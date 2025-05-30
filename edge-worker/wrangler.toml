@@ -5,5 +5,7 @@ compatibility_date = "2025-06-01"
 EDGE_HMAC_KEY = "${EDGE_HMAC_KEY}"
 [[kv_namespaces]]
 binding = "APP_KV"
-id = ""
-preview_id = ""
+# Replace the following with your actual KV namespace ID
+id = "<YOUR_KV_NAMESPACE_ID>"
+# For preview (dev) environment, you can reuse the same namespace or specify another ID
+preview_id = "<YOUR_KV_NAMESPACE_ID>"
