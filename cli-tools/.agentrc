@@ -1,0 +1,10 @@
+name: cli-tools-agent
+description: |
+  Owns the CLI utilities in /cli-tools: data import/export, mocking setups, diagnostics.
+context: |
+  • CLI entrypoint: /cli-tools/index.ts (TBD)
+  • Shared models: /shared
+instructions: |
+  1. Only modify files under /cli-tools.
+  2. Place mocks or helpers here, do not edit edge-worker/ or ios-client/.
+  3. Use shared types from /shared for consistency.

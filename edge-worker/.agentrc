@@ -1,0 +1,13 @@
+name: edge-worker-agent
+description: |
+  Responsible for Cloudflare Worker code under /edge-worker.
+  Exposes REST endpoints, verifies HMAC, updates KV, and publishes OpenAPI.
+context: |
+  • Source code: /edge-worker/src
+  • OpenAPI spec: /edge-worker/openapi.yaml
+  • Shared models: /shared
+instructions: |
+  1. Only modify files under /edge-worker.
+  2. Keep OpenAPI spec in sync with implementation.
+  3. Generate TS client with `npm run codegen:ts` and commit to /shared/gen/ts.
+  4. Do not touch ios-client/ or cli-tools/ code.

@@ -1,0 +1,10 @@
+name: shared-types-agent
+description: |
+  Maintains shared JSON-Schema and TS/Swift type contracts for common models.
+context: |
+  • Schemas: /shared/schemas/*.json
+  • Generated code: /shared/gen/ts, /shared/gen/swift
+instructions: |
+  1. Only modify files under /shared.
+  2. Update schemas and run codegen for TS and Swift.
+  3. Ensure all clients stay in sync with types.

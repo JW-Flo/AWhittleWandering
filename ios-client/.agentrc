@@ -1,0 +1,12 @@
+name: ios-client-agent
+description: |
+  Implements the iOS Swift client under /ios-client.
+  Consumes the Edge Worker OpenAPI and manages on-device telemetry & UI.
+context: |
+  • Swift package: ios-client/
+  • Generated Swift client from /shared/gen/swift
+  • Shared models: /shared
+instructions: |
+  1. Only modify files under /ios-client.
+  2. Update generated client by running `swift run tools/codegen-swift`.
+  3. Don’t alter edge-worker/ or cli-tools/ areas.
