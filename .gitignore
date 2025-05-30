@@ -1,0 +1,14 @@
+node_modules/
+edge-worker/node_modules/
+dist/
+.wrangler/
+.vscode/
+ios-client/.build/
+.build/
+.swiftpm/
+ios-client/DerivedData/
+# macOS
+.DS_Store
+# Swift Package Manager
+.build/
+/.build/**
