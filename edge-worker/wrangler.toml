@@ -1,0 +1,9 @@
+name = "mcp-worker"
+main = "src/index.ts"
+compatibility_date = "2025-06-01"
+[vars]
+EDGE_HMAC_KEY = "${EDGE_HMAC_KEY}"
+[[kv_namespaces]]
+binding = "APP_KV"
+id = ""
+preview_id = ""
