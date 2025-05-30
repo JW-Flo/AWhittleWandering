@@ -1,0 +1,66 @@
+name: Codex Scaffold
+on:
+  workflow_dispatch:          # run manually from Actions tab
+  push:
+    branches: [main]          # or remove if you only want manual runs
+
+jobs:
+  codex:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write         # lets workflow commit back with GITHUB_TOKEN
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq & curl
+        run: sudo apt-get update && sudo apt-get install -y jq curl
+
+      - name: Call Codex to generate/update project
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}   # add this secret once
+        run: |
+          prompt=$(cat <<'PROMPT'
+You are Codex. Fill or update these directories with a SwiftUI iOS client
+(CoreLocation logging, CoreData, BGTaskScheduler) and a Cloudflare Worker
+(HMAC auth, KV).  Keep CI minimal but compile-clean.  Do not touch files
+outside ios-client/ and edge-worker/ and .github/workflows/.
+PROMPT
+          )
+
+          # Ask Codex for a diff
+          response=$(curl https://api.openai.com/v1/chat/completions \
+            -H "Authorization: Bearer $OPENAI_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d @- <<EOF
+{
+  "model": "gpt-4o-mini",
+  "messages": [
+     {"role":"system","content":"You are a helpful code generator."},
+     {"role":"user","content": "$prompt"}
+  ],
+  "tools":[{"type":"code_edit"}],
+  "tool_choice":"code_edit"
+}
+EOF
+          )
+
+          echo "$response" | jq -r '.choices[0].message.tool_calls[0].code_diff' \
+             > codex.patch
+
+          if [ -s codex.patch ]; then
+            git apply codex.patch
+          else
+            echo "Codex returned empty diff."; exit 1
+          fi
+
+      - name: Commit changes
+        run: |
+          git config user.email "codex-bot@github"
+          git config user.name  "Codex Bot"
+          git add .
+          if ! git diff --cached --quiet; then
+            git commit -m "Codex scaffold/update"
+            git push origin HEAD:main
+          else
+            echo "No changes to commit."
+          fi
