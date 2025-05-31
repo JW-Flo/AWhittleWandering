@@ -29,15 +29,23 @@
             "label": "Start Agents",
             "type": "shell",
             "command": "${workspaceFolder}/scripts/start-agents.sh",
-            "group": "none",
-            "presentation": { "reveal": "always", "panel": "shared" }
+            "isBackground": true,
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
         },
         {
             "label": "Generate TS Client",
             "type": "shell",
             "command": "npm run codegen:ts",
-            "group": "none",
-            "presentation": { "reveal": "always", "panel": "shared" }
+            "isBackground": true,
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
         },
         {
             "label": "CI Pipeline",
@@ -50,6 +58,20 @@
             "group": {
                 "kind": "build",
                 "isDefault": false
+            }
+        },
+        {
+            "label": "Dev: All",
+            "dependsOn": [
+                "Build: Edge Worker",
+                "Build: iOS Client",
+                "Generate TS Client",
+                "Start Agents"
+            ],
+            "dependsOrder": "parallel",
+            "group": {
+                "kind": "build",
+                "isDefault": true
             }
         }
     ]

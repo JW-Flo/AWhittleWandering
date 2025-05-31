@@ -5,7 +5,8 @@
 if command -v roo >/dev/null 2>&1; then
   ROO_CMD=roo
 else
-  ROO_CMD="$(pwd)/scripts/roo"
+  DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  ROO_CMD="$DIR/roo"
 fi
 echo "Starting Edge Worker agent with '$ROO_CMD'..."
 $ROO_CMD run --config edge-worker/.agentrc &
