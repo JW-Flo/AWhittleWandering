@@ -1,14 +1,11 @@
 #!/usr/bin/env bash
 # Script to start both ROO agents in background
 
-## Determine ROO command (gift fallback to npx if installed locally)
+## Determine ROO command: use global if available, otherwise use local stub
 if command -v roo >/dev/null 2>&1; then
   ROO_CMD=roo
-elif command -v npx >/dev/null 2>&1; then
-  ROO_CMD="npx roo"
 else
-  echo "Error: 'roo' CLI not found. Install globally (npm install -g @roo/cli) or ensure it's in PATH."
-  exit 1
+  ROO_CMD="$(pwd)/scripts/roo"
 fi
 echo "Starting Edge Worker agent with '$ROO_CMD'..."
 $ROO_CMD run --config edge-worker/.agentrc &

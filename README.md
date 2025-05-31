@@ -8,7 +8,8 @@ A fully autonomous, 60-day EV-road-trip planner. • Collects read-only telemetr
 - Xcode 15 (or later)  
 - Swift 5.9 toolchain  
 - Node.js (v16+) & npm  
-- Cloudflare Wrangler CLI (`npm install -g @cloudflare/wrangler`)  
+- Cloudflare Wrangler CLI (`npm install -g @cloudflare/wrangler`)
+- ROO C-line CLI (install via `npm install -g @roo/cli` or see https://github.com/roo/cli)
 - Set `EDGE_HMAC_KEY` in your shell or CI environment
 
 ### iOS Client

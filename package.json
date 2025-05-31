@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "build:edge": "wrangler build --cwd edge-worker",
-    "deploy:edge": "wrangler publish --cwd edge-worker"
+    "deploy:edge": "wrangler publish --cwd edge-worker",
+    "codegen:ts": "npm --prefix shared run codegen:ts"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
