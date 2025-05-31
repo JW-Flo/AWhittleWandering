@@ -1,0 +1,56 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build: Edge Worker",
+            "type": "shell",
+            "command": "npm run build:edge",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Deploy: Edge Worker",
+            "type": "shell",
+            "command": "npm run deploy:edge",
+            "group": "none",
+            "problemMatcher": []
+        },
+        {
+            "label": "Build: iOS Client",
+            "type": "shell",
+            "command": "swift build",
+            "options": {
+                "cwd": "${workspaceFolder}/ios-client"
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Start Agents",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/start-agents.sh",
+            "group": "none",
+            "presentation": { "reveal": "always", "panel": "shared" }
+        },
+        {
+            "label": "Generate TS Client",
+            "type": "shell",
+            "command": "npm run codegen:ts",
+            "group": "none",
+            "presentation": { "reveal": "always", "panel": "shared" }
+        },
+        {
+            "label": "CI Pipeline",
+            "dependsOn": [
+                "Build: Edge Worker",
+                "Build: iOS Client",
+                "Deploy: Edge Worker"
+            ],
+            "dependsOrder": "sequence",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        }
+    ]
+}
