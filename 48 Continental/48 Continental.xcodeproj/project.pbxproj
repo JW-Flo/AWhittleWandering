@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		D8328A802DEAABBC00C9B2F0 /* MCPClient in Frameworks */ = {isa = PBXBuildFile; productRef = D8328A7F2DEAABBC00C9B2F0 /* MCPClient */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		D8B2BD762DEAA89000BCDB0E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D8328A802DEAABBC00C9B2F0 /* MCPClient in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +117,7 @@
 			);
 			name = "48 Continental";
 			packageProductDependencies = (
+				D8328A7F2DEAABBC00C9B2F0 /* MCPClient */,
 			);
 			productName = "48 Continental";
 			productReference = D8B2BD652DEAA88E00BCDB0E /* 48 Continental.app */;
@@ -195,6 +201,9 @@
 			);
 			mainGroup = D8B2BD5C2DEAA88E00BCDB0E;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D8328A7E2DEAABBC00C9B2F0 /* XCLocalSwiftPackageReference "../ios-client" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = D8B2BD662DEAA88E00BCDB0E /* Products */;
 			projectDirPath = "";
@@ -593,6 +602,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		D8328A7E2DEAABBC00C9B2F0 /* XCLocalSwiftPackageReference "../ios-client" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../ios-client";
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D8328A7F2DEAABBC00C9B2F0 /* MCPClient */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MCPClient;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = D8B2BD5D2DEAA88E00BCDB0E /* Project object */;
 }
