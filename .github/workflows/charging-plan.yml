@@ -1,0 +1,16 @@
+name: Charging Plan
+on: workflow_dispatch
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    env:
+      ABRP_API_KEY: ${{ secrets.ABRP_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "leg,start,end" > charging-plan.csv
+      - run: |
+          git config user.email bot@github
+          git config user.name bot
+          git add charging-plan.csv
+          git commit -m "cli: stub plan"
+          git push

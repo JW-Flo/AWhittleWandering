@@ -1,0 +1,11 @@
+{
+  "name": "@mcp/shared",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "codegen:ts": "openapi-typescript-codegen --input edge-worker/openapi.yaml --output shared/ts"
+  },
+  "devDependencies": {
+    "openapi-typescript-codegen": "^0.0.0"
+  }
+}
