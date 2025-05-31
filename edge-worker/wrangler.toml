@@ -1,6 +1,6 @@
-name = "mcp-worker"
+name = "worker-name"
+compatibility_date = "2025-05-31"
 main = "src/index.ts"
-compatibility_date = "2025-06-01"
 [vars]
 EDGE_HMAC_KEY = "${EDGE_HMAC_KEY}"
 [[kv_namespaces]]
