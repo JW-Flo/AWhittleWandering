@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Stub for ROO CLI
+# Simply echoes the arguments and simulates starting an agent
+echo "[stub roo] Executing: roo $@"
+# Simulate a running process
+while true; do sleep 3600; done
