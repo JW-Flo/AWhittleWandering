@@ -1,5 +1,6 @@
 import SwiftUI
 
+@available(macOS 11.0, *)
 struct DashboardView: View {
     @State private var mileage: Double = 0.0
     @State private var targetSoC: Double = 80.0
@@ -55,8 +56,13 @@ struct DashboardView: View {
     }
 }
 
+@available(macOS 11.0, *)
 struct DashboardView_Previews: PreviewProvider {
     static var previews: some View {
-        DashboardView()
+        if #available(macOS 11.0, *) {
+            DashboardView()
+        } else {
+            Text("Not available on this macOS version")
+        }
     }
 }
