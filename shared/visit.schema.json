@@ -1,11 +1,25 @@
 {
-  "$id": "Visit",
-  "type": "object",
-  "properties": {
-    "id":   { "type": "string" },
-    "time": { "type": "string", "format": "date-time" },
-    "lat":  { "type": "number" },
-    "lon":  { "type": "number" }
-  },
-  "required": ["id","time","lat","lon"]
+    "$id": "Visit",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "string"
+        },
+        "time": {
+            "type": "string",
+            "format": "date-time"            ./scripts/start-agents.sh
+        },
+        "lat": {
+            "type": "number"
+        },
+        "lon": {
+            "type": "number"
+        }
+    },
+    "required": [
+        "id",
+        "time",
+        "lat",
+        "lon"
+    ]
 }

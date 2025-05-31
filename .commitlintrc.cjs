@@ -1,6 +1,6 @@
 module.exports = {
-  extends: ['@commitlint/config-conventional'],
-  rules: {
-    'scope-enum': [2, 'always', ['edge', 'ios', 'cli', 'shared']]
-  }
+    extends: ['@commitlint/config-conventional'],
+    rules: {
+        'scope-enum': [2, 'always', ['edge', 'ios', 'cli', 'shared']]
+    }
 };

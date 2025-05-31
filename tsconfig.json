@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "es2021",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "lib": ["es2021", "webworker"],
+    "outDir": "dist",
+    "strict": true,
+    "sourceMap": true
+  },
+  "include": ["edge-worker/src"]
+}
