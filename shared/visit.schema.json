@@ -7,7 +7,7 @@
         },
         "time": {
             "type": "string",
-            "format": "date-time"            ./scripts/start-agents.sh
+            "format": "date-time"
         },
         "lat": {
             "type": "number"

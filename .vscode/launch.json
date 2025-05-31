@@ -1,0 +1,33 @@
+{
+    // VS Code Launch Configurations for Debugging
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Wrangler Dev (Edge Worker)",
+            "type": "pwa-node",
+            "request": "launch",
+            "program": "${workspaceFolder}/node_modules/.bin/wrangler",
+            "args": [
+                "dev",
+                "--cwd",
+                "edge-worker"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "preLaunchTask": "Build: Edge Worker"
+        },
+        {
+            "name": "Debug Edge Worker (ts-node)",
+            "type": "pwa-node",
+            "request": "launch",
+            "program": "${workspaceFolder}/edge-worker/src/index.ts",
+            "runtimeArgs": [
+                "-r",
+                "ts-node/register"
+            ],
+            "cwd": "${workspaceFolder}/edge-worker",
+            "preLaunchTask": "Build: Edge Worker",
+            "sourceMaps": true
+        }
+    ]
+}

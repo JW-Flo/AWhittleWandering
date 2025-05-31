@@ -1,4 +1,5 @@
-import Foundation, CoreLocation
+import Foundation
+import CoreLocation
 public final class AppState: NSObject, ObservableObject, CLLocationManagerDelegate {
   private let mgr = CLLocationManager()
   public override init() { super.init(); mgr.delegate = self; mgr.requestAlwaysAuthorization(); mgr.startMonitoringVisits() }

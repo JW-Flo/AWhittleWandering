@@ -1,0 +1,13 @@
+{
+    "roo-cline.rooCodeCloudEnabled": true,
+    "roo-cline.vsCodeLmModelSelector": {
+        // 1. Vendor to use for all LLM calls. Allowed: "openai" | "anthropic" | "cohere"
+        "vendor": "openai",
+        // 2. Default model variant for the chosen vendor. Examples: "gpt-4", "gpt-3.5-turbo"
+        "model": "gpt-4-turbo",
+        // 3. How long (in milliseconds) to wait before aborting an API request.
+        "timeoutMs": 30000,
+        // 4. Number of times to retry on transient network or rate-limit errors.
+        "retryCount": 2
+    }
+}

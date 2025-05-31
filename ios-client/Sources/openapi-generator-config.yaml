@@ -1,0 +1,12 @@
+# OpenAPI Generator Config
+# Example configuration for generating Swift client code
+
+config:
+  apiToken: ${TAVILY_API_TOKEN}
+  outputDirectory: Sources/Generated
+  # Add valid configuration keys here
+
+modules:
+  - name: "MCPClient"
+    output: "Sources"
+    input: "openapi.yaml"
