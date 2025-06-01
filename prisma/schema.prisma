@@ -1,0 +1,17 @@
+// Prisma schema file
+// Define your data model here
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "sqlite"
+    url      = "file:./dev.db"
+}
+
+model Example {
+    id    Int    @id @default(autoincrement())
+    name  String
+    email String @unique
+}

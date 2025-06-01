@@ -21,7 +21,7 @@ struct ContinentalApp: App {
                         Label("People", systemImage: "person.3")
                     }
 
-                SettingsView()
+                SettingsManagerView()
                     .tabItem {
                         Label("Settings", systemImage: "gear")
                     }
