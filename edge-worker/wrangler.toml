@@ -5,7 +5,5 @@ main = "src/index.ts"
 EDGE_HMAC_KEY = "${EDGE_HMAC_KEY}"
 [[kv_namespaces]]
 binding = "APP_KV"
-# Replace the following with your actual KV namespace ID
-id = "<YOUR_KV_NAMESPACE_ID>"
-# For preview (dev) environment, you can reuse the same namespace or specify another ID
-preview_id = "<YOUR_KV_NAMESPACE_ID>"
+id = "c7eba0c892bf4f2fbcf73fb60a38706c"
+preview_id = "a68ee6412d644992b79b6fddd8d17f47"
