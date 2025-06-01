@@ -202,7 +202,6 @@
 			mainGroup = D8B2BD5C2DEAA88E00BCDB0E;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				D8328A7E2DEAABBC00C9B2F0 /* XCLocalSwiftPackageReference "../ios-client" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = D8B2BD662DEAA88E00BCDB0E /* Products */;
@@ -606,13 +605,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCLocalSwiftPackageReference section */
-		D8328A7E2DEAABBC00C9B2F0 /* XCLocalSwiftPackageReference "../ios-client" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = "../ios-client";
-		};
-/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		D8328A7F2DEAABBC00C9B2F0 /* MCPClient */ = {

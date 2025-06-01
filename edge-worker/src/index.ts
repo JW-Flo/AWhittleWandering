@@ -60,6 +60,52 @@ export default {
             });
         }
 
+        // --- Tesla Authentication Endpoint ---
+        if (method === "POST" && url.pathname === "/api/tesla/authenticate") {
+            const { email, password } = await request.json();
+            // TODO: Replace with secure Tesla API integration
+            // Example: Forward credentials to Tesla API and return access token
+            // For now, return a fake token for demo
+            return new Response(JSON.stringify({ access_token: "demo-token-123", expires_in: 3600 }), {
+                status: 200,
+                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+            });
+        }
+
+        // --- Tesla Command Endpoint ---
+        if (method === "POST" && url.pathname.startsWith("/api/tesla/")) {
+            const command = url.pathname.replace("/api/tesla/", "");
+            const params = await request.json();
+            // TODO: Replace with secure Tesla API command forwarding
+            // For now, echo the command and params
+            return new Response(JSON.stringify({ result: `Command '${command}' received`, params }), {
+                status: 200,
+                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+            });
+        }
+
+        // --- Visit Logging Endpoint ---
+        if (method === "POST" && url.pathname === "/api/visits") {
+            const visit = await request.json();
+            const id = `visit-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+            await env.APP_KV.put(id, JSON.stringify(visit));
+            return new Response(JSON.stringify({ status: "ok", id }), {
+                status: 200,
+                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+            });
+        }
+
+        // --- SoC Logging Endpoint ---
+        if (method === "POST" && url.pathname === "/api/soc") {
+            const soc = await request.json();
+            const id = `soc-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+            await env.APP_KV.put(id, JSON.stringify(soc));
+            return new Response(JSON.stringify({ status: "ok", id }), {
+                status: 200,
+                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+            });
+        }
+
         // POST: ingest event
         if (method === "POST" && url.pathname === "/") {
             const buf = await request.arrayBuffer();
