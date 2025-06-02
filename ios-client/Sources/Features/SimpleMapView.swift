@@ -52,7 +52,7 @@ struct RouteInfoCard: View {
             }
         }
         .padding()
-        .background(Material.regular)
+        .background(.background)
         .cornerRadius(12)
         .shadow(radius: 5)
     }

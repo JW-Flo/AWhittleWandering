@@ -3,35 +3,39 @@ export interface Location {
   longitude: number;
 }
 
-export interface WeatherData {
+export interface Weather {
   temperature: number;
   windSpeed: number;
   precipitation: number;
   conditions: string[];
 }
 
+export interface WeatherRiskResponse {
+  location: Location;
+  riskLevel: 'low' | 'medium' | 'high';
+  weather: Weather;
+  recommendations: string[];
+}
+
 export interface RouteSegment {
   start: Location;
   end: Location;
   distance: number;
-  estimatedConsumption: number;
+  duration: number;
+  weatherRisk: number;
 }
 
 export interface Route {
   segments: RouteSegment[];
+  coordinates: Location[];
   totalDistance: number;
+  totalDuration: number;
+  weatherRisk: number;
   totalConsumption: number;
-}
-
-export interface WeatherRiskResponse {
-  location: Location;
-  weather: WeatherData;
-  riskLevel: 'low' | 'medium' | 'high';
-  recommendations: string[];
+  requiredStops: number;
 }
 
 export interface RouteResponse {
   route: Route;
-  weatherRisks: WeatherRiskResponse[];
-  alternativeRoutes?: Route[];
+  alternatives: Route[];
 }

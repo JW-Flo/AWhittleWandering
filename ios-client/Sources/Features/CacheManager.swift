@@ -1,4 +1,5 @@
 import CoreData
+import CoreLocation
 import Foundation
 
 class CacheManager {

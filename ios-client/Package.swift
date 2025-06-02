@@ -7,7 +7,10 @@ let package = Package(
     .iOS(.v17),
     .macOS(.v13),
   ],
-  products: [.library(name: "MCPClient", targets: ["MCPClient"])],
+  products: [
+    .library(name: "MCPClient", targets: ["MCPClient"]),
+    .library(name: "Models", targets: ["Models"]),
+  ],
   dependencies: [
     .package(
       url: "https://github.com/apple/swift-openapi-runtime.git",
@@ -20,16 +23,22 @@ let package = Package(
   ],
   targets: [
     .target(
+      name: "Models",
+      dependencies: [],
+      path: "Sources/Models"
+    ),
+    .target(
       name: "MCPClient",
       dependencies: [
         .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
         .product(name: "RealmSwift", package: "realm-swift"),
+        "Models",
       ],
-      path: "Sources"
+      path: "Sources/Features"
     ),
     .testTarget(
       name: "TeslaAPITests",
-      dependencies: ["MCPClient"],
+      dependencies: ["MCPClient", "Models"],
       path: "Tests"
     ),
   ]

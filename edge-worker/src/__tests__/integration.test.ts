@@ -14,6 +14,34 @@ describe('Edge Worker Integration Tests', () => {
         await cleanupTestEnv(testEnv);
     });
 
+    describe('Static File Serving', () => {
+        it('should serve index.html for root path', async () => {
+            const res = await testEnv.mf.dispatchFetch('http://localhost:8787/', {
+                method: 'GET'
+            });
+            expect(res.status).toBe(200);
+            expect(res.headers.get('Content-Type')).toBe('text/html');
+            const body = await res.text();
+            expect(body).toContain('<!DOCTYPE html>');
+        });
+
+        it('should return 404 for non-existent files', async () => {
+            const res = await testEnv.mf.dispatchFetch('http://localhost:8787/not-found.html', {
+                method: 'GET'
+            });
+            expect(res.status).toBe(404);
+        });
+
+        it('should handle CORS headers for static files', async () => {
+            const res = await testEnv.mf.dispatchFetch('http://localhost:8787/', {
+                method: 'OPTIONS'
+            });
+            expect(res.headers.get('Access-Control-Allow-Origin')).toBe('*');
+            expect(res.headers.get('Access-Control-Allow-Methods')).toContain('GET');
+            expect(res.headers.get('Access-Control-Allow-Headers')).toBeDefined();
+        });
+    });
+
     describe('Weather Risk Calculation', () => {
         it('should calculate weather risk for a given location', async () => {
             const body = testEnv.mockLocations.sf;

@@ -4,44 +4,35 @@ import SwiftUI
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let locationManager = CLLocationManager()
 
-    @Published var lastLocation: CLLocation?
-    @Published var authorizationStatus: CLAuthorizationStatus?
+    @Published var location: CLLocation?
+    @Published var authorizationStatus: CLAuthorizationStatus
 
     override init() {
+        authorizationStatus = locationManager.authorizationStatus
         super.init()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.distanceFilter = 50  // Update location every 50 meters
-    }
-
-    func requestAuthorization() {
         locationManager.requestWhenInUseAuthorization()
     }
 
-    func startUpdatingLocation() {
-        locationManager.startUpdatingLocation()
-    }
-
-    func stopUpdatingLocation() {
-        locationManager.stopUpdatingLocation()
-    }
-
-    // MARK: - CLLocationManagerDelegate
-
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        lastLocation = locations.last
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        authorizationStatus = manager.authorizationStatus
+        #if os(iOS)
+            if authorizationStatus == .authorizedWhenInUse {
+                locationManager.startUpdatingLocation()
+            }
+        #elseif os(macOS)
+            if authorizationStatus == .authorized {
+                locationManager.startUpdatingLocation()
+            }
+        #endif
     }
 
     func locationManager(
-        _ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus
+        _ manager: CLLocationManager,
+        didUpdateLocations locations: [CLLocation]
     ) {
-        authorizationStatus = status
-        if status == .authorizedWhenInUse {
-            locationManager.startUpdatingLocation()
-        }
-    }
-
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("Location manager failed with error: \(error.localizedDescription)")
+        location = locations.last
     }
 }
