@@ -20,6 +20,28 @@ else
     exit 1
 fi
 
+# Deploy Public Website to Cloudflare Pages
+echo -e "\n${YELLOW}Deploying Public Website...${NC}"
+cd ../48Continental_Starter/public-site
+npm run build && wrangler pages publish ./dist
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}Public Website deployment successful${NC}"
+else
+    echo -e "${RED}Public Website deployment failed${NC}"
+    exit 1
+fi
+
+# Deploy Mobile Apps
+echo -e "\n${YELLOW}Deploying Mobile Apps...${NC}"
+cd ../../scripts
+./deploy-mobile.sh
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}Mobile Apps deployment successful${NC}"
+else
+    echo -e "${RED}Mobile Apps deployment failed${NC}"
+    exit 1
+fi
+
 # Archive iOS App
 echo -e "\n${YELLOW}Archiving iOS App...${NC}"
 cd ../ios-client
