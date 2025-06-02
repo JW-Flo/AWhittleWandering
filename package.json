@@ -5,10 +5,15 @@
   "scripts": {
     "build:edge": "wrangler build --cwd edge-worker",
     "deploy:edge": "wrangler publish --cwd edge-worker",
+    "build:site": "cd 48Continental_Starter/public-site && npm run build",
+    "deploy:site": "cd 48Continental_Starter/public-site && wrangler pages publish ./dist",
+    "build:mobile": "./scripts/deploy-mobile.sh",
+    "deploy:mobile": "npm run build:mobile && cd ContinentalUSA-mobile && npm run deploy",
     "codegen:ts": "npm --prefix shared run codegen:ts",
     "lint": "eslint edge-worker/src/**/*.ts",
     "test": "npm --prefix edge-worker test && cd ios-client && swift test",
-    "pre-deploy": "npm run lint && npm run build:edge && npm run test"
+    "pre-deploy": "npm run lint && npm run build:edge && npm run test",
+    "deploy": "scripts/deploy-all.sh"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",

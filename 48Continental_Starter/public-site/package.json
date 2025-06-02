@@ -1,0 +1,21 @@
+{
+  "name": "continentalusa-site",
+  "version": "1.0.0",
+  "description": "Continental USA Trip Planner Public Site",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "wrangler pages publish dist"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.2.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.3"
+  },
+  "devDependencies": {
+    "vite": "^5.1.6",
+    "wrangler": "^4.18.0"
+  }
+}
