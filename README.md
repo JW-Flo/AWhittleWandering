@@ -2,6 +2,27 @@
 App to manage 48 state continental drive 
 A fully autonomous, 60-day EV-road-trip planner. • Collects read-only telemetry (state-of-charge, location, charging events) every 15 min while driving or charging. • Feeds data to an on-device algorithm that selects the next Supercharger/fallback L2 site using offline ABRP matrices. • Transmits high-level stats (leg complete, arrival %, charging cost) to the driver's personal Cloudflare Worker for post-trip analytics. **No remote commands** are issued (start-charge, unlock, climate, etc.). Data never shared with third parties; solely for personal trip logistics and energy budgeting.
 
+## Project Progress
+
+- Public website built with React + Vite + Windi CSS for modern, responsive UI
+- Live route status with real-time updates from Cloudflare Worker
+- Interactive Mapbox map showing current location
+- Dark mode toggle with persistent user preference
+- Photo gallery with lightbox functionality
+- Trip logs management with add/delete
+- Tabbed navigation with URL hash support
+- Offline support with service worker caching
+- Accessibility improvements with ARIA roles and keyboard navigation
+- GitHub Actions CI/CD for automatic deployment to Cloudflare Pages
+
+## Next Steps
+
+- Refactor Tesla API integration to work with Cloudflare Workers limitations
+- Move Tesla API calls to an external backend service or rewrite with direct HTTP calls
+- Implement secure authentication and token management for Tesla API
+- Enhance trip logs and comments with backend persistence
+- Add more interactive features like social sharing, notifications, and media uploads
+
 ## Quick Start
 
 ### Public Website (Remote Access)
@@ -52,6 +73,7 @@ cd ContinentalUSA-mobile
 npm run build:ios
 
 # Build Android
+cd ContinentalUSA-mobile
 npm run build:android
 
 # Deploy to stores (requires proper credentials)
