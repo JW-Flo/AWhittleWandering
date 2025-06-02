@@ -17,7 +17,7 @@ async function runTask(task: string) {
     }
   } catch (e) {
     console.error(`[Codex Agent] Task failed: ${(e as Error).message}`);
-    const healing = require('./healing/patchAndRetry');
+    const healing = await import('./healing/patchAndRetry');
     healing.patchAndRetry(task);
   }
 }
