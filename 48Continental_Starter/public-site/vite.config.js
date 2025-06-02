@@ -1,7 +1,18 @@
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import WindiCSS from 'vite-plugin-windicss';
 
 export default defineConfig({
-  plugins: [react(), WindiCSS()],
+  plugins: [],
+  root: '.',
+  build: {
+    outDir: 'dist',
+    rollupOptions: {
+      input: {
+        main: './index.html'
+      }
+    }
+  },
+  server: {
+    port: 3000,
+    open: true
+  }
 });
