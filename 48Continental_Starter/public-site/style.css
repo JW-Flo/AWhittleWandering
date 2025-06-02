@@ -9,7 +9,8 @@ body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: #f9fafb;
   color: #333;
-  line-height: 1.6;
+  margin: 0;
+  padding: 0;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -414,4 +415,86 @@ nav#main-nav a:focus {
 
 #comment-list li:last-child {
   border-bottom: none;
+}
+
+.header {
+  background: linear-gradient(135deg, #4f46e5, #3b82f6);
+  color: white;
+  padding: 2rem 1rem;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.header h1 {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.header p {
+  font-size: 1.25rem;
+  margin-top: 0;
+}
+
+.nav {
+  display: flex;
+  justify-content: center;
+  background: #4338ca;
+  padding: 0.5rem 0;
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.tab-button:hover,
+.tab-button:focus {
+  background-color: #6366f1;
+  outline: none;
+}
+
+.tab-button.active {
+  border-bottom: 3px solid #a5b4fc;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+#map-container {
+  height: 450px;
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.gallery img {
+  width: 100%;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+}
+
+.gallery img:hover,
+.gallery img:focus {
+  transform: scale(1.05);
+  outline: none;
 }
