@@ -1,4 +1,7 @@
+/* eslint-env browser */
 /* global mapboxgl */
+import { getStations } from './src/nwsStations.js';
+
 const ENDPOINT = '/functions/route';   // Cloudflare Function
 
 // Show loading spinner
@@ -45,32 +48,35 @@ refreshStatus();
 mapboxgl.accessToken = 'YOUR_MAPBOX_PUBLIC_TOKEN';
 
 // Map loading spinner
-const mapContainer = document.getElementById('map');
+const mapContainer = document.getElementById('map-container');
 const mapSpinner = document.createElement('div');
 mapSpinner.className = 'spinner map-spinner';
 mapContainer.appendChild(mapSpinner);
 
-let map, marker;
-function initMap() {
-  map = new mapboxgl.Map({
-    container: 'map',
+// Unified map variables
+let mapInstance, mapMarker;
+
+function initializeMap() {
+  mapInstance = new mapboxgl.Map({
+    container: 'map-container',
     style: 'mapbox://styles/mapbox/streets-v12',
-    center: [-98.5795, 39.8283], // USA center
+    center: [-98.5795, 39.8283],
     zoom: 3
   });
-  map.on('load', () => {
+  mapInstance.on('load', () => {
     mapSpinner.style.display = 'none';
   });
 }
+
 function updateMap(lat, lng) {
-  if (!map) initMap();
+  if (!mapInstance) initializeMap();
   const lngLat = [lng, lat];
-  if (!marker) {
-    marker = new mapboxgl.Marker().setLngLat(lngLat).addTo(map);
+  if (!mapMarker) {
+    mapMarker = new mapboxgl.Marker().setLngLat(lngLat).addTo(mapInstance);
   } else {
-    marker.setLngLat(lngLat);
+    mapMarker.setLngLat(lngLat);
   }
-  map.flyTo({ center: lngLat, zoom: 5 });
+  mapInstance.flyTo({ center: lngLat, zoom: 5 });
 }
 
 /* ---------- Dark‑mode toggle ---------- */
@@ -140,8 +146,8 @@ galleryItems.forEach(item => {
 });
 
 /* ---------- Trip logs management ---------- */
-const logList = document.getElementById('log-list');
 const logForm = document.getElementById('log-form');
+const logList = document.getElementById('log-list');
 
 let logs = [];
 
@@ -158,7 +164,6 @@ function renderLogs() {
     logList.appendChild(entry);
   });
 
-  // Attach delete handlers
   logList.querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', e => {
       const idx = e.target.getAttribute('data-index');
@@ -210,22 +215,54 @@ window.addEventListener('mousedown', () => {
 
 /* ---------- Tab switching and comment posting ---------- */
 // Tab switching logic
-const tabs = document.querySelectorAll('.tabs button');
-const tabPanels = document.querySelectorAll('main > section[role="tabpanel"]');
+const tabs = document.querySelectorAll('.tab-button');
+const tabContents = document.querySelectorAll('.tab-content');
+
+async function loadLiveStatus() {
+  try {
+    const data = await fetch('/functions/route').then(r => r.json());
+    document.getElementById('current').textContent = data.current;
+    document.getElementById('next').textContent = data.next;
+    document.getElementById('eta').textContent = new Date(data.eta).toLocaleString();
+    updateMap(data.currentLat, data.currentLng);
+  } catch (err) {
+    console.error('Failed to load live status', err);
+  }
+}
+
+function loadGallery() {
+  // Gallery is static for now
+}
+
+function loadLogs() {
+  renderLogs();
+}
+
+// Tab switching with dynamic data loading
+function activateTab(tabName) {
+  tabs.forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.tab === tabName);
+  });
+  tabContents.forEach(content => {
+    content.classList.toggle('active', content.id === tabName);
+  });
+
+  // Load data for active tab
+  if (tabName === 'status') loadLiveStatus();
+  else if (tabName === 'gallery') loadGallery();
+  else if (tabName === 'logs') loadLogs();
+}
 
 tabs.forEach(tab => {
   tab.addEventListener('click', () => {
-    tabs.forEach(t => {
-      t.setAttribute('aria-selected', 'false');
-      document.getElementById(t.getAttribute('aria-controls')).hidden = true;
-    });
-    tab.setAttribute('aria-selected', 'true');
-    document.getElementById(tab.getAttribute('aria-controls')).hidden = false;
-    document.getElementById(tab.getAttribute('aria-controls')).focus();
+    activateTab(tab.dataset.tab);
   });
 });
 
-// Comment posting logic
+// Initialize first tab
+activateTab(tabs[0].dataset.tab);
+
+/* ---------- Comment posting ---------- */
 const commentForm = document.getElementById('comment-form');
 const commentList = document.getElementById('comment-list');
 
@@ -251,3 +288,7 @@ commentForm.addEventListener('submit', e => {
 });
 
 renderComments();
+
+window.addEventListener('load', () => {
+  getStations();
+});
