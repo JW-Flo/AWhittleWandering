@@ -1,30 +1,49 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>48Continental</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8">
+  <title>48Continental – 60 days, 48 states</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Driving across all 48 continental U.S. states in 60 days. Follow the adventure in real time.">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="48Continental – 60 days, 48 states">
+  <meta property="og:description" content="Driving across all 48 continental U.S. states in 60 days.">
+  <meta property="og:image" content="https://48continental.com/og.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
 </head>
 <body>
-  <header>
+  <header class="hero">
     <h1>48Continental</h1>
     <p>60 days. 48 states. One Tesla. And a very good dog.</p>
   </header>
+
   <main>
-    <section class="intro">
+    <section id="journey">
       <h2>The Journey</h2>
-      <p>This summer, I’m driving across all 48 continental U.S. states — camping, hiking, reconnecting, reflecting. I’ll be posting updates here as the trip unfolds.</p>
+      <p>This summer I'm driving across all 48 continental U.S. states — camping, hiking, reconnecting, reflecting. I’ll be posting updates here as the trip unfolds.</p>
     </section>
-    <section class="live-status">
+
+    <section id="status">
       <h2>Live Route Status</h2>
-      <div id="route-status">
-        <p><strong>Current Stop:</strong> loading…</p>
-        <p><strong>Next Stop:</strong> loading…</p>
-        <p><strong>ETA:</strong> loading…</p>
+      <div class="card">
+        <p><strong>Current Stop:</strong> <span id="current">loading…</span></p>
+        <p><strong>Next Stop:</strong> <span id="next">loading…</span></p>
+        <p><strong>ETA:</strong> <span id="eta">loading…</span></p>
       </div>
     </section>
-    <section class="coming-soon">
+
+    <section id="map-wrap">
+      <h2>Where I Am</h2>
+      <div id="map"></div>
+    </section>
+
+    <section id="coming">
       <h2>Coming Soon</h2>
       <ul>
         <li>Photo journal from the road</li>
@@ -32,10 +51,28 @@
         <li>Short travel films</li>
       </ul>
     </section>
+
+    <section id="subscribe">
+      <h2>Get Updates</h2>
+      <form action="https://buttondown.email/api/emails/embed-subscribe/48continental"
+            method="post"
+            target="popupwindow"
+            onsubmit="window.open('https://buttondown.email/48continental', 'popupwindow')">
+        <input type="email" name="email" placeholder="you@example.com" required>
+        <button type="submit">Subscribe</button>
+      </form>
+    </section>
   </main>
+
   <footer>
-    <p>&copy; 2025 48Continental. Built on the road. Hosted on Cloudflare.</p>
+    © 2025 48Continental. Built on the road. Hosted on Cloudflare.
   </footer>
-  <script src="scripts/tracker.js"></script>
+
+  <!-- Mapbox -->
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
+
+  <!-- Main JS -->
+  <script type="module" src="app.js"></script>
 </body>
 </html>
