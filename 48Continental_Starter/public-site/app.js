@@ -2,48 +2,6 @@
 /* global mapboxgl */
 import { getStations } from './src/nwsStations.js';
 
-const ENDPOINT = '/functions/route';   // Cloudflare Function
-
-// Show loading spinner
-function showLoading(id) {
-  const el = document.getElementById(id);
-  el.textContent = '';
-  const spinner = document.createElement('span');
-  spinner.className = 'spinner';
-  el.appendChild(spinner);
-}
-
-// Hide loading spinner
-function hideLoading(id, text) {
-  const el = document.getElementById(id);
-  el.textContent = text;
-  el.classList.add('fade-in');
-  setTimeout(() => el.classList.remove('fade-in'), 1000);
-}
-
-async function refreshStatus() {
-  try {
-    ['current', 'next', 'eta'].forEach(id => showLoading(id));
-    const data = await fetch(ENDPOINT).then(r => r.json());
-
-    hideLoading('current', data.current);
-    hideLoading('next', data.next);
-    hideLoading('eta', new Date(data.eta).toLocaleString());
-
-    updateMap(data.currentLat, data.currentLng);
-  } catch (err) {
-    ['current', 'next', 'eta'].forEach(id => {
-      const el = document.getElementById(id);
-      el.textContent = 'Error loading data';
-      el.classList.add('error');
-    });
-    console.error('Status update failed', err);
-  }
-}
-
-setInterval(refreshStatus, 5 * 60 * 1000);
-refreshStatus();
-
 /* ---------- Mapbox ---------- */
 mapboxgl.accessToken = 'YOUR_MAPBOX_PUBLIC_TOKEN';
 
@@ -218,49 +176,41 @@ window.addEventListener('mousedown', () => {
 const tabs = document.querySelectorAll('.tab-button');
 const tabContents = document.querySelectorAll('.tab-content');
 
-async function loadLiveStatus() {
-  try {
-    const data = await fetch('/functions/route').then(r => r.json());
-    document.getElementById('current').textContent = data.current;
-    document.getElementById('next').textContent = data.next;
-    document.getElementById('eta').textContent = new Date(data.eta).toLocaleString();
-    updateMap(data.currentLat, data.currentLng);
-  } catch (err) {
-    console.error('Failed to load live status', err);
-  }
-}
-
-function loadGallery() {
-  // Gallery is static for now
-}
-
-function loadLogs() {
-  renderLogs();
-}
-
-// Tab switching with dynamic data loading
-function activateTab(tabName) {
-  tabs.forEach(tab => {
-    tab.classList.toggle('active', tab.dataset.tab === tabName);
-  });
-  tabContents.forEach(content => {
-    content.classList.toggle('active', content.id === tabName);
-  });
-
-  // Load data for active tab
-  if (tabName === 'status') loadLiveStatus();
-  else if (tabName === 'gallery') loadGallery();
-  else if (tabName === 'logs') loadLogs();
-}
-
 tabs.forEach(tab => {
   tab.addEventListener('click', () => {
-    activateTab(tab.dataset.tab);
+    tabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+
+    tabContents.forEach(content => content.classList.remove('active'));
+    const target = document.getElementById(tab.dataset.tab);
+    if (target) target.classList.add('active');
   });
 });
 
 // Initialize first tab
-activateTab(tabs[0].dataset.tab);
+if (tabs.length > 0) {
+  tabs[0].click();
+}
+
+// Live data fetch and update
+const ENDPOINT = '/functions/route';
+
+async function refreshStatus() {
+  try {
+    const data = await fetch(ENDPOINT).then(r => r.json());
+
+    document.getElementById('current').textContent = data.current;
+    document.getElementById('next').textContent = data.next;
+    document.getElementById('eta').textContent = new Date(data.eta).toLocaleString();
+
+    updateMap(data.currentLat, data.currentLng);
+  } catch (err) {
+    console.error('Failed to fetch live status', err);
+  }
+}
+
+setInterval(refreshStatus, 5 * 60 * 1000);
+refreshStatus();
 
 /* ---------- Comment posting ---------- */
 const commentForm = document.getElementById('comment-form');
@@ -270,7 +220,7 @@ let comments = [];
 
 function renderComments() {
   commentList.innerHTML = '';
-  comments.forEach((comment, idx) => {
+  comments.forEach(comment => {
     const li = document.createElement('li');
     li.textContent = comment;
     commentList.appendChild(li);
