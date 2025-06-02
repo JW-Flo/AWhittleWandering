@@ -1,4 +1,4 @@
-name = "worker-name"
+name = "continentalusa-edge"
 compatibility_date = "2025-05-31"
 main = "src/index.ts"
 [vars]
