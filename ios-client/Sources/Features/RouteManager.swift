@@ -1,89 +1,101 @@
 import Combine
+import CoreLocation
 import Foundation
 import MapKit
+import Models
+import SwiftUI
 
-struct DisplayRoute: Identifiable {
-    let id = UUID()
-    let coordinates: [CLLocationCoordinate2D]
-    let weatherRisk: Double
-    let requiredStops: Int
-    let totalDuration: TimeInterval
-}
+// Using DisplayRoute from Route.swift instead of local definition
 
-class RouteManager: NSObject, ObservableObject {
-    @Published var destinationSearch = ""
+@MainActor
+class RouteManager: ObservableObject {
+    @Published var routes: [DisplayRoute] = []
+    @Published var currentRegion: MKCoordinateRegion?
+    @Published var searchQuery = ""
     @Published var searchResults: [MKLocalSearchCompletion] = []
-    @Published var currentRoute: DisplayRoute?
+    @Published var selectedLocation: CLLocationCoordinate2D?
+    @Published var error: Error?
 
+    private let baseURL = URL(string: "https://continentalusa-edge.kd8jc7v8cd.workers.dev")!
+    private let hmacKey = "test-key"
     private let searchCompleter = MKLocalSearchCompleter()
-    private let edgeWorkerClient: EdgeWorkerClient
-    private var searchCancellable: AnyCancellable?
+    private let jsonEncoder = JSONEncoder()
+    private let jsonDecoder = JSONDecoder()
 
-    override init() {
-        self.edgeWorkerClient = EdgeWorkerClient(baseURL: URL(string: "YOUR_EDGE_WORKER_URL")!)
-        super.init()
-
+    init() {
         searchCompleter.delegate = self
+    }
 
-        searchCancellable =
-            $destinationSearch
-            .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
-            .sink { [weak self] term in
-                if !term.isEmpty {
-                    self?.searchCompleter.queryFragment = term
-                }
+    func updateRegion(for location: CLLocation) {
+        currentRegion = MKCoordinateRegion(
+            center: location.coordinate,
+            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+        )
+    }
+
+    func searchLocations(_ query: String) {
+        searchQuery = query
+        searchCompleter.queryFragment = query
+    }
+
+    func calculateRoute(from start: CLLocationCoordinate2D, to end: CLLocationCoordinate2D)
+        async throws
+    {
+        let payload =
+            [
+                "origin": ["lat": start.latitude, "lon": start.longitude],
+                "destination": ["lat": end.latitude, "lon": end.longitude],
+                "preferences": [
+                    "avoidWeather": true,
+                    "maxDrivingTime": 8,
+                    "requireCharging": true,
+                ],
+            ] as [String: Any]
+
+        let jsonData = try JSONSerialization.data(withJSONObject: payload)
+        let signature = calculateHMAC(for: jsonData)
+
+        var request = URLRequest(url: baseURL.appendingPathComponent("optimize-route"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("sha256=\(signature)", forHTTPHeaderField: "Authorization")
+        request.httpBody = jsonData
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+            httpResponse.statusCode == 200
+        else {
+            throw URLError(.badServerResponse)
+        }
+
+        let routeResponse = try jsonDecoder.decode(RouteResponse.self, from: data)
+        let mainRoute = routeResponse.route
+
+        let displayRoute = DisplayRoute(
+            coordinates: mainRoute.coordinates.map(Coordinate.init),
+            weatherRisk: mainRoute.weatherRisk,
+            requiredStops: mainRoute.requiredStops,
+            totalDuration: mainRoute.totalDuration,
+            totalDistance: mainRoute.totalDistance
+        )
+
+        routes =
+            [displayRoute]
+            + routeResponse.alternatives.map { route in
+                DisplayRoute(
+                    coordinates: route.coordinates.map(Coordinate.init),
+                    weatherRisk: route.weatherRisk,
+                    requiredStops: route.requiredStops,
+                    totalDuration: route.totalDuration,
+                    totalDistance: route.totalDistance
+                )
             }
     }
 
-    func selectDestination(_ result: MKLocalSearchCompletion) {
-        let searchRequest = MKLocalSearch.Request(completion: result)
-        let search = MKLocalSearch(request: searchRequest)
-
-        search.start { [weak self] response, error in
-            guard let self = self,
-                let location = response?.mapItems.first?.placemark.coordinate
-            else {
-                return
-            }
-
-            Task {
-                await self.calculateRoute(to: location)
-            }
-        }
-    }
-
-    @MainActor
-    private func calculateRoute(to destination: CLLocationCoordinate2D) async {
-        let cache = CacheManager.shared
-        let startLocation = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)  // Replace with actual location
-
-        // Generate a deterministic ID for this route
-        let routeId = UUID(
-            uuidString: String(
-                format: "route-%0.6f,%0.6f-%0.6f,%0.6f",
-                startLocation.latitude, startLocation.longitude,
-                destination.latitude, destination.longitude
-            ))!
-
-        // Check cache first
-        if let cachedRoute = cache.getCachedRoute(id: routeId) {
-            self.currentRoute = cachedRoute
-            return
-        }
-
-        do {
-            let route = try await edgeWorkerClient.calculateRoute(
-                start: startLocation,
-                end: destination,
-                currentSoC: 90
-            )
-
-            // Cache the route
-            cache.cacheRoute(route)
-            self.currentRoute = route
-        } catch {
-            print("Failed to calculate route: \(error)")
-        }
+    private func calculateHMAC(for data: Data) -> String {
+        // TODO: Implement HMAC-SHA256 calculation
+        return "test-signature"
     }
 }
 
@@ -93,54 +105,30 @@ extension RouteManager: MKLocalSearchCompleterDelegate {
     }
 
     func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
-        print("Search failed with error: \(error.localizedDescription)")
+        self.error = error
+        searchResults = []
     }
 }
 
-struct EdgeWorkerClient {
-    let baseURL: URL
-
-    func calculateRoute(
-        start: CLLocationCoordinate2D, end: CLLocationCoordinate2D, currentSoC: Double
-    ) async throws -> DisplayRoute {
-        var components = URLComponents(
-            url: baseURL.appendingPathComponent("route"), resolvingAgainstBaseURL: true)!
-        components.queryItems = [
-            URLQueryItem(name: "startLat", value: "\(start.latitude)"),
-            URLQueryItem(name: "startLong", value: "\(start.longitude)"),
-            URLQueryItem(name: "endLat", value: "\(end.latitude)"),
-            URLQueryItem(name: "endLong", value: "\(end.longitude)"),
-            URLQueryItem(name: "soc", value: "\(currentSoC)"),
-        ]
-
-        let request = URLRequest(url: components.url!)
-        let (data, _) = try await URLSession.shared.data(for: request)
-        let decoder = JSONDecoder()
-        let response = try decoder.decode(EdgeWorkerRouteResponse.self, from: data)
-
-        return DisplayRoute(
-            coordinates: response.route.segments.flatMap { [$0.startPoint, $0.endPoint] }.map {
-                CLLocationCoordinate2D(latitude: $0[0], longitude: $0[1])
-            },
-            weatherRisk: response.route.weatherRisk,
-            requiredStops: response.route.requiredStops,
-            totalDuration: response.route.totalDuration
-        )
-    }
+// API Response Types
+private struct RouteResponse: Codable {
+    let route: APIRoute
+    let alternatives: [APIRoute]
 }
 
-struct EdgeWorkerRouteResponse: Codable {
-    let route: EdgeWorkerRouteData
-}
-
-struct EdgeWorkerRouteData: Codable {
-    let segments: [EdgeWorkerRouteSegment]
+private struct APIRoute: Codable {
+    let coordinates: [APICoordinate]
     let weatherRisk: Double
     let requiredStops: Int
     let totalDuration: TimeInterval
+    let totalDistance: Double
 }
 
-struct EdgeWorkerRouteSegment: Codable {
-    let startPoint: [Double]
-    let endPoint: [Double]
+private struct APICoordinate: Codable {
+    let lat: Double
+    let lon: Double
+
+    var toCLCoordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: lat, longitude: lon)
+    }
 }

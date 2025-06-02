@@ -1,0 +1,65 @@
+import CoreLocation
+import Foundation
+
+public struct Coordinate: Codable, Hashable, Identifiable {
+    public var id: String { "\(latitude),\(longitude)" }
+    public let latitude: Double
+    public let longitude: Double
+
+    public init(latitude: Double, longitude: Double) {
+        self.latitude = latitude
+        self.longitude = longitude
+    }
+
+    public init(from coordinate: CLLocationCoordinate2D) {
+        self.latitude = coordinate.latitude
+        self.longitude = coordinate.longitude
+    }
+
+    public var toCLCoordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
+}
+
+public struct DisplayRoute: Identifiable, Codable, Hashable {
+    public let id: UUID
+    public let coordinates: [Coordinate]
+    public let weatherRisk: Double
+    public let requiredStops: Int
+    public let totalDuration: TimeInterval
+    public let totalDistance: Double
+
+    public init(
+        id: UUID = UUID(),
+        coordinates: [Coordinate],
+        weatherRisk: Double,
+        requiredStops: Int,
+        totalDuration: TimeInterval,
+        totalDistance: Double
+    ) {
+        self.id = id
+        self.coordinates = coordinates
+        self.weatherRisk = weatherRisk
+        self.requiredStops = requiredStops
+        self.totalDuration = totalDuration
+        self.totalDistance = totalDistance
+    }
+
+    public var clCoordinates: [CLLocationCoordinate2D] {
+        coordinates.map { $0.toCLCoordinate }
+    }
+
+    public static var preview: DisplayRoute {
+        DisplayRoute(
+            coordinates: [
+                Coordinate(latitude: 37.7749, longitude: -122.4194),  // San Francisco
+                Coordinate(latitude: 36.7783, longitude: -119.4179),  // Fresno
+                Coordinate(latitude: 34.0522, longitude: -118.2437),  // Los Angeles
+            ],
+            weatherRisk: 0.2,
+            requiredStops: 1,
+            totalDuration: 21600,  // 6 hours
+            totalDistance: 687.0  // km
+        )
+    }
+}
