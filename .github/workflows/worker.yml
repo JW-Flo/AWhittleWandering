@@ -15,4 +15,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           workingDirectory: edge-worker
-          command: publish --dry-run
+          command: publish
