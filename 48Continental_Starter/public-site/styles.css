@@ -1,0 +1,10 @@
+body { margin: 0; font-family: system-ui, sans-serif; background-color: #f7f7f7; color: #222; line-height: 1.6; }
+header { background-color: #111; color: #fff; padding: 2rem 1rem; text-align: center; }
+header h1 { margin: 0; font-size: 2.5rem; }
+header p { font-size: 1.2rem; margin-top: 0.5rem; opacity: 0.85; }
+main { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+section { margin-bottom: 2.5rem; }
+h2 { font-size: 1.6rem; margin-bottom: 0.5rem; }
+footer { text-align: center; padding: 2rem 1rem; color: #666; font-size: 0.9rem; }
+ul { padding-left: 1.2rem; list-style: circle; }
+#route-status { background: #fff; border-radius: 0.5rem; padding: 1rem; box-shadow: 0 0 0 1px #ddd; }
