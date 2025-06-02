@@ -18,54 +18,100 @@
   <link rel="icon" href="icons/icon-192.png">
 </head>
 <body>
-  <header class="hero">
+  <header class="hero" role="banner">
     <h1>48Continental</h1>
     <p>60 days. 48 states. One Tesla. And a very good dog.</p>
   </header>
 
-  <main>
-    <section id="journey">
-      <h2>The Journey</h2>
-      <p>This summer I'm driving across all 48 continental U.S. states — camping, hiking, reconnecting, reflecting. I’ll be posting updates here as the trip unfolds.</p>
+  <!-- Add smooth scrolling navigation -->
+  <nav id="main-nav" aria-label="Primary">
+    <ul>
+      <li><a href="#journey">Journey</a></li>
+      <li><a href="#status">Live Status</a></li>
+      <li><a href="#map-wrap">Map</a></li>
+      <li><a href="#gallery">Gallery</a></li>
+      <li><a href="#logs">Logs</a></li>
+    </ul>
+  </nav>
+
+  <!-- Replace main content with tabbed interface -->
+  <main role="main">
+    <nav class="tabs" role="tablist" aria-label="Main content tabs">
+      <button role="tab" aria-selected="true" aria-controls="tab-journal" id="tab-journal-btn">Journal / Live Updates</button>
+      <button role="tab" aria-selected="false" aria-controls="tab-gallery" id="tab-gallery-btn">Photo / Video Gallery</button>
+      <button role="tab" aria-selected="false" aria-controls="tab-features" id="tab-features-btn">Features / Functions</button>
+    </nav>
+
+    <section id="tab-journal" role="tabpanel" tabindex="0" aria-labelledby="tab-journal-btn">
+      <section id="journey" aria-labelledby="journey-heading">
+        <h2 id="journey-heading">The Journey</h2>
+        <p>This summer I'm driving across all 48 continental U.S. states — camping, hiking, reconnecting, reflecting. I’ll be posting updates here as the trip unfolds.</p>
+      </section>
+
+      <section id="status" aria-labelledby="status-heading">
+        <h2 id="status-heading">Live Route Status</h2>
+        <div class="card" role="region" aria-live="polite" aria-atomic="true">
+          <p><strong>Current Stop:</strong> <span id="current">loading…</span></p>
+          <p><strong>Next Stop:</strong> <span id="next">loading…</span></p>
+          <p><strong>ETA:</strong> <span id="eta">loading…</span></p>
+        </div>
+      </section>
+
+      <section id="logs" aria-labelledby="logs-heading">
+        <h2 id="logs-heading">Trip Logs</h2>
+        <div id="log-list"></div>
+        <form id="log-form">
+          <h3>Add New Log</h3>
+          <label for="log-title">Title</label>
+          <input type="text" id="log-title" name="title" required>
+          <label for="log-content">Content</label>
+          <textarea id="log-content" name="content" rows="4" required></textarea>
+          <button type="submit">Add Log</button>
+        </form>
+      </section>
     </section>
 
-    <section id="status">
-      <h2>Live Route Status</h2>
-      <div class="card">
-        <p><strong>Current Stop:</strong> <span id="current">loading…</span></p>
-        <p><strong>Next Stop:</strong> <span id="next">loading…</span></p>
-        <p><strong>ETA:</strong> <span id="eta">loading…</span></p>
+    <section id="tab-gallery" role="tabpanel" tabindex="0" aria-labelledby="tab-gallery-btn" hidden>
+      <h2>Photo Gallery</h2>
+      <div class="gallery-grid">
+        <img src="photos/photo1.jpg" alt="Sunset over mountains" tabindex="0" class="gallery-item">
+        <img src="photos/photo2.jpg" alt="Campfire at night" tabindex="0" class="gallery-item">
+        <img src="photos/photo3.jpg" alt="Tesla charging" tabindex="0" class="gallery-item">
+      </div>
+
+      <!-- Lightbox container -->
+      <div id="lightbox" class="lightbox" aria-hidden="true" role="dialog" aria-modal="true">
+        <button id="lightbox-close" aria-label="Close gallery">×</button>
+        <img id="lightbox-img" src="" alt="">
       </div>
     </section>
 
-    <section id="map-wrap">
-      <h2>Where I Am</h2>
-      <div id="map"></div>
-    </section>
-
-    <section id="coming">
-      <h2>Coming Soon</h2>
-      <ul>
-        <li>Photo journal from the road</li>
-        <li>Trail and camp reviews</li>
-        <li>Short travel films</li>
-      </ul>
-    </section>
-
-    <section id="subscribe">
-      <h2>Get Updates</h2>
-      <form action="https://buttondown.email/api/emails/embed-subscribe/48continental"
-            method="post"
-            target="popupwindow"
-            onsubmit="window.open('https://buttondown.email/48continental', 'popupwindow')">
-        <input type="email" name="email" placeholder="you@example.com" required>
-        <button type="submit">Subscribe</button>
-      </form>
+    <section id="tab-features" role="tabpanel" tabindex="0" aria-labelledby="tab-features-btn" hidden>
+      <h2>Features / Functions</h2>
+      <p>More features coming soon!</p>
     </section>
   </main>
 
-  <footer>
+  <!-- Add comment and like system below trip logs -->
+  <section id="comments" aria-labelledby="comments-heading">
+    <h2 id="comments-heading">Comments</h2>
+    <form id="comment-form">
+      <label for="comment-text">Add a comment</label>
+      <textarea id="comment-text" rows="3" required></textarea>
+      <button type="submit">Post Comment</button>
+    </form>
+    <ul id="comment-list"></ul>
+  </section>
+
+  <footer role="contentinfo">
     © 2025 48Continental. Built on the road. Hosted on Cloudflare.
+
+    <!-- Add social sharing buttons -->
+    <div class="social-share">
+      <a href="#" aria-label="Share on Facebook">Facebook</a>
+      <a href="#" aria-label="Share on Twitter">Twitter</a>
+      <a href="#" aria-label="Share on LinkedIn">LinkedIn</a>
+    </div>
   </footer>
 
   <!-- Mapbox -->
@@ -74,5 +120,32 @@
 
   <!-- Main JS -->
   <script type="module" src="app.js"></script>
+
+  <!-- Lightbox JS (for photo gallery) -->
+  <script>
+    const galleryItems = document.querySelectorAll('.gallery-item');
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const lightboxClose = document.getElementById('lightbox-close');
+
+    galleryItems.forEach(item => {
+      item.addEventListener('click', () => {
+        lightboxImg.src = item.src;
+        lightboxImg.alt = item.alt;
+        lightbox.setAttribute('aria-hidden', 'false');
+        lightboxClose.focus();
+      });
+    });
+
+    lightboxClose.addEventListener('click', () => {
+      lightbox.setAttribute('aria-hidden', 'true');
+    });
+
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) {
+        lightbox.setAttribute('aria-hidden', 'true');
+      }
+    });
+  </script>
 </body>
 </html>
