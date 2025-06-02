@@ -1,0 +1,25 @@
+[pages]
+name = "continentalusa-site"
+pages_build_output_dir = "dist"
+
+[build]
+command = "npm run build"
+
+[env.production]
+name = "continentalusa-site"
+routes = ["continentalusa-site.pages.dev/*"]
+
+# SSL/TLS settings for production
+[ssl]
+always_use_https = true
+minimum_tls_version = "1.2"
+tls_1_3 = "on"
+
+# Security headers
+[[headers]]
+for = "/*"
+[headers.values]
+Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+X-Content-Type-Options = "nosniff"
+X-Frame-Options = "DENY"
+Content-Security-Policy = "default-src 'self'; img-src 'self' data: blob: https://*; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline';"
