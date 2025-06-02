@@ -122,7 +122,7 @@ wrangler dev
 wrangler build
 
 # publish to Cloudflare (will read EDGE_HMAC_KEY from env)
-wrangler publish
+wrangler deploy
 ```
 
 ### Agents & Services
@@ -173,19 +173,3 @@ npm run codegen:ts
 ## License
 
 See [LICENSE](./LICENSE) for details.
-
-## Codex Agent
-
-This repository includes a local "Codex" agent located in `codex-agent/`.
-The agent helps automate component scaffolding, local builds, and repository
-pushes. It runs without persistent background services and integrates with
-existing CI/CD pipelines.
-
-Run a task with:
-
-```bash
-npx ts-node codex-agent/run-task.ts <task>
-```
-
-Available tasks include `create`, `build`, and `push`. When a task fails, the
-healing module attempts to auto-fix common issues and retry.

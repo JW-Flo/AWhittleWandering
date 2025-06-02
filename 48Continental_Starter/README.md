@@ -37,7 +37,7 @@ Secured with bearer token (`ADMIN_TOKEN`).
 ### Deploy the Cloudflare Worker
 ```
 cd cloudflare/route-tracker
-wrangler publish
+wrangler deploy
 ```
 
 Set the secret token:
