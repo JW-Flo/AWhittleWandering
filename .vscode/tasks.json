@@ -2,11 +2,37 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build: Edge Worker",
+            "label": "Pre-deploy Checks",
             "type": "shell",
-            "command": "npm run build:edge",
-            "group": "build",
+            "command": "npm run pre-deploy",
+            "group": "test",
+            "problemMatcher": ["$eslint-stylish", "$tsc"],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Deploy All",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/deploy-all.sh",
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
             "problemMatcher": []
+        },
+        {
+            "label": "Build Edge Worker",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/edge-worker && npm run build",
+            "group": "build",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared"
+            },
+            "problemMatcher": ["$tsc"]
         },
         {
             "label": "Deploy: Edge Worker",

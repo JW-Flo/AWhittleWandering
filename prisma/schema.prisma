@@ -1,5 +1,5 @@
 // Prisma schema file
-// Define your data model here
+// Tesla road trip planning and monitoring application schema
 
 generator client {
     provider = "prisma-client-js"
@@ -10,8 +10,191 @@ datasource db {
     url      = "file:./dev.db"
 }
 
-model Example {
-    id    Int    @id @default(autoincrement())
-    name  String
-    email String @unique
+model Vehicle {
+    id               String            @id
+    name             String?
+    model            String
+    vin              String            @unique
+    stateOfCharge    Float?
+    trips            Trip[]
+    chargingSessions ChargingSession[]
+    locationVisits   LocationVisit[]
+    createdAt        DateTime          @default(now())
+    updatedAt        DateTime          @updatedAt
+}
+
+model Trip {
+    id               String            @id @default(cuid())
+    vehicleId        String
+    vehicle          Vehicle           @relation(fields: [vehicleId], references: [id])
+    routeId          String?
+    route            Route?            @relation("RouteTrip", fields: [routeId], references: [id])
+    startLocation    String
+    endLocation      String?
+    startTime        DateTime          @default(now())
+    endTime          DateTime?
+    totalMiles       Float?
+    averageSpeed     Float?
+    energyUsed       Float?
+    chargingSessions ChargingSession[]
+    locationVisits   LocationVisit[]
+    createdAt        DateTime          @default(now())
+    updatedAt        DateTime          @updatedAt
+}
+
+model ChargingSession {
+    id           String    @id @default(cuid())
+    vehicleId    String
+    vehicle      Vehicle   @relation(fields: [vehicleId], references: [id])
+    tripId       String?
+    trip         Trip?     @relation(fields: [tripId], references: [id])
+    location     String
+    startSoC     Float
+    endSoC       Float?
+    startTime    DateTime  @default(now())
+    endTime      DateTime?
+    energyAdded  Float?
+    cost         Float?
+    supercharger Boolean   @default(false)
+    createdAt    DateTime  @default(now())
+    updatedAt    DateTime  @updatedAt
+}
+
+model LocationVisit {
+    id            String           @id @default(cuid())
+    vehicleId     String
+    vehicle       Vehicle          @relation(fields: [vehicleId], references: [id])
+    tripId        String?
+    trip          Trip?            @relation(fields: [tripId], references: [id])
+    stationId     String?
+    station       ChargingStation? @relation(fields: [stationId], references: [id])
+    latitude      Float
+    longitude     Float
+    arrivalTime   DateTime         @default(now())
+    departureTime DateTime?
+    stateOfCharge Float?
+    createdAt     DateTime         @default(now())
+    updatedAt     DateTime         @updatedAt
+}
+
+model UserSettings {
+    id                String   @id @default(cuid())
+    lowSoCThreshold   Float    @default(20.0)
+    nightlyChecklist  Boolean  @default(true)
+    offlineMode       Boolean  @default(false)
+    pushNotifications Boolean  @default(true)
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
+model ChargingStation {
+    id          String           @id @default(cuid())
+    name        String
+    latitude    Float
+    longitude   Float
+    type        String // "supercharger", "urban_charger", "destination", "l2"
+    stalls      Int              @default(1)
+    power       Float // kW
+    amenities   String // JSON array: food, restroom, lodging, etc.
+    hours       String? // Operating hours in JSON format
+    reliability Float            @default(1.0) // Historical uptime score
+    visits      LocationVisit[]
+    waypoints   Waypoint[]
+    mapTiles    MapTileStation[]
+    createdAt   DateTime         @default(now())
+    updatedAt   DateTime         @updatedAt
+}
+
+model Route {
+    id              String         @id @default(cuid())
+    name            String
+    description     String?
+    startPoint      String // JSON coordinates
+    endPoint        String // JSON coordinates
+    waypoints       Waypoint[]
+    estimatedMiles  Float
+    estimatedTime   Int // minutes
+    requiredStops   Int            @default(0)
+    weatherRisk     Float          @default(0.0)
+    associatedTrips Trip[]         @relation("RouteTrip")
+    mapTiles        MapTileRoute[]
+    createdAt       DateTime       @default(now())
+    updatedAt       DateTime       @updatedAt
+}
+
+model Waypoint {
+    id              String            @id @default(cuid())
+    routeId         String
+    route           Route             @relation(fields: [routeId], references: [id])
+    order           Int
+    type            String // "charging", "destination", "waypoint", "emergency"
+    location        String // JSON coordinates
+    stationId       String?
+    station         ChargingStation?  @relation(fields: [stationId], references: [id])
+    minSoCRequired  Float? // Minimum SoC needed to reach next point
+    fallbackOptions String // JSON array of fallback charging options
+    mapTiles        MapTileWaypoint[]
+    createdAt       DateTime          @default(now())
+    updatedAt       DateTime          @updatedAt
+}
+
+model OfflineMapTile {
+    id           String            @id @default(cuid())
+    z            Int // zoom level
+    x            Int // tile x coordinate
+    y            Int // tile y coordinate
+    data         Bytes // actual map tile data
+    format       String // "png", "jpg", "pbf"
+    routeMaps    MapTileRoute[]
+    waypointMaps MapTileWaypoint[]
+    stationMaps  MapTileStation[]
+    expiresAt    DateTime
+    createdAt    DateTime          @default(now())
+    updatedAt    DateTime          @updatedAt
+
+    @@unique([z, x, y])
+}
+
+// Junction Models for Many-to-Many Relations
+model MapTileRoute {
+    tileId    String
+    routeId   String
+    tile      OfflineMapTile @relation(fields: [tileId], references: [id])
+    route     Route          @relation(fields: [routeId], references: [id])
+    createdAt DateTime       @default(now())
+
+    @@id([tileId, routeId])
+}
+
+model MapTileWaypoint {
+    tileId     String
+    waypointId String
+    tile       OfflineMapTile @relation(fields: [tileId], references: [id])
+    waypoint   Waypoint       @relation(fields: [waypointId], references: [id])
+    createdAt  DateTime       @default(now())
+
+    @@id([tileId, waypointId])
+}
+
+model MapTileStation {
+    tileId    String
+    stationId String
+    tile      OfflineMapTile  @relation(fields: [tileId], references: [id])
+    station   ChargingStation @relation(fields: [stationId], references: [id])
+    createdAt DateTime        @default(now())
+
+    @@id([tileId, stationId])
+}
+
+model WeatherAlert {
+    id          String    @id @default(cuid())
+    type        String // "storm", "ice", "heat", etc.
+    severity    String // "warning", "watch", "advisory"
+    location    String // JSON coordinates or region
+    startTime   DateTime
+    endTime     DateTime?
+    description String
+    impact      String? // How it affects EV range/charging
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
 }
