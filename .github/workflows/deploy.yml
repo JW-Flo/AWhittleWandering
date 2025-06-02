@@ -10,9 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deploy
-        uses: cloudflare/pages-action@v1
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          projectName: 48continental
-          directory: public
+        run: wrangler publish
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        working-directory: 48Continental_Starter/public-site
