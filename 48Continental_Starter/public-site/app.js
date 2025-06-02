@@ -1,6 +1,5 @@
 /* eslint-env browser */
 /* global mapboxgl */
-import { getStations } from './src/nwsStations.js';
 
 /* ---------- Mapbox ---------- */
 mapboxgl.accessToken = 'YOUR_MAPBOX_PUBLIC_TOKEN';
@@ -240,5 +239,5 @@ commentForm.addEventListener('submit', e => {
 renderComments();
 
 window.addEventListener('load', () => {
-  getStations();
+  // Site initialization complete
 });

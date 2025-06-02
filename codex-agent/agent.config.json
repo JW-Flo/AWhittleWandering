@@ -1,8 +1,0 @@
-{
-  "name": "48Continental_CodingAI",
-  "description": "Full-stack AI coding assistant for the 48-state roadtrip app. Handles build, UI, DevOps, and workflow failures.",
-  "entry": "run-task.ts",
-  "functions": ["create_component", "run_local_build", "push_to_repo"],
-  "retry": true,
-  "self_healing": true
-}

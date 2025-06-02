@@ -1,26 +1,62 @@
-import { createComponent } from './tasks/createComponent';
-import { runLocalBuild } from './tasks/runLocalBuild';
-import { pushToRepo } from './tasks/pushToRepo';
+import { createComponent } from './tasks/createComponent.ts';
+import { runLocalBuild } from './tasks/runLocalBuild.ts';
+import { pushToRepo } from './tasks/pushToRepo.ts';
 
 async function runTask(task: string) {
   console.log(`[Codex Agent] Running task: ${task}`);
 
   try {
+    let result = '';
+
     if (task.includes('create')) {
-      await createComponent({ name: 'Navbar', props: ['title'] });
+      console.log("[Debug] Entering create block");
+      result = await createComponent({ name: 'Navbar', props: ['title'] });
     } else if (task.includes('build')) {
-      await runLocalBuild({ target: 'web' });
+      console.log("[Debug] Entering build block");
+      result = await runLocalBuild({ target: 'web' });
     } else if (task.includes('push')) {
-      await pushToRepo({ branch: 'main', message: 'Codex commit' });
+      console.log("[Debug] Entering push block");
+      result = await pushToRepo({ branch: 'main', message: 'Codex commit' });
     } else {
-      throw new Error('Unknown task');
+      throw new Error(`Unknown task input: "${task}"`);
     }
-  } catch (e) {
-    console.error(`[Codex Agent] Task failed: ${(e as Error).message}`);
-    const healing = await import('./healing/patchAndRetry');
-    healing.patchAndRetry(task);
+
+    console.log(`[Codex Agent] Success: ${result}`);
+  } catch (e: unknown) {
+    console.error(`[Codex Agent] Error Caught:\n`);
+    if (e instanceof Error) {
+      console.error(e.stack || e.message);
+    } else {
+      try {
+        console.error(JSON.stringify(e, null, 2));
+      } catch {
+        console.error(e);
+      }
+    }
+
+    try {
+      const healing = await import('./healing/patchAndRetry.ts');
+      healing.patchAndRetry(task);
+    } catch (healErr) {
+      console.error('[Healing Error]', healErr instanceof Error ? healErr.stack : healErr);
+    }
   }
 }
 
-const task = process.argv[2];
-runTask(task || 'create navbar component');
+// CLI Input Handler
+const task = process.argv.slice(2).join(" ").trim();
+console.log("[Debug] Parsed task input:", task);
+
+if (!task) {
+  console.error("[Codex Agent] No task argument provided.");
+  process.exit(1);
+}
+
+console.log("[Debug] Starting runTask()...");
+runTask(task)
+  .then(() => console.log("[Debug] runTask() completed"))
+  .catch((err) => {
+    console.error("[Debug] runTask() failed unexpectedly:");
+    console.error(err instanceof Error ? err.stack : err);
+  });
+
