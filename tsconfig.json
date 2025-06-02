@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
-    "target": "es2021",
-    "module": "esnext",
-    "moduleResolution": "node",
-    "lib": ["es2021", "webworker"],
-    "outDir": "dist",
-    "strict": true,
-    "sourceMap": true
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "outDir": "./dist"
   },
-  "include": ["edge-worker/src"]
+  "include": ["codex-agent/**/*.ts"]
 }
+
