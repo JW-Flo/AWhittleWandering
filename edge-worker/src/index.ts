@@ -1,9 +1,22 @@
-export interface Env {
-    APP_KV: KVNamespace;
-    EDGE_HMAC_KEY: string;
+interface ExecutionContext {
+    waitUntil(promise: Promise<unknown>): void;
+    passThroughOnException(): void;
 }
 
-// TextEncoder and TextDecoder are global in Cloudflare Workers
+import type { Location, WeatherRiskResponse, Route, RouteResponse } from './types';
+
+interface KVNamespace {
+    get(key: string): Promise<string | null>;
+    put(key: string, value: string): Promise<void>;
+    delete(key: string): Promise<void>;
+    list(options?: { prefix?: string; limit?: number; cursor?: string }): Promise<{ keys: { name: string }[]; list_complete: boolean; cursor?: string }>;
+}
+
+export interface Env {
+    APP_KV: KVNamespace;
+    MAP_TILES_KV: KVNamespace;
+    EDGE_HMAC_KEY: string;
+}
 
 async function verifySignature(
     body: ArrayBuffer,
@@ -26,133 +39,270 @@ async function verifySignature(
     const expectedHex = Array.from(new Uint8Array(expected))
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("");
-    const sigBytes = new Uint8Array(
-        signature.match(/.{2}/g)!.map((byte) => parseInt(byte, 16))
-    );
-    const expBytes = new Uint8Array(
-        expectedHex.match(/.{2}/g)!.map((byte) => parseInt(byte, 16))
-    );
-    if (sigBytes.length !== expBytes.length) {
-        return false;
+    return signature === expectedHex;
+}
+
+function calculateRiskLevel(weather: { temperature: number; windSpeed: number; precipitation: number; conditions: string[] }): 'low' | 'medium' | 'high' {
+    let riskScore = 0;
+    
+    // Temperature risk (extreme temperatures)
+    if (weather.temperature < 0 || weather.temperature > 35) {
+        riskScore += 2;
+    } else if (weather.temperature < 5 || weather.temperature > 30) {
+        riskScore += 1;
     }
-    // timing safe compare
-    let diff = 0;
-    for (let i = 0; i < expBytes.length; i++) {
-        diff |= expBytes[i] ^ sigBytes[i];
+    
+    // Wind risk
+    if (weather.windSpeed > 50) {
+        riskScore += 3;
+    } else if (weather.windSpeed > 30) {
+        riskScore += 2;
+    } else if (weather.windSpeed > 20) {
+        riskScore += 1;
     }
-    return diff === 0;
+    
+    // Precipitation risk
+    if (weather.precipitation > 25) {
+        riskScore += 3;
+    } else if (weather.precipitation > 10) {
+        riskScore += 2;
+    } else if (weather.precipitation > 5) {
+        riskScore += 1;
+    }
+    
+    // Conditions risk
+    const dangerousConditions = ['thunderstorm', 'tornado', 'hurricane', 'blizzard'];
+    const moderateConditions = ['rain', 'snow', 'sleet', 'fog'];
+    
+    for (const condition of weather.conditions) {
+        if (dangerousConditions.includes(condition.toLowerCase())) {
+            riskScore += 3;
+        } else if (moderateConditions.includes(condition.toLowerCase())) {
+            riskScore += 1;
+        }
+    }
+    
+    // Convert score to risk level
+    if (riskScore >= 5) {
+        return 'high';
+    } else if (riskScore >= 2) {
+        return 'medium';
+    }
+    return 'low';
+}
+
+function generateWeatherRecommendations(weather: { temperature: number; windSpeed: number; precipitation: number; conditions: string[] }, riskLevel: 'low' | 'medium' | 'high'): string[] {
+    const recommendations: string[] = [];
+    
+    if (riskLevel === 'high') {
+        recommendations.push('Consider postponing non-essential travel');
+    }
+    
+    if (weather.temperature < 0) {
+        recommendations.push('Risk of icy conditions. Ensure vehicle is properly equipped for winter weather');
+    } else if (weather.temperature > 35) {
+        recommendations.push('High temperature may affect vehicle performance. Ensure cooling system is working properly');
+    }
+    
+    if (weather.windSpeed > 30) {
+        recommendations.push('Strong winds may affect vehicle stability. Drive with caution');
+    }
+    
+    if (weather.precipitation > 10) {
+        recommendations.push('Heavy precipitation. Reduce speed and increase following distance');
+    }
+    
+    for (const condition of weather.conditions) {
+        switch(condition.toLowerCase()) {
+            case 'fog':
+                recommendations.push('Reduced visibility. Use fog lights and reduce speed');
+                break;
+            case 'snow':
+            case 'sleet':
+                recommendations.push('Winter weather conditions. Use appropriate tires and drive cautiously');
+                break;
+            case 'thunderstorm':
+                recommendations.push('Severe weather. Seek shelter if conditions worsen');
+                break;
+        }
+    }
+    
+    if (recommendations.length === 0) {
+        recommendations.push('Safe to travel. Normal driving conditions');
+    }
+    
+    return recommendations;
+}
+
+async function handleWeatherRisk(request: Request): Promise<Response> {
+    const location = await request.json() as Location;
+    
+    // Validate location data
+    if (!location.latitude || !location.longitude || 
+        location.latitude < -90 || location.latitude > 90 || 
+        location.longitude < -180 || location.longitude > 180) {
+        return new Response(JSON.stringify({ error: 'Invalid location data' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+
+    // Mock weather data (in production, this would come from a weather API)
+    const weather = {
+        temperature: 20 + Math.random() * 10,
+        windSpeed: Math.random() * 40,
+        precipitation: Math.random() * 20,
+        conditions: ['clear']
+    };
+
+    // Calculate risk level
+    const riskLevel = calculateRiskLevel(weather);
+    
+    // Generate recommendations
+    const recommendations = generateWeatherRecommendations(weather, riskLevel);
+
+    const response: WeatherRiskResponse = {
+        location,
+        weather,
+        riskLevel,
+        recommendations
+    };
+
+    return new Response(JSON.stringify(response), {
+        headers: { 'Content-Type': 'application/json' }
+    });
+}
+
+async function handleOptimizeRoute(request: Request): Promise<Response> {
+    const { origin, destination, avoidWeather = false } = await request.json() as { 
+        origin: Location; 
+        destination: Location;
+        avoidWeather?: boolean;
+    };
+
+    // Validate input
+    if (!origin || !destination ||
+        !origin.latitude || !origin.longitude ||
+        !destination.latitude || !destination.longitude) {
+        return new Response(JSON.stringify({ error: 'Invalid route data' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+
+    // Mock weather data for different points along the route
+    const originWeather = {
+        temperature: 20 + Math.random() * 10,
+        windSpeed: Math.random() * 40,
+        precipitation: Math.random() * 20,
+        conditions: ['clear']
+    };
+
+    const midpointWeather = {
+        temperature: 22 + Math.random() * 10,
+        windSpeed: 15 + Math.random() * 40,
+        precipitation: 5 + Math.random() * 20,
+        conditions: avoidWeather ? ['rain', 'wind'] : ['clear']
+    };
+
+    // Calculate risk levels
+    const originRisk = calculateRiskLevel(originWeather);
+    const midpointRisk = calculateRiskLevel(midpointWeather);
+
+    // Calculate route based on weather risks
+    const baseDistance = 100;
+    const baseConsumption = 20;
+    const weatherMultiplier = avoidWeather && (originRisk === 'high' || midpointRisk === 'high') ? 1.4 : 1.0;
+
+    // Calculate midpoint for the route
+    const midpoint: Location = {
+        latitude: (origin.latitude + destination.latitude) / 2,
+        longitude: (origin.longitude + destination.longitude) / 2
+    };
+
+    const response: RouteResponse = {
+        route: {
+            segments: [
+                {
+                    start: origin,
+                    end: midpoint,
+                    distance: (baseDistance / 2) * weatherMultiplier,
+                    estimatedConsumption: (baseConsumption / 2) * weatherMultiplier
+                },
+                {
+                    start: midpoint,
+                    end: destination,
+                    distance: (baseDistance / 2) * weatherMultiplier,
+                    estimatedConsumption: (baseConsumption / 2) * weatherMultiplier
+                }
+            ],
+            totalDistance: baseDistance * weatherMultiplier,
+            totalConsumption: baseConsumption * weatherMultiplier
+        },
+        weatherRisks: [
+            {
+                location: origin,
+                weather: originWeather,
+                riskLevel: originRisk,
+                recommendations: generateWeatherRecommendations(originWeather, originRisk)
+            },
+            {
+                location: midpoint,
+                weather: midpointWeather,
+                riskLevel: midpointRisk,
+                recommendations: generateWeatherRecommendations(midpointWeather, midpointRisk)
+            }
+        ]
+    };
+
+    return new Response(JSON.stringify(response), {
+        headers: { 'Content-Type': 'application/json' }
+    });
 }
 
 export default {
-    async fetch(request: Request, env: Env): Promise<Response> {
-        const { method, headers } = request;
+    async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
         const url = new URL(request.url);
 
-        // CORS preflight
-        if (method === "OPTIONS") {
-            return new Response(null, {
-                status: 204,
-                headers: {
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-                    "Access-Control-Allow-Headers": "Content-Type, X-Signature",
-                },
-            });
-        }
-
-        // --- Tesla Authentication Endpoint ---
-        if (method === "POST" && url.pathname === "/api/tesla/authenticate") {
-            const { email, password } = await request.json();
-            // TODO: Replace with secure Tesla API integration
-            // Example: Forward credentials to Tesla API and return access token
-            // For now, return a fake token for demo
-            return new Response(JSON.stringify({ access_token: "demo-token-123", expires_in: 3600 }), {
-                status: 200,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-            });
-        }
-
-        // --- Tesla Command Endpoint ---
-        if (method === "POST" && url.pathname.startsWith("/api/tesla/")) {
-            const command = url.pathname.replace("/api/tesla/", "");
-            const params = await request.json();
-            // TODO: Replace with secure Tesla API command forwarding
-            // For now, echo the command and params
-            return new Response(JSON.stringify({ result: `Command '${command}' received`, params }), {
-                status: 200,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-            });
-        }
-
-        // --- Visit Logging Endpoint ---
-        if (method === "POST" && url.pathname === "/api/visits") {
-            const visit = await request.json();
-            const id = `visit-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-            await env.APP_KV.put(id, JSON.stringify(visit));
-            return new Response(JSON.stringify({ status: "ok", id }), {
-                status: 200,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-            });
-        }
-
-        // --- SoC Logging Endpoint ---
-        if (method === "POST" && url.pathname === "/api/soc") {
-            const soc = await request.json();
-            const id = `soc-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-            await env.APP_KV.put(id, JSON.stringify(soc));
-            return new Response(JSON.stringify({ status: "ok", id }), {
-                status: 200,
-                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-            });
-        }
-
-        // POST: ingest event
-        if (method === "POST" && url.pathname === "/") {
-            const buf = await request.arrayBuffer();
-            const signature = headers.get("X-Signature");
-            if (!(await verifySignature(buf, env.EDGE_HMAC_KEY, signature))) {
-                return new Response("Unauthorized", { status: 401 });
-            }
-            let data: any;
-            try {
-                data = JSON.parse(new TextDecoder().decode(buf));
-            } catch {
-                return new Response("Invalid JSON", { status: 400 });
-            }
-            if (!data.id) {
-                return new Response("Missing id", { status: 400 });
-            }
-            await env.APP_KV.put(data.id, JSON.stringify(data));
-            return new Response("Stored", {
-                status: 200,
-                headers: { "Access-Control-Allow-Origin": "*" },
-            });
-        }
-
-        // GET: retrieve events
-        if (method === "GET") {
-            const id = url.searchParams.get("id");
-            if (id) {
-                const item = await env.APP_KV.get(id);
-                if (!item) {
-                    return new Response("Not Found", { status: 404 });
-                }
-                return new Response(item, {
-                    status: 200,
-                    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-                });
-            } else {
-                const list = await env.APP_KV.list();
-                const items = await Promise.all(
-                    list.keys.map((k: { name: string }) => env.APP_KV.get(k.name))
-                );
-                return new Response(JSON.stringify(items), {
-                    status: 200,
-                    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+        // Verify HMAC signature for authenticated endpoints
+        if (request.method === 'POST') {
+            const clonedRequest = request.clone();
+            const body = await clonedRequest.arrayBuffer();
+            const signature = request.headers.get('x-signature');
+            const isValid = await verifySignature(body, env.EDGE_HMAC_KEY, signature);
+            
+            if (!isValid) {
+                return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+                    status: 401,
+                    headers: { 'Content-Type': 'application/json' }
                 });
             }
         }
 
-        return new Response("Method Not Allowed", { status: 405 });
+        try {
+            switch (url.pathname) {
+                case '/weather-risk':
+                    if (request.method === 'POST') {
+                        return await handleWeatherRisk(request);
+                    }
+                    break;
+                case '/optimize-route':
+                    if (request.method === 'POST') {
+                        return await handleOptimizeRoute(request);
+                    }
+                    break;
+            }
+
+            return new Response(JSON.stringify({ error: 'Not found' }), {
+                status: 404,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        } catch (error) {
+            console.error('Error handling request:', error);
+            return new Response(JSON.stringify({ error: 'Internal server error' }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
     }
 };

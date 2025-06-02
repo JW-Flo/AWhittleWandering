@@ -5,13 +5,19 @@
   "scripts": {
     "build:edge": "wrangler build --cwd edge-worker",
     "deploy:edge": "wrangler publish --cwd edge-worker",
-    "codegen:ts": "npm --prefix shared run codegen:ts"
+    "codegen:ts": "npm --prefix shared run codegen:ts",
+    "lint": "eslint edge-worker/src/**/*.ts",
+    "test": "npm --prefix edge-worker test && cd ios-client && swift test",
+    "pre-deploy": "npm run lint && npm run build:edge && npm run test"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "openapi-typescript-codegen": "^0.29.0",
     "typescript": "^4.9.5",
-    "wrangler": "^4.18.0"
+    "wrangler": "^4.18.0",
+    "eslint": "^8.56.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0"
   }
 }
