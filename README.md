@@ -4,7 +4,7 @@ A fully autonomous, 60-day EV-road-trip planner. • Collects read-only telemetr
 
 ## Quick Start
 
-### Public Website (WLAN Interface)
+### Public Website (Remote Access)
 
 ```bash
 # from repo root
@@ -23,7 +23,7 @@ npm run build
 npm run deploy
 ```
 
-The WLAN interface provides local network access to trip statistics and charging information without requiring internet connectivity.
+The public website is now remotely accessible, providing global access to real-time trip statistics and charging information over the internet.
 
 ### Mobile App (React Native)
 
@@ -115,7 +115,7 @@ To start all backend services and data collection agents:
 
 The project consists of several key components:
 
-1. **Public Website** - Local WLAN interface for accessing trip data without internet connectivity
+1. **Public Website** - WLAN accessible interface for accessing trip data without internet connectivity
 2. **React Native Mobile App** - Cross-platform companion app for trip statistics and charging station management
 3. **iOS Native Client** - Swift-based application for primary trip management and vehicle telemetry
 4. **Edge Worker** - Cloudflare Worker handling data aggregation and trip analytics
