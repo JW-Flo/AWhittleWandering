@@ -8,6 +8,7 @@
     "allowJs": true,
     "outDir": "./dist"
   },
-  "include": ["codex-agent/**/*.ts"]
+  "include": [
+    "codex-agent/**/*.ts"
+  ]
 }
-
