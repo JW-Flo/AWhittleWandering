@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>The Wandering Whilttle - Road Trip</title>
+  <title>The Wandering Whittle - Road Trip</title>
   <link rel="stylesheet" href="style.css" />
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet" />
   <!-- Mapbox token -->
-  <meta name="mapbox-token" content="YOUR_MAPBOX_PUBLIC_TOKEN">
+  <meta name="mapbox-token" content="pk.eyJ1IjoidGhld2FuZGVyaW5nd2hpdHRsZSIsImEiOiJjbHQxaXhzejYwYmU2MmpxdHl0MHowN3UzIn0.Q7xKTRlXvtimBHd39JqN1A">
 </head>
 <body>
   <header class="hero">
-    <h1>The Wandering Whilttle</h1>
+    <h1>The Wandering Whittle</h1>
     <p>60 days. 48 states. One Tesla. And a very good dog.</p>
     <nav class="nav">
       <button class="tab-button active" data-tab="journey">Journey</button>
@@ -92,8 +92,8 @@
       const message = document.getElementById('subscribe-message');
       message.textContent = '';
       try {
-        // TODO: Set this to your deployed edge-worker domain before production
-        const EDGE_WORKER_DOMAIN = window.EDGE_WORKER_DOMAIN || 'https://YOUR_EDGE_WORKER_DOMAIN';
+        // Edge worker domain for The Wandering Whittle
+        const EDGE_WORKER_DOMAIN = window.EDGE_WORKER_DOMAIN || 'https://thewanderingwhittle-edge.workers.dev';
         const res = await fetch(`${EDGE_WORKER_DOMAIN}/email/subscribe`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

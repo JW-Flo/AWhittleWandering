@@ -6,7 +6,9 @@
  *   - sendEmail(env, to, subject, content): Promise<void>
  */
 
-export async function sendEmail(env: any, to: string, subject: string, content: string): Promise<void> {
+import { WorkerEnvironment } from '../types/cloudflare';
+
+export async function sendEmail(env: WorkerEnvironment, to: string, subject: string, content: string): Promise<void> {
   // Example: SendGrid API
   const SENDGRID_API_KEY = env.SENDGRID_API_KEY;
   const FROM_EMAIL = env.FROM_EMAIL || 'noreply@continentalusa.com';

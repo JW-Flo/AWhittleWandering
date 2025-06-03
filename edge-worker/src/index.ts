@@ -3,27 +3,21 @@ import { verify } from './hmac';
 import { TeslaAPIClient } from './utils/tesla-client';
 import { getToken, setToken } from './utils/tesla-tokens';
 import { handleEmailSubscribe, handleEmailNotify } from './email';
+import { handleItineraryRequest } from './itinerary';
+import { WorkerEnvironment } from './types/cloudflare';
 
+// Interface for Cloudflare Workers execution context
+// This is used by the Workers runtime but not directly in our code
+/** @deprecated - Kept for reference */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface ExecutionContext {
     waitUntil(promise: Promise<unknown>): void;
     passThroughOnException(): void;
 }
 
-interface KVNamespace {
-    get(key: string): Promise<string | null>;
-    put(key: string, value: string): Promise<void>;
-    delete(key: string): Promise<void>;
-    list(options?: { prefix?: string; limit?: number; cursor?: string }): Promise<{ keys: { name: string }[]; list_complete: boolean; cursor?: string }>;
-}
-
-export interface Env {
-    APP_KV: KVNamespace;
-    MAP_TILES_KV: KVNamespace;
-    EDGE_HMAC_KEY: string;
-    TESLA_CLIENT_ID?: string;
-    TESLA_CLIENT_SECRET?: string;
-    TESLA_KV?: KVNamespace;
-    DB?: any;
+// Using WorkerEnvironment from types/cloudflare.ts 
+export interface Env extends WorkerEnvironment {
+    ITINERARY_KV: KVNamespace;
 }
 
 async function verifySignature(
@@ -208,22 +202,36 @@ async function handleWeatherRisk(request: Request, env: Env): Promise<Response> 
     }
 }
 
-function calculateRouteSegments(coordinates: Location[]): RouteSegment[] {
+function calculateRouteSegments(coordinates: Location[], avoidWeather = false): RouteSegment[] {
     const segments: RouteSegment[] = [];
+    
     for (let i = 0; i < coordinates.length - 1; i++) {
         const start = coordinates[i];
         const end = coordinates[i + 1];
-        const distance = Math.sqrt(
-            Math.pow(end.latitude - start.latitude, 2) + Math.pow(end.longitude - start.longitude, 2)
-        ) * 111; // Rough km conversion
+        
+        // Base distance calculation using Haversine formula for more accuracy
+        const R = 6371; // Earth radius in km
+        const dLat = (end.latitude - start.latitude) * Math.PI / 180;
+        const dLon = (end.longitude - start.longitude) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(start.latitude * Math.PI / 180) * Math.cos(end.latitude * Math.PI / 180) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const distance = R * c;
+        
+        // Apply a multiplier for weather-avoiding routes to represent detours
+        const weatherMultiplier = avoidWeather ? 1.15 : 1.0; // 15% longer for weather avoidance
+        const adjustedDistance = distance * weatherMultiplier;
+        
         segments.push({
             start,
             end,
-            distance,
-            duration: distance * 60, // Rough minutes calculation
-            weatherRisk: Math.random()
+            distance: adjustedDistance,
+            duration: adjustedDistance * 60, // Rough minutes calculation
+            weatherRisk: avoidWeather ? Math.random() * 0.3 : Math.random() * 0.7 // Lower risk for weather-avoiding routes
         });
     }
+    
     return segments;
 }
 
@@ -288,31 +296,49 @@ async function handleRouteOptimization(request: Request, env: Env): Promise<Resp
             });
         }
 
-        // Generate waypoints for the route
-        const coordinates: Location[] = [
-            origin,
-            {
-                latitude: (origin.latitude + destination.latitude) / 2,
-                longitude: (origin.longitude + destination.longitude) / 2
-            },
-            destination
-        ];
+        // Generate waypoints for the route with slight variation if avoiding weather
+        let coordinates: Location[];
+        
+        if (avoidWeather) {
+            // Create a slightly different route when avoiding weather
+            const midpointOffset = 0.05; // Add an offset to create a different route
+            coordinates = [
+                origin,
+                {
+                    latitude: (origin.latitude + destination.latitude) / 2 + midpointOffset,
+                    longitude: (origin.longitude + destination.longitude) / 2 + midpointOffset
+                },
+                destination
+            ];
+        } else {
+            coordinates = [
+                origin,
+                {
+                    latitude: (origin.latitude + destination.latitude) / 2,
+                    longitude: (origin.longitude + destination.longitude) / 2
+                },
+                destination
+            ];
+        }
 
-        const segments = calculateRouteSegments(coordinates);
+        const segments = calculateRouteSegments(coordinates, avoidWeather);
         const totalDistance = segments.reduce((sum, seg) => sum + seg.distance, 0);
         const totalDuration = segments.reduce((sum, seg) => sum + seg.duration, 0);
         
-        // Weather risk calculation
+        // Weather risk calculation - lower risk when avoiding weather
         const baseRisk = avoidWeather ? 0.2 : 0.6;
         const weatherRisk = Math.min(1, Math.max(0, baseRisk));
 
+        // Calculate consumption rate based on weather risk
+        const consumptionRate = avoidWeather ? 0.22 : 0.2; // Higher consumption for avoiding weather (longer route)
+        
         const route: Route = {
             segments,
             coordinates,
             totalDistance,
             totalDuration,
             weatherRisk,
-            totalConsumption: totalDistance * 0.2, // Rough kWh calculation
+            totalConsumption: totalDistance * consumptionRate, // Adjusted kWh calculation
             requiredStops: Math.max(1, Math.ceil(totalDistance / 300)) // At least 1 stop if > 300 miles
         };
 
@@ -420,6 +446,11 @@ export default {
         }
         if (url.pathname === "/email/notify" && request.method === "POST") {
             return await handleEmailNotify(request, env);
+        }
+        
+        // --- ITINERARY ROUTES ---
+        if (url.pathname.startsWith("/api/itinerary")) {
+            return await handleItineraryRequest(request, env);
         }
 
         // Handle CORS preflight requests
