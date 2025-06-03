@@ -24,8 +24,7 @@ This document provides a high-level overview of the entire system architecture, 
   - Mobile clients (data consumption)
   - MCP server (data synchronization)
 
-### 1.2 mcp-server (Local Orchestrator)
-- **Location**: Always-on iMac
+### 1.2 mcp-server (Cloud Orchestrator)
 - **Primary Responsibilities**:
   - Schedules and coordinates agent tasks
   - Buffers telemetry locally when edge-worker is unavailable
@@ -51,7 +50,7 @@ This document provides a high-level overview of the entire system architecture, 
   - Browser local storage (offline functionality)
 
 ### 1.4 mobile clients
-- **React Native App** (iOS/Android):
+- **React Native App** (iOS/):
   - Trip management dashboard
   - Charging station finder
   - Push notifications for trip events
