@@ -1,7 +1,8 @@
 {\rtf1\ansi\ansicpg1252\cocoartf2822
-\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 .SFNS-Bold;\f1\fnil\fcharset0 .SFNS-Regular;\f2\fnil\fcharset0 HelveticaNeue-Bold;
-\f3\fnil\fcharset0 .AppleSystemUIFontMonospaced-Regular;\f4\froman\fcharset0 Times-Roman;\f5\fmodern\fcharset0 Courier;
-\f6\fswiss\fcharset0 Helvetica;}
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 AppleColorEmoji;\f1\fnil\fcharset0 .SFNS-Bold;\f2\fnil\fcharset0 .SFNS-Regular;
+\f3\fnil\fcharset0 HelveticaNeue-Bold;\f4\fnil\fcharset0 .AppleSystemUIFontMonospaced-Regular;\f5\froman\fcharset0 Times-Roman;
+\f6\fmodern\fcharset0 Courier;\f7\fswiss\fcharset0 Helvetica;\f8\fnil\fcharset0 LucidaGrande;
+}
 {\colortbl;\red255\green255\blue255;\red14\green14\blue14;\red0\green0\blue0;\red155\green162\blue177;
 \red197\green136\blue83;\red136\green185\blue102;\red184\green93\blue213;\red74\green80\blue93;}
 {\*\expandedcolortbl;;\cssrgb\c6700\c6700\c6700;\cssrgb\c0\c0\c0;\cssrgb\c67059\c69804\c74902;
@@ -9,50 +10,46 @@
 \margl1440\margr1440\vieww11520\viewh8400\viewkind0
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f0\b\fs26 \cf2 \uc0\u55357 \u56770 \u65039  PROJECT STRUCTURE & MODULE INSTRUCTIONS
-\f1\b0\fs24 \
+\f0\fs26 \cf2 \uc0\u55357 \u56770 \u65039 
+\f1\b  PROJECT STRUCTURE & MODULE INSTRUCTIONS
+\f2\b0\fs24 \
 \
 
-\f0\b\fs22 1. mcp-server/ \'97 Local Orchestrator & Agent Core
-\f1\b0\fs24 \
+\f1\b\fs22 1. mcp-server/ \'97 Cloud Orchestrator & Agent Core
+\f2\b0\fs24 \
 \pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	
-\f2\b Runs on
-\f1\b0 : Always-on iMac (static IP, no dynamic DNS issues).\
+\f3\b Runs on
+\f2\b0 : Always in Cloud \
 	\'95	
-\f2\b Language
-\f1\b0 : Node.js or Bun (default to Node.js unless 
-\f3 .bun
-\f1  is scaffolded).\
+\f3\b Purpose
+\f2\b0 : Accepts tasks, schedules AI workflows, buffers data locally, interfaces with 
+\f4 tracker/
+\f2  and 
+\f4 web/
+\f2 .\
 	\'95	
-\f2\b Purpose
-\f1\b0 : Accepts tasks, schedules AI workflows, buffers data locally, interfaces with 
-\f3 tracker/
-\f1  and 
-\f3 web/
-\f1 .\
-	\'95	
-\f2\b Key Features
-\f1\b0 :\
+\f3\b Key Features
+\f2\b0 :\
 \pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	Accepts incoming JSON payloads from 
-\f3 tracker/
-\f1 \
+\f4 tracker/
+\f2 \
 	\'95	Issues queued commands to GPT agents\
 	\'95	Syncs status to 
-\f3 Cloudflare Worker
-\f1 \
+\f4 Cloudflare Worker
+\f2 \
 	\'95	Supports 
-\f3 cron
-\f1 , 
-\f3 manual
-\f1 , and 
-\f3 event
-\f1  triggers\
+\f4 cron
+\f2 , 
+\f4 manual
+\f2 , and 
+\f4 event
+\f2  triggers\
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f4 \cf0 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec3 \
+\f5 \cf0 \expnd0\expndtw0\kerning0
+\
 \
 \pard\pardeftab720\partightenfactor0
 \cf0 \
@@ -60,109 +57,110 @@
 \
 \
 You are assisting in the development and orchestration of the 
-\f5\fs26 TheWanderingWhittle
-\f4\fs24  project\'97a real-time, multi-system initiative that tracks a 60-day Tesla road trip through all 48 contiguous U.S. states. The project consists of a local MCP (Mission Control Platform) server running persistently on an always-on iMac that coordinates agents, schedules tasks, buffers telemetry from an onboard tracker, and syncs with edge infrastructure hosted via Cloudflare Workers. Your role is to generate production-ready code, automate deployments, document new modules, and maintain a consistent data model across 
-\f5\fs26 mcp-server
-\f4\fs24 , 
-\f5\fs26 tracker
-\f4\fs24 , 
-\f5\fs26 web
-\f4\fs24 , and 
-\f5\fs26 infra
-\f4\fs24  folders. You must assume that every action affects a real-world system in motion\'97no simulations or stubs. Every output must be a working module with README, full logic, fallback handling, 
-\f5\fs26 .env.example
-\f4\fs24  files if secrets are needed, and API or CLI-ready interfaces where applicable. This is not a dev experiment; it\'92s a deployed, interconnected system with storytelling, safety, and synchronization needs. Act with rigor, precision, and a sense of creative adventure.\
+\f6\fs26 TheWanderingWhittle
+\f5\fs24  project\'97a real-time, multi-system initiative that tracks a 60-day Tesla road trip through all 48 contiguous U.S. states. The project consists of a local MCP (Mission Control Platform) server running persistently on an always-on iMac that coordinates agents, schedules tasks, buffers telemetry from an onboard tracker, and syncs with edge infrastructure hosted via Cloudflare Workers. Your role is to generate production-ready code, automate deployments, document new modules, and maintain a consistent data model across 
+\f6\fs26 mcp-server
+\f5\fs24 , 
+\f6\fs26 tracker
+\f5\fs24 , 
+\f6\fs26 web
+\f5\fs24 , and 
+\f6\fs26 infra
+\f5\fs24  folders. You must assume that every action affects a real-world system in motion\'97no simulations or stubs. Every output must be a working module with README, full logic, fallback handling, 
+\f6\fs26 .env.example
+\f5\fs24  files if secrets are needed, and API or CLI-ready interfaces where applicable. This is not a dev experiment; it\'92s a deployed, interconnected system with storytelling, safety, and synchronization needs. Act with rigor, precision, and a sense of creative adventure.\
 \
 \
 \
 \pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
 
-\f1 \cf2 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 	\'95	Use 
-\f3 lowdb
-\f1  or SQLite for lightweight local persistence\
+\f2 \cf2 \kerning1\expnd0\expndtw0 	\'95	Use 
+\f4 lowdb
+\f2  or SQLite for lightweight local persistence\
 	\'95	Use 
-\f3 express
-\f1  for local API port\
+\f4 express
+\f2  for local API port\
 	\'95	Configure 
-\f3 .env
-\f1  with secrets (Starlink IP, Cloudflare keys, auth tokens)\
+\f4 .env
+\f2  with secrets (Starlink IP, Cloudflare keys, auth tokens)\
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 
-\f6 \cf0 \
-\uc0\u11835 \
+\f7 \cf0 \
+
+\f2 \uc0\u11835 
+\f7 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f1 \cf2 \
+\f2 \cf2 \
 
-\f0\b\fs22 2. tracker/ \'97 Location + Visit Logger
-\f1\b0\fs24 \
+\f1\b\fs22 2. tracker/ \'97 Location + Visit Logger
+\f2\b0\fs24 \
 \pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	
-\f2\b Device
-\f1\b0 : Tesla Model Y with Starlink Mini and iPhone on board\
+\f3\b Device
+\f2\b0 : Tesla Model Y with Starlink Mini and iPhone on board\
 	\'95	
-\f2\b Objective
-\f1\b0 : Log each meaningful visit, rest stop, charge, or camp via:\
+\f3\b Objective
+\f2\b0 : Log each meaningful visit, rest stop, charge, or camp via:\
 \pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	
-\f3 CLLocationManager
-\f1  (on iPhone app)\
+\f4 CLLocationManager
+\f2  (on iPhone app)\
 	\'95	Background geofencing\
 	\'95	Manual GPS pings via shortcut or Siri\
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f0\b\fs26 \cf2 \uc0\u55357 \u56770 \u65039  PROJECT STRUCTURE & MODULE INSTRUCTIONS
-\f1\b0\fs24 \
+\f0\fs26 \cf2 \uc0\u55357 \u56770 \u65039 
+\f1\b  PROJECT STRUCTURE & MODULE INSTRUCTIONS
+\f2\b0\fs24 \
 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f0\b\fs22 1. mcp-server/ \'97 Local Orchestrator & Agent Core
-\f1\b0\fs24 \
+\f1\b\fs22 \cf2 1. mcp-server/ \'97 Cloud Orchestrator & Agent Core
+\f2\b0\fs24 \
 \pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	
-\f2\b Runs on
-\f1\b0 : Always-on iMac (static IP, no dynamic DNS issues).\
+\f3\b Runs on
+\f2\b0 : Always cloud\
 	\'95	
-\f2\b Language
-\f1\b0 : Node.js or Bun (default to Node.js unless 
-\f3 .bun
-\f1  is scaffolded).\
+\f3\b Purpose
+\f2\b0 : Accepts tasks, schedules AI workflows, buffers data locally, interfaces with 
+\f4 tracker/
+\f2  and 
+\f4 web/
+\f2 .\
 	\'95	
-\f2\b Purpose
-\f1\b0 : Accepts tasks, schedules AI workflows, buffers data locally, interfaces with 
-\f3 tracker/
-\f1  and 
-\f3 web/
-\f1 .\
-	\'95	
-\f2\b Key Features
-\f1\b0 :\
+\f3\b Key Features
+\f2\b0 :\
 \pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	Accepts incoming JSON payloads from 
-\f3 tracker/
-\f1 \
+\f4 tracker/
+\f2 \
 	\'95	Issues queued commands to GPT agents\
 	\'95	Syncs status to 
-\f3 Cloudflare Worker
-\f1 \
+\f4 Cloudflare Worker
+\f2 \
 	\'95	Supports 
-\f3 cron
-\f1 , 
-\f3 manual
-\f1 , and 
-\f3 event
-\f1  triggers\
-\uc0\u9989  
-\f2\b \cf2 Copilot Instructions
-\f1\b0 \cf2 :\
+\f4 cron
+\f2 , 
+\f4 manual
+\f2 , and 
+\f4 event
+\f2  triggers\
+
+\f0 \uc0\u9989 
+\f2  
+\f3\b Copilot Instructions
+\f2\b0 :\
 \pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	Log structured visit data in this format:
-\f4 \cf0 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec3 \
+\f5 \cf0 \expnd0\expndtw0\kerning0
+\
 \pard\pardeftab720\partightenfactor0
 \cf0 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 
-\f3\fs22 \cf4 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 \{\
+\f4\fs22 \cf4 \kerning1\expnd0\expndtw0 \{\
   \cf5 "type"\cf4 : \cf6 "supercharger"\cf4 ,\
   \cf5 "name"\cf4 : \cf6 "Flagstaff, AZ"\cf4 ,\
   \cf5 "timestamp"\cf4 : \cf6 "2025-06-12T14:45:00Z"\cf4 ,\
@@ -170,166 +168,186 @@ You are assisting in the development and orchestration of the
   \cf5 "duration"\cf4 : \cf5 37\cf4 \
 \}\
 
-\f1\fs24 \cf2 	\'95	Use 
-\f3 .buffer/visits.json
-\f1  for local caching if offline\
+\f2\fs24 \cf2 	\'95	Use 
+\f4 .buffer/visits.json
+\f2  for local caching if offline\
 \pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	Sync via HTTPS POST to 
-\f3 mcp-server/api/visits
-\f1 \
+\f4 mcp-server/api/visits
+\f2 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 
-\f6 \cf0 \
-\uc0\u11835 \
+\f7 \cf0 \
+
+\f2 \uc0\u11835 
+\f7 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f1 \cf2 \
+\f2 \cf2 \
 
-\f0\b\fs22 3. web/ \'97 Public Storytelling Site
-\f1\b0\fs24 \
+\f1\b\fs22 3. web/ \'97 Public Storytelling Site
+\f2\b0\fs24 \
 \pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	
-\f2\b Stack
-\f1\b0 : Astro preferred, fallback to Next.js if SSR is critical\
+\f3\b Stack
+\f2\b0 : Astro preferred, fallback to Next.js if SSR is critical\
 	\'95	
-\f2\b Hosted
-\f1\b0 : Cloudflare Pages + Workers\
+\f3\b Hosted
+\f2\b0 : Cloudflare Pages + Workers\
 	\'95	
-\f2\b Content
-\f1\b0 : Live trip map, visit stories, dog photos, trip stats, and editorial narrative\
+\f3\b Content
+\f2\b0 : Live trip map, visit stories, dog photos, trip stats, and editorial narrative\
 \
-\uc0\u9989  
-\f2\b Copilot Instructions
-\f1\b0 :\
+
+\f0 \uc0\u9989 
+\f2  
+\f3\b Copilot Instructions
+\f2\b0 :\
 	\'95	All content should be emotionally warm, personal, and evocative of the \'93Americana adventure\'94 spirit\
 	\'95	Pull content dynamically from:\
 \pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	
-\f3 mcp-server
-\f1  API (
-\f3 /api/summary
-\f1 , 
-\f3 /api/today
-\f1 )\
+\f4 mcp-server
+\f2  API (
+\f4 /api/summary
+\f2 , 
+\f4 /api/today
+\f2 )\
 	\'95	Pre-render with 
-\f3 Astro.getStaticPaths()
-\f1  where possible\
+\f4 Astro.getStaticPaths()
+\f2  where possible\
 \pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	Use image CDN with resizing (e.g., Cloudflare Images or 
-\f3 imgix
-\f1 )\
+\f4 imgix
+\f2 )\
 	\'95	Markdown-based posts (
-\f3 /src/posts/*.md
-\f1 ) preferred for journal entries\
+\f4 /src/posts/*.md
+\f2 ) preferred for journal entries\
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 
-\f6 \cf0 \
-\uc0\u11835 \
+\f7 \cf0 \
+
+\f2 \uc0\u11835 
+\f7 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f1 \cf2 \
+\f2 \cf2 \
 
-\f0\b\fs22 4. infra/ \'97 Cloudflare Worker + DNS + Failover Config
-\f1\b0\fs24 \
+\f1\b\fs22 4. infra/ \'97 Cloudflare Worker + DNS + Failover Config
+\f2\b0\fs24 \
 \pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	
-\f2\b Purpose
-\f1\b0 :\
+\f3\b Purpose
+\f2\b0 :\
 \pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	Receive public telemetry streams and proxy to GitHub\
 	\'95	Schedule or requeue failover tasks (e.g., retry on error)\
 	\'95	Mask direct IP access to local MCP\
 \
-\uc0\u9989  
-\f2\b \cf2 Copilot Instructions
-\f1\b0 \cf2 :\
+
+\f0 \uc0\u9989 
+\f2  
+\f3\b Copilot Instructions
+\f2\b0 :\
 \pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	Use 
-\f3 wrangler.toml
-\f1  for deploy config\
+\f4 wrangler.toml
+\f2  for deploy config\
 	\'95	Secure Worker endpoint via HMAC shared secret or token header\
 	\'95	Use this Cloudflare Worker interface:
-\f6 \cf0 \
+\f7 \cf0 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 \cf0 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 
-\f3\fs22 \cf7 export\cf4  \cf7 async\cf4  \cf7 function\cf4  onRequest(context) \{\
+\f4\fs22 \cf7 export\cf4  \cf7 async\cf4  \cf7 function\cf4  onRequest(context) \{\
   \cf7 const\cf4  data = \cf7 await\cf4  context.request.json();\
   \cf8 // route to GitHub Actions or local MCP via IP\cf4 \
 \}
-\f6\fs24 \cf0 \
+\f7\fs24 \cf0 \
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f1 \cf2 \
+\f2 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f0\b\fs26 \uc0\u55357 \u57057 \u65039  SECURITY INSTRUCTIONS
-\f1\b0\fs24 \
+\f0\fs26 \cf2 \uc0\u55357 \u57057 \u65039 
+\f1\b  SECURITY INSTRUCTIONS
+\f2\b0\fs24 \
 \pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	Never commit 
-\f3 .env
-\f1  files, secrets, or IP addresses.\
+\f4 .env
+\f2  files, secrets, or IP addresses.\
 	\'95	All outbound requests to Cloudflare must use HTTPS and have a shared HMAC token in headers.\
 	\'95	MCP logs should be rotated and truncated; avoid infinite append.\
 	\'95	Telemetry should be rate-limited to prevent battery drain or overflow on mobile.\
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 
-\f6 \cf0 \
-\uc0\u11835 \
+\f7 \cf0 \
+
+\f2 \uc0\u11835 
+\f7 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f1 \cf2 \
+\f2 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f0\b\fs26 \uc0\u55357 \u56513  OUTPUT EXPECTATIONS FOR AGENTS
-\f1\b0\fs24 \
+\f0\fs26 \cf2 \uc0\u55357 \u56513 
+\f1\b  OUTPUT EXPECTATIONS FOR AGENTS
+\f2\b0\fs24 \
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f2\b \cf2 Every Copilot or ChatGPT agent task should generate:
-\f1\b0 \cf2 \
+\f3\b \cf2 Every Copilot or ChatGPT agent task should generate:
+\f2\b0 \
 \pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	
-\f3 README.md
-\f1  for the module or folder\
+\f4 README.md
+\f2  for the module or folder\
 	\'95	Fully working 
-\f3 .ts
-\f1  or 
-\f3 .js
-\f1  file(s)\
+\f4 .ts
+\f2  or 
+\f4 .js
+\f2  file(s)\
 	\'95	Example input/output if it\'92s an endpoint or service\
 	\'95	
-\f3 .env.example
-\f1  if the module uses secrets\
+\f4 .env.example
+\f2  if the module uses secrets\
 	\'95	Optional: 
-\f3 test.ts
-\f1  or 
-\f3 demo.sh
-\f1  if appropriate\
+\f4 test.ts
+\f2  or 
+\f4 demo.sh
+\f2  if appropriate\
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 
-\f6 \cf0 \
-\uc0\u11835 \
+\f7 \cf0 \
+
+\f2 \uc0\u11835 
+\f7 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f1 \cf2 \
+\f2 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f0\b\fs26 \uc0\u55358 \u56800  GPT AGENT MEMOIZATION / CONTEXT
-\f1\b0\fs24 \
+\f0\fs26 \cf2 \uc0\u55358 \u56800 
+\f1\b  GPT AGENT MEMOIZATION / CONTEXT
+\f2\b0\fs24 \
 \pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	Project name: 
-\f3 TheWanderingWhittle
-\f1 \
+\f4 TheWanderingWhittle
+\f2 \
 	\'95	Default timezone: Central (UTC-5)\
 	\'95	Start date: June 4, 2025\
 	\'95	End date: ~August 4, 2025\
 	\'95	Starlink IP: Static\
 	\'95	Local device: iMac (MCP server), Model Y + iPhone (tracker client)\
-	\'95	Dog name: Sasha \uc0\u55357 \u56382 \
+	\'95	Dog name: Sasha 
+\f0 \uc0\u55357 \u56382 
+\f2 \
 \pard\pardeftab720\partightenfactor0
 
-\f4 \cf0 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec3 \
+\f5 \cf0 \expnd0\expndtw0\kerning0
+\
 \
 \
 \
@@ -434,7 +452,9 @@ npm run deploy:android\
 \
 1. Open the Swift Package in Xcode via `ios-client/Package.swift`.  \
 2. Select a simulator or device (targeting iOS 17+).  \
-3. Hit **Run** (\uc0\u8984 +R) to build and launch the app.\
+3. Hit **Run** (
+\f8 \uc0\u8984 
+\f5 +R) to build and launch the app.\
 \
 > Alternatively, from terminal:\
 >\
