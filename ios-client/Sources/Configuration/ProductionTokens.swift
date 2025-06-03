@@ -24,6 +24,18 @@ enum ProductionTokens {
         clientSecret: "ta-secret.t4@VFJevq!il8gTM"
     )
     
+    // MARK: - OAuth Settings
+    
+    /// OAuth Grant Types allowed
+    static let oauthGrantTypes = ["client-credentials", "authorization-code"]
+    
+    /// Allowed Origins for OAuth
+    static let allowedOrigins = [
+        "https://laoi.48continental.com",
+        "http://localhost:5173",
+        "https://laoi.48continental.com/tesla/callback"
+    ]
+    
     // MARK: - Secure Storage
     
     /// Store tokens securely in Keychain
