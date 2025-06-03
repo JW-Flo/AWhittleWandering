@@ -3,6 +3,15 @@
  * 
  * This module provides enhanced map functionality using our MapBox service,
  * including advanced routing, weather overlays, and state boundary highlighting.
+ * 
+ * Weather Integration Interface:
+ * This component exposes methods for weather overlay integration:
+ * - registerOverlayLayer(layer): Registers a new overlay layer with the map
+ * - setLayerVisibility(layerId, visible): Sets visibility of a specific layer
+ * - setLayerOpacity(layerId, opacity): Sets opacity of a specific layer
+ * - getCurrentViewport(): Returns current map viewport (bounds, zoom, etc.)
+ * - getRouteCoordinates(): Returns current route coordinates for weather along route
+ * - addRouteAlert(alert, position): Adds an alert marker at a specific position on the route
  */
 
 /* eslint-env browser */
@@ -37,6 +46,10 @@ class MapboxComponent {
     this.weatherData = null;
     this.currentVehiclePosition = null;
     
+    // Overlay layers registry
+    this.overlayLayers = {};
+    this.weatherAlertMarkers = [];
+    
     // Bind methods to this instance
     this.initialize = this.initialize.bind(this);
     this.updateMap = this.updateMap.bind(this);
@@ -54,6 +67,16 @@ class MapboxComponent {
     this.setWeatherData = this.setWeatherData.bind(this);
     this.createWeatherMarker = this.createWeatherMarker.bind(this);
     this.animateRoute = this.animateRoute.bind(this);
+    
+    // Weather overlay integration methods
+    this.registerOverlayLayer = this.registerOverlayLayer.bind(this);
+    this.setLayerVisibility = this.setLayerVisibility.bind(this);
+    this.setLayerOpacity = this.setLayerOpacity.bind(this);
+    this.getCurrentViewport = this.getCurrentViewport.bind(this);
+    this.getRouteCoordinates = this.getRouteCoordinates.bind(this);
+    this.addRouteAlert = this.addRouteAlert.bind(this);
+    this.removeRouteAlert = this.removeRouteAlert.bind(this);
+    this.addWeatherOverlay = this.addWeatherOverlay.bind(this);
   }
 
   /**
@@ -702,18 +725,335 @@ class MapboxComponent {
   }
   
   /**
-   * Update visited states from trip data
-   * @param {string[]} states - Array of state names
-   * @param {Object} locationData - Current location data
+   * Register a new overlay layer with the map
+   * @param {Object} layer - Layer configuration
+   * @returns {string} - Layer ID
    */
-  updateVisitedStates(states, locationData) {
-    if (!states || !states.length || !locationData) return;
+  registerOverlayLayer(layer) {
+    if (!this.map || !this.isMapLoaded) return null;
     
-    // Add state marker for current location
-    if (locationData.currentLat && locationData.currentLng && states.length > 0) {
-      // Assume the most recently visited state is the current one
-      const currentState = states[states.length - 1];
-      this.addStateMarker(currentState, locationData.currentLat, locationData.currentLng);
+    const layerId = layer.id || `overlay-${Date.now()}`;
+    
+    // Check if source exists, create if not
+    if (!this.map.getSource(layer.source.id)) {
+      this.map.addSource(layer.source.id, layer.source.config);
+    }
+    
+    // Add layer to map
+    this.map.addLayer({
+      id: layerId,
+      type: layer.type,
+      source: layer.source.id,
+      layout: layer.layout || {},
+      paint: layer.paint || {},
+      minzoom: layer.minzoom,
+      maxzoom: layer.maxzoom
+    });
+    
+    // Store in registry
+    this.overlayLayers[layerId] = layer;
+    
+    // Emit event
+    const event = new CustomEvent('mapboxComponent:overlayAdded', {
+      detail: { layerId, layer }
+    });
+    document.dispatchEvent(event);
+    
+    return layerId;
+  }
+  
+  /**
+   * Set visibility of a specific layer
+   * @param {string} layerId - ID of the layer
+   * @param {boolean} visible - Whether the layer should be visible
+   */
+  setLayerVisibility(layerId, visible) {
+    if (!this.map || !this.isMapLoaded) return;
+    
+    const visibility = visible ? 'visible' : 'none';
+    this.map.setLayoutProperty(layerId, 'visibility', visibility);
+  }
+  
+  /**
+   * Set opacity of a specific layer
+   * @param {string} layerId - ID of the layer
+   * @param {number} opacity - Opacity value (0-1)
+   */
+  setLayerOpacity(layerId, opacity) {
+    if (!this.map || !this.isMapLoaded) return;
+    
+    // Determine layer type to set the right property
+    const layer = this.map.getLayer(layerId);
+    if (!layer) return;
+    
+    const opacityProp = {
+      'fill': 'fill-opacity',
+      'line': 'line-opacity',
+      'circle': 'circle-opacity',
+      'symbol': 'icon-opacity',
+      'raster': 'raster-opacity',
+      'heatmap': 'heatmap-opacity'
+    }[layer.type] || 'opacity';
+    
+    this.map.setPaintProperty(layerId, opacityProp, opacity);
+  }
+  
+  /**
+   * Get current map viewport
+   * @returns {Object} Viewport information
+   */
+  getCurrentViewport() {
+    if (!this.map) return null;
+    
+    const bounds = this.map.getBounds();
+    return {
+      bounds: [
+        [bounds.getWest(), bounds.getSouth()],
+        [bounds.getEast(), bounds.getNorth()]
+      ],
+      zoom: this.map.getZoom(),
+      center: this.map.getCenter().toArray(),
+      bearing: this.map.getBearing(),
+      pitch: this.map.getPitch()
+    };
+  }
+  
+  /**
+   * Get current route coordinates
+   * @returns {Array} Array of coordinates
+   */
+  getRouteCoordinates() {
+    if (!this.map || !this.isMapLoaded) return [];
+    
+    const routeSource = this.map.getSource('route');
+    if (!routeSource || !routeSource._data) return [];
+    
+    return routeSource._data.geometry.coordinates || [];
+  }
+  
+  /**
+   * Add a weather alert marker to the route
+   * @param {Object} alert - Alert information
+   * @param {Array} position - [lng, lat] coordinates
+   * @returns {Object} Marker reference
+   */
+  addRouteAlert(alert, position) {
+    if (!this.map) return null;
+    
+    // Create marker element
+    const el = document.createElement('div');
+    el.className = `weather-alert-marker severity-${alert.severity}`;
+    el.innerHTML = `<div class="alert-icon">${alert.icon || '⚠️'}</div>`;
+    
+    // Create popup
+    const popup = new mapboxgl.Popup({
+      offset: 25,
+      closeButton: true,
+      closeOnClick: true
+    }).setHTML(`
+      <div class="weather-alert-popup">
+        <h3>${alert.type}</h3>
+        <p>${alert.message}</p>
+      </div>
+    `);
+    
+    // Create and add marker
+    const marker = new mapboxgl.Marker(el)
+      .setLngLat(position)
+      .setPopup(popup)
+      .addTo(this.map);
+    
+    // Store marker reference
+    this.weatherAlertMarkers.push({
+      id: alert.id || `alert-${Date.now()}`,
+      marker
+    });
+    
+    return marker;
+  }
+  
+  /**
+   * Remove a weather alert marker
+   * @param {string} alertId - ID of the alert to remove
+   */
+  removeRouteAlert(alertId) {
+    const alertIndex = this.weatherAlertMarkers.findIndex(alert => alert.id === alertId);
+    
+    if (alertIndex >= 0) {
+      // Remove marker from map
+      this.weatherAlertMarkers[alertIndex].marker.remove();
+      
+      // Remove from array
+      this.weatherAlertMarkers.splice(alertIndex, 1);
+    }
+  }
+  
+  /**
+   * Add a weather overlay to the map
+   * @param {string} type - Type of overlay ('radar', 'temperature', 'precipitation', etc.)
+   * @param {Object} data - Overlay data
+   * @param {Object} options - Display options
+   * @returns {string} Layer ID
+   */
+  addWeatherOverlay(type, data, options = {}) {
+    if (!this.map || !this.isMapLoaded) return null;
+    
+    const sourceId = `weather-${type}`;
+    const layerId = `weather-${type}-layer`;
+    
+    // Set up source and layer based on overlay type
+    switch (type) {
+      case 'radar':
+        // Add radar as raster layer
+        if (!this.map.getSource(sourceId)) {
+          this.map.addSource(sourceId, {
+            type: 'raster',
+            tiles: data.tiles,
+            tileSize: 256,
+            attribution: data.attribution
+          });
+        }
+        
+        if (!this.map.getLayer(layerId)) {
+          this.map.addLayer({
+            id: layerId,
+            type: 'raster',
+            source: sourceId,
+            paint: {
+              'raster-opacity': options.opacity || 0.7,
+              'raster-fade-duration': 0
+            }
+          });
+        }
+        break;
+        
+      case 'temperature':
+        // Add temperature as fill layer with data-driven styling
+        if (!this.map.getSource(sourceId)) {
+          this.map.addSource(sourceId, {
+            type: 'geojson',
+            data: data
+          });
+        } else {
+          this.map.getSource(sourceId).setData(data);
+        }
+        
+        if (!this.map.getLayer(layerId)) {
+          this.map.addLayer({
+            id: layerId,
+            type: 'fill',
+            source: sourceId,
+            paint: {
+              'fill-color': [
+                'interpolate',
+                ['linear'],
+                ['get', 'temperature'],
+                -20, '#0022FF',  // Very cold (deep blue)
+                0, '#00AAFF',    // Freezing (light blue)
+                32, '#FFFFFF',   // Freezing point (white)
+                50, '#FFFF00',   // Cool (yellow)
+                70, '#FF7700',   // Warm (orange)
+                90, '#FF0000',   // Hot (red)
+                110, '#990000'   // Very hot (dark red)
+              ],
+              'fill-opacity': options.opacity || 0.6
+            }
+          });
+        }
+        break;
+        
+      case 'precipitation':
+        // Add precipitation as circle layer
+        if (!this.map.getSource(sourceId)) {
+          this.map.addSource(sourceId, {
+            type: 'geojson',
+            data: data
+          });
+        } else {
+          this.map.getSource(sourceId).setData(data);
+        }
+        
+        if (!this.map.getLayer(layerId)) {
+          this.map.addLayer({
+            id: layerId,
+            type: 'circle',
+            source: sourceId,
+            paint: {
+              'circle-radius': [
+                'interpolate',
+                ['linear'],
+                ['get', 'intensity'],
+                0, 3,
+                1, 15
+              ],
+              'circle-color': [
+                'interpolate',
+                ['linear'],
+                ['get', 'intensity'],
+                0, 'rgba(0, 255, 255, 0.5)',
+                0.5, 'rgba(0, 0, 255, 0.5)',
+                1, 'rgba(128, 0, 128, 0.5)'
+              ],
+              'circle-opacity': options.opacity || 0.7
+            }
+          });
+        }
+        break;
+        
+      default:
+        // Generic GeoJSON overlay
+        if (!this.map.getSource(sourceId)) {
+          this.map.addSource(sourceId, {
+            type: 'geojson',
+            data: data
+          });
+        } else {
+          this.map.getSource(sourceId).setData(data);
+        }
+        
+        if (!this.map.getLayer(layerId)) {
+          this.map.addLayer({
+            id: layerId,
+            type: options.layerType || 'fill',
+            source: sourceId,
+            paint: options.paint || {
+              'fill-color': '#00FF00',
+              'fill-opacity': 0.5
+            }
+          });
+        }
+    }
+    
+    // Store in registry
+    this.overlayLayers[layerId] = {
+      id: layerId,
+      type: type,
+      sourceId
+    };
+    
+    // Return layer ID for future reference
+    return layerId;
+  }
+  
+  /**
+   * Clean up resources
+   */
+  destroy() {
+    // Cancel animations
+    if (this.routeAnimationId) {
+      cancelAnimationFrame(this.routeAnimationId);
+    }
+    
+    // Remove all weather alert markers
+    this.weatherAlertMarkers.forEach(alert => {
+      alert.marker.remove();
+    });
+    this.weatherAlertMarkers = [];
+    
+    // Remove map
+    if (this.map) {
+      this.map.remove();
+      this.map = null;
     }
   }
   
@@ -782,21 +1122,6 @@ class MapboxComponent {
     document.dispatchEvent(event);
   }
   
-  /**
-   * Destroy the map and clean up resources
-   */
-  destroy() {
-    // Cancel animations
-    if (this.routeAnimationId) {
-      cancelAnimationFrame(this.routeAnimationId);
-    }
-    
-    // Remove map
-    if (this.map) {
-      this.map.remove();
-      this.map = null;
-    }
-  }
 }
 
 export default MapboxComponent;
