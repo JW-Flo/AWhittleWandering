@@ -4,7 +4,8 @@ import { TeslaAPIClient } from './utils/tesla-client';
 import { getToken, setToken } from './utils/tesla-tokens';
 import { handleEmailSubscribe, handleEmailNotify } from './email';
 import { handleItineraryRequest } from './itinerary';
-import { WorkerEnvironment } from './types/cloudflare';
+import { WorkerEnvironment, KVNamespace } from './types/cloudflare';
+import { fetchWeatherData, isFavorableForEV } from './utils/weather-api';
 
 // Interface for Cloudflare Workers execution context
 // This is used by the Workers runtime but not directly in our code
@@ -173,20 +174,21 @@ async function handleWeatherRisk(request: Request, env: Env): Promise<Response> 
             });
         }
 
-        // TODO: Replace with actual weather API call
-        const mockWeather: Weather = {
-            temperature: 20,
-            windSpeed: 15,
-            precipitation: 0.2,
-            conditions: ["cloudy", "rain"]
-        };
-
-        const riskLevel = calculateRiskLevel(mockWeather);
+        // Fetch real weather data from the API
+        const weather = await fetchWeatherData(latitude, longitude, env.WEATHER_API_KEY || '');
+        
+        // Calculate weather risk level
+        const riskLevel = calculateRiskLevel(weather);
+        
+        // Check if the conditions are favorable for EV travel
+        const isFavorable = isFavorableForEV(weather);
+        
         const response: WeatherRiskResponse = {
             location: { latitude, longitude },
             riskLevel,
-            weather: mockWeather,
-            recommendations: generateWeatherRecommendations(mockWeather, riskLevel)
+            weather,
+            recommendations: generateWeatherRecommendations(weather, riskLevel),
+            isFavorableForEV: isFavorable
         };
 
         return new Response(JSON.stringify(response), {

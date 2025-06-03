@@ -9,6 +9,12 @@
     "deploy": "wrangler deploy",
     "serve": "vite preview"
   },
+  "dependencies": {
+    "mapbox-gl": "^3.4.0",
+    "three": "^0.157.0",
+    "gsap": "^3.12.2",
+    "intersection-observer": "^0.12.2"
+  },
   "devDependencies": {
     "vite": "^6.3.5",
     "wrangler": "^4.18.0"

@@ -10,7 +10,7 @@ const path = require('path');
 // DB and buffer paths
 const DB_PATH = process.env.DB_PATH || './data/mcp.sqlite';
 const TELEMETRY_BUFFER_PATH = process.env.TELEMETRY_BUFFER_PATH || './data/telemetry.json';
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 4001;
 const HMAC_SECRET = process.env.HMAC_SECRET || 'changeme';
 
 const app = express();

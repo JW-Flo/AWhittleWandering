@@ -15,6 +15,7 @@ export interface WeatherRiskResponse {
   riskLevel: 'low' | 'medium' | 'high';
   weather: Weather;
   recommendations: string[];
+  isFavorableForEV?: boolean;
 }
 
 export interface RouteSegment {
