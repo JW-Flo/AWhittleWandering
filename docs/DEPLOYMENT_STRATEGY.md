@@ -37,7 +37,8 @@ npm install
 npm run validate-config
 
 # Deploy to Cloudflare
-npm run deploy
+# Note: All wrangler commands should use npx wrangler instead of global wrangler
+npx wrangler deploy
 ```
 
 **Verification**:
@@ -117,7 +118,7 @@ npm install
 npm run build
 
 # Deploy to Cloudflare Pages
-wrangler pages deploy ./dist --project-name continentalusa-site
+npx wrangler pages deploy ./dist --project-name continentalusa-site
 ```
 
 **Verification**:
@@ -186,13 +187,13 @@ This script checks:
 ### Edge Worker Rollback
 ```bash
 cd edge-worker
-wrangler rollback
+npx wrangler rollback
 ```
 
 ### Public Website Rollback
 ```bash
 cd 48Continental_Starter/public-site
-wrangler pages deployment rollback --project-name continentalusa-site
+npx wrangler pages deployment rollback --project-name continentalusa-site
 ```
 
 ### MCP Server Rollback

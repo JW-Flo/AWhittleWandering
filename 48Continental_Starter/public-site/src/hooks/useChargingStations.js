@@ -1,31 +1,34 @@
 /**
  * Charging Stations Hook
  * 
- * This hook provides access to nearby charging stations data
- * based on vehicle location or specified coordinates.
+ * This hook provides access to nearby Tesla Supercharger stations
+ * for the 48 Continental USA journey.
  */
 
 /* eslint-env browser */
 import { useState, useEffect, useCallback } from 'react';
-import { fetchChargingStations, generateSimulatedChargingStations } from '../api';
+import { fetchChargingStations, generateSimulatedChargingStations } from '../api/chargingApi';
 
 // Default polling interval in milliseconds
 const DEFAULT_POLL_INTERVAL = 300000; // 5 minutes
 
+// Default search radius in miles
+const DEFAULT_RADIUS = 50;
+
 /**
  * Hook for accessing charging stations data
  * @param {Object} options - Configuration options
- * @param {number} options.latitude - Latitude to search around
- * @param {number} options.longitude - Longitude to search around
+ * @param {number} options.latitude - Center latitude for search
+ * @param {number} options.longitude - Center longitude for search
  * @param {number} options.radius - Search radius in miles
  * @param {number} options.pollInterval - Data refresh interval in ms
  * @returns {Object} Charging stations data, loading state, and error
  */
 export const useChargingStations = (options = {}) => {
   const {
-    latitude = null,
-    longitude = null,
-    radius = 50,
+    latitude,
+    longitude,
+    radius = DEFAULT_RADIUS,
     pollInterval = DEFAULT_POLL_INTERVAL
   } = options;
   
@@ -35,10 +38,11 @@ export const useChargingStations = (options = {}) => {
   const [stationsError, setStationsError] = useState(null);
   
   // Function to fetch charging stations data from API
-  const getChargingStations = useCallback(async () => {
-    // Skip if no location provided
-    if (latitude === null || longitude === null) {
-      setStationsData(null);
+  const getStationsData = useCallback(async () => {
+    // If no location provided, can't fetch charging stations
+    if (!latitude || !longitude) {
+      // Use simulated data with default location
+      setStationsData(generateSimulatedChargingStations());
       setStationsLoading(false);
       return;
     }
@@ -46,12 +50,17 @@ export const useChargingStations = (options = {}) => {
     setStationsLoading(true);
     
     try {
-      // Call our API function
-      const data = await fetchChargingStations(latitude, longitude, radius);
+      // Call our API function with location and radius
+      const data = await fetchChargingStations({
+        latitude,
+        longitude,
+        radius
+      });
+      
       setStationsData(data);
       setStationsError(null);
     } catch (error) {
-      console.error('Error fetching charging stations:', error);
+      console.error('Error fetching charging stations data:', error);
       setStationsError(error.message);
       
       // If we don't have data yet, use simulated data
@@ -61,36 +70,35 @@ export const useChargingStations = (options = {}) => {
     } finally {
       setStationsLoading(false);
     }
-  }, [latitude, longitude, radius]);
+  }, [latitude, longitude, radius, stationsData]);
   
-  // Refresh data when location or radius changes
+  // Fetch charging stations data when location changes or on initial load
   useEffect(() => {
-    getChargingStations();
-  }, [getChargingStations]);
-  
-  // Set up polling for periodic updates
-  useEffect(() => {
-    if (latitude !== null && longitude !== null) {
-      const pollTimer = setInterval(getChargingStations, pollInterval);
+    getStationsData();
+    
+    // Set up polling if location provided
+    if (latitude && longitude) {
+      const pollTimer = setInterval(getStationsData, pollInterval);
       
       return () => {
         clearInterval(pollTimer);
       };
     }
-  }, [getChargingStations, pollInterval, latitude, longitude]);
+  }, [getStationsData, latitude, longitude, pollInterval]);
   
-  // Computed values
-  const availableStations = stationsData?.stations?.filter(station => station.available) || [];
-  const unavailableStations = stationsData?.stations?.filter(station => !station.available) || [];
+  // Get nearest charging station
+  const nearestStation = stationsData?.stations?.length > 0 ? stationsData.stations[0] : null;
+  
+  // Get available stations count
+  const availableStations = stationsData?.stations?.filter(station => station.available > 0).length || 0;
   
   return {
     stationsData,
     stationsLoading,
     stationsError,
-    refreshStationsData: getChargingStations,
+    refreshStationsData: getStationsData,
     // Computed properties
-    availableStations,
-    unavailableStations,
-    totalStations: stationsData?.stations?.length || 0
+    nearestStation,
+    availableStations
   };
 };

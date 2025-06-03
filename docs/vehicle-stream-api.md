@@ -190,8 +190,12 @@ ws://localhost:8787/tesla/vehicle/stream?id=your_vehicle_id
 Use Cloudflare Wrangler CLI to run the worker locally:
 ```
 cd edge-worker
-wrangler dev
+npx wrangler dev
 ```
+
+> **Important:** Always use `npx wrangler` commands rather than a global wrangler installation to ensure consistency across development and CI/CD environments.
+
+For more detailed implementation information, see [WebSocket Implementation Guide](websocket-implementation.md).
 
 ### WebSocket Testing Tools
 

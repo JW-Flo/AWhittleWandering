@@ -4,15 +4,15 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 // Import simulated data generators from our API
-const SIMULATED_API_PATH = './src/api';
+const SIMULATED_API_PATH = '../../src/api';
 
 // API simulation middleware for local development
 const simulateApiEndpoints = async (req, res, next) => {
   // Define API endpoint handlers
   const apiHandlers = {
     '/api/vehicle': async () => {
-      // Import simulated vehicle data generator
-      const { generateSimulatedVehicleData } = await import(`${SIMULATED_API_PATH}/vehicleApi.js`);
+      // Import simulated vehicle data generator directly from simulation file
+      const { generateSimulatedVehicleData } = await import(`${SIMULATED_API_PATH}/vehicleSimulation.js`);
       return generateSimulatedVehicleData();
     },
     '/api/weather': async () => {
@@ -21,8 +21,8 @@ const simulateApiEndpoints = async (req, res, next) => {
       return generateSimulatedWeatherData();
     },
     '/api/trip': async () => {
-      // Import simulated trip data generator
-      const { generateSimulatedTripData } = await import(`${SIMULATED_API_PATH}/tripApi.js`);
+      // Import simulated trip data generator directly from simulation file
+      const { generateSimulatedTripData } = await import(`${SIMULATED_API_PATH}/tripSimulation.js`);
       return generateSimulatedTripData();
     },
     '/api/charging': async () => {

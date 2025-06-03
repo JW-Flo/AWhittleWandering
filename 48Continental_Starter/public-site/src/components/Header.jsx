@@ -62,8 +62,14 @@ const Header = ({
 Header.propTypes = {
   tripName: PropTypes.string,
   currentState: PropTypes.string,
-  onViewChange: PropTypes.func.isRequired,
-  activeView: PropTypes.string.isRequired
+  onViewChange: PropTypes.func,
+  activeView: PropTypes.string
+};
+
+// Default props for the Header component
+Header.defaultProps = {
+  onViewChange: () => {},
+  activeView: 'map'
 };
 
 export default Header;
