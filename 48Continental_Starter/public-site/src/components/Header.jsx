@@ -18,13 +18,12 @@ const Header = ({
   activeView
 }) => {
   return (
-    <header className="app-header">
+    <header className="hero">
       <div className="header-left">
         <div className="logo">
-          <span className="logo-number">48</span>
-          <span className="logo-text">Continental USA</span>
+          <span className="logo-text">The Wandering Whilttle</span>
         </div>
-        {tripName && <h1 className="trip-title">{tripName}</h1>}
+        {tripName && <h2 className="trip-subtitle">{tripName}</h2>}
       </div>
       
       <div className="header-center">
@@ -37,32 +36,24 @@ const Header = ({
       </div>
       
       <nav className="header-nav">
-        <button 
-          className={`nav-button ${activeView === 'map' ? 'active' : ''}`}
-          onClick={() => onViewChange('map')}
-          aria-pressed={activeView === 'map'}
-        >
-          <span className="nav-icon">🗺️</span>
-          <span className="nav-text">Map</span>
-        </button>
-        
-        <button 
-          className={`nav-button ${activeView === 'journey' ? 'active' : ''}`}
-          onClick={() => onViewChange('journey')}
-          aria-pressed={activeView === 'journey'}
-        >
-          <span className="nav-icon">📍</span>
-          <span className="nav-text">Journey</span>
-        </button>
-        
-        <button 
-          className={`nav-button ${activeView === 'states' ? 'active' : ''}`}
-          onClick={() => onViewChange('states')}
-          aria-pressed={activeView === 'states'}
-        >
-          <span className="nav-icon">🇺🇸</span>
-          <span className="nav-text">States</span>
-        </button>
+        {[
+          { view: 'journey', icon: '📍', label: 'Journey' },
+          { view: 'status', icon: '📊', label: 'Status' },
+          { view: 'map', icon: '🗺️', label: 'Map' },
+          { view: 'gallery', icon: '🖼️', label: 'Gallery' },
+          { view: 'comments', icon: '💬', label: 'Comments' },
+          { view: 'logs', icon: '📝', label: 'Logs' }
+        ].map(({ view, icon, label }) => (
+          <button
+            key={view}
+            className={`nav-button ${activeView === view ? 'active' : ''}`}
+            onClick={() => onViewChange(view)}
+            aria-pressed={activeView === view}
+          >
+            <span className="nav-icon">{icon}</span>
+            <span className="nav-text">{label}</span>
+          </button>
+        ))}
       </nav>
     </header>
   );
