@@ -20,6 +20,10 @@ let package = Package(
       url: "https://github.com/realm/realm-swift.git",
       from: "10.0.0"
     ),
+    .package(
+      url: "https://github.com/mapbox/mapbox-maps-ios.git",
+      from: "10.16.0"
+    ),
   ],
   targets: [
     .target(
@@ -32,6 +36,7 @@ let package = Package(
       dependencies: [
         .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
         .product(name: "RealmSwift", package: "realm-swift"),
+        .product(name: "MapboxMaps", package: "mapbox-maps-ios"),
         "Models",
       ],
       path: "Sources/Features"
