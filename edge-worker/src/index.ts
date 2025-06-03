@@ -6,7 +6,8 @@ import { handleEmailSubscribe, handleEmailNotify } from './email';
 import { handleItineraryRequest } from './itinerary';
 import { WorkerEnvironment, KVNamespace } from './types/cloudflare';
 import { fetchWeatherData, isFavorableForEV } from './utils/weather-api';
-import { SyncServiceDurableObject } from '../../shared/agent-coordination/syncService';
+// Import required types and modules
+import { onRequest as handleVehicleStream } from './vehicle-stream';
 
 // Interface for Cloudflare Workers execution context
 // This is used by the Workers runtime but not directly in our code
@@ -15,6 +16,21 @@ import { SyncServiceDurableObject } from '../../shared/agent-coordination/syncSe
 interface ExecutionContext {
     waitUntil(promise: Promise<unknown>): void;
     passThroughOnException(): void;
+}
+
+// Define DurableObjectNamespace interface
+interface DurableObjectNamespace {
+    idFromName(name: string): DurableObjectId;
+    idFromString(hex: string): DurableObjectId;
+    get(id: DurableObjectId): DurableObject;
+}
+
+interface DurableObjectId {
+    toString(): string;
+}
+
+interface DurableObject {
+    fetch(request: Request): Promise<Response>;
 }
 
 // Using WorkerEnvironment from types/cloudflare.ts 
@@ -457,6 +473,9 @@ export default {
         // --- TESLA API ROUTES ---
         if (url.pathname === "/tesla/vehicle" && request.method === "GET") {
             return await handleTeslaVehicle(request, env);
+        }
+        if (url.pathname === "/tesla/vehicle/stream") {
+            return await handleVehicleStream(request, env);
         }
         if (url.pathname === "/tesla/auth" && request.method === "POST") {
             return await handleTeslaAuth(request, env);
