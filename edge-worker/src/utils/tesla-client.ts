@@ -4,20 +4,64 @@
  * 
  * Methods:
  *   - listVehicles(): Promise<Vehicle[]>
- *   - getVehicleData(vehicleId: string): Promise<any>
- *   - refreshToken(): Promise<{ access_token, refresh_token }>
+ *   - getVehicleData(vehicleId: string): Promise<VehicleData>
+ *   - refreshTokens(): Promise<{ access_token, refresh_token }>
  */
 
-type TeslaToken = {
+export interface TeslaToken {
   access_token: string;
   refresh_token: string;
-};
+}
 
-type Vehicle = {
+export interface Vehicle {
   id_s: string;
   display_name: string;
   vin: string;
-};
+}
+
+// Define more specific return type for vehicle data
+export interface VehicleData {
+  id: string;
+  vehicle_id: number;
+  vin: string;
+  display_name: string;
+  state: string;
+  drive_state: {
+    latitude: number;
+    longitude: number;
+    heading: number;
+    speed: number | null;
+    power: number;
+    timestamp: number;
+  };
+  charge_state: {
+    battery_level: number;
+    battery_range: number;
+    charging_state: string;
+    charge_rate: number;
+    minutes_to_full_charge: number;
+    timestamp: number;
+  };
+  climate_state: {
+    inside_temp: number;
+    outside_temp: number;
+    driver_temp_setting: number;
+    passenger_temp_setting: number;
+    is_climate_on: boolean;
+    timestamp: number;
+  };
+  vehicle_state: {
+    locked: boolean;
+    sentry_mode: boolean;
+    software_update: {
+      status: string;
+      version: string;
+    };
+    odometer: number;
+    timestamp: number;
+  };
+  [key: string]: unknown; // For any additional properties that might be returned
+}
 
 export class TeslaAPIClient {
   private clientId: string;
@@ -36,6 +80,20 @@ export class TeslaAPIClient {
     this.accessToken = opts.accessToken;
     this.refreshToken = opts.refreshToken;
   }
+  
+  // Public getters/setters for token management
+  getAccessToken(): string {
+    return this.accessToken;
+  }
+  
+  getRefreshToken(): string {
+    return this.refreshToken;
+  }
+  
+  updateTokens(accessToken: string, refreshToken: string): void {
+    this.accessToken = accessToken;
+    this.refreshToken = refreshToken;
+  }
 
   async listVehicles(): Promise<Vehicle[]> {
     const res = await fetch('https://owner-api.teslamotors.com/api/1/vehicles', {
@@ -53,7 +111,7 @@ export class TeslaAPIClient {
     return data.response as Vehicle[];
   }
 
-  async getVehicleData(vehicleId: string): Promise<any> {
+  async getVehicleData(vehicleId: string): Promise<VehicleData> {
     const res = await fetch(`https://owner-api.teslamotors.com/api/1/vehicles/${vehicleId}/vehicle_data`, {
       headers: {
         Authorization: `Bearer ${this.accessToken}`,
@@ -69,7 +127,7 @@ export class TeslaAPIClient {
     return data.response;
   }
 
-  async refreshToken(): Promise<TeslaToken> {
+  async refreshTokens(): Promise<TeslaToken> {
     const res = await fetch('https://auth.tesla.com/oauth2/v3/token', {
       method: 'POST',
       headers: {
