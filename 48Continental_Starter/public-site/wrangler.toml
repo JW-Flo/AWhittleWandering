@@ -1,6 +1,8 @@
 [pages]
-name = "continentalusa-site"
+name = "thewanderingwhilttle-site"
 pages_build_output_dir = "dist"
+  # Public custom domain
+custom_domain = "thewanderingwhilttle.com"
 
 [build]
 command = "npm run build"
@@ -8,8 +10,8 @@ command = "npm run build"
 compatibility_date = "2025-06-02"
 
 [env.production]
-name = "continentalusa-site"
-routes = ["continentalusa-site.pages.dev/*"]
+name = "thewanderingwhilttle-site"
+routes = ["continentalusa-site.pages.dev/*", "thewanderingwhilttle.com/*"]
 
 # SSL/TLS settings for production
 [ssl]

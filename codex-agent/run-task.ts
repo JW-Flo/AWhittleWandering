@@ -1,62 +1,51 @@
-import { createComponent } from './tasks/createComponent.ts';
-import { runLocalBuild } from './tasks/runLocalBuild.ts';
-import { pushToRepo } from './tasks/pushToRepo.ts';
+import * as fs from 'fs';
 
-async function runTask(task: string) {
-  console.log(`[Codex Agent] Running task: ${task}`);
+try {
+  const { createComponent } = await import('./tasks/createComponent.ts');
+  const { runLocalBuild } = await import('./tasks/runLocalBuild.ts');
+  const { pushToRepo } = await import('./tasks/pushToRepo.ts');
+
+  const task = process.argv.slice(2).join(" ").trim();
+  console.log("[Debug] Parsed task:", task);
+
+  if (!task) {
+    console.error("[Codex Agent] No task input provided.");
+    process.exit(1);
+  }
+
+  let result = "";
+
+  if (task.includes("create")) {
+    console.log("[Debug] Running createComponent");
+    result = await createComponent({ name: "Navbar", props: ["title"] });
+  } else if (task.includes("build")) {
+    console.log("[Debug] Running runLocalBuild");
+    result = await runLocalBuild({ target: "web" });
+  } else if (task.includes("push")) {
+    console.log("[Debug] Running pushToRepo");
+    result = await pushToRepo({ branch: "main", message: "Codex commit" });
+  } else {
+    console.log("[Codex Agent] Unknown task.");
+    process.exit(1);
+  }
+
+  console.log("[Codex Agent] Success:", result);
+} catch (err) {
+  console.log("[Codex Agent] FATAL ERROR:");
+  if (err instanceof Error) {
+    console.error(err.message);
+    console.error(err.stack);
+  } else {
+    console.error(JSON.stringify(err, null, 2));
+  }
 
   try {
-    let result = '';
-
-    if (task.includes('create')) {
-      console.log("[Debug] Entering create block");
-      result = await createComponent({ name: 'Navbar', props: ['title'] });
-    } else if (task.includes('build')) {
-      console.log("[Debug] Entering build block");
-      result = await runLocalBuild({ target: 'web' });
-    } else if (task.includes('push')) {
-      console.log("[Debug] Entering push block");
-      result = await pushToRepo({ branch: 'main', message: 'Codex commit' });
-    } else {
-      throw new Error(`Unknown task input: "${task}"`);
-    }
-
-    console.log(`[Codex Agent] Success: ${result}`);
-  } catch (e: unknown) {
-    console.error(`[Codex Agent] Error Caught:\n`);
-    if (e instanceof Error) {
-      console.error(e.stack || e.message);
-    } else {
-      try {
-        console.error(JSON.stringify(e, null, 2));
-      } catch {
-        console.error(e);
-      }
-    }
-
-    try {
-      const healing = await import('./healing/patchAndRetry.ts');
-      healing.patchAndRetry(task);
-    } catch (healErr) {
-      console.error('[Healing Error]', healErr instanceof Error ? healErr.stack : healErr);
-    }
+    const healing = await import('./healing/patchAndRetry.ts');
+    healing.patchAndRetry(process.argv.slice(2).join(" "));
+  } catch (e) {
+    console.error("[Codex Agent] Healing failed:", e);
   }
-}
 
-// CLI Input Handler
-const task = process.argv.slice(2).join(" ").trim();
-console.log("[Debug] Parsed task input:", task);
-
-if (!task) {
-  console.error("[Codex Agent] No task argument provided.");
   process.exit(1);
 }
-
-console.log("[Debug] Starting runTask()...");
-runTask(task)
-  .then(() => console.log("[Debug] runTask() completed"))
-  .catch((err) => {
-    console.error("[Debug] runTask() failed unexpectedly:");
-    console.error(err instanceof Error ? err.stack : err);
-  });
 
