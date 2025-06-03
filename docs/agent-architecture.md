@@ -67,7 +67,7 @@ jobs:
       - uses: actions/checkout@v2
       - run: npm install
       - run: npm run build:edge
-      - run: wrangler publish --cwd edge-worker
+      - run: wrangler deploy --cwd edge-worker
 
   ios-client:
     runs-on: macos-latest

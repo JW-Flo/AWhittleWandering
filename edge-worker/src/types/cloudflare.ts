@@ -3,11 +3,11 @@
  */
 
 export interface D1Database {
-  prepare<T = any>(query: string): D1PreparedStatement<T>;
+  prepare<T = unknown>(query: string): D1PreparedStatement<T>;
 }
 
-export interface D1PreparedStatement<T = any> {
-  bind(...values: any[]): D1PreparedStatement<T>;
+export interface D1PreparedStatement<T = unknown> {
+  bind(...values: unknown[]): D1PreparedStatement<T>;
   all<U = T>(): Promise<{ results: U[] }>;
   run(): Promise<{ changes: number }>;
   get<U = T>(): Promise<U | null>;
@@ -35,4 +35,7 @@ export interface WorkerEnvironment {
   TESLA_CLIENT_SECRET?: string;
   SENDGRID_API_KEY?: string;
   FROM_EMAIL?: string;
+  WEATHER_API_KEY?: string;
+  ABRP_API_KEY?: string;
+  MAPBOX_TOKEN?: string;
 }

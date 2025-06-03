@@ -1,175 +1,207 @@
-# ContinentalUSA
-App to manage 48 state continental drive 
-A fully autonomous, 60-day EV-road-trip planner. • Collects read-only telemetry (state-of-charge, location, charging events) every 15 min while driving or charging. • Feeds data to an on-device algorithm that selects the next Supercharger/fallback L2 site using offline ABRP matrices. • Transmits high-level stats (leg complete, arrival %, charging cost) to the driver's personal Cloudflare Worker for post-trip analytics. **No remote commands** are issued (start-charge, unlock, climate, etc.). Data never shared with third parties; solely for personal trip logistics and energy budgeting.
+# 48 Continental USA Road Trip Tracker
 
-## Project Progress
+Real-time tracking and visualization for a 60-day Tesla road trip across all 48 contiguous U.S. states.
 
-- Public website built with React + Vite + Windi CSS for modern, responsive UI
-- Live route status with real-time updates from Cloudflare Worker
-- Interactive Mapbox map showing current location
-- Dark mode toggle with persistent user preference
-- Photo gallery with lightbox functionality
-- Trip logs management with add/delete
-- Tabbed navigation with URL hash support
-- Offline support with service worker caching
-- Accessibility improvements with ARIA roles and keyboard navigation
-- GitHub Actions CI/CD for automatic deployment to Cloudflare Pages
+## Project Overview
 
-## Next Steps
+The 48 Continental project is a real-time, multi-system initiative that tracks a 60-day Tesla road trip through all 48 contiguous U.S. states. The system consists of multiple integrated components:
 
-- Refactor Tesla API integration to work with Cloudflare Workers limitations
-- Move Tesla API calls to an external backend service or rewrite with direct HTTP calls
-- Implement secure authentication and token management for Tesla API
-- Enhance trip logs and comments with backend persistence
-- Add more interactive features like social sharing, notifications, and media uploads
+1. **Public Website** - Shows live trip status, vehicle data, weather conditions, and trip progress
+2. **MCP Server** - Mission Control Platform running on an always-on iMac to coordinate components
+3. **Mobile Client** - React Native app for real-time updates while on the road
+4. **Edge Worker** - Cloudflare Workers that provide API endpoints and handle data synchronization
+5. **Functions** - Serverless functions that fetch real-time data from various sources
 
-## Quick Start
+## Features
 
-### Public Website (Remote Access)
+- ✅ **Real-time Tesla data** integration (location, battery level, speed, range)
+- ✅ **Route planning** with A Better Route Planner (ABRP) API
+- ✅ **Weather data** for current and upcoming locations
+- ✅ **MapBox integration** for route visualization and mapping
+- ✅ **Offline support** via service workers
+- ✅ **Email subscription** for trip updates
+- ✅ **Photo gallery** from the journey
+- ✅ **Interactive map** showing current location and route
 
-```bash
-# from repo root
-cd 48Continental_Starter/public-site
+## System Architecture
 
-# install dependencies
-npm install
-
-# start local development server
-npm run dev
-
-# build for production
-npm run build
-
-# deploy to Cloudflare Pages
-npm run deploy
+```
+┌─────────────────┐     ┌───────────────┐     ┌────────────────┐
+│                 │     │               │     │                │
+│  Public Website │◄────┤  Edge Worker  │◄────┤   MCP Server   │
+│                 │     │               │     │                │
+└────────┬────────┘     └───────┬───────┘     └────────┬───────┘
+         │                      │                      │
+         │                      │                      │
+         │                      ▼                      ▼
+         │              ┌───────────────┐     ┌────────────────┐
+         │              │  Cloudflare   │     │   Tesla API    │
+         └─────────────►│    Workers    │     │                │
+                        │               │     └────────┬───────┘
+                        └───────┬───────┘              │
+                                │                      │
+                                ▼                      ▼
+                        ┌───────────────┐     ┌────────────────┐
+                        │   Weather &   │     │      ABRP      │
+                        │  MapBox APIs  │     │      API       │
+                        │               │     │                │
+                        └───────────────┘     └────────────────┘
 ```
 
-The public website is now remotely accessible, providing global access to real-time trip statistics and charging information over the internet.
+## Getting Started
 
-### Mobile App (React Native)
+### Prerequisites
 
-```bash
-# from repo root
-cd ContinentalUSA-mobile
+- Node.js (v18+)
+- npm or yarn
+- API keys for Tesla, ABRP, OpenWeatherMap, and MapBox
 
-# install dependencies
-npm install
+### Installation and Setup
 
-# start development server
-npm start
+1. Clone the repository:
+   ```
+   git clone https://github.com/username/ContinentalUSA.git
+   cd ContinentalUSA
+   ```
 
-# run on iOS simulator
-npm run ios
+2. Install dependencies:
+   ```
+   npm install
+   ```
 
-# run on Android device/emulator
-npm run android
+3. Create a `.env` file with your API keys (or run one of the deployment scripts which will create it for you):
+   ```
+   # Tesla API credentials
+   TESLA_CLIENT_ID=your_tesla_client_id
+   TESLA_CLIENT_SECRET=your_tesla_client_secret
+   TESLA_REFRESH_TOKEN=your_tesla_refresh_token
+
+   # ABRP API key
+   ABRP_API_KEY=your_abrp_api_key
+
+   # Weather API key
+   WEATHER_API_KEY=your_weather_api_key
+
+   # MapBox token
+   MAPBOX_TOKEN=pk.eyJ1IjoidGhld2FuZGVyaW5nd2hpdHRsZSIsImEiOiJjbHQxaXhzejYwYmU2MmpxdHl0MHowN3UzIn0.Q7xKTRlXvtimBHd39JqN1A
+
+   # KV namespace for caching
+   CONTINENTALUSA_KV=your_kv_namespace_id
+   ```
+
+### Running the Application
+
+#### Quick Start - All Services
+
+To start all services with real-time data integration:
+
+```
+./scripts/start-services.sh
 ```
 
-For production deployment:
+This script will:
+1. Load environment variables from `.env`
+2. Start the MCP server
+3. Start the Edge Worker locally
+4. Start the Public Website in development mode
+5. Open the website in your default browser
 
-```bash
-# Build iOS
-cd ContinentalUSA-mobile
-npm run build:ios
+The website will be available at http://localhost:3000
 
-# Build Android
-cd ContinentalUSA-mobile
-npm run build:android
+To stop all services:
 
-# Deploy to stores (requires proper credentials)
-npm run deploy:ios
-npm run deploy:android
+```
+./scripts/stop-services.sh
 ```
 
-## Additional Components
+#### Local Development Server Only
 
-### Requirements
+To run only the public website:
 
-- Xcode 15 (or later)  
-- Swift 5.9 toolchain  
-- Node.js (v16+) & npm  
-- Cloudflare Wrangler CLI (`npm install -g @cloudflare/wrangler`)
-- ROO CLI (install via `npm install -g @roo/cli` or [see documentation](https://github.com/roo/cli))
-- Set `EDGE_HMAC_KEY` in your shell or CI environment
-
-### iOS Client
-
-1. Open the Swift Package in Xcode via `ios-client/Package.swift`.  
-2. Select a simulator or device (targeting iOS 17+).  
-3. Hit **Run** (⌘+R) to build and launch the app.
-
-> Alternatively, from terminal:
->
-> ```bash
-> cd ios-client
-> swift build
-> # Note: `swift run` is not supported for iOS targets—use Xcode to launch.
-> ```
-
-### Edge Worker
-
-```bash
-# from repo root
-cd edge-worker
-
-# install dependencies
-npm install
-
-# run in dev mode on localhost:8787
-wrangler dev
-
-# build for production
-wrangler build
-
-# publish to Cloudflare (will read EDGE_HMAC_KEY from env)
-wrangler deploy
+```
+./scripts/deploy-public-site.sh
 ```
 
-### Agents & Services
+This script will:
+1. Install dependencies
+2. Create `.env` file if needed
+3. Build the public site
+4. Start the local development server
 
-To start all backend services and data collection agents:
+#### MCP Server Only
 
-```bash
-./scripts/start-agents.sh
+To only run the MCP server:
+
+```
+./scripts/start-mcp-server.sh
 ```
 
-## Architecture
+#### Full Production Deployment
 
-The project consists of several key components:
+For a full production deployment of all components:
 
-1. **Public Website** - WLAN accessible interface for accessing trip data without internet connectivity
-2. **React Native Mobile App** - Cross-platform companion app for trip statistics and charging station management
-3. **iOS Native Client** - Swift-based application for primary trip management and vehicle telemetry
-4. **Edge Worker** - Cloudflare Worker handling data aggregation and trip analytics
-5. **Backend Agents** - Services for data collection, route optimization, and charging station availability
-
-## Development
-
-### Pre-deploy Checks
-
-Before deploying any changes, run:
-
-```bash
-npm run pre-deploy
+```
+./scripts/deploy-all.sh
 ```
 
-### Generate TypeScript Client
+This script will:
+1. Verify environment variables
+2. Deploy the Edge Worker to Cloudflare
+3. Set up the MCP Server
+4. Deploy the Public Website to Cloudflare Pages
+5. Build mobile applications (if configured)
+6. Perform verification checks
 
-To update the TypeScript API client:
+## Data Sources
 
-```bash
-npm run codegen:ts
+The application integrates data from multiple sources:
+
+### Tesla API
+- Vehicle location
+- Battery level and range
+- Speed and power usage
+- Climate control status
+
+### A Better Route Planner (ABRP) API
+- Route planning
+- Charging stop recommendations
+- Energy usage predictions
+- ETA calculations
+
+### OpenWeatherMap API
+- Current weather conditions
+- Temperature and humidity
+- Wind speed
+- Weather forecasts
+
+### MapBox API
+- Interactive maps
+- Route visualization
+- Geocoding (location names)
+- Distance and duration calculations
+
+## Project Structure
+
+```
+ContinentalUSA/
+├── 48Continental_Starter/    # Public website code
+│   └── public-site/          # Vite-based frontend
+├── edge-worker/              # Cloudflare Workers code
+├── functions/                # Serverless functions
+├── ios-client/               # iOS native client
+├── mcp-server/               # Mission Control Platform
+├── scripts/                  # Deployment and utility scripts
+├── shared/                   # Shared code and models
+│   ├── api-manager/          # API integration code
+│   ├── credential-manager/   # Secure credential handling
+│   └── models/               # Shared data models
+└── docs/                     # Documentation
 ```
 
-## Security
+## Contributing
 
-- All vehicle telemetry is collected in read-only mode
-- Data is encrypted in transit using HMAC authentication
-- No remote vehicle commands are supported
-- Personal data remains on-device; only aggregated statistics are transmitted
-- WLAN interface is only accessible on local network
-- Mobile app uses secure storage for sensitive data
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-See [LICENSE](./LICENSE) for details.
+This project is licensed under the MIT License - see the LICENSE file for details.

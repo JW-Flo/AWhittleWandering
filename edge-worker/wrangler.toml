@@ -2,7 +2,7 @@ name = "thewanderingwhittle-edge"
 compatibility_date = "2025-05-31"
 main = "src/index.ts"
 [vars]
-EDGE_HMAC_KEY = "test-key"
+EDGE_HMAC_KEY = "48continental_secure_key"
 
 [[kv_namespaces]]
 binding = "APP_KV"
