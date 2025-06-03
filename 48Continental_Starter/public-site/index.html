@@ -3,19 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>48Continental - Road Trip</title>
+  <title>The Wandering Whilttle - Road Trip</title>
   <link rel="stylesheet" href="style.css" />
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet" />
+  <!-- Mapbox token -->
+  <meta name="mapbox-token" content="YOUR_MAPBOX_PUBLIC_TOKEN">
 </head>
 <body>
-  <header class="header">
-    <h1>48Continental</h1>
+  <header class="hero">
+    <h1>The Wandering Whilttle</h1>
     <p>60 days. 48 states. One Tesla. And a very good dog.</p>
     <nav class="nav">
       <button class="tab-button active" data-tab="journey">Journey</button>
       <button class="tab-button" data-tab="status">Live Status</button>
       <button class="tab-button" data-tab="map">Map</button>
       <button class="tab-button" data-tab="gallery">Gallery</button>
+      <button class="tab-button" data-tab="comments">Comments</button>
       <button class="tab-button" data-tab="logs">Logs</button>
     </nav>
   </header>
@@ -43,9 +46,9 @@
     <section id="gallery" class="tab-content">
       <h2>Photo Gallery</h2>
       <div class="gallery">
-        <img src="photos/photo1.jpg" alt="Sunset over mountains" />
-        <img src="photos/photo2.jpg" alt="Campfire at night" />
-        <img src="photos/photo3.jpg" alt="Tesla charging" />
+        <img class="gallery-item" tabindex="0" src="photos/photo1.jpg" alt="Sunset over mountains" />
+        <img class="gallery-item" tabindex="0" src="photos/photo2.jpg" alt="Campfire at night" />
+        <img class="gallery-item" tabindex="0" src="photos/photo3.jpg" alt="Tesla charging" />
       </div>
     </section>
 
@@ -58,13 +61,64 @@
         <button type="submit">Add Log</button>
       </form>
     </section>
+    <!-- Comments section -->
+    <section id="comments" class="tab-content">
+      <h2>Comments</h2>
+      <form id="comment-form">
+        <input type="text" name="comment-text" placeholder="Leave a comment..." required />
+        <button type="submit">Post</button>
+      </form>
+      <ul id="comment-list"></ul>
+    </section>
   </main>
 
   <footer>
+    <form id="subscribe-form" style="margin-bottom: 1em;">
+      <label for="subscribe-email" style="font-weight: bold;">Subscribe for trip updates:</label>
+      <input type="email" id="subscribe-email" name="email" placeholder="your@email.com" required style="margin-left: 0.5em; padding: 0.5em; border-radius: 4px; border: 1px solid #ccc;">
+      <button type="submit" style="padding: 0.5em 1em; border-radius: 4px; background: #0074d9; color: #fff; border: none;">Subscribe</button>
+      <span id="subscribe-message" style="margin-left: 1em; color: #0074d9; font-weight: bold;"></span>
+    </form>
     <p>© 2025 48Continental. Built on the road. Hosted on Cloudflare.</p>
   </footer>
 
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
   <script src="app.js" type="module"></script>
+  <script>
+    // Email subscription form handler
+    document.getElementById('subscribe-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('subscribe-email').value;
+      const message = document.getElementById('subscribe-message');
+      message.textContent = '';
+      try {
+        // TODO: Set this to your deployed edge-worker domain before production
+        const EDGE_WORKER_DOMAIN = window.EDGE_WORKER_DOMAIN || 'https://YOUR_EDGE_WORKER_DOMAIN';
+        const res = await fetch(`${EDGE_WORKER_DOMAIN}/email/subscribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        if (res.ok) {
+          message.textContent = 'Subscribed!';
+          message.style.color = '#0074d9';
+          document.getElementById('subscribe-email').value = '';
+        } else {
+          const data = await res.json();
+          message.textContent = data.error || 'Subscription failed';
+          message.style.color = '#d90000';
+        }
+      } catch (err) {
+        message.textContent = 'Network error';
+        message.style.color = '#d90000';
+      }
+    });
+  </script>
+</body>
+  <!-- Lightbox container -->
+  <div id="lightbox" aria-hidden="true" class="lightbox">
+    <img id="lightbox-img" src="" alt="" />
+    <button id="lightbox-close" aria-label="Close">&times;</button>
+  </div>
 </body>
 </html>

@@ -1,0 +1,30 @@
+{
+  "name": "@48continental/credential-manager",
+  "version": "1.0.0",
+  "description": "Security credential manager for 48 Continental project",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.9"
+  },
+  "devDependencies": {
+    "@types/node": "^18.15.11",
+    "@types/node-fetch": "^2.6.3",
+    "typescript": "^5.0.4",
+    "jest": "^29.5.0",
+    "@types/jest": "^29.5.0",
+    "ts-jest": "^29.1.0"
+  },
+  "keywords": [
+    "security",
+    "credentials",
+    "1password",
+    "secrets-management"
+  ],
+  "author": "48 Continental Team",
+  "license": "MIT"
+}

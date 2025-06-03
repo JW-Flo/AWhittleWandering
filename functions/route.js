@@ -1,20 +1,17 @@
 /// <reference lib="webworker" />
+/* global fetch, Response */
 
 const TESLA_CLIENT_ID = 'a78b7df7-5e4f-4ea4-91f4-d3963bcaf74e';
 const TESLA_CLIENT_SECRET = 'ta-secret.t4@VFJevq!il8gTM';
 
-// Use environment variables for sensitive info
-const TESLA_EMAIL = TESLA_EMAIL || '';
-const TESLA_PASSWORD = TESLA_PASSWORD || '';
-
-async function getTeslaAccessToken() {
+async function getTeslaAccessToken(email, password) {
   const url = 'https://owner-api.teslamotors.com/oauth/token';
   const body = {
     grant_type: 'password',
     client_id: TESLA_CLIENT_ID,
     client_secret: TESLA_CLIENT_SECRET,
-    email: TESLA_EMAIL,
-    password: TESLA_PASSWORD
+    email: email,
+    password: password
   };
 
   const res = await fetch(url, {
@@ -51,8 +48,11 @@ async function getVehicleState(accessToken, vehicleId) {
 }
 
 export async function onRequest(context) {
+  const { env } = context;
+  const email = env.TESLA_EMAIL || '';
+  const password = env.TESLA_PASSWORD || '';
   try {
-    const accessToken = await getTeslaAccessToken();
+    const accessToken = await getTeslaAccessToken(email, password);
     const vehicle = await getVehicleData(accessToken);
     const vehicleState = await getVehicleState(accessToken, vehicle.id_s);
 

@@ -10,3 +10,12 @@ instructions: |
   1. Only modify files under /ios-client.
   2. Update generated client by running `swift run tools/codegen-swift`.
   3. Don’t alter edge-worker/ or cli-tools/ areas.
+
+mcp:
+  servers:
+    console-ninja:
+      command: npx
+      args:
+        - -y
+        - -c
+        - node ~/.console-ninja/mcp/
