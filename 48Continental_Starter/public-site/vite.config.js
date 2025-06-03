@@ -1,15 +1,66 @@
+/* eslint-env node */
 import { defineConfig } from 'vite';
-import fs from 'fs';
+import react from '@vitejs/plugin-react';
 import path from 'path';
 
-// Custom middleware to simulate Cloudflare Function for local development
-const simulateCloudflareFunction = (req, res, next) => {
-  if (req.url === '/route') {
+// Import simulated data generators from our API
+const SIMULATED_API_PATH = './src/api';
+
+// API simulation middleware for local development
+const simulateApiEndpoints = async (req, res, next) => {
+  // Define API endpoint handlers
+  const apiHandlers = {
+    '/api/vehicle': async () => {
+      // Import simulated vehicle data generator
+      const { generateSimulatedVehicleData } = await import(`${SIMULATED_API_PATH}/vehicleApi.js`);
+      return generateSimulatedVehicleData();
+    },
+    '/api/weather': async () => {
+      // Import simulated weather data generator
+      const { generateSimulatedWeatherData } = await import(`${SIMULATED_API_PATH}/weatherApi.js`);
+      return generateSimulatedWeatherData();
+    },
+    '/api/trip': async () => {
+      // Import simulated trip data generator
+      const { generateSimulatedTripData } = await import(`${SIMULATED_API_PATH}/tripApi.js`);
+      return generateSimulatedTripData();
+    },
+    '/api/charging': async () => {
+      // Import simulated charging data generator
+      const { generateSimulatedChargingStations } = await import(`${SIMULATED_API_PATH}/chargingApi.js`);
+      // Use center of USA as default coordinates
+      return generateSimulatedChargingStations(39.8283, -98.5795, 50);
+    }
+  };
+
+  // Check if the request is for one of our API endpoints
+  const handler = apiHandlers[req.url];
+  if (handler) {
+    try {
+      // Generate simulated data
+      Promise.resolve(handler())
+        .then(data => {
+          // Set headers and send JSON response
+          res.setHeader('Content-Type', 'application/json');
+          res.statusCode = 200;
+          res.end(JSON.stringify(data));
+        })
+        .catch(error => {
+          console.error(`Error in API simulation (${req.url}):`, error);
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: 'Internal Server Error' }));
+        });
+    } catch (error) {
+      console.error(`Failed to execute API simulation (${req.url}):`, error);
+      res.statusCode = 500;
+      res.end(JSON.stringify({ error: 'Internal Server Error' }));
+    }
+  } else if (req.url === '/route') {
     try {
       // Import the function handler from our route.js file
       const functionPath = path.resolve('../../functions/route.js');
-      delete require.cache[require.resolve(functionPath)]; // Clear cache to get latest changes
-      const routeHandler = require(functionPath);
+      // Clear cache using dynamic import instead of require
+      const routeHandler = await import(functionPath);
 
       // Execute the function
       Promise.resolve(routeHandler.onRequestGet())
@@ -46,7 +97,15 @@ const simulateCloudflareFunction = (req, res, next) => {
 };
 
 export default defineConfig({
-  plugins: [],
+  plugins: [
+    react(),
+    {
+      name: 'simulate-api-plugin',
+      configureServer(server) {
+        server.middlewares.use(simulateApiEndpoints);
+      }
+    }
+  ],
   root: '.',
   build: {
     outDir: 'dist',
@@ -58,7 +117,6 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    open: true,
-    middleware: [simulateCloudflareFunction]
+    open: true
   }
 });

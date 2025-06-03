@@ -9,9 +9,7 @@
 import React, { useState, useEffect } from 'react';
 
 // Import data source hooks
-import { useVehicleData } from './hooks/useVehicleData';
-import { useWeatherData } from './hooks/useWeatherData';
-import { useTripData } from './hooks/useTripData';
+import { useVehicleData, useWeatherData, useTripData, useChargingStations } from './hooks';
 
 // Import Dashboard component
 import Dashboard from './components/Dashboard';
@@ -26,12 +24,19 @@ const App = () => {
   
   // Fetch data using custom hooks
   const { vehicleData, vehicleLoading, vehicleError } = useVehicleData();
-  const { weatherData, weatherLoading, weatherError } = useWeatherData();
+  const { weatherData, weatherLoading, weatherError } = useWeatherData({
+    location: vehicleData ? { latitude: vehicleData.latitude, longitude: vehicleData.longitude } : null
+  });
   const { tripData, tripLoading, tripError } = useTripData();
+  const { stationsData, stationsLoading, stationsError } = useChargingStations({
+    latitude: vehicleData?.latitude,
+    longitude: vehicleData?.longitude,
+    radius: 50
+  });
   
   // Set loading state based on data loading
   useEffect(() => {
-    if (!vehicleLoading && !weatherLoading && !tripLoading) {
+    if (!vehicleLoading && !weatherLoading && !tripLoading && !stationsLoading) {
       // Slight delay to ensure smooth transition
       const timer = setTimeout(() => {
         setIsLoading(false);
@@ -39,15 +44,15 @@ const App = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [vehicleLoading, weatherLoading, tripLoading]);
+  }, [vehicleLoading, weatherLoading, tripLoading, stationsLoading]);
   
   // Set error state if any data fetching fails
   useEffect(() => {
-    const errorMessage = vehicleError || weatherError || tripError;
+    const errorMessage = vehicleError || weatherError || tripError || stationsError;
     if (errorMessage) {
       setError(errorMessage);
     }
-  }, [vehicleError, weatherError, tripError]);
+  }, [vehicleError, weatherError, tripError, stationsError]);
   
   // Add Mapbox token to document head if not already present
   useEffect(() => {
@@ -67,6 +72,7 @@ const App = () => {
         vehicleData={vehicleData}
         weatherData={weatherData}
         tripData={tripData}
+        stationsData={stationsData}
         isLoading={isLoading}
         error={error}
       />
