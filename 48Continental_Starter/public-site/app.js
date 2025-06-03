@@ -6,7 +6,8 @@
  */
 
 /* eslint-env browser */
-import './src/app-bootstrap.js';
+// Use React entry point instead of the legacy bootstrap
+import './src/index.jsx';
 
 // Set up global error handler
 window.addEventListener('error', (event) => {

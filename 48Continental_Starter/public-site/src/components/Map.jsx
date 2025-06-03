@@ -9,6 +9,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import mapboxgl from 'mapbox-gl';
+import ChargingStations from './ChargingStations';
 
 // Mapbox token (in a real app, this would be in an environment variable)
 // This is a placeholder token - replace with a valid one for production
@@ -21,10 +22,12 @@ const Map = ({
   vehicleData, 
   tripData, 
   weatherData,
+  stationsData,
   mapLayers = { 
     weather: false, 
     traffic: false, 
-    satellite: false 
+    satellite: false,
+    chargingStations: false
   } 
 }) => {
   const mapContainer = useRef(null);
@@ -95,6 +98,117 @@ const Map = ({
       console.log('Weather overlay would show data:', weatherData);
     }
   }, [mapLayers, mapReady, weatherData]);
+  
+  // Add and update charging stations on the map
+  useEffect(() => {
+    if (!mapReady || !map.current) return;
+    
+    // Handle charging stations layer
+    const sourceId = 'charging-stations';
+    const layerId = 'charging-stations-layer';
+    
+    // Remove existing layer and source if they exist
+    if (map.current.getLayer(layerId)) {
+      map.current.removeLayer(layerId);
+    }
+    
+    if (map.current.getSource(sourceId)) {
+      map.current.removeSource(sourceId);
+    }
+    
+    // Only add the layer if it's enabled and we have data
+    if (mapLayers.chargingStations && stationsData?.stations?.length > 0) {
+      // Convert stations to GeoJSON
+      const stationsGeoJSON = {
+        type: 'FeatureCollection',
+        features: stationsData.stations.map(station => ({
+          type: 'Feature',
+          properties: {
+            id: station.id,
+            name: station.name,
+            available: station.available,
+            power: station.power,
+            connectorType: station.connectorType,
+            description: station.description
+          },
+          geometry: {
+            type: 'Point',
+            coordinates: [station.longitude, station.latitude]
+          }
+        }))
+      };
+      
+      // Add stations source
+      map.current.addSource(sourceId, {
+        type: 'geojson',
+        data: stationsGeoJSON
+      });
+      
+      // Add a symbol layer for stations
+      map.current.addLayer({
+        id: layerId,
+        type: 'symbol',
+        source: sourceId,
+        layout: {
+          'icon-image': 'charging-station',
+          'icon-size': 1.2,
+          'icon-allow-overlap': true,
+          'text-field': ['get', 'name'],
+          'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+          'text-offset': [0, 1.2],
+          'text-anchor': 'top',
+          'text-size': 12,
+          'text-optional': true
+        },
+        paint: {
+          'text-color': '#333',
+          'text-halo-color': '#fff',
+          'text-halo-width': 1,
+          'icon-color': [
+            'case',
+            ['get', 'available'],
+            '#4CAF50', // Available (green)
+            '#F44336'  // Unavailable (red)
+          ]
+        }
+      });
+      
+      // Add click handler for stations
+      map.current.on('click', layerId, (e) => {
+        const coordinates = e.features[0].geometry.coordinates.slice();
+        const { name, available, power, connectorType, description } = e.features[0].properties;
+        
+        // Create popup content
+        const statusText = available ? 'Available' : 'In Use';
+        const statusClass = available ? 'status-available' : 'status-unavailable';
+        
+        const popupContent = `
+          <div class="map-popup charging-popup">
+            <h4>${name}</h4>
+            <p>${description || 'Tesla Supercharger'}</p>
+            <p class="station-power">Power: ${power || 'Unknown'} kW</p>
+            <p class="station-connector">Connector: ${connectorType || 'Tesla'}</p>
+            <p class="station-status ${statusClass}">Status: ${statusText}</p>
+          </div>
+        `;
+        
+        // Create popup
+        new mapboxgl.Popup()
+          .setLngLat(coordinates)
+          .setHTML(popupContent)
+          .addTo(map.current);
+      });
+      
+      // Change cursor on hover
+      map.current.on('mouseenter', layerId, () => {
+        map.current.getCanvas().style.cursor = 'pointer';
+      });
+      
+      map.current.on('mouseleave', layerId, () => {
+        map.current.getCanvas().style.cursor = '';
+      });
+    }
+  }, [mapLayers.chargingStations, stationsData, mapReady]);
   
   // Add and update route on the map
   useEffect(() => {
@@ -316,6 +430,12 @@ const Map = ({
     <div className="map-container">
       <div ref={mapContainer} className="map" />
       
+      {/* Charging stations overlay with custom UI and controls */}
+      <ChargingStations 
+        mapRef={mapContainer} 
+        vehicle={vehicleData} 
+      />
+      
       {vehicleData && (
         <button 
           className="center-vehicle-btn"
@@ -359,10 +479,26 @@ Map.propTypes = {
     )
   }),
   weatherData: PropTypes.object,
+  stationsData: PropTypes.shape({
+    stations: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string,
+        name: PropTypes.string,
+        latitude: PropTypes.number,
+        longitude: PropTypes.number,
+        available: PropTypes.bool,
+        power: PropTypes.number,
+        connectorType: PropTypes.string,
+        description: PropTypes.string
+      })
+    ),
+    radius: PropTypes.number
+  }),
   mapLayers: PropTypes.shape({
     weather: PropTypes.bool,
     traffic: PropTypes.bool,
-    satellite: PropTypes.bool
+    satellite: PropTypes.bool,
+    chargingStations: PropTypes.bool
   })
 };
 
