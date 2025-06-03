@@ -24,6 +24,20 @@ export interface KVNamespace {
   list(options?: { prefix?: string; limit?: number; cursor?: string }): Promise<{ keys: { name: string }[]; list_complete: boolean; cursor?: string }>;
 }
 
+export interface DurableObjectNamespace {
+  idFromName(name: string): DurableObjectId;
+  idFromString(id: string): DurableObjectId;
+  newUniqueId(): DurableObjectId;
+}
+
+export interface DurableObjectId {
+  toString(): string;
+}
+
+export interface DurableObjectStub {
+  fetch(request: Request): Promise<Response>;
+}
+
 export interface WorkerEnvironment {
   DB?: D1Database;
   TESLA_KV?: KVNamespace;

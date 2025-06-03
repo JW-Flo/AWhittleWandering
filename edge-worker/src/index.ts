@@ -6,6 +6,7 @@ import { handleEmailSubscribe, handleEmailNotify } from './email';
 import { handleItineraryRequest } from './itinerary';
 import { WorkerEnvironment, KVNamespace } from './types/cloudflare';
 import { fetchWeatherData, isFavorableForEV } from './utils/weather-api';
+import { SyncServiceDurableObject } from '../../shared/agent-coordination/syncService';
 
 // Interface for Cloudflare Workers execution context
 // This is used by the Workers runtime but not directly in our code
@@ -19,6 +20,7 @@ interface ExecutionContext {
 // Using WorkerEnvironment from types/cloudflare.ts 
 export interface Env extends WorkerEnvironment {
     ITINERARY_KV: KVNamespace;
+    SYNC_SERVICE_DO: DurableObjectNamespace;
 }
 
 async function verifySignature(
@@ -430,9 +432,27 @@ async function handleTeslaAuth(request: Request, env: Env): Promise<Response> {
     });
 }
 
+async function handleSyncService(request: Request, env: Env): Promise<Response> {
+    // Verify it's a WebSocket request
+    if (request.headers.get('Upgrade') !== 'websocket') {
+        return new Response('Expected WebSocket', { status: 400 });
+    }
+
+    const id = env.SYNC_SERVICE_DO.idFromName('sync-service');
+    const syncObj = env.SYNC_SERVICE_DO.get(id);
+    
+    // Pass the request to the Durable Object
+    return syncObj.fetch(request);
+}
+
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
         const url = new URL(request.url);
+
+        // --- SYNC SERVICE ROUTE ---
+        if (url.pathname === "/sync-service") {
+            return await handleSyncService(request, env);
+        }
 
         // --- TESLA API ROUTES ---
         if (url.pathname === "/tesla/vehicle" && request.method === "GET") {
