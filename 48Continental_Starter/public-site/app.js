@@ -2,7 +2,8 @@
 /* global mapboxgl */
 
 /* ---------- Mapbox ---------- */
-mapboxgl.accessToken = 'YOUR_MAPBOX_PUBLIC_TOKEN';
+// Get token from meta tag
+mapboxgl.accessToken = document.querySelector('meta[name="mapbox-token"]').getAttribute('content');
 
 // Map loading spinner
 const mapContainer = document.getElementById('map-container');

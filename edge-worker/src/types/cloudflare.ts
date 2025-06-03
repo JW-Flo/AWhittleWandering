@@ -1,0 +1,38 @@
+/**
+ * Type definitions for Cloudflare Workers environment
+ */
+
+export interface D1Database {
+  prepare<T = any>(query: string): D1PreparedStatement<T>;
+}
+
+export interface D1PreparedStatement<T = any> {
+  bind(...values: any[]): D1PreparedStatement<T>;
+  all<U = T>(): Promise<{ results: U[] }>;
+  run(): Promise<{ changes: number }>;
+  get<U = T>(): Promise<U | null>;
+}
+
+export interface KVNamespace {
+  get(key: string): Promise<string | null>;
+  get(key: string, type: 'text'): Promise<string | null>;
+  get(key: string, type: 'json'): Promise<unknown>;
+  get(key: string, type: 'arrayBuffer'): Promise<ArrayBuffer | null>;
+  get(key: string, type: 'stream'): Promise<ReadableStream | null>;
+  put(key: string, value: string | ArrayBuffer | ReadableStream): Promise<void>;
+  delete(key: string): Promise<void>;
+  list(options?: { prefix?: string; limit?: number; cursor?: string }): Promise<{ keys: { name: string }[]; list_complete: boolean; cursor?: string }>;
+}
+
+export interface WorkerEnvironment {
+  DB?: D1Database;
+  TESLA_KV?: KVNamespace;
+  APP_KV: KVNamespace;
+  MAP_TILES_KV: KVNamespace;
+  ITINERARY_KV: KVNamespace;
+  EDGE_HMAC_KEY: string;
+  TESLA_CLIENT_ID?: string;
+  TESLA_CLIENT_SECRET?: string;
+  SENDGRID_API_KEY?: string;
+  FROM_EMAIL?: string;
+}
