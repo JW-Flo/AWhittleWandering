@@ -1,9 +1,13 @@
-name = "continentalusa-edge"
+name = "thewanderingwhittle-edge"
 compatibility_date = "2025-05-31"
 main = "src/index.ts"
 [vars]
 EDGE_HMAC_KEY = "test-key"
+
 [[kv_namespaces]]
 binding = "APP_KV"
-id = "c7eba0c892bf4f2fbcf73fb60a38706c"
-preview_id = "a68ee6412d644992b79b6fddd8d17f47"
+id = "8016b1e4a16f4fa7b75bcee9f1e37573"
+
+[[kv_namespaces]]
+binding = "ITINERARY_KV"
+id = "41e8cca6911d47338647d950d2344d91"

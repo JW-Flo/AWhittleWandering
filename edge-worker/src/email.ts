@@ -8,10 +8,11 @@
  * All storage is in Cloudflare KV/D1. Email delivery via SendGrid/Mailgun API.
  */
 
-import { getSubscribers, addSubscriber } from './utils/email-subscribers';
+import { addSubscriber, getSubscriberEmails } from './utils/email-subscribers';
 import { sendEmail } from './utils/email-delivery';
+import { WorkerEnvironment } from './types/cloudflare';
 
-export async function handleEmailSubscribe(request: Request, env: any): Promise<Response> {
+export async function handleEmailSubscribe(request: Request, env: WorkerEnvironment): Promise<Response> {
   const { email } = await request.json();
   if (!email || typeof email !== 'string' || !email.includes('@')) {
     return new Response(JSON.stringify({ error: 'Invalid email' }), {
@@ -27,7 +28,7 @@ export async function handleEmailSubscribe(request: Request, env: any): Promise<
 }
 
 // Admin endpoint: POST /email/notify
-export async function handleEmailNotify(request: Request, env: any): Promise<Response> {
+export async function handleEmailNotify(request: Request, env: WorkerEnvironment): Promise<Response> {
   // TODO: Add admin JWT verification
   const { subject, content } = await request.json();
   if (!subject || !content) {
@@ -36,9 +37,9 @@ export async function handleEmailNotify(request: Request, env: any): Promise<Res
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
     });
   }
-  const subscribers = await getSubscribers(env);
+  const emails = await getSubscriberEmails(env);
   let sent = 0;
-  for (const email of subscribers) {
+  for (const email of emails) {
     await sendEmail(env, email, subject, content);
     sent++;
   }
