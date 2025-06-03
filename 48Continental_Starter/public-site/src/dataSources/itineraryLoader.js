@@ -9,7 +9,8 @@
 // Default start date for the trip (two weeks from now)
 const DEFAULT_START_DATE = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-// Sample itinerary data for development/fallback
+// Sample itinerary data for development/fallback - kept for reference
+// eslint-disable-next-line no-unused-vars
 const SAMPLE_ITINERARY = {
   name: "48 Continental USA Road Trip",
   description: "Epic journey through all 48 continental states",
@@ -101,7 +102,8 @@ const SAMPLE_ITINERARY = {
 function generateCompleteItinerary() {
   const startDate = new Date(DEFAULT_START_DATE);
   
-  // Define all 48 continental states
+  // Define all 48 continental states - keeping the list for reference
+  // eslint-disable-next-line no-unused-vars
   const allStates = [
     "Alabama", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
     "Delaware", "Florida", "Georgia", "Idaho", "Illinois", "Indiana", "Iowa",
