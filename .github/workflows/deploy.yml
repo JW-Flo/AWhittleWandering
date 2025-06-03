@@ -9,8 +9,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        run: |
+          cd 48Continental_Starter/public-site
+          npm install
+
+      - name: Build site
+        run: |
+          cd 48Continental_Starter/public-site
+          npm run build
+
       - name: Deploy
-        run: wrangler deploy
+        run: npx wrangler pages deploy ./dist --project-name continentalusa-site
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}

@@ -213,6 +213,12 @@ else
     echo -e "${RED}Edge Worker health check failed (HTTP $HTTP_STATUS)${NC}"
 fi
 
+# Check WebSocket endpoint
+echo -e "${YELLOW}Checking WebSocket endpoint...${NC}"
+echo -e "${YELLOW}WebSocket endpoint should be available at:${NC}"
+echo -e "${YELLOW}wss://${EDGE_WORKER_URL#https://}/tesla/vehicle/stream${NC}"
+echo -e "${YELLOW}This can be tested with WebSocket testing tools like WebSocket King${NC}"
+
 # Check Public Website
 echo -e "${YELLOW}Checking Public Website...${NC}"
 echo -e "${YELLOW}Visit https://continentalusa.pages.dev to verify manually${NC}"
@@ -223,6 +229,7 @@ REPORT_FILE="$PROJECT_ROOT/deployment-verification-$(date +%Y%m%d-%H%M%S).txt"
 echo "48 Continental Deployment Verification Report" > "$REPORT_FILE"
 echo "Date: $(date)" >> "$REPORT_FILE"
 echo "Edge Worker Status: $HTTP_STATUS" >> "$REPORT_FILE"
+echo "WebSocket Endpoint: wss://${EDGE_WORKER_URL#https://}/tesla/vehicle/stream" >> "$REPORT_FILE"
 echo "Public Website: Deployed to https://continentalusa.pages.dev" >> "$REPORT_FILE"
 echo "Mobile Apps: Build completed" >> "$REPORT_FILE"
 

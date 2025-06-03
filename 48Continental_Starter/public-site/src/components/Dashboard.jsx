@@ -11,7 +11,7 @@ import PropTypes from 'prop-types';
 import GlassPanel from './GlassPanel';
 import Header from './Header';
 import Map from './Map';
-import VehicleStats from './VehicleStats';
+import VehicleStatusCard from './VehicleStatusCard';
 import WeatherDisplay from './WeatherDisplay';
 import StateCollection from './StateCollection';
 import TripJourney from './TripJourney';
@@ -162,7 +162,8 @@ const Dashboard = ({
         <div className="dashboard-sidebar">
           <div className="sidebar-panel vehicle-panel">
             <GlassPanel title="Vehicle Status">
-              <VehicleStats vehicleData={vehicleData} />
+              {/* Use the new real-time VehicleStatusCard instead of static VehicleStats */}
+              <VehicleStatusCard />
             </GlassPanel>
           </div>
           
