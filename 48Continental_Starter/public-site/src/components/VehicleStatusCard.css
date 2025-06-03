@@ -1,0 +1,281 @@
+/* Vehicle Status Card with real-time WebSocket connection styles */
+
+.vehicle-status-card {
+  position: relative;
+  width: 100%;
+}
+
+/* Connection status indicator */
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  border-radius: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  font-size: 0.85rem;
+}
+
+.status-icon {
+  font-size: 1.2rem;
+}
+
+.status-connected {
+  border-left: 3px solid var(--success-color);
+}
+
+.status-connected .status-icon {
+  color: var(--success-color);
+}
+
+.status-connecting {
+  border-left: 3px solid var(--warning-color);
+}
+
+.status-connecting .status-icon {
+  color: var(--warning-color);
+  animation: pulse 1s infinite;
+}
+
+.status-reconnecting {
+  border-left: 3px solid var(--warning-color);
+}
+
+.status-reconnecting .status-icon {
+  color: var(--warning-color);
+  animation: pulse 0.5s infinite;
+}
+
+.status-disconnected {
+  border-left: 3px solid var(--alert-color);
+}
+
+.status-disconnected .status-icon {
+  color: var(--alert-color);
+}
+
+.reconnect-button {
+  margin-left: auto;
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.reconnect-button:hover {
+  background-color: var(--accent-color);
+}
+
+/* Loading state */
+.vehicle-status-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.vehicle-status-loading .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--accent-color);
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error state */
+.vehicle-status-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  background-color: rgba(232, 33, 39, 0.1);
+  border-radius: 0.5rem;
+  border: 1px solid var(--alert-color);
+}
+
+.vehicle-status-error .error-icon {
+  font-size: 2rem;
+  color: var(--alert-color);
+  margin-bottom: 1rem;
+}
+
+.vehicle-status-error .error-message {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.retry-button {
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.retry-button:hover {
+  background-color: var(--accent-color);
+}
+
+/* Battery styles */
+.battery-stats {
+  margin-bottom: 1.5rem;
+}
+
+.battery-visual-container {
+  width: 100%;
+  height: 20px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.battery-visual {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.5s ease;
+}
+
+.battery-visual.good {
+  background-color: var(--success-color);
+}
+
+.battery-visual.warning {
+  background-color: var(--warning-color);
+}
+
+.battery-visual.critical {
+  background-color: var(--alert-color);
+}
+
+.battery-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.battery-percentage {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.charging-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--warning-color);
+}
+
+.charging-icon {
+  animation: pulse 1s infinite;
+}
+
+/* Stats layout */
+.stat-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin-bottom: 0.25rem;
+}
+
+.stat-value {
+  font-weight: bold;
+}
+
+.section {
+  margin-bottom: 1.5rem;
+}
+
+.section h3 {
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+  opacity: 0.9;
+}
+
+/* Status grid */
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 1rem;
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+}
+
+/* Tire pressure grid */
+.tire-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.tire-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+}
+
+.tire-value {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.tire-label {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+/* Last updated area */
+.last-updated {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--success-color);
+  font-weight: bold;
+}

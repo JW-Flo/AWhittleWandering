@@ -108,6 +108,8 @@ This script will:
 
 The website will be available at http://localhost:3000
 
+> **Important Note:** All Cloudflare Wrangler commands in this project should be run using `npx wrangler` rather than a global `wrangler` installation. For example, use `npx wrangler dev` instead of `wrangler dev`. This follows Cloudflare's recommendation to install Wrangler locally in your project rather than globally.
+
 To stop all services:
 
 ```
@@ -219,4 +221,3 @@ A detailed summary of the recent development work is available in the [docs/WORK
 - Comprehensive test suite with unit tests and GitHub Actions CI workflow
 
 Please refer to this document for an overview to assist the orchestrator MCP and further development.
-

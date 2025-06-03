@@ -1,27 +1,27 @@
 /**
  * Weather Data Hook
  * 
- * This hook provides access to weather data for the current vehicle location
- * or any specified location.
+ * This hook provides access to current and forecasted weather data
+ * for the 48 Continental USA journey.
  */
 
 /* eslint-env browser */
 import { useState, useEffect, useCallback } from 'react';
-import { fetchWeatherData, generateSimulatedWeatherData } from '../api';
+import { fetchWeatherData, generateSimulatedWeatherData } from '../api/weatherApi';
 
 // Default polling interval in milliseconds
-const DEFAULT_POLL_INTERVAL = 300000; // 5 minutes
+const DEFAULT_POLL_INTERVAL = 600000; // 10 minutes
 
 /**
  * Hook for accessing weather data
  * @param {Object} options - Configuration options
- * @param {Object} options.location - Location object with latitude and longitude
+ * @param {Object} options.location - Location coordinates
  * @param {number} options.pollInterval - Data refresh interval in ms
  * @returns {Object} Weather data, loading state, and error
  */
 export const useWeatherData = (options = {}) => {
   const {
-    location = null,
+    location,
     pollInterval = DEFAULT_POLL_INTERVAL
   } = options;
   
@@ -32,11 +32,23 @@ export const useWeatherData = (options = {}) => {
   
   // Function to fetch weather data from API
   const getWeatherData = useCallback(async () => {
+    // If no location provided, can't fetch weather
+    if (!location || !location.latitude || !location.longitude) {
+      // Use simulated data with default location
+      setWeatherData(generateSimulatedWeatherData());
+      setWeatherLoading(false);
+      return;
+    }
+    
     setWeatherLoading(true);
     
     try {
-      // Call our API function
-      const data = await fetchWeatherData(location);
+      // Call our API function with location
+      const data = await fetchWeatherData({
+        latitude: location.latitude,
+        longitude: location.longitude
+      });
+      
       setWeatherData(data);
       setWeatherError(null);
     } catch (error) {
@@ -45,26 +57,26 @@ export const useWeatherData = (options = {}) => {
       
       // If we don't have data yet, use simulated data
       if (!weatherData) {
-        setWeatherData(generateSimulatedWeatherData(location));
+        setWeatherData(generateSimulatedWeatherData({ location }));
       }
     } finally {
       setWeatherLoading(false);
     }
   }, [location, weatherData]);
   
-  // Refresh weather data when location changes
+  // Fetch weather data when location changes or on initial load
   useEffect(() => {
     getWeatherData();
-  }, [getWeatherData]);
-  
-  // Set up polling for periodic updates
-  useEffect(() => {
-    const pollTimer = setInterval(getWeatherData, pollInterval);
     
-    return () => {
-      clearInterval(pollTimer);
-    };
-  }, [getWeatherData, pollInterval]);
+    // Set up polling if location provided
+    if (location) {
+      const pollTimer = setInterval(getWeatherData, pollInterval);
+      
+      return () => {
+        clearInterval(pollTimer);
+      };
+    }
+  }, [getWeatherData, location, pollInterval]);
   
   return {
     weatherData,

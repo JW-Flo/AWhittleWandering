@@ -30,8 +30,9 @@ The WebSocket implementation acts as a bridge between the Tesla API and the fron
 1. Start the worker locally:
    ```
    cd edge-worker
-   wrangler dev
+   npx wrangler dev
    ```
+   > **Note:** Always use `npx wrangler` instead of a global wrangler installation.
 
 2. Test WebSocket connection using a tool like [WebSocket King](https://websocketking.com/):
    - Connect to: `ws://localhost:8787/tesla/vehicle/stream?id=your_vehicle_id`
@@ -48,8 +49,10 @@ Deploy to Cloudflare using Wrangler:
 
 ```
 cd edge-worker
-wrangler publish
+npx wrangler deploy
 ```
+
+> **Important:** All deployment commands should use `npx wrangler` to ensure consistency across environments.
 
 ## Integration Points
 
@@ -73,7 +76,7 @@ Common error scenarios handled:
 
 ## Further Documentation
 
-See the full API documentation in [docs/vehicle-stream-api.md](../../docs/vehicle-stream-api.md) for:
+See the full API documentation in [vehicle-stream-api.md](vehicle-stream-api.md) for:
 - Complete data structure
 - Frontend integration examples
 - iOS integration example
