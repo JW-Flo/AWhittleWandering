@@ -7,6 +7,7 @@
 
 /* eslint-env browser */
 import { useState, useEffect, useCallback } from 'react';
+import { fetchVehicleData, generateSimulatedVehicleData } from '../api';
 
 // Default polling interval in milliseconds
 const DEFAULT_POLL_INTERVAL = 30000; // 30 seconds
@@ -31,19 +32,12 @@ export const useVehicleData = (options = {}) => {
   const [streamConnection, setStreamConnection] = useState(null);
   
   // Function to fetch vehicle data from API
-  const fetchVehicleData = useCallback(async () => {
+  const getVehicleData = useCallback(async () => {
     setVehicleLoading(true);
     
     try {
-      // In a real implementation, this would call your Tesla API service
-      // For now, using simulated data for the prototype
-      const response = await fetch('/api/vehicle');
-      
-      if (!response.ok) {
-        throw new Error(`Vehicle API error: ${response.status}`);
-      }
-      
-      const data = await response.json();
+      // Call our API function
+      const data = await fetchVehicleData();
       setVehicleData(data);
       setVehicleError(null);
     } catch (error) {
@@ -106,7 +100,7 @@ export const useVehicleData = (options = {}) => {
   
   // Initial data fetch
   useEffect(() => {
-    fetchVehicleData();
+    getVehicleData();
     
     // Set up polling or streaming
     if (enableStreaming) {
@@ -114,57 +108,18 @@ export const useVehicleData = (options = {}) => {
       return cleanup;
     } else {
       // Set up polling as fallback
-      const pollTimer = setInterval(fetchVehicleData, pollInterval);
+      const pollTimer = setInterval(getVehicleData, pollInterval);
       
       return () => {
         clearInterval(pollTimer);
       };
     }
-  }, [fetchVehicleData, setupStreamConnection, pollInterval, enableStreaming]);
+  }, [getVehicleData, setupStreamConnection, pollInterval, enableStreaming]);
   
   return { 
     vehicleData, 
     vehicleLoading, 
     vehicleError,
-    refreshVehicleData: fetchVehicleData
+    refreshVehicleData: getVehicleData
   };
 };
-
-/**
- * Generate simulated vehicle data for testing
- * @returns {Object} Simulated vehicle data
- */
-function generateSimulatedVehicleData() {
-  return {
-    id: 'tesla_model_3_2025',
-    name: 'Tesla Model 3',
-    model: 'model3',
-    year: 2025,
-    latitude: 39.8283 + (Math.random() - 0.5) * 0.1,
-    longitude: -98.5795 + (Math.random() - 0.5) * 0.1,
-    batteryLevel: 70 + (Math.random() * 20),
-    range: 250 + (Math.random() * 50),
-    speed: Math.random() * 70,
-    power: Math.random() * 40,
-    temperature: {
-      inside: 68 + (Math.random() * 10),
-      outside: 65 + (Math.random() * 15)
-    },
-    charging: false,
-    climate: {
-      enabled: true,
-      temperature: 72
-    },
-    locked: true,
-    sentry_mode: true,
-    windows_open: false,
-    doors_open: false,
-    tire_pressure: {
-      front_left: 45 + (Math.random() * 3),
-      front_right: 45 + (Math.random() * 3),
-      rear_left: 45 + (Math.random() * 3),
-      rear_right: 45 + (Math.random() * 3)
-    },
-    last_updated: new Date().toISOString()
-  };
-}
