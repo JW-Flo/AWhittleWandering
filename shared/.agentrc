@@ -8,3 +8,12 @@ instructions: |
   1. Only modify files under /shared.
   2. Update schemas and run codegen for TS and Swift.
   3. Ensure all clients stay in sync with types.
+
+mcp:
+  servers:
+    console-ninja:
+      command: npx
+      args:
+        - -y
+        - -c
+        - node ~/.console-ninja/mcp/

@@ -11,3 +11,12 @@ instructions: |
   2. Keep OpenAPI spec in sync with implementation.
   3. Generate TS client with `npm run codegen:ts` and commit to /shared/gen/ts.
   4. Do not touch ios-client/ or cli-tools/ code.
+
+mcp:
+  servers:
+    console-ninja:
+      command: npx
+      args:
+        - -y
+        - -c
+        - node ~/.console-ninja/mcp/

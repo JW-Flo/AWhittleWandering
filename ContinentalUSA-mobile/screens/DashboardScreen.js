@@ -1,26 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
-import { Card, Icon, Button } from '@rneui/themed';
+import { View, Text, StyleSheet, ScrollView, Dimensions, ActivityIndicator, Alert } from 'react-native';
+import { Card, Icon } from '@rneui/themed';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
-  withSpring,
-  withRepeat 
+  withSpring
 } from 'react-native-reanimated';
-import { useAppContext } from '../context/AppContext';
 import { TeslaAPI } from '../utils/TeslaAPI';
-import { ChargingStations } from '../utils/ChargingStations';
-import { TripManager } from '../utils/TripManager';
 
 const { width } = Dimensions.get('window');
 
 export default function DashboardScreen() {
-  const [batteryLevel, setBatteryLevel] = useState(75);
-  const [range, setRange] = useState(267);
-  const [temperature, setTemperature] = useState(72);
+  const [batteryLevel, setBatteryLevel] = useState(null);
+  const [range, setRange] = useState(null);
+  const [temperature, setTemperature] = useState(null);
   const [nextStop, setNextStop] = useState('Supercharger - Kettleman City');
   const [timeToNext, setTimeToNext] = useState('2h 30m');
-  
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const batteryScale = useSharedValue(1);
 
   const animatedBatteryStyle = useAnimatedStyle(() => {
@@ -30,19 +28,51 @@ export default function DashboardScreen() {
   });
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      // Simulate battery drain
-      setBatteryLevel(current => Math.max(current - 0.1, 0));
-      setRange(current => Math.max(current - 0.4, 0));
-      
-      // Animate battery icon
-      batteryScale.value = withSpring(0.8);
-      setTimeout(() => {
-        batteryScale.value = withSpring(1);
-      }, 500);
-    }, 5000);
+    let interval;
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Get Tesla vehicles
+        const vehicles = await TeslaAPI.getVehicles();
+        if (!vehicles || vehicles.length === 0) {
+          setError('No Tesla vehicles found for this account.');
+          setLoading(false);
+          return;
+        }
+        const vehicleId = vehicles[0].id_s;
+        // Get vehicle data
+        const data = await TeslaAPI.getVehicleData(vehicleId);
+        setBatteryLevel(data.charge_state?.battery_level ?? null);
+        setRange(data.charge_state?.battery_range ?? null);
+        setTemperature(data.climate_state?.inside_temp ?? null);
+        setLoading(false);
 
-    return () => clearInterval(interval);
+        // Set up periodic refresh
+        interval = setInterval(async () => {
+          try {
+            const updatedData = await TeslaAPI.getVehicleData(vehicleId);
+            setBatteryLevel(updatedData.charge_state?.battery_level ?? null);
+            setRange(updatedData.charge_state?.battery_range ?? null);
+            setTemperature(updatedData.climate_state?.inside_temp ?? null);
+            // Animate battery icon
+            batteryScale.value = withSpring(0.8);
+            setTimeout(() => {
+              batteryScale.value = withSpring(1);
+            }, 500);
+          } catch (err) {
+            setError('Failed to refresh Tesla data.');
+          }
+        }, 30000); // 30s refresh
+      } catch (err) {
+        setError('Failed to fetch Tesla vehicle data. Please check your connection and Tesla login.');
+        setLoading(false);
+      }
+    })();
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, []);
 
   return (
@@ -58,10 +88,20 @@ export default function DashboardScreen() {
             />
           </Animated.View>
           <View style={styles.batteryInfo}>
-            <Text style={styles.percentage}>{Math.round(batteryLevel)}%</Text>
-            <Text style={styles.range}>{Math.round(range)} mi</Text>
+            <Text style={styles.percentage}>
+              {batteryLevel !== null ? `${Math.round(batteryLevel)}%` : '--'}
+            </Text>
+            <Text style={styles.range}>
+              {range !== null ? `${Math.round(range)} mi` : '-- mi'}
+            </Text>
           </View>
         </View>
+        {loading && (
+          <ActivityIndicator size="large" color="#2196F3" style={{ marginTop: 16 }} />
+        )}
+        {error && (
+          <Text style={styles.errorText}>{error}</Text>
+        )}
       </Card>
 
       <Card containerStyle={styles.card}>
@@ -80,7 +120,9 @@ export default function DashboardScreen() {
         <View style={styles.dogModeContainer}>
           <Icon name="dog" type="material-community" color="#FF9800" size={24} />
           <View style={styles.temperatureContainer}>
-            <Text style={styles.temperature}>{temperature}°F</Text>
+            <Text style={styles.temperature}>
+              {temperature !== null ? `${temperature}°F` : '--°F'}
+            </Text>
             <Text style={styles.tempStatus}>Cabin temperature stable</Text>
           </View>
         </View>
@@ -168,5 +210,11 @@ const styles = StyleSheet.create({
     color: '#4CAF50',
     fontSize: 14,
     marginTop: 5,
+  },
+  errorText: {
+    color: '#f44336',
+    fontSize: 16,
+    marginTop: 12,
+    textAlign: 'center',
   },
 });

@@ -1,5 +1,8 @@
 import type { Location, WeatherRiskResponse, Route, RouteResponse, Weather, RouteSegment } from './types';
 import { verify } from './hmac';
+import { TeslaAPIClient } from './utils/tesla-client';
+import { getToken, setToken } from './utils/tesla-tokens';
+import { handleEmailSubscribe, handleEmailNotify } from './email';
 
 interface ExecutionContext {
     waitUntil(promise: Promise<unknown>): void;
@@ -17,6 +20,10 @@ export interface Env {
     APP_KV: KVNamespace;
     MAP_TILES_KV: KVNamespace;
     EDGE_HMAC_KEY: string;
+    TESLA_CLIENT_ID?: string;
+    TESLA_CLIENT_SECRET?: string;
+    TESLA_KV?: KVNamespace;
+    DB?: any;
 }
 
 async function verifySignature(
@@ -341,10 +348,80 @@ async function handleRouteOptimization(request: Request, env: Env): Promise<Resp
     }
 }
 
+// --- TESLA API PROXY HANDLERS ---
+
+async function handleTeslaVehicle(request: Request, env: Env): Promise<Response> {
+    try {
+        const token = await getToken(env);
+        if (!token) {
+            return new Response(JSON.stringify({ error: 'Tesla token not set' }), {
+                status: 401,
+                headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+            });
+        }
+        const client = new TeslaAPIClient({
+            clientId: env.TESLA_CLIENT_ID!,
+            clientSecret: env.TESLA_CLIENT_SECRET!,
+            accessToken: token.access_token,
+            refreshToken: token.refresh_token,
+        });
+        const vehicles = await client.listVehicles();
+        if (!vehicles || vehicles.length === 0) {
+            return new Response(JSON.stringify({ error: 'No vehicles found' }), {
+                status: 404,
+                headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+            });
+        }
+        const vehicle = vehicles[0];
+        const data = await client.getVehicleData(vehicle.id_s);
+        return new Response(JSON.stringify({ vehicle: data }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+    } catch (err) {
+        return new Response(JSON.stringify({ error: 'Failed to fetch Tesla data', details: String(err) }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+    }
+}
+
+async function handleTeslaAuth(request: Request, env: Env): Promise<Response> {
+    // TODO: Add admin JWT verification
+    const body = await request.json();
+    if (!body.access_token || !body.refresh_token) {
+        return new Response(JSON.stringify({ error: 'Missing tokens' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+    }
+    await setToken(env, body);
+    return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+}
+
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
         const url = new URL(request.url);
-        
+
+        // --- TESLA API ROUTES ---
+        if (url.pathname === "/tesla/vehicle" && request.method === "GET") {
+            return await handleTeslaVehicle(request, env);
+        }
+        if (url.pathname === "/tesla/auth" && request.method === "POST") {
+            return await handleTeslaAuth(request, env);
+        }
+
+        // --- EMAIL SUBSCRIPTION ROUTES ---
+        if (url.pathname === "/email/subscribe" && request.method === "POST") {
+            return await handleEmailSubscribe(request, env);
+        }
+        if (url.pathname === "/email/notify" && request.method === "POST") {
+            return await handleEmailNotify(request, env);
+        }
+
         // Handle CORS preflight requests
         if (request.method === 'OPTIONS') {
             return new Response(null, {

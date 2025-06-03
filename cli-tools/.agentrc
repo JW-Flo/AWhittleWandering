@@ -8,3 +8,12 @@ instructions: |
   1. Only modify files under /cli-tools.
   2. Place mocks or helpers here, do not edit edge-worker/ or ios-client/.
   3. Use shared types from /shared for consistency.
+
+mcp:
+  servers:
+    console-ninja:
+      command: npx
+      args:
+        - -y
+        - -c
+        - node ~/.console-ninja/mcp/

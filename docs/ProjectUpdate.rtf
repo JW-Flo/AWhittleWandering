@@ -1,0 +1,513 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 .SFNS-Bold;\f1\fnil\fcharset0 .SFNS-Regular;\f2\fnil\fcharset0 HelveticaNeue-Bold;
+\f3\fnil\fcharset0 .AppleSystemUIFontMonospaced-Regular;\f4\froman\fcharset0 Times-Roman;\f5\fmodern\fcharset0 Courier;
+\f6\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;\red14\green14\blue14;\red0\green0\blue0;\red155\green162\blue177;
+\red197\green136\blue83;\red136\green185\blue102;\red184\green93\blue213;\red74\green80\blue93;}
+{\*\expandedcolortbl;;\cssrgb\c6700\c6700\c6700;\cssrgb\c0\c0\c0;\cssrgb\c67059\c69804\c74902;
+\cssrgb\c81961\c60392\c40000;\cssrgb\c59608\c76471\c47451;\cssrgb\c77647\c47059\c86667;\cssrgb\c36078\c38824\c43922;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs26 \cf2 \uc0\u55357 \u56770 \u65039  PROJECT STRUCTURE & MODULE INSTRUCTIONS
+\f1\b0\fs24 \
+\
+
+\f0\b\fs22 1. mcp-server/ \'97 Local Orchestrator & Agent Core
+\f1\b0\fs24 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f2\b Runs on
+\f1\b0 : Always-on iMac (static IP, no dynamic DNS issues).\
+	\'95	
+\f2\b Language
+\f1\b0 : Node.js or Bun (default to Node.js unless 
+\f3 .bun
+\f1  is scaffolded).\
+	\'95	
+\f2\b Purpose
+\f1\b0 : Accepts tasks, schedules AI workflows, buffers data locally, interfaces with 
+\f3 tracker/
+\f1  and 
+\f3 web/
+\f1 .\
+	\'95	
+\f2\b Key Features
+\f1\b0 :\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Accepts incoming JSON payloads from 
+\f3 tracker/
+\f1 \
+	\'95	Issues queued commands to GPT agents\
+	\'95	Syncs status to 
+\f3 Cloudflare Worker
+\f1 \
+	\'95	Supports 
+\f3 cron
+\f1 , 
+\f3 manual
+\f1 , and 
+\f3 event
+\f1  triggers\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f4 \cf0 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec3 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf0 \
+\
+\
+\
+You are assisting in the development and orchestration of the 
+\f5\fs26 TheWanderingWhittle
+\f4\fs24  project\'97a real-time, multi-system initiative that tracks a 60-day Tesla road trip through all 48 contiguous U.S. states. The project consists of a local MCP (Mission Control Platform) server running persistently on an always-on iMac that coordinates agents, schedules tasks, buffers telemetry from an onboard tracker, and syncs with edge infrastructure hosted via Cloudflare Workers. Your role is to generate production-ready code, automate deployments, document new modules, and maintain a consistent data model across 
+\f5\fs26 mcp-server
+\f4\fs24 , 
+\f5\fs26 tracker
+\f4\fs24 , 
+\f5\fs26 web
+\f4\fs24 , and 
+\f5\fs26 infra
+\f4\fs24  folders. You must assume that every action affects a real-world system in motion\'97no simulations or stubs. Every output must be a working module with README, full logic, fallback handling, 
+\f5\fs26 .env.example
+\f4\fs24  files if secrets are needed, and API or CLI-ready interfaces where applicable. This is not a dev experiment; it\'92s a deployed, interconnected system with storytelling, safety, and synchronization needs. Act with rigor, precision, and a sense of creative adventure.\
+\
+\
+\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+
+\f1 \cf2 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 	\'95	Use 
+\f3 lowdb
+\f1  or SQLite for lightweight local persistence\
+	\'95	Use 
+\f3 express
+\f1  for local API port\
+	\'95	Configure 
+\f3 .env
+\f1  with secrets (Starlink IP, Cloudflare keys, auth tokens)\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f6 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1 \cf2 \
+
+\f0\b\fs22 2. tracker/ \'97 Location + Visit Logger
+\f1\b0\fs24 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f2\b Device
+\f1\b0 : Tesla Model Y with Starlink Mini and iPhone on board\
+	\'95	
+\f2\b Objective
+\f1\b0 : Log each meaningful visit, rest stop, charge, or camp via:\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f3 CLLocationManager
+\f1  (on iPhone app)\
+	\'95	Background geofencing\
+	\'95	Manual GPS pings via shortcut or Siri\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs26 \cf2 \uc0\u55357 \u56770 \u65039  PROJECT STRUCTURE & MODULE INSTRUCTIONS
+\f1\b0\fs24 \
+\
+
+\f0\b\fs22 1. mcp-server/ \'97 Local Orchestrator & Agent Core
+\f1\b0\fs24 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f2\b Runs on
+\f1\b0 : Always-on iMac (static IP, no dynamic DNS issues).\
+	\'95	
+\f2\b Language
+\f1\b0 : Node.js or Bun (default to Node.js unless 
+\f3 .bun
+\f1  is scaffolded).\
+	\'95	
+\f2\b Purpose
+\f1\b0 : Accepts tasks, schedules AI workflows, buffers data locally, interfaces with 
+\f3 tracker/
+\f1  and 
+\f3 web/
+\f1 .\
+	\'95	
+\f2\b Key Features
+\f1\b0 :\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Accepts incoming JSON payloads from 
+\f3 tracker/
+\f1 \
+	\'95	Issues queued commands to GPT agents\
+	\'95	Syncs status to 
+\f3 Cloudflare Worker
+\f1 \
+	\'95	Supports 
+\f3 cron
+\f1 , 
+\f3 manual
+\f1 , and 
+\f3 event
+\f1  triggers\
+\uc0\u9989  
+\f2\b \cf2 Copilot Instructions
+\f1\b0 \cf2 :\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Log structured visit data in this format:
+\f4 \cf0 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec3 \
+\pard\pardeftab720\partightenfactor0
+\cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs22 \cf4 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 \{\
+  \cf5 "type"\cf4 : \cf6 "supercharger"\cf4 ,\
+  \cf5 "name"\cf4 : \cf6 "Flagstaff, AZ"\cf4 ,\
+  \cf5 "timestamp"\cf4 : \cf6 "2025-06-12T14:45:00Z"\cf4 ,\
+  \cf5 "coordinates"\cf4 : [\cf5 35.1983\cf4 , \cf5 -111.6513\cf4 ],\
+  \cf5 "duration"\cf4 : \cf5 37\cf4 \
+\}\
+
+\f1\fs24 \cf2 	\'95	Use 
+\f3 .buffer/visits.json
+\f1  for local caching if offline\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Sync via HTTPS POST to 
+\f3 mcp-server/api/visits
+\f1 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f6 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1 \cf2 \
+
+\f0\b\fs22 3. web/ \'97 Public Storytelling Site
+\f1\b0\fs24 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f2\b Stack
+\f1\b0 : Astro preferred, fallback to Next.js if SSR is critical\
+	\'95	
+\f2\b Hosted
+\f1\b0 : Cloudflare Pages + Workers\
+	\'95	
+\f2\b Content
+\f1\b0 : Live trip map, visit stories, dog photos, trip stats, and editorial narrative\
+\
+\uc0\u9989  
+\f2\b Copilot Instructions
+\f1\b0 :\
+	\'95	All content should be emotionally warm, personal, and evocative of the \'93Americana adventure\'94 spirit\
+	\'95	Pull content dynamically from:\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f3 mcp-server
+\f1  API (
+\f3 /api/summary
+\f1 , 
+\f3 /api/today
+\f1 )\
+	\'95	Pre-render with 
+\f3 Astro.getStaticPaths()
+\f1  where possible\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Use image CDN with resizing (e.g., Cloudflare Images or 
+\f3 imgix
+\f1 )\
+	\'95	Markdown-based posts (
+\f3 /src/posts/*.md
+\f1 ) preferred for journal entries\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f6 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1 \cf2 \
+
+\f0\b\fs22 4. infra/ \'97 Cloudflare Worker + DNS + Failover Config
+\f1\b0\fs24 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f2\b Purpose
+\f1\b0 :\
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Receive public telemetry streams and proxy to GitHub\
+	\'95	Schedule or requeue failover tasks (e.g., retry on error)\
+	\'95	Mask direct IP access to local MCP\
+\
+\uc0\u9989  
+\f2\b \cf2 Copilot Instructions
+\f1\b0 \cf2 :\
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Use 
+\f3 wrangler.toml
+\f1  for deploy config\
+	\'95	Secure Worker endpoint via HMAC shared secret or token header\
+	\'95	Use this Cloudflare Worker interface:
+\f6 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f3\fs22 \cf7 export\cf4  \cf7 async\cf4  \cf7 function\cf4  onRequest(context) \{\
+  \cf7 const\cf4  data = \cf7 await\cf4  context.request.json();\
+  \cf8 // route to GitHub Actions or local MCP via IP\cf4 \
+\}
+\f6\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1 \cf2 \
+
+\f0\b\fs26 \uc0\u55357 \u57057 \u65039  SECURITY INSTRUCTIONS
+\f1\b0\fs24 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Never commit 
+\f3 .env
+\f1  files, secrets, or IP addresses.\
+	\'95	All outbound requests to Cloudflare must use HTTPS and have a shared HMAC token in headers.\
+	\'95	MCP logs should be rotated and truncated; avoid infinite append.\
+	\'95	Telemetry should be rate-limited to prevent battery drain or overflow on mobile.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f6 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1 \cf2 \
+
+\f0\b\fs26 \uc0\u55357 \u56513  OUTPUT EXPECTATIONS FOR AGENTS
+\f1\b0\fs24 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\b \cf2 Every Copilot or ChatGPT agent task should generate:
+\f1\b0 \cf2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f3 README.md
+\f1  for the module or folder\
+	\'95	Fully working 
+\f3 .ts
+\f1  or 
+\f3 .js
+\f1  file(s)\
+	\'95	Example input/output if it\'92s an endpoint or service\
+	\'95	
+\f3 .env.example
+\f1  if the module uses secrets\
+	\'95	Optional: 
+\f3 test.ts
+\f1  or 
+\f3 demo.sh
+\f1  if appropriate\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f6 \cf0 \
+\uc0\u11835 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1 \cf2 \
+
+\f0\b\fs26 \uc0\u55358 \u56800  GPT AGENT MEMOIZATION / CONTEXT
+\f1\b0\fs24 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Project name: 
+\f3 TheWanderingWhittle
+\f1 \
+	\'95	Default timezone: Central (UTC-5)\
+	\'95	Start date: June 4, 2025\
+	\'95	End date: ~August 4, 2025\
+	\'95	Starlink IP: Static\
+	\'95	Local device: iMac (MCP server), Model Y + iPhone (tracker client)\
+	\'95	Dog name: Sasha \uc0\u55357 \u56382 \
+\pard\pardeftab720\partightenfactor0
+
+\f4 \cf0 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec3 \
+\
+\
+\
+\
+\
+\
+# ContinentalUSA\
+App to manage 48 state continental drive \
+A fully autonomous, 60-day EV-road-trip planner. \'95 Collects read-only telemetry (state-of-charge, location, charging events) every 15 min while driving or charging. \'95 Feeds data to an on-device algorithm that selects the next Supercharger/fallback L2 site using offline ABRP matrices. \'95 Transmits high-level stats (leg complete, arrival %, charging cost) to the driver's personal Cloudflare Worker for post-trip analytics. **No remote commands** are issued (start-charge, unlock, climate, etc.). Data never shared with third parties; solely for personal trip logistics and energy budgeting.\
+\
+## Project Progress\
+\
+- Public website built with React + Vite + Windi CSS for modern, responsive UI\
+- Live route status with real-time updates from Cloudflare Worker\
+- Interactive Mapbox map showing current location\
+- Dark mode toggle with persistent user preference\
+- Photo gallery with lightbox functionality\
+- Trip logs management with add/delete\
+- Tabbed navigation with URL hash support\
+- Offline support with service worker caching\
+- Accessibility improvements with ARIA roles and keyboard navigation\
+- GitHub Actions CI/CD for automatic deployment to Cloudflare Pages\
+\
+## Next Steps\
+\
+- Refactor Tesla API integration to work with Cloudflare Workers limitations\
+- Move Tesla API calls to an external backend service or rewrite with direct HTTP calls\
+- Implement secure authentication and token management for Tesla API\
+- Enhance trip logs and comments with backend persistence\
+- Add more interactive features like social sharing, notifications, and media uploads\
+\
+## Quick Start\
+\
+### Public Website (Remote Access)\
+\
+```bash\
+# from repo root\
+cd 48Continental_Starter/public-site\
+\
+# install dependencies\
+npm install\
+\
+# start local development server\
+npm run dev\
+\
+# build for production\
+npm run build\
+\
+# deploy to Cloudflare Pages\
+npm run deploy\
+```\
+\
+The public website is now remotely accessible, providing global access to real-time trip statistics and charging information over the internet.\
+\
+### Mobile App (React Native)\
+\
+```bash\
+# from repo root\
+cd ContinentalUSA-mobile\
+\
+# install dependencies\
+npm install\
+\
+# start development server\
+npm start\
+\
+# run on iOS simulator\
+npm run ios\
+\
+# run on Android device/emulator\
+npm run android\
+```\
+\
+For production deployment:\
+\
+```bash\
+# Build iOS\
+cd ContinentalUSA-mobile\
+npm run build:ios\
+\
+# Build Android\
+cd ContinentalUSA-mobile\
+npm run build:android\
+\
+# Deploy to stores (requires proper credentials)\
+npm run deploy:ios\
+npm run deploy:android\
+```\
+\
+## Additional Components\
+\
+### Requirements\
+\
+- Xcode 15 (or later)  \
+- Swift 5.9 toolchain  \
+- Node.js (v16+) & npm  \
+- Cloudflare Wrangler CLI (`npm install -g @cloudflare/wrangler`)\
+- ROO CLI (install via `npm install -g @roo/cli` or [see documentation](https://github.com/roo/cli))\
+- Set `EDGE_HMAC_KEY` in your shell or CI environment\
+\
+### iOS Client\
+\
+1. Open the Swift Package in Xcode via `ios-client/Package.swift`.  \
+2. Select a simulator or device (targeting iOS 17+).  \
+3. Hit **Run** (\uc0\u8984 +R) to build and launch the app.\
+\
+> Alternatively, from terminal:\
+>\
+> ```bash\
+> cd ios-client\
+> swift build\
+> # Note: `swift run` is not supported for iOS targets\'97use Xcode to launch.\
+> ```\
+\
+### Edge Worker\
+\
+```bash\
+# from repo root\
+cd edge-worker\
+\
+# install dependencies\
+npm install\
+\
+# run in dev mode on localhost:8787\
+wrangler dev\
+\
+# build for production\
+wrangler build\
+\
+# publish to Cloudflare (will read EDGE_HMAC_KEY from env)\
+wrangler deploy\
+```\
+\
+### Agents & Services\
+\
+To start all backend services and data collection agents:\
+\
+```bash\
+./scripts/start-agents.sh\
+```\
+\
+## Architecture\
+\
+The project consists of several key components:\
+\
+1. **Public Website** - WLAN accessible interface for accessing trip data without internet connectivity\
+2. **React Native Mobile App** - Cross-platform companion app for trip statistics and charging station management\
+3. **iOS Native Client** - Swift-based application for primary trip management and vehicle telemetry\
+4. **Edge Worker** - Cloudflare Worker handling data aggregation and trip analytics\
+5. **Backend Agents** - Services for data collection, route optimization, and charging station availability\
+\
+## Development\
+\
+### Pre-deploy Checks\
+\
+Before deploying any changes, run:\
+\
+```bash\
+npm run pre-deploy\
+```\
+\
+### Generate TypeScript Client\
+\
+To update the TypeScript API client:\
+\
+```bash\
+npm run codegen:ts\
+```\
+\
+## Security\
+\
+- All vehicle telemetry is collected in read-only mode\
+- Data is encrypted in transit using HMAC authentication\
+- No remote vehicle commands are supported\
+- Personal data remains on-device; only aggregated statistics are transmitted\
+- WLAN interface is only accessible on local network\
+- Mobile app uses secure storage for sensitive data\
+\
+## License\
+\
+See [LICENSE](./LICENSE) for details.}
