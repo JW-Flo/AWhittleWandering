@@ -6,6 +6,7 @@
     "scripts": {
         "build": "esbuild src/index.ts --bundle --format=esm --outfile=dist/worker.js",
         "deploy": "wrangler deploy",
+        "dev": "wrangler dev --local",
         "upload-static": "node scripts/upload-static.js",
         "prepare-static": "node scripts/prepare-static.js",
         "test": "vitest run",

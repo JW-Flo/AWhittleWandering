@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "start": "./scripts/start-services.sh",
+    "stop": "./scripts/stop-services.sh",
     "build:edge": "wrangler build --cwd edge-worker",
     "deploy:edge": "wrangler deploy --cwd edge-worker",
     "build:site": "cd 48Continental_Starter/public-site && npm run build",
