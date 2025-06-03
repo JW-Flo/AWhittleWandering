@@ -5,6 +5,8 @@
  */
 
 /* eslint-env browser */
+// Base URL for API endpoints (configurable via .env)
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
 /**
  * Generate simulated vehicle data for testing
@@ -18,7 +20,7 @@ export { generateSimulatedVehicleData } from './vehicleSimulation';
  */
 export const fetchVehicleData = async () => {
   try {
-    const response = await fetch('/api/vehicle');
+    const response = await fetch(`${API_BASE}/vehicle`);
     
     if (!response.ok) {
       throw new Error(`Vehicle API error: ${response.status}`);
