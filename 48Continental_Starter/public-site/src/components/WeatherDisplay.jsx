@@ -1,7 +1,7 @@
 /**
  * Weather Display Component
  * 
- * Displays current weather information in a Tessie-like UI.
+ * Displays current weather information along The Wandering Whittle's route.
  */
 
 import React from 'react';
@@ -107,7 +107,7 @@ const WeatherDisplay = ({ weatherData }) => {
           </div>
           <div className="detail-value">
             {windSpeed !== undefined ? `${windSpeed} mph` : 'N/A'}
-            {windDirection ? ` ${windDirection}` : ''}
+            {windDirection ? ` from ${windDirection}` : ''}
           </div>
         </div>
         

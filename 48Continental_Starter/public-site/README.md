@@ -1,6 +1,6 @@
 # The Wandering Whittle Public Website
 
-This is the public-facing website for The Wandering Whittle road trip tracking application. It provides real-time tracking and visualization of a Tesla road trip across all 48 contiguous United States.
+This is the public-facing website for The Wandering Whittle road trip tracking application. It provides real-time tracking and visualization of a 60-day Tesla road trip across all 48 contiguous United States.
 
 ## Features
 
@@ -45,9 +45,9 @@ This feature replaces the previous polling mechanism and offers:
 The real-time vehicle data is implemented using:
 
 1. A Cloudflare Worker that:
-   - Establishes a secure connection to Tesla API
-   - Handles authentication and token refresh
-   - Polls the Tesla API at defined intervals
+   - Establishes a secure connection to the Tessie API
+   - Handles authentication using the provided Tessie API token
+   - Polls the Tessie API at defined intervals
    - Broadcasts updates to all connected clients via WebSockets
 
 2. A React hook (`useVehicleData`) that:
@@ -102,7 +102,7 @@ For testing the WebSocket vehicle data stream locally:
 2. Use the included test utility from the browser console:
    ```javascript
    import { testVehicleWebSocket } from './src/utils/websocket-test';
-   const test = testVehicleWebSocket('your_vehicle_id');
+   const test = testVehicleWebSocket('your_vehicle_vin');
    ```
 
 ### Building for Production

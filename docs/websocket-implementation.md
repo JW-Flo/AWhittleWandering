@@ -1,22 +1,22 @@
 # Real-Time Vehicle WebSocket Implementation
 
-This directory contains the Cloudflare Worker implementation for real-time Tesla vehicle data streaming via WebSockets.
+This document describes the Cloudflare Worker implementation for real-time Tesla vehicle data streaming via WebSockets for The Wandering Whittle project.
 
 ## Files Overview
 
 - `vehicle-stream.ts` - The main WebSocket handler for vehicle data streaming
-- `utils/tesla-client.ts` - Tesla API client with authentication and data fetching capabilities
-- `utils/tesla-tokens.ts` - Token storage utilities for Tesla API credentials
+- `utils/tessie-client.ts` - Tessie API client with authentication and data fetching capabilities 
+- `utils/tessie-tokens.ts` - Token storage utilities for Tessie API credentials
 - `index.ts` - Main Worker entry point with route handlers
 
 ## How It Works
 
 The WebSocket implementation acts as a bridge between the Tesla API and the frontend applications:
 
-1. When a client connects to `/tesla/vehicle/stream?id={vehicleId}`, the worker:
-   - Verifies the vehicle ID is valid and accessible
+1. When a client connects to `/tessie/vehicle/stream?vin={vin}`, the worker:
+   - Verifies the VIN is valid and accessible
    - Creates a WebSocket connection with the client
-   - Begins polling the Tesla API for vehicle data (every 5 seconds)
+   - Begins polling the Tessie API for vehicle data (every 5 seconds)
    - Streams updates to the connected client
 
 2. The worker handles:
@@ -35,7 +35,7 @@ The WebSocket implementation acts as a bridge between the Tesla API and the fron
    > **Note:** Always use `npx wrangler` instead of a global wrangler installation.
 
 2. Test WebSocket connection using a tool like [WebSocket King](https://websocketking.com/):
-   - Connect to: `ws://localhost:8787/tesla/vehicle/stream?id=your_vehicle_id`
+   - Connect to: `ws://localhost:8787/tessie/vehicle/stream?vin=your_vehicle_vin`
 
 3. Or test directly from the frontend:
    ```
@@ -57,15 +57,15 @@ npx wrangler deploy
 ## Integration Points
 
 - **Frontend**: Uses the `useVehicleData` React hook that connects to this WebSocket endpoint
-- **iOS Client**: Can connect directly to the WebSocket endpoint using `URLSessionWebSocketTask`
+- **iOS Client**: Can connect directly to the WebSocket endpoint using `URLSession.shared.webSocketTask(with:)`
 
 ## Error Handling
 
 Common error scenarios handled:
 
 1. **Connection failures**: The worker responds with appropriate HTTP status codes
-2. **Authentication failures**: Automatically attempts to refresh tokens
-3. **API rate limiting**: Respects Tesla's rate limits with timed polling
+2. **Authentication failures**: Automatically reconnects using the provided Tessie API token
+3. **API rate limiting**: Respects Tessie's rate limits with timed polling
 4. **Client disconnections**: Cleans up resources when clients disconnect
 
 ## Performance Notes
