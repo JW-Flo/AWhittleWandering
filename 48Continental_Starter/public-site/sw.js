@@ -20,6 +20,16 @@ self.addEventListener('install', e => {
 
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
+  
+  // Skip handling WebSocket connections
+  if (e.request.headers.get('Upgrade') === 'websocket') {
+    return;
+  }
+  
+  // Skip handling WebSocket API endpoints (even for HTTP requests to these endpoints)
+  if (url.pathname.startsWith('/api/stream/')) {
+    return;
+  }
 
   // Cache weather data requests
   if (url.pathname.startsWith('/weather') || url.hostname.includes('weather.gov')) {

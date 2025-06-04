@@ -11,9 +11,8 @@ import PropTypes from 'prop-types';
 import mapboxgl from 'mapbox-gl';
 import ChargingStations from './ChargingStations';
 
-// Mapbox token (in a real app, this would be in an environment variable)
-// This is a placeholder token - replace with a valid one for production
-mapboxgl.accessToken = 'pk.placeholder-token-replace-in-production';
+// Set MapBox token from environment variables
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoidGhld2FuZGVyaW5nd2hpdHRsZSIsImEiOiJjbHQxaXhzejYwYmU2MmpxdHl0MHowN3UzIn0.Q7xKTRlXvtimBHd39JqN1A';
 
 /**
  * Interactive map component using Mapbox GL

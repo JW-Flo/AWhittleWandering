@@ -143,7 +143,7 @@ describe('Edge Worker Integration Tests', () => {
             const normalRoute = (await normalRes.json() as RouteResponse).route;
             const severeRoute = (await severeRes.json() as RouteResponse).route;
 
-            expect(normalRoute.totalDistance).not.toBe(severeRoute.totalDistance);
+            expect(Math.abs(normalRoute.totalDistance - severeRoute.totalDistance)).toBeGreaterThan(0.01);
             expect(normalRoute.totalConsumption).toBeLessThan(severeRoute.totalConsumption);
         });
     });

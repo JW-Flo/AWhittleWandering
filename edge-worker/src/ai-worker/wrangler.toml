@@ -1,0 +1,16 @@
+name = "continental-ai-worker"
+main = "continental-ai-worker.js"
+compatibility_date = "2024-05-01"
+
+# Configure the AI binding
+[ai]
+binding = "AI"
+
+# Add environment variables (these would be configured in production)
+[vars]
+ENVIRONMENT = "development"
+
+# Define a route for the worker (update with your domain in production)
+# [route]
+# pattern = "ai-worker.continental48.com/*"
+# zone_name = "continental48.com"

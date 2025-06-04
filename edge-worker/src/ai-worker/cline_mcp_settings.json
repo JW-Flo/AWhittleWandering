@@ -1,0 +1,39 @@
+{
+  "mcpServers": {
+    "github.com/continental/ai-server": {
+      "autoApprove": [
+        "generate_code",
+        "refine_code",
+        "explain_code",
+        "route_optimization",
+        "charging_strategy",
+        "travel_highlights",
+        "environmental_impact"
+      ],
+      "disabled": false,
+      "timeout": 120,
+      "transportType": "http",
+      "endpoint": "https://continental-ai-worker.yourworker.workers.dev/v1/chat/completions",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer ${env.CONTINENTAL_API_KEY}"
+      }
+    },
+    "github.com/continental/specialized-ai": {
+      "autoApprove": [
+        "route_optimization",
+        "charging_strategy",
+        "travel_highlights",
+        "environmental_impact"
+      ],
+      "disabled": false,
+      "timeout": 60,
+      "transportType": "http",
+      "endpoint": "https://continental-ai-worker.yourworker.workers.dev",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer ${env.CONTINENTAL_API_KEY}"
+      }
+    }
+  }
+}

@@ -1,8 +1,8 @@
 /**
  * Weather API Utilities
  * 
- * This module provides functions to generate simulated weather data
- * for testing and development of the 48 Continental USA application.
+ * This module provides functions to fetch and process weather data
+ * from OpenWeather API for The Wandering Whittle application.
  */
 
 /* eslint-env browser */
@@ -133,28 +133,143 @@ export function generateSimulatedWeatherData(options = {}) {
 }
 
 /**
- * Fetch weather data from the API
+ * Fetch weather data directly from OpenWeather API
  * @param {Object} options - Query options
  * @returns {Promise<Object>} Weather data
  */
 export const fetchWeatherData = async (options = {}) => {
+  const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
+  
+  if (!API_KEY) {
+    console.error('Missing OpenWeather API key in environment variables');
+    throw new Error('Configuration error: Missing OpenWeather API key');
+  }
+  
   try {
+    // Use our Cloudflare Worker to proxy the request and add caching
     let url = '/api/weather';
     
     // Add query parameters if provided
     if (options.latitude && options.longitude) {
       url += `?lat=${options.latitude}&lon=${options.longitude}`;
+    } else if (options.location) {
+      // Use location object if provided
+      url += `?lat=${options.location.latitude}&lon=${options.location.longitude}`;
     }
     
+    // Add our API key to the request
+    url += `&appid=${API_KEY}&units=imperial`;
+    
+    // Make the request
     const response = await fetch(url);
     
     if (!response.ok) {
-      throw new Error(`Weather API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('Weather API error:', response.status, errorText);
+      throw new Error(`Weather API error: ${response.status} - ${errorText}`);
     }
     
-    return await response.json();
+    const data = await response.json();
+    return transformWeatherData(data);
   } catch (error) {
     console.error('Error fetching weather data:', error);
+    
+    // If we're in development mode or the API fails, return simulated data
+    if (import.meta.env.DEV || error.message.includes('Weather API error')) {
+      console.warn('Using simulated weather data due to API error');
+      return generateSimulatedWeatherData(options);
+    }
+    
     throw error;
   }
+};
+
+/**
+ * Transform OpenWeather API data to our application format
+ * @param {Object} weatherData - Raw data from OpenWeather API
+ * @returns {Object} Transformed weather data
+ */
+const transformWeatherData = (weatherData) => {
+  // If we received data in our format already (e.g., from cache)
+  if (weatherData.current && weatherData.daily) {
+    return weatherData;
+  }
+  
+  // Get the weather condition icon mapping
+  const getConditionFromCode = (code) => {
+    const codeStr = code.toString();
+    
+    // Weather condition mapping based on OpenWeather codes
+    // https://openweathermap.org/weather-conditions
+    if (codeStr.startsWith('2')) {
+      return { type: 'thunderstorm', description: 'Thunderstorm', icon: '🌩️' };
+    } else if (codeStr.startsWith('3')) {
+      return { type: 'drizzle', description: 'Drizzle', icon: '🌧️' };
+    } else if (codeStr.startsWith('5')) {
+      return { type: 'rain', description: 'Rain', icon: '🌧️' };
+    } else if (codeStr.startsWith('6')) {
+      return { type: 'snow', description: 'Snow', icon: '❄️' };
+    } else if (codeStr.startsWith('7')) {
+      return { type: 'fog', description: 'Fog', icon: '🌫️' };
+    } else if (codeStr === '800') {
+      return { type: 'clear', description: 'Clear sky', icon: '☀️' };
+    } else if (codeStr.startsWith('80')) {
+      return { type: 'clouds', description: 'Clouds', icon: '☁️' };
+    }
+    
+    return { type: 'unknown', description: 'Unknown', icon: '❓' };
+  };
+  
+  // Format hourly forecast if available
+  const hourly = weatherData.hourly?.map(hour => {
+    const condition = getConditionFromCode(hour.weather[0].id);
+    
+    return {
+      hour: new Date(hour.dt * 1000).getHours(),
+      temp: Math.round(hour.temp),
+      condition
+    };
+  }) || [];
+  
+  // Format daily forecast if available
+  const daily = weatherData.daily?.map(day => {
+    const condition = getConditionFromCode(day.weather[0].id);
+    
+    return {
+      day: new Date(day.dt * 1000).toISOString().split('T')[0],
+      high: Math.round(day.temp.max),
+      low: Math.round(day.temp.min),
+      condition,
+      precipitation: Math.round(day.pop * 100) // Probability of precipitation
+    };
+  }) || [];
+  
+  // Transform the current weather data
+  const current = weatherData.current;
+  const mainCondition = current?.weather?.[0] || { id: 800, description: 'Clear' };
+  
+  return {
+    location: {
+      latitude: weatherData.lat || 0,
+      longitude: weatherData.lon || 0,
+      city: weatherData.name || 'Unknown',
+      state: weatherData.state || '',
+      country: weatherData.country || 'US'
+    },
+    current: {
+      temp: Math.round(current?.temp || 0),
+      feels_like: Math.round(current?.feels_like || 0),
+      humidity: current?.humidity || 0,
+      wind_speed: Math.round(current?.wind_speed || 0),
+      wind_direction: current?.wind_deg || 0,
+      condition: getConditionFromCode(mainCondition.id),
+      uv_index: Math.round(current?.uvi || 0),
+      visibility: Math.round((current?.visibility || 0) / 1609.34), // Convert meters to miles
+      pressure: current?.pressure || 0
+    },
+    hourly: hourly.slice(0, 24), // Limit to 24 hours
+    daily: daily.slice(0, 7),    // Limit to 7 days
+    alerts: weatherData.alerts || [],
+    last_updated: new Date().toISOString()
+  };
 };

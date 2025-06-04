@@ -1,8 +1,8 @@
 /**
- * 48 Continental USA Main Application Component
+ * The Wandering Whittle Main Application Component
  * 
  * This is the primary React component that renders the entire
- * 48 Continental USA road trip tracking application.
+ * The Wandering Whittle road trip tracking application.
  */
 
 /* eslint-env browser */
@@ -22,16 +22,28 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Fetch data using custom hooks
-  const { vehicleData, vehicleLoading, vehicleError } = useVehicleData();
-  const { weatherData, weatherLoading, weatherError } = useWeatherData({
-    location: vehicleData ? { latitude: vehicleData.latitude, longitude: vehicleData.longitude } : null
+  // Fetch data using custom hooks with WebSocket streaming for vehicle data
+  const { vehicleData, vehicleLoading, vehicleError, connectionStatus } = useVehicleData({ 
+    enableStreaming: true, 
+    pollInterval: 30000  // Fallback polling interval if WebSocket fails
   });
-  const { tripData, tripLoading, tripError } = useTripData();
+  
+  // Update other data sources based on vehicle location
+  const { weatherData, weatherLoading, weatherError } = useWeatherData({
+    location: vehicleData ? { 
+      latitude: vehicleData.location?.latitude || vehicleData.latitude, 
+      longitude: vehicleData.location?.longitude || vehicleData.longitude 
+    } : null,
+    pollInterval: 15000  // More frequent updates for weather
+  });
+  
+  const { tripData, tripLoading, tripError } = useTripData({ pollInterval: 20000 });
+  
   const { stationsData, stationsLoading, stationsError } = useChargingStations({
-    latitude: vehicleData?.latitude,
-    longitude: vehicleData?.longitude,
-    radius: 50
+    latitude: vehicleData?.location?.latitude || vehicleData?.latitude,
+    longitude: vehicleData?.location?.longitude || vehicleData?.longitude,
+    radius: 50,
+    pollInterval: 30000
   });
   
   // Set loading state based on data loading
@@ -60,8 +72,8 @@ const App = () => {
     if (!document.querySelector('meta[name="mapbox-token"]')) {
       const tokenMeta = document.createElement('meta');
       tokenMeta.name = 'mapbox-token';
-      // This is a placeholder token - replace with a valid one for production
-      tokenMeta.content = 'pk.placeholder-token-replace-in-production';
+      // Use our Mapbox token from environment variables
+      tokenMeta.content = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoidGhld2FuZGVyaW5nd2hpdHRsZSIsImEiOiJjbHQxaXhzejYwYmU2MmpxdHl0MHowN3UzIn0.Q7xKTRlXvtimBHd39JqN1A';
       document.head.appendChild(tokenMeta);
     }
   }, []);
@@ -73,6 +85,7 @@ const App = () => {
         weatherData={weatherData}
         tripData={tripData}
         stationsData={stationsData}
+        connectionStatus={connectionStatus}
         isLoading={isLoading}
         error={error}
       />
