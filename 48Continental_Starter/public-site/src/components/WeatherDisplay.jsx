@@ -1,152 +1,125 @@
 /**
  * Weather Display Component
  * 
- * Displays current weather conditions and forecast for the
- * current location during the 48 Continental USA journey.
+ * Displays current weather information in a Tessie-like UI.
  */
 
-/* eslint-env browser */
 import React from 'react';
 import PropTypes from 'prop-types';
+import { 
+  FaTemperatureHigh, 
+  FaWind, 
+  FaCloudRain, 
+  FaSun, 
+  FaCloud, 
+  FaCloudSun,
+  FaSnowflake,
+  FaBolt,
+  FaSmog
+} from 'react-icons/fa';
 
 /**
- * Weather display component
+ * Get the appropriate weather icon based on the condition
+ */
+const getWeatherIcon = (condition) => {
+  if (!condition) return <FaCloudSun size={32} />;
+  
+  const lowerCondition = condition.toLowerCase();
+  
+  if (lowerCondition.includes('clear') || lowerCondition.includes('sunny')) {
+    return <FaSun size={32} />;
+  } else if (lowerCondition.includes('cloud') || lowerCondition.includes('overcast')) {
+    return <FaCloud size={32} />;
+  } else if (lowerCondition.includes('rain') || lowerCondition.includes('drizzle') || lowerCondition.includes('shower')) {
+    return <FaCloudRain size={32} />;
+  } else if (lowerCondition.includes('snow') || lowerCondition.includes('sleet') || lowerCondition.includes('ice')) {
+    return <FaSnowflake size={32} />;
+  } else if (lowerCondition.includes('thunder') || lowerCondition.includes('lightning') || lowerCondition.includes('storm')) {
+    return <FaBolt size={32} />;
+  } else if (lowerCondition.includes('fog') || lowerCondition.includes('mist') || lowerCondition.includes('haze')) {
+    return <FaSmog size={32} />;
+  } else {
+    return <FaCloudSun size={32} />;
+  }
+};
+
+/**
+ * Weather Display component
  */
 const WeatherDisplay = ({ weatherData }) => {
   if (!weatherData) {
     return (
-      <div className="no-data-message">
-        <p>Weather data not available</p>
+      <div className="weather-display">
+        <div className="no-data-message">No weather data available</div>
       </div>
     );
   }
-  
-  const { 
-    temperature, 
-    feelsLike, 
-    condition, 
-    icon, 
-    humidity, 
-    windSpeed, 
+
+  const {
+    temperature,
+    condition,
+    feelsLike,
+    humidity,
+    windSpeed,
     windDirection,
-    precipitation,
-    sunrise,
-    sunset,
-    forecast,
-    location,
-    last_updated
+    precipitation
   } = weatherData;
-  
-  // Format sunrise/sunset times
-  const formatTime = (timeString) => {
-    if (!timeString) return 'N/A';
-    
-    const date = new Date(timeString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-  
-  // Format the last updated time
-  const formattedUpdateTime = last_updated 
-    ? new Date(last_updated).toLocaleString() 
-    : 'Unknown';
-  
-  // Convert wind direction degrees to cardinal direction
-  const getWindDirection = (degrees) => {
-    if (degrees === undefined) return 'N/A';
-    
-    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'N'];
-    const index = Math.round(degrees / 22.5);
-    return directions[index];
-  };
-  
+
   return (
     <div className="weather-display">
-      {/* Current Weather Overview */}
-      <div className="current-weather">
-        <div className="weather-main">
-          <div className="weather-icon-temp">
-            {icon && (
-              <img 
-                src={`https://openweathermap.org/img/wn/${icon}@2x.png`} 
-                alt={condition} 
-                className="weather-icon-large"
-              />
-            )}
-            <div className="temperature-display">
-              <span className="current-temp">{Math.round(temperature)}°F</span>
-              <span className="feels-like">Feels like {Math.round(feelsLike)}°F</span>
-            </div>
-          </div>
-          <div className="condition-location">
-            <h3 className="condition">{condition}</h3>
-            {location && (
-              <p className="location">{location.name || 'Current Location'}</p>
-            )}
-          </div>
-        </div>
-        
-        {/* Weather Details */}
-        <div className="weather-details">
-          <div className="detail-item">
-            <span className="detail-icon">💧</span>
-            <span className="detail-label">Humidity</span>
-            <span className="detail-value">{humidity}%</span>
-          </div>
-          
-          <div className="detail-item">
-            <span className="detail-icon">💨</span>
-            <span className="detail-label">Wind</span>
-            <span className="detail-value">{windSpeed} mph {getWindDirection(windDirection)}</span>
-          </div>
-          
-          {precipitation && (
-            <div className="detail-item">
-              <span className="detail-icon">🌧️</span>
-              <span className="detail-label">Precipitation</span>
-              <span className="detail-value">{Math.round(precipitation.probability * 100)}%</span>
-            </div>
-          )}
-        </div>
-        
-        {/* Sun Times */}
-        <div className="sun-times">
-          <div className="sun-item">
-            <span className="sun-icon">🌅</span>
-            <span className="sun-label">Sunrise</span>
-            <span className="sun-value">{formatTime(sunrise)}</span>
-          </div>
-          
-          <div className="sun-item">
-            <span className="sun-icon">🌇</span>
-            <span className="sun-label">Sunset</span>
-            <span className="sun-value">{formatTime(sunset)}</span>
-          </div>
-        </div>
+      <div className="weather-icon">
+        {getWeatherIcon(condition)}
       </div>
       
-      {/* Forecast */}
-      {forecast && forecast.length > 0 && (
-        <div className="forecast-section">
-          <h3>5-Day Forecast</h3>
-          <div className="forecast-container">
-            {forecast.map((day, index) => (
-              <div className="forecast-day" key={index}>
-                <span className="day-name">{day.day}</span>
-                <div className="day-temps">
-                  <span className="high-temp">{Math.round(day.temperature.high)}°</span>
-                  <span className="low-temp">{Math.round(day.temperature.low)}°</span>
-                </div>
-                <span className="day-condition">{day.condition}</span>
-                <span className="day-precip">{Math.round(day.precipitation)}%</span>
-              </div>
-            ))}
+      <div className="weather-temp">
+        {temperature !== undefined ? `${Math.round(temperature)}°F` : 'N/A'}
+      </div>
+      
+      <div className="weather-condition">
+        {condition || 'Weather data unavailable'}
+      </div>
+      
+      <div className="weather-details">
+        <div className="weather-detail-item">
+          <div className="detail-label">
+            <FaTemperatureHigh size={12} style={{ marginRight: '4px' }} />
+            FEELS LIKE
+          </div>
+          <div className="detail-value">
+            {feelsLike !== undefined ? `${Math.round(feelsLike)}°F` : 'N/A'}
           </div>
         </div>
-      )}
-      
-      {/* Last updated */}
-      <div className="last-updated">
-        Last updated: {formattedUpdateTime}
+        
+        <div className="weather-detail-item">
+          <div className="detail-label">
+            <FaCloudRain size={12} style={{ marginRight: '4px' }} />
+            HUMIDITY
+          </div>
+          <div className="detail-value">
+            {humidity !== undefined ? `${humidity}%` : 'N/A'}
+          </div>
+        </div>
+        
+        <div className="weather-detail-item">
+          <div className="detail-label">
+            <FaWind size={12} style={{ marginRight: '4px' }} />
+            WIND
+          </div>
+          <div className="detail-value">
+            {windSpeed !== undefined ? `${windSpeed} mph` : 'N/A'}
+            {windDirection ? ` ${windDirection}` : ''}
+          </div>
+        </div>
+        
+        <div className="weather-detail-item">
+          <div className="detail-label">
+            <FaCloudRain size={12} style={{ marginRight: '4px' }} />
+            PRECIP
+          </div>
+          <div className="detail-value">
+            {precipitation !== undefined ? `${precipitation}%` : 'N/A'}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -155,35 +128,12 @@ const WeatherDisplay = ({ weatherData }) => {
 WeatherDisplay.propTypes = {
   weatherData: PropTypes.shape({
     temperature: PropTypes.number,
-    feelsLike: PropTypes.number,
     condition: PropTypes.string,
-    icon: PropTypes.string,
+    feelsLike: PropTypes.number,
     humidity: PropTypes.number,
     windSpeed: PropTypes.number,
-    windDirection: PropTypes.number,
-    precipitation: PropTypes.shape({
-      probability: PropTypes.number,
-      intensity: PropTypes.number
-    }),
-    sunrise: PropTypes.string,
-    sunset: PropTypes.string,
-    forecast: PropTypes.arrayOf(
-      PropTypes.shape({
-        day: PropTypes.string,
-        temperature: PropTypes.shape({
-          high: PropTypes.number,
-          low: PropTypes.number
-        }),
-        condition: PropTypes.string,
-        precipitation: PropTypes.number
-      })
-    ),
-    location: PropTypes.shape({
-      latitude: PropTypes.number,
-      longitude: PropTypes.number,
-      name: PropTypes.string
-    }),
-    last_updated: PropTypes.string
+    windDirection: PropTypes.string,
+    precipitation: PropTypes.number
   })
 };
 

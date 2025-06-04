@@ -1,16 +1,26 @@
-name: Worker CI
-on: push
+name: Edge Worker CI/CD
+on:
+  push:
+    paths:
+      - "edge-worker/**"
+      - ".github/workflows/worker.yml"
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
       - name: Install dependencies
         run: |
           cd edge-worker
           npm install
 
+      # Using the official Cloudflare action is the recommended approach
       - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}

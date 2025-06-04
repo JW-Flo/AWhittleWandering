@@ -1,8 +1,8 @@
 /**
- * 48 Continental USA Web Application Entry Point
+ * The Wandering Whittle Web Application Entry Point
  * 
  * This is the main entry point for the React application that powers
- * the 48 Continental USA road trip tracking website.
+ * the The Wandering Whittle road trip tracking website.
  */
 
 /* eslint-env browser */
@@ -24,7 +24,7 @@ root.render(
   </React.StrictMode>
 );
 
-console.log('48 Continental USA React application initialized');
+console.log('The Wandering Whittle React application initialized');
 
 // Handle errors globally
 window.addEventListener('error', (event) => {

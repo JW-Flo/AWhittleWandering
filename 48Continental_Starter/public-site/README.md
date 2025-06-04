@@ -1,6 +1,6 @@
-# 48 Continental USA Public Website
+# The Wandering Whittle Public Website
 
-This is the public-facing website for the 48 Continental USA road trip tracking application. It provides real-time tracking and visualization of a Tesla road trip across all 48 contiguous United States.
+This is the public-facing website for The Wandering Whittle road trip tracking application. It provides real-time tracking and visualization of a Tesla road trip across all 48 contiguous United States.
 
 ## Features
 

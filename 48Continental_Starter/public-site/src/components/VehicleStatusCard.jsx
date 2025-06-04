@@ -1,236 +1,139 @@
 /**
- * Vehicle Status Card Component with Real-time Updates
+ * Vehicle Status Card Component
  * 
- * Displays detailed Tesla vehicle information with live updates via WebSocket.
- * This component uses the useVehicleData hook with streaming enabled.
+ * Displays vehicle status information in a Tessie-like UI.
  */
 
-/* eslint-env browser */
 import React from 'react';
-import { useVehicleData } from '../hooks/useVehicleData';
-import './VehicleStatusCard.css';
+import PropTypes from 'prop-types';
+import { FaCar, FaBatteryThreeQuarters, FaThermometerHalf, FaLocationArrow } from 'react-icons/fa';
 
 /**
- * Real-time vehicle status display card
+ * Vehicle Status Card component
  */
-const VehicleStatusCard = () => {
-  // Use the vehicle data hook with WebSocket streaming enabled
-  const { 
-    vehicleData, 
-    vehicleLoading, 
-    vehicleError,
-    connectionStatus,
-    reconnect
-  } = useVehicleData({ 
-    enableStreaming: true 
-  });
-  
-  // Loading state
-  if (vehicleLoading && !vehicleData) {
-    return (
-      <div className="vehicle-status-loading">
-        <div className="loading-spinner"></div>
-        <p>Connecting to vehicle...</p>
-      </div>
-    );
-  }
-  
-  // Error state
-  if (vehicleError && !vehicleData) {
-    return (
-      <div className="vehicle-status-error">
-        <div className="error-icon">⚠️</div>
-        <p className="error-message">{vehicleError}</p>
-        <button 
-          className="retry-button"
-          onClick={reconnect}
-        >
-          Reconnect
-        </button>
-      </div>
-    );
-  }
-  
-  // No data state
+const VehicleStatusCard = ({ vehicleData }) => {
   if (!vehicleData) {
     return (
-      <div className="no-data-message">
-        <p>Vehicle data not available</p>
-        <button 
-          className="retry-button"
-          onClick={reconnect}
-        >
-          Retry Connection
-        </button>
+      <div className="dashboard-card vehicle-status-card">
+        <div className="card-header">
+          <h3 className="card-title">Vehicle Status</h3>
+        </div>
+        <div className="card-content">
+          <div className="no-data-message">No vehicle data available</div>
+        </div>
       </div>
     );
   }
-  
+
+  // Extract vehicle data
   const { 
-    batteryLevel, 
-    range, 
-    speed, 
-    power, 
-    temperature, 
-    charging, 
+    name, 
+    model, 
+    battery,
+    location,
     climate,
-    locked,
-    sentry_mode,
-    tire_pressure,
-    last_updated
+    status
   } = vehicleData;
+
+  // Calculate battery level percentage for visualization
+  const batteryLevelPercent = battery?.level || 0;
   
-  // Format the last updated time
-  const formattedTime = last_updated 
-    ? new Date(last_updated).toLocaleString() 
-    : 'Unknown';
-  
-  // Battery level color class
-  const getBatteryColorClass = (level) => {
-    if (level < 20) return 'critical';
-    if (level < 40) return 'warning';
-    return 'good';
-  };
-  
-  // Connection status indicator
-  const getConnectionStatusClass = (status) => {
-    switch (status) {
-      case 'connected': return 'status-connected';
-      case 'connecting': return 'status-connecting';
-      case 'reconnecting': return 'status-reconnecting';
-      case 'disconnected': 
-      default: return 'status-disconnected';
-    }
-  };
-  
-  const getConnectionStatusIcon = (status) => {
-    switch (status) {
-      case 'connected': return '●';
-      case 'connecting': return '◌';
-      case 'reconnecting': return '◎';
-      case 'disconnected': 
-      default: return '○';
-    }
-  };
+  // Determine vehicle status text
+  const vehicleStatusText = status?.locked 
+    ? 'Parked & Locked' 
+    : status?.is_user_present
+      ? 'In Use'
+      : 'Parked';
   
   return (
-    <div className="vehicle-status-card">
-      {/* Connection status indicator */}
-      <div className={`connection-status ${getConnectionStatusClass(connectionStatus)}`}>
-        <span className="status-icon">{getConnectionStatusIcon(connectionStatus)}</span>
-        <span className="status-text">{connectionStatus}</span>
-        {connectionStatus === 'disconnected' && (
-          <button 
-            className="reconnect-button"
-            onClick={reconnect}
-          >
-            Reconnect
-          </button>
-        )}
+    <div className="dashboard-card vehicle-status-card">
+      <div className="card-header">
+        <h3 className="card-title">Vehicle Status</h3>
       </div>
-      
-      {/* Main stats */}
-      <div className="main-stats">
-        <div className="stat-group battery-stats">
-          <div className="battery-visual-container">
-            <div 
-              className={`battery-visual ${getBatteryColorClass(batteryLevel)}`} 
-              style={{ width: `${batteryLevel}%` }}
-            />
+      <div className="card-content">
+        {/* Vehicle primary info */}
+        <div className="vehicle-primary-info">
+          <div className="vehicle-icon">
+            <FaCar size={24} />
           </div>
-          <div className="battery-info">
-            <span className="battery-percentage">{Math.round(batteryLevel)}%</span>
-            <span className="battery-range">~{Math.round(range)} mi</span>
+          <div>
+            <h4 className="vehicle-name">{name || `${model} ${new Date().getFullYear()}`}</h4>
+            <p className="vehicle-status">{vehicleStatusText}</p>
           </div>
-          {charging && (
-            <div className="charging-indicator">
-              <span className="charging-icon">⚡</span>
-              <span>Charging</span>
-            </div>
-          )}
         </div>
         
-        <div className="stat-row">
-          <div className="stat-item">
-            <span className="stat-label">Speed</span>
-            <span className="stat-value">{Math.round(speed)} mph</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Power</span>
-            <span className="stat-value">{Math.round(power)} kW</span>
-          </div>
-        </div>
-      </div>
-      
-      {/* Temperature section */}
-      <div className="section">
-        <h3>Temperature</h3>
-        <div className="stat-row">
-          <div className="stat-item">
-            <span className="stat-label">Inside</span>
-            <span className="stat-value">{Math.round(temperature?.inside || 0)}°F</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Outside</span>
-            <span className="stat-value">{Math.round(temperature?.outside || 0)}°F</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Climate</span>
-            <span className="stat-value">
-              {climate?.enabled ? 'On' : 'Off'}
-              {climate?.enabled && climate?.temperature && ` (${climate.temperature}°F)`}
-            </span>
-          </div>
-        </div>
-      </div>
-      
-      {/* Vehicle status section */}
-      <div className="section">
-        <h3>Vehicle Status</h3>
-        <div className="status-grid">
-          <div className="status-item">
-            <span className="status-icon">{locked ? '🔒' : '🔓'}</span>
-            <span className="status-label">{locked ? 'Locked' : 'Unlocked'}</span>
-          </div>
-          <div className="status-item">
-            <span className="status-icon">{sentry_mode ? '👁️' : '⚪'}</span>
-            <span className="status-label">Sentry Mode: {sentry_mode ? 'On' : 'Off'}</span>
-          </div>
-        </div>
-      </div>
-      
-      {/* Tire pressure section */}
-      {tire_pressure && (
-        <div className="section">
-          <h3>Tire Pressure (PSI)</h3>
-          <div className="tire-grid">
-            <div className="tire-item">
-              <span className="tire-value">{Math.round(tire_pressure.front_left)}</span>
-              <span className="tire-label">Front Left</span>
+        {/* Vehicle stats */}
+        <div className="vehicle-stats">
+          {/* Battery */}
+          <div className="stat-group">
+            <div className="stat-label">
+              <FaBatteryThreeQuarters size={14} style={{ marginRight: '4px' }} />
+              BATTERY
             </div>
-            <div className="tire-item">
-              <span className="tire-value">{Math.round(tire_pressure.front_right)}</span>
-              <span className="tire-label">Front Right</span>
-            </div>
-            <div className="tire-item">
-              <span className="tire-value">{Math.round(tire_pressure.rear_left)}</span>
-              <span className="tire-label">Rear Left</span>
-            </div>
-            <div className="tire-item">
-              <span className="tire-value">{Math.round(tire_pressure.rear_right)}</span>
-              <span className="tire-label">Rear Right</span>
+            <div className="stat-value battery">{batteryLevelPercent}%</div>
+            <div className="battery-graphic">
+              <div className="battery-level" style={{ width: `${batteryLevelPercent}%` }}></div>
             </div>
           </div>
+          
+          {/* Range */}
+          <div className="stat-group">
+            <div className="stat-label">RANGE</div>
+            <div className="stat-value">{battery?.range || 0} mi</div>
+          </div>
+          
+          {/* Interior Temperature */}
+          <div className="stat-group">
+            <div className="stat-label">
+              <FaThermometerHalf size={14} style={{ marginRight: '4px' }} />
+              INTERIOR
+            </div>
+            <div className="stat-value">{climate?.insideTemp || 72}°F</div>
+          </div>
+          
+          {/* Exterior Temperature */}
+          <div className="stat-group">
+            <div className="stat-label">
+              <FaThermometerHalf size={14} style={{ marginRight: '4px' }} />
+              EXTERIOR
+            </div>
+            <div className="stat-value">{climate?.outsideTemp || 68}°F</div>
+          </div>
         </div>
-      )}
-      
-      {/* Last updated */}
-      <div className="last-updated">
-        <span>Last updated: {formattedTime}</span>
-        <span className="live-indicator">● LIVE</span>
+        
+        {/* Location & Speed */}
+        <div className="vehicle-location-info" style={{ marginTop: '20px' }}>
+          <div className="stat-label" style={{ marginBottom: '10px' }}>
+            <FaLocationArrow size={14} style={{ marginRight: '4px' }} />
+            LOCATION
+          </div>
+          <div className="location-details">
+            <div className="speed-heading">
+              <span className="stat-value">{location?.speed || 0}</span>
+              <span className="stat-unit" style={{ fontSize: '0.9rem', marginLeft: '4px' }}>mph</span>
+            </div>
+            {location?.heading && (
+              <div className="heading-indicator" style={{ marginTop: '5px' }}>
+                Direction: {getDirectionFromHeading(location.heading)}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
+};
+
+/**
+ * Convert heading in degrees to cardinal direction
+ */
+function getDirectionFromHeading(heading) {
+  const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW', 'N'];
+  return directions[Math.round(heading / 45) % 8];
+}
+
+VehicleStatusCard.propTypes = {
+  vehicleData: PropTypes.object
 };
 
 export default VehicleStatusCard;

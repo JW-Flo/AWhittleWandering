@@ -1,16 +1,76 @@
-name: Charging Plan
-on: workflow_dispatch
+name: Tesla Charging Plan Generator
+on:
+  workflow_dispatch:
+    inputs:
+      route_id:
+        description: "Trip route ID to generate plan for"
+        required: false
+        default: "default"
+      regenerate:
+        description: "Force regeneration of existing plan"
+        required: false
+        default: false
+        type: boolean
+
 jobs:
-  plan:
+  generate-charging-plan:
     runs-on: ubuntu-latest
     env:
       ABRP_API_KEY: ${{ secrets.ABRP_API_KEY }}
+      TESLA_REFRESH_TOKEN: ${{ secrets.TESLA_REFRESH_TOKEN }}
+      MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
-      - run: echo "leg,start,end" > charging-plan.csv
-      - run: |
-          git config user.email bot@github
-          git config user.name bot
-          git add charging-plan.csv
-          git commit -m "cli: stub plan"
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        run: |
+          npm ci
+
+      - name: Generate charging plan
+        id: generate-plan
+        run: |
+          echo "Generating charging plan for trip route: ${{ github.event.inputs.route_id || 'default' }}"
+
+          # Create plan directory if it doesn't exist
+          mkdir -p plans
+
+          # Initialize plan with headers if it doesn't exist or regeneration is requested
+          if [ ! -f "plans/charging-plan-${{ github.event.inputs.route_id || 'default' }}.csv" ] || [ "${{ github.event.inputs.regenerate }}" == "true" ]; then
+            echo "leg,start_location,end_location,distance_miles,starting_soc,ending_soc,charging_stop,charger_type,charging_time_min,energy_kwh" > "plans/charging-plan-${{ github.event.inputs.route_id || 'default' }}.csv"
+            
+            # Run the charging plan generator script
+            node scripts/generate-charging-plan.js --route="${{ github.event.inputs.route_id || 'default' }}" --output="plans/charging-plan-${{ github.event.inputs.route_id || 'default' }}.csv"
+            
+            # Check if generation was successful
+            if [ $? -ne 0 ]; then
+              echo "Error: Charging plan generation failed"
+              exit 1
+            fi
+          else
+            echo "Plan already exists. Use regenerate=true to force regeneration."
+          fi
+
+          # Show plan summary
+          echo "Plan summary:"
+          head -n 5 "plans/charging-plan-${{ github.event.inputs.route_id || 'default' }}.csv"
+
+          # Count total charging stops
+          STOPS=$(grep -c "true" "plans/charging-plan-${{ github.event.inputs.route_id || 'default' }}.csv" || echo "0")
+          echo "Total charging stops: $STOPS"
+
+          # Commit file path for next steps
+          echo "plan_file=plans/charging-plan-${{ github.event.inputs.route_id || 'default' }}.csv" >> $GITHUB_OUTPUT
+
+      - name: Commit and push charging plan
+        run: |
+          git config user.email "48continental-bot@github.com"
+          git config user.name "48 Continental Bot"
+          git add "${{ steps.generate-plan.outputs.plan_file }}"
+          git commit -m "charging-plan: update plan for route ${{ github.event.inputs.route_id || 'default' }}"
           git push

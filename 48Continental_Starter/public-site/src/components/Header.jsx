@@ -1,66 +1,75 @@
 /**
  * Header Component
  * 
- * Main navigation header for the 48 Continental USA journey website.
+ * Main navigation header for The Wandering Whittle journey website.
+ * Styled with a modern dark theme UI for better user experience.
  */
 
 /* eslint-env browser */
 import React from 'react';
 import PropTypes from 'prop-types';
+import { FaRoute, FaChartBar, FaMapMarkedAlt } from 'react-icons/fa';
 
 /**
  * Header component with navigation
  */
 const Header = ({ 
-  tripName, 
   currentState, 
   onViewChange,
   activeView
 }) => {
   return (
-    <header className="hero">
-      <div className="header-left">
-        <div className="logo">
-          <span className="logo-text">The Wandering Whilttle</span>
+    <header className="dashboard-header">
+      <div className="logo">
+        <span className="logo-text">The Wandering Whittle</span>
+      </div>
+      
+      {currentState && (
+        <div className="current-state-pill">
+          <span className="state-label">Current State:</span>
+          <span className="state-value">{currentState}</span>
         </div>
-        {tripName && <h2 className="trip-subtitle">{tripName}</h2>}
-      </div>
+      )}
       
-      <div className="header-center">
-        {currentState && (
-          <div className="current-state-pill">
-            <span className="state-label">Current State:</span>
-            <span className="state-value">{currentState}</span>
-          </div>
-        )}
+      <div className="header-tabs">
+        <div 
+          className={`header-tab ${activeView === 'map' ? 'active' : ''}`} 
+          onClick={() => onViewChange('map')}
+          role="button"
+          tabIndex={0}
+          aria-pressed={activeView === 'map'}
+        >
+          <FaMapMarkedAlt style={{ marginRight: '8px' }} />
+          Map
+        </div>
+        
+        <div 
+          className={`header-tab ${activeView === 'journey' ? 'active' : ''}`} 
+          onClick={() => onViewChange('journey')}
+          role="button"
+          tabIndex={0}
+          aria-pressed={activeView === 'journey'}
+        >
+          <FaRoute style={{ marginRight: '8px' }} />
+          Journey
+        </div>
+        
+        <div 
+          className={`header-tab ${activeView === 'states' ? 'active' : ''}`} 
+          onClick={() => onViewChange('states')}
+          role="button"
+          tabIndex={0}
+          aria-pressed={activeView === 'states'}
+        >
+          <FaChartBar style={{ marginRight: '8px' }} />
+          States
+        </div>
       </div>
-      
-      <nav className="header-nav">
-        {[
-          { view: 'journey', icon: '📍', label: 'Journey' },
-          { view: 'status', icon: '📊', label: 'Status' },
-          { view: 'map', icon: '🗺️', label: 'Map' },
-          { view: 'gallery', icon: '🖼️', label: 'Gallery' },
-          { view: 'comments', icon: '💬', label: 'Comments' },
-          { view: 'logs', icon: '📝', label: 'Logs' }
-        ].map(({ view, icon, label }) => (
-          <button
-            key={view}
-            className={`nav-button ${activeView === view ? 'active' : ''}`}
-            onClick={() => onViewChange(view)}
-            aria-pressed={activeView === view}
-          >
-            <span className="nav-icon">{icon}</span>
-            <span className="nav-text">{label}</span>
-          </button>
-        ))}
-      </nav>
     </header>
   );
 };
 
 Header.propTypes = {
-  tripName: PropTypes.string,
   currentState: PropTypes.string,
   onViewChange: PropTypes.func,
   activeView: PropTypes.string

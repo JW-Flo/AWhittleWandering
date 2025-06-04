@@ -1,3 +1,4 @@
+import { describe, test, expect } from 'vitest';
 import { calculateEmissionsSaved, analyzeEnergyConsumption, calculateChargingEfficiency } from '../48Continental_Starter/public-site/src/modules/environmental-impact/calculations';
 
 describe('Environmental Impact Calculations', () => {
