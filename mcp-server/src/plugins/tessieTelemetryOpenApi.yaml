@@ -1,0 +1,111 @@
+openapi: 3.0.0
+info:
+  title: Tessie API
+  version: 1.0.0
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  description: |
+    The Tesla management platform. Provides access to Tesla Fleet Telemetry and vehicle configuration.
+  contact:
+    name: Tessie
+    url: https://tessie.com
+    email: support@tessie.com
+  x-logo:
+    url: ""
+  termsOfService: https://tessie.com/terms
+servers:
+  - url: https://api.tessie.com
+paths:
+  "/{vin}/fleet_telemetry_config":
+    parameters:
+      - name: vin
+        description: The associated VIN.
+        schema:
+          type: string
+        in: path
+        required: true
+        deprecated: false
+        x-last-modified: 1643747623235
+        example: 5YJXCAE43LF123456
+    get:
+      summary: Get Telemetry Config
+      operationId: get-fleet-telemetry-config
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  synced:
+                    type: boolean
+                  config:
+                    type: object
+                    properties:
+                      hostname:
+                        type: string
+                      ca:
+                        type: string
+                      exp:
+                        type: integer
+                      port:
+                        type: integer
+                      fields:
+                        type: object
+                        properties: {}
+                      alert_types:
+                        type: array
+                        items:
+                          type: string
+                  update_available:
+                    type: boolean
+                x-examples:
+                  Example 1:
+                    synced: true
+                    config:
+                      hostname: telemetry.tessie.com
+                      ca: "..."
+                      exp: 1753759258
+                      port: 443
+                      fields: {}
+                      alert_types:
+                        - service
+                    update_available: false
+              examples:
+                Example 1:
+                  value:
+                    synced: true
+                    config:
+                      hostname: telemetry.tessie.com
+                      ca: "..."
+                      exp: 1753759258
+                      port: 443
+                      fields:
+                        ACChargingPower: { interval_seconds: 60 }
+                        BatteryLevel: { interval_seconds: 60 }
+                        ChargeState: { interval_seconds: 60 }
+                        DCChargingPower: { interval_seconds: 60 }
+                        EnergyRemaining: { interval_seconds: 60 }
+                        Gear: { interval_seconds: 60 }
+                        IdealBatteryRange: { interval_seconds: 60 }
+                        Location: { interval_seconds: 60 }
+                        Odometer: { interval_seconds: 60 }
+                        RatedRange: { interval_seconds: 60 }
+                      alert_types:
+                        - service
+                    update_available: false
+      description: Returns the vehicle's Fleet Telemetry configuration.
+      tags:
+        - Telemetry Configuration
+components:
+  securitySchemes:
+    bearerAuth:
+      scheme: bearer
+      type: http
+security:
+  - bearerAuth: []
+tags:
+  - name: Telemetry Configuration
+    description: Vehicle telemetry configuration endpoints
