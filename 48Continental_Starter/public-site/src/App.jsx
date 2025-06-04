@@ -3,6 +3,12 @@
  * 
  * This is the primary React component that renders the entire
  * The Wandering Whittle road trip tracking application.
+ * 
+ * @version 1.0.0
+ * @author The Wandering Whittle Team
+ * @license MIT
+ * 
+ * CRITICAL LAUNCH VERSION
  */
 
 /* eslint-env browser */
@@ -22,7 +28,7 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Fetch data using custom hooks with WebSocket streaming for vehicle data
+  // Fetch data using custom hooks with WebSocket streaming for vehicle data from Tessie API
   const { vehicleData, vehicleLoading, vehicleError, connectionStatus } = useVehicleData({ 
     enableStreaming: true, 
     pollInterval: 30000  // Fallback polling interval if WebSocket fails
@@ -72,8 +78,8 @@ const App = () => {
     if (!document.querySelector('meta[name="mapbox-token"]')) {
       const tokenMeta = document.createElement('meta');
       tokenMeta.name = 'mapbox-token';
-      // Use our Mapbox token from environment variables
-      tokenMeta.content = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoidGhld2FuZGVyaW5nd2hpdHRsZSIsImEiOiJjbHQxaXhzejYwYmU2MmpxdHl0MHowN3UzIn0.Q7xKTRlXvtimBHd39JqN1A';
+      // Use The Wandering Whittle's Mapbox token
+      tokenMeta.content = process.env.REACT_APP_MAPBOX_TOKEN || '';
       document.head.appendChild(tokenMeta);
     }
   }, []);

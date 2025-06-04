@@ -1,6 +1,6 @@
-# 48 Continental – Deployment Strategy
+# The Wandering Whittle – Deployment Strategy
 
-This document outlines the comprehensive deployment strategy for the 48 Continental project. It provides detailed instructions, verification steps, and troubleshooting guidance for each component to ensure consistent and reliable deployments.
+This document outlines the comprehensive deployment strategy for The Wandering Whittle project. It provides detailed instructions, verification steps, and troubleshooting guidance for each component to ensure consistent and reliable deployments.
 
 ---
 
@@ -20,9 +20,8 @@ This document outlines the comprehensive deployment strategy for the 48 Continen
 
 **Prerequisites**:
 - Valid Cloudflare API token with Worker permissions
-- Tesla API credentials
+- Tessie API token
 - MapBox API token
-- ABRP API key
 - Weather API key
 
 **Deployment Steps**:
@@ -46,16 +45,16 @@ npx wrangler deploy
    ```bash
    curl https://continentalusa.workers.dev/health
    ```
-2. Verify Tesla API integration:
+2. Verify Tessie API integration:
    ```bash
-   curl -H "Authorization: Bearer ${EDGE_HMAC_KEY}" https://continentalusa.workers.dev/tesla/status
+   curl -H "Authorization: Bearer ${EDGE_HMAC_KEY}" https://wanderingwhittle.workers.dev/tessie/status
    ```
 3. Verify all KV bindings are properly configured in Cloudflare dashboard
 
 **Troubleshooting**:
 - If deployment fails with KV errors, verify KV namespaces exist and are properly bound
 - If authentication fails, check EDGE_HMAC_KEY consistency
-- If Tesla API fails, verify token refresh mechanism is working
+- If Tessie API fails, verify the API token is valid
 
 ### 2. MCP Server Startup
 
@@ -118,7 +117,7 @@ npm install
 npm run build
 
 # Deploy to Cloudflare Pages
-npx wrangler pages deploy ./dist --project-name continentalusa-site
+npx wrangler pages deploy ./dist --project-name wandering-whittle
 ```
 
 **Verification**:
@@ -129,7 +128,7 @@ npx wrangler pages deploy ./dist --project-name continentalusa-site
 
 **Troubleshooting**:
 - If "Nothing is here yet" appears, check that Pages project is properly configured
-- If map fails to load, verify VITE_MAPBOX_TOKEN is set
+- If map fails to load, verify MAPBOX_TOKEN is set
 - If data doesn't appear, check Edge Worker URL configuration
 
 ### 4. Mobile Apps Deployment
@@ -216,7 +215,7 @@ For detailed environment configuration, refer to the `.env.example` files in eac
 - `EDGE_HMAC_KEY`: Must be consistent across all components
 - `EDGE_WORKER_URL`: URL of the deployed Edge Worker
 - `MAPBOX_TOKEN`: Required for map functionality
-- `TESLA_CLIENT_ID` and `TESLA_CLIENT_SECRET`: Required for Tesla API access
+- `TESSIE_API_TOKEN`: Required for Tessie API access
 
 ---
 
@@ -243,11 +242,11 @@ After deployment, monitor system health through:
 
 3. **Map Not Loading**
    - Solution: Verify MapBox token is valid and properly configured
-   - Check: VITE_MAPBOX_TOKEN in public-site environment
+   - Check: MAPBOX_TOKEN in public-site environment
 
-4. **Tesla API Connection Failures**
-   - Solution: Verify Tesla credentials and token refresh mechanism
-   - Check: Edge Worker logs for token errors
+4. **Tessie API Connection Failures**
+   - Solution: Verify Tessie API token is valid
+   - Check: Edge Worker logs for authentication errors
 
 5. **MCP Server Connection Issues**
    - Solution: Verify network connectivity between components

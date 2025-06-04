@@ -1,7 +1,7 @@
 /**
  * Map Component
  * 
- * Displays an interactive map of the 48 Continental USA journey
+ * Displays an interactive map of The Wandering Whittle's journey
  * with route, stops, and current vehicle location.
  */
 
@@ -376,8 +376,8 @@ const Map = ({
       // Create a vehicle marker element
       const el = document.createElement('div');
       el.className = 'vehicle-marker';
-      el.innerHTML = '🚗';
-      el.style.fontSize = '24px';
+      el.innerHTML = '🚙';
+      el.style.fontSize = '32px';
       
       // Add vehicle marker to map
       vehicleMarker.current = new mapboxgl.Marker(el)
@@ -388,7 +388,7 @@ const Map = ({
       const popup = new mapboxgl.Popup({ offset: 25, closeButton: false })
         .setHTML(`
           <div class="vehicle-popup">
-            <h4>${vehicleData.name}</h4>
+            <h4>Whittle Wagon</h4>
             <p>Battery: ${Math.round(vehicleData.batteryLevel)}%</p>
             <p>Range: ~${Math.round(vehicleData.range)} mi</p>
             <p>Speed: ${Math.round(vehicleData.speed)} mph</p>
@@ -404,7 +404,7 @@ const Map = ({
       if (vehicleMarker.current.getPopup()) {
         vehicleMarker.current.getPopup().setHTML(`
           <div class="vehicle-popup">
-            <h4>${vehicleData.name}</h4>
+            <h4>Whittle Wagon</h4>
             <p>Battery: ${Math.round(vehicleData.batteryLevel)}%</p>
             <p>Range: ~${Math.round(vehicleData.range)} mi</p>
             <p>Speed: ${Math.round(vehicleData.speed)} mph</p>
