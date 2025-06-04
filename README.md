@@ -1,4 +1,4 @@
-# 48 Continental USA Road Trip Tracker
+ 48 Continental USA Road Trip Tracker
 
 Real-time tracking and visualization for a 60-day Tesla road trip across all 48 contiguous U.S. states.
 

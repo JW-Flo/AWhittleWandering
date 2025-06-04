@@ -4,6 +4,8 @@ compatibility_date = "2025-06-03"
 [site]
 bucket = "./dist"
 
+pages_build_output_dir = "dist"
+
 [pages]
 pages_build_output_dir = "dist"
 
