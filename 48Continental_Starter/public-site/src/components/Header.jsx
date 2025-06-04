@@ -21,6 +21,7 @@ const Header = ({
   return (
     <header className="dashboard-header">
       <div className="logo">
+        <img src="/wandering-whittle-logo.png" alt="The Wandering Whittle Logo" />
         <span className="logo-text">The Wandering Whittle</span>
       </div>
       
@@ -40,7 +41,7 @@ const Header = ({
           aria-pressed={activeView === 'map'}
         >
           <FaMapMarkedAlt style={{ marginRight: '8px' }} />
-          Map
+          Live Map
         </div>
         
         <div 
@@ -51,7 +52,7 @@ const Header = ({
           aria-pressed={activeView === 'journey'}
         >
           <FaRoute style={{ marginRight: '8px' }} />
-          Journey
+          Road Trip
         </div>
         
         <div 
@@ -62,7 +63,7 @@ const Header = ({
           aria-pressed={activeView === 'states'}
         >
           <FaChartBar style={{ marginRight: '8px' }} />
-          States
+          48 States
         </div>
       </div>
     </header>

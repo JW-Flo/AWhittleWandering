@@ -89,7 +89,7 @@ const Dashboard = ({
   
   return (
     <div className="dashboard">
-      <Header 
+        <Header 
         tripName="The Wandering Whittle"
         currentState={tripData?.currentState}
         onViewChange={switchView}
@@ -228,7 +228,7 @@ const Dashboard = ({
       
       {/* Footer */}
       <footer className="dashboard-footer">
-        <p>The Wandering Whittle</p>
+        <p>The Wandering Whittle &copy; 2025</p>
         <div className="footer-status-info">
           <p className="last-updated">
             Last Updated: {

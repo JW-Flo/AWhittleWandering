@@ -1,6 +1,6 @@
-# Tesla Vehicle WebSocket Stream API
+# Tessie Vehicle WebSocket Stream API
 
-This document describes the real-time vehicle data streaming system implemented for the 48 Continental USA project.
+This document describes the real-time Tesla vehicle data streaming system implemented for The Wandering Whittle project using the Tessie API.
 
 ## Overview
 
@@ -17,10 +17,10 @@ The system provides real-time Tesla vehicle data via WebSockets, enabling live u
 └─────────────┘      └──────────────────┘      └─────────────┘
 ```
 
-1. **Cloudflare Worker**: Acts as a middleman between the Tesla API and the frontend apps. It:
-   - Maintains persistent connections with the Tesla API
-   - Handles token refresh when needed
-   - Polls the Tesla API at a defined interval (currently 5 seconds)
+1. **Cloudflare Worker**: Acts as a middleman between the Tessie API and the frontend apps. It:
+   - Maintains persistent connections with the Tessie API
+   - Handles authentication using the provided Tessie API token
+   - Polls the Tessie API at a defined interval (currently 5 seconds)
    - Broadcasts vehicle data updates to all connected clients
    - Manages error handling and reconnection logic
 
@@ -30,12 +30,12 @@ The system provides real-time Tesla vehicle data via WebSockets, enabling live u
 
 ### WebSocket Vehicle Stream
 
-**URL**: `/tesla/vehicle/stream?id={vehicleId}`
+**URL**: `/tessie/vehicle/stream?vin={vin}`
 
 **Protocol**: WebSocket (wss:// or ws:// depending on environment)
 
 **Query Parameters**:
-- `id`: The Tesla vehicle ID to stream data for (required)
+- `vin`: The Tesla vehicle VIN to stream data for (required)
 
 **Response Format**:
 - Regular data updates: Full vehicle data object (see "Data Structure" below)
@@ -173,7 +173,7 @@ class VehicleStreamManager {
 
 The WebSocket endpoint handles the following error scenarios:
 
-1. **Authentication failures**: Automatically attempts to refresh the Tesla API token
+1. **Authentication failures**: Automatically reconnects using the provided Tessie API token
 2. **Connection drops**: Implements exponential backoff reconnection
 3. **API rate limits**: Enforces the 5-second minimum polling interval
 4. **Invalid vehicle ID**: Returns appropriate error response
@@ -184,7 +184,7 @@ The WebSocket endpoint handles the following error scenarios:
 
 For local development, the WebSocket endpoint is available at:
 ```
-ws://localhost:8787/tesla/vehicle/stream?id=your_vehicle_id
+ws://localhost:8787/tessie/vehicle/stream?vin=your_vehicle_vin
 ```
 
 Use Cloudflare Wrangler CLI to run the worker locally:
@@ -211,7 +211,7 @@ For testing WebSocket connections independent of the frontend:
 
 ## Security Considerations
 
-- Authentication with the Tesla API is handled server-side
-- Tokens are stored securely in KV or D1 database
+- Authentication with the Tessie API is handled server-side using the provided API token
+- The Tessie API token is stored securely in a Cloudflare Worker secret
 - No client-side token storage is required
-- Only vehicle IDs that the authenticated account has access to can be streamed
+- Only vehicle VINs that the authenticated Tessie account has access to can be streamed

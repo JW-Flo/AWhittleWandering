@@ -1,10 +1,10 @@
- 48 Continental USA Road Trip Tracker
+# The Wandering Whittle Road Trip Tracker
 
 Real-time tracking and visualization for a 60-day Tesla road trip across all 48 contiguous U.S. states.
 
 ## Project Overview
 
-The 48 Continental project is a real-time, multi-system initiative that tracks a 60-day Tesla road trip through all 48 contiguous U.S. states. The system consists of multiple integrated components:
+The Wandering Whittle is a real-time, multi-system initiative that tracks a 60-day Tesla road trip through all 48 contiguous U.S. states. The system consists of multiple integrated components:
 
 1. **Public Website** - Shows live trip status, vehicle data, weather conditions, and trip progress
 2. **MCP Server** - Mission Control Platform running on an always-on iMac to coordinate components
@@ -14,8 +14,7 @@ The 48 Continental project is a real-time, multi-system initiative that tracks a
 
 ## Features
 
-- ✅ **Real-time Tesla data** integration (location, battery level, speed, range)
-- ✅ **Route planning** with A Better Route Planner (ABRP) API
+- ✅ **Real-time Tesla data** integration via Tessie API (location, battery level, speed, range)
 - ✅ **Weather data** for current and upcoming locations
 - ✅ **MapBox integration** for route visualization and mapping
 - ✅ **Offline support** via service workers
@@ -35,14 +34,14 @@ The 48 Continental project is a real-time, multi-system initiative that tracks a
          │                      │                      │
          │                      ▼                      ▼
          │              ┌───────────────┐     ┌────────────────┐
-         │              │  Cloudflare   │     │   Tesla API    │
+         │              │  Cloudflare   │     │   Tessie API   │
          └─────────────►│    Workers    │     │                │
                         │               │     └────────┬───────┘
                         └───────┬───────┘              │
                                 │                      │
                                 ▼                      ▼
                         ┌───────────────┐     ┌────────────────┐
-                        │   Weather &   │     │      ABRP      │
+                        │   Weather &   │     │    MapBox      │
                         │  MapBox APIs  │     │      API       │
                         │               │     │                │
                         └───────────────┘     └────────────────┘
@@ -54,14 +53,14 @@ The 48 Continental project is a real-time, multi-system initiative that tracks a
 
 - Node.js (v18+)
 - npm or yarn
-- API keys for Tesla, ABRP, OpenWeatherMap, and MapBox
+- API keys for Tessie, OpenWeatherMap, and MapBox
 
 ### Installation and Setup
 
 1. Clone the repository:
    ```
-   git clone https://github.com/username/ContinentalUSA.git
-   cd ContinentalUSA
+   git clone https://github.com/username/WanderingWhittle.git
+   cd WanderingWhittle
    ```
 
 2. Install dependencies:
@@ -71,13 +70,8 @@ The 48 Continental project is a real-time, multi-system initiative that tracks a
 
 3. Create a `.env` file with your API keys (or run one of the deployment scripts which will create it for you):
    ```
-   # Tesla API credentials
-   TESLA_CLIENT_ID=your_tesla_client_id
-   TESLA_CLIENT_SECRET=your_tesla_client_secret
-   TESLA_REFRESH_TOKEN=your_tesla_refresh_token
-
-   # ABRP API key
-   ABRP_API_KEY=your_abrp_api_key
+   # Tessie API token
+   TESSIE_API_TOKEN=your_tessie_api_token
 
    # Weather API key
    WEATHER_API_KEY=your_weather_api_key
@@ -86,7 +80,7 @@ The 48 Continental project is a real-time, multi-system initiative that tracks a
    MAPBOX_TOKEN=pk.eyJ1IjoidGhld2FuZGVyaW5nd2hpdHRsZSIsImEiOiJjbHQxaXhzejYwYmU2MmpxdHl0MHowN3UzIn0.Q7xKTRlXvtimBHd39JqN1A
 
    # KV namespace for caching
-   CONTINENTALUSA_KV=your_kv_namespace_id
+   WANDERINGWHITTLE_KV=your_kv_namespace_id
    ```
 
 ### Running the Application
@@ -158,17 +152,11 @@ This script will:
 
 The application integrates data from multiple sources:
 
-### Tesla API
+### Tessie API
 - Vehicle location
 - Battery level and range
 - Speed and power usage
 - Climate control status
-
-### A Better Route Planner (ABRP) API
-- Route planning
-- Charging stop recommendations
-- Energy usage predictions
-- ETA calculations
 
 ### OpenWeatherMap API
 - Current weather conditions
@@ -185,7 +173,7 @@ The application integrates data from multiple sources:
 ## Project Structure
 
 ```
-ContinentalUSA/
+WanderingWhittle/
 ├── 48Continental_Starter/    # Public website code
 │   └── public-site/          # Vite-based frontend
 ├── edge-worker/              # Cloudflare Workers code

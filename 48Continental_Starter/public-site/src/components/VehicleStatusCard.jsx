@@ -6,7 +6,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FaCar, FaBatteryThreeQuarters, FaThermometerHalf, FaLocationArrow } from 'react-icons/fa';
+import { FaBatteryThreeQuarters, FaThermometerHalf, FaLocationArrow } from 'react-icons/fa';
 
 /**
  * Vehicle Status Card component
@@ -27,8 +27,6 @@ const VehicleStatusCard = ({ vehicleData }) => {
 
   // Extract vehicle data
   const { 
-    name, 
-    model, 
     battery,
     location,
     climate,
@@ -48,16 +46,16 @@ const VehicleStatusCard = ({ vehicleData }) => {
   return (
     <div className="dashboard-card vehicle-status-card">
       <div className="card-header">
-        <h3 className="card-title">Vehicle Status</h3>
+        <h3 className="card-title">Whittle Wagon Status</h3>
       </div>
       <div className="card-content">
         {/* Vehicle primary info */}
         <div className="vehicle-primary-info">
           <div className="vehicle-icon">
-            <FaCar size={24} />
+            <img src="/whittle-wagon-icon.png" alt="Whittle Wagon Icon" />
           </div>
           <div>
-            <h4 className="vehicle-name">{name || `${model} ${new Date().getFullYear()}`}</h4>
+            <h4 className="vehicle-name">Whittle Wagon</h4>
             <p className="vehicle-status">{vehicleStatusText}</p>
           </div>
         </div>
@@ -114,7 +112,7 @@ const VehicleStatusCard = ({ vehicleData }) => {
             </div>
             {location?.heading && (
               <div className="heading-indicator" style={{ marginTop: '5px' }}>
-                Direction: {getDirectionFromHeading(location.heading)}
+                Heading: {getDirectionFromHeading(location.heading)}
               </div>
             )}
           </div>
