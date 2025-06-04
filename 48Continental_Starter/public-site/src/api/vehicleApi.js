@@ -9,27 +9,87 @@
  */
 
 /* eslint-env browser */
-import axios from 'axios';
 
 /**
  * Generate simulated vehicle data for testing
  * @returns {Object} Simulated vehicle data
  */
-export { generateSimulatedVehicleData } from './vehicleSimulation';
+export const generateSimulatedVehicleData = () => {
+  const now = new Date();
+  const timeOfDay = now.getHours();
+  
+  // Simulate a road trip scenario
+  const baseLatitude = 39.8283; // Starting around Denver, CO
+  const baseLongitude = -98.5795; // Center of US
+  
+  // Battery level varies throughout the day (charging cycles)
+  let batteryLevel;
+  if (timeOfDay >= 6 && timeOfDay <= 8) {
+    batteryLevel = 85 + Math.random() * 10;
+  } else if (timeOfDay >= 12 && timeOfDay <= 14) {
+    batteryLevel = 60 + Math.random() * 25;
+  } else if (timeOfDay >= 18 && timeOfDay <= 22) {
+    batteryLevel = 70 + Math.random() * 25;
+  } else {
+    batteryLevel = 30 + Math.random() * 40;
+  }
+  
+  // Speed varies by time of day
+  let speed = 0;
+  if (timeOfDay >= 7 && timeOfDay <= 19) {
+    speed = 45 + Math.random() * 35; // 45-80 mph
+  }
+  
+  // Charging status
+  const isCharging = (timeOfDay >= 6 && timeOfDay <= 8) || 
+                    (timeOfDay >= 12 && timeOfDay <= 14) || 
+                    (timeOfDay >= 18 && timeOfDay <= 22);
+  
+  return {
+    id: "simulated-tesla-12345",
+    name: "The Wandering Whittle",
+    model: "Model 3 Long Range",
+    batteryLevel: Math.round(batteryLevel),
+    range: Math.round(batteryLevel * 3.5),
+    speed: Math.round(speed),
+    power: isCharging ? -(50 + Math.random() * 200) : (speed > 0 ? 15 + Math.random() * 25 : 0),
+    charging: isCharging,
+    location: {
+      latitude: baseLatitude,
+      longitude: baseLongitude,
+      heading: 90
+    },
+    temperature: {
+      inside: 72,
+      outside: 68
+    },
+    climate: {
+      enabled: true,
+      temperature: 72
+    },
+    locked: !isCharging && speed === 0,
+    sentry_mode: speed === 0 && !isCharging,
+    tire_pressure: {
+      front_left: 42,
+      front_right: 42,
+      rear_left: 42,
+      rear_right: 42
+    },
+    last_updated: new Date().toISOString()
+  };
+};
 
 /**
  * Constants
  */
 const DEFAULT_VEHICLE_VIN = import.meta.env.VITE_VEHICLE_VIN;
-const TESSIE_API_BASE_URL = 'https://api.tessie.com';
-const WEBSOCKET_URL = 'wss://streaming.tessie.com';
 
 /**
  * Fetch current vehicle data from Tesla API via Tessie
  * @param {string} [vin=DEFAULT_VEHICLE_VIN] - Vehicle VIN
  * @returns {Promise<Object>} Vehicle data
  */
-export const fetchVehicleData = async (vin = DEFAULT_VEHICLE_VIN) => {
+export const fetchVehicleData = async () => {
   const TESSIE_API_TOKEN = import.meta.env.VITE_TESSIE_API_TOKEN;
   
   if (!TESSIE_API_TOKEN) {
