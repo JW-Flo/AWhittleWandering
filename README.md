@@ -7,10 +7,26 @@ Real-time tracking and visualization for a 60-day Tesla road trip across all 48 
 The Wandering Whittle is a real-time, multi-system initiative that tracks a 60-day Tesla road trip through all 48 contiguous U.S. states. The system consists of multiple integrated components:
 
 1. **Public Website** - Shows live trip status, vehicle data, weather conditions, and trip progress
-2. **MCP Server** - Mission Control Platform running on an always-on iMac to coordinate components
+2. **Edge Worker & AI Backend** - Cloudflare Workers providing API endpoints, data synchronization, and GPU-powered analytics
 3. **Mobile Client** - React Native app for real-time updates while on the road
-4. **Edge Worker** - Cloudflare Workers that provide API endpoints and handle data synchronization
-5. **Functions** - Serverless functions that fetch real-time data from various sources
+4. **Functions** - Serverless functions that fetch real-time data from various sources
+
+## Recent Updates & Planned Enhancements
+
+### Completed Work
+- Migrated MCP backend server to Cloudflare Workers for improved performance and reliability
+- Integrated GPU-powered AI analytics for route optimization and weather prediction
+- Enhanced error handling and API response format validation
+- Implemented automated CI/CD error monitoring with GitHub issue creation
+- Updated deployment scripts to use `npx wrangler` consistently
+- Added comprehensive testing coverage for critical paths
+
+### In Progress
+- Extending Cloudflare Workers with AI-powered analytics endpoints
+- Implementing intelligent charging station recommendations
+- Enhancing frontend components to display AI-generated insights
+- Upgrading Node.js version requirements in CI/CD pipelines
+- Integrating AI agents for system monitoring and maintenance
 
 ## Features
 
@@ -21,23 +37,25 @@ The Wandering Whittle is a real-time, multi-system initiative that tracks a 60-d
 - ✅ **Email subscription** for trip updates
 - ✅ **Photo gallery** from the journey
 - ✅ **Interactive map** showing current location and route
+- ✅ **AI-powered analytics** for route optimization and predictions
+- ✅ **Automated error monitoring** and issue creation
 
 ## System Architecture
 
 ```
 ┌─────────────────┐     ┌───────────────┐     ┌────────────────┐
-│                 │     │               │     │                │
-│  Public Website │◄────┤  Edge Worker  │◄────┤   MCP Server   │
+│                 │     │   AI-Powered  │     │                │
+│  Public Website │◄────┤  Edge Worker  │◄────┤   Tessie API   │
 │                 │     │               │     │                │
 └────────┬────────┘     └───────┬───────┘     └────────┬───────┘
          │                      │                      │
          │                      │                      │
          │                      ▼                      ▼
          │              ┌───────────────┐     ┌────────────────┐
-         │              │  Cloudflare   │     │   Tessie API   │
-         └─────────────►│    Workers    │     │                │
-                        │               │     └────────┬───────┘
-                        └───────┬───────┘              │
+         │              │  Cloudflare   │     │   GPU-Powered  │
+         └─────────────►│    Workers    │────►│    Analytics   │
+                        │               │     │                │
+                        └───────┬───────┘     └────────┬───────┘
                                 │                      │
                                 ▼                      ▼
                         ┌───────────────┐     ┌────────────────┐
@@ -51,7 +69,7 @@ The Wandering Whittle is a real-time, multi-system initiative that tracks a 60-d
 
 ### Prerequisites
 
-- Node.js (v18+)
+- Node.js (v20+)
 - npm or yarn
 - API keys for Tessie, OpenWeatherMap, and MapBox
 
@@ -81,6 +99,10 @@ The Wandering Whittle is a real-time, multi-system initiative that tracks a 60-d
 
    # KV namespace for caching
    WANDERINGWHITTLE_KV=your_kv_namespace_id
+
+   # GPU cluster configuration
+   GPU_CLUSTER_URL=your_gpu_cluster_url
+   GPU_API_KEY=your_gpu_api_key
    ```
 
 ### Running the Application
@@ -95,14 +117,13 @@ To start all services with real-time data integration:
 
 This script will:
 1. Load environment variables from `.env`
-2. Start the MCP server
-3. Start the Edge Worker locally
-4. Start the Public Website in development mode
-5. Open the website in your default browser
+2. Deploy and start the Edge Worker
+3. Start the Public Website in development mode
+4. Open the website in your default browser
 
 The website will be available at http://localhost:3000
 
-> **Important Note:** All Cloudflare Wrangler commands in this project should be run using `npx wrangler` rather than a global `wrangler` installation. For example, use `npx wrangler dev` instead of `wrangler dev`. This follows Cloudflare's recommendation to install Wrangler locally in your project rather than globally.
+> **Important Note:** All Cloudflare Wrangler commands in this project must be run using `npx wrangler` rather than a global `wrangler` installation. For example, use `npx wrangler dev` instead of `wrangler dev`. This follows Cloudflare's recommendation and ensures consistent versioning.
 
 To stop all services:
 
@@ -124,14 +145,6 @@ This script will:
 3. Build the public site
 4. Start the local development server
 
-#### MCP Server Only
-
-To only run the MCP server:
-
-```
-./scripts/start-mcp-server.sh
-```
-
 #### Full Production Deployment
 
 For a full production deployment of all components:
@@ -143,10 +156,10 @@ For a full production deployment of all components:
 This script will:
 1. Verify environment variables
 2. Deploy the Edge Worker to Cloudflare
-3. Set up the MCP Server
-4. Deploy the Public Website to Cloudflare Pages
-5. Build mobile applications (if configured)
-6. Perform verification checks
+3. Deploy the Public Website to Cloudflare Pages
+4. Build mobile applications (if configured)
+5. Perform verification checks
+6. Monitor deployment status and create GitHub issues for any failures
 
 ## Data Sources
 
@@ -170,6 +183,12 @@ The application integrates data from multiple sources:
 - Geocoding (location names)
 - Distance and duration calculations
 
+### GPU-Powered Analytics
+- Route optimization
+- Weather prediction
+- Charging station recommendations
+- Environmental impact calculations
+
 ## Project Structure
 
 ```
@@ -179,13 +198,12 @@ WanderingWhittle/
 ├── edge-worker/              # Cloudflare Workers code
 ├── functions/                # Serverless functions
 ├── ios-client/               # iOS native client
-├── mcp-server/               # Mission Control Platform
 ├── scripts/                  # Deployment and utility scripts
 ├── shared/                   # Shared code and models
 │   ├── api-manager/          # API integration code
 │   ├── credential-manager/   # Secure credential handling
-│   └── models/               # Shared data models
-└── docs/                     # Documentation
+│   └── models/              # Shared data models
+└── docs/                    # Documentation
 ```
 
 ## Contributing
@@ -202,10 +220,13 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 A detailed summary of the recent development work is available in the [docs/WORK_COMPLETED_SUMMARY.md](docs/WORK_COMPLETED_SUMMARY.md) file. This document outlines:
 
-- Photo Gallery Component for the website with responsive design and API
-- Trip Statistics Dashboard with interactive visualizations and localStorage persistence
-- Environmental Impact Calculator module tailored for Tesla Model Y 2020
-- 1Password Connect MCP Server implementation for secure credential management
-- Comprehensive test suite with unit tests and GitHub Actions CI workflow
+- Migration of MCP backend to Cloudflare Workers
+- Integration of GPU-powered AI analytics
+- Enhanced CI/CD with automated issue creation
+- Photo Gallery Component with responsive design
+- Trip Statistics Dashboard with interactive visualizations
+- Environmental Impact Calculator module
+- 1Password Connect implementation
+- Comprehensive test suite with GitHub Actions workflow
 
 Please refer to this document for an overview to assist the orchestrator MCP and further development.
