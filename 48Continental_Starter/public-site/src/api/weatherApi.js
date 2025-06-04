@@ -20,6 +20,10 @@ const WEATHER_CONDITIONS = [
   { type: 'windy', description: 'Windy', icon: '💨' }
 ];
 
+const weatherCache = {};
+const pendingRequests = {};
+const CACHE_TTL = 60000; // 60 seconds TTL for cached weather data
+
 /**
  * Generate random temperature value within a range
  * @param {number} min - Minimum temperature
@@ -138,50 +142,71 @@ export function generateSimulatedWeatherData(options = {}) {
  * @returns {Promise<Object>} Weather data
  */
 export const fetchWeatherData = async (options = {}) => {
-  const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
-  
-  if (!API_KEY) {
-    console.error('Missing OpenWeather API key in environment variables');
-    throw new Error('Configuration error: Missing OpenWeather API key');
+  const key = (options.latitude && options.longitude)
+    ? `${options.latitude},${options.longitude}`
+    : (options.location && options.location.latitude && options.location.longitude)
+      ? `${options.location.latitude},${options.location.longitude}`
+      : 'default';
+  const now = Date.now();
+  if (weatherCache[key] && (now - weatherCache[key].timestamp < CACHE_TTL)) {
+    return weatherCache[key].data;
   }
-  
-  try {
-    // Use our Cloudflare Worker to proxy the request and add caching
-    let url = '/api/weather';
+  pendingRequests[key] = (async () => {
+    const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
     
-    // Add query parameters if provided
-    if (options.latitude && options.longitude) {
-      url += `?lat=${options.latitude}&lon=${options.longitude}`;
-    } else if (options.location) {
-      // Use location object if provided
-      url += `?lat=${options.location.latitude}&lon=${options.location.longitude}`;
+    if (!API_KEY) {
+      console.error('Missing OpenWeather API key in environment variables');
+      throw new Error('Configuration error: Missing OpenWeather API key');
     }
     
-    // Add our API key to the request
-    url += `&appid=${API_KEY}&units=imperial`;
-    
-    // Make the request
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Weather API error:', response.status, errorText);
-      throw new Error(`Weather API error: ${response.status} - ${errorText}`);
+    try {
+      // Use our Cloudflare Worker to proxy the request and add caching
+      let url = '/api/weather';
+      
+      // Add query parameters using effective coordinates
+      if (options.latitude && options.longitude) {
+        url += `?lat=${options.latitude}&lon=${options.longitude}`;
+      } else if (options.location) {
+        url += `?lat=${options.location.latitude}&lon=${options.location.longitude}`;
+      }
+      
+      // Add our API key to the request
+      url += `&appid=${API_KEY}&units=imperial`;
+      
+      // Make the request
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Weather API error:', response.status, errorText);
+        throw new Error(`Weather API error: ${response.status} - ${errorText}`);
+      }
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("Weather API error: Unexpected content-type", contentType, text);
+        throw new Error("Unexpected response format");
+      }
+      
+      const data = await response.json();
+      const transformed = transformWeatherData(data);
+      weatherCache[key] = { data: transformed, timestamp: Date.now() };
+      return transformed;
+    } catch (error) {
+      console.error('Error fetching weather data:', error);
+      
+      // If we're in development mode or the API fails, return simulated data
+      if (import.meta.env.DEV || error.message.includes('Weather API error')) {
+        console.warn('Using simulated weather data due to API error');
+        return generateSimulatedWeatherData(options);
+      }
+      
+      throw error;
+    } finally {
+      delete pendingRequests[key];
     }
-    
-    const data = await response.json();
-    return transformWeatherData(data);
-  } catch (error) {
-    console.error('Error fetching weather data:', error);
-    
-    // If we're in development mode or the API fails, return simulated data
-    if (import.meta.env.DEV || error.message.includes('Weather API error')) {
-      console.warn('Using simulated weather data due to API error');
-      return generateSimulatedWeatherData(options);
-    }
-    
-    throw error;
-  }
+  })();
+  return pendingRequests[key];
 };
 
 /**

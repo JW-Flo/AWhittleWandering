@@ -9,6 +9,7 @@
  */
 
 /* eslint-env browser */
+import { cachedRequest } from './apiCache';
 
 /**
  * Generate simulated vehicle data for testing
@@ -79,10 +80,6 @@ export const generateSimulatedVehicleData = () => {
   };
 };
 
-/**
- * Constants
- */
-const DEFAULT_VEHICLE_VIN = import.meta.env.VITE_VEHICLE_VIN;
 
 /**
  * Fetch current vehicle data from Tesla API via Tessie
@@ -97,27 +94,29 @@ export const fetchVehicleData = async () => {
     throw new Error('Configuration error: Missing Tessie API token');
   }
   
-  try {
-    // We're using a Cloudflare Worker as a proxy to avoid CORS issues and add caching
-    const response = await fetch('/api/vehicle', {
-      headers: {
-        'Authorization': `Bearer ${TESSIE_API_TOKEN}`,
-        'Content-Type': 'application/json'
+  return cachedRequest('tessie-vehicle', async () => {
+    try {
+      // We're using a Cloudflare Worker as a proxy to avoid CORS issues and add caching
+      const response = await fetch('/api/vehicle', {
+        headers: {
+          'Authorization': `Bearer ${TESSIE_API_TOKEN}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Vehicle API error:', response.status, errorText);
+        throw new Error(`Vehicle API error: ${response.status} - ${errorText}`);
       }
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Vehicle API error:', response.status, errorText);
-      throw new Error(`Vehicle API error: ${response.status} - ${errorText}`);
+      
+      const data = await response.json();
+      return transformTessieData(data);
+    } catch (error) {
+      console.error('Error fetching vehicle data:', error);
+      throw error;
     }
-    
-    const data = await response.json();
-    return transformTessieData(data);
-  } catch (error) {
-    console.error('Error fetching vehicle data:', error);
-    throw error;
-  }
+  });
 };
 
 /**

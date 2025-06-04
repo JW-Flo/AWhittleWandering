@@ -2,18 +2,11 @@
 // Streams real-time vehicle data and alerts from Tessie
 
 /**
- * Usage:
- *   import { connectTeslaTelemetry } from './api/teslaTelemetry';
- *   const ws = connectTeslaTelemetry({
- *     vin: 'YOUR_VIN',
- *     accessToken: 'YOUR_TESSIE_API_TOKEN',
- *     onData: (data) => { ... },
- *     onAlert: (alert) => { ... },
- *     onConnectivity: (status) => { ... },
- *     onError: (err) => { ... }
- *   });
- *   // To close: ws.close();
+ * Tesla Telemetry API Utilities
+ * 
+ * Provides functions to fetch Tesla telemetry data.
  */
+
 
 export function connectTeslaTelemetry({
   vin,
