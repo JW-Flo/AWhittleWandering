@@ -136,7 +136,7 @@ fi
 
 # Deploy to Cloudflare Pages
 echo -e "${YELLOW}Deploying to Cloudflare Pages...${NC}"
-wrangler pages deploy ./dist --project-name continentalusa-site
+npx wrangler pages deploy ./dist --project-name continentalusa-site
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Public Website deployment successful${NC}"
 else
@@ -147,7 +147,7 @@ else
     echo -e "3. The build output directory might be incorrect"
     echo -e "\n${YELLOW}To fix:${NC}"
     echo -e "1. Check Cloudflare dashboard for project configuration"
-    echo -e "2. Run 'wrangler login' to authenticate"
+    echo -e "2. Run 'npx wrangler login' to authenticate"
     echo -e "3. Verify 'dist' is the correct output directory in vite.config.js"
     exit 1
 fi

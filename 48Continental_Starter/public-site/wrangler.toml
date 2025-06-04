@@ -1,17 +1,15 @@
+name = "wandering-whittle"
+compatibility_date = "2025-06-03"
+
+[site]
+bucket = "./dist"
+
 [pages]
-name = "thewanderingwhittle-site"
 pages_build_output_dir = "dist"
-  # Public custom domain
-custom_domain = "thewanderingwhittle.com"
-
-[build]
-command = "npm run build"
-
-compatibility_date = "2025-06-02"
 
 [env.production]
-name = "thewanderingwhittle-site"
-routes = ["continentalusa-site.pages.dev/*", "thewanderingwhittle.com/*"]
+name = "wandering-whittle"
+routes = ["wandering-whittle.pages.dev/*", "thewanderingwhittle.com/*"]
 
 # SSL/TLS settings for production
 [ssl]

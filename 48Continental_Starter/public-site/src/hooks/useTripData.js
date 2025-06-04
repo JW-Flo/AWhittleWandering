@@ -1,7 +1,7 @@
 /**
  * Trip Data Hook
  * 
- * This hook provides access to the 48 Continental USA trip data
+ * This hook provides access to The Wandering Whittle trip data
  * including routes, stops, and state visit progress.
  */
 

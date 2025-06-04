@@ -1,141 +1,119 @@
 /**
- * Tesla Vehicle Data Hook
+ * Custom hook for real-time vehicle data
  * 
- * This hook provides access to real-time Tesla vehicle data
- * including location, battery status, and driving statistics.
+ * This hook provides real-time Tesla vehicle data through the Tessie API,
+ * handling connection management, data transformation, and error states.
+ * Now with robust fallback to mock data to ensure display even when APIs fail.
  */
 
 /* eslint-env browser */
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { fetchVehicleData, createVehicleDataStream } from '../api/vehicleApi';
 
-// Default polling interval in milliseconds
-const DEFAULT_POLL_INTERVAL = 30000; // 30 seconds
+import { useState, useEffect } from 'react';
+import { fetchVehicleData, createVehicleDataStream } from '../api/vehicleApi';
+import { mockVehicleData } from '../mockData';
 
 /**
- * Hook for accessing Tesla vehicle data with real-time updates
- * @param {Object} options - Configuration options
- * @param {number} options.pollInterval - Data refresh interval in ms
- * @param {boolean} options.enableStreaming - Whether to use streaming WebSocket API
- * @returns {Object} Vehicle data, loading state, error, connection status
+ * Hook for real-time vehicle data with WebSocket streaming
+ * @param {string} vehicleId - The vehicle ID to get data for
+ * @returns {Object} Vehicle data, loading state, error state, and connection status
  */
-export const useVehicleData = (options = {}) => {
-  const {
-    pollInterval = DEFAULT_POLL_INTERVAL,
-    enableStreaming = true
-  } = options;
-  
-  // State for vehicle data
+export const useVehicleData = (vehicleId) => {
   const [vehicleData, setVehicleData] = useState(null);
-  const [vehicleLoading, setVehicleLoading] = useState(true);
-  const [vehicleError, setVehicleError] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
-  const wsRef = useRef(null);
-  const pollTimerRef = useRef(null);
+  const [useMockData, setUseMockData] = useState(false);
   
-  // Function to fetch vehicle data from API
-  const getVehicleData = useCallback(async () => {
-    setVehicleLoading(true);
+  useEffect(() => {
+    let dataStream = null;
+    let mockDataTimeout = null;
     
-    try {
-      // Call our API function
-      const data = await fetchVehicleData();
-      setVehicleData(data);
-      setVehicleError(null);
-    } catch (error) {
-      console.error('Error fetching vehicle data:', error);
-      setVehicleError(`API Error: ${error.message}. Please check network connection and API keys.`);
-    } finally {
-      setVehicleLoading(false);
-    }
-  }, []);
-  
-  // Function to set up WebSocket streaming connection
-  const setupStreamConnection = useCallback(() => {
-    // Clean up any existing connection
-    if (wsRef.current) {
-      wsRef.current.close();
-    }
-    
-    // Only set up streaming if we have vehicle data with an ID
-    if (!vehicleData || !vehicleData.id) {
-      console.log('No vehicle ID available for streaming setup');
-      return () => {};
-    }
-    
-    // Create a real WebSocket connection
-    wsRef.current = createVehicleDataStream(
-      vehicleData.id,
-      // On data callback
-      (streamData) => {
-        setVehicleData(streamData);
-        setVehicleError(null);
-      },
-      // On error callback
-      (error) => {
-        console.error('Vehicle stream error:', error);
-        setVehicleError(`Stream Error: ${error.message}`);
-      },
-      // On status change callback
-      (status) => {
-        setConnectionStatus(status);
-        // Clear error when reconnecting or connected
-        if (status === 'connected') {
-          setVehicleError(null);
-        }
-      }
-    );
-    
-    // Clean up function
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
+    // Initial data fetch
+    const fetchInitialData = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchVehicleData();
+        setVehicleData(data);
+        setError(null);
+        setUseMockData(false);
+      } catch (err) {
+        console.error('Error fetching initial vehicle data:', err);
+        setError(err.message);
+        
+        // Fallback to mock data when real data fails
+        console.log('Falling back to mock vehicle data');
+        setVehicleData(mockVehicleData);
+        setUseMockData(true);
+      } finally {
+        setLoading(false);
       }
     };
-  }, [vehicleData]);
-  
-  // Initial data fetch and connection setup
-  useEffect(() => {
-    // First get initial data
-    getVehicleData();
     
-    // Set up either WebSocket streaming or polling
-    if (enableStreaming) {
-      // Only set up streaming after we have initial data
-      if (vehicleData) {
-        const cleanup = setupStreamConnection();
-        return cleanup;
+    fetchInitialData();
+    
+    // Set a timeout to fallback to mock data if data loading takes too long
+    mockDataTimeout = setTimeout(() => {
+      if (loading && !vehicleData) {
+        console.log('Data loading timeout, using mock vehicle data');
+        setVehicleData(mockVehicleData);
+        setUseMockData(true);
+        setLoading(false);
+        setConnectionStatus('offline');
       }
-    } else {
-      // Set up polling as fallback
-      pollTimerRef.current = setInterval(getVehicleData, pollInterval);
-      
-      return () => {
-        if (pollTimerRef.current) {
-          clearInterval(pollTimerRef.current);
-          pollTimerRef.current = null;
+    }, 5000); // 5 second timeout
+    
+    // Only attempt real-time data stream if not using mock data
+    if (!useMockData) {
+      dataStream = createVehicleDataStream(
+        vehicleId,
+        (data) => {
+          setVehicleData(data);
+          setLoading(false);
+          setUseMockData(false);
+        },
+        (err) => {
+          console.error('WebSocket error:', err);
+          setError(err.message);
+          
+          // Fallback to mock data on WebSocket error if we don't already have data
+          if (!vehicleData) {
+            console.log('WebSocket error, using mock vehicle data');
+            setVehicleData(mockVehicleData);
+            setUseMockData(true);
+          }
+        },
+        (status) => {
+          setConnectionStatus(status);
+          
+          // If disconnected and we don't have data, use mock data
+          if (status === 'disconnected' && !vehicleData) {
+            console.log('Connection disconnected, using mock vehicle data');
+            setVehicleData(mockVehicleData);
+            setUseMockData(true);
+          }
         }
-      };
+      );
     }
-  }, [getVehicleData, setupStreamConnection, pollInterval, enableStreaming, vehicleData?.id]);
-  
-  return { 
-    vehicleData, 
-    vehicleLoading, 
-    vehicleError,
-    connectionStatus,
-    refreshVehicleData: getVehicleData,
-    reconnect: useCallback(() => {
-      if (enableStreaming && vehicleData?.id) {
-        if (wsRef.current) {
-          wsRef.current.close();
-          wsRef.current = null;
-        }
-        setupStreamConnection();
-      } else {
-        getVehicleData();
+    
+    // Cleanup
+    return () => {
+      if (dataStream) {
+        dataStream.close();
       }
-    }, [enableStreaming, vehicleData, getVehicleData, setupStreamConnection])
+      if (mockDataTimeout) {
+        clearTimeout(mockDataTimeout);
+      }
+    };
+  }, [vehicleId, useMockData]);
+  
+  return {
+    vehicleData,
+    loading,
+    error,
+    connectionStatus: useMockData ? 'offline' : connectionStatus,
+    isConnected: connectionStatus === 'connected' && !useMockData,
+    isMockData: useMockData
   };
 };
+
+export default useVehicleData;

@@ -1,8 +1,11 @@
-name: Deploy to Cloudflare Pages
+name: Deploy Public Site to Cloudflare Pages
 on:
   push:
     branches:
       - main
+    paths:
+      - "48Continental_Starter/public-site/**"
+      - ".github/workflows/deploy.yml"
 
 jobs:
   deploy:
@@ -14,18 +17,29 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "18"
+          cache: "npm"
+          cache-dependency-path: "48Continental_Starter/public-site/package-lock.json"
 
       - name: Install dependencies
         run: |
           cd 48Continental_Starter/public-site
-          npm install
+          npm ci
 
       - name: Build site
         run: |
           cd 48Continental_Starter/public-site
           npm run build
 
-      - name: Deploy
+      - name: Verify build output
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "Error: Build output directory not found!"
+            exit 1
+          fi
+          echo "Build verification successful."
+        working-directory: 48Continental_Starter/public-site
+
+      - name: Deploy to Cloudflare Pages
         run: npx wrangler pages deploy ./dist --project-name continentalusa-site
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}

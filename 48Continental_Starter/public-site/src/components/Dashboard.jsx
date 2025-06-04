@@ -1,20 +1,25 @@
 /**
  * Dashboard Component
  * 
- * Main dashboard for the 48 Continental USA journey website.
+ * Main dashboard for The Wandering Whittle journey website.
  * Integrates all the components and provides the main layout.
+ * Styled after Tessie dashboard design for improved user experience.
  */
 
 /* eslint-env browser */
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import GlassPanel from './GlassPanel';
 import Header from './Header';
 import Map from './Map';
 import VehicleStatusCard from './VehicleStatusCard';
 import WeatherDisplay from './WeatherDisplay';
 import StateCollection from './StateCollection';
 import TripJourney from './TripJourney';
+import { FaSatellite, FaCloudRain, FaRoad, FaChargingStation } from 'react-icons/fa';
+
+// Import component styles
+import './Dashboard.css';
+import './DarkTheme.css'; // Import the new dark theme
 
 /**
  * Dashboard component that integrates all other components
@@ -24,6 +29,7 @@ const Dashboard = ({
   weatherData, 
   tripData,
   stationsData,
+  connectionStatus,
   isLoading,
   error 
 }) => {
@@ -84,98 +90,35 @@ const Dashboard = ({
   return (
     <div className="dashboard">
       <Header 
-        tripName={tripData?.name}
+        tripName="The Wandering Whittle"
         currentState={tripData?.currentState}
         onViewChange={switchView}
         activeView={activeView}
       />
       
       <div className="dashboard-content">
-        {/* Main content area */}
-        <div className="main-content">
-          {activeView === 'map' && (
-            <div className="map-view">
-              <div className="map-container-wrapper">
-                <Map 
-                  vehicleData={vehicleData}
-                  tripData={tripData}
-                  weatherData={weatherData}
-                  stationsData={stationsData}
-                  mapLayers={mapLayers}
-                />
-                
-                <div className="map-controls">
-                  <button 
-                    className={`layer-toggle ${mapLayers.satellite ? 'active' : ''}`}
-                    onClick={() => toggleMapLayer('satellite')}
-                    aria-pressed={mapLayers.satellite}
-                  >
-                    Satellite
-                  </button>
-                  <button 
-                    className={`layer-toggle ${mapLayers.traffic ? 'active' : ''}`}
-                    onClick={() => toggleMapLayer('traffic')}
-                    aria-pressed={mapLayers.traffic}
-                  >
-                    Traffic
-                  </button>
-                  <button 
-                    className={`layer-toggle ${mapLayers.weather ? 'active' : ''}`}
-                    onClick={() => toggleMapLayer('weather')}
-                    aria-pressed={mapLayers.weather}
-                  >
-                    Weather
-                  </button>
-                  <button 
-                    className={`layer-toggle ${mapLayers.chargingStations ? 'active' : ''}`}
-                    onClick={() => toggleMapLayer('chargingStations')}
-                    aria-pressed={mapLayers.chargingStations}
-                  >
-                    Charging
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {activeView === 'journey' && (
-            <div className="journey-view">
-              <GlassPanel title="Trip Journey">
-                <TripJourney tripData={tripData} />
-              </GlassPanel>
-            </div>
-          )}
-          
-          {activeView === 'states' && (
-            <div className="states-view">
-              <GlassPanel title="States Collection">
-                <StateCollection 
-                  visitedStates={tripData?.visitedStates}
-                  totalStates={48}
-                />
-              </GlassPanel>
-            </div>
-          )}
-        </div>
-        
-        {/* Sidebar for stats and info */}
+        {/* Left sidebar for vehicle status and stats */}
         <div className="dashboard-sidebar">
-          <div className="sidebar-panel vehicle-panel">
-            <GlassPanel title="Vehicle Status">
-              {/* Use the new real-time VehicleStatusCard instead of static VehicleStats */}
-              <VehicleStatusCard />
-            </GlassPanel>
-          </div>
+          {/* Vehicle Status Card */}
+          <VehicleStatusCard vehicleData={vehicleData} />
           
-          <div className="sidebar-panel weather-panel">
-            <GlassPanel title="Current Weather">
+          {/* Weather Card */}
+          <div className="dashboard-card">
+            <div className="card-header">
+              <h3 className="card-title">Current Weather</h3>
+            </div>
+            <div className="card-content">
               <WeatherDisplay weatherData={weatherData} />
-            </GlassPanel>
+            </div>
           </div>
           
-          <div className="sidebar-panel current-status-panel">
-            <GlassPanel title="Trip Status">
-              <div className="quick-status">
+          {/* Trip Status Card */}
+          <div className="dashboard-card">
+            <div className="card-header">
+              <h3 className="card-title">Trip Status</h3>
+            </div>
+            <div className="card-content">
+              <div className="trip-status">
                 <div className="status-item">
                   <span className="status-label">Current State</span>
                   <span className="status-value">{tripData?.currentState || 'N/A'}</span>
@@ -197,48 +140,116 @@ const Dashboard = ({
                   </span>
                 </div>
               </div>
-            </GlassPanel>
+            </div>
           </div>
-          
-          <div className="sidebar-panel charging-panel">
-            <GlassPanel title="Charging Stations">
-              <div className="quick-status">
-                <div className="status-item">
-                  <span className="status-label">Nearby Stations</span>
-                  <span className="status-value">
-                    {stationsData?.stations ? stationsData.stations.length : 'N/A'}
-                  </span>
-                </div>
-                <div className="status-item">
-                  <span className="status-label">Available Stations</span>
-                  <span className="status-value">
-                    {stationsData?.stations 
-                      ? stationsData.stations.filter(s => s.available).length 
-                      : 'N/A'}
-                  </span>
-                </div>
-                <div className="status-item">
-                  <span className="status-label">Search Radius</span>
-                  <span className="status-value">
-                    {stationsData?.radius ? `${stationsData.radius} miles` : '50 miles'}
-                  </span>
+        </div>
+        
+        {/* Main content area */}
+        <div className="main-content">
+          {activeView === 'map' && (
+            <div className="map-view">
+              <div className="map-container-wrapper">
+                <Map 
+                  vehicleData={vehicleData}
+                  tripData={tripData}
+                  weatherData={weatherData}
+                  stationsData={stationsData}
+                  mapLayers={mapLayers}
+                />
+                
+                <div className="map-controls">
+                  <button 
+                    className={`control-button ${mapLayers.satellite ? 'active' : ''}`}
+                    onClick={() => toggleMapLayer('satellite')}
+                    aria-pressed={mapLayers.satellite}
+                    title="Satellite View"
+                  >
+                    <FaSatellite />
+                  </button>
+                  <button 
+                    className={`control-button ${mapLayers.traffic ? 'active' : ''}`}
+                    onClick={() => toggleMapLayer('traffic')}
+                    aria-pressed={mapLayers.traffic}
+                    title="Traffic"
+                  >
+                    <FaRoad />
+                  </button>
+                  <button 
+                    className={`control-button ${mapLayers.weather ? 'active' : ''}`}
+                    onClick={() => toggleMapLayer('weather')}
+                    aria-pressed={mapLayers.weather}
+                    title="Weather"
+                  >
+                    <FaCloudRain />
+                  </button>
+                  <button 
+                    className={`control-button ${mapLayers.chargingStations ? 'active' : ''}`}
+                    onClick={() => toggleMapLayer('chargingStations')}
+                    aria-pressed={mapLayers.chargingStations}
+                    title="Charging Stations"
+                  >
+                    <FaChargingStation />
+                  </button>
                 </div>
               </div>
-            </GlassPanel>
-          </div>
+            </div>
+          )}
+          
+          {activeView === 'journey' && (
+            <div className="journey-view">
+              <div className="dashboard-card">
+                <div className="card-header">
+                  <h3 className="card-title">Trip Journey</h3>
+                </div>
+                <div className="card-content">
+                  <TripJourney tripData={tripData} />
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {activeView === 'states' && (
+            <div className="states-view" role="tabpanel" id="states-panel" aria-labelledby="tab-states">
+              <div className="dashboard-card">
+                <div className="card-header">
+                  <h3 className="card-title">States Collection</h3>
+                </div>
+                <div className="card-content">
+                  <StateCollection 
+                    visitedStates={tripData?.visitedStates}
+                    totalStates={48}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       
       {/* Footer */}
       <footer className="dashboard-footer">
-        <p>48 Continental USA Journey Tracker</p>
-        <p className="last-updated">
-          Last Updated: {
-            tripData?.lastUpdated 
-              ? new Date(tripData.lastUpdated).toLocaleString() 
-              : 'Unknown'
-          }
-        </p>
+        <p>The Wandering Whittle</p>
+        <div className="footer-status-info">
+          <p className="last-updated">
+            Last Updated: {
+              tripData?.lastUpdated 
+                ? new Date(tripData.lastUpdated).toLocaleString() 
+                : 'Unknown'
+            }
+          </p>
+          <div className="connection-status">
+            <span 
+              className={`status-indicator ${connectionStatus}`}
+              title={`Connection: ${connectionStatus}`}
+            ></span>
+            <span className="status-text">
+              {connectionStatus === 'connected' ? 'Live Data' : 
+               connectionStatus === 'connecting' ? 'Connecting...' :
+               connectionStatus === 'reconnecting' ? 'Reconnecting...' :
+               'Offline Mode'}
+            </span>
+          </div>
+        </div>
       </footer>
     </div>
   );
@@ -249,6 +260,7 @@ Dashboard.propTypes = {
   weatherData: PropTypes.object,
   tripData: PropTypes.object,
   stationsData: PropTypes.object,
+  connectionStatus: PropTypes.string,
   isLoading: PropTypes.bool,
   error: PropTypes.string
 };
