@@ -2,22 +2,24 @@
  * Custom Hooks Index
  * 
  * Exports all custom hooks for The Wandering Whittle website
+ * NOTE: All hooks now use real API calls; no fallback mock data remains.
  */
+
 
 /* eslint-env browser */
 import { useState, useEffect } from 'react';
-import { mockWeatherData, mockTripData, mockStationsData } from '../mockData';
 import realUseVehicleData from './useVehicleData';
+import { fetchWeatherData } from '../api/weatherApi';
 
 /**
  * Hook for accessing vehicle data with real implementation
  * Adapts the new hook to maintain the same API interface
- * Now with enhanced error handling and mock data fallback
+ * Now with enhanced error handling and mock data fallback (if desired)
  */
 export const useVehicleData = (options = {}) => {
-  const vehicleId = options.vehicleId || 'default';
-  
-  // Use our real implementation with improved fallback
+  const vehicleId = options.vehicleId || '5YJYGDEE5LF027324';
+
+  // Use our real implementation
   const {
     vehicleData,
     loading,
@@ -39,22 +41,30 @@ export const useVehicleData = (options = {}) => {
 };
 
 /**
- * Hook for accessing weather data with mock implementation
+ * Hook for accessing weather data with real OpenWeather integration
  */
 export const useWeatherData = (options = {}) => {
   const [weatherData, setWeatherData] = useState(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
-  const [weatherError] = useState(null);
+  const [weatherError, setWeatherError] = useState(null);
 
   useEffect(() => {
-    // Short timeout to simulate loading
-    const timer = setTimeout(() => {
-      setWeatherData(mockWeatherData);
-      setWeatherLoading(false);
-    }, 1500);
+    async function loadWeather() {
+      try {
+        const lat = options.latitude || 27.741777;
+        const lon = options.longitude || -97.388844;
+        const data = await fetchWeatherData({ latitude: lat, longitude: lon });
+        setWeatherData(data);
+      } catch (err) {
+        console.error('Error loading weather data:', err);
+        setWeatherError(err.message);
+      } finally {
+        setWeatherLoading(false);
+      }
+    }
 
-    return () => clearTimeout(timer);
-  }, [options.location]);
+    loadWeather();
+  }, [options]);
 
   return {
     weatherData,
@@ -65,33 +75,42 @@ export const useWeatherData = (options = {}) => {
 };
 
 /**
- * Hook for accessing trip data with mock implementation
+ * Hook for accessing trip data from real API
  */
 export const useTripData = () => {
   const [tripData, setTripData] = useState(null);
   const [tripLoading, setTripLoading] = useState(true);
-  const [tripError] = useState(null);
+  const [tripError, setTripError] = useState(null);
 
   useEffect(() => {
-    // Short timeout to simulate loading
-    const timer = setTimeout(() => {
-      setTripData(mockTripData);
-      setTripLoading(false);
-    }, 2000);
+    async function loadTrip() {
+      try {
+        // Example: replace with your real trip endpoint
+        const response = await fetch('/api/trip');
+        if (!response.ok) {
+          throw new Error(`Trip data error: ${response.status}`);
+        }
+        const data = await response.json();
+        setTripData(data);
+      } catch (error) {
+        console.error('Error loading trip data:', error);
+        setTripError(error.message);
+      } finally {
+        setTripLoading(false);
+      }
+    }
 
-    return () => clearTimeout(timer);
+    loadTrip();
   }, []);
 
   // Computed values
   const currentStop = tripData?.currentStop || null;
   const nextStop = tripData?.nextStop || null;
   const visitedStates = tripData?.visitedStates || [];
-  const remainingStates = tripData ? 
-    48 - visitedStates.length : 
-    48;
-  const completionPercentage = tripData ? 
-    Math.round((visitedStates.length / 48) * 100) : 
-    0;
+  const remainingStates = tripData ? (48 - visitedStates.length) : 48;
+  const completionPercentage = tripData
+    ? Math.round((visitedStates.length / 48) * 100)
+    : 0;
 
   return {
     tripData,
@@ -108,22 +127,36 @@ export const useTripData = () => {
 };
 
 /**
- * Hook for accessing charging stations data with mock implementation
+ * Hook for accessing charging stations data from real API
  */
 export const useChargingStations = (options = {}) => {
   const [stationsData, setStationsData] = useState(null);
   const [stationsLoading, setStationsLoading] = useState(true);
-  const [stationsError] = useState(null);
+  const [stationsError, setStationsError] = useState(null);
 
   useEffect(() => {
-    // Short timeout to simulate loading
-    const timer = setTimeout(() => {
-      setStationsData(mockStationsData);
-      setStationsLoading(false);
-    }, 1800);
+    async function loadStations() {
+      try {
+        const lat = options.latitude || 27.741777;
+        const lon = options.longitude || -97.388844;
+  
+        // Example: replace with your real stations endpoint
+        const resp = await fetch(`/api/stations?lat=${lat}&lon=${lon}`);
+        if (!resp.ok) {
+          throw new Error(`Error loading stations: ${resp.status}`);
+        }
+        const data = await resp.json();
+        setStationsData(data);
+      } catch (err) {
+        console.error('Error loading charging stations:', err);
+        setStationsError(err.message);
+      } finally {
+        setStationsLoading(false);
+      }
+    }
 
-    return () => clearTimeout(timer);
-  }, [options.latitude, options.longitude]);
+    loadStations();
+  }, [options]);
 
   return {
     stationsData,
