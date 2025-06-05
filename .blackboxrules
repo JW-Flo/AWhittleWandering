@@ -1,1 +1,173 @@
+# BlackBox Rules Configuration for 48 Continental USA Project
 
+# Deployment Validation Rules
+[deployment]
+# Node.js Version Requirements
+node_version_min = "24.1.0"
+node_version_max = "25.0.0"
+
+# Cloudflare Configuration
+cloudflare_requirements = [
+    "KV_WRITE_PERMISSION",
+    "WORKERS_SCRIPT_EDIT",
+    "ACCOUNT_SETTINGS_READ"
+]
+
+# Wrangler Configuration
+wrangler_config = {
+    installation = "local-per-project",
+    version = "latest",
+    command_prefix = "npx"
+}
+
+# Required Environment Variables
+required_env_vars = [
+    "CLOUDFLARE_API_TOKEN",
+    "CLOUDFLARE_ACCOUNT_ID",
+    "TESSIE_API_TOKEN",
+    "TESSIE_VIN",
+    "OPENWEATHER_API_KEY",
+    "MAPBOX_TOKEN",
+    "EDGE_HMAC_KEY",
+    "VITE_MAPBOX_TOKEN",
+    "VITE_OPENWEATHER_API_KEY",
+    "VITE_TESSIE_API_TOKEN",
+    "VITE_TESSIE_VIN",
+    "VITE_EDGE_WORKER_URL"
+]
+
+# Testing Requirements
+[testing]
+# Critical Path Tests
+critical_tests = [
+    "edge-worker-deployment",
+    "kv-permissions",
+    "api-token-validation",
+    "pages-deployment"
+]
+
+# Component Tests
+component_tests = {
+    "edge-worker" = [
+        "unit-tests",
+        "integration-tests",
+        "kv-operations"
+    ],
+    "public-site" = [
+        "build-process",
+        "component-tests",
+        "e2e-tests"
+    ]
+}
+
+# Verification Steps
+[verification]
+pre_deployment = [
+    "verify-cloudflare-permissions",
+    "verify-node-version",
+    "verify-env-vars",
+    "verify-wrangler-installation"
+]
+
+post_deployment = [
+    "verify-worker-status",
+    "verify-kv-bindings",
+    "verify-pages-deployment",
+    "verify-api-endpoints"
+]
+
+# Error Handling
+[error_handling]
+known_errors = {
+    "10023" = {
+        description = "KV bindings require write permissions",
+        resolution = "update-cloudflare-token-permissions",
+        documentation = "docs/CLOUDFLARE_KV_PERMISSIONS_FIX.md"
+    },
+    "node_version" = {
+        description = "Incorrect Node.js version",
+        resolution = "update-node-version",
+        documentation = "docs/NODE_VERSION_REQUIREMENTS.md"
+    }
+}
+
+# File Monitoring
+[file_monitoring]
+critical_files = [
+    ".github/workflows/deploy-all-final.yml",
+    "edge-worker/wrangler.toml",
+    "48Continental_Starter/public-site/package.json",
+    "scripts/verify-cloudflare-permissions.sh"
+]
+
+test_files = [
+    "48Continental_Starter/public-site/src/__tests__/*.test.jsx",
+    "edge-worker/src/__tests__/*.test.ts"
+]
+
+# Workflow Requirements
+[workflow]
+required_steps = [
+    "test-all",
+    "deploy-edge-worker",
+    "deploy-public-site",
+    "notify-deployment"
+]
+
+environment_setup = [
+    "checkout",
+    "setup-node",
+    "install-dependencies",
+    "verify-permissions"
+]
+
+# Documentation Requirements
+[documentation]
+required_docs = [
+    "CLOUDFLARE_KV_PERMISSIONS_FIX.md",
+    "DEPLOYMENT_FIX_SUMMARY.md",
+    "FINAL_DEPLOYMENT_FIX_SUMMARY.md"
+]
+
+# Automation Rules
+[automation]
+auto_fix = [
+    "npm-audit-fix",
+    "node-version-check",
+    "wrangler-version-update"
+]
+
+skip_if = [
+    "draft-pull-request",
+    "skip-ci-label"
+]
+
+# Project Structure
+[project_structure]
+components = [
+    "edge-worker",
+    "48Continental_Starter/public-site",
+    "ios-client",
+    "ContinentalUSA-mobile"
+]
+
+deployment_order = [
+    "edge-worker",
+    "public-site",
+    "mobile-apps"
+]
+
+# Monitoring
+[monitoring]
+health_checks = [
+    "edge-worker-status",
+    "kv-operations",
+    "pages-deployment",
+    "api-endpoints"
+]
+
+alerts = [
+    "deployment-failure",
+    "permission-issues",
+    "test-failures"
+]

@@ -1,4 +1,4 @@
-name: Deploy All Components (Fixed)
+name: Deploy All Components (Final)
 on:
   push:
     branches:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  NODE_VERSION: "20"
+  NODE_VERSION: "24.1.0"
 
 jobs:
   # Test all components
@@ -53,12 +53,6 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Verify Cloudflare Permissions
-        run: ./scripts/verify-cloudflare-permissions.sh
-        env:
-          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-
       - name: Install and Deploy Edge Worker
         run: |
           cd edge-worker
@@ -88,17 +82,17 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Build and Deploy
+      - name: Build Public Site
         run: |
           cd 48Continental_Starter/public-site
           npm ci
           npm run build
         env:
-          VITE_MAPBOX_TOKEN: ${{ secrets.MAP_API_TOKEN }}
-          VITE_OPENWEATHER_API_KEY: ${{ secrets.VITE_OPENWEATHER_API_KEY }}
-          VITE_TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
-          VITE_TESSIE_VIN: ${{ secrets.TESSIE_VIN }}
-          VITE_EDGE_WORKER_URL: https://thewanderingwhittle-edge.workers.dev
+          MAPBOX_TOKEN: ${{ secrets.MAP_API_TOKEN }}
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+          TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
+          TESSIE_VIN: ${{ secrets.TESSIE_VIN }}
+          EDGE_WORKER_URL: https://thewanderingwhittle-edge.workers.dev
 
       - name: Install and Deploy to Pages
         run: |
