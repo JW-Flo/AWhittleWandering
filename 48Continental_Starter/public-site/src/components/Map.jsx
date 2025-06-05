@@ -36,47 +36,53 @@ const Map = ({
   const map = useRef(null);
   const vehicleMarker = useRef(null);
   const [mapReady, setMapReady] = useState(false);
+  const [mapError, setMapError] = useState(null);
 
   // Initialize map on component mount
   useEffect(() => {
     if (map.current) return; // Map already initialized
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v11',
-      center: [-98.5795, 39.8283], // Center of continental US
-      zoom: 3.5,
-      minZoom: 2,
-      maxZoom: 18
-    });
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/streets-v11',
+        center: [-98.5795, 39.8283], // Center of continental US
+        zoom: 3.5,
+        minZoom: 2,
+        maxZoom: 18
+      });
 
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-    map.current.addControl(new mapboxgl.FullscreenControl(), 'top-right');
-    map.current.addControl(new mapboxgl.GeolocateControl({
-      positionOptions: {
-        enableHighAccuracy: true
-      },
-      trackUserLocation: false
-    }), 'top-right');
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      map.current.addControl(new mapboxgl.FullscreenControl(), 'top-right');
+      map.current.addControl(new mapboxgl.GeolocateControl({
+        positionOptions: {
+          enableHighAccuracy: true
+        },
+        trackUserLocation: false
+      }), 'top-right');
 
-    // Add scale control
-    map.current.addControl(new mapboxgl.ScaleControl({
-      maxWidth: 100,
-      unit: 'imperial'
-    }), 'bottom-left');
+      // Add scale control
+      map.current.addControl(new mapboxgl.ScaleControl({
+        maxWidth: 100,
+        unit: 'imperial'
+      }), 'bottom-left');
 
-    // Mark map as ready when loaded
-    map.current.on('load', () => {
-      setMapReady(true);
-    });
+      // Mark map as ready when loaded
+      map.current.on('load', () => {
+        setMapReady(true);
+      });
 
-    // Cleanup on unmount
-    return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-      }
-    };
+      // Cleanup on unmount
+      return () => {
+        if (map.current) {
+          map.current.remove();
+          map.current = null;
+        }
+      };
+    } catch (error) {
+      console.error('Error initializing map:', error);
+      setMapError(error.message);
+    }
   }, []);
 
   // Update map style based on layer toggles
@@ -439,24 +445,33 @@ const Map = ({
 
   return (
     <div className={`map-container ${fullscreen ? 'map-fullscreen-mode' : ''}`}>
-      <div ref={mapContainer} className="map" />
+      {mapError ? (
+        <div className="map-error">
+          <h3>Error loading map</h3>
+          <p>{mapError}</p>
+        </div>
+      ) : (
+        <>
+          <div ref={mapContainer} className="map" />
 
-      {/* Trip statistics overlay - only show when not in fullscreen mode */}
-      {mapReady && !fullscreen && (
-        <TripStatistics
-          mapRef={map}
-          vehicle={vehicleData}
-        />
-      )}
+          {/* Trip statistics overlay - only show when not in fullscreen mode */}
+          {mapReady && !fullscreen && (
+            <TripStatistics
+              mapRef={map}
+              vehicle={vehicleData}
+            />
+          )}
 
-      {vehicleData && !fullscreen && (
-        <button
-          className="center-vehicle-btn"
-          onClick={centerMapOnVehicle}
-          aria-label="Center map on vehicle"
-        >
-          <span className="center-icon">🎯</span>
-        </button>
+          {vehicleData && !fullscreen && (
+            <button
+              className="center-vehicle-btn"
+              onClick={centerMapOnVehicle}
+              aria-label="Center map on vehicle"
+            >
+              <span className="center-icon">🎯</span>
+            </button>
+          )}
+        </>
       )}
     </div>
   );
