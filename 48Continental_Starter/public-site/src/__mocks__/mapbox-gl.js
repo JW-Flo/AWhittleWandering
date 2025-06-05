@@ -1,46 +1,53 @@
 /* eslint-env node */
 // Mock for mapbox-gl in tests
-const mockFn = () => {};
 
 export default {
   accessToken: "",
   Map: class MockMap {
     constructor() {
-      this.current = {
-        addControl: mockFn,
-        removeControl: mockFn,
-        on: mockFn,
-        off: mockFn,
-        remove: mockFn,
-        addSource: mockFn,
-        removeSource: mockFn,
-        addLayer: mockFn,
-        removeLayer: mockFn,
-        getSource: () => null,
-        getLayer: () => null,
-        setStyle: mockFn,
-        flyTo: mockFn,
-        getCanvas: () => ({ style: { cursor: "" } }),
-      };
+      // Return the instance itself so map.current works properly
+      return this;
     }
 
-    addControl() {}
-    removeControl() {}
-    on() {}
-    off() {}
-    remove() {}
-    addSource() {}
-    removeSource() {}
-    addLayer() {}
-    removeLayer() {}
+    addControl() {
+      return this;
+    }
+    removeControl() {
+      return this;
+    }
+    on() {
+      return this;
+    }
+    off() {
+      return this;
+    }
+    remove() {
+      return this;
+    }
+    addSource() {
+      return this;
+    }
+    removeSource() {
+      return this;
+    }
+    addLayer() {
+      return this;
+    }
+    removeLayer() {
+      return this;
+    }
     getSource() {
       return null;
     }
     getLayer() {
       return null;
     }
-    setStyle() {}
-    flyTo() {}
+    setStyle() {
+      return this;
+    }
+    flyTo() {
+      return this;
+    }
     getCanvas() {
       return { style: { cursor: "" } };
     }

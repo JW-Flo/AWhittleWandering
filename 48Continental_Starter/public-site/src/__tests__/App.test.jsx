@@ -1,4 +1,4 @@
-import { describe, test, expect, vi } from 'vitest';
+"import { describe, test, expect, vi } from 'vitest';
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import App from '../App';
@@ -34,19 +34,10 @@ const mockStationsData = {
   refreshStationsData: vi.fn()
 };
 
-vi.mock('../hooks/useVehicleData', () => ({
-  useVehicleData: () => mockVehicleData
-}));
-
-vi.mock('../hooks/useWeatherData', () => ({
-  useWeatherData: () => mockWeatherData
-}));
-
-vi.mock('../hooks/useTripData', () => ({
-  useTripData: () => mockTripData
-}));
-
-vi.mock('../hooks/useChargingStations', () => ({
+vi.mock('../hooks', () => ({
+  useVehicleData: () => mockVehicleData,
+  useWeatherData: () => mockWeatherData,
+  useTripData: () => mockTripData,
   useChargingStations: () => mockStationsData
 }));
 
@@ -96,7 +87,7 @@ describe('App Component', () => {
   test('renders Dashboard with data when loading is false and no errors', async () => {
     render(<App />);
     await waitFor(() => {
-      expect(screen.getByText(/The Wandering Whittle/i)).toBeInTheDocument();
+      expect(screen.getByText(/48 Continental/i)).toBeInTheDocument();
     });
   });
 });

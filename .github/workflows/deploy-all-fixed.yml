@@ -48,14 +48,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy Edge Worker
-        uses: cloudflare/wrangler-action@v3.13.0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          workingDirectory: edge-worker
-          command: deploy
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Verify Cloudflare Permissions
+        run: ./scripts/verify-cloudflare-permissions.sh
         env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+
+      - name: Install and Deploy Edge Worker
+        run: |
+          cd edge-worker
+          npm install -D wrangler@latest
+          npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
           TESSIE_VIN: ${{ secrets.TESSIE_VIN }}
           OPENWEATHER_API_KEY: ${{ secrets.OPEN_WEATHER_API_KEY }}
@@ -89,13 +100,14 @@ jobs:
           VITE_TESSIE_VIN: ${{ secrets.TESSIE_VIN }}
           VITE_EDGE_WORKER_URL: https://thewanderingwhittle-edge.workers.dev
 
-      - name: Deploy to Pages
-        uses: cloudflare/wrangler-action@v3.13.0
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          workingDirectory: 48Continental_Starter/public-site
-          command: pages deploy dist --project-name=continentalusa-site
+      - name: Install and Deploy to Pages
+        run: |
+          cd 48Continental_Starter/public-site
+          npm install -D wrangler@latest
+          npx wrangler pages deploy dist --project-name=continentalusa-site
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
   # Notification
   notify-deployment:
