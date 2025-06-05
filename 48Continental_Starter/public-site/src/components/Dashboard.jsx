@@ -101,7 +101,7 @@ const Dashboard = ({
         {/* Left sidebar for vehicle status and stats */}
         <div className="dashboard-sidebar">
           {/* Vehicle Status Card */}
-          <TripCompanionCard vehicleData={vehicleData} />
+          <VehicleStatusCard vehicleData={vehicleData} />
           
           {/* Weather Card */}
           <div className="dashboard-card">
