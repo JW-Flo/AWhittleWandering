@@ -64,13 +64,17 @@ const App = () => {
     }
   }, [vehicleLoading, weatherLoading, tripLoading, stationsLoading]);
   
-  // Set error state if any data fetching fails
+  // Set error state only if we have no data at all
   useEffect(() => {
-    const errorMessage = vehicleError || weatherError || tripError || stationsError;
-    if (errorMessage) {
-      setError(errorMessage);
+    // Only show error if we have no vehicle data AND an error
+    // Since vehicle data is the most critical, we can still show the app with just that
+    if (!vehicleData && vehicleError) {
+      setError(vehicleError);
+    } else {
+      // Clear any previous errors if we have data
+      setError(null);
     }
-  }, [vehicleError, weatherError, tripError, stationsError]);
+  }, [vehicleData, vehicleError, weatherError, tripError, stationsError]);
   
   // Add Mapbox token to document head if not already present
   useEffect(() => {
@@ -79,7 +83,7 @@ const App = () => {
       const tokenMeta = document.createElement('meta');
       tokenMeta.name = 'mapbox-token';
       // Use The Wandering Whittle's Mapbox token
-      tokenMeta.content = process.env.REACT_APP_MAPBOX_TOKEN || '';
+      tokenMeta.content = import.meta.env.VITE_MAPBOX_TOKEN || '';
       document.head.appendChild(tokenMeta);
     }
   }, []);
