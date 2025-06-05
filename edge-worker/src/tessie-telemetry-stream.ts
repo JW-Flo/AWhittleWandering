@@ -33,7 +33,7 @@ interface StreamOptions {
 }
 
 export class TessieTelemetryStream {
-  private client: TessieClient;
+  private client: TessieAPIClient;
   private ws: WebSocket | null = null;
   private reconnectTimer: number | null = null;
   private reconnectAttempts = 0;
@@ -42,7 +42,7 @@ export class TessieTelemetryStream {
   private options: StreamOptions;
   private isClosing = false;
 
-  constructor(client: TessieClient, options: StreamOptions) {
+  constructor(client: TessieAPIClient, options: StreamOptions) {
     this.client = client;
     this.options = options;
   }
@@ -286,7 +286,7 @@ export class TessieTelemetryStream {
  * Create a telemetry stream for a vehicle
  */
 export function createTelemetryStream(
-  client: TessieClient,
+  client: TessieAPIClient,
   options: StreamOptions
 ): TessieTelemetryStream {
   const stream = new TessieTelemetryStream(client, options);
