@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, act } from 'vitest';
+import { describe, test, expect, vi } from 'vitest';
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import App from '../App';
@@ -35,70 +35,66 @@ const mockStationsData = {
 };
 
 vi.mock('../hooks/useVehicleData', () => ({
-  default: () => mockVehicleData
+  useVehicleData: () => mockVehicleData
 }));
 
 vi.mock('../hooks/useWeatherData', () => ({
-  default: () => mockWeatherData
+  useWeatherData: () => mockWeatherData
 }));
 
 vi.mock('../hooks/useTripData', () => ({
-  default: () => mockTripData
+  useTripData: () => mockTripData
 }));
 
 vi.mock('../hooks/useChargingStations', () => ({
-  default: () => mockStationsData
+  useChargingStations: () => mockStationsData
 }));
 
 describe('App Component', () => {
   test('renders loading state initially', () => {
     render(<App />);
-    expect(screen.getByText(/Loading journey data/i)).toBeInTheDocument();
+    expect(screen.getByText(/Loading your journey/i)).toBeInTheDocument();
   });
 
   test('renders error message if any hook returns error', async () => {
     // Override mocks to return error state
     vi.mock('../hooks/useVehicleData', () => ({
-      default: () => ({
+      useVehicleData: () => ({
         vehicleData: null,
         vehicleLoading: false,
         vehicleError: new Error('Vehicle data error')
       })
     }));
     vi.mock('../hooks/useWeatherData', () => ({
-      default: () => ({
+      useWeatherData: () => ({
         weatherData: null,
         weatherLoading: false,
         weatherError: new Error('Weather data error')
       })
     }));
     vi.mock('../hooks/useTripData', () => ({
-      default: () => ({
+      useTripData: () => ({
         tripData: null,
         tripLoading: false,
         tripError: new Error('Trip data error')
       })
     }));
     vi.mock('../hooks/useChargingStations', () => ({
-      default: () => ({
+      useChargingStations: () => ({
         stationsData: null,
         stationsLoading: false,
         stationsError: new Error('Stations data error')
       })
     }));
 
-    await act(async () => {
-      render(<App />);
-    });
+    render(<App />);
     await waitFor(() => {
-      expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
+      expect(screen.getByText(/Unable to load journey data/i)).toBeInTheDocument();
     });
   });
 
   test('renders Dashboard with data when loading is false and no errors', async () => {
-    await act(async () => {
-      render(<App />);
-    });
+    render(<App />);
     await waitFor(() => {
       expect(screen.getByText(/The Wandering Whittle/i)).toBeInTheDocument();
     });

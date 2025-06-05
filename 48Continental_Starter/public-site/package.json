@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "The Wandering Whittle Trip Planner Public Site",
   "type": "module",
+  "engines": {
+    "node": ">=22.16.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -11,7 +15,13 @@
     "serve": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "test:real-data": "./scripts/run-tests-with-real-data.sh",
+    "test:analyze": "node scripts/test-analyzer.js",
+    "test:capture-failures": "npm run test:real-data || npm run test:analyze",
+    "setup": "./scripts/setup-environment.sh",
+    "preinstall": "node -e \"const v=process.versions.node.split('.').map(Number);if(v[0]<22){console.error('Node.js 22+ required');process.exit(1);}\"",
+    "postinstall": "echo 'Setup complete. Run npm run dev to start development server.'"
   },
   "dependencies": {
     "@testing-library/jest-dom": "^6.6.3",
