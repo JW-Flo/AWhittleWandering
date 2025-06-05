@@ -49,28 +49,18 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Deploy Edge Worker
-        if: ${{ secrets.CF_API_TOKEN != '' }}
         uses: cloudflare/wrangler-action@v3.13.0
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           workingDirectory: edge-worker
           command: deploy
-          secrets: |
-            TESSIE_API_TOKEN
-            OPENWEATHER_API_KEY
-            MAPBOX_TOKEN
-            EDGE_HMAC_KEY
         env:
           TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
           TESSIE_VIN: ${{ secrets.TESSIE_VIN }}
           OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
           MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
           EDGE_HMAC_KEY: ${{ secrets.EDGE_HMAC_KEY }}
-
-      - name: Skip Deployment
-        if: ${{ secrets.CF_API_TOKEN == '' }}
-        run: echo "Cloudflare secrets not configured, skipping deployment"
 
   # Deploy Public Site
   deploy-public-site:
@@ -88,7 +78,6 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Build and Deploy
-        if: ${{ secrets.CF_API_TOKEN != '' }}
         run: |
           cd 48Continental_Starter/public-site
           npm ci
@@ -101,7 +90,6 @@ jobs:
           VITE_EDGE_WORKER_URL: https://thewanderingwhittle-edge.workers.dev
 
       - name: Deploy to Pages
-        if: ${{ secrets.CF_API_TOKEN != '' }}
         uses: cloudflare/wrangler-action@v3.13.0
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
