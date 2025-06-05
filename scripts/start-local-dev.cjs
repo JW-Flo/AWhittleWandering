@@ -23,6 +23,12 @@ const PUBLIC_SITE_DIR = path.resolve(
 );
 const ENV_FILE_PATH = path.resolve(PUBLIC_SITE_DIR, ".env");
 
+// Delay (in ms) before validating connectivity after starting services
+const CONNECTIVITY_VALIDATION_DELAY_MS = 5000;
+
+// Delay (ms) before starting the public site after edge worker starts
+const PUBLIC_SITE_START_DELAY_MS = 3000;
+
 // ANSI colors for console output
 const colors = {
   reset: "\x1b[0m",
@@ -325,11 +331,11 @@ ${colors.bright}${colors.green}========================================${colors.
     startPublicSite();
 
     // Set up command line interface
-    setupCLI();
+    setTimeout(validateConnectivity, CONNECTIVITY_VALIDATION_DELAY_MS);
 
     // Validate connectivity after both services are running
     setTimeout(validateConnectivity, 5000);
-  }, 3000);
+  }, PUBLIC_SITE_START_DELAY_MS);
 }
 
 // Run the main function
