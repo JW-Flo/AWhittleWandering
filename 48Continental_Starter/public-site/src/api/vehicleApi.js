@@ -92,8 +92,9 @@ export const generateSimulatedVehicleData = () => {
  */
 export const fetchVehicleData = async () => {
   const TESSIE_API_TOKEN = import.meta.env.VITE_TESSIE_API_TOKEN;
+  const API_BASE_URL = import.meta.env.VITE_EDGE_WORKER_URL || "/api";
 
-  if (!TESSIE_API_TOKEN) {
+  if (!TESSIE_API_TOKEN && import.meta.env.MODE === "production") {
     console.error("Missing Tessie API token in environment variables");
     throw new Error("Configuration error: Missing Tessie API token");
   }
@@ -102,7 +103,7 @@ export const fetchVehicleData = async () => {
     try {
       // We're using a Cloudflare Worker as a proxy to avoid CORS issues and add caching
       // The edge worker handles Tessie authentication internally
-      const response = await fetch("/api/vehicle", {
+      const response = await fetch(`${API_BASE_URL}/vehicle`, {
         headers: {
           "Content-Type": "application/json",
         },

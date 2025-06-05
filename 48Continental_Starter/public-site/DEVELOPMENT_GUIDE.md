@@ -1,200 +1,189 @@
-# Development Guide
+# 48 Continental USA Development Guide
 
-## Overview
+This guide provides instructions for setting up, developing, and deploying the 48 Continental USA website.
 
-This guide covers the development setup, testing strategy, and failure tracking system for the Wandering Whittle project.
+## Project Overview
 
-## Version Requirements
+The 48 Continental project tracks a 60-day Tesla road trip through all 48 contiguous U.S. states, with real-time vehicle telemetry, weather data, and interactive mapping. The project consists of:
 
-### Required Software Versions
+- **Edge Worker**: A Cloudflare Worker that provides APIs for vehicle data, trip statistics, and other backend services
+- **Public Site**: A React-based frontend that displays the trip information with interactive maps and dashboards
 
-- **Node.js**: >= 22.16.0 (LTS)
-- **npm**: >= 10.0.0
-- **Wrangler CLI**: >= 4.19.0
+## Prerequisites
 
-### Why These Versions?
+- Node.js v24.1.0 or higher
+- npm or yarn
+- Cloudflare account (for deployment)
+- API keys:
+  - Tessie API token (for Tesla vehicle data)
+  - Mapbox token (for mapping functionality)
+  - OpenWeather API key (for weather data)
 
-- **Node.js 22**: Latest LTS with improved performance and security
-- **npm 10**: Includes latest security fixes and performance improvements
-- **Wrangler 4.19**: Latest stable version with Cloudflare Workers support
+## Environment Setup
 
-## Test Failure Tracking System
-
-### Philosophy: Real Data Over Mocks
-
-We prioritize testing with real data to catch actual integration issues rather than relying solely on mocks.
-
-### Test Scripts
-
-1. **Standard Tests**: `npm test`
-   - Uses mocks for fast feedback
-   - Good for unit testing and basic functionality
-
-2. **Real Data Tests**: `npm run test:real-data`
-   - Uses actual API calls and real data
-   - Catches integration issues
-   - Slower but more reliable
-
-3. **Failure Analysis**: `npm run test:analyze`
-   - Analyzes test results and generates reports
-   - Creates actionable failure summaries
-
-### Failure Tracking Workflow
-
-1. **Run Tests**: Execute `npm run test:real-data`
-2. **Capture Failures**: System automatically captures failures to `test-results/`
-3. **Analyze**: Review `test-results/LATEST_FAILURES.md` for summary
-4. **Fix Issues**: Address real data integration problems
-5. **Iterate**: Re-run tests to verify fixes
-
-### Test Results Structure
-
-```
-test-results/
-├── LATEST_FAILURES.md          # Human-readable summary
-├── latest-summary.txt          # Console-friendly summary
-├── failure-report-*.json       # Detailed failure data
-└── test-results.json          # Raw test output
-```
-
-## Environment Configuration
-
-### Required Environment Variables
+The project includes scripts to set up your development environment:
 
 ```bash
-# Core Configuration
-VITE_MAPBOX_TOKEN=your_mapbox_token_here
-CF_ACCOUNT_ID=your_cloudflare_account_id
-CF_API_TOKEN=your_cloudflare_api_token
+# Set up environment variables for both edge worker and public site
+node scripts/setup-env.cjs
 
-# Feature Flags
-VITE_USE_REAL_DATA=true
-VITE_ENABLE_STREAMING=true
-
-# Development
-VITE_DEBUG=false
-VITE_LOG_LEVEL=info
+# Start both edge worker and public site for local development
+node scripts/start-local-dev.cjs
 ```
 
-### Getting API Keys
+### Environment Variables
 
-1. **Mapbox Token**:
-   - Visit: https://account.mapbox.com/access-tokens/
-   - Create a new token with appropriate scopes
+Required environment variables for full functionality:
 
-2. **Cloudflare Credentials**:
-   - Visit: https://dash.cloudflare.com/profile/api-tokens
-   - Create token with Workers:Edit permissions
+| Variable | Purpose | Required |
+|----------|---------|----------|
+| TESSIE_API_TOKEN | Access Tesla vehicle data | Yes |
+| TESSIE_VIN | Vehicle identification number | Yes |
+| MAPBOX_TOKEN | Interactive mapping | Yes |
+| OPENWEATHER_API_KEY | Weather data | Yes |
+| EDGE_HMAC_KEY | Security key for API authentication | Auto-generated |
 
-## Development Workflow
+These can be set in your system environment, or in the following files:
+- Edge worker: `edge-worker/.dev.vars`
+- Public site: `48Continental_Starter/public-site/.env.local`
 
-### Initial Setup
+## Local Development
+
+The project includes a unified development environment that runs both the edge worker and public site:
 
 ```bash
-# Option 1: Automated setup
-npm run setup
+node scripts/start-local-dev.cjs
+```
 
-# Option 2: Manual setup
-nvm use 22
+This script:
+1. Sets up environment variables
+2. Starts the Edge Worker with Wrangler
+3. Starts the Public Site development server
+4. Connects the services together
+5. Provides an interactive CLI for controlling the development environment
+
+### Development CLI Commands
+
+While the development environment is running, you can use these commands:
+
+- `help` - Show available commands
+- `restart` - Restart both services
+- `validate` - Test connectivity between services
+- `clear` - Clear the console
+- `exit` - Shut down and exit
+
+## Manual Development
+
+If you prefer to run the services separately:
+
+### Edge Worker
+
+```bash
+cd edge-worker
 npm install
-cp .env.example .env
-# Edit .env with your values
+npx wrangler dev
 ```
 
-### Daily Development
+### Public Site
 
 ```bash
-# Start development server
+cd 48Continental_Starter/public-site
+npm install
 npm run dev
+```
 
-# Run tests (fast feedback)
+## Testing
+
+The project includes both unit tests and integration tests with real data simulation:
+
+```bash
+# Run unit tests
+cd 48Continental_Starter/public-site
 npm test
 
-# Run comprehensive tests with real data
-npm run test:real-data
-
-# Build for production
-npm run build
-
-# Deploy to Cloudflare
-npm run deploy
+# Run tests with real data simulation
+cd 48Continental_Starter/public-site
+npm run test:realdata
 ```
 
-### Debugging Test Failures
+## Production Deployment
 
-1. **Check Test Results**:
-   ```bash
-   cat test-results/LATEST_FAILURES.md
-   ```
+The project uses GitHub Actions for automated deployment to Cloudflare:
 
-2. **Run Specific Tests**:
-   ```bash
-   npm test -- --grep "specific test name"
-   ```
+1. Edge Worker is deployed as a Cloudflare Worker
+2. Public Site is deployed to Cloudflare Pages
 
-3. **Enable Debug Mode**:
-   ```bash
-   VITE_DEBUG=true npm run test:real-data
-   ```
+### Manual Deployment
 
-## Best Practices
+If you need to deploy manually:
 
-### Testing
+#### Edge Worker
 
-- Always run real data tests before deploying
-- Review failure reports to understand integration issues
-- Use mocks for unit tests, real data for integration tests
-- Keep test data current and representative
+```bash
+cd edge-worker
+npm ci
+npx wrangler deploy
+```
 
-### Version Management
+#### Public Site
 
-- Use `.nvmrc` for consistent Node.js versions
-- Pin dependency versions in `package.json`
-- Update versions systematically, not ad-hoc
+```bash
+cd 48Continental_Starter/public-site
+npm ci
+npm run build
+npx wrangler pages deploy dist --project-name=continentalusa-site
+```
 
-### Environment Management
+## Project Structure
 
-- Never commit `.env` files
-- Keep `.env.example` updated
-- Use different environments for different stages
+```
+.
+├── edge-worker/                # Cloudflare Worker backend
+│   ├── src/                    # Source code
+│   │   ├── index.ts            # Main entry point
+│   │   ├── tessie-client.ts    # Tesla API integration
+│   │   └── ...                 # Other modules
+│   ├── .dev.vars               # Local environment variables
+│   └── wrangler.toml           # Wrangler configuration
+│
+├── 48Continental_Starter/
+│   └── public-site/            # React frontend
+│       ├── src/                # Source code
+│       │   ├── components/     # UI components
+│       │   ├── hooks/          # Custom React hooks
+│       │   ├── api/            # API clients
+│       │   └── ...             # Other frontend code
+│       ├── .env.local          # Local environment variables
+│       └── vite.config.js      # Vite configuration
+│
+├── scripts/                    # Development and deployment scripts
+│   ├── setup-env.cjs           # Environment setup script
+│   └── start-local-dev.cjs     # Local development runner
+│
+└── .github/workflows/          # GitHub Actions workflows
+    └── deploy-all-final.yml    # Production deployment workflow
+```
 
 ## Troubleshooting
 
-### Common Issues
+### API Connection Issues
 
-1. **Node Version Mismatch**:
-   ```bash
-   nvm use 22
-   ```
+If you're seeing API errors:
 
-2. **Wrangler Authentication**:
-   ```bash
-   wrangler login
-   ```
+1. Check that all required API keys are set in your environment
+2. Verify the edge worker is running and accessible
+3. Check the console logs for specific error messages
 
-3. **Port Already in Use**:
-   ```bash
-   kill -9 $(lsof -ti:3000)
-   ```
+### Deployment Issues
 
-4. **Test Failures with Real Data**:
-   - Check API credentials in `.env`
-   - Verify network connectivity
-   - Review rate limiting
+If deployment fails:
 
-### Getting Help
+1. Verify Cloudflare API tokens are correctly set up
+2. Check GitHub Actions logs for detailed error information
+3. Ensure KV namespaces are correctly configured
 
-1. Check `test-results/LATEST_FAILURES.md` for specific errors
-2. Review environment configuration
-3. Verify all required software versions
-4. Check network connectivity for real data tests
+## Contributing
 
-## Continuous Integration
-
-The project includes GitHub Actions workflows that:
-- Verify Node.js version requirements
-- Run both mock and real data tests
-- Deploy to Cloudflare on successful tests
-- Generate failure reports for debugging
-
-See `.github/workflows/` for specific configurations.
+1. Follow the code style of the existing project
+2. Run tests before submitting pull requests
+3. Update documentation for any new features

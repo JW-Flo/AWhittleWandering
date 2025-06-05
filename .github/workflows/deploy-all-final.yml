@@ -44,6 +44,17 @@ jobs:
           MAPBOX_TOKEN: ${{ secrets.MAP_API_TOKEN }}
           EDGE_HMAC_KEY: ${{ secrets.EDGE_HMAC_KEY }}
 
+      - name: Setup Environment Variables
+        run: |
+          node scripts/setup-env.cjs
+        env:
+          EDGE_WORKER_URL: "https://thewanderingwhittle-edge.workers.dev"
+          API_BASE_URL: "https://thewanderingwhittle-edge.workers.dev"
+          MAPBOX_TOKEN: ${{ secrets.MAP_API_TOKEN }}
+          OPENWEATHERMAP_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+          TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
+          TESSIE_VIN: ${{ secrets.TESSIE_VIN }}
+
       - name: Build & Deploy Public Site
         run: |
           cd 48Continental_Starter/public-site
@@ -54,11 +65,6 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-          MAPBOX_TOKEN: ${{ secrets.MAP_API_TOKEN }}
-          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
-          TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
-          TESSIE_VIN: ${{ secrets.TESSIE_VIN }}
-          EDGE_WORKER_URL: "https://thewanderingwhittle-edge.workers.dev"
 
       - name: Deployment Status
         run: |
