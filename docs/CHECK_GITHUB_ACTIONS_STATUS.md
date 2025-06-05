@@ -40,7 +40,7 @@ gh run watch
 
 ## Expected Workflow Jobs
 
-The "Deploy All Components (Fixed)" workflow should run these jobs:
+The "Deploy All Components" workflow (the "(Fixed)" suffix indicates this version resolves previous issues) should run these jobs:
 1. **test-all** - Tests edge worker and public site
 2. **deploy-edge-worker** - Deploys the edge worker to Cloudflare
 3. **deploy-public-site** - Builds and deploys the public site to Cloudflare Pages
