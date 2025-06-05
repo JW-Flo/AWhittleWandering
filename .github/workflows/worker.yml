@@ -64,6 +64,6 @@ jobs:
           workingDirectory: edge-worker/src/ai-worker
           command: deploy
           secrets: |
-            CONTINENTAL_API_KEY
+            WORKERS_AI_TOKEN
         env:
-          CONTINENTAL_API_KEY: ${{ secrets.CONTINENTAL_API_KEY }}
+          WORKERS_AI_TOKEN: ${{ secrets.WORKERS_AI_TOKEN }}

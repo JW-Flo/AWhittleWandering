@@ -17,16 +17,15 @@ import { fetchWeatherData } from '../api/weatherApi';
  * Now with enhanced error handling and mock data fallback (if desired)
  */
 export const useVehicleData = (options = {}) => {
-  const vehicleId = options.vehicleId || '5YJYGDEE5LF027324';
-
-  // Use our real implementation
+  // Use our real implementation with options passed through
   const {
     vehicleData,
     loading,
     error,
     connectionStatus,
-    isMockData
-  } = realUseVehicleData(vehicleId);
+    retry,
+    isSimulated
+  } = realUseVehicleData(options);
 
   // Return with the naming expected by components
   return {
@@ -34,9 +33,9 @@ export const useVehicleData = (options = {}) => {
     vehicleLoading: loading,
     vehicleError: error,
     connectionStatus,
-    isMockData,
-    refreshVehicleData: () => {}, // Maintained for API compatibility
-    usingMockData: isMockData
+    isMockData: isSimulated,
+    refreshVehicleData: retry, // Use the retry function
+    usingMockData: isSimulated
   };
 };
 
@@ -51,10 +50,25 @@ export const useWeatherData = (options = {}) => {
   useEffect(() => {
     async function loadWeather() {
       try {
-        const lat = options.latitude || 27.741777;
-        const lon = options.longitude || -97.388844;
+        // Use location from options if provided (from vehicle data)
+        let lat, lon;
+        if (options.location) {
+          lat = options.location.latitude;
+          lon = options.location.longitude;
+        } else {
+          // Default to Texas location if no vehicle location available
+          lat = options.latitude || 27.741777;
+          lon = options.longitude || -97.388844;
+        }
+        
+        if (!lat || !lon) {
+          setWeatherLoading(false);
+          return;
+        }
+        
         const data = await fetchWeatherData({ latitude: lat, longitude: lon });
         setWeatherData(data);
+        setWeatherError(null);
       } catch (err) {
         console.error('Error loading weather data:', err);
         setWeatherError(err.message);
@@ -64,7 +78,7 @@ export const useWeatherData = (options = {}) => {
     }
 
     loadWeather();
-  }, [options]);
+  }, [options.location, options.latitude, options.longitude]);
 
   return {
     weatherData,
