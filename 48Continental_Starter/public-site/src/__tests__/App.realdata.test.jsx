@@ -38,7 +38,7 @@ vi.mock('../hooks/useChargingStations', () => ({
 describe('App Component with real data', () => {
   test('renders loading state and then dashboard with real data', async () => {
     render(<App />);
-    expect(screen.getByText(/Loading journey data/i)).toBeInTheDocument();
+    expect(screen.getByText(/Loading your journey/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByTestId('dashboard-component')).toBeInTheDocument();
     });
