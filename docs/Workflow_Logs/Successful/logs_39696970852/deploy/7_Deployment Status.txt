@@ -1,0 +1,11 @@
+﻿2025-06-05T23:10:11.9045604Z ##[group]Run echo "✅ Deployment completed"
+2025-06-05T23:10:11.9045983Z [36;1mecho "✅ Deployment completed"[0m
+2025-06-05T23:10:11.9046372Z [36;1mecho "Edge Worker: https://thewanderingwhittle-edge.workers.dev"[0m
+2025-06-05T23:10:11.9046845Z [36;1mecho "Public Site: https://continentalusa-site.pages.dev"[0m
+2025-06-05T23:10:11.9096805Z shell: /usr/bin/bash -e {0}
+2025-06-05T23:10:11.9097047Z env:
+2025-06-05T23:10:11.9097229Z   NODE_VERSION: 24.1.0
+2025-06-05T23:10:11.9097455Z ##[endgroup]
+2025-06-05T23:10:11.9165810Z ✅ Deployment completed
+2025-06-05T23:10:11.9166854Z Edge Worker: https://thewanderingwhittle-edge.workers.dev
+2025-06-05T23:10:11.9168373Z Public Site: https://continentalusa-site.pages.dev
