@@ -530,6 +530,95 @@ async function handleSyncService(request: Request, env: Env): Promise<Response> 
     return syncObj.fetch(request);
 }
 
+// Add weather and stations endpoints
+async function handleWeatherAPI(request: Request, env: Env): Promise<Response> {
+    const corsHeaders = {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+    };
+
+    try {
+        const url = new URL(request.url);
+        const lat = url.searchParams.get('lat') || '27.741777';
+        const lon = url.searchParams.get('lon') || '-97.388844';
+        
+        const weather = await fetchWeatherData(parseFloat(lat), parseFloat(lon), env.WEATHER_API_KEY || '');
+        
+        return new Response(JSON.stringify(weather), {
+            status: 200,
+            headers: corsHeaders
+        });
+    } catch (error) {
+        console.error('Weather API error:', error);
+        return new Response(JSON.stringify({ 
+            error: 'Failed to fetch weather data',
+            message: error instanceof Error ? error.message : 'Unknown error'
+        }), {
+            status: 500,
+            headers: corsHeaders
+        });
+    }
+}
+
+async function handleStationsAPI(request: Request, env: Env): Promise<Response> {
+    const corsHeaders = {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+    };
+
+    try {
+        const url = new URL(request.url);
+        const lat = parseFloat(url.searchParams.get('lat') || '27.741777');
+        const lon = parseFloat(url.searchParams.get('lon') || '-97.388844');
+        
+        // Mock charging stations data for now
+        const stations = {
+            stations: [
+                {
+                    id: "station-1",
+                    name: "Tesla Supercharger - Corpus Christi",
+                    latitude: lat + 0.01,
+                    longitude: lon + 0.01,
+                    address: "5488 S Padre Island Dr, Corpus Christi, TX 78411",
+                    distance: 2.3,
+                    available: 8,
+                    total: 12,
+                    power: 250
+                },
+                {
+                    id: "station-2",
+                    name: "ChargePoint - HEB Plus",
+                    latitude: lat - 0.02,
+                    longitude: lon + 0.005,
+                    address: "1145 Waldron Rd, Corpus Christi, TX 78418",
+                    distance: 4.1,
+                    available: 2,
+                    total: 4,
+                    power: 150
+                }
+            ]
+        };
+        
+        return new Response(JSON.stringify(stations), {
+            status: 200,
+            headers: corsHeaders
+        });
+    } catch (error) {
+        console.error('Stations API error:', error);
+        return new Response(JSON.stringify({ 
+            error: 'Failed to fetch charging stations',
+            message: error instanceof Error ? error.message : 'Unknown error'
+        }), {
+            status: 500,
+            headers: corsHeaders
+        });
+    }
+}
+
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
         const url = new URL(request.url);
@@ -543,6 +632,14 @@ export default {
         // Main vehicle endpoint used by frontend
         if (url.pathname === "/api/vehicle" && request.method === "GET") {
             return await handleTessieVehicle(request, env);
+        }
+        
+        // --- WEATHER AND STATIONS API ROUTES ---
+        if (url.pathname === "/api/weather" && request.method === "GET") {
+            return await handleWeatherAPI(request, env);
+        }
+        if (url.pathname === "/api/stations" && request.method === "GET") {
+            return await handleStationsAPI(request, env);
         }
         
         // --- TESLA API ROUTES (Legacy) ---
@@ -603,3 +700,6 @@ export default {
         }
     }
 };
+
+// Export the Durable Object class
+export { SyncServiceDurableObject } from '../../shared/agent-coordination/syncService';
