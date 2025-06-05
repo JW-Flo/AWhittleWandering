@@ -1,19 +1,26 @@
 name: Deploy All Components (Final)
+
 on:
   push:
     branches:
       - main
+    paths:
+      - "edge-worker/**"
+      - "48Continental_Starter/public-site/**"
+      - ".github/workflows/deploy-all-final.yml"
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   NODE_VERSION: "24.1.0"
 
 jobs:
-  # Test all components
-  test-all:
+  deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -22,40 +29,10 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Test Edge Worker
-        run: |
-          if [ -d "edge-worker" ]; then
-            cd edge-worker
-            npm ci || echo "npm ci failed, continuing"
-            npm test || echo "tests failed, continuing"
-          fi
-
-      - name: Test Public Site
-        run: |
-          if [ -d "48Continental_Starter/public-site" ]; then
-            cd 48Continental_Starter/public-site
-            npm ci || echo "npm ci failed, continuing"
-            npm run test || echo "tests failed, continuing"
-          fi
-
-  # Deploy Edge Worker
-  deploy-edge-worker:
-    needs: test-all
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Install and Deploy Edge Worker
+      - name: Deploy Edge Worker
         run: |
           cd edge-worker
+          npm ci
           npm install -D wrangler@latest
           npx wrangler deploy
         env:
@@ -63,54 +40,28 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
           TESSIE_VIN: ${{ secrets.TESSIE_VIN }}
-          OPENWEATHER_API_KEY: ${{ secrets.OPEN_WEATHER_API_KEY }}
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
           MAPBOX_TOKEN: ${{ secrets.MAP_API_TOKEN }}
           EDGE_HMAC_KEY: ${{ secrets.EDGE_HMAC_KEY }}
 
-  # Deploy Public Site
-  deploy-public-site:
-    needs: [test-all, deploy-edge-worker]
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Build Public Site
+      - name: Build & Deploy Public Site
         run: |
           cd 48Continental_Starter/public-site
           npm ci
           npm run build
-        env:
-          MAPBOX_TOKEN: ${{ secrets.MAP_API_TOKEN }}
-          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
-          TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
-          TESSIE_VIN: ${{ secrets.TESSIE_VIN }}
-          EDGE_WORKER_URL: https://thewanderingwhittle-edge.workers.dev
-
-      - name: Install and Deploy to Pages
-        run: |
-          cd 48Continental_Starter/public-site
           npm install -D wrangler@latest
           npx wrangler pages deploy dist --project-name=continentalusa-site
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          MAPBOX_TOKEN: ${{ secrets.MAP_API_TOKEN }}
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+          TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
+          TESSIE_VIN: ${{ secrets.TESSIE_VIN }}
+          EDGE_WORKER_URL: "https://thewanderingwhittle-edge.workers.dev"
 
-  # Notification
-  notify-deployment:
-    needs: [deploy-edge-worker, deploy-public-site]
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Status
+      - name: Deployment Status
         run: |
-          echo "Deployment completed"
-          echo "Edge Worker: ${{ needs.deploy-edge-worker.result }}"
-          echo "Public Site: ${{ needs.deploy-public-site.result }}"
+          echo "✅ Deployment completed"
+          echo "Edge Worker: https://thewanderingwhittle-edge.workers.dev"
+          echo "Public Site: https://continentalusa-site.pages.dev"

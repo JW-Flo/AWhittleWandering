@@ -1,107 +1,507 @@
 /* eslint-env browser */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+
+/**
+ * US State boundaries for accurate state detection
+ * Simplified bounding boxes for the continental US states
+ */
+const STATE_BOUNDARIES = {
+  AL: { minLat: 30.2, maxLat: 35.0, minLng: -88.5, maxLng: -84.9 },
+  AZ: { minLat: 31.3, maxLat: 37.0, minLng: -114.8, maxLng: -109.0 },
+  AR: { minLat: 33.0, maxLat: 36.5, minLng: -94.6, maxLng: -89.6 },
+  CA: { minLat: 32.5, maxLat: 42.0, minLng: -124.4, maxLng: -114.1 },
+  CO: { minLat: 37.0, maxLat: 41.0, minLng: -109.1, maxLng: -102.0 },
+  CT: { minLat: 40.9, maxLat: 42.1, minLng: -73.7, maxLng: -71.8 },
+  DE: { minLat: 38.4, maxLat: 39.8, minLng: -75.8, maxLng: -75.0 },
+  FL: { minLat: 24.4, maxLat: 31.0, minLng: -87.6, maxLng: -80.0 },
+  GA: { minLat: 30.4, maxLat: 35.0, minLng: -85.6, maxLng: -80.8 },
+  ID: { minLat: 42.0, maxLat: 49.0, minLng: -117.2, maxLng: -111.0 },
+  IL: { minLat: 36.9, maxLat: 42.5, minLng: -91.5, maxLng: -87.0 },
+  IN: { minLat: 37.8, maxLat: 41.8, minLng: -88.1, maxLng: -84.8 },
+  IA: { minLat: 40.4, maxLat: 43.5, minLng: -96.6, maxLng: -90.1 },
+  KS: { minLat: 37.0, maxLat: 40.0, minLng: -102.1, maxLng: -94.6 },
+  KY: { minLat: 36.5, maxLat: 39.1, minLng: -89.6, maxLng: -81.9 },
+  LA: { minLat: 28.9, maxLat: 33.0, minLng: -94.0, maxLng: -88.8 },
+  ME: { minLat: 43.1, maxLat: 47.5, minLng: -71.1, maxLng: -66.9 },
+  MD: { minLat: 37.9, maxLat: 39.7, minLng: -79.5, maxLng: -75.0 },
+  MA: { minLat: 41.2, maxLat: 42.9, minLng: -73.5, maxLng: -69.9 },
+  MI: { minLat: 41.7, maxLat: 48.2, minLng: -90.4, maxLng: -82.4 },
+  MN: { minLat: 43.5, maxLat: 49.4, minLng: -97.2, maxLng: -89.5 },
+  MS: { minLat: 30.2, maxLat: 35.0, minLng: -91.7, maxLng: -88.1 },
+  MO: { minLat: 36.0, maxLat: 40.6, minLng: -95.8, maxLng: -89.1 },
+  MT: { minLat: 45.0, maxLat: 49.0, minLng: -116.1, maxLng: -104.0 },
+  NE: { minLat: 40.0, maxLat: 43.0, minLng: -104.1, maxLng: -95.3 },
+  NV: { minLat: 35.0, maxLat: 42.0, minLng: -120.0, maxLng: -114.0 },
+  NH: { minLat: 42.7, maxLat: 45.3, minLng: -72.6, maxLng: -70.6 },
+  NJ: { minLat: 38.9, maxLat: 41.4, minLng: -75.6, maxLng: -73.9 },
+  NM: { minLat: 31.3, maxLat: 37.0, minLng: -109.1, maxLng: -103.0 },
+  NY: { minLat: 40.5, maxLat: 45.0, minLng: -79.8, maxLng: -71.9 },
+  NC: { minLat: 33.8, maxLat: 36.6, minLng: -84.3, maxLng: -75.5 },
+  ND: { minLat: 45.9, maxLat: 49.0, minLng: -104.1, maxLng: -96.6 },
+  OH: { minLat: 38.4, maxLat: 42.3, minLng: -84.8, maxLng: -80.5 },
+  OK: { minLat: 33.6, maxLat: 37.0, minLng: -103.0, maxLng: -94.4 },
+  OR: { minLat: 42.0, maxLat: 46.3, minLng: -124.6, maxLng: -116.5 },
+  PA: { minLat: 39.7, maxLat: 42.5, minLng: -80.5, maxLng: -74.7 },
+  RI: { minLat: 41.1, maxLat: 42.0, minLng: -71.9, maxLng: -71.1 },
+  SC: { minLat: 32.0, maxLat: 35.2, minLng: -83.4, maxLng: -78.5 },
+  SD: { minLat: 42.5, maxLat: 45.9, minLng: -104.1, maxLng: -96.4 },
+  TN: { minLat: 35.0, maxLat: 36.7, minLng: -90.3, maxLng: -81.6 },
+  TX: { minLat: 25.8, maxLat: 36.5, minLng: -106.6, maxLng: -93.5 },
+  UT: { minLat: 37.0, maxLat: 42.0, minLng: -114.1, maxLng: -109.0 },
+  VT: { minLat: 42.7, maxLat: 45.0, minLng: -73.4, maxLng: -71.5 },
+  VA: { minLat: 36.5, maxLat: 39.5, minLng: -83.7, maxLng: -75.2 },
+  WA: { minLat: 45.5, maxLat: 49.0, minLng: -124.8, maxLng: -116.9 },
+  WV: { minLat: 37.2, maxLat: 40.6, minLng: -82.6, maxLng: -77.7 },
+  WI: { minLat: 42.5, maxLat: 47.1, minLng: -92.9, maxLng: -86.8 },
+  WY: { minLat: 41.0, maxLat: 45.0, minLng: -111.1, maxLng: -104.0 },
+  DC: { minLat: 38.8, maxLat: 39.0, minLng: -77.1, maxLng: -76.9 },
+};
+
+/**
+ * Determine which state a coordinate is in
+ */
+const getStateFromCoordinates = (latitude, longitude) => {
+  for (const [state, bounds] of Object.entries(STATE_BOUNDARIES)) {
+    if (
+      latitude >= bounds.minLat &&
+      latitude <= bounds.maxLat &&
+      longitude >= bounds.minLng &&
+      longitude <= bounds.maxLng
+    ) {
+      return state;
+    }
+  }
+  return null; // Not in any continental US state
+};
+
+/**
+ * Calculate distance between two points using Haversine formula
+ */
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 3959; // Earth radius in miles
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
 
 /**
  * Hook for fetching and managing trip data
- * Uses simulated data for development
+ * Enhanced with real-time state tracking and dynamic route calculation
  */
-export const useTripData = ({ pollInterval = 60000 } = {}) => {
+export const useTripData = ({ vehicleData, pollInterval = 60000 } = {}) => {
   const [tripData, setTripData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [visitedStates, setVisitedStates] = useState(new Set());
+  const [stateHistory, setStateHistory] = useState([]);
 
-  useEffect(() => {
-    const fetchTripData = async () => {
-      try {
-        // Attempt to fetch from API
-        const response = await fetch(
-          `${
-            import.meta.env.VITE_API_BASE_URL || "http://localhost:8787"
-          }/api/trip`
+  // Enhanced trip data generation based on vehicle location
+  const generateEnhancedTripData = useCallback(
+    (currentVehicleData) => {
+      const now = new Date();
+      const tripStartDate = new Date("2024-01-01"); // Adjust based on actual trip start
+      const daysOnRoad = Math.floor(
+        (now - tripStartDate) / (1000 * 60 * 60 * 24)
+      );
+
+      // Get current location
+      const currentLat =
+        currentVehicleData?.latitude ||
+        currentVehicleData?.location?.latitude ||
+        27.8006;
+      const currentLng =
+        currentVehicleData?.longitude ||
+        currentVehicleData?.location?.longitude ||
+        -97.3964;
+
+      // Determine current state
+      const currentState = getStateFromCoordinates(currentLat, currentLng);
+
+      // Planned route stops (from the actual itinerary)
+      const plannedStops = [
+        {
+          id: "1",
+          name: "Corpus Christi",
+          state: "TX",
+          lat: 27.8006,
+          lng: -97.3964,
+          type: "start",
+        },
+        {
+          id: "2",
+          name: "Houston",
+          state: "TX",
+          lat: 29.7604,
+          lng: -95.3698,
+          type: "waypoint",
+        },
+        {
+          id: "3",
+          name: "Austin",
+          state: "TX",
+          lat: 30.2672,
+          lng: -97.7431,
+          type: "waypoint",
+        },
+        {
+          id: "4",
+          name: "Dallas",
+          state: "TX",
+          lat: 32.7767,
+          lng: -96.797,
+          type: "waypoint",
+        },
+        {
+          id: "5",
+          name: "New Orleans",
+          state: "LA",
+          lat: 29.9511,
+          lng: -90.0715,
+          type: "overnight",
+        },
+        {
+          id: "6",
+          name: "Biloxi",
+          state: "MS",
+          lat: 30.6944,
+          lng: -88.0431,
+          type: "waypoint",
+        },
+        {
+          id: "7",
+          name: "Montgomery",
+          state: "AL",
+          lat: 32.3617,
+          lng: -86.2792,
+          type: "waypoint",
+        },
+        {
+          id: "8",
+          name: "Miami",
+          state: "FL",
+          lat: 25.7617,
+          lng: -80.1918,
+          type: "overnight",
+        },
+        {
+          id: "9",
+          name: "Orlando",
+          state: "FL",
+          lat: 28.5383,
+          lng: -81.3792,
+          type: "waypoint",
+        },
+        {
+          id: "10",
+          name: "Atlanta",
+          state: "GA",
+          lat: 33.749,
+          lng: -84.388,
+          type: "overnight",
+        },
+        {
+          id: "11",
+          name: "Charlotte",
+          state: "NC",
+          lat: 35.2271,
+          lng: -80.8431,
+          type: "waypoint",
+        },
+        {
+          id: "12",
+          name: "Washington DC",
+          state: "DC",
+          lat: 38.9072,
+          lng: -77.0369,
+          type: "overnight",
+        },
+        {
+          id: "13",
+          name: "New York",
+          state: "NY",
+          lat: 40.7128,
+          lng: -74.006,
+          type: "overnight",
+        },
+        {
+          id: "14",
+          name: "Boston",
+          state: "MA",
+          lat: 42.3601,
+          lng: -71.0589,
+          type: "waypoint",
+        },
+        {
+          id: "15",
+          name: "Chicago",
+          state: "IL",
+          lat: 41.8781,
+          lng: -87.6298,
+          type: "overnight",
+        },
+        {
+          id: "16",
+          name: "Minneapolis",
+          state: "MN",
+          lat: 44.9778,
+          lng: -93.265,
+          type: "waypoint",
+        },
+        {
+          id: "17",
+          name: "Denver",
+          state: "CO",
+          lat: 39.7392,
+          lng: -104.9903,
+          type: "overnight",
+        },
+        {
+          id: "18",
+          name: "Las Vegas",
+          state: "NV",
+          lat: 36.1627,
+          lng: -115.1731,
+          type: "waypoint",
+        },
+        {
+          id: "19",
+          name: "Los Angeles",
+          state: "CA",
+          lat: 34.0522,
+          lng: -118.2437,
+          type: "overnight",
+        },
+        {
+          id: "20",
+          name: "San Francisco",
+          state: "CA",
+          lat: 37.7749,
+          lng: -122.4194,
+          type: "waypoint",
+        },
+        {
+          id: "21",
+          name: "Seattle",
+          state: "WA",
+          lat: 47.6062,
+          lng: -122.3321,
+          type: "end",
+        },
+      ];
+
+      // Find the closest upcoming stop
+      let nextStop = null;
+      let minDistance = Infinity;
+      let distanceToNext = 0;
+
+      for (const stop of plannedStops) {
+        const distance = calculateDistance(
+          currentLat,
+          currentLng,
+          stop.lat,
+          stop.lng
         );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch trip data");
+        if (distance < minDistance && distance > 5) {
+          // Must be more than 5 miles away to be "next"
+          minDistance = distance;
+          nextStop = stop;
+          distanceToNext = Math.round(distance);
         }
-
-        const data = await response.json();
-        setTripData(data);
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching trip data:", err);
-        // Fallback to simulated data
-        console.log("Falling back to simulated trip data");
-        setTripData({
-          visitedStates: [
-            "TX",
-            "LA",
-            "MS",
-            "AL",
-            "FL",
-            "GA",
-            "SC",
-            "NC",
-            "VA",
-            "WV",
-            "KY",
-            "TN",
-            "AR",
-            "MO",
-            "IL",
-            "IN",
-            "OH",
-            "MI",
-            "WI",
-            "MN",
-            "IA",
-            "NE",
-            "CO",
-          ],
-          currentState: "TX",
-          nextStop: {
-            city: "Houston",
-            state: "TX",
-            eta: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-          },
-          distanceToNext: 142,
-          route: [
-            { latitude: 27.8006, longitude: -97.3964 },
-            { latitude: 29.7604, longitude: -95.3698 },
-          ],
-          stops: [
-            {
-              id: "1",
-              name: "Corpus Christi",
-              latitude: 27.8006,
-              longitude: -97.3964,
-              type: "current",
-              description: "Current location",
-              charging: true,
-              overnight: false,
-            },
-            {
-              id: "2",
-              name: "Houston",
-              latitude: 29.7604,
-              longitude: -95.3698,
-              type: "next",
-              description: "Next destination",
-              charging: true,
-              overnight: true,
-            },
-          ],
-        });
-      } finally {
-        setLoading(false);
       }
-    };
 
+      // If no next stop found, use the last stop
+      if (!nextStop) {
+        nextStop = plannedStops[plannedStops.length - 1];
+        distanceToNext = Math.round(
+          calculateDistance(currentLat, currentLng, nextStop.lat, nextStop.lng)
+        );
+      }
+
+      // Calculate total miles traveled (rough estimate)
+      const totalMiles = 12000 + daysOnRoad * 400; // Base + daily average
+
+      // Generate route coordinates (simplified)
+      const route = plannedStops.map((stop) => ({
+        latitude: stop.lat,
+        longitude: stop.lng,
+      }));
+
+      // Convert planned stops to the expected format
+      const stops = plannedStops.map((stop) => ({
+        id: stop.id,
+        name: stop.name,
+        latitude: stop.lat,
+        longitude: stop.lng,
+        type: stop.type,
+        description: `${stop.name}, ${stop.state}`,
+        charging: stop.type === "overnight" || stop.type === "waypoint",
+        overnight: stop.type === "overnight",
+        state: stop.state,
+      }));
+
+      return {
+        visitedStates: Array.from(visitedStates),
+        currentState: currentState || "TX",
+        currentCity: currentVehicleData?.currentCity || "Corpus Christi",
+        nextStop: {
+          city: nextStop.name,
+          state: nextStop.state,
+          eta: new Date(
+            Date.now() + (distanceToNext / 60) * 60 * 60 * 1000
+          ).toISOString(), // Rough ETA
+        },
+        distanceToNext,
+        totalMiles,
+        daysOnRoad,
+        route,
+        stops,
+        // Additional trip statistics
+        statesRemaining: 48 - visitedStates.size,
+        routeProgress: Math.round((visitedStates.size / 48) * 100),
+        averageMilesPerDay: Math.round(totalMiles / Math.max(daysOnRoad, 1)),
+        // Real-time location data
+        currentLocation: {
+          latitude: currentLat,
+          longitude: currentLng,
+          state: currentState,
+          city: currentVehicleData?.currentCity,
+        },
+        lastUpdated: new Date().toISOString(),
+      };
+    },
+    [visitedStates]
+  );
+
+  // Update visited states when vehicle location changes
+  useEffect(() => {
+    if (!vehicleData?.latitude || !vehicleData?.longitude) return;
+
+    const currentState = getStateFromCoordinates(
+      vehicleData.latitude,
+      vehicleData.longitude
+    );
+
+    if (currentState && !visitedStates.has(currentState)) {
+      setVisitedStates((prev) => new Set([...prev, currentState]));
+      setStateHistory((prev) => [
+        ...prev,
+        {
+          state: currentState,
+          timestamp: new Date().toISOString(),
+          coordinates: {
+            latitude: vehicleData.latitude,
+            longitude: vehicleData.longitude,
+          },
+        },
+      ]);
+      console.log(`🗺️ Entered new state: ${currentState}`);
+    }
+  }, [vehicleData?.latitude, vehicleData?.longitude, visitedStates]);
+
+  const fetchTripData = useCallback(async () => {
+    try {
+      // Try to fetch from API first
+      const apiUrl =
+        import.meta.env.VITE_EDGE_WORKER_URL ||
+        import.meta.env.VITE_API_BASE_URL ||
+        "http://localhost:8787";
+
+      const response = await fetch(`${apiUrl}/api/trip`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        signal: AbortSignal.timeout(5000), // 5 second timeout
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // Merge API data with our enhanced local data
+        const enhancedData = generateEnhancedTripData(vehicleData);
+        const mergedData = {
+          ...data,
+          ...enhancedData,
+          // Prefer API data for certain fields if available
+          visitedStates:
+            data.visitedStates?.length > 0
+              ? data.visitedStates
+              : enhancedData.visitedStates,
+        };
+
+        setTripData(mergedData);
+        setError(null);
+        console.log("✅ Successfully fetched trip data from API");
+        return;
+      }
+    } catch (err) {
+      console.warn("⚠️ Failed to fetch trip data from API:", err.message);
+    }
+
+    // Fallback to enhanced local data
+    const enhancedData = generateEnhancedTripData(vehicleData);
+    setTripData(enhancedData);
+    setError(null);
+    console.log("📍 Using enhanced local trip data");
+  }, [vehicleData, generateEnhancedTripData]);
+
+  // Fetch trip data on mount and when vehicle data changes
+  useEffect(() => {
     fetchTripData();
-    // Poll based on provided interval
+    setLoading(false);
+  }, [fetchTripData]);
+
+  // Set up polling for trip data updates
+  useEffect(() => {
     const interval = setInterval(fetchTripData, pollInterval);
-
     return () => clearInterval(interval);
-  }, [pollInterval]);
+  }, [fetchTripData, pollInterval]);
 
-  return { tripData, loading, error };
+  // Manual refresh function
+  const refreshTripData = useCallback(() => {
+    setLoading(true);
+    fetchTripData().finally(() => setLoading(false));
+  }, [fetchTripData]);
+
+  // Helper functions
+  const getStateProgress = useCallback(() => {
+    const totalStates = 48;
+    const visited = visitedStates.size;
+    return {
+      visited,
+      remaining: totalStates - visited,
+      percentage: Math.round((visited / totalStates) * 100),
+    };
+  }, [visitedStates]);
+
+  const isStateVisited = useCallback(
+    (state) => {
+      return visitedStates.has(state);
+    },
+    [visitedStates]
+  );
+
+  return {
+    tripData,
+    loading,
+    error,
+    refreshTripData,
+    // State tracking helpers
+    visitedStates: Array.from(visitedStates),
+    stateHistory,
+    getStateProgress,
+    isStateVisited,
+    // Real-time location helpers
+    currentState: tripData?.currentState,
+    currentCity: tripData?.currentCity,
+    nextDestination: tripData?.nextStop,
+    distanceToNext: tripData?.distanceToNext,
+  };
 };

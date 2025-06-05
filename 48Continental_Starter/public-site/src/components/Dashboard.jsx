@@ -8,12 +8,15 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Map from './Map';
+import StatesTracker from './StatesTracker';
+import { useVehicleData } from '../hooks/useVehicleData';
+import { useTripData } from '../hooks/useTripData';
 import './Dashboard.css';
 
 const Dashboard = ({
-  vehicleData,
+  vehicleData: propVehicleData,
   weatherData,
-  tripData,
+  tripData: propTripData,
   stationsData,
   connectionStatus,
   isLoading,
@@ -21,6 +24,16 @@ const Dashboard = ({
 }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [activePanel, setActivePanel] = useState('journey'); // 'journey', 'vehicle', 'states'
+
+  // Use hooks for enhanced data
+  const { vehicleData, loading: vehicleLoading, error: vehicleError } = useVehicleData();
+  const { tripData, loading: tripLoading, visitedStates, currentState } = useTripData({
+    vehicleData: vehicleData || propVehicleData
+  });
+
+  // Use enhanced data if available, fallback to props
+  const finalVehicleData = vehicleData || propVehicleData;
+  const finalTripData = tripData || propTripData;
 
   if (isLoading) {
     return (
@@ -65,8 +78,8 @@ const Dashboard = ({
     );
   }
 
-  // Calculate journey progress
-  const statesVisited = tripData?.visitedStates?.length || 23;
+  // Calculate journey progress using enhanced data
+  const statesVisited = visitedStates?.length || finalTripData?.visitedStates?.length || 23;
   const progressPercentage = (statesVisited / 48) * 100;
 
   return (
@@ -90,16 +103,16 @@ const Dashboard = ({
           <div className="vehicle-stats">
             <div className="stat-badge">
               <span className="stat-icon">🔋</span>
-              <span className="stat-value">{vehicleData?.batteryLevel || 72}%</span>
+              <span className="stat-value">{finalVehicleData?.batteryLevel || 72}%</span>
             </div>
             <div className="stat-badge">
               <span className="stat-icon">⚡</span>
-              <span className="stat-value">{vehicleData?.range || 218} mi</span>
+              <span className="stat-value">{finalVehicleData?.range || 218} mi</span>
             </div>
-            {vehicleData?.speed > 0 && (
+            {finalVehicleData?.speed > 0 && (
               <div className="stat-badge">
                 <span className="stat-icon">💨</span>
-                <span className="stat-value">{vehicleData.speed} mph</span>
+                <span className="stat-value">{finalVehicleData.speed} mph</span>
               </div>
             )}
           </div>
@@ -109,8 +122,8 @@ const Dashboard = ({
       {/* Full Screen Map */}
       <div className="map-fullscreen">
         <Map
-          vehicleData={vehicleData}
-          tripData={tripData}
+          vehicleData={finalVehicleData}
+          tripData={finalTripData}
           stationsData={stationsData}
           fullscreen={true}
         />
@@ -210,38 +223,38 @@ const Dashboard = ({
                   <div className="battery-icon">
                     <div
                       className="battery-fill"
-                      style={{ width: `${vehicleData?.batteryLevel || 72}%` }}
+                      style={{ width: `${finalVehicleData?.batteryLevel || 72}%` }}
                     />
                   </div>
-                  <span className="battery-text">{vehicleData?.batteryLevel || 72}%</span>
+                  <span className="battery-text">{finalVehicleData?.batteryLevel || 72}%</span>
                 </div>
 
                 <div className="stat-group">
                   <div className="stat-row">
                     <span className="stat-label">Range</span>
-                    <span className="stat-value">{vehicleData?.range || 218} miles</span>
+                    <span className="stat-value">{finalVehicleData?.range || 218} miles</span>
                   </div>
                   <div className="stat-row">
                     <span className="stat-label">Odometer</span>
-                    <span className="stat-value">{vehicleData?.odometer?.toLocaleString() || '45,123'} mi</span>
+                    <span className="stat-value">{finalVehicleData?.odometer?.toLocaleString() || '45,123'} mi</span>
                   </div>
                   <div className="stat-row">
                     <span className="stat-label">Location</span>
-                    <span className="stat-value">Corpus Christi, TX</span>
+                    <span className="stat-value">{finalTripData?.currentCity || 'Corpus Christi'}, {currentState || 'TX'}</span>
                   </div>
                 </div>
 
-                {vehicleData?.climate && (
+                {finalVehicleData?.climate && (
                   <>
                     <h4>Climate</h4>
                     <div className="stat-group">
                       <div className="stat-row">
                         <span className="stat-label">Interior</span>
-                        <span className="stat-value">{vehicleData.climate.insideTemp}°F</span>
+                        <span className="stat-value">{finalVehicleData.climate.insideTemp}°F</span>
                       </div>
                       <div className="stat-row">
                         <span className="stat-label">Exterior</span>
-                        <span className="stat-value">{vehicleData.climate.outsideTemp}°F</span>
+                        <span className="stat-value">{finalVehicleData.climate.outsideTemp}°F</span>
                       </div>
                     </div>
                   </>
@@ -251,44 +264,13 @@ const Dashboard = ({
 
             {activePanel === 'states' && (
               <div className="states-details">
-                <h3>States Collection</h3>
-
-                <div className="states-progress">
-                  <div className="progress-circle">
-                    <svg viewBox="0 0 100 100">
-                      <circle cx="50" cy="50" r="45" fill="none" stroke="#e0e0e0" strokeWidth="5" />
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="45"
-                        fill="none"
-                        stroke="#007AFF"
-                        strokeWidth="5"
-                        strokeDasharray={`${progressPercentage * 2.83} 283`}
-                        transform="rotate(-90 50 50)"
-                      />
-                    </svg>
-                    <div className="progress-text-center">
-                      <span className="progress-number">{statesVisited}</span>
-                      <span className="progress-label">of 48</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="states-list">
-                  <h4>Recently Visited</h4>
-                  <div className="recent-states">
-                    <span className="state-badge">TX</span>
-                    <span className="state-badge">LA</span>
-                    <span className="state-badge">MS</span>
-                    <span className="state-badge">AL</span>
-                    <span className="state-badge">FL</span>
-                  </div>
-                </div>
-
-                <div className="states-remaining">
-                  <p>{48 - statesVisited} states remaining</p>
-                </div>
+                <StatesTracker
+                  visitedStates={visitedStates || finalTripData?.visitedStates || ['TX', 'LA', 'MS', 'AL', 'FL']}
+                  currentState={currentState || finalTripData?.currentState || 'TX'}
+                  tripData={finalTripData}
+                  vehicleData={finalVehicleData}
+                  compact={true}
+                />
               </div>
             )}
           </div>
