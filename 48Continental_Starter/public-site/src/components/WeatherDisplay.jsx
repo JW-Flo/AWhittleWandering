@@ -55,15 +55,20 @@ const WeatherDisplay = ({ weatherData }) => {
     );
   }
 
-  const {
-    temperature,
-    condition,
-    feelsLike,
-    humidity,
-    windSpeed,
-    windDirection,
-    precipitation
-  } = weatherData;
+  // Transform weather data from API format
+  const temperature = weatherData.main?.temp;
+  const condition = weatherData.weather?.[0]?.description;
+  const feelsLike = weatherData.main?.feels_like;
+  const humidity = weatherData.main?.humidity;
+  const windSpeed = weatherData.wind?.speed;
+  const windDirection = weatherData.wind?.deg ? getWindDirection(weatherData.wind.deg) : null;
+  const precipitation = weatherData.clouds?.all;
+
+  // Helper function to convert wind degrees to cardinal direction
+  function getWindDirection(degrees) {
+    const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    return directions[Math.round(degrees / 45) % 8];
+  }
 
   return (
     <div className="weather-display">

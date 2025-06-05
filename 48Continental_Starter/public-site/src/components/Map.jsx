@@ -370,7 +370,11 @@ const Map = ({
   useEffect(() => {
     if (!mapReady || !map.current || !vehicleData) return;
     
-    const { latitude, longitude } = vehicleData;
+    // Extract coordinates with proper fallbacks
+    const latitude = vehicleData.location?.latitude || vehicleData.latitude;
+    const longitude = vehicleData.location?.longitude || vehicleData.longitude;
+    
+    if (!latitude || !longitude) return;
     
     if (!vehicleMarker.current) {
       // Create a vehicle marker element
@@ -418,8 +422,13 @@ const Map = ({
   const centerMapOnVehicle = () => {
     if (!map.current || !vehicleData) return;
     
+    const latitude = vehicleData.location?.latitude || vehicleData.latitude;
+    const longitude = vehicleData.location?.longitude || vehicleData.longitude;
+    
+    if (!latitude || !longitude) return;
+    
     map.current.flyTo({
-      center: [vehicleData.longitude, vehicleData.latitude],
+      center: [longitude, latitude],
       zoom: 12,
       essential: true
     });
