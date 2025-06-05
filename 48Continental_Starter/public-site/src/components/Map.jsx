@@ -71,18 +71,18 @@ const Map = ({
       map.current.on('load', () => {
         setMapReady(true);
       });
-
-      // Cleanup on unmount
-      return () => {
-        if (map.current) {
-          map.current.remove();
-          map.current = null;
-        }
-      };
     } catch (error) {
       console.error('Error initializing map:', error);
       setMapError(error.message);
     }
+
+    // Cleanup on unmount
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    };
   }, []);
 
   // Update map style based on layer toggles
