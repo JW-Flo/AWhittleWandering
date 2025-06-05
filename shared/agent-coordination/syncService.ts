@@ -10,7 +10,13 @@
  * - AI agents
  */
 
-import { DurableObjectState, WebSocketPair, CloudflareResponseInit, CloudflareWebSocket } from './cloudflare-types';
+import { DurableObjectState, CloudflareResponseInit, CloudflareWebSocket } from './cloudflare-types';
+import type { WebSocketPair as WebSocketPairType } from './cloudflare-types';
+
+// Use the global WebSocketPair
+declare const WebSocketPair: {
+  new(): WebSocketPairType;
+};
 
 export interface MessagePayload {
   type: string;

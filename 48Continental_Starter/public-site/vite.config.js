@@ -6,11 +6,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        // Forward all /api requests to the backend API server.
-        // Change target below to match the URL of your backend.
-        target: 'http://localhost:5000',
+        // Forward all /api requests to the edge-worker backend
+        target: 'http://localhost:8787',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        // Keep the /api prefix as the edge-worker expects it
+        rewrite: (path) => path
       }
     }
   }
