@@ -130,7 +130,7 @@ const Dashboard = ({
                 </div>
                 <div className="status-item">
                   <span className="status-label">Next Stop</span>
-                  <span className="status-value">{tripData?.nextStop || 'N/A'}</span>
+                  <span className="status-value">{tripData?.nextStop?.city || 'N/A'}</span>
                 </div>
                 <div className="status-item">
                   <span className="status-label">Distance to Next</span>

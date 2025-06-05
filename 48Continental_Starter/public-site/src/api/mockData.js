@@ -71,6 +71,12 @@ export const mockStationsData = {
 };
 
 export const mockTripData = {
+  id: "48continental-2025",
+  name: "The Wandering Whittle's 48 Continental Journey",
+  description: "An epic road trip across all 48 continental United States in a Tesla, exploring the beauty and diversity of America.",
+  startDate: new Date(Date.now() - 15 * 86400000).toISOString(),
+  endDate: new Date(Date.now() + 33 * 86400000).toISOString(),
+  currentState: "Texas",
   currentStop: {
     city: "Corpus Christi",
     state: "TX",
@@ -83,12 +89,116 @@ export const mockTripData = {
     date: new Date(Date.now() + 86400000).toISOString(),
     dayNumber: 16
   },
+  distanceToNext: 210,
+  durationToNext: 195, // minutes
   visitedStates: [
     "CA", "NV", "AZ", "NM", "TX", "OK", "KS", "CO", 
     "WY", "MT", "ID", "UT", "OR", "WA"
   ],
   totalMiles: 4523,
   daysElapsed: 15,
+  stats: {
+    totalDistance: 4523,
+    daysOnRoad: 15,
+    chargingStops: 42,
+    statesVisited: 14
+  },
+  timeline: [
+    {
+      date: new Date(Date.now() - 15 * 86400000).toISOString(),
+      location: "San Francisco, CA",
+      description: "Started the journey from the Golden Gate Bridge",
+      completed: true
+    },
+    {
+      date: new Date(Date.now() - 12 * 86400000).toISOString(),
+      location: "Las Vegas, NV",
+      description: "Explored the desert and charged at Tesla Supercharger",
+      completed: true
+    },
+    {
+      date: new Date(Date.now() - 8 * 86400000).toISOString(),
+      location: "Grand Canyon, AZ",
+      description: "Witnessed one of nature's greatest wonders",
+      completed: true
+    },
+    {
+      date: new Date(Date.now() - 3 * 86400000).toISOString(),
+      location: "Austin, TX",
+      description: "Visited Tesla Gigafactory Texas",
+      completed: true
+    },
+    {
+      date: new Date().toISOString(),
+      location: "Corpus Christi, TX",
+      description: "Enjoying the Gulf Coast beaches",
+      completed: false
+    },
+    {
+      date: new Date(Date.now() + 5 * 86400000).toISOString(),
+      location: "New Orleans, LA",
+      description: "Experience the vibrant culture and cuisine",
+      completed: false
+    }
+  ],
+  stops: [
+    {
+      id: "stop-1",
+      name: "Golden Gate Bridge",
+      latitude: 37.8199,
+      longitude: -122.4783,
+      state: "CA",
+      type: "waypoint",
+      arrivalTime: new Date(Date.now() - 15 * 86400000).toISOString(),
+      description: "Starting point of our epic journey",
+      notes: "Perfect weather for the send-off!"
+    },
+    {
+      id: "stop-2",
+      name: "Tesla Supercharger Las Vegas",
+      latitude: 36.1699,
+      longitude: -115.1398,
+      state: "NV",
+      type: "charging",
+      arrivalTime: new Date(Date.now() - 12 * 86400000).toISOString(),
+      description: "Quick charge and lunch break",
+      notes: "250kW charging speed"
+    },
+    {
+      id: "stop-3",
+      name: "Grand Canyon South Rim",
+      latitude: 36.0544,
+      longitude: -112.1401,
+      state: "AZ",
+      type: "overnight",
+      arrivalTime: new Date(Date.now() - 8 * 86400000).toISOString(),
+      description: "Overnight stay with sunrise viewing",
+      notes: "Unforgettable sunrise at Hopi Point"
+    },
+    {
+      id: "stop-4",
+      name: "Tesla Gigafactory Texas",
+      latitude: 30.2211,
+      longitude: -97.6269,
+      state: "TX",
+      type: "waypoint",
+      arrivalTime: new Date(Date.now() - 3 * 86400000).toISOString(),
+      description: "Factory tour and charging",
+      notes: "Amazing to see where our car was built!"
+    },
+    {
+      id: "stop-5",
+      name: "Corpus Christi Beach",
+      latitude: 27.7418,
+      longitude: -97.3888,
+      state: "TX",
+      type: "overnight",
+      arrivalTime: new Date().toISOString(),
+      description: "Current location - enjoying the coast",
+      notes: "Beautiful sunset over the Gulf"
+    }
+  ],
+  lastUpdated: new Date().toISOString(),
   _isMockData: true
 };
 
