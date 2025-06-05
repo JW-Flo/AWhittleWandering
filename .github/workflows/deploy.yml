@@ -30,11 +30,12 @@ jobs:
           cd 48Continental_Starter/public-site
           npm run build
         env:
-          VITE_MAPBOX_TOKEN: ${{ secrets.VITE_MAPBOX_TOKEN }}
+          VITE_MAPBOX_TOKEN: ${{ secrets.MAP_API_TOKEN }}
           VITE_OPENWEATHER_API_KEY: ${{ secrets.VITE_OPENWEATHER_API_KEY }}
-          VITE_TESSIE_API_TOKEN: ${{ secrets.VITE_TESSIE_API_TOKEN }}
-          VITE_EDGE_WORKER_URL: ${{ secrets.VITE_EDGE_WORKER_URL }}
-          VITE_AI_WORKER_URL: ${{ secrets.VITE_AI_WORKER_URL }}
+          VITE_TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
+          VITE_TESSIE_VIN: ${{ secrets.TESSIE_VIN }}
+          VITE_EDGE_WORKER_URL: https://thewanderingwhittle-edge.workers.dev
+          VITE_AI_WORKER_URL: https://continental-ai-worker.workers.dev
 
       - name: Verify build output
         run: |
