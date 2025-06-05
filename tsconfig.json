@@ -8,7 +8,5 @@
     "allowJs": true,
     "outDir": "./dist"
   },
-  "include": [
-    "codex-agent/**/*.ts"
-  ]
+  "include": ["edge-worker/**/*.ts", "shared/**/*.ts"]
 }
