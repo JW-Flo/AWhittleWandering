@@ -619,6 +619,74 @@ async function handleStationsAPI(request: Request, env: Env): Promise<Response> 
     }
 }
 
+async function handleTripAPI(request: Request, env: Env): Promise<Response> {
+    const corsHeaders = {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+    };
+
+    try {
+        // For now, return mock trip data
+        // In production, this would fetch from a database or calculate from itinerary
+        const tripData = {
+            visitedStates: [
+                "TX", "LA", "MS", "AL", "FL", "GA", "SC", "NC", "VA", "WV",
+                "KY", "TN", "AR", "MO", "IL", "IN", "OH", "MI", "WI", "MN",
+                "IA", "NE", "CO"
+            ],
+            currentState: "TX",
+            nextStop: {
+                city: "Houston",
+                state: "TX",
+                eta: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString()
+            },
+            distanceToNext: 142,
+            route: [
+                { latitude: 27.8006, longitude: -97.3964 },
+                { latitude: 29.7604, longitude: -95.3698 }
+            ],
+            stops: [
+                {
+                    id: "1",
+                    name: "Corpus Christi",
+                    latitude: 27.8006,
+                    longitude: -97.3964,
+                    type: "current",
+                    description: "Current location",
+                    charging: true,
+                    overnight: false
+                },
+                {
+                    id: "2",
+                    name: "Houston",
+                    latitude: 29.7604,
+                    longitude: -95.3698,
+                    type: "next",
+                    description: "Next destination",
+                    charging: true,
+                    overnight: true
+                }
+            ]
+        };
+        
+        return new Response(JSON.stringify(tripData), {
+            status: 200,
+            headers: corsHeaders
+        });
+    } catch (error) {
+        console.error('Trip API error:', error);
+        return new Response(JSON.stringify({ 
+            error: 'Failed to fetch trip data',
+            message: error instanceof Error ? error.message : 'Unknown error'
+        }), {
+            status: 500,
+            headers: corsHeaders
+        });
+    }
+}
+
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
         const url = new URL(request.url);
@@ -632,6 +700,11 @@ export default {
         // Main vehicle endpoint used by frontend
         if (url.pathname === "/api/vehicle" && request.method === "GET") {
             return await handleTessieVehicle(request, env);
+        }
+        
+        // --- TRIP API ROUTE ---
+        if (url.pathname === "/api/trip" && request.method === "GET") {
+            return await handleTripAPI(request, env);
         }
         
         // --- WEATHER AND STATIONS API ROUTES ---
