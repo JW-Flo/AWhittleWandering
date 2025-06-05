@@ -25,21 +25,18 @@ const VehicleStatusCard = ({ vehicleData }) => {
     );
   }
 
-  // Extract vehicle data
-  const { 
-    battery,
-    location,
-    climate,
-    status
-  } = vehicleData;
-
-  // Calculate battery level percentage for visualization
-  const batteryLevelPercent = battery?.level || 0;
+  // Extract vehicle data with proper fallbacks
+  const batteryLevelPercent = vehicleData.batteryLevel || 0;
+  const range = vehicleData.range || 0;
+  const speed = vehicleData.speed || 0;
+  const heading = vehicleData.location?.heading;
+  const insideTemp = vehicleData.temperature?.inside || 72;
+  const outsideTemp = vehicleData.temperature?.outside || 68;
   
   // Determine vehicle status text
-  const vehicleStatusText = status?.locked 
+  const vehicleStatusText = vehicleData.locked 
     ? 'Parked & Locked' 
-    : status?.is_user_present
+    : speed > 0
       ? 'In Use'
       : 'Parked';
   
@@ -68,51 +65,51 @@ const VehicleStatusCard = ({ vehicleData }) => {
               <FaBatteryThreeQuarters size={14} style={{ marginRight: '4px' }} />
               BATTERY
             </div>
-            <div className="stat-value battery">{batteryLevelPercent}%</div>
-            <div className="battery-graphic">
-              <div className="battery-level" style={{ width: `${batteryLevelPercent}%` }}></div>
-            </div>
-          </div>
-          
-          {/* Range */}
-          <div className="stat-group">
-            <div className="stat-label">RANGE</div>
-            <div className="stat-value">{battery?.range || 0} mi</div>
-          </div>
-          
-          {/* Interior Temperature */}
-          <div className="stat-group">
-            <div className="stat-label">
-              <FaThermometerHalf size={14} style={{ marginRight: '4px' }} />
-              INTERIOR
-            </div>
-            <div className="stat-value">{climate?.insideTemp || 72}°F</div>
-          </div>
-          
-          {/* Exterior Temperature */}
-          <div className="stat-group">
-            <div className="stat-label">
-              <FaThermometerHalf size={14} style={{ marginRight: '4px' }} />
-              EXTERIOR
-            </div>
-            <div className="stat-value">{climate?.outsideTemp || 68}°F</div>
+          <div className="stat-value battery">{batteryLevelPercent}%</div>
+          <div className="battery-graphic">
+            <div className="battery-level" style={{ width: `${batteryLevelPercent}%` }}></div>
           </div>
         </div>
         
-        {/* Location & Speed */}
-        <div className="vehicle-location-info" style={{ marginTop: '20px' }}>
-          <div className="stat-label" style={{ marginBottom: '10px' }}>
-            <FaLocationArrow size={14} style={{ marginRight: '4px' }} />
-            LOCATION
+        {/* Range */}
+        <div className="stat-group">
+          <div className="stat-label">RANGE</div>
+          <div className="stat-value">{range} mi</div>
+        </div>
+        
+        {/* Interior Temperature */}
+        <div className="stat-group">
+          <div className="stat-label">
+            <FaThermometerHalf size={14} style={{ marginRight: '4px' }} />
+            INTERIOR
           </div>
-          <div className="location-details">
-            <div className="speed-heading">
-              <span className="stat-value">{location?.speed || 0}</span>
+          <div className="stat-value">{insideTemp}°F</div>
+        </div>
+        
+        {/* Exterior Temperature */}
+        <div className="stat-group">
+          <div className="stat-label">
+            <FaThermometerHalf size={14} style={{ marginRight: '4px' }} />
+            EXTERIOR
+          </div>
+          <div className="stat-value">{outsideTemp}°F</div>
+        </div>
+      </div>
+      
+      {/* Location & Speed */}
+      <div className="vehicle-location-info" style={{ marginTop: '20px' }}>
+        <div className="stat-label" style={{ marginBottom: '10px' }}>
+          <FaLocationArrow size={14} style={{ marginRight: '4px' }} />
+          LOCATION
+        </div>
+        <div className="location-details">
+          <div className="speed-heading">
+            <span className="stat-value">{speed}</span>
               <span className="stat-unit" style={{ fontSize: '0.9rem', marginLeft: '4px' }}>mph</span>
             </div>
-            {location?.heading && (
+            {heading && (
               <div className="heading-indicator" style={{ marginTop: '5px' }}>
-                Heading: {getDirectionFromHeading(location.heading)}
+                Heading: {getDirectionFromHeading(heading)}
               </div>
             )}
           </div>
