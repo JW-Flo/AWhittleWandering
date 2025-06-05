@@ -1,0 +1,59 @@
+﻿2025-06-05T22:13:16.2113619Z ##[group]Run cd edge-worker
+2025-06-05T22:13:16.2113986Z [36;1mcd edge-worker[0m
+2025-06-05T22:13:16.2114246Z [36;1mnpm ci[0m
+2025-06-05T22:13:16.2114514Z [36;1mnpm install -D wrangler@latest[0m
+2025-06-05T22:13:16.2114811Z [36;1mnpx wrangler deploy[0m
+2025-06-05T22:13:16.2278264Z shell: /usr/bin/bash -e {0}
+2025-06-05T22:13:16.2278561Z env:
+2025-06-05T22:13:16.2278767Z   NODE_VERSION: 24.1.0
+2025-06-05T22:13:16.2279201Z   CLOUDFLARE_API_TOKEN: ***
+2025-06-05T22:13:16.2279544Z   CLOUDFLARE_ACCOUNT_ID: ***
+2025-06-05T22:13:16.2279869Z   TESSIE_API_TOKEN: ***
+2025-06-05T22:13:16.2280098Z   TESSIE_VIN: 
+2025-06-05T22:13:16.2280375Z   OPENWEATHER_API_KEY: ***
+2025-06-05T22:13:16.2281027Z   MAPBOX_TOKEN: ***
+2025-06-05T22:13:16.2281382Z   EDGE_HMAC_KEY: ***
+2025-06-05T22:13:16.2281616Z ##[endgroup]
+2025-06-05T22:13:17.9012089Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2025-06-05T22:13:18.0380864Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-06-05T22:13:21.4984768Z 
+2025-06-05T22:13:21.4985947Z added 331 packages, and audited 332 packages in 5s
+2025-06-05T22:13:21.4986734Z 
+2025-06-05T22:13:21.4987390Z 60 packages are looking for funding
+2025-06-05T22:13:21.4988343Z   run `npm fund` for details
+2025-06-05T22:13:21.5168675Z 
+2025-06-05T22:13:21.5169483Z 5 moderate severity vulnerabilities
+2025-06-05T22:13:21.5170344Z 
+2025-06-05T22:13:21.5171024Z To address all issues (including breaking changes), run:
+2025-06-05T22:13:21.5171694Z   npm audit fix --force
+2025-06-05T22:13:21.5171969Z 
+2025-06-05T22:13:21.5172192Z Run `npm audit` for details.
+2025-06-05T22:13:23.2781355Z 
+2025-06-05T22:13:23.2789965Z up to date, audited 332 packages in 2s
+2025-06-05T22:13:23.2790692Z 
+2025-06-05T22:13:23.2791154Z 60 packages are looking for funding
+2025-06-05T22:13:23.2791945Z   run `npm fund` for details
+2025-06-05T22:13:23.3031421Z 
+2025-06-05T22:13:23.3031961Z 5 moderate severity vulnerabilities
+2025-06-05T22:13:23.3032359Z 
+2025-06-05T22:13:23.3033133Z To address all issues (including breaking changes), run:
+2025-06-05T22:13:23.3033792Z   npm audit fix --force
+2025-06-05T22:13:23.3034103Z 
+2025-06-05T22:13:23.3034347Z Run `npm audit` for details.
+2025-06-05T22:13:24.3286185Z 
+2025-06-05T22:13:24.3288808Z  ⛅️ wrangler 4.19.1
+2025-06-05T22:13:24.3292259Z ───────────────────
+2025-06-05T22:13:25.1468383Z Total Upload: 68.47 KiB / gzip: 14.09 KiB
+2025-06-05T22:13:26.8469740Z Your Worker has access to the following bindings:
+2025-06-05T22:13:26.8472250Z Binding                                                     Resource                  
+2025-06-05T22:13:26.8477960Z env.SYNC_SERVICE_DO (SyncServiceDurableObject)              Durable Object            
+2025-06-05T22:13:26.8479172Z env.APP_KV (8016b1e4a16f4fa7b75bcee9f1e37573)               KV Namespace              
+2025-06-05T22:13:26.8480686Z env.ITINERARY_KV (41e8cca6911d47338647d950d2344d91)         KV Namespace              
+2025-06-05T22:13:26.8481979Z env.EDGE_HMAC_KEY ("48continental_secure_key")              Environment Variable      
+2025-06-05T22:13:26.8482497Z 
+2025-06-05T22:13:26.8483791Z Uploaded thewanderingwhittle-edge (2.10 sec)
+2025-06-05T22:13:27.3496401Z Deployed thewanderingwhittle-edge triggers (0.24 sec)
+2025-06-05T22:13:27.3498196Z   https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev
+2025-06-05T22:13:27.3521058Z Current Version ID: 6c0a9d62-d380-407d-9792-ebafe1139af6
+2025-06-05T22:13:27.3521770Z 
+2025-06-05T22:13:27.3523491Z Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
