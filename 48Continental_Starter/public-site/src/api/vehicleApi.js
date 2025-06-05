@@ -101,9 +101,9 @@ export const fetchVehicleData = async () => {
   return cachedRequest("tessie-vehicle", async () => {
     try {
       // We're using a Cloudflare Worker as a proxy to avoid CORS issues and add caching
+      // The edge worker handles Tessie authentication internally
       const response = await fetch("/api/vehicle", {
         headers: {
-          Authorization: `Bearer ${TESSIE_API_TOKEN}`,
           "Content-Type": "application/json",
         },
       });

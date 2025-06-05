@@ -11,4 +11,3 @@ ios-client/DerivedData/
 # Swift Package Manager
 .build/
 /.build/**
-codex-agent/logs/
