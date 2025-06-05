@@ -8,6 +8,7 @@
 /* eslint-env browser */
 import React from 'react';
 import PropTypes from 'prop-types';
+import './StateCollection.css';
 
 // List of all 48 continental US states with abbreviations
 const CONTINENTAL_STATES = [
@@ -88,13 +89,13 @@ const StateCollection = ({ visitedStates, totalStates, onStateClick }) => {
       
       <div className="states-grid">
         {CONTINENTAL_STATES.map(state => {
-          const isVisited = visitedStates?.includes(state.name);
+          const isVisited = visitedStates?.includes(state.abbr);
           
           return (
             <div 
               key={state.abbr} 
               className={`state-badge ${isVisited ? 'visited' : 'unvisited'}`}
-              onClick={() => onStateClick && onStateClick(state.name)}
+              onClick={() => onStateClick && onStateClick(state.abbr)}
               role="button"
               tabIndex="0"
               aria-pressed={isVisited}

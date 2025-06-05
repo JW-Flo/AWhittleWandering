@@ -12,7 +12,8 @@ import mapboxgl from 'mapbox-gl';
 import ChargingStations from './ChargingStations';
 
 // Set MapBox token from environment variables
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoidGhld2FuZGVyaW5nd2hpdHRsZSIsImEiOiJjbHQxaXhzejYwYmU2MmpxdHl0MHowN3UzIn0.Q7xKTRlXvtimBHd39JqN1A';
+// Using public token (pk.) for client-side application
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2liaTA4enIwIn0.tU9_tLaaxXxhfcVX4WhOeA';
 
 /**
  * Interactive map component using Mapbox GL
