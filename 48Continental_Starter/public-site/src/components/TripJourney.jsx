@@ -8,6 +8,7 @@
 /* eslint-env browser */
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import './TripJourney.css';
 
 /**
  * Trip journey display component
