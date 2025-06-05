@@ -14,7 +14,7 @@ import './Map.css';
 
 // Set MapBox token from environment variables
 // Using public token (pk.) for client-side application
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2liaTA4enIwIn0.tU9_tLaaxXxhfcVX4WhOeA';
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
 /**
  * Interactive map component using Mapbox GL
