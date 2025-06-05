@@ -7,9 +7,16 @@
 
 
 /* eslint-env browser */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import realUseVehicleData from './useVehicleData';
 import { fetchWeatherData } from '../api/weatherApi';
+import { mockWeatherData, mockStationsData } from '../api/mockData';
+
+// Track API call counts globally to prevent excessive calls
+const apiCallCounts = {
+  weather: 0,
+  stations: 0
+};
 
 /**
  * Hook for accessing vehicle data with real implementation
@@ -46,9 +53,14 @@ export const useWeatherData = (options = {}) => {
   const [weatherData, setWeatherData] = useState(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [weatherError, setWeatherError] = useState(null);
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     async function loadWeather() {
+      // Prevent duplicate calls on mount
+      if (hasLoadedRef.current) return;
+      hasLoadedRef.current = true;
+
       try {
         // Use location from options if provided (from vehicle data)
         let lat, lon;
@@ -65,26 +77,47 @@ export const useWeatherData = (options = {}) => {
           setWeatherLoading(false);
           return;
         }
+
+        // Check if we should use mock data
+        if (apiCallCounts.weather >= 5) {
+          console.log('Weather API: Using mock data after 5 failed attempts');
+          setWeatherData({ ...mockWeatherData, coord: { lat, lon } });
+          setWeatherError(null);
+          setWeatherLoading(false);
+          return;
+        }
         
         const data = await fetchWeatherData({ latitude: lat, longitude: lon });
         setWeatherData(data);
         setWeatherError(null);
+        apiCallCounts.weather = 0; // Reset on success
       } catch (err) {
-        console.error('Error loading weather data:', err);
-        setWeatherError(err.message);
+        apiCallCounts.weather++;
+        console.error(`Weather API error (attempt ${apiCallCounts.weather}/5):`, err);
+        
+        if (apiCallCounts.weather >= 5) {
+          console.log('Weather API: Switching to mock data');
+          setWeatherData({ ...mockWeatherData, coord: { lat: options.latitude || 27.741777, lon: options.longitude || -97.388844 } });
+          setWeatherError('Using cached data');
+        } else {
+          setWeatherError(err.message);
+        }
       } finally {
         setWeatherLoading(false);
       }
     }
 
     loadWeather();
-  }, [options.location, options.latitude, options.longitude]);
+  }, [options.location?.latitude, options.location?.longitude, options.latitude, options.longitude]);
 
   return {
     weatherData,
     weatherLoading,
     weatherError,
-    refreshWeatherData: () => {}
+    refreshWeatherData: () => {
+      hasLoadedRef.current = false;
+      setWeatherLoading(true);
+    }
   };
 };
 
@@ -147,35 +180,61 @@ export const useChargingStations = (options = {}) => {
   const [stationsData, setStationsData] = useState(null);
   const [stationsLoading, setStationsLoading] = useState(true);
   const [stationsError, setStationsError] = useState(null);
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     async function loadStations() {
+      // Prevent duplicate calls on mount
+      if (hasLoadedRef.current) return;
+      hasLoadedRef.current = true;
+
       try {
         const lat = options.latitude || 27.741777;
         const lon = options.longitude || -97.388844;
+
+        // Check if we should use mock data
+        if (apiCallCounts.stations >= 5) {
+          console.log('Stations API: Using mock data after 5 failed attempts');
+          setStationsData(mockStationsData);
+          setStationsError(null);
+          setStationsLoading(false);
+          return;
+        }
   
-        // Example: replace with your real stations endpoint
         const resp = await fetch(`/api/stations?lat=${lat}&lon=${lon}`);
         if (!resp.ok) {
           throw new Error(`Error loading stations: ${resp.status}`);
         }
         const data = await resp.json();
         setStationsData(data);
+        setStationsError(null);
+        apiCallCounts.stations = 0; // Reset on success
       } catch (err) {
-        console.error('Error loading charging stations:', err);
-        setStationsError(err.message);
+        apiCallCounts.stations++;
+        console.error(`Stations API error (attempt ${apiCallCounts.stations}/5):`, err);
+        
+        if (apiCallCounts.stations >= 5) {
+          console.log('Stations API: Switching to mock data');
+          setStationsData(mockStationsData);
+          setStationsError('Using cached data');
+        } else {
+          setStationsError(err.message);
+        }
       } finally {
         setStationsLoading(false);
       }
     }
 
     loadStations();
-  }, [options]);
+  }, [options.latitude, options.longitude]);
 
   return {
     stationsData,
     stationsLoading,
     stationsError,
-    refreshStationsData: () => {}
+    refreshStationsData: () => {
+      hasLoadedRef.current = false;
+      setStationsLoading(true);
+    }
   };
 };

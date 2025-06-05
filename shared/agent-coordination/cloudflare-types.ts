@@ -63,6 +63,12 @@ export interface CloudflareResponseInit extends ResponseInit {
   webSocket?: CloudflareWebSocket;
 }
 
+// Export the WebSocketPair constructor type
+export declare const WebSocketPair: {
+  new(): WebSocketPair;
+  prototype: WebSocketPair;
+};
+
 declare global {
   const WebSocketPair: {
     new(): WebSocketPair;
