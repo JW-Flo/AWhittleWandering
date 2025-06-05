@@ -1,0 +1,154 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.integration
+    volumes:
+      - ./test/integration/config.json:/etc/tesla/config.json:ro
+      - ./test/integration/test-certs:/etc/tesla/certs/server:ro
+      - /tmp/fleet-telemetry/:/tmp/fleet-telemetry:rw
+    command:
+      - "/fleet-telemetry"
+      - "-config=/etc/tesla/config.json"
+    ports:
+      - "4443:4443"
+      - "4269:4269"
+      - "5284:5284"
+      - "8080:8080"
+      - "9090:9090"
+    environment:
+      # Note these AWS env vars are required for local kinesis, but their values are ignored
+      AWS_DEFAULT_REGION: us-west-2
+      AWS_ACCESS_KEY_ID: ABC123
+      AWS_SECRET_ACCESS_KEY: EFG456
+      PUBSUB_EMULATOR_HOST: pubsub:8085
+      SUPPRESS_TLS_HANDSHAKE_ERROR_LOGGING: true
+    depends_on:
+      kinesis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      pubsub:
+        condition: service_started
+      errbit:
+        condition: service_healthy
+      mqtt:
+        condition: service_started
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.2.6
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.2.6
+    hostname: kafka
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "29092:29092"
+      - "9092:9092"
+      - "9101:9101"
+    healthcheck:
+      test: nc -z localhost 9092 || exit -1
+      start_period: 15s
+      interval: 5s
+      timeout: 10s
+      retries: 10
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ENABLE_IDEMPOTENCE: "true"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  mqtt:
+    image: eclipse-mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./test/integration/mqtt/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+
+  pubsub:
+    image: google/cloud-sdk:415.0.0
+    ports:
+      - '8085:8085'
+    command: [ "gcloud", "beta", "emulators", "pubsub", "start", "--host-port", "pubsub:8085" ]
+
+  kinesis:
+    image: localstack/localstack
+    ports:
+      - "127.0.0.1:4566:4566" # LocalStack Gateway
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:4566" ]
+      start_period: 15s
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
+  # Errbit implements airbrake's API, so we can use it to test the airbrake
+  errbit:
+    image: errbit/errbit:v0.8.0
+    ports:
+      - '48088:8080'
+    command: sh -c "bundle exec rake errbit:bootstrap && bundle exec puma -C config/puma.default.rb"
+    volumes:
+      - ./test/integration/errbit/apps.json:/initialize/apps.json:ro
+      - ./test/integration/errbit/site_configs.json:/initialize/site_configs.json:ro
+      - ./test/integration/errbit/users.json:/initialize/users.json:ro
+      - ./test/integration/errbit/init_errbit.rake:/app/lib/tasks/init_errbit.rake:ro
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      RACK_ENV: production
+      PORT: 8080
+      MONGO_URL: mongodb://errbit_user:errbit_password@mongodb:27017/errbit
+      # Add these environment variables to control the initialization
+      ERRBIT_ADMIN_EMAIL: admin@example.com
+      ERRBIT_ADMIN_PASSWORD: password
+      ERRBIT_ADMIN_USER: admin
+
+  mongodb:
+    image: mongo:4.1
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: errbit-admin
+      MONGO_INITDB_ROOT_PASSWORD: 42
+    healthcheck:
+      test: mongo -u errbit-admin  -p 42  --eval "db.adminCommand('ping')" --quiet
+      interval: 5s
+    volumes:
+      - ./test/integration/mongodb/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "19090:9090"
+    volumes:
+      - ./test/integration/prometheus:/etc/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "13000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+    volumes:
+      - ./test/integration/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      prometheus:
+        condition: service_started

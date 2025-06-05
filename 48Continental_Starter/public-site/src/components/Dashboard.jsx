@@ -11,7 +11,8 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Header from './Header';
 import Map from './Map';
-import VehicleStatusCard from './VehicleStatusCard';
+import TripCompanionCard from './TripCompanionCard';
+import './TripCompanionCard.css';
 import WeatherDisplay from './WeatherDisplay';
 import StateCollection from './StateCollection';
 import TripJourney from './TripJourney';
@@ -100,7 +101,7 @@ const Dashboard = ({
         {/* Left sidebar for vehicle status and stats */}
         <div className="dashboard-sidebar">
           {/* Vehicle Status Card */}
-          <VehicleStatusCard vehicleData={vehicleData} />
+          <TripCompanionCard vehicleData={vehicleData} />
           
           {/* Weather Card */}
           <div className="dashboard-card">
