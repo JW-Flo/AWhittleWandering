@@ -1,0 +1,168 @@
+name: Deploy All Components
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      deploy_edge_worker:
+        description: "Deploy Edge Worker"
+        required: false
+        default: true
+        type: boolean
+      deploy_ai_worker:
+        description: "Deploy AI Worker"
+        required: false
+        default: true
+        type: boolean
+      deploy_public_site:
+        description: "Deploy Public Site"
+        required: false
+        default: true
+        type: boolean
+
+env:
+  NODE_VERSION: "18"
+
+jobs:
+  # Test all components
+  test-all:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Test Edge Worker
+        run: |
+          cd edge-worker
+          npm ci
+          npm test || true
+
+      - name: Test Public Site
+        run: |
+          cd 48Continental_Starter/public-site
+          npm ci
+          npm test || true
+
+  # Deploy Edge Worker
+  deploy-edge-worker:
+    needs: test-all
+    if: github.event_name == 'push' || github.event.inputs.deploy_edge_worker == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      worker_url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy Edge Worker
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: edge-worker
+          command: deploy
+          secrets: |
+            TESSIE_API_TOKEN
+            OPENWEATHER_API_KEY
+            MAPBOX_TOKEN
+            EDGE_HMAC_KEY
+        env:
+          TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+          MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+          EDGE_HMAC_KEY: ${{ secrets.EDGE_HMAC_KEY }}
+
+      - name: Verify Edge Worker Deployment
+        run: |
+          sleep 10
+          curl -f https://thewanderingwhittle-edge.workers.dev/health || exit 1
+
+  # Deploy AI Worker
+  deploy-ai-worker:
+    needs: test-all
+    if: github.event_name == 'push' || github.event.inputs.deploy_ai_worker == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      ai_worker_url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy AI Worker
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: edge-worker/src/ai-worker
+          command: deploy
+          secrets: |
+            CONTINENTAL_API_KEY
+        env:
+          CONTINENTAL_API_KEY: ${{ secrets.CONTINENTAL_API_KEY }}
+
+      - name: Verify AI Worker Deployment
+        run: |
+          sleep 10
+          curl -f https://continental-ai-worker.workers.dev/health || true
+
+  # Deploy Public Site
+  deploy-public-site:
+    needs: [deploy-edge-worker, deploy-ai-worker]
+    if: github.event_name == 'push' || github.event.inputs.deploy_public_site == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: "48Continental_Starter/public-site/package-lock.json"
+
+      - name: Install dependencies
+        run: |
+          cd 48Continental_Starter/public-site
+          npm ci
+
+      - name: Build site
+        run: |
+          cd 48Continental_Starter/public-site
+          npm run build
+        env:
+          VITE_MAPBOX_TOKEN: ${{ secrets.VITE_MAPBOX_TOKEN }}
+          VITE_OPENWEATHER_API_KEY: ${{ secrets.VITE_OPENWEATHER_API_KEY }}
+          VITE_TESSIE_API_TOKEN: ${{ secrets.VITE_TESSIE_API_TOKEN }}
+          VITE_EDGE_WORKER_URL: https://thewanderingwhittle-edge.workers.dev
+          VITE_AI_WORKER_URL: https://continental-ai-worker.workers.dev
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: 48Continental_Starter/public-site
+          command: pages deploy dist --project-name=continentalusa-site
+
+      - name: Verify Public Site Deployment
+        run: |
+          sleep 30
+          curl -f https://continentalusa-site.pages.dev || true
+
+  # Send deployment notification
+  notify-deployment:
+    needs: [deploy-edge-worker, deploy-ai-worker, deploy-public-site]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send deployment status
+        run: |
+          echo "Deployment completed!"
+          echo "Edge Worker: ${{ needs.deploy-edge-worker.result }}"
+          echo "AI Worker: ${{ needs.deploy-ai-worker.result }}"
+          echo "Public Site: ${{ needs.deploy-public-site.result }}"

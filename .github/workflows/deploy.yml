@@ -29,19 +29,25 @@ jobs:
         run: |
           cd 48Continental_Starter/public-site
           npm run build
+        env:
+          VITE_MAPBOX_TOKEN: ${{ secrets.VITE_MAPBOX_TOKEN }}
+          VITE_OPENWEATHER_API_KEY: ${{ secrets.VITE_OPENWEATHER_API_KEY }}
+          VITE_TESSIE_API_TOKEN: ${{ secrets.VITE_TESSIE_API_TOKEN }}
+          VITE_EDGE_WORKER_URL: ${{ secrets.VITE_EDGE_WORKER_URL }}
+          VITE_AI_WORKER_URL: ${{ secrets.VITE_AI_WORKER_URL }}
 
       - name: Verify build output
         run: |
-          if [ ! -d "dist" ]; then
+          if [ ! -d "48Continental_Starter/public-site/dist" ]; then
             echo "Error: Build output directory not found!"
             exit 1
           fi
           echo "Build verification successful."
-        working-directory: 48Continental_Starter/public-site
+          ls -la 48Continental_Starter/public-site/dist
 
       - name: Deploy to Cloudflare Pages
         run: npx wrangler pages deploy ./dist --project-name continentalusa-site
         env:
-          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         working-directory: 48Continental_Starter/public-site
