@@ -9,7 +9,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import mapboxgl from 'mapbox-gl';
-import ChargingStations from './ChargingStations';
+import TripStatistics from './TripStatistics';
+import './Map.css';
 
 // Set MapBox token from environment variables
 // Using public token (pk.) for client-side application
@@ -18,27 +19,28 @@ mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoiaGFyZHdv
 /**
  * Interactive map component using Mapbox GL
  */
-const Map = ({ 
-  vehicleData, 
-  tripData, 
+const Map = ({
+  vehicleData,
+  tripData,
   weatherData,
   stationsData,
-  mapLayers = { 
-    weather: false, 
-    traffic: false, 
+  fullscreen = false,
+  mapLayers = {
+    weather: false,
+    traffic: false,
     satellite: false,
     chargingStations: false
-  } 
+  }
 }) => {
   const mapContainer = useRef(null);
   const map = useRef(null);
   const vehicleMarker = useRef(null);
   const [mapReady, setMapReady] = useState(false);
-  
+
   // Initialize map on component mount
   useEffect(() => {
     if (map.current) return; // Map already initialized
-    
+
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v11',
@@ -47,7 +49,7 @@ const Map = ({
       minZoom: 2,
       maxZoom: 18
     });
-    
+
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
     map.current.addControl(new mapboxgl.FullscreenControl(), 'top-right');
     map.current.addControl(new mapboxgl.GeolocateControl({
@@ -56,18 +58,18 @@ const Map = ({
       },
       trackUserLocation: false
     }), 'top-right');
-    
+
     // Add scale control
     map.current.addControl(new mapboxgl.ScaleControl({
       maxWidth: 100,
       unit: 'imperial'
     }), 'bottom-left');
-    
+
     // Mark map as ready when loaded
     map.current.on('load', () => {
       setMapReady(true);
     });
-    
+
     // Cleanup on unmount
     return () => {
       if (map.current) {
@@ -76,46 +78,46 @@ const Map = ({
       }
     };
   }, []);
-  
+
   // Update map style based on layer toggles
   useEffect(() => {
     if (!mapReady || !map.current) return;
-    
+
     // Handle satellite view toggle
     if (mapLayers.satellite) {
       map.current.setStyle('mapbox://styles/mapbox/satellite-streets-v11');
     } else {
       map.current.setStyle('mapbox://styles/mapbox/streets-v11');
     }
-    
+
     // Note: Traffic and weather layers would be added here
     // For traffic, you'd use Mapbox's traffic layers
     // For weather, you'd need to integrate with a weather API that provides tile overlays
-    
+
     // Placeholder for future weather overlay implementation
     if (mapLayers.weather && weatherData) {
       // Weather overlay would be implemented here
       console.log('Weather overlay would show data:', weatherData);
     }
   }, [mapLayers, mapReady, weatherData]);
-  
+
   // Add and update charging stations on the map
   useEffect(() => {
     if (!mapReady || !map.current) return;
-    
+
     // Handle charging stations layer
     const sourceId = 'charging-stations';
     const layerId = 'charging-stations-layer';
-    
+
     // Remove existing layer and source if they exist
     if (map.current.getLayer(layerId)) {
       map.current.removeLayer(layerId);
     }
-    
+
     if (map.current.getSource(sourceId)) {
       map.current.removeSource(sourceId);
     }
-    
+
     // Only add the layer if it's enabled and we have data
     if (mapLayers.chargingStations && stationsData?.stations?.length > 0) {
       // Convert stations to GeoJSON
@@ -137,13 +139,13 @@ const Map = ({
           }
         }))
       };
-      
+
       // Add stations source
       map.current.addSource(sourceId, {
         type: 'geojson',
         data: stationsGeoJSON
       });
-      
+
       // Add a symbol layer for stations
       map.current.addLayer({
         id: layerId,
@@ -172,16 +174,16 @@ const Map = ({
           ]
         }
       });
-      
+
       // Add click handler for stations
       map.current.on('click', layerId, (e) => {
         const coordinates = e.features[0].geometry.coordinates.slice();
         const { name, available, power, connectorType, description } = e.features[0].properties;
-        
+
         // Create popup content
         const statusText = available ? 'Available' : 'In Use';
         const statusClass = available ? 'status-available' : 'status-unavailable';
-        
+
         const popupContent = `
           <div class="map-popup charging-popup">
             <h4>${name}</h4>
@@ -191,29 +193,29 @@ const Map = ({
             <p class="station-status ${statusClass}">Status: ${statusText}</p>
           </div>
         `;
-        
+
         // Create popup
         new mapboxgl.Popup()
           .setLngLat(coordinates)
           .setHTML(popupContent)
           .addTo(map.current);
       });
-      
+
       // Change cursor on hover
       map.current.on('mouseenter', layerId, () => {
         map.current.getCanvas().style.cursor = 'pointer';
       });
-      
+
       map.current.on('mouseleave', layerId, () => {
         map.current.getCanvas().style.cursor = '';
       });
     }
   }, [mapLayers.chargingStations, stationsData, mapReady]);
-  
+
   // Add and update route on the map
   useEffect(() => {
     if (!mapReady || !map.current || !tripData?.route) return;
-    
+
     // Check if route layer already exists
     if (!map.current.getSource('route')) {
       // Convert route format to GeoJSON
@@ -225,13 +227,13 @@ const Map = ({
           coordinates: tripData.route.map(point => [point.longitude, point.latitude])
         }
       };
-      
+
       // Add route source and layer
       map.current.addSource('route', {
         type: 'geojson',
         data: routeGeoJSON
       });
-      
+
       map.current.addLayer({
         id: 'route-line',
         type: 'line',
@@ -257,7 +259,7 @@ const Map = ({
         }
       });
     }
-    
+
     // Add stop markers
     if (tripData.stops && !map.current.getSource('stops')) {
       const stopsGeoJSON = {
@@ -278,12 +280,12 @@ const Map = ({
           }
         }))
       };
-      
+
       map.current.addSource('stops', {
         type: 'geojson',
         data: stopsGeoJSON
       });
-      
+
       // Add a symbol layer for stops
       map.current.addLayer({
         id: 'stops-markers',
@@ -312,12 +314,12 @@ const Map = ({
           'text-halo-width': 1
         }
       });
-      
+
       // Add click handler for stops
       map.current.on('click', 'stops-markers', (e) => {
         const coordinates = e.features[0].geometry.coordinates.slice();
         const { name, description, type } = e.features[0].properties;
-        
+
         // Create popup content
         const popupContent = `
           <div class="map-popup">
@@ -326,19 +328,19 @@ const Map = ({
             <p class="stop-type">Type: ${type.charAt(0).toUpperCase() + type.slice(1)}</p>
           </div>
         `;
-        
+
         // Create popup
         new mapboxgl.Popup()
           .setLngLat(coordinates)
           .setHTML(popupContent)
           .addTo(map.current);
       });
-      
+
       // Change cursor on hover
       map.current.on('mouseenter', 'stops-markers', () => {
         map.current.getCanvas().style.cursor = 'pointer';
       });
-      
+
       map.current.on('mouseleave', 'stops-markers', () => {
         map.current.getCanvas().style.cursor = '';
       });
@@ -362,33 +364,33 @@ const Map = ({
           }
         }))
       };
-      
+
       map.current.getSource('stops').setData(stopsGeoJSON);
     }
   }, [tripData, mapReady]);
-  
+
   // Add and update vehicle marker
   useEffect(() => {
     if (!mapReady || !map.current || !vehicleData) return;
-    
+
     // Extract coordinates with proper fallbacks
     const latitude = vehicleData.location?.latitude || vehicleData.latitude;
     const longitude = vehicleData.location?.longitude || vehicleData.longitude;
-    
+
     if (!latitude || !longitude) return;
-    
+
     if (!vehicleMarker.current) {
       // Create a vehicle marker element
       const el = document.createElement('div');
       el.className = 'vehicle-marker';
       el.innerHTML = '🚙';
       el.style.fontSize = '32px';
-      
+
       // Add vehicle marker to map
       vehicleMarker.current = new mapboxgl.Marker(el)
         .setLngLat([longitude, latitude])
         .addTo(map.current);
-      
+
       // Add popup for vehicle
       const popup = new mapboxgl.Popup({ offset: 25, closeButton: false })
         .setHTML(`
@@ -399,12 +401,12 @@ const Map = ({
             <p>Speed: ${Math.round(vehicleData.speed)} mph</p>
           </div>
         `);
-      
+
       vehicleMarker.current.setPopup(popup);
     } else {
       // Update marker position
       vehicleMarker.current.setLngLat([longitude, latitude]);
-      
+
       // Update popup content
       if (vehicleMarker.current.getPopup()) {
         vehicleMarker.current.getPopup().setHTML(`
@@ -418,35 +420,37 @@ const Map = ({
       }
     }
   }, [vehicleData, mapReady]);
-  
+
   // Center map on vehicle location when asked
   const centerMapOnVehicle = () => {
     if (!map.current || !vehicleData) return;
-    
+
     const latitude = vehicleData.location?.latitude || vehicleData.latitude;
     const longitude = vehicleData.location?.longitude || vehicleData.longitude;
-    
+
     if (!latitude || !longitude) return;
-    
+
     map.current.flyTo({
       center: [longitude, latitude],
       zoom: 12,
       essential: true
     });
   };
-  
+
   return (
-    <div className="map-container">
+    <div className={`map-container ${fullscreen ? 'map-fullscreen-mode' : ''}`}>
       <div ref={mapContainer} className="map" />
-      
-      {/* Charging stations overlay with custom UI and controls */}
-      <ChargingStations 
-        mapRef={mapContainer} 
-        vehicle={vehicleData} 
-      />
-      
-      {vehicleData && (
-        <button 
+
+      {/* Trip statistics overlay - only show when not in fullscreen mode */}
+      {mapReady && !fullscreen && (
+        <TripStatistics
+          mapRef={map}
+          vehicle={vehicleData}
+        />
+      )}
+
+      {vehicleData && !fullscreen && (
+        <button
           className="center-vehicle-btn"
           onClick={centerMapOnVehicle}
           aria-label="Center map on vehicle"
@@ -503,6 +507,7 @@ Map.propTypes = {
     ),
     radius: PropTypes.number
   }),
+  fullscreen: PropTypes.bool,
   mapLayers: PropTypes.shape({
     weather: PropTypes.bool,
     traffic: PropTypes.bool,

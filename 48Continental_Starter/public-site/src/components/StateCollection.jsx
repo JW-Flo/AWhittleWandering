@@ -67,10 +67,10 @@ const CONTINENTAL_STATES = [
  */
 const StateCollection = ({ visitedStates, totalStates, onStateClick }) => {
   // Calculate progress percentage
-  const progressPercentage = visitedStates && totalStates 
-    ? Math.round((visitedStates.length / totalStates) * 100) 
+  const progressPercentage = visitedStates && totalStates
+    ? Math.round((visitedStates.length / totalStates) * 100)
     : 0;
-  
+
   return (
     <div className="state-collection">
       <div className="collection-header">
@@ -80,25 +80,27 @@ const StateCollection = ({ visitedStates, totalStates, onStateClick }) => {
           <span className="progress-percentage">{progressPercentage}%</span>
         </div>
         <div className="progress-bar-container">
-          <div 
-            className="progress-bar" 
+          <div
+            className="progress-bar"
             style={{ width: `${progressPercentage}%` }}
           ></div>
         </div>
       </div>
-      
+
       <div className="states-grid">
         {CONTINENTAL_STATES.map(state => {
           const isVisited = visitedStates?.includes(state.abbr);
-          
+          const isNewlyVisited = visitedStates?.includes(state.abbr) && visitedStates.indexOf(state.abbr) === visitedStates.length - 1;
+
           return (
-            <div 
-              key={state.abbr} 
-              className={`state-badge ${isVisited ? 'visited' : 'unvisited'}`}
+            <div
+              key={state.abbr}
+              className={`state-badge ${isVisited ? 'visited' : 'unvisited'} ${isNewlyVisited ? 'newly-visited' : ''}`}
               onClick={() => onStateClick && onStateClick(state.abbr)}
               role="button"
               tabIndex="0"
               aria-pressed={isVisited}
+              title={`${state.name}${isVisited ? ' - Visited' : ' - Not yet visited'}`}
             >
               <div className="state-abbr">{state.abbr}</div>
               <div className="state-name">{state.name}</div>
@@ -107,7 +109,7 @@ const StateCollection = ({ visitedStates, totalStates, onStateClick }) => {
           );
         })}
       </div>
-      
+
       {/* Legend */}
       <div className="collection-legend">
         <div className="legend-item">
