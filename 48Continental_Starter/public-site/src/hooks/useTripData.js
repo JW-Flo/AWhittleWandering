@@ -1,88 +1,107 @@
-/**
- * Trip Data Hook
- * 
- * This hook provides access to The Wandering Whittle trip data
- * including routes, stops, and state visit progress.
- */
-
 /* eslint-env browser */
-import { useState, useEffect, useCallback } from 'react';
-import { fetchTripData, generateSimulatedTripData } from '../api';
-
-// Default polling interval in milliseconds (how often we refresh trip data)
-const DEFAULT_POLL_INTERVAL = 30000; // 30 seconds (~30,000 ms)
+import { useState, useEffect } from "react";
 
 /**
- * Hook for accessing trip data
- * @param {Object} options - Configuration options
- * @param {number} options.pollInterval - Data refresh interval in ms
- * @returns {Object} Trip data, loading state, and error
+ * Hook for fetching and managing trip data
+ * Uses simulated data for development
  */
-export const useTripData = (options = {}) => {
-  const {
-    pollInterval = DEFAULT_POLL_INTERVAL
-  } = options;
-  
-  // State for trip data
+export const useTripData = ({ pollInterval = 60000 } = {}) => {
   const [tripData, setTripData] = useState(null);
-  const [tripLoading, setTripLoading] = useState(true);
-  const [tripError, setTripError] = useState(null);
-  
-  // Function to fetch trip data from API
-  const getTripData = useCallback(async () => {
-    setTripLoading(true);
-    
-    try {
-      // Call our API function
-      const data = await fetchTripData();
-      setTripData(data);
-      setTripError(null);
-    } catch (error) {
-      console.error('Error fetching trip data:', error);
-      setTripError(error.message);
-      
-      // If we don't have data yet, use simulated data
-      if (!tripData) {
-        setTripData(generateSimulatedTripData());
-      }
-    } finally {
-      setTripLoading(false);
-    }
-  }, [tripData]);
-  
-  // Initial data fetch
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   useEffect(() => {
-    getTripData();
-    
-    // Set up polling for periodic updates
-    const pollTimer = setInterval(getTripData, pollInterval);
-    
-    return () => {
-      clearInterval(pollTimer);
+    const fetchTripData = async () => {
+      try {
+        // Attempt to fetch from API
+        const response = await fetch(
+          `${
+            import.meta.env.VITE_API_BASE_URL || "http://localhost:8787"
+          }/api/trip`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch trip data");
+        }
+
+        const data = await response.json();
+        setTripData(data);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching trip data:", err);
+        // Fallback to simulated data
+        console.log("Falling back to simulated trip data");
+        setTripData({
+          visitedStates: [
+            "TX",
+            "LA",
+            "MS",
+            "AL",
+            "FL",
+            "GA",
+            "SC",
+            "NC",
+            "VA",
+            "WV",
+            "KY",
+            "TN",
+            "AR",
+            "MO",
+            "IL",
+            "IN",
+            "OH",
+            "MI",
+            "WI",
+            "MN",
+            "IA",
+            "NE",
+            "CO",
+          ],
+          currentState: "TX",
+          nextStop: {
+            city: "Houston",
+            state: "TX",
+            eta: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+          },
+          distanceToNext: 142,
+          route: [
+            { latitude: 27.8006, longitude: -97.3964 },
+            { latitude: 29.7604, longitude: -95.3698 },
+          ],
+          stops: [
+            {
+              id: "1",
+              name: "Corpus Christi",
+              latitude: 27.8006,
+              longitude: -97.3964,
+              type: "current",
+              description: "Current location",
+              charging: true,
+              overnight: false,
+            },
+            {
+              id: "2",
+              name: "Houston",
+              latitude: 29.7604,
+              longitude: -95.3698,
+              type: "next",
+              description: "Next destination",
+              charging: true,
+              overnight: true,
+            },
+          ],
+        });
+      } finally {
+        setLoading(false);
+      }
     };
-  }, [getTripData, pollInterval]);
-  
-  // Computed values
-  const currentStop = tripData?.currentStop || null;
-  const nextStop = tripData?.nextStop || null;
-  const visitedStates = tripData?.visitedStates || [];
-  const remainingStates = tripData ? 
-    Object.keys(tripData.stateCoordinates).filter(state => !visitedStates.includes(state)) : 
-    [];
-  const completionPercentage = tripData ? 
-    Math.round((visitedStates.length / 48) * 100) : 
-    0;
-  
-  return {
-    tripData,
-    tripLoading,
-    tripError,
-    refreshTripData: getTripData,
-    // Computed properties
-    currentStop,
-    nextStop,
-    visitedStates,
-    remainingStates,
-    completionPercentage
-  };
+
+    fetchTripData();
+    // Poll based on provided interval
+    const interval = setInterval(fetchTripData, pollInterval);
+
+    return () => clearInterval(interval);
+  }, [pollInterval]);
+
+  return { tripData, loading, error };
 };
