@@ -29,7 +29,7 @@ const App = () => {
   const [error, setError] = useState(null);
   
   // Fetch data using custom hooks with WebSocket streaming for vehicle data from Tessie API
-  const { vehicleData, vehicleLoading, vehicleError, connectionStatus } = useVehicleData({ 
+  const { vehicleData, loading: vehicleLoading, error: vehicleError, connectionStatus } = useVehicleData({ 
     enableStreaming: true, 
     pollInterval: 30000  // Fallback polling interval if WebSocket fails
   });
