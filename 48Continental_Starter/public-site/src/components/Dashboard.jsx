@@ -70,7 +70,7 @@ const Dashboard = ({
   const progressPercentage = (statesVisited / 48) * 100;
 
   return (
-    <div className="dashboard-fullscreen">
+    <div className="dashboard-fullscreen" data-testid="dashboard-component">
       {/* Minimal Header Bar */}
       <div className="header-overlay">
         <div className="header-left">
