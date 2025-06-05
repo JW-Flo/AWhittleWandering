@@ -47,6 +47,8 @@ export interface WorkerEnvironment {
   EDGE_HMAC_KEY: string;
   TESLA_CLIENT_ID?: string;
   TESLA_CLIENT_SECRET?: string;
+  TESSIE_API_TOKEN?: string;
+  TESSIE_VIN?: string;
   SENDGRID_API_KEY?: string;
   FROM_EMAIL?: string;
   WEATHER_API_KEY?: string;

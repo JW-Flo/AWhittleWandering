@@ -1,6 +1,7 @@
 import type { Location, WeatherRiskResponse, Route, RouteResponse, Weather, RouteSegment } from './types';
 import { verify } from './hmac';
 import { TeslaAPIClient } from './utils/tesla-client';
+import { TessieAPIClient } from './tessie-client';
 import { getToken, setToken } from './utils/tesla-tokens';
 import { handleEmailSubscribe, handleEmailNotify } from './email';
 import { handleItineraryRequest } from './itinerary';
@@ -394,6 +395,74 @@ async function handleRouteOptimization(request: Request, env: Env): Promise<Resp
     }
 }
 
+// --- TESSIE API HANDLERS ---
+
+async function handleTessieVehicle(request: Request, env: Env): Promise<Response> {
+    const corsHeaders = {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    };
+
+    try {
+        // Check if Tessie API is configured
+        if (!env.TESSIE_API_TOKEN || !env.TESSIE_VIN) {
+            console.error('Tessie API not configured');
+            return new Response(JSON.stringify({ 
+                error: 'Vehicle API not configured',
+                message: 'Please configure TESSIE_API_TOKEN and TESSIE_VIN'
+            }), {
+                status: 503,
+                headers: corsHeaders
+            });
+        }
+
+        // Create Tessie client
+        const tessieClient = new TessieAPIClient(env);
+        
+        // Get vehicle state from Tessie
+        const vehicleData = await tessieClient.getVehicleState();
+        
+        // Transform to standard format
+        const transformedData = tessieClient.transformToStandardFormat(vehicleData);
+        
+        return new Response(JSON.stringify(transformedData), {
+            status: 200,
+            headers: corsHeaders
+        });
+    } catch (error) {
+        console.error('Tessie API error:', error);
+        
+        // Check if it's a wake-up issue
+        if (error instanceof Error && error.message.includes('asleep')) {
+            try {
+                const tessieClient = new TessieAPIClient(env);
+                await tessieClient.wakeVehicle();
+                
+                return new Response(JSON.stringify({ 
+                    error: 'Vehicle is asleep',
+                    message: 'Waking up vehicle, please try again in a few seconds',
+                    retry: true
+                }), {
+                    status: 202,
+                    headers: corsHeaders
+                });
+            } catch (wakeError) {
+                console.error('Failed to wake vehicle:', wakeError);
+            }
+        }
+        
+        return new Response(JSON.stringify({ 
+            error: 'Failed to fetch vehicle data',
+            message: error instanceof Error ? error.message : 'Unknown error'
+        }), {
+            status: 500,
+            headers: corsHeaders
+        });
+    }
+}
+
 // --- TESLA API PROXY HANDLERS ---
 
 async function handleTeslaVehicle(request: Request, env: Env): Promise<Response> {
@@ -470,7 +539,13 @@ export default {
             return await handleSyncService(request, env);
         }
 
-        // --- TESLA API ROUTES ---
+        // --- VEHICLE API ROUTES ---
+        // Main vehicle endpoint used by frontend
+        if (url.pathname === "/api/vehicle" && request.method === "GET") {
+            return await handleTessieVehicle(request, env);
+        }
+        
+        // --- TESLA API ROUTES (Legacy) ---
         if (url.pathname === "/tesla/vehicle" && request.method === "GET") {
             return await handleTeslaVehicle(request, env);
         }
