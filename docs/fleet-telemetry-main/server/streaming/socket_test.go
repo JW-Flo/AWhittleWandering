@@ -1,0 +1,146 @@
+package streaming_test
+
+import (
+	"context"
+	"net/http"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
+	"github.com/sirupsen/logrus/hooks/test"
+
+	"github.com/teslamotors/fleet-telemetry/config"
+	logrus "github.com/teslamotors/fleet-telemetry/logger"
+	"github.com/teslamotors/fleet-telemetry/messages"
+	"github.com/teslamotors/fleet-telemetry/messages/tesla"
+	"github.com/teslamotors/fleet-telemetry/server/streaming"
+	"github.com/teslamotors/fleet-telemetry/telemetry"
+)
+
+var _ = Describe("Socket test", func() {
+	var (
+		conf            *config.Config
+		logger          *logrus.Logger
+		hook            *test.Hook
+		serializer      *telemetry.BinarySerializer
+		sm              *streaming.SocketManager
+		requestIdentity *telemetry.RequestIdentity
+	)
+
+	BeforeEach(func() {
+		conf = CreateTestConfig()
+		logger, hook = logrus.NoOpLogger()
+		requestIdentity = &telemetry.RequestIdentity{
+			DeviceID: "42",
+			SenderID: "vehicle_device.42",
+		}
+		serializer = telemetry.NewBinarySerializer(
+			requestIdentity,
+			map[string][]telemetry.Producer{"D4": nil},
+			logger,
+		)
+		sm = streaming.NewSocketManager(context.Background(), requestIdentity, nil, conf, logger)
+	})
+
+	It("TestRecordsStatsToString", func() {
+		logInfo := sm.RecordsStatsToLogInfo()
+		Expect(logInfo["total"]).To(Equal("0"))
+
+		sm.RecordsStats["test"] = 42
+		logInfo = sm.RecordsStatsToLogInfo()
+
+		Expect(logInfo["total"]).To(Equal("42"))
+		Expect(logInfo["test"]).To(Equal("42"))
+		Expect(hook.AllEntries()).To(BeEmpty())
+	})
+
+	It("TestStatsBytesPerRecords", func() {
+		sm.ReportMetricBytesPerRecords("test", 42)
+		Expect(sm.RecordsStats["test"]).To(Equal(42))
+
+		sm.ReportMetricBytesPerRecords("test", 42)
+		Expect(sm.RecordsStats["test"]).To(Equal(84))
+	})
+
+	var _ = Describe("ParseAndProcessMessage", func() {
+		It("rejects text as binary", func() {
+			record := []byte("D4,test,1234,{\"mydata\":42}")
+			sm.ParseAndProcessRecord(serializer, record)
+
+			msg := sm.ListenToWriteChannel()
+			Expect(msg.MsgType).To(Equal(2))
+			strMsg, err := messages.StreamMessageFromBytes(msg.Msg)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(strMsg.Payload)).To(Equal("incorrect message format"))
+		})
+
+		It("unknown message type returns error", func() {
+			sm.ParseAndProcessRecord(serializer, []byte{})
+
+			msg := sm.ListenToWriteChannel()
+			Expect(msg.MsgType).To(Equal(2))
+			envelope, _, err := tesla.FlatbuffersEnvelopeFromBytes(msg.Msg)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(envelope.MessageType()).To(Equal(tesla.MessageFlatbuffersStreamAck))
+			lastLogEntry := hook.LastEntry()
+			Expect(lastLogEntry.Message).To(ContainSubstring("unknown_message_type_error"))
+		})
+
+		It("returns error for unknown topic and unmatched sender", func() {
+			record := messages.StreamMessage{TXID: []byte("1234"), MessageTopic: []byte("canlogs"), Payload: []byte("data")}
+			recordMsg, err := record.ToBytes()
+			Expect(err).NotTo(HaveOccurred())
+
+			sm.ParseAndProcessRecord(serializer, recordMsg)
+			msg := sm.ListenToWriteChannel()
+			Expect(msg.MsgType).To(Equal(2))
+
+			streamMessage, err := messages.StreamMessageFromBytes(msg.Msg)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(streamMessage.Payload)).To(Equal("incorrect message format"))
+			firstEntry := hook.Entries[0]
+			Expect(firstEntry.Message).To(ContainSubstring("unexpected_sender_id"))
+			lastLogEntry := hook.LastEntry()
+			Expect(lastLogEntry.Message).To(ContainSubstring("unexpected_record"))
+		})
+
+		It("topic is verified and no matching sender", func() {
+			record := messages.StreamMessage{TXID: []byte("1234"), SenderID: []byte("SOMEOTHERVIN"), MessageTopic: []byte("D4"), Payload: []byte("data")}
+			recordMsg, err := record.ToBytes()
+			Expect(err).NotTo(HaveOccurred())
+
+			sm.ParseAndProcessRecord(serializer, recordMsg)
+			Expect(hook.Entries).To(HaveLen(0))
+		})
+
+		It("topic is not verified, but sender matches", func() {
+			record := messages.StreamMessage{TXID: []byte("1234"), SenderID: []byte("vehicle_device.42"), MessageTopic: []byte("canlogs"), Payload: []byte("data")}
+			recordMsg, err := record.ToBytes()
+			Expect(err).NotTo(HaveOccurred())
+
+			sm.ParseAndProcessRecord(serializer, recordMsg)
+
+			msg := sm.ListenToWriteChannel()
+			Expect(msg.MsgType).To(Equal(2))
+
+			streamMessage, err := messages.StreamAckMessageFromBytes(msg.Msg)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(hook.Entries).To(HaveLen(0))
+
+			Expect(string(streamMessage.MessageTopic)).To(Equal("canlogs"))
+		})
+
+		It("empty network interface", func() {
+			Expect(sm.GetNetworkInterface()).To(BeEmpty())
+		})
+
+		It("with request in context", func() {
+			req, err := http.NewRequest("GET", "/test", nil)
+			Expect(err).NotTo(HaveOccurred())
+			req.Header.Add("X-Network-Interface", "cellular")
+			ctx := context.WithValue(context.Background(), streaming.SocketContext, map[string]interface{}{"request": req})
+			sm := streaming.NewSocketManager(ctx, requestIdentity, nil, conf, logger)
+			Expect(sm.GetNetworkInterface()).To(Equal("cellular"))
+		})
+	})
+})

@@ -1,0 +1,213 @@
+/**
+ * Trip Companion Card Styles
+ * 
+ * Immersive, minimal styling for the trip companion experience
+ */
+
+.trip-companion-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.dark-theme .trip-companion-card {
+  background: rgba(30, 30, 30, 0.95);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.companion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.companion-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.live-indicator {
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 500;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+.companion-content {
+  padding: 24px;
+}
+
+.status-message {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}
+
+.activity-status {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.activity-text {
+  font-size: 1.1rem;
+  color: #333;
+  font-weight: 500;
+  margin: 0;
+}
+
+.dark-theme .activity-text {
+  color: #e0e0e0;
+}
+
+.trip-metrics {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.metric-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.dark-theme .metric-item {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.metric-item.primary {
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.metric-icon {
+  font-size: 1.5rem;
+  color: #667eea;
+  flex-shrink: 0;
+}
+
+.metric-value {
+  flex: 1;
+}
+
+.big-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #333;
+  line-height: 1;
+}
+
+.dark-theme .big-number {
+  color: #fff;
+}
+
+.number {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.dark-theme .number {
+  color: #fff;
+}
+
+.unit {
+  font-size: 1rem;
+  color: #666;
+  margin-left: 8px;
+}
+
+.label {
+  display: block;
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 4px;
+}
+
+.battery-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.dark-theme .battery-bar {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.battery-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%);
+  transition: width 0.5s ease;
+}
+
+.location-context {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(102, 126, 234, 0.08);
+  border-radius: 8px;
+  margin-top: 16px;
+}
+
+.location-icon {
+  color: #667eea;
+  font-size: 1rem;
+}
+
+.location-text {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.dark-theme .location-text {
+  color: #ccc;
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+  .trip-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .metric-item.primary {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Animation for data updates */
+.metric-value {
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

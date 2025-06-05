@@ -1,0 +1,81 @@
+{
+    "host": "app",
+    "port": 4443,
+    "status_port": 8080,
+    "log_level": "info",
+    "json_log_enable": true,
+    "namespace": "tesla_telemetry",
+    "reliable_ack_sources": {
+        "V": "kafka"
+    },
+    "kafka": {
+        "bootstrap.servers": "kafka:9092",
+        "queue.buffering.max.messages": 1000000,
+        "queue.buffering.max.ms": 50,
+        "compression.type": "gzip"
+    },
+    "pubsub": {
+        "gcp_project_id": "test-project-id"
+    },
+    "kinesis": {
+        "override_host": "http://kinesis:4566",
+        "max_retries": 3,
+        "streams": {
+            "V": "test_V",
+            "connectivity": "test_connectivity"
+        }
+    },
+    "zmq": {
+        "addr": "tcp://*:5284"
+    },
+    "mqtt": {
+        "broker": "mqtt:1883",
+        "client_id": "client-1",
+        "topic_base": "telemetry",
+        "qos": 1,
+        "retained": false,
+        "connect_timeout_ms": 30000,
+        "publish_timeout_ms": 1000
+    },
+    "vins_signal_tracking_enabled": [
+        "device-1"
+    ],
+    "monitoring": {
+        "prometheus_metrics_port": 9090,
+        "profiler_port": 4269,
+        "profiling_path": "/tmp/fleet-telemetry/profile"
+    },
+    "rate_limit": {
+        "enabled": true,
+        "message_interval_time": 30,
+        "message_limit": 1000
+    },
+    "records": {
+        "V": [
+            "kafka",
+            "kinesis",
+            "pubsub",
+            "logger",
+            "mqtt",
+            "zmq"
+        ],
+        "connectivity": [
+            "kafka",
+            "kinesis",
+            "pubsub",
+            "logger",
+            "zmq"
+        ]
+    },
+    "tls": {
+        "ca_file": "/etc/tesla/certs/server/vehicle_device.CA.cert",
+        "server_cert": "/etc/tesla/certs/server/vehicle_device.app.cert",
+        "server_key": "/etc/tesla/certs/server/vehicle_device.app.key"
+    },
+    "airbrake": {
+        "project_id": 1,
+        "project_key": "test1",
+        "environment": "integration",
+        "host": "http://errbit:48088"
+    }
+}
