@@ -58,8 +58,8 @@ jobs:
         env:
           TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
           TESSIE_VIN: ${{ secrets.TESSIE_VIN }}
-          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
-          MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+          OPENWEATHER_API_KEY: ${{ secrets.OPEN_WEATHER_API_KEY }}
+          MAPBOX_TOKEN: ${{ secrets.MAP_API_TOKEN }}
           EDGE_HMAC_KEY: ${{ secrets.EDGE_HMAC_KEY }}
 
   # Deploy Public Site
@@ -83,10 +83,10 @@ jobs:
           npm ci
           npm run build
         env:
-          VITE_MAPBOX_TOKEN: ${{ secrets.VITE_MAPBOX_TOKEN }}
+          VITE_MAPBOX_TOKEN: ${{ secrets.MAP_API_TOKEN }}
           VITE_OPENWEATHER_API_KEY: ${{ secrets.VITE_OPENWEATHER_API_KEY }}
-          VITE_TESSIE_API_TOKEN: ${{ secrets.VITE_TESSIE_API_TOKEN }}
-          VITE_TESSIE_VIN: ${{ secrets.VITE_TESSIE_VIN }}
+          VITE_TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
+          VITE_TESSIE_VIN: ${{ secrets.TESSIE_VIN }}
           VITE_EDGE_WORKER_URL: https://thewanderingwhittle-edge.workers.dev
 
       - name: Deploy to Pages
