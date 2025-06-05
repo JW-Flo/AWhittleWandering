@@ -5,7 +5,7 @@ on:
       - "edge-worker/**"
       - ".github/workflows/worker.yml"
 jobs:
-  publish:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,15 +14,56 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "18"
+          cache: "npm"
+          cache-dependency-path: "edge-worker/package-lock.json"
 
       - name: Install dependencies
         run: |
           cd edge-worker
-          npm install
+          npm ci
 
-      # Using the official Cloudflare action is the recommended approach
-      - uses: cloudflare/wrangler-action@v3
+      - name: Run tests
+        run: |
+          cd edge-worker
+          npm test
+        continue-on-error: true
+
+  deploy-edge-worker:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy Edge Worker
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           workingDirectory: edge-worker
           command: deploy
+          secrets: |
+            TESSIE_API_TOKEN
+            OPENWEATHER_API_KEY
+            MAPBOX_TOKEN
+            EDGE_HMAC_KEY
+        env:
+          TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+          MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+          EDGE_HMAC_KEY: ${{ secrets.EDGE_HMAC_KEY }}
+
+  deploy-ai-worker:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy AI Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          workingDirectory: edge-worker/src/ai-worker
+          command: deploy
+          secrets: |
+            CONTINENTAL_API_KEY
+        env:
+          CONTINENTAL_API_KEY: ${{ secrets.CONTINENTAL_API_KEY }}

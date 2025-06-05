@@ -1,200 +1,74 @@
-# BlackBox AI Task: 48 Continental USA Project Completion
+# BlackBox Prompt for ContinentalUSA Project (Without GPU)
 
-## Project Overview
-The 48 Continental USA project is a real-time tracking system for a 60-day Tesla road trip through all 48 contiguous U.S. states. The system consists of multiple integrated components including a public website, MCP server, mobile clients, edge workers, and serverless functions. The project is designed for a real-world trip with real data and telemetry.
+## Objective
 
-## Current Status and Critical Issues
+Create a robust, real-time data streaming and analytics system for a cross-country trip across the continental USA. The system must integrate vehicle telemetry, weather data, and trip statistics into a unified, efficient, and reliable platform.
 
-We've encountered and fixed several critical issues that must be carefully avoided in future development:
+## Key Features and Requirements
 
-### 1. Wrangler Command Execution Failures
-- **Problem**: CI/CD workflows were failing with `wrangler: command not found` errors in GitHub Actions
-- **Root Cause**: Using direct `wrangler` commands without `npx` prefix, assuming global installation
-- **Solution**: All Wrangler commands must use `npx wrangler` syntax to ensure execution in any environment
-- **Impact**: This affected all deployment pipelines and caused production outages
+1. **Real-Time Streaming API Endpoint**
 
-### 2. GitHub Actions Workflow Configuration Issues
-- **Problem**: Deployment workflows contained inconsistent command structures
-- **Root Cause**: Some workflows used the Cloudflare Wrangler action correctly while others attempted global installation
-- **Solution**: Standardized on either `npx wrangler` or the official Cloudflare GitHub action
-- **Impact**: Broken deployments and inconsistent infrastructure
+   - Develop a push-based streaming REST API endpoint that streams vehicle telemetry, weather updates, and trip statistics.
+   - Ensure the API supports WebSocket or Server-Sent Events (SSE) for efficient real-time data delivery.
+   - Implement robust error handling, reconnection logic, and fallback mechanisms.
 
-### 3. Documentation Inconsistencies
-- **Problem**: Command examples in documentation didn't match actual required syntax
-- **Root Cause**: Documentation was written assuming global installation of tools
-- **Solution**: Updated all documentation to consistently use `npx wrangler`
-- **Impact**: Developers following documentation encountered errors and deployment failures
+2. **Vehicle Telemetry Integration**
 
-### 4. WebSocket Implementation Issues
-- **Problem**: Intermittent WebSocket disconnections and data loss
-- **Root Cause**: Improper error handling and reconnection logic
-- **Impact**: Real-time vehicle tracking data was inconsistent and unreliable
+   - Use the Tessie API for vehicle telemetry data.
+   - Fix existing telemetry schema issues and extend it to include additional relevant data points.
+   - Implement authentication using rotating OAuth tokens as per Tessie API specifications.
+   - Ensure rate limiting and caching strategies to optimize API usage.
 
-### 5. Cross-Environment Inconsistencies
-- **Problem**: Code working in development but failing in production
-- **Root Cause**: Different tool installations between environments
-- **Solution**: Using `npx` ensures consistent execution regardless of global installations
-- **Impact**: Production deployments failing despite successful local testing
+3. **Weather Data Integration**
 
-## Tasks to Complete (Prioritized)
+   - Integrate a nested weather object into the telemetry data stream.
+   - Use existing weather API integrations and update the UI components accordingly.
+   - Optimize for mobile and low-bandwidth connections.
 
-### 1. Critical Reliability Improvements
-- Implement comprehensive error handling for WebSocket connections
-- Create robust reconnection logic with exponential backoff
-- Add proper data buffering to prevent data loss during reconnection
-- Implement dead-man switch mechanisms to detect stalled connections
-- Add comprehensive logging to identify failure points
-- Create fallback mechanisms for all critical API integrations
+4. **AI-Enhanced Analytics**
 
-### 2. Deployment Pipeline Hardening
-- Review and test all deployment scripts with focus on resilience
-- Add pre-flight checks to validate environment before deployment attempts
-- Implement staged rollouts with automatic rollback capability
-- Create deployment verification tests that validate system health post-deployment
-- Implement canary deployments for high-risk updates
+   - Implement AI-driven analytics on the streaming data to provide insights and predictions.
+   - Use existing AI worker infrastructure for processing and analysis.
+   - Ensure analytics results are streamed back to clients in real-time.
 
-### 3. Monitoring and Alerting
-- Implement real-time system monitoring for all components
-- Create alerts for critical system health metrics
-- Add telemetry dashboards for operations team
-- Implement usage analytics for the public website
-- Set up error reporting that categorizes issues by severity and component
-- Create a status dashboard that shows system health in real-time
+5. **Deployment and Monitoring**
 
-### 4. Performance Optimization
-- Implement WebSocket message compression to reduce bandwidth usage
-- Optimize map rendering for mobile devices and low-bandwidth connections
-- Implement proper caching strategies for weather and charging station data
-- Reduce bundle size of the public website through code splitting and lazy loading
-- Implement batched updates to reduce API calls for multiple simultaneous clients
-- Add offline support with intelligent sync when connectivity returns
+   - Follow the documented deployment strategy for edge workers, MCP server, public website, and mobile apps.
+   - Implement automated verification and rollback procedures.
+   - Set up monitoring and alerting for all components.
 
-### 5. Testing and Verification
-- Create comprehensive test suite for the WebSocket implementation
-- Add load testing for Edge Worker with simulated multiple clients
-- Implement end-to-end tests for critical user flows
-- Create chaos testing to simulate network failures and API outages
-- Verify API token refresh mechanisms work correctly under all conditions
-- Add regression tests for previously encountered issues
+6. **Security and Compliance**
 
-### 6. Documentation Updates
-- Create a unified API documentation covering all endpoints
-- Update any remaining references to global wrangler commands
-- Create detailed troubleshooting guides for common issues
-- Document data flow between all components with sequence diagrams
-- Update architecture diagrams to reflect the current system design
-- Create runbooks for incident response
+   - Store all secrets in environment variables; never commit them to source control.
+   - Sanitize and validate all incoming and outgoing data.
+   - Implement IP allow-listing and secure communication protocols.
 
-### 7. iOS Client Development (Lower Priority)
-- Implement proper WebSocket connection handling on iOS
-- Add offline mode support with local caching
-- Implement MapKit integration showing vehicle location and route
-- Optimize UI for both iPhone and iPad layouts
-- Add background fetch capabilities to update widget data
-- Create proper error handling and user feedback mechanisms
+7. **Testing and Documentation**
+   - Achieve at least 90% test coverage with unit, integration, and end-to-end tests.
+   - Document all APIs, data schemas, and deployment procedures inline and in dedicated documentation files.
 
-## Previous Failures - Learn From These
+## Development Guidelines
 
-### CI/CD Pipeline Failures
-```yaml
-# WRONG APPROACH (DON'T DO THIS):
-- name: Install and deploy
-  run: |
-    npm install -g wrangler
-    wrangler deploy
+- Use local dependencies and `npx` for all CLI tool executions.
+- Follow consistent naming conventions and modularize components.
+- Optimize frontend code for performance and accessibility.
+- Implement message batching for WebSocket communications.
+- Use compressed and modern image formats for assets.
 
-# CORRECT APPROACH:
-- name: Deploy
-  run: npx wrangler deploy
-```
+## Deliverables
 
-### Shell Script Failures
-```bash
-# WRONG APPROACH (DON'T DO THIS):
-wrangler deploy
+- Updated telemetry schema and API integration code.
+- New streaming REST API endpoint with push-based data delivery.
+- Updated frontend components to display nested weather data and analytics.
+- Deployment scripts and CI/CD workflows.
+- Comprehensive test suite and documentation.
 
-# CORRECT APPROACH:
-npx wrangler deploy
-```
+## References
 
-### WebSocket Implementation Problems
-```javascript
-// WRONG APPROACH (DON'T DO THIS):
-// No reconnection logic, no error handling
-const ws = new WebSocket(url);
-ws.onmessage = (event) => {
-  updateUI(JSON.parse(event.data));
-};
+- Tessie API documentation and integration notes.
+- WebSocket implementation and vehicle stream API docs.
+- Deployment strategy and monitoring guidelines.
 
-// CORRECT APPROACH:
-let ws = null;
-let reconnectAttempts = 0;
-const maxReconnectAttempts = 10;
-const reconnectInterval = 1000;
+---
 
-function connect() {
-  ws = new WebSocket(url);
-  
-  ws.onmessage = (event) => {
-    reconnectAttempts = 0; // Reset on successful message
-    updateUI(JSON.parse(event.data));
-  };
-  
-  ws.onclose = () => {
-    if (reconnectAttempts < maxReconnectAttempts) {
-      setTimeout(() => {
-        reconnectAttempts++;
-        connect();
-      }, reconnectInterval * Math.pow(2, reconnectAttempts)); // Exponential backoff
-    }
-  };
-  
-  ws.onerror = (error) => {
-    console.error("WebSocket error:", error);
-  };
-}
-
-connect();
-```
-
-## Technical Requirements
-
-- **Zero Tolerance for Global Tool Dependencies**: Every command must use `npx` or local script aliases
-- **Resilient Error Handling**: All network operations must have proper error handling and recovery
-- **Comprehensive Logging**: Every component must log events for debugging and monitoring
-- **Offline-First Approach**: All user-facing components must function without network connectivity
-- **Performance Budgets**: Public site must load in under 2 seconds on 3G connections
-- **Test Coverage**: Minimum 80% test coverage for all new code
-- **Documentation**: All APIs must be documented with examples
-- **Accessibility**: All UI components must meet WCAG 2.1 AA standards
-
-## Deployment Checklist
-
-Before each deployment, verify:
-
-1. All wrangler commands use `npx wrangler` syntax
-2. Environment variables are properly configured
-3. KV namespaces are properly bound
-4. Test suite passes
-5. Performance metrics meet requirements
-6. API endpoints return expected responses
-7. WebSocket connections maintain stability under load
-8. Offline functionality works as expected
-
-## Resources
-
-- Tesla API documentation: [https://developer.tesla.com/docs/api](https://developer.tesla.com/docs/api)
-- Cloudflare Workers documentation: [https://developers.cloudflare.com/workers/](https://developers.cloudflare.com/workers/)
-- WebSocket best practices: [https://websocket.org/](https://websocket.org/)
-- MapBox API: [https://docs.mapbox.com/api/](https://docs.mapbox.com/api/)
-- Service Worker: [https://developers.google.com/web/fundamentals/primers/service-workers](https://developers.google.com/web/fundamentals/primers/service-workers)
-
-## Critical Path To Success
-
-1. Fix reliability issues in the WebSocket implementation
-2. Harden deployment pipelines to prevent environment-related failures
-3. Implement monitoring to detect issues before they affect users
-4. Optimize performance for reliable operation in varying network conditions
-5. Create comprehensive tests to prevent regression
-
-Remember: This is a real-world system with real users depending on it during a 60-day road trip. Reliability and fault tolerance are not optional - they are essential. Every component must work together seamlessly, with proper fallbacks when primary systems fail.
+This prompt excludes any GPU-related components or references.
