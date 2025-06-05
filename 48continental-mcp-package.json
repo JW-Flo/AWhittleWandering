@@ -1,0 +1,23 @@
+{
+  "name": "48continental-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for the 48 Continental USA road trip project",
+  "main": "48continental-mcp-server.js",
+  "scripts": {
+    "start": "node 48continental-mcp-server.js",
+    "dev": "nodemon 48continental-mcp-server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "^0.1.0",
+    "dotenv": "^16.0.3",
+    "fs-extra": "^11.1.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22",
+    "eslint": "^8.40.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "private": true
+}

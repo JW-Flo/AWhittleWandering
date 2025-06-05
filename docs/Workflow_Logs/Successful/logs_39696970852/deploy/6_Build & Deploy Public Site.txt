@@ -1,0 +1,68 @@
+﻿2025-06-05T23:09:43.8790165Z ##[group]Run cd 48Continental_Starter/public-site
+2025-06-05T23:09:43.8790588Z [36;1mcd 48Continental_Starter/public-site[0m
+2025-06-05T23:09:43.8790878Z [36;1mnpm ci[0m
+2025-06-05T23:09:43.8791089Z [36;1mnpm run build[0m
+2025-06-05T23:09:43.8791330Z [36;1mnpm install -D wrangler@latest[0m
+2025-06-05T23:09:43.8791826Z [36;1mnpx wrangler pages deploy dist --project-name=continentalusa-site[0m
+2025-06-05T23:09:43.8842393Z shell: /usr/bin/bash -e {0}
+2025-06-05T23:09:43.8842650Z env:
+2025-06-05T23:09:43.8842838Z   NODE_VERSION: 24.1.0
+2025-06-05T23:09:43.8843231Z   CLOUDFLARE_API_TOKEN: ***
+2025-06-05T23:09:43.8843542Z   CLOUDFLARE_ACCOUNT_ID: ***
+2025-06-05T23:09:43.8843771Z ##[endgroup]
+2025-06-05T23:09:49.3493585Z 
+2025-06-05T23:09:49.3495355Z > wandering-whittle@1.0.0 preinstall
+2025-06-05T23:09:49.3497051Z > echo 'Skipping Node.js version check for local development'
+2025-06-05T23:09:49.3497814Z 
+2025-06-05T23:09:49.3613935Z Skipping Node.js version check for local development
+2025-06-05T23:09:49.3632452Z 
+2025-06-05T23:09:49.3633053Z > wandering-whittle@1.0.0 postinstall
+2025-06-05T23:09:49.3634586Z > echo 'Setup complete. Run npm run dev to start development server.'
+2025-06-05T23:09:49.3635064Z 
+2025-06-05T23:09:49.3747773Z Setup complete. Run npm run dev to start development server.
+2025-06-05T23:09:49.3805271Z 
+2025-06-05T23:09:49.3806015Z added 375 packages, and audited 376 packages in 5s
+2025-06-05T23:09:49.3807349Z 
+2025-06-05T23:09:49.3807677Z 58 packages are looking for funding
+2025-06-05T23:09:49.3808195Z   run `npm fund` for details
+2025-06-05T23:09:49.3819211Z 
+2025-06-05T23:09:49.3819920Z found 0 vulnerabilities
+2025-06-05T23:09:49.5214443Z 
+2025-06-05T23:09:49.5215513Z > wandering-whittle@1.0.0 build
+2025-06-05T23:09:49.5216857Z > vite build
+2025-06-05T23:09:49.5218210Z 
+2025-06-05T23:09:49.7483417Z [36mvite v6.3.5 [32mbuilding for production...[36m[39m
+2025-06-05T23:09:49.8090749Z transforming...
+2025-06-05T23:09:55.3690847Z [32m✓[39m 46 modules transformed.
+2025-06-05T23:09:55.8936063Z rendering chunks...
+2025-06-05T23:09:55.9127010Z computing gzip size...
+2025-06-05T23:09:55.9595649Z [2mdist/[22m[32mindex.html                 [39m[1m[2m    1.73 kB[22m[1m[22m[2m │ gzip:   0.88 kB[22m
+2025-06-05T23:09:55.9597692Z [33m
+2025-06-05T23:09:55.9598802Z [2mdist/[22m[2massets/[22m[35mindex-CKtUjetP.css  [39m[1m[2m   20.87 kB[22m[1m[22m[2m │ gzip:   4.48 kB[22m
+2025-06-05T23:09:55.9600548Z (!) Some chunks are larger than 500 kB after minification. Consider:
+2025-06-05T23:09:55.9601680Z - Using dynamic import() to code-split the application
+2025-06-05T23:09:55.9603976Z - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+2025-06-05T23:09:55.9605549Z - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+2025-06-05T23:09:55.9607207Z [2mdist/[22m[2massets/[22m[36mindex-QDC6CvDX.js   [39m[1m[33m1,745.96 kB[39m[22m[2m │ gzip: 491.96 kB[22m
+2025-06-05T23:09:55.9608154Z [32m✓ built in 6.19s[39m
+2025-06-05T23:09:57.2466873Z 
+2025-06-05T23:09:57.2469507Z added 88 packages, and audited 376 packages in 1s
+2025-06-05T23:09:57.2476940Z 
+2025-06-05T23:09:57.2477277Z 58 packages are looking for funding
+2025-06-05T23:09:57.2477817Z   run `npm fund` for details
+2025-06-05T23:09:57.2481203Z 
+2025-06-05T23:09:57.2481828Z found 0 vulnerabilities
+2025-06-05T23:09:57.9717341Z 
+2025-06-05T23:09:57.9718139Z  ⛅️ wrangler 4.19.1
+2025-06-05T23:09:57.9718688Z ───────────────────
+2025-06-05T23:09:58.9744210Z [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mWarning: Your working directory is a git repo and has uncommitted changes[0m
+2025-06-05T23:09:58.9745033Z 
+2025-06-05T23:09:58.9745370Z   To silence this warning, pass in --commit-dirty=true
+2025-06-05T23:09:58.9745798Z 
+2025-06-05T23:09:58.9745821Z 
+2025-06-05T23:09:59.6221497Z Uploading... (3/3)
+2025-06-05T23:09:59.6228881Z ✨ Success! Uploaded 0 files (3 already uploaded) (0.38 sec)
+2025-06-05T23:09:59.6230794Z 
+2025-06-05T23:10:00.8910762Z 🌎 Deploying...
+2025-06-05T23:10:11.8196904Z ✨ Deployment complete! Take a peek over at https://8feb7623.continentalusa-site.pages.dev
+2025-06-05T23:10:11.8198653Z ✨ Deployment alias URL: https://main.continentalusa-site.pages.dev

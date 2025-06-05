@@ -5,7 +5,7 @@
  */
 
 /* eslint-env browser */
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import Map from './Map';
 import StatesTracker from './StatesTracker';
@@ -24,18 +24,55 @@ const Dashboard = ({
 }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [activePanel, setActivePanel] = useState('journey'); // 'journey', 'vehicle', 'states'
+  const [mapLayers, setMapLayers] = useState({
+    weather: false,
+    traffic: false,
+    satellite: false,
+    chargingStations: true
+  });
 
-  // Use hooks for enhanced data
+  // Use hooks for enhanced data with combined loading and error states
   const { vehicleData, loading: vehicleLoading, error: vehicleError } = useVehicleData();
   const { tripData, loading: tripLoading, visitedStates, currentState } = useTripData({
     vehicleData: vehicleData || propVehicleData
   });
 
+  // Combine loading and error states
+  const isCurrentlyLoading = isLoading || vehicleLoading || tripLoading;
+  const currentError = error || vehicleError;
+
+  // Handle keyboard shortcuts for panel toggle
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'i' || e.key === 'I') {
+        setShowDetails(prev => !prev);
+      }
+
+      if (showDetails) {
+        // Number keys for panel switching
+        if (e.key === '1') setActivePanel('journey');
+        if (e.key === '2') setActivePanel('vehicle');
+        if (e.key === '3') setActivePanel('states');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showDetails]);
+
+  // Toggle map layers
+  const toggleMapLayer = useCallback((layer) => {
+    setMapLayers(prev => ({
+      ...prev,
+      [layer]: !prev[layer]
+    }));
+  }, []);
+
   // Use enhanced data if available, fallback to props
   const finalVehicleData = vehicleData || propVehicleData;
   const finalTripData = tripData || propTripData;
 
-  if (isLoading) {
+  if (isCurrentlyLoading) {
     return (
       <div className="dashboard-fullscreen">
         <div className="loading-overlay">
@@ -47,7 +84,7 @@ const Dashboard = ({
   }
 
   // Error handling
-  if (error) {
+  if (currentError) {
     return (
       <div className="dashboard-fullscreen">
         <div className="loading-overlay">
@@ -55,7 +92,7 @@ const Dashboard = ({
             <p style={{ fontSize: '48px', marginBottom: '20px' }}>⚠️</p>
             <p>Unable to load journey data</p>
             <p style={{ fontSize: '14px', opacity: 0.7, marginTop: '10px' }}>
-              {error?.message || 'Please check your connection'}
+              {currentError?.message || 'Please check your connection'}
             </p>
             <button
               onClick={() => window.location.reload()}
@@ -125,7 +162,9 @@ const Dashboard = ({
           vehicleData={finalVehicleData}
           tripData={finalTripData}
           stationsData={stationsData}
+          weatherData={weatherData}
           fullscreen={true}
+          mapLayers={mapLayers}
         />
       </div>
 
@@ -138,6 +177,38 @@ const Dashboard = ({
         >
           {showDetails ? '✕' : 'ℹ️'}
         </button>
+
+        {/* Map Layer Controls */}
+        <div className="map-layer-controls">
+          <button
+            className={`map-layer-button ${mapLayers.chargingStations ? 'active' : ''}`}
+            onClick={() => toggleMapLayer('chargingStations')}
+            aria-label="Toggle charging stations"
+            title="Show/hide charging stations"
+          >
+            🔌
+          </button>
+
+          <button
+            className={`map-layer-button ${mapLayers.satellite ? 'active' : ''}`}
+            onClick={() => toggleMapLayer('satellite')}
+            aria-label="Toggle satellite view"
+            title="Toggle satellite view"
+          >
+            🛰️
+          </button>
+
+          {weatherData && (
+            <button
+              className={`map-layer-button ${mapLayers.weather ? 'active' : ''}`}
+              onClick={() => toggleMapLayer('weather')}
+              aria-label="Toggle weather overlay"
+              title="Show/hide weather overlay"
+            >
+              ☁️
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Slide-out Details Panel */}
