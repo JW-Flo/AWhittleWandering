@@ -1,0 +1,19 @@
+﻿2025-06-05T22:13:11.0022115Z ##[group]Run actions/setup-node@v4
+2025-06-05T22:13:11.0022529Z with:
+2025-06-05T22:13:11.0023166Z   node-version: 24.1.0
+2025-06-05T22:13:11.0023455Z   always-auth: false
+2025-06-05T22:13:11.0023718Z   check-latest: false
+2025-06-05T22:13:11.0024135Z   token: ***
+2025-06-05T22:13:11.0024395Z env:
+2025-06-05T22:13:11.0024634Z   NODE_VERSION: 24.1.0
+2025-06-05T22:13:11.0024898Z ##[endgroup]
+2025-06-05T22:13:11.1833497Z Attempting to download 24.1.0...
+2025-06-05T22:13:11.6041726Z Acquiring 24.1.0 - x64 from https://github.com/actions/node-versions/releases/download/24.1.0-15177436545/node-24.1.0-linux-x64.tar.gz
+2025-06-05T22:13:12.2528015Z Extracting ...
+2025-06-05T22:13:12.2636428Z [command]/usr/bin/tar xz --strip 1 --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/13e0ce2e-f7dc-43c4-abfc-9be99d5342b2 -f /home/runner/work/_temp/249d457e-c6a8-4ee6-82bd-a57440cc5d07
+2025-06-05T22:13:13.5795892Z Adding to the cache ...
+2025-06-05T22:13:15.9269795Z ##[group]Environment details
+2025-06-05T22:13:16.1942263Z node: v24.1.0
+2025-06-05T22:13:16.1943536Z npm: 11.3.0
+2025-06-05T22:13:16.1963188Z yarn: 1.22.22
+2025-06-05T22:13:16.1964211Z ##[endgroup]
