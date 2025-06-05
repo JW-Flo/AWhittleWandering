@@ -1,4 +1,4 @@
-"import { describe, test, expect, vi } from 'vitest';
+import { describe, test, expect, vi } from 'vitest';
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import App from '../App';

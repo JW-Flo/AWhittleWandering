@@ -6,22 +6,54 @@
  * already set up on the vehicle to receive real-time updates.
  */
 
-import { TessieAPIClient } from './tessie-client';
-import { WorkerEnvironment } from './types/cloudflare';
+import { TessieClient, VehicleData } from '../../shared/tessie/tessieClient';
 
-interface TelemetryConfig {
-  hostname: string;
-  port: number;
-  fields: Record<string, {
-    interval_seconds: number;
-    minimum_delta?: number;
-  }>;
+interface TelemetryData {
+  BatteryLevel?: number;
+  RatedRange?: number;
+  IdealBatteryRange?: number;
+  EnergyRemaining?: number;
+  PackCurrent?: number;
+  PackVoltage?: number;
+  DetailedChargeState?: string;
+  ChargeLimitSoc?: number;
+  ChargeRate?: number;
+  ChargerPower?: number;
+  TimeToFullCharge?: number;
+  ChargePortDoorOpen?: boolean;
+  ChargePortLatch?: string;
+  InsideTemp?: number;
+  OutsideTemp?: number;
+  DriverTempSetting?: number;
+  PassengerTempSetting?: number;
+  IsClimateOn?: boolean;
+  HvacFanStatus?: number;
+  VehicleSpeed?: number;
+  Power?: number;
+  ShiftState?: string;
+  Gear?: string;
+  GpsHeading?: number;
+  Latitude?: number;
+  Longitude?: number;
+  Locked?: boolean;
+  SentryMode?: boolean;
+  Odometer?: number;
+  Version?: string;
+  VehicleName?: string;
+  TpmsPressureFl?: number;
+  TpmsPressureFr?: number;
+  TpmsPressureRl?: number;
+  TpmsPressureRr?: number;
+  MilesToArrival?: number;
+  MinutesToArrival?: number;
+  DestinationName?: string;
+  ExpectedEnergyPercentAtTripArrival?: number;
 }
 
 interface TelemetryMessage {
   vin: string;
   timestamp: number;
-  data: Record<string, any>;
+  data: TelemetryData;
   messageType: 'telemetry' | 'alert' | 'error';
 }
 
@@ -33,7 +65,7 @@ interface StreamOptions {
 }
 
 export class TessieTelemetryStream {
-  private client: TessieAPIClient;
+  private client: TessieClient;
   private ws: WebSocket | null = null;
   private reconnectTimer: number | null = null;
   private reconnectAttempts = 0;
@@ -42,7 +74,7 @@ export class TessieTelemetryStream {
   private options: StreamOptions;
   private isClosing = false;
 
-  constructor(client: TessieAPIClient, options: StreamOptions) {
+  constructor(client: TessieClient, options: StreamOptions) {
     this.client = client;
     this.options = options;
   }
@@ -52,19 +84,35 @@ export class TessieTelemetryStream {
    */
   async connect(): Promise<void> {
     try {
-      // Get the telemetry configuration to understand what data is available
-      const config = await this.client.getTelemetryConfig();
+      // Get vehicle data to get VIN and auth token
+      const vehicles = await this.client.listVehicles();
+      const vehicle = vehicles[0]; // Assuming first vehicle for now
+      
+      if (!vehicle) {
+        throw new Error('No vehicles found');
+      }
+      
+      // Get vehicle data which includes telemetry configuration
+      const vehicleData = await this.client.getVehicleData(vehicle.id);
       
       // Construct WebSocket URL for Tessie's telemetry endpoint
-      // Note: This would be the actual Tessie WebSocket endpoint
-      const wsUrl = `wss://telemetry.tessie.com/stream/${this.client.vin}`;
+      const wsUrl = `wss://telemetry.tessie.com/stream/${vehicle.vin}`;
       
-      this.ws = new WebSocket(wsUrl, {
-        headers: {
-          'Authorization': `Bearer ${this.client.token}`,
-          'X-Tessie-Fields': this.options.fields?.join(',') || 'all'
-        }
-      });
+      // Get auth token from environment
+      const token = process.env.TESSIE_API_TOKEN;
+      if (!token) {
+        throw new Error('TESSIE_API_TOKEN not found in environment');
+      }
+      
+      this.ws = new WebSocket(wsUrl);
+      this.ws.onopen = () => {
+        // Send authentication message
+        this.ws?.send(JSON.stringify({
+          type: 'auth',
+          token: token,
+          fields: this.options.fields || ['all']
+        }));
+      };
 
       this.setupEventHandlers();
     } catch (error) {
@@ -145,7 +193,7 @@ export class TessieTelemetryStream {
   /**
    * Transform raw telemetry data into a structured format
    */
-  private transformTelemetryData(rawData: Record<string, any>): Record<string, any> {
+  private transformTelemetryData(rawData: TelemetryData): Record<string, unknown> {
     // Group related fields together for easier consumption
     return {
       battery: {
@@ -191,18 +239,6 @@ export class TessieTelemetryStream {
         odometer: rawData.Odometer,
         softwareVersion: rawData.Version,
         vehicleName: rawData.VehicleName
-      },
-      tires: {
-        frontLeft: rawData.TpmsPressureFl,
-        frontRight: rawData.TpmsPressureFr,
-        rearLeft: rawData.TpmsPressureRl,
-        rearRight: rawData.TpmsPressureRr
-      },
-      trip: {
-        milesToArrival: rawData.MilesToArrival,
-        minutesToArrival: rawData.MinutesToArrival,
-        destinationName: rawData.DestinationName,
-        expectedEnergyAtArrival: rawData.ExpectedEnergyPercentAtTripArrival
       }
     };
   }
@@ -212,7 +248,6 @@ export class TessieTelemetryStream {
    */
   private processAlert(message: TelemetryMessage): void {
     console.warn('Telemetry alert:', message);
-    // You could emit specific events for different alert types
     this.options.onData(message);
   }
 
@@ -249,7 +284,7 @@ export class TessieTelemetryStream {
   /**
    * Send a command through the telemetry stream
    */
-  send(command: any): void {
+  send(command: Record<string, unknown>): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(command));
     } else {
@@ -286,7 +321,7 @@ export class TessieTelemetryStream {
  * Create a telemetry stream for a vehicle
  */
 export function createTelemetryStream(
-  client: TessieAPIClient,
+  client: TessieClient,
   options: StreamOptions
 ): TessieTelemetryStream {
   const stream = new TessieTelemetryStream(client, options);
