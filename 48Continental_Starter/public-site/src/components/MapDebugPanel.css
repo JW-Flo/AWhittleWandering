@@ -1,0 +1,158 @@
+/**
+ * Map Debug Panel Styles
+ */
+
+.map-debug-panel {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 320px;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  z-index: 10;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  max-height: 500px;
+}
+
+.map-debug-panel.collapsed {
+  max-height: 40px;
+}
+
+.debug-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #0066cc;
+  color: white;
+  cursor: pointer;
+}
+
+.debug-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.toggle-icon {
+  font-size: 12px;
+}
+
+.debug-content {
+  max-height: calc(500px - 40px);
+  overflow-y: auto;
+}
+
+.debug-tabs {
+  display: flex;
+  border-bottom: 1px solid #ddd;
+}
+
+.debug-tabs button {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 8px 0;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: "Courier New", monospace;
+}
+
+.debug-tabs button.active {
+  font-weight: bold;
+  color: #0066cc;
+  border-bottom: 2px solid #0066cc;
+}
+
+.debug-panel {
+  padding: 10px;
+}
+
+.debug-section h4 {
+  margin: 0 0 10px 0;
+  font-size: 13px;
+}
+
+.debug-section h5 {
+  margin: 10px 0 5px 0;
+  font-size: 12px;
+  font-weight: bold;
+  border-bottom: 1px dashed #ccc;
+  padding-bottom: 3px;
+}
+
+.debug-data {
+  margin-bottom: 15px;
+}
+
+.data-row {
+  display: flex;
+  margin-bottom: 5px;
+  align-items: flex-start;
+}
+
+.label {
+  flex: 0 0 100px;
+  font-weight: bold;
+  color: #555;
+}
+
+.value {
+  flex: 1;
+  word-break: break-word;
+}
+
+.value.valid {
+  color: #2e7d32;
+}
+
+.value.invalid {
+  color: #d32f2f;
+}
+
+.coordinate-sample {
+  background-color: #f5f5f5;
+  padding: 5px;
+  border-radius: 4px;
+  margin-bottom: 5px;
+}
+
+.no-data {
+  color: #777;
+  font-style: italic;
+}
+
+.debug-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.debug-button {
+  padding: 5px 10px;
+  background-color: #0066cc;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.debug-button:hover {
+  background-color: #004c99;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .map-debug-panel {
+    width: 280px;
+  }
+
+  .label {
+    flex: 0 0 80px;
+  }
+}
