@@ -1,0 +1,50 @@
+/**
+ * CoordinateFormatTest Component Styles
+ * 
+ * Styling for the coordinate format testing utility
+ */
+
+.coordinate-format-test {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+}
+
+.test-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.test-header h2 {
+  margin: 0 0 5px 0;
+  color: #2c3e50;
+}
+
+.test-header p {
+  margin: 0;
+  color: #7f8c8d;
+  font-size: 0.95rem;
+}
+
+.conversion-selector {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.conversion-selector label {
+  font-weight: 500;
+  color: #495057;
+  min-width: 120px;
+}
+
+.conversion-selector select {
+  flex: 1;
+  padding: 8px 12px;
