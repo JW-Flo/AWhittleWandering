@@ -1,7 +1,7 @@
 /**
  * Map Component
  * 
- * Displays an interactive map of the 48 Continental USA journey
+ * Displays an interactive map of The Wandering Whittle journey
  * with route, stops, and current vehicle location.
  * 
  * This version includes enhanced coordinate validation and formatting,
@@ -78,6 +78,10 @@ const createMarkerElement = (type) => {
 
 // Validate and normalize GeoJSON coordinates
 const validateGeoJSONCoordinates = (lng, lat) => {
+  // Convert string values to numbers if needed
+  if (typeof lng === 'string') lng = parseFloat(lng);
+  if (typeof lat === 'string') lat = parseFloat(lat);
+
   // Check if values are valid numbers and within range
   // Longitude: -180 to 180, Latitude: -90 to 90
   const validLng = typeof lng === 'number' && !isNaN(lng) && lng >= -180 && lng <= 180;
@@ -94,30 +98,49 @@ const validateGeoJSONCoordinates = (lng, lat) => {
 const fixCoordinateFormat = (point) => {
   if (!point) return null;
 
-  // Check if values might be swapped (lat, lng instead of lng, lat)
-  if (point.latitude && point.longitude) {
-    const lat = point.latitude;
-    const lng = point.longitude;
+  // Handle if point is already an array
+  if (Array.isArray(point) && point.length === 2) {
+    const [first, second] = point.map(p => typeof p === 'string' ? parseFloat(p) : p);
+
+    // Skip invalid values
+    if (isNaN(first) || isNaN(second)) return null;
+
+    // If first value looks like latitude and second like longitude
+    if (Math.abs(first) <= 90 && Math.abs(second) <= 180 && Math.abs(second) > 90) {
+      console.log('Fixing swapped array coordinates:', [first, second], '→', [second, first]);
+      return validateGeoJSONCoordinates(second, first);
+    }
+
+    return validateGeoJSONCoordinates(first, second);
+  }
+
+  // Handle if point has lat/lng properties
+  if (point.latitude !== undefined && point.longitude !== undefined) {
+    const lat = typeof point.latitude === 'string' ? parseFloat(point.latitude) : point.latitude;
+    const lng = typeof point.longitude === 'string' ? parseFloat(point.longitude) : point.longitude;
+
+    // Skip invalid values
+    if (isNaN(lat) || isNaN(lng)) return null;
 
     // If longitude looks like it might be a latitude value and vice versa
     if (Math.abs(lng) <= 90 && Math.abs(lat) > 90) {
-      console.warn('Detected swapped coordinates, fixing:', { original: [lng, lat], fixed: [lat, lng] });
+      console.log('Fixing swapped lat/lng properties:', { lat, lng }, '→', { lat: lng, lng: lat });
       return validateGeoJSONCoordinates(lat, lng);
     }
 
     return validateGeoJSONCoordinates(lng, lat);
   }
 
-  // If we have an array instead of lat/lng properties
-  if (Array.isArray(point) && point.length === 2) {
-    const [first, second] = point;
+  // Handle if point has lng/lat properties (GeoJSON style)
+  if (point.lng !== undefined && point.lat !== undefined) {
+    const lng = typeof point.lng === 'string' ? parseFloat(point.lng) : point.lng;
+    const lat = typeof point.lat === 'string' ? parseFloat(point.lat) : point.lat;
+    return validateGeoJSONCoordinates(lng, lat);
+  }
 
-    // If first value looks like latitude and second like longitude
-    if (Math.abs(first) <= 90 && Math.abs(second) <= 180 && Math.abs(second) > 90) {
-      return validateGeoJSONCoordinates(second, first);
-    }
-
-    return validateGeoJSONCoordinates(first, second);
+  // Handle if point has coordinates array property
+  if (point.coordinates && Array.isArray(point.coordinates) && point.coordinates.length === 2) {
+    return fixCoordinateFormat(point.coordinates);
   }
 
   return null;
@@ -164,7 +187,7 @@ const initializeMapLayers = async (map, tripData) => {
         // First try to validate with expected format
         let coords = null;
 
-        if (point && typeof point.longitude === 'number' && typeof point.latitude === 'number') {
+        if (point && typeof point.longitude !== 'undefined' && typeof point.latitude !== 'undefined') {
           coords = validateGeoJSONCoordinates(point.longitude, point.latitude);
         }
 
@@ -231,8 +254,7 @@ const initializeMapLayers = async (map, tripData) => {
         let coords = null;
 
         // First try standard format
-        if (typeof stop.longitude === 'number' && typeof stop.latitude === 'number' &&
-          !isNaN(stop.longitude) && !isNaN(stop.latitude)) {
+        if (typeof stop.longitude !== 'undefined' && typeof stop.latitude !== 'undefined') {
           coords = validateGeoJSONCoordinates(stop.longitude, stop.latitude);
         }
 
@@ -351,6 +373,7 @@ const Map = ({
   const [loading, setLoading] = useState(true);
   const [mapError, setMapError] = useState(null);
   const [mapInitAttempted, setMapInitAttempted] = useState(false);
+  const [debugVisible, setDebugVisible] = useState(false);
 
   // Initialize map on component mount
   useEffect(() => {
@@ -499,7 +522,7 @@ const Map = ({
         console.error('Error cleaning up map:', e);
       }
     };
-  }, []);
+  }, [tripData]);
 
   // Update map style based on layer toggles
   useEffect(() => {
@@ -733,7 +756,8 @@ const Map = ({
             const batteryClass = vehicleData.batteryLevel < 20 ? 'battery-low' :
               vehicleData.batteryLevel > 80 ? 'battery-high' : '';
 
-            const popup = new mapboxgl.Popup({
+            // Create and attach popup to the marker
+            new mapboxgl.Popup({
               offset: 25,
               closeButton: false,
               closeOnClick: false,
@@ -748,36 +772,161 @@ const Map = ({
                       <span class="popup-stat-icon">🔋</span>
                       <span class="popup-stat-value ${batteryClass}">${Math.round(vehicleData.batteryLevel || 0)}%</span>
                     </div>
-                    <div class="popup-stat">
-                      <span class="popup-stat-icon">⚡</span>
-                      <span class="popup-stat-value">${Math.round(vehicleData.range || 0)} mi</span>
-                    </div>
-                    <div class="popup-stat">
-                      <span class="popup-stat-icon">🚀</span>
-                      <span class="popup-stat-value">${Math.round(vehicleData.speed || 0)} mph</span>
-                    </div>
-                  </div>
-                </div>
-              `);
+              <div class="popup-stat">
+                <span class="popup-stat-icon">⚡</span>
+                <span class="popup-stat-value">${Math.round(vehicleData.range || 0)} mi</span>
+              </div>
+              <div class="popup-stat">
+                <span class="popup-stat-icon">🚗</span>
+                <span class="popup-stat-value">${Math.round(vehicleData.speed || 0)} mph</span>
+              </div>
+            </div>
+          </div>
+        `)
+              .addTo(map.current);
 
-            vehicleMarker.current.setPopup(popup);
           } else {
-            // Update marker position and rotation
-            vehicleMarker.current.setLngLat([longitude, latitude]);
+            // Update existing marker
+            vehicleMarker.current
+              .setLngLat([longitude, latitude])
+              .setRotation(vehicleData.heading || 0);
 
-            // Update rotation if heading is available
-            if (vehicleData.heading !== undefined) {
-              const markerEl = vehicleMarker.current.getElement();
-              vehicleMarker.current.setRotation(vehicleData.heading);
+            // Update marker appearance based on battery level
+            const markerElement = vehicleMarker.current.getElement();
+            if (markerElement) {
+              const batteryLevel = vehicleData.batteryLevel || 100;
+              const batteryColor = batteryLevel < 20 ? '#f44336' : '#4CAF50';
 
-              // Update moving state
-              if (vehicleData.speed > 0) {
-                markerEl.classList.add('vehicle-moving');
-              } else {
-                markerEl.classList.remove('vehicle-moving');
+              const svgElement = markerElement.querySelector('svg');
+              if (svgElement) {
+                svgElement.setAttribute('fill', batteryColor);
               }
 
-              // Update car color based on battery
-              const svgPath = markerEl.querySelector('svg');
-              if (svgPath) {
-                svgPath.style.fill = vehicleData.batteryLevel <
+              // Update pulse effect based on movement
+              if (vehicleData.speed > 0) {
+                markerElement.classList.add('vehicle-moving');
+              } else {
+                markerElement.classList.remove('vehicle-moving');
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error updating vehicle marker:', error);
+        }
+      };
+
+      // Update the marker
+      updateVehicleMarker();
+    } catch (error) {
+      console.error('Error in vehicle data effect:', error);
+    }
+  }, [vehicleData, mapReady]);
+
+  // Debug keyboard shortcut
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Toggle debug panel with Ctrl+Shift+D
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        setDebugVisible(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Map container click handler to reset errors
+  const handleMapContainerClick = () => {
+    if (mapError) {
+      setMapError(null);
+      setMapInitAttempted(false);
+    }
+  };
+
+  // Reset map handler for debug panel
+  const handleResetMap = () => {
+    try {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+
+      if (vehicleMarker.current) {
+        vehicleMarker.current = null;
+      }
+
+      setMapReady(false);
+      setMapInitAttempted(false);
+      setMapError(null);
+      setLoading(true);
+    } catch (error) {
+      console.error('Error resetting map:', error);
+    }
+  };
+
+  // Refresh data handler for debug panel
+  const handleRefreshData = () => {
+    console.log('Data refresh requested from debug panel');
+    // This would normally call a function passed via props to refresh the data
+    // For now, we'll just log it and re-initialize with current data
+    if (map.current && mapReady && tripData) {
+      initializeMapLayers(map.current, tripData)
+        .catch(error => console.error('Error refreshing map data:', error));
+    }
+  };
+
+  return (
+    <div
+      className={`map-container ${fullscreen ? 'fullscreen' : ''}`}
+      onClick={handleMapContainerClick}
+    >
+      {loading && (
+        <div className="map-loading">
+          <div className="spinner"></div>
+          <p>Loading map...</p>
+        </div>
+      )}
+
+      {mapError && (
+        <div className="map-error">
+          <h3>Map Error</h3>
+          <p>{mapError}</p>
+          <button onClick={() => {
+            setMapError(null);
+            setMapInitAttempted(false);
+          }}>Try Again</button>
+        </div>
+      )}
+
+      <div ref={mapContainer} className="map" />
+
+      {tripData && <TripStatistics tripData={tripData} />}
+
+      {debugVisible && (
+        <MapDebugPanel
+          tripData={tripData}
+          vehicleData={vehicleData}
+          mapReady={mapReady}
+          onResetMap={handleResetMap}
+          onRefreshData={handleRefreshData}
+        />
+      )}
+    </div>
+  );
+};
+
+Map.propTypes = {
+  vehicleData: PropTypes.object,
+  tripData: PropTypes.object,
+  weatherData: PropTypes.object,
+  stationsData: PropTypes.object,
+  fullscreen: PropTypes.bool,
+  mapLayers: PropTypes.shape({
+    weather: PropTypes.bool,
+    traffic: PropTypes.bool,
+    satellite: PropTypes.bool,
+    chargingStations: PropTypes.bool
+  })
+};
+
+export default Map;

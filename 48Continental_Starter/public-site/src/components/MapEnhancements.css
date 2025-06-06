@@ -1,165 +1,128 @@
 /**
  * Map Enhancements CSS
  * 
- * Enhanced styling for the map component to improve visualization and interaction.
- * Includes improved route visualization, marker styling, and responsive design.
+ * Styling for enhanced map elements including markers, popups, animations,
+ * and mobile-friendly controls.
  */
 
-/* Main map container enhancements */
-.map-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.map {
-  width: 100%;
-  height: 100%;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-/* Fullscreen mode adjustments */
-.map-fullscreen-mode {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 1000;
-}
-
-.map-fullscreen-mode .map {
-  border-radius: 0;
-}
-
-/* Map controls positioning and styling */
-.mapboxgl-ctrl-top-right {
-  margin-top: 10px;
-  margin-right: 10px;
-}
-
-.mapboxgl-ctrl-group {
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.mapboxgl-ctrl button {
-  width: 32px;
-  height: 32px;
-}
-
-/* Enhanced marker styles */
-.marker-icon {
-  cursor: pointer;
-  width: 30px;
-  height: 30px;
-  transition: transform 0.2s ease, filter 0.2s ease;
-}
-
-.marker-icon:hover {
-  transform: scale(1.2);
-  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.4));
-}
-
-.marker-waypoint {
-  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
-}
-
-.marker-charging-station {
-  filter: drop-shadow(0 2px 2px rgba(0, 150, 0, 0.3));
-}
-
-.marker-lodging {
-  filter: drop-shadow(0 2px 2px rgba(33, 150, 243, 0.3));
-}
-
-/* Vehicle marker enhancements */
+/* Vehicle marker styling */
 .vehicle-marker {
   width: 36px;
   height: 36px;
   cursor: pointer;
-  transition: transform 0.3s ease;
+  position: relative;
+  z-index: 10;
 }
 
 .vehicle-marker svg {
-  filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  transition: all 0.3s ease;
 }
 
-.vehicle-moving {
-  animation: pulse 1.5s infinite alternate;
+.vehicle-marker:hover svg {
+  transform: scale(1.1);
+}
+
+/* Pulse animation for moving vehicle */
+.vehicle-moving::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: rgba(76, 175, 80, 0.4);
+  border-radius: 50%;
+  z-index: -1;
+  animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
   0% {
     transform: scale(1);
+    opacity: 0.7;
+  }
+  70% {
+    transform: scale(2);
+    opacity: 0;
   }
   100% {
-    transform: scale(1.15);
+    transform: scale(1);
+    opacity: 0;
   }
 }
 
-/* Popup styling improvements */
+/* Stop marker styling */
+.marker-icon {
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
+  transition: all 0.2s ease;
+}
+
+.marker-icon:hover {
+  transform: scale(1.2);
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.4));
+}
+
+/* Marker types */
+.marker-waypoint svg {
+  filter: drop-shadow(0 1px 3px rgba(255, 193, 7, 0.6));
+}
+
+.marker-charging-station svg {
+  filter: drop-shadow(0 1px 3px rgba(76, 175, 80, 0.6));
+}
+
+.marker-lodging svg {
+  filter: drop-shadow(0 1px 3px rgba(33, 150, 243, 0.6));
+}
+
+/* Enhanced popup styling */
 .mapboxgl-popup {
-  max-width: 320px !important;
+  max-width: 300px !important;
 }
 
 .mapboxgl-popup-content {
-  padding: 15px;
+  padding: 12px;
   border-radius: 8px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.mapboxgl-popup-close-button {
-  font-size: 18px;
-  color: #555;
-  padding: 5px 8px;
-}
-
-.map-popup {
-  font-family: "Arial", sans-serif;
-}
-
-.map-popup h4 {
-  margin: 0 0 8px 0;
-  color: #0066cc;
-  font-size: 16px;
-}
-
-.map-popup p {
-  margin: 5px 0;
-  color: #333;
-  font-size: 13px;
-}
-
-/* Vehicle popup specific styling */
+/* Vehicle popup */
 .vehicle-popup {
   min-width: 220px;
+}
+
+.vehicle-popup h4 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
 }
 
 .vehicle-popup-stats {
   display: flex;
   justify-content: space-between;
-  margin-top: 10px;
 }
 
 .popup-stat {
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 1;
+  padding: 5px;
 }
 
 .popup-stat-icon {
-  font-size: 16px;
-  margin-bottom: 4px;
+  font-size: 18px;
+  margin-bottom: 3px;
 }
 
 .popup-stat-value {
-  font-weight: bold;
+  font-weight: 600;
   font-size: 14px;
 }
 
@@ -171,131 +134,197 @@
   color: #4caf50;
 }
 
-/* Stop type indicators */
-.stop-type {
-  font-size: 12px;
-  font-style: italic;
+/* Stop popup */
+.map-popup h4 {
+  margin: 0 0 5px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.map-popup p {
+  margin: 5px 0;
+  font-size: 14px;
   color: #666;
 }
 
-/* Center vehicle button */
-.center-vehicle-btn {
-  position: absolute;
-  bottom: 80px;
-  right: 10px;
-  width: 40px;
-  height: 40px;
-  background: white;
-  border: none;
-  border-radius: 50%;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 5;
-  transition: transform 0.2s ease;
+.stop-type {
+  font-style: italic;
+  color: #777;
+  font-size: 12px;
 }
 
-.center-vehicle-btn:hover {
-  transform: scale(1.1);
-}
-
-.center-icon {
-  font-size: 20px;
-}
-
-/* Route line customization */
-.route-line {
-  stroke-dasharray: 5, 5;
-  animation: dash 30s linear infinite;
-}
-
-@keyframes dash {
-  to {
-    stroke-dashoffset: 1000;
-  }
-}
-
-/* Improved error display */
-.map-error {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  text-align: center;
-  max-width: 80%;
-}
-
-.map-error h3 {
-  color: #f44336;
-  margin-top: 0;
-}
-
-.map-retry-button {
-  background: #0066cc;
-  color: white;
-  border: none;
-  padding: 8px 16px;
+/* Charging station popup */
+.charging-popup .station-status {
+  margin-top: 8px;
+  padding: 4px 8px;
   border-radius: 4px;
-  margin-top: 15px;
-  cursor: pointer;
+  font-weight: 600;
+  display: inline-block;
 }
 
-/* Loading indicator */
-.map-loading {
+.status-available {
+  background-color: rgba(76, 175, 80, 0.15);
+  color: #2e7d32;
+}
+
+.status-unavailable {
+  background-color: rgba(244, 67, 54, 0.15);
+  color: #c62828;
+}
+
+/* Map loading and error messages */
+.map-loading,
+.map-error {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.7);
+  right: 0;
+  bottom: 0;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
-  z-index: 5;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 100;
+  text-align: center;
+  padding: 20px;
 }
 
-.map-loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 5px solid #f3f3f3;
-  border-top: 5px solid #0066cc;
+.map-error {
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+.map-error h3 {
+  color: #c62828;
+  margin-bottom: 10px;
+}
+
+.map-error button {
+  margin-top: 15px;
+  padding: 8px 16px;
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.map-error button:hover {
+  background-color: #1976d2;
+}
+
+/* Spinner animation for loading */
+.spinner {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 15px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #0066cc;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
+  to {
     transform: rotate(360deg);
   }
 }
 
-/* Responsive adjustments */
+/* Trip statistics display */
+.trip-statistics {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 10px;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  max-width: 300px;
+  font-size: 14px;
+  z-index: 5;
+}
+
+.trip-statistics h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  color: #666;
+}
+
+.stat-value {
+  font-weight: 600;
+  color: #333;
+}
+
+/* Responsive map controls for mobile */
 @media (max-width: 768px) {
-  .mapboxgl-popup {
-    max-width: 250px !important;
+  .mapboxgl-ctrl-top-right .mapboxgl-ctrl {
+    margin: 6px 6px 0 0;
+  }
+
+  .mapboxgl-ctrl-group {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .mapboxgl-ctrl button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .trip-statistics {
+    max-width: 200px;
+    font-size: 12px;
+  }
+
+  .trip-statistics h3 {
+    font-size: 14px;
+  }
+
+  /* Smaller popup on mobile */
+  .mapboxgl-popup-content {
+    padding: 8px;
+    max-width: 220px;
   }
 
   .vehicle-popup-stats {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-wrap: wrap;
   }
 
   .popup-stat {
-    flex-direction: row;
-    margin-bottom: 5px;
+    flex: 1 0 30%;
+    padding: 3px;
   }
+}
 
-  .popup-stat-icon {
-    margin-right: 8px;
-    margin-bottom: 0;
-  }
+/* Fullscreen map mode */
+.map-container.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+}
+
+/* Additional transition effects */
+.mapboxgl-popup {
+  transition: opacity 0.3s;
+}
+
+/* Focus state for better accessibility */
+.mapboxgl-ctrl button:focus {
+  outline: 2px solid #4285f4;
+  outline-offset: 2px;
 }
