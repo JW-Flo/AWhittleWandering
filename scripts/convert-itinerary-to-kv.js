@@ -23,7 +23,16 @@ const JSON_OUTPUT = path.join(__dirname, "..", "itinerary.json");
 function parseDate(dateStr) {
   if (!dateStr) return null;
 
-  const [month, day, year] = dateStr.split("/").map((n) => parseInt(n, 10));
+  const parts = dateStr.split("/").map((n) => parseInt(n, 10));
+  let month, day, year;
+  if (parts.length === 3) {
+    [month, day, year] = parts;
+  } else if (parts.length === 2) {
+    [month, day] = parts;
+    year = new Date().getFullYear(); // Use current year if missing
+  } else {
+    return null;
+  }
   const date = new Date(year, month - 1, day);
   return date.toISOString().split("T")[0]; // YYYY-MM-DD format
 }
