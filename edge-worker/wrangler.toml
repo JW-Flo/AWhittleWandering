@@ -29,3 +29,9 @@ new_classes = ["SyncServiceDurableObject"]
 # pattern = "https://trip.thewanderingwhittle.com/*"
 # custom_domain = true
 # zone_name = "thewanderingwhittle.com"
+
+# Workers Logs configuration
+[logs]
+enabled = true
+sampling_rate = 1.0 # 100%
+include_invocation_logs = true
