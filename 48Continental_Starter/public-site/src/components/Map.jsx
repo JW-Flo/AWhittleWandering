@@ -399,7 +399,20 @@ const Map = ({
     }
 
     try {
-      // Initialize map with safe defaults
+      // Enable debug mode for mapbox if querystring has debug=true
+      const urlParams = new URLSearchParams(window.location.search);
+      const debug = urlParams.get('debug') === 'true';
+
+      if (debug) {
+        console.log('🛠️ Mapbox debug mode enabled');
+        mapboxgl.setRTLTextPlugin(
+          'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-rtl-text/v0.2.3/mapbox-gl-rtl-text.js',
+          null,
+          true // Force load even if not needed
+        );
+      }
+
+      // Initialize map with safe defaults and proper error handling
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/streets-v11',
@@ -409,12 +422,46 @@ const Map = ({
         maxZoom: 18,
         failIfMajorPerformanceCaveat: false, // Try to load even on low-performance devices
         attributionControl: false, // We'll add it manually in a better position
-        preserveDrawingBuffer: true // Required for screenshot functionality
+        preserveDrawingBuffer: true, // Required for screenshot functionality
+        transformRequest: (url, resourceType) => {
+          // Log requests for debugging
+          if (debug && resourceType === 'Source') {
+            console.log(`Mapbox requesting: ${resourceType}`, url);
+          }
+          return { url };
+        }
       });
 
-      // Add map error handler
+      // Add detailed map error handler
       map.current.on('error', (e) => {
         console.error('Mapbox map error:', e);
+
+        // Check for specific token-related errors
+        if (e.error && (
+          e.error.message?.includes('access token') ||
+          e.error.message?.includes('401')
+        )) {
+          setMapError('Invalid Mapbox access token. Please check your configuration.');
+        }
+
+        // Check for network-related errors
+        if (e.error && (
+          e.error.message?.includes('network') ||
+          e.error.message?.includes('Failed to fetch')
+        )) {
+          setMapError('Network error loading map resources. Please check your connection.');
+        }
+      });
+
+      // Add more verbose load event handling
+      map.current.on('styledata', () => {
+        console.log('Map style loaded successfully');
+      });
+
+      map.current.on('sourcedata', (e) => {
+        if (e.isSourceLoaded && debug) {
+          console.log('Map source loaded:', e.sourceId);
+        }
       });
 
       // Safely add controls one by one with error handling
@@ -482,7 +529,7 @@ const Map = ({
 
       // Mark map as ready when loaded and initialize layers
       map.current.on('load', () => {
-        console.log('Map loaded successfully');
+        console.log('Map load event fired - map fully loaded');
         setMapReady(true);
         setLoading(false);
 
@@ -493,6 +540,24 @@ const Map = ({
             .catch(error => console.error('Error initializing map layers on load:', error));
         } else {
           console.log('No tripData available yet, will initialize layers when data arrives');
+        }
+
+        // Pre-load marker images for better performance
+        try {
+          // Check if the image is already loaded
+          if (!map.current.hasImage('charging-station')) {
+            map.current.loadImage(
+              'https://img.icons8.com/material/96/4CAF50/charging-station--v1.png',
+              (error, image) => {
+                if (error) throw error;
+                if (!map.current.hasImage('charging-station')) {
+                  map.current.addImage('charging-station', image);
+                }
+              }
+            );
+          }
+        } catch (e) {
+          console.warn('Failed to preload marker images:', e);
         }
       });
 
@@ -686,22 +751,51 @@ const Map = ({
     }
   }, [mapLayers.chargingStations, stationsData, mapReady]);
 
-  // Update map data when tripData changes
+  // Update map data when tripData changes - with improved load handling
   useEffect(() => {
-    if (!mapReady || !map.current || !tripData) return;
+    if (!map.current || !tripData) return;
 
     console.log('Trip data changed, updating map layers', {
       hasRoute: !!tripData.route,
-      hasStops: !!tripData.stops
+      hasStops: !!tripData.stops,
+      mapReady: mapReady
     });
 
     try {
-      // Re-initialize layers with new data
-      initializeMapLayers(map.current, tripData)
-        .catch(error => {
-          console.error('Error updating map data:', error);
-          setMapError('Failed to update map data, but map is still functional');
-        });
+      // Only add layers if map is already loaded
+      if (mapReady) {
+        console.log('Map is ready, initializing layers immediately');
+        // Re-initialize layers with new data
+        initializeMapLayers(map.current, tripData)
+          .catch(error => {
+            console.error('Error updating map data:', error);
+            setMapError('Failed to update map data, but map is still functional');
+          });
+      } else {
+        // If map is not ready yet, set up an event listener for the load event
+        console.log('Map not ready, waiting for load event to initialize layers');
+        const handleMapLoad = () => {
+          console.log('Map load event fired, initializing layers');
+          initializeMapLayers(map.current, tripData)
+            .catch(error => {
+              console.error('Error initializing map layers on delayed load:', error);
+              setMapError('Failed to initialize map data, but map is still functional');
+            });
+
+          // Remove this event listener after it fires
+          map.current.off('load', handleMapLoad);
+        };
+
+        // Add the load event listener
+        map.current.on('load', handleMapLoad);
+
+        return () => {
+          // Clean up the event listener if the component unmounts before the map loads
+          if (map.current) {
+            map.current.off('load', handleMapLoad);
+          }
+        };
+      }
     } catch (error) {
       console.error('Error in tripData effect:', error);
     }

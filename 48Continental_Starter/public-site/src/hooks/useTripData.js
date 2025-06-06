@@ -405,17 +405,124 @@ export const useTripData = ({ vehicleData, pollInterval = 60000 } = {}) => {
     }
   }, [vehicleData?.latitude, vehicleData?.longitude, visitedStates]);
 
-  // Helper function to validate GeoJSON coordinates
-  const validateCoordinates = (coords) => {
-    if (!coords || !Array.isArray(coords)) return false;
-    // Check if the format appears to be [lng, lat] (GeoJSON standard)
-    // Longitude ranges from -180 to 180, Latitude from -90 to 90
-    return (
-      coords.length === 2 &&
-      Math.abs(coords[0]) <= 180 &&
-      Math.abs(coords[1]) <= 90
-    );
-  };
+  /**
+   * Validate and normalize coordinates to ensure they are in [longitude, latitude] format
+   * This ensures coordinate consistency across all data sources
+   *
+   * IMPORTANT: MapBox requires coordinates in [longitude, latitude] format.
+   * Many data sources provide them as [latitude, longitude], causing render issues.
+   *
+   * @param {Array|Object} coords - Coordinates to validate and normalize
+   * @returns {Array|null} - Normalized [longitude, latitude] array or null if invalid
+   */
+  const validateAndNormalizeCoordinates = useCallback((coords) => {
+    // Already an array [lng, lat] or [lat, lng]
+    if (Array.isArray(coords) && coords.length === 2) {
+      const [first, second] = coords.map((v) =>
+        typeof v === "string" ? parseFloat(v) : v
+      );
+
+      // Skip if invalid numbers
+      if (isNaN(first) || isNaN(second)) return null;
+
+      // Check if values are within valid ranges
+      // Longitude: -180 to 180, Latitude: -90 to 90
+      const isFirstLongitude =
+        Math.abs(first) <= 180 &&
+        (Math.abs(first) > 90 || Math.abs(second) > 90);
+      const isSecondLatitude = Math.abs(second) <= 90;
+
+      // If first is longitude and second is latitude (correct GeoJSON order)
+      if (isFirstLongitude && isSecondLatitude) {
+        return [first, second]; // [longitude, latitude]
+      }
+
+      // If first looks like latitude and second like longitude (swapped)
+      if (
+        Math.abs(first) <= 90 &&
+        Math.abs(second) <= 180 &&
+        Math.abs(second) > 90
+      ) {
+        console.log("Fixed swapped coordinates:", [first, second], "→", [
+          second,
+          first,
+        ]);
+        return [second, first]; // [longitude, latitude]
+      }
+
+      // If both values are within latitude range, make a best guess
+      if (Math.abs(first) <= 90 && Math.abs(second) <= 90) {
+        // In the US, longitude values are typically larger than latitude values
+        if (Math.abs(first) > Math.abs(second)) {
+          return [first, second]; // first is likely longitude
+        } else {
+          return [second, first]; // second is likely longitude
+        }
+      }
+
+      // Fallback to original order if we can't determine
+      return [first, second];
+    }
+
+    // Object with lat/lng or latitude/longitude properties
+    if (coords && typeof coords === "object") {
+      let lng, lat;
+
+      // Handle latitude/longitude properties
+      if (coords.latitude !== undefined && coords.longitude !== undefined) {
+        lat =
+          typeof coords.latitude === "string"
+            ? parseFloat(coords.latitude)
+            : coords.latitude;
+        lng =
+          typeof coords.longitude === "string"
+            ? parseFloat(coords.longitude)
+            : coords.longitude;
+      }
+      // Handle lat/lng properties (GeoJSON style)
+      else if (coords.lat !== undefined && coords.lng !== undefined) {
+        lat =
+          typeof coords.lat === "string" ? parseFloat(coords.lat) : coords.lat;
+        lng =
+          typeof coords.lng === "string" ? parseFloat(coords.lng) : coords.lng;
+      }
+      // Handle coordinates array property
+      else if (
+        coords.coordinates &&
+        Array.isArray(coords.coordinates) &&
+        coords.coordinates.length === 2
+      ) {
+        return validateAndNormalizeCoordinates(coords.coordinates);
+      }
+
+      // Skip if invalid numbers
+      if (lng === undefined || lat === undefined || isNaN(lng) || isNaN(lat))
+        return null;
+
+      // Check if values are within valid ranges
+      // Longitude: -180 to 180, Latitude: -90 to 90
+      const validLng = Math.abs(lng) <= 180;
+      const validLat = Math.abs(lat) <= 90;
+
+      if (!validLng || !validLat) {
+        // Check if they're swapped
+        if (Math.abs(lng) <= 90 && Math.abs(lat) <= 180 && Math.abs(lat) > 90) {
+          console.log("Fixed swapped lat/lng properties:", { lat, lng }, "→", {
+            lat: lng,
+            lng: lat,
+          });
+          return [lat, lng]; // [longitude, latitude] with swapped values
+        }
+        return null;
+      }
+
+      return [lng, lat]; // [longitude, latitude]
+    }
+
+    return null;
+  }, []);
+
+  // We're now using validateAndNormalizeCoordinates directly for better coordinate handling
 
   const fetchTripData = useCallback(async () => {
     try {
@@ -424,6 +531,8 @@ export const useTripData = ({ vehicleData, pollInterval = 60000 } = {}) => {
         import.meta.env.VITE_EDGE_WORKER_URL ||
         import.meta.env.VITE_API_BASE_URL ||
         "http://localhost:8787";
+
+      console.log(`Fetching trip data from API: ${apiUrl}/api/itinerary`);
 
       const response = await fetch(`${apiUrl}/api/itinerary`, {
         method: "GET",
@@ -435,102 +544,230 @@ export const useTripData = ({ vehicleData, pollInterval = 60000 } = {}) => {
 
       if (response.ok) {
         const data = await response.json();
+        console.log("API response received:", data);
 
-        // Validate data structure
-        if (!data.features || !data.features[0] || !data.features[0].geometry) {
-          console.warn("API returned invalid GeoJSON structure:", data);
-          throw new Error("Invalid GeoJSON data structure");
-        }
+        // Properly handle different response formats
+        let extractedRoute = [];
+        let extractedStops = [];
 
-        // Extract route and stops from GeoJSON format with validation
-        const coordinates = data.features[0].geometry.coordinates;
+        // GeoJSON format handling
+        if (data.type === "FeatureCollection" && Array.isArray(data.features)) {
+          console.log("Processing GeoJSON FeatureCollection");
 
-        // Validate coordinate format and convert if needed
-        let route = [];
-        if (Array.isArray(coordinates)) {
-          route = coordinates
-            .map((coord) => {
-              // Ensure coord is in [lng, lat] format (GeoJSON standard)
-              if (validateCoordinates(coord)) {
-                return {
-                  longitude: coord[0],
-                  latitude: coord[1],
-                };
-              } else if (Array.isArray(coord) && coord.length === 2) {
-                // If coordinates don't match GeoJSON format but are still valid, try to fix
-                const [first, second] = coord;
-                // If first value looks like longitude (-180 to 180) and second like latitude (-90 to 90)
-                if (Math.abs(first) <= 180 && Math.abs(second) <= 90) {
+          // Extract route from LineString features
+          const routeFeature = data.features.find(
+            (f) => f.geometry && f.geometry.type === "LineString"
+          );
+
+          if (
+            routeFeature &&
+            Array.isArray(routeFeature.geometry.coordinates)
+          ) {
+            extractedRoute = routeFeature.geometry.coordinates
+              .map((coord) => {
+                const normalized = validateAndNormalizeCoordinates(coord);
+                if (normalized) {
+                  const [longitude, latitude] = normalized;
                   return {
-                    longitude: first,
-                    latitude: second,
-                  };
-                } else if (Math.abs(second) <= 180 && Math.abs(first) <= 90) {
-                  // If they're swapped, fix the order
-                  console.warn("Found swapped coordinates, fixing:", coord);
-                  return {
-                    longitude: second,
-                    latitude: first,
+                    longitude,
+                    latitude,
+                    coordinates: [longitude, latitude], // Add GeoJSON-compatible coordinates array
                   };
                 }
-              }
-              // Fallback for invalid coordinates
-              console.warn("Invalid coordinate format:", coord);
-              return null;
-            })
-            .filter(Boolean); // Filter out null values
+                return null;
+              })
+              .filter(Boolean);
+          }
+
+          // Extract stops from Point features or properties
+          const stopFeatures = data.features.filter(
+            (f) => f.geometry && f.geometry.type === "Point"
+          );
+
+          if (stopFeatures.length > 0) {
+            extractedStops = stopFeatures
+              .map((feature, idx) => {
+                const normalized = validateAndNormalizeCoordinates(
+                  feature.geometry.coordinates
+                );
+
+                if (!normalized) {
+                  console.warn(
+                    "Invalid stop coordinates:",
+                    feature.geometry.coordinates
+                  );
+                  return null;
+                }
+
+                const [longitude, latitude] = normalized;
+                const props = feature.properties || {};
+
+                return {
+                  id: props.id || `stop-${idx}`,
+                  name: props.name || props.location || `Stop ${idx}`,
+                  longitude,
+                  latitude,
+                  coordinates: [longitude, latitude],
+                  type: props.type || "waypoint",
+                  description: props.description || props.name || "",
+                  charging: props.charging || props.type === "charging",
+                  overnight: props.overnight || props.type === "overnight",
+                  state:
+                    props.state ||
+                    getStateFromCoordinates(latitude, longitude) ||
+                    "",
+                };
+              })
+              .filter(Boolean);
+          }
+          // Check for stops in properties of the first feature
+          else if (
+            data.features[0] &&
+            data.features[0].properties &&
+            Array.isArray(data.features[0].properties.stops)
+          ) {
+            extractedStops = data.features[0].properties.stops
+              .map((stop, idx) => {
+                // Try different coordinate sources
+                let normalized = null;
+
+                // Try coordinates array first
+                if (stop.coordinates && Array.isArray(stop.coordinates)) {
+                  normalized = validateAndNormalizeCoordinates(
+                    stop.coordinates
+                  );
+                }
+
+                // Then try lat/lng or latitude/longitude
+                if (
+                  !normalized &&
+                  (stop.latitude !== undefined || stop.lat !== undefined)
+                ) {
+                  normalized = validateAndNormalizeCoordinates(stop);
+                }
+
+                if (!normalized) {
+                  console.warn(
+                    "Could not extract valid coordinates for stop:",
+                    stop
+                  );
+                  return null;
+                }
+
+                const [longitude, latitude] = normalized;
+
+                return {
+                  id: stop.id || `${stop.name || "stop"}-${idx}`,
+                  name:
+                    stop.name ||
+                    (stop.location
+                      ? stop.location.split(",")[0].trim()
+                      : `Stop ${idx}`),
+                  longitude,
+                  latitude,
+                  coordinates: [longitude, latitude],
+                  type: stop.type || "waypoint",
+                  description: stop.description || stop.name || "",
+                  charging: stop.charging || stop.type === "charging",
+                  overnight: stop.overnight || stop.type === "overnight",
+                  state:
+                    stop.state ||
+                    getStateFromCoordinates(latitude, longitude) ||
+                    "",
+                };
+              })
+              .filter(Boolean);
+          }
+        }
+        // Standard JSON format handling
+        else if (data.route || data.stops) {
+          console.log("Processing standard JSON format");
+
+          // Extract route data
+          if (Array.isArray(data.route)) {
+            extractedRoute = data.route
+              .map((point) => {
+                const normalized = validateAndNormalizeCoordinates(point);
+                if (normalized) {
+                  const [longitude, latitude] = normalized;
+                  return {
+                    longitude,
+                    latitude,
+                    coordinates: [longitude, latitude],
+                  };
+                }
+                return null;
+              })
+              .filter(Boolean);
+          }
+
+          // Extract stops data
+          if (Array.isArray(data.stops)) {
+            extractedStops = data.stops
+              .map((stop, idx) => {
+                const normalized = validateAndNormalizeCoordinates(stop);
+                if (!normalized) {
+                  console.warn("Invalid stop data:", stop);
+                  return null;
+                }
+
+                const [longitude, latitude] = normalized;
+
+                return {
+                  id: stop.id || `stop-${idx}`,
+                  name: stop.name || `Stop ${idx}`,
+                  longitude,
+                  latitude,
+                  coordinates: [longitude, latitude],
+                  type: stop.type || "waypoint",
+                  description: stop.description || stop.name || "",
+                  charging: stop.charging || stop.type === "charging",
+                  overnight: stop.overnight || stop.type === "overnight",
+                  state:
+                    stop.state ||
+                    getStateFromCoordinates(latitude, longitude) ||
+                    "",
+                };
+              })
+              .filter(Boolean);
+          }
         }
 
-        // Process stops with proper validation
-        const stops =
-          data.features[0].properties.stops?.map((stop, idx) => {
-            // Determine if stop has correctly formatted coordinates
-            const hasValidLatLng =
-              typeof stop.latitude === "number" &&
-              typeof stop.longitude === "number" &&
-              !isNaN(stop.latitude) &&
-              !isNaN(stop.longitude);
+        console.log(
+          `Processed API data: ${extractedRoute.length} route points, ${extractedStops.length} stops`
+        );
 
-            // Extract coordinates from GeoJSON if available
-            const hasCoordinates =
-              Array.isArray(stop.coordinates) && stop.coordinates.length === 2;
+        // Check if we extracted valid data
+        if (extractedRoute.length > 0 || extractedStops.length > 0) {
+          // Merge API data with our enhanced local data
+          const enhancedData = generateEnhancedTripData(vehicleData);
 
-            // Construct the stop object with best available data
-            return {
-              id: `${stop.location || "stop"}-${idx}`,
-              name: (stop.location || "").split(",")[0].trim(),
-              // Use the most reliable source for coordinates
-              latitude: hasValidLatLng
-                ? stop.latitude
-                : hasCoordinates
-                ? stop.coordinates[1]
-                : null,
-              longitude: hasValidLatLng
-                ? stop.longitude
-                : hasCoordinates
-                ? stop.coordinates[0]
-                : null,
-              type: stop.type || "waypoint",
-              description: stop.description || stop.location || "",
-              charging: stop.type === "charging",
-              overnight: stop.type === "overnight",
-              state: stop.state || "",
-            };
-          }) || [];
+          const mergedData = {
+            ...enhancedData,
+            // Only override route and stops if we extracted valid data
+            ...(extractedRoute.length > 0 ? { route: extractedRoute } : {}),
+            ...(extractedStops.length > 0 ? { stops: extractedStops } : {}),
+            visitedStates: Array.from(visitedStates),
+          };
 
-        // Merge API data with our enhanced local data
-        const enhancedData = generateEnhancedTripData(vehicleData);
-        const mergedData = {
-          ...enhancedData,
-          route,
-          stops,
-          visitedStates: Array.from(visitedStates),
-        };
+          // Add any other fields from the API data
+          if (data.currentStopIndex !== undefined) {
+            mergedData.currentStopIndex = data.currentStopIndex;
+          }
 
-        setTripData(mergedData);
-        setError(null);
-        console.log("✅ Successfully fetched trip data from API");
-        return;
+          setTripData(mergedData);
+          setError(null);
+          console.log(
+            "✅ Successfully fetched and processed trip data from API"
+          );
+          return;
+        } else {
+          console.warn("API data didn't contain valid route or stops");
+          throw new Error("Invalid or incomplete API data");
+        }
+      } else {
+        console.warn(`API request failed with status: ${response.status}`);
+        throw new Error(`API request failed with status: ${response.status}`);
       }
     } catch (err) {
       console.warn("⚠️ Failed to fetch trip data from API:", err.message);
@@ -540,8 +777,8 @@ export const useTripData = ({ vehicleData, pollInterval = 60000 } = {}) => {
     const enhancedData = generateEnhancedTripData(vehicleData);
     setTripData(enhancedData);
     setError(null);
-    console.log("📍 Using enhanced local trip data");
-  }, [vehicleData, generateEnhancedTripData]);
+    console.log("📍 Using enhanced local trip data as fallback");
+  }, [vehicleData, generateEnhancedTripData, validateAndNormalizeCoordinates]);
 
   // Fetch trip data on mount and when vehicle data changes
   useEffect(() => {

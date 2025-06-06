@@ -1,473 +1,446 @@
-#!/usr/bin/env node
-/* eslint-disable @typescript-eslint/no-var-requires */
-/* eslint-env node */
-
 /**
- * Coordinate Format Fix Script
+ * Coordinate Format Fixer
  *
- * This script ensures that all coordinates in the itinerary data files follow the correct format:
- * - GeoJSON requires [longitude, latitude] format for coordinates arrays
- * - Individual properties should have separate latitude and longitude properties
- * - All coordinate values must be within valid ranges (-180 to 180 for longitude, -90 to 90 for latitude)
+ * This script ensures that all coordinates in the itinerary data follow the
+ * GeoJSON standard format of [longitude, latitude] and are consistently formatted
+ * across all data sources. It fixes common issues like swapped coordinates,
+ * string vs number formats, and inconsistent property naming.
  *
- * The script processes:
- * 1. itinerary.json - Simplified format
- * 2. itinerary-full.json - GeoJSON format
- * 3. edge-worker/trip-data.json - KV storage format
+ * Usage: node scripts/fix-coordinate-format.cjs
  */
 
 const fs = require("fs");
 const path = require("path");
 
-// File paths
-const ROOT_DIR = path.resolve(__dirname, "..");
-const ITINERARY_FILE = path.resolve(ROOT_DIR, "itinerary.json");
-const FULL_ITINERARY_FILE = path.resolve(ROOT_DIR, "itinerary-full.json");
-const EDGE_WORKER_DATA_FILE = path.resolve(
-  ROOT_DIR,
-  "edge-worker/trip-data.json"
+// Paths to the data files
+const ITINERARY_FULL_PATH = path.join(__dirname, "..", "itinerary-full.json");
+const ITINERARY_PATH = path.join(__dirname, "..", "itinerary.json");
+const EDGE_WORKER_ITINERARY_PATH = path.join(
+  __dirname,
+  "..",
+  "edge-worker",
+  "itinerary-data.json"
+);
+const EDGE_WORKER_TRIP_PATH = path.join(
+  __dirname,
+  "..",
+  "edge-worker",
+  "trip-data.json"
 );
 
-// Helper to check if a file exists
-const fileExists = (filePath) => {
-  try {
-    return fs.existsSync(filePath);
-  } catch (error) {
-    return false;
-  }
-};
+/**
+ * Validate and normalize coordinates to ensure they are in [longitude, latitude] format
+ * @param {number|string} lng - Longitude value
+ * @param {number|string} lat - Latitude value
+ * @returns {Array|null} - Normalized [longitude, latitude] array or null if invalid
+ */
+function validateAndNormalizeCoordinates(lng, lat) {
+  // Convert string values to numbers
+  if (typeof lng === "string") lng = parseFloat(lng);
+  if (typeof lat === "string") lat = parseFloat(lat);
 
-// Validate coordinate values
-const isValidCoordinate = (lng, lat) => {
-  return (
-    typeof lng === "number" &&
-    typeof lat === "number" &&
-    !isNaN(lng) &&
-    !isNaN(lat) &&
-    Math.abs(lng) <= 180 &&
-    Math.abs(lat) <= 90
-  );
-};
+  // Check if values are valid numbers and within range
+  // Longitude: -180 to 180, Latitude: -90 to 90
+  const validLng =
+    typeof lng === "number" && !isNaN(lng) && lng >= -180 && lng <= 180;
+  const validLat =
+    typeof lat === "number" && !isNaN(lat) && lat >= -90 && lat <= 90;
 
-// Swap coordinates if they appear to be in the wrong order
-// Logic: If the first value looks like latitude and second like longitude
-const fixCoordinateOrder = (coord) => {
-  if (!Array.isArray(coord) || coord.length !== 2) {
+  if (!validLng || !validLat) {
     return null;
   }
 
-  const [first, second] = coord;
+  return [lng, lat];
+}
 
-  // Both values should be numbers
-  if (typeof first !== "number" || typeof second !== "number") {
-    return null;
-  }
+/**
+ * Detect and fix potentially swapped coordinates
+ * @param {Object|Array} point - Point data with lat/lng or coordinates array
+ * @returns {Array|null} - Fixed [longitude, latitude] array or null if invalid
+ */
+function fixCoordinateFormat(point) {
+  if (!point) return null;
 
-  // If coordinates look correct (longitude, latitude)
-  if (Math.abs(first) <= 180 && Math.abs(second) <= 90) {
-    return [first, second]; // Already in correct GeoJSON order
-  }
-  // If coordinates seem swapped (latitude, longitude)
-  else if (Math.abs(first) <= 90 && Math.abs(second) <= 180) {
-    console.log(
-      `Swapping coordinates from [${first}, ${second}] to [${second}, ${first}]`
+  // Handle if point is already an array
+  if (Array.isArray(point) && point.length === 2) {
+    const [first, second] = point.map((p) =>
+      typeof p === "string" ? parseFloat(p) : p
     );
-    return [second, first]; // Swap to correct GeoJSON order
+
+    // Skip invalid values
+    if (isNaN(first) || isNaN(second)) return null;
+
+    // If first value looks like latitude and second like longitude
+    if (
+      Math.abs(first) <= 90 &&
+      Math.abs(second) <= 180 &&
+      Math.abs(second) > 90
+    ) {
+      console.log("Fixing swapped array coordinates:", [first, second], "→", [
+        second,
+        first,
+      ]);
+      return validateAndNormalizeCoordinates(second, first);
+    }
+
+    return validateAndNormalizeCoordinates(first, second);
   }
 
-  // Invalid coordinates
+  // Handle if point has lat/lng properties
+  if (point.latitude !== undefined && point.longitude !== undefined) {
+    const lat =
+      typeof point.latitude === "string"
+        ? parseFloat(point.latitude)
+        : point.latitude;
+    const lng =
+      typeof point.longitude === "string"
+        ? parseFloat(point.longitude)
+        : point.longitude;
+
+    // Skip invalid values
+    if (isNaN(lat) || isNaN(lng)) return null;
+
+    // If longitude looks like it might be a latitude value and vice versa
+    if (Math.abs(lng) <= 90 && Math.abs(lat) > 90) {
+      console.log("Fixing swapped lat/lng properties:", { lat, lng }, "→", {
+        lat: lng,
+        lng: lat,
+      });
+      return validateAndNormalizeCoordinates(lat, lng);
+    }
+
+    return validateAndNormalizeCoordinates(lng, lat);
+  }
+
+  // Handle if point has lng/lat properties (GeoJSON style)
+  if (point.lng !== undefined && point.lat !== undefined) {
+    const lng =
+      typeof point.lng === "string" ? parseFloat(point.lng) : point.lng;
+    const lat =
+      typeof point.lat === "string" ? parseFloat(point.lat) : point.lat;
+    return validateAndNormalizeCoordinates(lng, lat);
+  }
+
+  // Handle if point has coordinates array property
+  if (
+    point.coordinates &&
+    Array.isArray(point.coordinates) &&
+    point.coordinates.length === 2
+  ) {
+    return fixCoordinateFormat(point.coordinates);
+  }
+
   return null;
-};
+}
 
-// Process simplified itinerary file
-const fixSimplifiedItinerary = () => {
-  if (!fileExists(ITINERARY_FILE)) {
-    console.log(`${ITINERARY_FILE} not found. Skipping.`);
-    return false;
+/**
+ * Fix stop coordinates in an itinerary
+ * @param {Object} stop - The stop object to fix
+ * @returns {Object} - The fixed stop object
+ */
+function fixStopCoordinates(stop) {
+  if (!stop) return stop;
+
+  let coordinates = null;
+
+  // First try standard format
+  if (
+    typeof stop.longitude !== "undefined" &&
+    typeof stop.latitude !== "undefined"
+  ) {
+    coordinates = validateAndNormalizeCoordinates(
+      stop.longitude,
+      stop.latitude
+    );
   }
 
-  try {
-    console.log(`Processing ${path.basename(ITINERARY_FILE)}...`);
+  // If that fails, try GeoJSON coordinates array if available
+  if (
+    !coordinates &&
+    stop.coordinates &&
+    Array.isArray(stop.coordinates) &&
+    stop.coordinates.length === 2
+  ) {
+    coordinates = validateAndNormalizeCoordinates(
+      stop.coordinates[0],
+      stop.coordinates[1]
+    );
+  }
 
-    const data = JSON.parse(fs.readFileSync(ITINERARY_FILE, "utf8"));
-    let fixedCount = 0;
+  // Last resort - try to fix potential format issues
+  if (!coordinates) {
+    coordinates = fixCoordinateFormat(stop);
+  }
 
-    if (!data.stops || !Array.isArray(data.stops)) {
-      console.log(
-        `Invalid format in ${path.basename(
-          ITINERARY_FILE
-        )}: missing or invalid 'stops' array.`
-      );
-      return false;
-    }
+  // If we successfully fixed/validated coordinates, update the stop object
+  if (coordinates) {
+    const [longitude, latitude] = coordinates;
 
-    // Fix each stop
-    for (const stop of data.stops) {
-      // Fix individual latitude/longitude properties
+    // Update with consistent format
+    const updatedStop = {
+      ...stop,
+      longitude,
+      latitude,
+      coordinates: [longitude, latitude], // Also add GeoJSON-compatible coordinates array
+    };
+
+    return updatedStop;
+  }
+
+  // If we couldn't fix coordinates, return the original stop
+  console.warn(
+    `WARNING: Could not fix coordinates for stop: ${stop.name || "Unknown"}`
+  );
+  return stop;
+}
+
+/**
+ * Fix route coordinates in an itinerary
+ * @param {Array} route - Array of route points
+ * @returns {Array} - Fixed route array
+ */
+function fixRouteCoordinates(route) {
+  if (!Array.isArray(route)) return route;
+
+  const fixedRoute = route
+    .map((point) => {
+      // Skip null/undefined points
+      if (!point) return null;
+
+      let coordinates = null;
+
+      // First try with standard format
       if (
-        stop.latitude !== undefined &&
-        stop.longitude !== undefined &&
-        !isValidCoordinate(stop.longitude, stop.latitude)
+        typeof point.longitude !== "undefined" &&
+        typeof point.latitude !== "undefined"
       ) {
-        // If values are swapped (longitude in latitude field and vice versa)
-        if (isValidCoordinate(stop.latitude, stop.longitude)) {
-          console.log(
-            `Fixing swapped latitude/longitude in stop: ${stop.location}`
-          );
-          const tempLat = stop.latitude;
-          stop.latitude = stop.longitude;
-          stop.longitude = tempLat;
-          fixedCount++;
-        }
+        coordinates = validateAndNormalizeCoordinates(
+          point.longitude,
+          point.latitude
+        );
       }
 
-      // Fix or create coordinates array
-      if (Array.isArray(stop.coordinates) && stop.coordinates.length === 2) {
-        const fixedCoords = fixCoordinateOrder(stop.coordinates);
-        if (fixedCoords) {
-          if (
-            fixedCoords[0] !== stop.coordinates[0] ||
-            fixedCoords[1] !== stop.coordinates[1]
-          ) {
-            stop.coordinates = fixedCoords;
-            fixedCount++;
-          }
-
-          // Make sure coordinates match individual properties
-          if (
-            stop.coordinates[0] !== stop.longitude ||
-            stop.coordinates[1] !== stop.latitude
-          ) {
-            stop.coordinates = [stop.longitude, stop.latitude];
-            fixedCount++;
-          }
-        }
-      } else if (stop.latitude !== undefined && stop.longitude !== undefined) {
-        // Create coordinates array if it doesn't exist
-        stop.coordinates = [stop.longitude, stop.latitude]; // GeoJSON format: [lng, lat]
-        fixedCount++;
+      // If that fails, try to fix potential format issues
+      if (!coordinates) {
+        coordinates = fixCoordinateFormat(point);
       }
-    }
 
-    if (fixedCount > 0) {
-      fs.writeFileSync(ITINERARY_FILE, JSON.stringify(data, null, 2));
-      console.log(
-        `✓ Fixed ${fixedCount} coordinate issues in ${path.basename(
-          ITINERARY_FILE
-        )}`
+      if (coordinates) {
+        const [longitude, latitude] = coordinates;
+
+        // Return a consistent format for route points
+        return {
+          longitude,
+          latitude,
+          coordinates: [longitude, latitude],
+        };
+      }
+
+      return null;
+    })
+    .filter((point) => point !== null); // Remove any null points
+
+  return fixedRoute;
+}
+
+/**
+ * Fix itinerary data by normalizing all coordinates
+ * @param {Object} itinerary - The itinerary object to fix
+ * @returns {Object} - The fixed itinerary object
+ */
+function fixItineraryData(itinerary) {
+  if (!itinerary) return itinerary;
+
+  const fixedItinerary = { ...itinerary };
+
+  // Fix stops
+  if (Array.isArray(itinerary.stops)) {
+    fixedItinerary.stops = itinerary.stops.map(fixStopCoordinates);
+  }
+
+  // Fix route
+  if (Array.isArray(itinerary.route)) {
+    fixedItinerary.route = fixRouteCoordinates(itinerary.route);
+  }
+
+  // Fix vehicle location if present
+  if (itinerary.vehicle) {
+    const { vehicle } = itinerary;
+    if (
+      typeof vehicle.longitude !== "undefined" &&
+      typeof vehicle.latitude !== "undefined"
+    ) {
+      const coordinates = validateAndNormalizeCoordinates(
+        vehicle.longitude,
+        vehicle.latitude
       );
-    } else {
-      console.log(`✓ No issues found in ${path.basename(ITINERARY_FILE)}`);
+      if (coordinates) {
+        const [longitude, latitude] = coordinates;
+        fixedItinerary.vehicle = {
+          ...vehicle,
+          longitude,
+          latitude,
+          coordinates: [longitude, latitude],
+        };
+      }
+    }
+  }
+
+  return fixedItinerary;
+}
+
+/**
+ * Fix GeoJSON data (for trip data and route visualization)
+ * @param {Object} geoJson - The GeoJSON object to fix
+ * @returns {Object} - The fixed GeoJSON object
+ */
+function fixGeoJsonData(geoJson) {
+  if (!geoJson || typeof geoJson !== "object") return geoJson;
+
+  const fixedGeoJson = { ...geoJson };
+
+  // Fix Feature Collection
+  if (geoJson.type === "FeatureCollection" && Array.isArray(geoJson.features)) {
+    fixedGeoJson.features = geoJson.features.map((feature) => {
+      if (!feature || !feature.geometry) return feature;
+
+      const fixedFeature = { ...feature };
+
+      // Fix Point geometry
+      if (
+        feature.geometry.type === "Point" &&
+        Array.isArray(feature.geometry.coordinates)
+      ) {
+        const coordinates = fixCoordinateFormat(feature.geometry.coordinates);
+        if (coordinates) {
+          fixedFeature.geometry = {
+            ...feature.geometry,
+            coordinates,
+          };
+        }
+      }
+
+      // Fix LineString geometry
+      if (
+        feature.geometry.type === "LineString" &&
+        Array.isArray(feature.geometry.coordinates)
+      ) {
+        fixedFeature.geometry = {
+          ...feature.geometry,
+          coordinates: feature.geometry.coordinates
+            .map((coords) => fixCoordinateFormat(coords))
+            .filter((coords) => coords !== null),
+        };
+      }
+
+      return fixedFeature;
+    });
+  }
+
+  // Fix Feature
+  if (geoJson.type === "Feature" && geoJson.geometry) {
+    const fixedFeature = { ...geoJson };
+
+    // Fix Point geometry
+    if (
+      geoJson.geometry.type === "Point" &&
+      Array.isArray(geoJson.geometry.coordinates)
+    ) {
+      const coordinates = fixCoordinateFormat(geoJson.geometry.coordinates);
+      if (coordinates) {
+        fixedFeature.geometry = {
+          ...geoJson.geometry,
+          coordinates,
+        };
+      }
     }
 
-    return true;
-  } catch (error) {
-    console.error(
-      `Error processing ${path.basename(ITINERARY_FILE)}: ${error.message}`
-    );
-    return false;
-  }
-};
+    // Fix LineString geometry
+    if (
+      geoJson.geometry.type === "LineString" &&
+      Array.isArray(geoJson.geometry.coordinates)
+    ) {
+      fixedFeature.geometry = {
+        ...geoJson.geometry,
+        coordinates: geoJson.geometry.coordinates
+          .map((coords) => fixCoordinateFormat(coords))
+          .filter((coords) => coords !== null),
+      };
+    }
 
-// Process GeoJSON itinerary file
-const fixGeoJSONItinerary = () => {
-  if (!fileExists(FULL_ITINERARY_FILE)) {
-    console.log(`${FULL_ITINERARY_FILE} not found. Skipping.`);
-    return false;
+    return fixedFeature;
   }
 
+  return fixedGeoJson;
+}
+
+/**
+ * Process and fix all itinerary data files
+ */
+async function processFiles() {
   try {
-    console.log(`Processing ${path.basename(FULL_ITINERARY_FILE)}...`);
-
-    const data = JSON.parse(fs.readFileSync(FULL_ITINERARY_FILE, "utf8"));
-    let fixedCount = 0;
-
-    if (
-      !data.features ||
-      !Array.isArray(data.features) ||
-      data.features.length === 0
-    ) {
-      console.log(
-        `Invalid format in ${path.basename(
-          FULL_ITINERARY_FILE
-        )}: missing or invalid 'features' array.`
+    // Process itinerary-full.json
+    if (fs.existsSync(ITINERARY_FULL_PATH)) {
+      console.log(`Processing: ${ITINERARY_FULL_PATH}`);
+      const itineraryFullData = JSON.parse(
+        fs.readFileSync(ITINERARY_FULL_PATH, "utf8")
       );
-      return false;
-    }
-
-    const feature = data.features[0];
-
-    // Fix geometry coordinates (GeoJSON format: [longitude, latitude])
-    if (
-      feature.geometry &&
-      feature.geometry.type === "LineString" &&
-      Array.isArray(feature.geometry.coordinates)
-    ) {
-      const coordinates = feature.geometry.coordinates;
-
-      for (let i = 0; i < coordinates.length; i++) {
-        const fixedCoords = fixCoordinateOrder(coordinates[i]);
-        if (
-          fixedCoords &&
-          (fixedCoords[0] !== coordinates[i][0] ||
-            fixedCoords[1] !== coordinates[i][1])
-        ) {
-          coordinates[i] = fixedCoords;
-          fixedCount++;
-        }
-      }
-    }
-
-    // Fix stops in properties
-    if (
-      feature.properties &&
-      feature.properties.stops &&
-      Array.isArray(feature.properties.stops)
-    ) {
-      const stops = feature.properties.stops;
-
-      for (const stop of stops) {
-        // Fix individual latitude/longitude properties
-        if (
-          stop.latitude !== undefined &&
-          stop.longitude !== undefined &&
-          !isValidCoordinate(stop.longitude, stop.latitude)
-        ) {
-          // If values are swapped (longitude in latitude field and vice versa)
-          if (isValidCoordinate(stop.latitude, stop.longitude)) {
-            console.log(
-              `Fixing swapped latitude/longitude in stop: ${stop.location}`
-            );
-            const tempLat = stop.latitude;
-            stop.latitude = stop.longitude;
-            stop.longitude = tempLat;
-            fixedCount++;
-          }
-        }
-
-        // Fix or create coordinates array
-        if (Array.isArray(stop.coordinates) && stop.coordinates.length === 2) {
-          const fixedCoords = fixCoordinateOrder(stop.coordinates);
-          if (fixedCoords) {
-            if (
-              fixedCoords[0] !== stop.coordinates[0] ||
-              fixedCoords[1] !== stop.coordinates[1]
-            ) {
-              stop.coordinates = fixedCoords;
-              fixedCount++;
-            }
-
-            // Make sure coordinates match individual properties
-            if (
-              stop.coordinates[0] !== stop.longitude ||
-              stop.coordinates[1] !== stop.latitude
-            ) {
-              stop.coordinates = [stop.longitude, stop.latitude];
-              fixedCount++;
-            }
-          }
-        } else if (
-          stop.latitude !== undefined &&
-          stop.longitude !== undefined
-        ) {
-          // Create coordinates array if it doesn't exist
-          stop.coordinates = [stop.longitude, stop.latitude]; // GeoJSON format: [lng, lat]
-          fixedCount++;
-        }
-      }
-    }
-
-    if (fixedCount > 0) {
-      fs.writeFileSync(FULL_ITINERARY_FILE, JSON.stringify(data, null, 2));
-      console.log(
-        `✓ Fixed ${fixedCount} coordinate issues in ${path.basename(
-          FULL_ITINERARY_FILE
-        )}`
+      const fixedItineraryFullData = fixItineraryData(itineraryFullData);
+      fs.writeFileSync(
+        ITINERARY_FULL_PATH,
+        JSON.stringify(fixedItineraryFullData, null, 2)
       );
-    } else {
-      console.log(`✓ No issues found in ${path.basename(FULL_ITINERARY_FILE)}`);
+      console.log(`Fixed coordinates in: ${ITINERARY_FULL_PATH}`);
     }
 
-    return true;
-  } catch (error) {
-    console.error(
-      `Error processing ${path.basename(FULL_ITINERARY_FILE)}: ${error.message}`
+    // Process itinerary.json
+    if (fs.existsSync(ITINERARY_PATH)) {
+      console.log(`Processing: ${ITINERARY_PATH}`);
+      const itineraryData = JSON.parse(fs.readFileSync(ITINERARY_PATH, "utf8"));
+      const fixedItineraryData = fixItineraryData(itineraryData);
+      fs.writeFileSync(
+        ITINERARY_PATH,
+        JSON.stringify(fixedItineraryData, null, 2)
+      );
+      console.log(`Fixed coordinates in: ${ITINERARY_PATH}`);
+    }
+
+    // Process edge-worker/itinerary-data.json
+    if (fs.existsSync(EDGE_WORKER_ITINERARY_PATH)) {
+      console.log(`Processing: ${EDGE_WORKER_ITINERARY_PATH}`);
+      const edgeWorkerItinerary = JSON.parse(
+        fs.readFileSync(EDGE_WORKER_ITINERARY_PATH, "utf8")
+      );
+      const fixedEdgeWorkerItinerary = fixItineraryData(edgeWorkerItinerary);
+      fs.writeFileSync(
+        EDGE_WORKER_ITINERARY_PATH,
+        JSON.stringify(fixedEdgeWorkerItinerary, null, 2)
+      );
+      console.log(`Fixed coordinates in: ${EDGE_WORKER_ITINERARY_PATH}`);
+    }
+
+    // Process edge-worker/trip-data.json (may be GeoJSON format)
+    if (fs.existsSync(EDGE_WORKER_TRIP_PATH)) {
+      console.log(`Processing: ${EDGE_WORKER_TRIP_PATH}`);
+      const tripData = JSON.parse(
+        fs.readFileSync(EDGE_WORKER_TRIP_PATH, "utf8")
+      );
+      const fixedTripData = fixGeoJsonData(tripData);
+      fs.writeFileSync(
+        EDGE_WORKER_TRIP_PATH,
+        JSON.stringify(fixedTripData, null, 2)
+      );
+      console.log(`Fixed coordinates in: ${EDGE_WORKER_TRIP_PATH}`);
+    }
+
+    console.log("All coordinates fixed successfully!");
+    console.log(
+      "NOTE: Map should now correctly display all locations with proper GeoJSON [longitude, latitude] format."
     );
-    return false;
-  }
-};
-
-// Process KV data file
-const fixKVData = () => {
-  if (!fileExists(EDGE_WORKER_DATA_FILE)) {
-    console.log(`${EDGE_WORKER_DATA_FILE} not found. Skipping.`);
-    return false;
-  }
-
-  try {
-    console.log(`Processing ${path.basename(EDGE_WORKER_DATA_FILE)}...`);
-
-    const data = JSON.parse(fs.readFileSync(EDGE_WORKER_DATA_FILE, "utf8"));
-    let fixedCount = 0;
-
-    if (!Array.isArray(data) || data.length === 0) {
-      console.log(
-        `Invalid format in ${path.basename(
-          EDGE_WORKER_DATA_FILE
-        )}: expected array of KV objects.`
-      );
-      return false;
-    }
-
-    for (const item of data) {
-      if (typeof item.key === "string" && typeof item.value === "string") {
-        try {
-          // Try to parse the value as JSON
-          const parsedValue = JSON.parse(item.value);
-
-          // If it's GeoJSON, fix the coordinates
-          if (
-            parsedValue &&
-            parsedValue.type === "FeatureCollection" &&
-            Array.isArray(parsedValue.features)
-          ) {
-            let valueFixedCount = 0;
-
-            for (const feature of parsedValue.features) {
-              // Fix geometry coordinates
-              if (
-                feature.geometry &&
-                feature.geometry.type === "LineString" &&
-                Array.isArray(feature.geometry.coordinates)
-              ) {
-                const coordinates = feature.geometry.coordinates;
-
-                for (let i = 0; i < coordinates.length; i++) {
-                  const fixedCoords = fixCoordinateOrder(coordinates[i]);
-                  if (
-                    fixedCoords &&
-                    (fixedCoords[0] !== coordinates[i][0] ||
-                      fixedCoords[1] !== coordinates[i][1])
-                  ) {
-                    coordinates[i] = fixedCoords;
-                    valueFixedCount++;
-                  }
-                }
-              }
-
-              // Fix stops in properties
-              if (
-                feature.properties &&
-                feature.properties.stops &&
-                Array.isArray(feature.properties.stops)
-              ) {
-                const stops = feature.properties.stops;
-
-                for (const stop of stops) {
-                  // Fix individual latitude/longitude properties
-                  if (
-                    stop.latitude !== undefined &&
-                    stop.longitude !== undefined &&
-                    !isValidCoordinate(stop.longitude, stop.latitude)
-                  ) {
-                    // If values are swapped (longitude in latitude field and vice versa)
-                    if (isValidCoordinate(stop.latitude, stop.longitude)) {
-                      console.log(
-                        `Fixing swapped latitude/longitude in KV stop: ${stop.location}`
-                      );
-                      const tempLat = stop.latitude;
-                      stop.latitude = stop.longitude;
-                      stop.longitude = tempLat;
-                      valueFixedCount++;
-                    }
-                  }
-
-                  // Fix or create coordinates array
-                  if (
-                    Array.isArray(stop.coordinates) &&
-                    stop.coordinates.length === 2
-                  ) {
-                    const fixedCoords = fixCoordinateOrder(stop.coordinates);
-                    if (fixedCoords) {
-                      if (
-                        fixedCoords[0] !== stop.coordinates[0] ||
-                        fixedCoords[1] !== stop.coordinates[1]
-                      ) {
-                        stop.coordinates = fixedCoords;
-                        valueFixedCount++;
-                      }
-
-                      // Make sure coordinates match individual properties
-                      if (
-                        stop.coordinates[0] !== stop.longitude ||
-                        stop.coordinates[1] !== stop.latitude
-                      ) {
-                        stop.coordinates = [stop.longitude, stop.latitude];
-                        valueFixedCount++;
-                      }
-                    }
-                  } else if (
-                    stop.latitude !== undefined &&
-                    stop.longitude !== undefined
-                  ) {
-                    // Create coordinates array if it doesn't exist
-                    stop.coordinates = [stop.longitude, stop.latitude]; // GeoJSON format: [lng, lat]
-                    valueFixedCount++;
-                  }
-                }
-              }
-            }
-
-            if (valueFixedCount > 0) {
-              item.value = JSON.stringify(parsedValue);
-              fixedCount += valueFixedCount;
-            }
-          }
-        } catch (error) {
-          console.log(
-            `Error parsing KV value for key ${item.key}: ${error.message}`
-          );
-        }
-      }
-    }
-
-    if (fixedCount > 0) {
-      fs.writeFileSync(EDGE_WORKER_DATA_FILE, JSON.stringify(data, null, 2));
-      console.log(
-        `✓ Fixed ${fixedCount} coordinate issues in ${path.basename(
-          EDGE_WORKER_DATA_FILE
-        )}`
-      );
-    } else {
-      console.log(
-        `✓ No issues found in ${path.basename(EDGE_WORKER_DATA_FILE)}`
-      );
-    }
-
-    return true;
   } catch (error) {
-    console.error(
-      `Error processing ${path.basename(EDGE_WORKER_DATA_FILE)}: ${
-        error.message
-      }`
-    );
-    return false;
+    console.error("Error processing files:", error);
   }
-};
+}
 
-// Run the coordinate fixes
-console.log("🌍 Coordinate Format Fix Utility");
-console.log("=============================");
-
-const simplifiedFixed = fixSimplifiedItinerary();
-const geoJSONFixed = fixGeoJSONItinerary();
-const kvDataFixed = fixKVData();
-
-console.log("\nSummary:");
-console.log("========");
-console.log(
-  `Simplified itinerary: ${simplifiedFixed ? "✓ Processed" : "✗ Failed"}`
-);
-console.log(`GeoJSON itinerary: ${geoJSONFixed ? "✓ Processed" : "✗ Failed"}`);
-console.log(`KV data: ${kvDataFixed ? "✓ Processed" : "✗ Failed"}`);
-console.log("\nCoordinate format fix complete!");
+// Run the processing function
+processFiles();
