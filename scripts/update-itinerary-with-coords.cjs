@@ -24,6 +24,8 @@ const rows = lines.slice(1).map((line) => {
 });
 
 // City/state to coordinates mapping with more locations from latest itinerary
+// NOTE: Coordinates are stored in [latitude, longitude] format here for readability
+// They will be converted to GeoJSON [longitude, latitude] format when needed
 const coordinatesMap = {
   "Corpus Christi, TX": [27.8006, -97.3964],
   "Tucson, AZ": [32.2226, -110.9747],
@@ -136,14 +138,24 @@ const itineraryData = {
       type: "Feature",
       properties: {
         route: "48 Continental USA",
-        stops: processedStops,
+        stops: processedStops.map((stop) => {
+          // Create a copy with properly formatted coordinates for the API
+          return {
+            ...stop,
+            // Add properly formatted GeoJSON coordinates
+            longitude: stop.coordinates[1],
+            latitude: stop.coordinates[0],
+            // Include both formats to help debugging
+            coordinates: [stop.coordinates[1], stop.coordinates[0]], // [longitude, latitude] for GeoJSON
+          };
+        }),
       },
       geometry: {
         type: "LineString",
         // Fix coordinate order for GeoJSON: MapBox requires [longitude, latitude]
         coordinates: processedStops.map((stop) => [
-          stop.coordinates[1],
-          stop.coordinates[0],
+          stop.coordinates[1], // longitude comes first in GeoJSON
+          stop.coordinates[0], // latitude comes second in GeoJSON
         ]),
       },
     },

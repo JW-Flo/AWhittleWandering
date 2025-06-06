@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": "1.0.0",
-    "generatedAt": "2025-06-06T10:25:44.767Z",
+    "generatedAt": "2025-06-06T11:15:50.359Z",
     "totalStops": 47,
     "title": "48 Continental USA Road Trip",
     "description": "Tesla road trip through all 48 contiguous US states"
@@ -14,6 +14,10 @@
       "notes": "Trip begins – depart early morning",
       "latitude": 27.8006,
       "longitude": -97.3964,
+      "coordinates": [
+        -97.3964,
+        27.8006
+      ],
       "type": "start"
     },
     {
@@ -23,6 +27,10 @@
       "notes": "Drive day + overnight recharge",
       "latitude": 32.2226,
       "longitude": -110.9747,
+      "coordinates": [
+        -110.9747,
+        32.2226
+      ],
       "type": "overnight"
     },
     {
@@ -32,6 +40,10 @@
       "notes": "1.5-day scenic visit",
       "latitude": 36.0544,
       "longitude": -112.1401,
+      "coordinates": [
+        -112.1401,
+        36.0544
+      ],
       "type": "waypoint"
     },
     {
@@ -41,6 +53,10 @@
       "notes": "Visit Laurent (1 day)",
       "latitude": 34.0522,
       "longitude": -118.2437,
+      "coordinates": [
+        -118.2437,
+        34.0522
+      ],
       "type": "waypoint"
     },
     {
@@ -50,6 +66,10 @@
       "notes": "Coastal beach drive north",
       "latitude": 36.0074,
       "longitude": -121.5008,
+      "coordinates": [
+        -121.5008,
+        36.0074
+      ],
       "type": "waypoint"
     },
     {
@@ -59,6 +79,10 @@
       "notes": "1.5-day stay in the forest",
       "latitude": 41.2132,
       "longitude": -124.0046,
+      "coordinates": [
+        -124.0046,
+        41.2132
+      ],
       "type": "waypoint"
     },
     {
@@ -68,6 +92,10 @@
       "notes": "Visit Stefan Morris (2 full days)",
       "latitude": 46.8791,
       "longitude": -117.3644,
+      "coordinates": [
+        -117.3644,
+        46.8791
+      ],
       "type": "waypoint"
     },
     {
@@ -77,6 +105,10 @@
       "notes": "1 full day beach stop",
       "latitude": 45.8918,
       "longitude": -123.9615,
+      "coordinates": [
+        -123.9615,
+        45.8918
+      ],
       "type": "waypoint"
     },
     {
@@ -86,6 +118,10 @@
       "notes": "Visit Brian",
       "latitude": 47.0379,
       "longitude": -122.9007,
+      "coordinates": [
+        -122.9007,
+        47.0379
+      ],
       "type": "waypoint"
     },
     {
@@ -95,6 +131,10 @@
       "notes": "Visit Troy before 6/20 camping",
       "latitude": 47.6062,
       "longitude": -122.3321,
+      "coordinates": [
+        -122.3321,
+        47.6062
+      ],
       "type": "waypoint"
     },
     {
@@ -104,6 +144,10 @@
       "notes": "2-night park stay",
       "latitude": 44.428,
       "longitude": -110.5885,
+      "coordinates": [
+        -110.5885,
+        44.428
+      ],
       "type": "waypoint"
     },
     {
@@ -113,6 +157,10 @@
       "notes": "Visit Brady Covington",
       "latitude": 40.7608,
       "longitude": -111.891,
+      "coordinates": [
+        -111.891,
+        40.7608
+      ],
       "type": "waypoint"
     },
     {
@@ -122,6 +170,10 @@
       "notes": "Visit Erin Lane (after her travel blackout)",
       "latitude": 40.2338,
       "longitude": -111.6585,
+      "coordinates": [
+        -111.6585,
+        40.2338
+      ],
       "type": "waypoint"
     },
     {
@@ -131,6 +183,10 @@
       "notes": "Visit Josh",
       "latitude": 39.7392,
       "longitude": -104.9903,
+      "coordinates": [
+        -104.9903,
+        39.7392
+      ],
       "type": "waypoint"
     },
     {
@@ -140,6 +196,10 @@
       "notes": "Visit Caleb Blakeman",
       "latitude": 40.5853,
       "longitude": -105.0844,
+      "coordinates": [
+        -105.0844,
+        40.5853
+      ],
       "type": "waypoint"
     },
     {
@@ -149,6 +209,10 @@
       "notes": "North Dakota overnight",
       "latitude": 46.8772,
       "longitude": -96.7898,
+      "coordinates": [
+        -96.7898,
+        46.8772
+      ],
       "type": "overnight"
     },
     {
@@ -158,6 +222,10 @@
       "notes": "South Dakota stop",
       "latitude": 43.5446,
       "longitude": -96.7311,
+      "coordinates": [
+        -96.7311,
+        43.5446
+      ],
       "type": "waypoint"
     },
     {
@@ -167,6 +235,10 @@
       "notes": "Visit Parents & Hayden (4 days)",
       "latitude": 40.8136,
       "longitude": -96.7026,
+      "coordinates": [
+        -96.7026,
+        40.8136
+      ],
       "type": "waypoint"
     },
     {
@@ -176,6 +248,10 @@
       "notes": "Visit Connor McBride",
       "latitude": 41.8781,
       "longitude": -87.6298,
+      "coordinates": [
+        -87.6298,
+        41.8781
+      ],
       "type": "waypoint"
     },
     {
@@ -185,6 +261,10 @@
       "notes": "Wisconsin stopover",
       "latitude": 43.0389,
       "longitude": -87.9065,
+      "coordinates": [
+        -87.9065,
+        43.0389
+      ],
       "type": "waypoint"
     },
     {
@@ -194,6 +274,10 @@
       "notes": "Minnesota drive-through",
       "latitude": 44.9778,
       "longitude": -93.265,
+      "coordinates": [
+        -93.265,
+        44.9778
+      ],
       "type": "waypoint"
     },
     {
@@ -203,6 +287,10 @@
       "notes": "\"Scenic lakeshore",
       "latitude": 44.7631,
       "longitude": -85.6206,
+      "coordinates": [
+        -85.6206,
+        44.7631
+      ],
       "type": "waypoint"
     },
     {
@@ -212,6 +300,10 @@
       "notes": "Visit Cameron Hynes",
       "latitude": 39.9612,
       "longitude": -82.9988,
+      "coordinates": [
+        -82.9988,
+        39.9612
+      ],
       "type": "waypoint"
     },
     {
@@ -221,6 +313,10 @@
       "notes": "Visit Jack Lavey",
       "latitude": 39.4667,
       "longitude": -87.4139,
+      "coordinates": [
+        -87.4139,
+        39.4667
+      ],
       "type": "waypoint"
     },
     {
@@ -230,6 +326,10 @@
       "notes": "City stop / route setup",
       "latitude": 39.9526,
       "longitude": -75.1652,
+      "coordinates": [
+        -75.1652,
+        39.9526
+      ],
       "type": "waypoint"
     },
     {
@@ -239,6 +339,10 @@
       "notes": "Visit Philip Dalton (optional)",
       "latitude": 42.6526,
       "longitude": -73.7562,
+      "coordinates": [
+        -73.7562,
+        42.6526
+      ],
       "type": "waypoint"
     },
     {
@@ -248,6 +352,10 @@
       "notes": "Check off New England states",
       "latitude": 43.734,
       "longitude": -72.454,
+      "coordinates": [
+        -72.454,
+        43.734
+      ],
       "type": "waypoint"
     },
     {
@@ -257,6 +365,10 @@
       "notes": "1.5-day scenic East Coast top",
       "latitude": 44.3876,
       "longitude": -68.2039,
+      "coordinates": [
+        -68.2039,
+        44.3876
+      ],
       "type": "waypoint"
     },
     {
@@ -266,6 +378,10 @@
       "notes": "Visit Deanna for July 4th (4 days)",
       "latitude": 41.7658,
       "longitude": -72.6734,
+      "coordinates": [
+        -72.6734,
+        41.7658
+      ],
       "type": "waypoint"
     },
     {
@@ -275,6 +391,10 @@
       "notes": "Wrap-up Northeast",
       "latitude": 42.3601,
       "longitude": -71.0589,
+      "coordinates": [
+        -71.0589,
+        42.3601
+      ],
       "type": "waypoint"
     },
     {
@@ -284,6 +404,10 @@
       "notes": "Quick state check-in",
       "latitude": 41.824,
       "longitude": -71.4128,
+      "coordinates": [
+        -71.4128,
+        41.824
+      ],
       "type": "waypoint"
     },
     {
@@ -293,6 +417,10 @@
       "notes": "Southbound entry",
       "latitude": 40.7357,
       "longitude": -74.1724,
+      "coordinates": [
+        -74.1724,
+        40.7357
+      ],
       "type": "waypoint"
     },
     {
@@ -302,6 +430,10 @@
       "notes": "Check off DE",
       "latitude": 39.7391,
       "longitude": -75.5398,
+      "coordinates": [
+        -75.5398,
+        39.7391
+      ],
       "type": "waypoint"
     },
     {
@@ -311,6 +443,10 @@
       "notes": "Scenic + historic",
       "latitude": 39.3254,
       "longitude": -77.7389,
+      "coordinates": [
+        -77.7389,
+        39.3254
+      ],
       "type": "waypoint"
     },
     {
@@ -320,6 +456,10 @@
       "notes": "Visit Brad Gross",
       "latitude": 35.7796,
       "longitude": -78.6382,
+      "coordinates": [
+        -78.6382,
+        35.7796
+      ],
       "type": "waypoint"
     },
     {
@@ -329,6 +469,10 @@
       "notes": "Visit Nana & Pawpaw — birthday 7/21",
       "latitude": 34.9854,
       "longitude": -80.5495,
+      "coordinates": [
+        -80.5495,
+        34.9854
+      ],
       "type": "waypoint"
     },
     {
@@ -338,6 +482,10 @@
       "notes": "Appalachian Trail area after Monroe",
       "latitude": 35.5951,
       "longitude": -82.5515,
+      "coordinates": [
+        -82.5515,
+        35.5951
+      ],
       "type": "waypoint"
     },
     {
@@ -347,6 +495,10 @@
       "notes": "Visit Max Mosley",
       "latitude": 34.9496,
       "longitude": -81.932,
+      "coordinates": [
+        -81.932,
+        34.9496
+      ],
       "type": "waypoint"
     },
     {
@@ -356,6 +508,10 @@
       "notes": "Lowcountry drive",
       "latitude": 32.0809,
       "longitude": -81.0912,
+      "coordinates": [
+        -81.0912,
+        32.0809
+      ],
       "type": "waypoint"
     },
     {
@@ -365,6 +521,10 @@
       "notes": "Visit John & Sarah",
       "latitude": 27.3364,
       "longitude": -82.5307,
+      "coordinates": [
+        -82.5307,
+        27.3364
+      ],
       "type": "waypoint"
     },
     {
@@ -374,6 +534,10 @@
       "notes": "Florida panhandle drive",
       "latitude": 30.4383,
       "longitude": -84.2807,
+      "coordinates": [
+        -84.2807,
+        30.4383
+      ],
       "type": "waypoint"
     },
     {
@@ -383,6 +547,10 @@
       "notes": "Visit Barton after Florida",
       "latitude": 35.9606,
       "longitude": -83.9207,
+      "coordinates": [
+        -83.9207,
+        35.9606
+      ],
       "type": "waypoint"
     },
     {
@@ -392,6 +560,10 @@
       "notes": "Gulf Coast rest stop",
       "latitude": 30.6954,
       "longitude": -88.0399,
+      "coordinates": [
+        -88.0399,
+        30.6954
+      ],
       "type": "waypoint"
     },
     {
@@ -401,6 +573,10 @@
       "notes": "Jazz & culture stop",
       "latitude": 29.9511,
       "longitude": -90.0715,
+      "coordinates": [
+        -90.0715,
+        29.9511
+      ],
       "type": "waypoint"
     },
     {
@@ -410,6 +586,10 @@
       "notes": "Southern swing",
       "latitude": 32.2988,
       "longitude": -90.1848,
+      "coordinates": [
+        -90.1848,
+        32.2988
+      ],
       "type": "waypoint"
     },
     {
@@ -419,6 +599,10 @@
       "notes": "Quick overnight",
       "latitude": 34.7465,
       "longitude": -92.2896,
+      "coordinates": [
+        -92.2896,
+        34.7465
+      ],
       "type": "overnight"
     },
     {
@@ -428,6 +612,10 @@
       "notes": "Final return — trip ends at 60 days",
       "latitude": 30.2672,
       "longitude": -97.7431,
+      "coordinates": [
+        -97.7431,
+        30.2672
+      ],
       "type": "end"
     }
   ]
