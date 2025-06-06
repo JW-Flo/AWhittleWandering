@@ -1,57 +1,59 @@
 /**
- * Map Enhancements CSS
- * Essential styling for map functionality
+ * Map Enhancements Styles
+ * 
+ * Additional styles for the enhanced Map component 
+ * to complement the base Map.css styles
  */
 
-/* Map container essentials */
-.map-container {
-  position: relative;
-  width: 100%;
-  height: 600px;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+/* Vehicle Marker Enhancements */
+.vehicle-marker {
+  cursor: pointer;
+  transform-origin: center;
+  transition: transform 0.3s ease, filter 0.3s ease;
 }
 
-.map-container.fullscreen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 9999;
-  border-radius: 0;
+.vehicle-marker.vehicle-moving {
+  animation: vehicle-pulse 2s infinite;
 }
 
-/* Ensure the map has proper height */
-.map {
-  width: 100%;
-  height: 100%;
+@keyframes vehicle-pulse {
+  0% {
+    filter: drop-shadow(0 0 4px rgba(0, 122, 255, 0.3));
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(0, 122, 255, 0.6));
+    transform: scale(1.1);
+  }
+  100% {
+    filter: drop-shadow(0 0 4px rgba(0, 122, 255, 0.3));
+    transform: scale(1);
+  }
 }
 
-/* Loading indicator */
+/* Map Loading State */
 .map-loading {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background-color: rgba(255, 255, 255, 0.9);
-  z-index: 1000;
+  z-index: 10;
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(0, 0, 0, 0.1);
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(0, 122, 255, 0.2);
+  border-top-color: rgba(0, 122, 255, 0.8);
   border-radius: 50%;
-  border-top-color: #2196f3;
   animation: spin 1s ease-in-out infinite;
-  margin-bottom: 16px;
+  margin-bottom: 15px;
 }
 
 @keyframes spin {
@@ -60,270 +62,318 @@
   }
 }
 
-/* Error state */
+/* Map Error State */
 .map-error {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(244, 67, 54, 0.05);
-  z-index: 1000;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 90%;
+  width: 400px;
+  z-index: 10;
 }
 
 .map-error h3 {
-  color: #d32f2f;
-  margin-bottom: 8px;
+  color: #dc3545;
+  margin-top: 0;
 }
 
 .map-error button {
-  margin-top: 16px;
-  padding: 8px 16px;
-  background-color: #2196f3;
+  background-color: #007bff;
   color: white;
   border: none;
   border-radius: 4px;
+  padding: 8px 16px;
+  margin-top: 15px;
   cursor: pointer;
-  font-weight: 500;
+  transition: background-color 0.2s ease;
 }
 
-/* Vehicle marker */
-.vehicle-marker {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+.map-error button:hover {
+  background-color: #0056b3;
 }
 
-/* Route and stop markers */
-.marker-icon {
-  width: 30px;
-  height: 30px;
-  cursor: pointer;
-}
-
-/* Popup styles */
-.mapboxgl-popup-content {
-  padding: 12px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.map-popup h4 {
-  margin: 0 0 8px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-}
-
-.map-popup p {
-  margin: 0 0 6px 0;
-  font-size: 14px;
-  color: #555;
-}
-
-/* Trip statistics panel */
-.trip-statistics {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  background-color: rgba(255, 255, 255, 0.9);
-  border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  z-index: 10;
+/* Enhanced Map Popups */
+.mapboxgl-popup {
   max-width: 280px;
 }
 
-.trip-statistics h3 {
-  margin: 0 0 8px 0;
-  font-size: 16px;
-  color: #333;
-}
-
-.trip-statistics-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-gap: 8px;
-}
-
-.trip-statistics-item {
-  display: flex;
-  flex-direction: column;
-}
-
-.trip-statistics-label {
-  font-size: 12px;
-  color: #666;
-  margin-bottom: 2px;
-}
-
-.trip-statistics-value {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-}
-
-.progress-container {
-  width: 100%;
-  height: 8px;
-  background-color: #f0f0f0;
-  border-radius: 4px;
+.mapboxgl-popup-content {
+  padding: 0;
   overflow: hidden;
-  margin-top: 4px;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
 }
 
-.progress-bar {
-  height: 100%;
-  background-color: #2196f3;
-  border-radius: 4px;
+/* Stop Markers */
+.marker-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  will-change: transform;
+  position: relative;
 }
 
-/* Map debug panel */
-.map-debug-overlay {
+.marker-icon:hover {
+  transform: scale(1.2);
+}
+
+.marker-icon svg {
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
+}
+
+.marker-waypoint svg {
+  filter: drop-shadow(0 2px 3px rgba(255, 193, 7, 0.4));
+}
+
+.marker-charging-station svg {
+  filter: drop-shadow(0 2px 3px rgba(76, 175, 80, 0.4));
+}
+
+.marker-lodging svg {
+  filter: drop-shadow(0 2px 3px rgba(33, 150, 243, 0.4));
+}
+
+/* Vehicle Battery Levels */
+.battery-low {
+  color: #dc3545 !important;
+}
+
+.battery-high {
+  color: #28a745 !important;
+}
+
+/* Charging Status */
+.charging-popup .status-available {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.charging-popup .status-unavailable {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* Map Controls */
+.layer-toggle-container {
   position: absolute;
   top: 10px;
-  right: 10px;
-  width: 320px;
-  max-height: 80%;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  overflow: hidden;
+  left: 10px;
+  z-index: 10;
   display: flex;
   flex-direction: column;
+  gap: 8px;
 }
 
-.map-debug-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  border-bottom: 1px solid #eee;
-}
-
-.map-debug-header h3 {
-  margin: 0;
-  font-size: 16px;
-}
-
-.map-debug-close {
-  background: none;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  color: #666;
-}
-
-.map-debug-content {
-  padding: 10px;
-  overflow-y: auto;
-  max-height: 500px;
-}
-
-.map-debug-panel {
-  margin-bottom: 15px;
-}
-
-.map-debug-panel h4 {
-  margin: 0 0 10px 0;
-  font-size: 14px;
-}
-
-.map-debug-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  font-size: 13px;
-}
-
-.map-debug-list li {
-  padding: 4px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.map-debug-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-
-.map-debug-table th,
-.map-debug-table td {
-  padding: 6px;
-  text-align: left;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.map-debug-button {
-  background-color: #2196f3;
-  color: white;
-  border: none;
+.layer-toggle {
+  background-color: white;
+  border: 1px solid #e9ecef;
   border-radius: 4px;
   padding: 8px 12px;
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
-  margin-top: 10px;
-}
-
-.map-debug-tabs {
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   display: flex;
-  border-bottom: 1px solid #eee;
-  margin-bottom: 10px;
+  align-items: center;
+  gap: 8px;
 }
 
-.map-debug-tabs button {
-  background: none;
-  border: none;
-  padding: 8px 12px;
-  cursor: pointer;
+.layer-toggle.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.layer-toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Map Debug Panel */
+.map-debug-panel {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background-color: white;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  font-size: 12px;
+  max-width: 300px;
+  z-index: 5;
+  max-height: 300px;
+  overflow: auto;
+}
+
+.map-debug-panel h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 14px;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 8px;
+}
+
+.debug-section {
+  margin-bottom: 12px;
+}
+
+.debug-section h4 {
+  margin: 0 0 8px 0;
   font-size: 13px;
-  color: #666;
-  border-bottom: 2px solid transparent;
+  color: #495057;
 }
 
-.map-debug-tabs button.active {
-  color: #2196f3;
-  border-bottom-color: #2196f3;
+.debug-action-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
 }
 
-/* Responsive design for smaller screens */
-@media (max-width: 768px) {
-  .map-container {
-    height: 450px;
-  }
-
-  .trip-statistics {
-    max-width: 240px;
-  }
-
-  .map-debug-overlay {
-    width: 300px;
-  }
+.debug-action-buttons button {
+  flex: 1;
+  padding: 6px 12px;
+  font-size: 12px;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-@media (max-width: 480px) {
-  .map-container {
-    height: 350px;
+.debug-action-buttons button:hover {
+  background-color: #e9ecef;
+}
+
+.debug-action-buttons button.reset {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.debug-action-buttons button.reset:hover {
+  background-color: #f5c6cb;
+}
+
+/* Data Display */
+.debug-data-display {
+  font-family: monospace;
+  font-size: 11px;
+  background-color: #f8f9fa;
+  padding: 8px;
+  border-radius: 4px;
+  max-height: 120px;
+  overflow: auto;
+  margin-top: 8px;
+}
+
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.data-row .label {
+  color: #6c757d;
+}
+
+.data-row .value {
+  color: #212529;
+  max-width: 60%;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .map-loading {
+    background-color: rgba(33, 37, 41, 0.8);
   }
 
-  .trip-statistics {
-    max-width: 220px;
-    font-size: 90%;
+  .map-loading p {
+    color: #e9ecef;
   }
 
-  .map-debug-overlay {
-    width: 280px;
-    right: 5px;
-    top: 5px;
+  .spinner {
+    border-color: rgba(0, 122, 255, 0.2);
+    border-top-color: rgba(0, 122, 255, 0.8);
+  }
+
+  .map-error {
+    background-color: #212529;
+    color: #e9ecef;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.3);
+  }
+
+  .map-debug-panel {
+    background-color: #212529;
+    color: #e9ecef;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    border: 1px solid #343a40;
+  }
+
+  .map-debug-panel h3 {
+    border-color: #343a40;
+    color: #e9ecef;
+  }
+
+  .debug-section h4 {
+    color: #adb5bd;
+  }
+
+  .debug-action-buttons button {
+    background-color: #343a40;
+    border-color: #495057;
+    color: #e9ecef;
+  }
+
+  .debug-action-buttons button:hover {
+    background-color: #495057;
+  }
+
+  .debug-action-buttons button.reset {
+    background-color: #2c2124;
+    border-color: #842029;
+    color: #ea868f;
+  }
+
+  .debug-action-buttons button.reset:hover {
+    background-color: #842029;
+  }
+
+  .debug-data-display {
+    background-color: #343a40;
+  }
+
+  .data-row {
+    border-color: #495057;
+  }
+
+  .data-row .label {
+    color: #adb5bd;
+  }
+
+  .data-row .value {
+    color: #e9ecef;
+  }
+
+  .layer-toggle {
+    background-color: #343a40;
+    border-color: #495057;
+    color: #e9ecef;
+  }
+
+  .layer-toggle:hover {
+    background-color: #495057;
   }
 }

@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>48 Continental USA Map Test</title>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        .overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 4px;
+            z-index: 1;
+            max-width: 300px;
+        }
+        .error-message {
+            color: red;
+            font-weight: bold;
+        }
+        .logs {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            width: 80%;
+            max-width: 600px;
+            font-family: monospace;
+            z-index: 1;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+        }
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            border-radius: 4px;
+            z-index: 2;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading">Loading map...</div>
+    <div id="map"></div>
+    <div class="overlay">
+        <h3>48 Continental USA Map Test</h3>
+        <div id="error" class="error-message"></div>
+        <div id="info"></div>
+    </div>
+    <div id="logs" class="logs"></div>
+
+    <script>
+        // Logging function
+        const logs = [];
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logs.push(`[${timestamp}] ${message}`);
+            const logsElement = document.getElementById('logs');
+            if (logsElement) {
+                const logEntry = document.createElement('div');
+                logEntry.classList.add('log-entry');
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                logsElement.appendChild(logEntry);
+                logsElement.scrollTop = logsElement.scrollHeight;
+            }
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function showError(message) {
+            const errorElement = document.getElementById('error');
+            if (errorElement) {
+                errorElement.textContent = message;
+            }
+            log(`ERROR: ${message}`);
+        }
+
+        // Token management
+        function getMapboxToken() {
+            // Check URL parameters first
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('token')) {
+                return urlParams.get('token');
+            }
+            
+            // Check for token in localStorage
+            const localToken = localStorage.getItem('mapbox_token');
+            if (localToken) {
+                return localToken;
+            }
+            
+            // Prompt user for token if not found
+            const token = prompt('Please enter your Mapbox token:', '');
+            if (token) {
+                localStorage.setItem('mapbox_token', token);
+                return token;
+            }
+            
+            return null;
+        }
+
+        // Load GeoJSON data
+        async function loadGeoJSON() {
+            try {
+                log('Loading trip data...');
+                const response = await fetch('./src/data/trip-data.geojson');
+                if (!response.ok) {
+                    throw new Error(`Failed to load GeoJSON: ${response.statusText}`);
+                }
+                const data = await response.json();
+                log(`Loaded trip data with ${data.features.length} features`);
+                return data;
+            } catch (error) {
+                showError(`Failed to load trip data: ${error.message}`);
+                return null;
+            }
+        }
+
+        // Initialize map
+        async function initMap() {
+            const token = getMapboxToken();
+            if (!token) {
+                showError('No Mapbox token provided');
+                document.getElementById('loading').style.display = 'none';
+                return;
+            }
+
+            log('Initializing map...');
+            mapboxgl.accessToken = token;
+            
+            try {
+                const map = new mapboxgl.Map({
+                    container: 'map',
+                    style: 'mapbox://styles/mapbox/streets-v11',
+                    center: [-95.7129, 37.0902], // Center of US
+                    zoom: 3
+                });
+
+                map.on('load', async () => {
+                    log('Map loaded successfully');
+                    document.getElementById('loading').style.display = 'none';
+                    
+                    // Load and add GeoJSON data
+                    const geoJSON = await loadGeoJSON();
+                    if (!geoJSON) return;
+                    
+                    // Add route source and layer
+                    const routeFeature = geoJSON.features.find(f => f.properties.type === 'route');
+                    if (routeFeature) {
+                        log('Adding route layer');
+                        map.addSource('route', {
+                            type: 'geojson',
+                            data: {
+                                type: 'FeatureCollection',
+                                features: [routeFeature]
+                            }
+                        });
+                        
+                        map.addLayer({
+                            id: 'route-line',
+                            type: 'line',
+                            source: 'route',
+                            layout: {
+                                'line-join': 'round',
+                                'line-cap': 'round'
+                            },
+                            paint: {
+                                'line-color': '#0080ff',
+                                'line-width': 3
+                            }
+                        });
+                    }
+                    
+                    // Add stops source and layer
+                    const stopFeatures = geoJSON.features.filter(f => f.geometry.type === 'Point');
+                    if (stopFeatures.length > 0) {
+                        log(`Adding ${stopFeatures.length} stop markers`);
+                        
+                        map.addSource('stops', {
+                            type: 'geojson',
+                            data: {
+                                type: 'FeatureCollection',
+                                features: stopFeatures
+                            }
+                        });
+                        
+                        map.addLayer({
+                            id: 'stops-circle',
+                            type: 'circle',
+                            source: 'stops',
+                            paint: {
+                                'circle-radius': 6,
+                                'circle-color': [
+                                    'match',
+                                    ['get', 'type'],
+                                    'overnight', '#ff4500',
+                                    'charging', '#4CAF50',
+                                    'waypoint', '#2196F3',
+                                    '#FFC107'  // default color
+                                ],
+                                'circle-stroke-width': 2,
+                                'circle-stroke-color': '#ffffff'
+                            }
+                        });
+                        
+                        // Add stop labels
+                        map.addLayer({
+                            id: 'stops-label',
+                            type: 'symbol',
+                            source: 'stops',
+                            layout: {
+                                'text-field': ['get', 'name'],
+                                'text-font': ['Open Sans Regular'],
+                                'text-size': 12,
+                                'text-offset': [0, 1.5],
+                                'text-anchor': 'top'
+                            },
+                            paint: {
+                                'text-color': '#333',
+                                'text-halo-color': '#fff',
+                                'text-halo-width': 1
+                            }
+                        });
+                        
+                        // Add click interactions
+                        map.on('click', 'stops-circle', (e) => {
+                            const properties = e.features[0].properties;
+                            const coordinates = e.features[0].geometry.coordinates.slice();
+                            
+                            // Create popup content
+                            let content = `<h3>${properties.name}</h3>`;
+                            if (properties.description) {
+                                content += `<p>${properties.description}</p>`;
+                            }
+                            if (properties.state) {
+                                content += `<p>State: ${properties.state}</p>`;
+                            }
+                            if (properties.overnight === 'true' || properties.overnight === true) {
+                                content += `<p>Overnight stay</p>`;
+                            }
+                            if (properties.charging === 'true' || properties.charging === true) {
+                                content += `<p>Charging location</p>`;
+                            }
+                            
+                            new mapboxgl.Popup()
+                                .setLngLat(coordinates)
+                                .setHTML(content)
+                                .addTo(map);
+                        });
+                        
+                        map.on('mouseenter', 'stops-circle', () => {
+                            map.getCanvas().style.cursor = 'pointer';
+                        });
+                        
+                        map.on('mouseleave', 'stops-circle', () => {
+                            map.getCanvas().style.cursor = '';
+                        });
+                    }
+                    
+                    // Fit map to route bounds
+                    if (routeFeature) {
+                        const coordinates = routeFeature.geometry.coordinates;
+                        if (coordinates.length > 0) {
+                            log('Fitting map to route bounds');
+                            
+                            // Create a 'LngLatBounds' with the first coordinate
+                            const bounds = new mapboxgl.LngLatBounds(
+                                coordinates[0], 
+                                coordinates[0]
+                            );
+                            
+                            // Extend the 'LngLatBounds' to include all coordinates
+                            coordinates.forEach(coord => {
+                                bounds.extend(coord);
+                            });
+                            
+                            map.fitBounds(bounds, {
+                                padding: 50
+                            });
+                        }
+                    }
+                    
+                    // Display info
+                    const infoElement = document.getElementById('info');
+                    if (infoElement) {
+                        infoElement.innerHTML = `
+                            <p>Map rendered successfully</p>
+                            <p>Stops: ${stopFeatures.length}</p>
+                        `;
+                    }
+                });
+                
+                map.on('error', (e) => {
+                    showError(`Map error: ${e.error ? e.error.message : 'Unknown error'}`);
+                    document.getElementById('loading').style.display = 'none';
+                });
+                
+            } catch (error) {
+                showError(`Failed to initialize map: ${error.message}`);
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+        
+        // Initialize the map when the page loads
+        window.onload = initMap;
+    </script>
+</body>
+</html>
