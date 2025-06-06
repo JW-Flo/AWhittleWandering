@@ -11,19 +11,38 @@ import PropTypes from 'prop-types';
 import mapboxgl from 'mapbox-gl';
 import Hammer from 'hammerjs';
 import TripStatistics from './TripStatistics';
+import MapDebugPanel from './MapDebugPanel';
 import './Map.css';
+import './MapEnhancements.css';
 
 // Set MapBox token from environment variables with robust fallback handling
 // Using public token (pk.) for client-side application
-const MAPBOX_FALLBACK_TOKEN = 'pk.eyJ1IjoidGhld2FuZGVyaW5nd2hpdHRsZSIsImEiOiJjbHQxaXhzejYwYmU2MmpxdHl0MHowN3UzIn0.Q7xKTRlXvtimBHd39JqN1A';
+const MAPBOX_FALLBACK_TOKEN = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2liaTA4enIwIn0.tU9_tLaaxXxhfcVX4WhOeA';
 
-// Safely retrieve the token
+// Safely retrieve the token with enhanced error handling
 try {
+  // More verbose logging to track what's happening
+  console.log('Environment variables available:', import.meta.env ? 'Yes' : 'No');
+
+  // Check if VITE_MAPBOX_TOKEN exists and log its status
   const envToken = import.meta.env.VITE_MAPBOX_TOKEN;
-  mapboxgl.accessToken = (envToken && envToken !== 'undefined') ? envToken : MAPBOX_FALLBACK_TOKEN;
-  console.log('Using Mapbox token:', mapboxgl.accessToken.substring(0, 10) + '...');
+  console.log('VITE_MAPBOX_TOKEN status:',
+    envToken ? `Found (starts with ${envToken.substring(0, 10)}...)` : 'Not found or empty');
+
+  // Set the token with improved validation
+  if (envToken && envToken !== 'undefined' && envToken.startsWith('pk.')) {
+    mapboxgl.accessToken = envToken;
+    console.log('Using Mapbox token from environment variables');
+  } else {
+    console.warn('Environment token invalid or missing, using fallback token');
+    mapboxgl.accessToken = MAPBOX_FALLBACK_TOKEN;
+  }
+
+  // Log the final token being used (first 10 chars only for security)
+  console.log('Final Mapbox token in use:', mapboxgl.accessToken.substring(0, 10) + '...');
 } catch (error) {
   console.error('Error setting Mapbox token:', error);
+  console.log('Falling back to hardcoded token');
   mapboxgl.accessToken = MAPBOX_FALLBACK_TOKEN;
 }
 
@@ -846,6 +865,21 @@ const Map = ({
             >
               <span className="center-icon">🎯</span>
             </button>
+          )}
+
+          {/* Debug panel - only show in development and not in fullscreen */}
+          {mapReady && !fullscreen && import.meta.env.MODE !== 'production' && (
+            <MapDebugPanel
+              tripData={tripData}
+              vehicleData={vehicleData}
+              mapReady={mapReady}
+              onResetMap={() => window.location.reload()}
+              onRefreshData={() => {
+                if (map.current) {
+                  initializeMapLayers(map.current, tripData);
+                }
+              }}
+            />
           )}
         </>
       )}

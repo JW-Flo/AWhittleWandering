@@ -1,0 +1,185 @@
+/**
+ * Map Component UI Enhancements
+ * 
+ * Additional styles to improve the map's appearance and user experience
+ */
+
+/* Marker Improvements */
+.marker-icon {
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  transform-origin: bottom center;
+  transform: translateY(-50%);
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.3));
+  transition: transform 0.2s ease-out, filter 0.2s ease;
+}
+
+.marker-icon:hover {
+  transform: translateY(-50%) scale(1.15);
+  filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.4));
+  z-index: 10;
+}
+
+.marker-charging-station {
+  filter: drop-shadow(0 2px 4px rgba(76, 175, 80, 0.4));
+}
+
+.marker-lodging {
+  filter: drop-shadow(0 2px 4px rgba(33, 150, 243, 0.4));
+}
+
+.marker-waypoint {
+  filter: drop-shadow(0 2px 4px rgba(255, 193, 7, 0.4));
+}
+
+/* Animated Vehicle Marker */
+.vehicle-marker {
+  z-index: 100 !important;
+}
+
+.vehicle-marker svg {
+  transition: transform 0.3s ease-out;
+}
+
+.vehicle-marker.vehicle-moving svg {
+  animation: vehicle-bounce 1.5s infinite alternate ease-in-out;
+}
+
+@keyframes vehicle-bounce {
+  0% {
+    transform: translateY(0px);
+  }
+  100% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Improved Route Line */
+.mapboxgl-canvas {
+  outline: none;
+}
+
+/* Custom Popup Styling */
+.mapboxgl-popup {
+  z-index: 5;
+}
+
+.mapboxgl-popup-content {
+  border-radius: 12px;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.map-popup {
+  padding: 15px;
+  max-width: 280px;
+}
+
+.map-popup h4 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  font-weight: 600;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 8px;
+}
+
+.map-popup p {
+  margin: 6px 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.map-popup .stop-type {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 10px;
+  background: #f0f4f8;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Map Controls Positioning */
+.mapboxgl-ctrl-top-right {
+  top: 15px;
+  right: 15px;
+}
+
+.mapboxgl-ctrl-bottom-left {
+  bottom: 15px;
+  left: 15px;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .marker-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .map-popup {
+    padding: 12px;
+    max-width: 240px;
+  }
+
+  .map-popup h4 {
+    font-size: 14px;
+  }
+
+  .map-popup p {
+    font-size: 13px;
+  }
+}
+
+/* Loading state */
+.map-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.map-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Custom state highlighting styles */
+.state-visited {
+  fill: rgba(0, 122, 255, 0.2);
+  stroke: rgba(0, 122, 255, 0.8);
+  stroke-width: 1px;
+}
+
+.state-current {
+  fill: rgba(0, 122, 255, 0.4);
+  stroke: rgba(0, 122, 255, 1);
+  stroke-width: 2px;
+}
+
+.state-next {
+  fill: rgba(255, 149, 0, 0.2);
+  stroke: rgba(255, 149, 0, 0.8);
+  stroke-width: 1px;
+}
