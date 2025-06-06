@@ -405,6 +405,18 @@ export const useTripData = ({ vehicleData, pollInterval = 60000 } = {}) => {
     }
   }, [vehicleData?.latitude, vehicleData?.longitude, visitedStates]);
 
+  // Helper function to validate GeoJSON coordinates
+  const validateCoordinates = (coords) => {
+    if (!coords || !Array.isArray(coords)) return false;
+    // Check if the format appears to be [lng, lat] (GeoJSON standard)
+    // Longitude ranges from -180 to 180, Latitude from -90 to 90
+    return (
+      coords.length === 2 &&
+      Math.abs(coords[0]) <= 180 &&
+      Math.abs(coords[1]) <= 90
+    );
+  };
+
   const fetchTripData = useCallback(async () => {
     try {
       // Try to fetch from API first
@@ -424,25 +436,87 @@ export const useTripData = ({ vehicleData, pollInterval = 60000 } = {}) => {
       if (response.ok) {
         const data = await response.json();
 
-        // Extract route and stops from GeoJSON format
-        const route = data.features[0].geometry.coordinates.map(
-          ([lng, lat]) => ({
-            longitude: lng,
-            latitude: lat,
-          })
-        );
+        // Validate data structure
+        if (!data.features || !data.features[0] || !data.features[0].geometry) {
+          console.warn("API returned invalid GeoJSON structure:", data);
+          throw new Error("Invalid GeoJSON data structure");
+        }
 
-        const stops = data.features[0].properties.stops.map((stop, idx) => ({
-          id: `${stop.location}-${idx}`,
-          name: stop.location.split(",")[0].trim(),
-          latitude: stop.latitude,
-          longitude: stop.longitude,
-          type: stop.type,
-          description: stop.description,
-          charging: stop.type === "charging",
-          overnight: stop.type === "overnight",
-          state: stop.state,
-        }));
+        // Extract route and stops from GeoJSON format with validation
+        const coordinates = data.features[0].geometry.coordinates;
+
+        // Validate coordinate format and convert if needed
+        let route = [];
+        if (Array.isArray(coordinates)) {
+          route = coordinates
+            .map((coord) => {
+              // Ensure coord is in [lng, lat] format (GeoJSON standard)
+              if (validateCoordinates(coord)) {
+                return {
+                  longitude: coord[0],
+                  latitude: coord[1],
+                };
+              } else if (Array.isArray(coord) && coord.length === 2) {
+                // If coordinates don't match GeoJSON format but are still valid, try to fix
+                const [first, second] = coord;
+                // If first value looks like longitude (-180 to 180) and second like latitude (-90 to 90)
+                if (Math.abs(first) <= 180 && Math.abs(second) <= 90) {
+                  return {
+                    longitude: first,
+                    latitude: second,
+                  };
+                } else if (Math.abs(second) <= 180 && Math.abs(first) <= 90) {
+                  // If they're swapped, fix the order
+                  console.warn("Found swapped coordinates, fixing:", coord);
+                  return {
+                    longitude: second,
+                    latitude: first,
+                  };
+                }
+              }
+              // Fallback for invalid coordinates
+              console.warn("Invalid coordinate format:", coord);
+              return null;
+            })
+            .filter(Boolean); // Filter out null values
+        }
+
+        // Process stops with proper validation
+        const stops =
+          data.features[0].properties.stops?.map((stop, idx) => {
+            // Determine if stop has correctly formatted coordinates
+            const hasValidLatLng =
+              typeof stop.latitude === "number" &&
+              typeof stop.longitude === "number" &&
+              !isNaN(stop.latitude) &&
+              !isNaN(stop.longitude);
+
+            // Extract coordinates from GeoJSON if available
+            const hasCoordinates =
+              Array.isArray(stop.coordinates) && stop.coordinates.length === 2;
+
+            // Construct the stop object with best available data
+            return {
+              id: `${stop.location || "stop"}-${idx}`,
+              name: (stop.location || "").split(",")[0].trim(),
+              // Use the most reliable source for coordinates
+              latitude: hasValidLatLng
+                ? stop.latitude
+                : hasCoordinates
+                ? stop.coordinates[1]
+                : null,
+              longitude: hasValidLatLng
+                ? stop.longitude
+                : hasCoordinates
+                ? stop.coordinates[0]
+                : null,
+              type: stop.type || "waypoint",
+              description: stop.description || stop.location || "",
+              charging: stop.type === "charging",
+              overnight: stop.type === "overnight",
+              state: stop.state || "",
+            };
+          }) || [];
 
         // Merge API data with our enhanced local data
         const enhancedData = generateEnhancedTripData(vehicleData);

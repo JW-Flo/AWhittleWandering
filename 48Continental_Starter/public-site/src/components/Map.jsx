@@ -54,7 +54,54 @@ const createMarkerElement = (type) => {
   return el;
 };
 
-// Initialize map markers and layers with error handling
+// Validate and normalize GeoJSON coordinates
+const validateGeoJSONCoordinates = (lng, lat) => {
+  // Check if values are valid numbers and within range
+  // Longitude: -180 to 180, Latitude: -90 to 90
+  const validLng = typeof lng === 'number' && !isNaN(lng) && lng >= -180 && lng <= 180;
+  const validLat = typeof lat === 'number' && !isNaN(lat) && lat >= -90 && lat <= 90;
+
+  if (!validLng || !validLat) {
+    return null;
+  }
+
+  return [lng, lat];
+};
+
+// Attempt to fix potentially swapped coordinates
+const fixCoordinateFormat = (point) => {
+  if (!point) return null;
+
+  // Check if values might be swapped (lat, lng instead of lng, lat)
+  if (point.latitude && point.longitude) {
+    const lat = point.latitude;
+    const lng = point.longitude;
+
+    // If longitude looks like it might be a latitude value and vice versa
+    if (Math.abs(lng) <= 90 && Math.abs(lat) > 90) {
+      console.warn('Detected swapped coordinates, fixing:', { original: [lng, lat], fixed: [lat, lng] });
+      return validateGeoJSONCoordinates(lat, lng);
+    }
+
+    return validateGeoJSONCoordinates(lng, lat);
+  }
+
+  // If we have an array instead of lat/lng properties
+  if (Array.isArray(point) && point.length === 2) {
+    const [first, second] = point;
+
+    // If first value looks like latitude and second like longitude
+    if (Math.abs(first) <= 90 && Math.abs(second) <= 180 && Math.abs(second) > 90) {
+      return validateGeoJSONCoordinates(second, first);
+    }
+
+    return validateGeoJSONCoordinates(first, second);
+  }
+
+  return null;
+};
+
+// Initialize map markers and layers with enhanced error handling and coordinate validation
 const initializeMapLayers = async (map, tripData) => {
   if (!map || !tripData) {
     console.warn('Cannot initialize map layers: map or tripData is missing', {
@@ -85,18 +132,36 @@ const initializeMapLayers = async (map, tripData) => {
 
     // Add route layer if route data exists and has enough points
     if (tripData.route?.length > 1) {
-      // Filter out invalid coordinates first
-      const validRoutePoints = tripData.route
-        .filter(point => point && point.longitude && point.latitude
-          && !isNaN(point.longitude) && !isNaN(point.latitude));
+      // Filter out invalid coordinates and fix any format issues
+      const validRoutePoints = [];
+
+      tripData.route.forEach(point => {
+        // First try to validate with expected format
+        let coords = null;
+
+        if (point && typeof point.longitude === 'number' && typeof point.latitude === 'number') {
+          coords = validateGeoJSONCoordinates(point.longitude, point.latitude);
+        }
+
+        // If validation failed, try to fix potential format issues
+        if (!coords) {
+          coords = fixCoordinateFormat(point);
+        }
+
+        if (coords) {
+          validRoutePoints.push(coords);
+        }
+      });
 
       if (validRoutePoints.length > 1) {
+        console.log(`Successfully validated ${validRoutePoints.length} route points`);
+
         const routeGeoJSON = {
           type: 'Feature',
           properties: {},
           geometry: {
             type: 'LineString',
-            coordinates: validRoutePoints.map(point => [point.longitude, point.latitude])
+            coordinates: validRoutePoints
           }
         };
 
@@ -132,12 +197,41 @@ const initializeMapLayers = async (map, tripData) => {
 
     // Add stops layer if stop data exists
     if (tripData.stops?.length > 0) {
-      // Filter out invalid stops first
-      const validStops = tripData.stops
-        .filter(stop => stop && stop.latitude && stop.longitude
-          && !isNaN(stop.latitude) && !isNaN(stop.longitude));
+      // Process stops with enhanced validation
+      const validStops = [];
+
+      tripData.stops.forEach(stop => {
+        if (!stop) return;
+
+        let coords = null;
+
+        // First try standard format
+        if (typeof stop.longitude === 'number' && typeof stop.latitude === 'number' &&
+          !isNaN(stop.longitude) && !isNaN(stop.latitude)) {
+          coords = validateGeoJSONCoordinates(stop.longitude, stop.latitude);
+        }
+
+        // If that fails, try GeoJSON coordinates array if available
+        if (!coords && stop.coordinates && Array.isArray(stop.coordinates) && stop.coordinates.length === 2) {
+          coords = validateGeoJSONCoordinates(stop.coordinates[0], stop.coordinates[1]);
+        }
+
+        // Last resort - try to fix potential format issues
+        if (!coords) {
+          coords = fixCoordinateFormat(stop);
+        }
+
+        if (coords) {
+          validStops.push({
+            ...stop,
+            _validatedCoordinates: coords
+          });
+        }
+      });
 
       if (validStops.length > 0) {
+        console.log(`Successfully validated ${validStops.length} stops`);
+
         const stopsGeoJSON = {
           type: 'FeatureCollection',
           features: validStops.map(stop => ({
@@ -152,7 +246,7 @@ const initializeMapLayers = async (map, tripData) => {
             },
             geometry: {
               type: 'Point',
-              coordinates: [stop.longitude, stop.latitude]
+              coordinates: stop._validatedCoordinates
             }
           }))
         };
