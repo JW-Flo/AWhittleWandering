@@ -13,9 +13,11 @@
             "notes": "Trip begins – depart early morning",
             "type": "start",
             "coordinates": [
-              27.8006,
-              -97.3964
-            ]
+              -97.3964,
+              27.8006
+            ],
+            "longitude": -97.3964,
+            "latitude": 27.8006
           },
           {
             "date": "6/6–6/7",
@@ -24,9 +26,11 @@
             "notes": "Drive day + overnight recharge",
             "type": "overnight",
             "coordinates": [
-              32.2226,
-              -110.9747
-            ]
+              -110.9747,
+              32.2226
+            ],
+            "longitude": -110.9747,
+            "latitude": 32.2226
           },
           {
             "date": "6/7–6/9",
@@ -35,9 +39,11 @@
             "notes": "1.5-day scenic visit",
             "type": "waypoint",
             "coordinates": [
-              36.0544,
-              -112.1401
-            ]
+              -112.1401,
+              36.0544
+            ],
+            "longitude": -112.1401,
+            "latitude": 36.0544
           },
           {
             "date": "6/9–6/10",
@@ -46,9 +52,11 @@
             "notes": "Visit Laurent (1 day)",
             "type": "waypoint",
             "coordinates": [
-              34.0522,
-              -118.2437
-            ]
+              -118.2437,
+              34.0522
+            ],
+            "longitude": -118.2437,
+            "latitude": 34.0522
           },
           {
             "date": "6/10–6/11",
@@ -57,9 +65,11 @@
             "notes": "Coastal beach drive north",
             "type": "waypoint",
             "coordinates": [
-              36.0074,
-              -121.5008
-            ]
+              -121.5008,
+              36.0074
+            ],
+            "longitude": -121.5008,
+            "latitude": 36.0074
           },
           {
             "date": "6/11–6/12",
@@ -68,9 +78,11 @@
             "notes": "1.5-day stay in the forest",
             "type": "waypoint",
             "coordinates": [
-              41.2132,
-              -124.0046
-            ]
+              -124.0046,
+              41.2132
+            ],
+            "longitude": -124.0046,
+            "latitude": 41.2132
           },
           {
             "date": "6/12–6/14",
@@ -79,9 +91,11 @@
             "notes": "Visit Stefan Morris (2 full days)",
             "type": "waypoint",
             "coordinates": [
-              46.8791,
-              -117.3644
-            ]
+              -117.3644,
+              46.8791
+            ],
+            "longitude": -117.3644,
+            "latitude": 46.8791
           },
           {
             "date": "6/14–6/15",
@@ -90,9 +104,11 @@
             "notes": "1 full day beach stop",
             "type": "waypoint",
             "coordinates": [
-              45.8918,
-              -123.9615
-            ]
+              -123.9615,
+              45.8918
+            ],
+            "longitude": -123.9615,
+            "latitude": 45.8918
           },
           {
             "date": "6/15–6/16",
@@ -101,9 +117,11 @@
             "notes": "Visit Brian",
             "type": "waypoint",
             "coordinates": [
-              47.0379,
-              -122.9007
-            ]
+              -122.9007,
+              47.0379
+            ],
+            "longitude": -122.9007,
+            "latitude": 47.0379
           },
           {
             "date": "6/16–6/17",
@@ -112,9 +130,11 @@
             "notes": "Visit Troy before 6/20 camping",
             "type": "waypoint",
             "coordinates": [
-              47.6062,
-              -122.3321
-            ]
+              -122.3321,
+              47.6062
+            ],
+            "longitude": -122.3321,
+            "latitude": 47.6062
           },
           {
             "date": "6/17–6/19",
@@ -123,9 +143,11 @@
             "notes": "2-night park stay",
             "type": "waypoint",
             "coordinates": [
-              44.428,
-              -110.5885
-            ]
+              -110.5885,
+              44.428
+            ],
+            "longitude": -110.5885,
+            "latitude": 44.428
           },
           {
             "date": "6/19–6/20",
@@ -134,9 +156,11 @@
             "notes": "Visit Brady Covington",
             "type": "waypoint",
             "coordinates": [
-              40.7608,
-              -111.891
-            ]
+              -111.891,
+              40.7608
+            ],
+            "longitude": -111.891,
+            "latitude": 40.7608
           },
           {
             "date": "6/21–6/23",
@@ -145,9 +169,11 @@
             "notes": "Visit Erin Lane (after her travel blackout)",
             "type": "waypoint",
             "coordinates": [
-              40.2338,
-              -111.6585
-            ]
+              -111.6585,
+              40.2338
+            ],
+            "longitude": -111.6585,
+            "latitude": 40.2338
           },
           {
             "date": "6/23–6/24",
@@ -156,9 +182,11 @@
             "notes": "Visit Josh",
             "type": "waypoint",
             "coordinates": [
-              39.7392,
-              -104.9903
-            ]
+              -104.9903,
+              39.7392
+            ],
+            "longitude": -104.9903,
+            "latitude": 39.7392
           },
           {
             "date": "6/24–6/25",
@@ -167,9 +195,11 @@
             "notes": "Visit Caleb Blakeman",
             "type": "waypoint",
             "coordinates": [
-              40.5853,
-              -105.0844
-            ]
+              -105.0844,
+              40.5853
+            ],
+            "longitude": -105.0844,
+            "latitude": 40.5853
           },
           {
             "date": "6/25–6/26",
@@ -178,9 +208,11 @@
             "notes": "North Dakota overnight",
             "type": "overnight",
             "coordinates": [
-              46.8772,
-              -96.7898
-            ]
+              -96.7898,
+              46.8772
+            ],
+            "longitude": -96.7898,
+            "latitude": 46.8772
           },
           {
             "date": "6/26–6/27",
@@ -189,9 +221,11 @@
             "notes": "South Dakota stop",
             "type": "waypoint",
             "coordinates": [
-              43.5446,
-              -96.7311
-            ]
+              -96.7311,
+              43.5446
+            ],
+            "longitude": -96.7311,
+            "latitude": 43.5446
           },
           {
             "date": "6/27–7/1",
@@ -200,9 +234,11 @@
             "notes": "Visit Parents & Hayden (4 days)",
             "type": "waypoint",
             "coordinates": [
-              40.8136,
-              -96.7026
-            ]
+              -96.7026,
+              40.8136
+            ],
+            "longitude": -96.7026,
+            "latitude": 40.8136
           },
           {
             "date": "7/1",
@@ -211,9 +247,11 @@
             "notes": "Visit Connor McBride",
             "type": "waypoint",
             "coordinates": [
-              41.8781,
-              -87.6298
-            ]
+              -87.6298,
+              41.8781
+            ],
+            "longitude": -87.6298,
+            "latitude": 41.8781
           },
           {
             "date": "7/2",
@@ -222,9 +260,11 @@
             "notes": "Wisconsin stopover",
             "type": "waypoint",
             "coordinates": [
-              43.0389,
-              -87.9065
-            ]
+              -87.9065,
+              43.0389
+            ],
+            "longitude": -87.9065,
+            "latitude": 43.0389
           },
           {
             "date": "7/3",
@@ -233,9 +273,11 @@
             "notes": "Minnesota drive-through",
             "type": "waypoint",
             "coordinates": [
-              44.9778,
-              -93.265
-            ]
+              -93.265,
+              44.9778
+            ],
+            "longitude": -93.265,
+            "latitude": 44.9778
           },
           {
             "date": "7/4",
@@ -244,9 +286,11 @@
             "notes": "\"Scenic lakeshore",
             "type": "waypoint",
             "coordinates": [
-              44.7631,
-              -85.6206
-            ]
+              -85.6206,
+              44.7631
+            ],
+            "longitude": -85.6206,
+            "latitude": 44.7631
           },
           {
             "date": "7/5",
@@ -255,9 +299,11 @@
             "notes": "Visit Cameron Hynes",
             "type": "waypoint",
             "coordinates": [
-              39.9612,
-              -82.9988
-            ]
+              -82.9988,
+              39.9612
+            ],
+            "longitude": -82.9988,
+            "latitude": 39.9612
           },
           {
             "date": "7/6",
@@ -266,9 +312,11 @@
             "notes": "Visit Jack Lavey",
             "type": "waypoint",
             "coordinates": [
-              39.4667,
-              -87.4139
-            ]
+              -87.4139,
+              39.4667
+            ],
+            "longitude": -87.4139,
+            "latitude": 39.4667
           },
           {
             "date": "7/7",
@@ -277,9 +325,11 @@
             "notes": "City stop / route setup",
             "type": "waypoint",
             "coordinates": [
-              39.9526,
-              -75.1652
-            ]
+              -75.1652,
+              39.9526
+            ],
+            "longitude": -75.1652,
+            "latitude": 39.9526
           },
           {
             "date": "7/8",
@@ -288,9 +338,11 @@
             "notes": "Visit Philip Dalton (optional)",
             "type": "waypoint",
             "coordinates": [
-              42.6526,
-              -73.7562
-            ]
+              -73.7562,
+              42.6526
+            ],
+            "longitude": -73.7562,
+            "latitude": 42.6526
           },
           {
             "date": "7/9",
@@ -299,9 +351,11 @@
             "notes": "Check off New England states",
             "type": "waypoint",
             "coordinates": [
-              43.734,
-              -72.454
-            ]
+              -72.454,
+              43.734
+            ],
+            "longitude": -72.454,
+            "latitude": 43.734
           },
           {
             "date": "7/10–7/11",
@@ -310,9 +364,11 @@
             "notes": "1.5-day scenic East Coast top",
             "type": "waypoint",
             "coordinates": [
-              44.3876,
-              -68.2039
-            ]
+              -68.2039,
+              44.3876
+            ],
+            "longitude": -68.2039,
+            "latitude": 44.3876
           },
           {
             "date": "7/11–7/15",
@@ -321,9 +377,11 @@
             "notes": "Visit Deanna for July 4th (4 days)",
             "type": "waypoint",
             "coordinates": [
-              41.7658,
-              -72.6734
-            ]
+              -72.6734,
+              41.7658
+            ],
+            "longitude": -72.6734,
+            "latitude": 41.7658
           },
           {
             "date": "7/15–7/16",
@@ -332,9 +390,11 @@
             "notes": "Wrap-up Northeast",
             "type": "waypoint",
             "coordinates": [
-              42.3601,
-              -71.0589
-            ]
+              -71.0589,
+              42.3601
+            ],
+            "longitude": -71.0589,
+            "latitude": 42.3601
           },
           {
             "date": "7/16–7/17",
@@ -343,9 +403,11 @@
             "notes": "Quick state check-in",
             "type": "waypoint",
             "coordinates": [
-              41.824,
-              -71.4128
-            ]
+              -71.4128,
+              41.824
+            ],
+            "longitude": -71.4128,
+            "latitude": 41.824
           },
           {
             "date": "7/17–7/18",
@@ -354,9 +416,11 @@
             "notes": "Southbound entry",
             "type": "waypoint",
             "coordinates": [
-              40.7357,
-              -74.1724
-            ]
+              -74.1724,
+              40.7357
+            ],
+            "longitude": -74.1724,
+            "latitude": 40.7357
           },
           {
             "date": "7/18–7/19",
@@ -365,9 +429,11 @@
             "notes": "Check off DE",
             "type": "waypoint",
             "coordinates": [
-              39.7391,
-              -75.5398
-            ]
+              -75.5398,
+              39.7391
+            ],
+            "longitude": -75.5398,
+            "latitude": 39.7391
           },
           {
             "date": "7/19–7/20",
@@ -376,9 +442,11 @@
             "notes": "Scenic + historic",
             "type": "waypoint",
             "coordinates": [
-              39.3254,
-              -77.7389
-            ]
+              -77.7389,
+              39.3254
+            ],
+            "longitude": -77.7389,
+            "latitude": 39.3254
           },
           {
             "date": "7/20–7/21",
@@ -387,9 +455,11 @@
             "notes": "Visit Brad Gross",
             "type": "waypoint",
             "coordinates": [
-              35.7796,
-              -78.6382
-            ]
+              -78.6382,
+              35.7796
+            ],
+            "longitude": -78.6382,
+            "latitude": 35.7796
           },
           {
             "date": "7/21–7/25",
@@ -398,9 +468,11 @@
             "notes": "Visit Nana & Pawpaw — birthday 7/21",
             "type": "waypoint",
             "coordinates": [
-              34.9854,
-              -80.5495
-            ]
+              -80.5495,
+              34.9854
+            ],
+            "longitude": -80.5495,
+            "latitude": 34.9854
           },
           {
             "date": "7/25–7/26",
@@ -409,9 +481,11 @@
             "notes": "Appalachian Trail area after Monroe",
             "type": "waypoint",
             "coordinates": [
-              35.5951,
-              -82.5515
-            ]
+              -82.5515,
+              35.5951
+            ],
+            "longitude": -82.5515,
+            "latitude": 35.5951
           },
           {
             "date": "7/26–7/27",
@@ -420,9 +494,11 @@
             "notes": "Visit Max Mosley",
             "type": "waypoint",
             "coordinates": [
-              34.9496,
-              -81.932
-            ]
+              -81.932,
+              34.9496
+            ],
+            "longitude": -81.932,
+            "latitude": 34.9496
           },
           {
             "date": "7/27–7/28",
@@ -431,9 +507,11 @@
             "notes": "Lowcountry drive",
             "type": "waypoint",
             "coordinates": [
-              32.0809,
-              -81.0912
-            ]
+              -81.0912,
+              32.0809
+            ],
+            "longitude": -81.0912,
+            "latitude": 32.0809
           },
           {
             "date": "7/28–7/29",
@@ -442,9 +520,11 @@
             "notes": "Visit John & Sarah",
             "type": "waypoint",
             "coordinates": [
-              27.3364,
-              -82.5307
-            ]
+              -82.5307,
+              27.3364
+            ],
+            "longitude": -82.5307,
+            "latitude": 27.3364
           },
           {
             "date": "7/29–7/30",
@@ -453,9 +533,11 @@
             "notes": "Florida panhandle drive",
             "type": "waypoint",
             "coordinates": [
-              30.4383,
-              -84.2807
-            ]
+              -84.2807,
+              30.4383
+            ],
+            "longitude": -84.2807,
+            "latitude": 30.4383
           },
           {
             "date": "7/30–7/31",
@@ -464,9 +546,11 @@
             "notes": "Visit Barton after Florida",
             "type": "waypoint",
             "coordinates": [
-              35.9606,
-              -83.9207
-            ]
+              -83.9207,
+              35.9606
+            ],
+            "longitude": -83.9207,
+            "latitude": 35.9606
           },
           {
             "date": "7/30–7/31",
@@ -475,9 +559,11 @@
             "notes": "Gulf Coast rest stop",
             "type": "waypoint",
             "coordinates": [
-              30.6954,
-              -88.0399
-            ]
+              -88.0399,
+              30.6954
+            ],
+            "longitude": -88.0399,
+            "latitude": 30.6954
           },
           {
             "date": "7/31–8/1",
@@ -486,9 +572,11 @@
             "notes": "Jazz & culture stop",
             "type": "waypoint",
             "coordinates": [
-              29.9511,
-              -90.0715
-            ]
+              -90.0715,
+              29.9511
+            ],
+            "longitude": -90.0715,
+            "latitude": 29.9511
           },
           {
             "date": "8/1–8/2",
@@ -497,9 +585,11 @@
             "notes": "Southern swing",
             "type": "waypoint",
             "coordinates": [
-              32.2988,
-              -90.1848
-            ]
+              -90.1848,
+              32.2988
+            ],
+            "longitude": -90.1848,
+            "latitude": 32.2988
           },
           {
             "date": "8/2–8/3",
@@ -508,9 +598,11 @@
             "notes": "Quick overnight",
             "type": "overnight",
             "coordinates": [
-              34.7465,
-              -92.2896
-            ]
+              -92.2896,
+              34.7465
+            ],
+            "longitude": -92.2896,
+            "latitude": 34.7465
           },
           {
             "date": "8/3–8/4",
@@ -519,9 +611,11 @@
             "notes": "Final return — trip ends at 60 days",
             "type": "end",
             "coordinates": [
-              30.2672,
-              -97.7431
-            ]
+              -97.7431,
+              30.2672
+            ],
+            "longitude": -97.7431,
+            "latitude": 30.2672
           }
         ]
       },
@@ -529,192 +623,192 @@
         "type": "LineString",
         "coordinates": [
           [
-            27.8006,
-            -97.3964
+            -97.3964,
+            27.8006
           ],
           [
-            32.2226,
-            -110.9747
+            -110.9747,
+            32.2226
           ],
           [
-            36.0544,
-            -112.1401
+            -112.1401,
+            36.0544
           ],
           [
-            34.0522,
-            -118.2437
+            -118.2437,
+            34.0522
           ],
           [
-            36.0074,
-            -121.5008
+            -121.5008,
+            36.0074
           ],
           [
-            41.2132,
-            -124.0046
+            -124.0046,
+            41.2132
           ],
           [
-            46.8791,
-            -117.3644
+            -117.3644,
+            46.8791
           ],
           [
-            45.8918,
-            -123.9615
+            -123.9615,
+            45.8918
           ],
           [
-            47.0379,
-            -122.9007
+            -122.9007,
+            47.0379
           ],
           [
-            47.6062,
-            -122.3321
+            -122.3321,
+            47.6062
           ],
           [
-            44.428,
-            -110.5885
+            -110.5885,
+            44.428
           ],
           [
-            40.7608,
-            -111.891
+            -111.891,
+            40.7608
           ],
           [
-            40.2338,
-            -111.6585
+            -111.6585,
+            40.2338
           ],
           [
-            39.7392,
-            -104.9903
+            -104.9903,
+            39.7392
           ],
           [
-            40.5853,
-            -105.0844
+            -105.0844,
+            40.5853
           ],
           [
-            46.8772,
-            -96.7898
+            -96.7898,
+            46.8772
           ],
           [
-            43.5446,
-            -96.7311
+            -96.7311,
+            43.5446
           ],
           [
-            40.8136,
-            -96.7026
+            -96.7026,
+            40.8136
           ],
           [
-            41.8781,
-            -87.6298
+            -87.6298,
+            41.8781
           ],
           [
-            43.0389,
-            -87.9065
+            -87.9065,
+            43.0389
           ],
           [
-            44.9778,
-            -93.265
+            -93.265,
+            44.9778
           ],
           [
-            44.7631,
-            -85.6206
+            -85.6206,
+            44.7631
           ],
           [
-            39.9612,
-            -82.9988
+            -82.9988,
+            39.9612
           ],
           [
-            39.4667,
-            -87.4139
+            -87.4139,
+            39.4667
           ],
           [
-            39.9526,
-            -75.1652
+            -75.1652,
+            39.9526
           ],
           [
-            42.6526,
-            -73.7562
+            -73.7562,
+            42.6526
           ],
           [
-            43.734,
-            -72.454
+            -72.454,
+            43.734
           ],
           [
-            44.3876,
-            -68.2039
+            -68.2039,
+            44.3876
           ],
           [
-            41.7658,
-            -72.6734
+            -72.6734,
+            41.7658
           ],
           [
-            42.3601,
-            -71.0589
+            -71.0589,
+            42.3601
           ],
           [
-            41.824,
-            -71.4128
+            -71.4128,
+            41.824
           ],
           [
-            40.7357,
-            -74.1724
+            -74.1724,
+            40.7357
           ],
           [
-            39.7391,
-            -75.5398
+            -75.5398,
+            39.7391
           ],
           [
-            39.3254,
-            -77.7389
+            -77.7389,
+            39.3254
           ],
           [
-            35.7796,
-            -78.6382
+            -78.6382,
+            35.7796
           ],
           [
-            34.9854,
-            -80.5495
+            -80.5495,
+            34.9854
           ],
           [
-            35.5951,
-            -82.5515
+            -82.5515,
+            35.5951
           ],
           [
-            34.9496,
-            -81.932
+            -81.932,
+            34.9496
           ],
           [
-            32.0809,
-            -81.0912
+            -81.0912,
+            32.0809
           ],
           [
-            27.3364,
-            -82.5307
+            -82.5307,
+            27.3364
           ],
           [
-            30.4383,
-            -84.2807
+            -84.2807,
+            30.4383
           ],
           [
-            35.9606,
-            -83.9207
+            -83.9207,
+            35.9606
           ],
           [
-            30.6954,
-            -88.0399
+            -88.0399,
+            30.6954
           ],
           [
-            29.9511,
-            -90.0715
+            -90.0715,
+            29.9511
           ],
           [
-            32.2988,
-            -90.1848
+            -90.1848,
+            32.2988
           ],
           [
-            34.7465,
-            -92.2896
+            -92.2896,
+            34.7465
           ],
           [
-            30.2672,
-            -97.7431
+            -97.7431,
+            30.2672
           ]
         ]
       }
