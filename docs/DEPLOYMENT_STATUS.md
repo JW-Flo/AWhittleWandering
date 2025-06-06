@@ -93,6 +93,7 @@ The following scripts were created to assist with deployment and configuration:
 3. `scripts/verify-deployment.sh` - Verifies the deployment status of all components
 4. `scripts/verify-public-site.cjs` - Verifies the public site accessibility and API connectivity
 5. `scripts/upload-missing-secrets.sh` - Uploads missing GitHub secrets from local environment files
+6. `scripts/upload-itinerary-data.cjs` - Parses and uploads the 48Continental_Revised_Final_Itinerary.csv to ITINERARY_KV namespace with structured stop and route data
 
 ## Conclusion
 

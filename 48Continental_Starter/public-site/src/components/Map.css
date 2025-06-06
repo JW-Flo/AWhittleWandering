@@ -42,12 +42,30 @@
 .vehicle-marker {
   cursor: pointer;
   transform: translate(-50%, -50%);
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-  transition: transform 0.2s ease;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+  transition: transform 0.2s ease, filter 0.3s ease;
+  z-index: 100;
 }
 
 .vehicle-marker:hover {
   transform: translate(-50%, -50%) scale(1.1);
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.5));
+}
+
+.vehicle-marker.vehicle-moving {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 10px rgba(0, 122, 255, 0.7));
+  }
+  100% {
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+  }
 }
 
 /* Map Popups */
@@ -87,12 +105,48 @@
   font-size: 16px;
   font-weight: 600;
   color: #212529;
+  text-align: center;
 }
 
-.vehicle-popup p {
-  margin: 4px 0;
+.vehicle-popup-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.popup-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f8f9fa;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.popup-stat-icon {
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.popup-stat-value {
+  font-weight: 600;
   font-size: 14px;
-  color: #6c757d;
+  color: #212529;
+}
+
+.popup-stat-value.battery-low {
+  color: #f44336;
+}
+
+.popup-stat-value.battery-high {
+  color: #4caf50;
+}
+
+.vehicle-marker-popup .mapboxgl-popup-content {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 12px;
 }
 
 /* Charging Station Popup */

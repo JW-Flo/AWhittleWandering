@@ -1,57 +1,72 @@
 #!/usr/bin/env node
 
 /**
- * Upload 48 Continental USA Itinerary to Cloudflare KV
- * This script uploads the itinerary.json file to the ITINERARY_KV namespace
- * targeting both local and remote namespaces
+ * Upload 48 Continental USA Itinerary Data to Cloudflare KV (Remote Version)
+ * This script reads the .current_trip_day.json file and uploads it to the ITINERARY_KV namespace
+ * with the --remote flag to ensure data is uploaded to the production environment
  */
 
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
 
-// Path to the JSON file (relative to project root)
-const JSON_FILE = path.join(__dirname, "..", "itinerary.json");
-// KV namespace name
+// Configuration
+const DATA_FILE = path.join(__dirname, "..", ".current_trip_day.json");
 const KV_NAMESPACE = "ITINERARY_KV";
-// Key name for the itinerary in KV
-const ITINERARY_KEY = "full_itinerary";
+const KEY_NAME = "current_day";
 
-// Main function to upload itinerary to KV
-async function uploadItineraryToKV() {
-  try {
-    // Read JSON file
-    console.log(`📂 Reading itinerary from ${JSON_FILE}`);
-    const itineraryData = fs.readFileSync(JSON_FILE, "utf8");
+// ANSI color codes for prettier output
+const GREEN = "\x1b[32m";
+const YELLOW = "\x1b[33m";
+const RED = "\x1b[31m";
+const RESET = "\x1b[0m";
 
-    // Write to a temporary file in the edge-worker directory
-    const tempFilePath = path.join(
-      __dirname,
-      "..",
-      "edge-worker",
-      "itinerary-data.json"
-    );
-    fs.writeFileSync(tempFilePath, itineraryData);
-
-    // Upload to remote namespace
-    console.log(
-      `🚀 Uploading full itinerary to ${KV_NAMESPACE}:${ITINERARY_KEY} (REMOTE)`
-    );
-
-    // Upload to remote namespace
-    const remoteUploadCommand = `cd edge-worker && npx wrangler kv key put "${ITINERARY_KEY}" --binding=${KV_NAMESPACE} --path=itinerary-data.json --remote`;
-
-    console.log(`Executing: ${remoteUploadCommand}`);
-    execSync(remoteUploadCommand, { stdio: "inherit" });
-
-    // Clean up temp file
-    fs.unlinkSync(tempFilePath);
-    console.log(`✅ Successfully uploaded itinerary to remote KV namespace`);
-  } catch (error) {
-    console.error("Error uploading itinerary to KV:", error);
-    process.exit(1);
-  }
+// Check if data file exists
+if (!fs.existsSync(DATA_FILE)) {
+  console.error(`${RED}Error: Data file ${DATA_FILE} not found${RESET}`);
+  console.log(
+    `${YELLOW}Please run convert-itinerary-to-kv.cjs first to generate the data file${RESET}`
+  );
+  process.exit(1);
 }
 
-// Execute the upload
-uploadItineraryToKV();
+try {
+  // Read data file
+  console.log(`${YELLOW}Reading trip data from ${DATA_FILE}${RESET}`);
+  const tripData = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+
+  // Create temporary directory if it doesn't exist
+  const tempDir = path.join(__dirname, "..", ".temp");
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir);
+  }
+
+  // Write trip data to temporary file
+  const tempFile = path.join(tempDir, "current_day.json");
+  fs.writeFileSync(tempFile, JSON.stringify(tripData, null, 2));
+
+  // Upload to KV namespace using wrangler with the --remote flag
+  console.log(
+    `${YELLOW}Uploading current day data to ${KV_NAMESPACE} (REMOTE)${RESET}`
+  );
+  const command = `cd edge-worker && npx wrangler kv key put "${KEY_NAME}" --binding=${KV_NAMESPACE} --path="${tempFile.replace(
+    /\\/g,
+    "/"
+  )}" --remote`;
+
+  console.log(`${YELLOW}Executing: ${command}${RESET}`);
+  execSync(command, { stdio: "inherit" });
+
+  console.log(
+    `${GREEN}Trip data uploaded successfully to remote KV namespace!${RESET}`
+  );
+
+  // Clean up temporary file
+  fs.unlinkSync(tempFile);
+
+  // Exit successfully
+  process.exit(0);
+} catch (error) {
+  console.error(`${RED}Error uploading trip data:${RESET}`, error);
+  process.exit(1);
+}

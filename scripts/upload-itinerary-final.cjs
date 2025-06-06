@@ -3,7 +3,7 @@
 /**
  * Upload 48 Continental USA Itinerary Data to Cloudflare KV
  * This script reads the .current_trip_day.json file and uploads it to the ITINERARY_KV namespace
- * using the namespace ID from wrangler.toml
+ * using the correct Wrangler command format
  */
 
 const fs = require("fs");
@@ -12,8 +12,8 @@ const { execSync } = require("child_process");
 
 // Configuration
 const DATA_FILE = path.join(__dirname, "..", ".current_trip_day.json");
+const KV_NAMESPACE = "ITINERARY_KV";
 const KEY_NAME = "current_day";
-const NAMESPACE_ID = "41e8cca6911d47338647d950d2344d91"; // From wrangler.toml
 
 // Check if data file exists
 if (!fs.existsSync(DATA_FILE)) {
@@ -40,8 +40,9 @@ try {
   fs.writeFileSync(tempFile, JSON.stringify(tripData, null, 2));
 
   // Upload to KV namespace using wrangler
-  console.log(`Uploading current day data to namespace ID: ${NAMESPACE_ID}`);
-  const command = `cd edge-worker && npx wrangler kv:key put --namespace-id=${NAMESPACE_ID} "${KEY_NAME}" --path="${tempFile.replace(
+  // NOTE: Using "kv key put" (without colon) based on successful examples in the project
+  console.log(`Uploading current day data to ${KV_NAMESPACE}`);
+  const command = `cd edge-worker && npx wrangler kv key put "${KEY_NAME}" --binding=${KV_NAMESPACE} --path="${tempFile.replace(
     /\\/g,
     "/"
   )}"`;
