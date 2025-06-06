@@ -10,6 +10,9 @@ import React from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from './App';
 import TestPage from './pages/TestPage';
+import MapFixTestPage from './pages/MapFixTestPage';
+import MapErrorTestPage from './pages/MapErrorTestPage';
+import SimpleMapTestPage from './pages/SimpleMapTestPage';
 
 // Define routes
 const router = createBrowserRouter([
@@ -20,6 +23,18 @@ const router = createBrowserRouter([
     {
         path: '/test',
         element: <TestPage />
+    },
+    {
+        path: '/map-fix-test',
+        element: <MapFixTestPage />
+    },
+    {
+        path: '/map-error-test',
+        element: <MapErrorTestPage />
+    },
+    {
+        path: '/simple-map-test',
+        element: <SimpleMapTestPage />
     }
 ]);
 

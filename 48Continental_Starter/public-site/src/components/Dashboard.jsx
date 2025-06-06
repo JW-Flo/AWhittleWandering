@@ -7,10 +7,9 @@
 /* eslint-env browser */
 import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import Map from './Map';
+import EnhancedMap from './EnhancedMap';
 import StatesTracker from './StatesTracker';
 import JourneyTab from './JourneyTab';
-import ErrorBoundary from './ErrorBoundary';
 import { useVehicleData } from '../hooks/useVehicleData';
 import { useTripData } from '../hooks/useTripData';
 import './Dashboard.css';
@@ -195,30 +194,15 @@ const Dashboard = ({
 
       {/* Full Screen Map */}
       <div className="map-fullscreen">
-        <ErrorBoundary
-          fallback={(error) => (
-            <div className="map-error-container">
-              <h3>Map Error</h3>
-              <p>There was a problem loading the map.</p>
-              <p className="error-details">{error?.message || 'Unknown error'}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="retry-button"
-              >
-                Reload Map
-              </button>
-            </div>
-          )}
-        >
-          <Map
-            vehicleData={finalVehicleData}
-            tripData={finalTripData}
-            stationsData={stationsData}
-            weatherData={weatherData}
-            fullscreen={true}
-            mapLayers={mapLayers}
-          />
-        </ErrorBoundary>
+        <EnhancedMap
+          vehicleData={finalVehicleData}
+          tripData={finalTripData}
+          stationsData={stationsData}
+          weatherData={weatherData}
+          fullscreen={true}
+          mapLayers={mapLayers}
+          mapboxToken={import.meta.env.VITE_MAPBOX_TOKEN}
+        />
       </div>
 
       {/* Floating Controls */}

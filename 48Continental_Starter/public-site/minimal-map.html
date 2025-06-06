@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal Map Test</title>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: Arial, sans-serif;
+        }
+        #map { 
+            position: absolute; 
+            top: 0; 
+            bottom: 0; 
+            width: 100%; 
+        }
+        .control-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            z-index: 1;
+            max-width: 300px;
+        }
+        .control-panel h3 {
+            margin-top: 0;
+        }
+        .control-panel p {
+            margin: 5px 0;
+        }
+        .marker {
+            background-image: url('data:image/svg+xml;charset=utf-8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 0c-4.4 0-8 3.6-8 8 0 5.4 7 13.4 7.3 13.7.2.2.5.3.7.3s.5-.1.7-.3c.3-.3 7.3-8.3 7.3-13.7 0-4.4-3.6-8-8-8zm0 12c-2.2 0-4-1.8-4-4s1.8-4 4-4 4 1.8 4 4-1.8 4-4 4z" fill="%23FF5722"/></svg>');
+            background-size: cover;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+        }
+        .mapboxgl-popup {
+            max-width: 200px;
+        }
+        .mapboxgl-popup-content {
+            text-align: center;
+            padding: 15px;
+        }
+        .button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background: #0055aa;
+        }
+    </style>
+</head>
+<body>
+    <div class="control-panel">
+        <h3>Minimal Map Test</h3>
+        <p>Testing the coordinate formatting utility.</p>
+        <div>
+            <input type="text" id="lat" placeholder="Latitude" />
+            <input type="text" id="lng" placeholder="Longitude" />
+            <button class="button" id="add-marker">Add Marker</button>
+        </div>
+        <div>
+            <button class="button" id="toggle-style">Toggle Satellite</button>
+        </div>
+        <div id="coords-display"></div>
+    </div>
+    <div id="map"></div>
+
+    <script>
+        // Initialize map
+        mapboxgl.accessToken = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2liaTA4enIwIn0.tU9_tLaaxXxhfcVX4WhOeA';
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: [-98.5795, 39.8283], // Center of US
+            zoom: 3.5
+        });
+
+        // Utility function to format coordinates
+        function ensureMapboxFormat(coords) {
+            // Handle null or undefined
+            if (!coords) return null;
+            
+            // Already an array [?, ?]
+            if (Array.isArray(coords) && coords.length === 2) {
+                const [first, second] = coords.map(v => typeof v === 'string' ? parseFloat(v) : v);
+                
+                // Skip if invalid numbers
+                if (isNaN(first) || isNaN(second)) return null;
+                
+                // Check if values are within valid ranges
+                // Longitude: -180 to 180, Latitude: -90 to 90
+                const firstIsValidLng = Math.abs(first) <= 180;
+                const secondIsValidLat = Math.abs(second) <= 90;
+                
+                // If both are valid in their current positions, return as is
+                if (firstIsValidLng && secondIsValidLat) {
+                    return [first, second]; // Already [longitude, latitude]
+                }
+                
+                // If first looks like latitude and second like longitude (swapped)
+                if (Math.abs(first) <= 90 && Math.abs(second) <= 180) {
+                    return [second, first]; // Swap to [longitude, latitude]
+                }
+                
+                // If both are out of range, return null
+                return null;
+            }
+            
+            // Object with lat/lng or latitude/longitude properties
+            if (typeof coords === 'object') {
+                let lng, lat;
+                
+                // Handle latitude/longitude properties
+                if (coords.latitude !== undefined && coords.longitude !== undefined) {
+                    lat = typeof coords.latitude === 'string' ? parseFloat(coords.latitude) : coords.latitude;
+                    lng = typeof coords.longitude === 'string' ? parseFloat(coords.longitude) : coords.longitude;
+                }
+                // Handle lat/lng properties
+                else if (coords.lat !== undefined && coords.lng !== undefined) {
+                    lat = typeof coords.lat === 'string' ? parseFloat(coords.lat) : coords.lat;
+                    lng = typeof coords.lng === 'string' ? parseFloat(coords.lng) : coords.lng;
+                }
+                
+                // Skip if invalid numbers
+                if (lng === undefined || lat === undefined || isNaN(lng) || isNaN(lat)) return null;
+                
+                // Check if values are within valid ranges
+                if (Math.abs(lng) <= 180 && Math.abs(lat) <= 90) {
+                    return [lng, lat]; // [longitude, latitude]
+                }
+                
+                // Check if they're swapped
+                if (Math.abs(lng) <= 90 && Math.abs(lat) <= 180) {
+                    return [lat, lng]; // [longitude, latitude] with swapped values
+                }
+                
+                return null;
+            }
+            
+            return null;
+        }
+
+        // Add navigation controls
+        map.addControl(new mapboxgl.NavigationControl());
+        
+        // UI Elements
+        const latInput = document.getElementById('lat');
+        const lngInput = document.getElementById('lng');
+        const addMarkerButton = document.getElementById('add-marker');
+        const toggleStyleButton = document.getElementById('toggle-style');
+        const coordsDisplay = document.getElementById('coords-display');
+        
+        // Toggle map style
+        let satelliteView = false;
+        toggleStyleButton.addEventListener('click', () => {
+            satelliteView = !satelliteView;
+            map.setStyle(satelliteView ? 'mapbox://styles/mapbox/satellite-streets-v11' : 'mapbox://styles/mapbox/streets-v11');
+            toggleStyleButton.textContent = satelliteView ? 'Show Streets' : 'Show Satellite';
+        });
+        
+        // Add marker when button is clicked
+        addMarkerButton.addEventListener('click', () => {
+            const lat = latInput.value;
+            const lng = lngInput.value;
+            
+            // Try different formats
+            let coords = ensureMapboxFormat([lat, lng]);
+            
+            // If that didn't work, try as an object
+            if (!coords) {
+                coords = ensureMapboxFormat({latitude: lat, longitude: lng});
+            }
+            
+            if (coords) {
+                // Add marker to map
+                const el = document.createElement('div');
+                el.className = 'marker';
+                
+                new mapboxgl.Marker(el)
+                    .setLngLat(coords)
+                    .setPopup(new mapboxgl.Popup({offset: 25})
+                        .setHTML(`<h3>Marker</h3><p>Coordinates: [${coords[0].toFixed(4)}, ${coords[1].toFixed(4)}]</p>`))
+                    .addTo(map);
+                
+                // Update display
+                coordsDisplay.innerHTML = `
+                    <p>Formatted coordinates: [${coords[0].toFixed(6)}, ${coords[1].toFixed(6)}]</p>
+                    <p>Format: [longitude, latitude]</p>
+                `;
+                
+                // Pan to the marker
+                map.flyTo({
+                    center: coords,
+                    zoom: 10,
+                    essential: true
+                });
+            } else {
+                coordsDisplay.innerHTML = '<p style="color: red;">Invalid coordinates. Please check your input.</p>';
+            }
+        });
+        
+        // Set up event for map clicks
+        map.on('click', (e) => {
+            const coords = [e.lngLat.lng, e.lngLat.lat];
+            
+            // Update input fields
+            lngInput.value = coords[0].toFixed(6);
+            latInput.value = coords[1].toFixed(6);
+            
+            // Update display
+            coordsDisplay.innerHTML = `
+                <p>Clicked at: [${coords[0].toFixed(6)}, ${coords[1].toFixed(6)}]</p>
+                <p>Format: [longitude, latitude]</p>
+            `;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+Date,City,State,StopType,Longitude,Latitude,EstimatedArrival,EstimatedDeparture,MilesFromPrevious,CumulativeMiles,LocationName,Address,ChargingAvailable,Notes\
+2025-06-06,Corpus Christi,TX,start,-97.3964,27.8006,2025-06-06T08:00:00,2025-06-06T08:30:00,0,0,Corpus Christi,Corpus Christi, TX,Yes,Trip begins\
+2025-06-06,Amarillo,TX,overnight,-101.8313,35.221997,2025-06-06T18:00:00,2025-06-07T08:00:00,580,580,Big Texan Motel,7701 I-40 East, Amarillo, TX,Yes,Overnight, Supercharger in city\
+2025-06-07,Tucson,AZ,overnight,-110.9747,32.2226,2025-06-07T19:30:00,2025-06-08T08:00:00,551,1131,Catalina State Park,11570 N Oracle Rd, Tucson, AZ,Yes,Campground + charging in Tucson\
+2025-06-08,Grand Canyon Village,AZ,overnight,-112.1401,36.0544,2025-06-08T15:00:00,2025-06-09T20:00:00,340,1471,Mather Campground,1 Mather Campground Rd, Grand Canyon Village, AZ,Yes,1.5-day scenic visit, Tusayan Supercharger\
+2025-06-10,Los Angeles,CA,overnight,-118.2437,34.0522,2025-06-10T19:00:00,2025-06-11T08:00:00,390,1861,Laurent's Place,Hollywood, Los Angeles, CA,Yes,Visit Laurent\
+2025-06-11,Big Sur,CA,overnight,-121.8041,36.2704,2025-06-11T17:30:00,2025-06-12T08:00:00,310,2171,Limekiln State Park,63025 CA-1, Big Sur, CA,Yes,Campground, Tesla charging in Monterey\
+2025-06-12,Redwoods,CA,overnight,-124.0621,41.2132,2025-06-12T19:30:00,2025-06-13T08:00:00,300,2471,Prairie Creek Redwoods,127011 Newton B. Drury Pkwy, Orick, CA,Yes (Eureka),Campground, scenic forest\
+2025-06-13,Colfax,CA,overnight,-120.9530,39.1007,2025-06-13T17:30:00,2025-06-15T08:00:00,230,2701,Stefan Morris'92 House,Colfax, CA,Yes (Auburn),Visit Stefan Morris (2 nights)\
+2025-06-15,Cannon Beach,OR,overnight,-123.9615,45.8918,2025-06-15T19:00:00,2025-06-16T08:00:00,525,3226,Wright's for Camping,334 Reservoir Rd, Cannon Beach, OR,Yes (Seaside),Beachfront camping\
+2025-06-16,Olympia,WA,overnight,-122.9007,47.0379,2025-06-16T18:00:00,2025-06-17T08:00:00,110,3336,Brian's House,Olympia, WA,Yes,Visit Brian\
+2025-06-17,Seattle,WA,overnight,-122.3321,47.6062,2025-06-17T19:00:00,2025-06-18T08:00:00,60,3396,Troy's House,Seattle, WA,Yes,Visit Troy\
+2025-06-18,Yellowstone,MT,overnight,-110.5885,44.4279,2025-06-18T18:00:00,2025-06-20T08:00:00,700,4096,Canyon Campground,Yellowstone National Park, WY,Yes (West Yellowstone),2-night park stay\
+2025-06-20,Salt Lake City,UT,overnight,-111.8910,40.7608,2025-06-20T18:00:00,2025-06-21T08:00:00,380,4476,Brady Covington's Place,Salt Lake City, UT,Yes,Visit Brady Covington\
+2025-06-21,Provo,UT,overnight,-111.6585,40.2338,2025-06-21T10:00:00,2025-06-23T08:00:00,45,4521,Erin Lane's Place,Provo, UT,Yes,Visit Erin Lane (2 nights)\
+2025-06-23,Denver,CO,overnight,-104.9903,39.7392,2025-06-23T17:00:00,2025-06-24T08:00:00,530,5051,Josh's House,Denver, CO,Yes,Visit Josh\
+2025-06-24,Fort Collins,CO,overnight,-105.0844,40.5853,2025-06-24T10:00:00,2025-06-25T08:00:00,65,5116,Caleb Blakeman's Place,Fort Collins, CO,Yes,Visit Caleb Blakeman\
+2025-06-25,Fargo,ND,overnight,-96.7898,46.8772,2025-06-25T18:00:00,2025-06-26T08:00:00,615,5731,Buffalo River State Park,565 155th St S, Glyndon, MN,Yes (Fargo),North Dakota overnight\
+2025-06-26,Sioux Falls,SD,overnight,-96.7311,43.5446,2025-06-26T18:00:00,2025-06-27T08:00:00,240,5971,Good Earth State Park,26924 480th Ave, Sioux Falls, SD,Yes,South Dakota stop\
+2025-06-27,Lincoln,NE,overnight,-96.6852,40.8136,2025-06-27T18:00:00,2025-07-01T08:00:00,280,6251,Parents'92 House,Lincoln, NE,Yes,Visit Parents & Hayden (4 nights)\
+2025-07-01,Chicago,IL,overnight,-87.6298,41.8781,2025-07-01T18:00:00,2025-07-02T08:00:00,530,6781,Connor McBride's Place,Chicago, IL,Yes,Visit Connor McBride\
+2025-07-02,Milwaukee,WI,overnight,-87.9065,43.0389,2025-07-02T18:00:00,2025-07-03T08:00:00,90,6871,Kettle Moraine Forest,WI-59, Eagle, WI,Yes,Camping, Supercharger nearby\
+2025-07-03,Minneapolis,MN,overnight,-93.2650,44.9778,2025-07-03T17:00:00,2025-07-04T08:00:00,335,7206,Afton State Park,6959 Peller Ave S, Hastings, MN,Yes,State park camping\
+2025-07-04,Kalamazoo,MI,overnight,-85.5872,42.2917,2025-07-04T19:00:00,2025-07-05T08:00:00,400,7606,Markin Glen Park,5300 N Westnedge Ave, Kalamazoo, MI,Yes,Nature overnight, Supercharger nearby\
+2025-07-05,Columbus,OH,overnight,-82.9988,39.9612,2025-07-05T18:00:00,2025-07-06T08:00:00,240,7846,Cameron Hynes' Place,Columbus, OH,Yes,Visit Cameron Hynes\
+2025-07-06,Terre Haute,IN,overnight,-87.4139,39.4667,2025-07-06T18:00:00,2025-07-07T08:00:00,200,8046,Jack Lavey's Place,Terre Haute, IN,Yes,Visit Jack Lavey\
+2025-07-07,Philadelphia,PA,overnight,-75.1652,39.9526,2025-07-07T18:00:00,2025-07-08T08:00:00,710,8756,Fairmount Park,2151 N 52nd St, Philadelphia, PA,Yes,Overnight, city park\
+2025-07-08,Albany,NY,overnight,-73.7562,42.6526,2025-07-08T18:00:00,2025-07-09T08:00:00,240,8996,Philip Dalton's Place,Albany, NY,Yes,Visit Philip Dalton (optional)\
+2025-07-09,Montpelier,VT,overnight,-72.5767,44.2601,2025-07-09T16:00:00,2025-07-10T08:00:00,170,9166,Quechee State Park,5800 Woodstock Rd, Hartford, VT,Yes,VT park camping\
+2025-07-10,Bar Harbor,ME,overnight,-68.2042,44.3876,2025-07-10T17:00:00,2025-07-12T08:00:00,230,9396,Blackwoods Campground,430 Blackwoods Rd, Bar Harbor, ME,Yes,1.5-day scenic East Coast top\
+2025-07-12,Hartford,CT,overnight,-72.6851,41.7637,2025-07-12T19:00:00,2025-07-16T08:00:00,370,9766,Deanna's Place,Hartford, CT,Yes,Visit Deanna (4 nights)\
+2025-07-16,Boston,MA,overnight,-71.0589,42.3601,2025-07-16T16:00:00,2025-07-17T08:00:00,120,9886,Boston Common,Boston, MA,Yes,Scenic overnight\
+2025-07-17,Wilmington,DE,overnight,-75.5466,39.7447,2025-07-17T19:00:00,2025-07-18T08:00:00,370,10256,Brandywine Creek State Park,41 Adams Dam Rd, Wilmington, DE,Yes,Overnight park, Supercharger nearby\
+2025-07-18,Harpers Ferry,WV,overnight,-77.7397,39.3254,2025-07-18T17:00:00,2025-07-19T08:00:00,150,10406,Harpers Ferry KOA,343 Campground Rd, Harpers Ferry, WV,Yes,Scenic overnight\
+2025-07-19,Raleigh,NC,overnight,-78.6382,35.7796,2025-07-19T17:00:00,2025-07-20T08:00:00,330,10736,Brad Gross' Place,Raleigh, NC,Yes,Visit Brad Gross\
+2025-07-20,Monroe,NC,overnight,-80.5495,34.9850,2025-07-20T16:00:00,2025-07-24T08:00:00,140,10876,Nana & Pawpaw's,Monroe, NC,Yes,Visit Nana & Pawpaw (birthday 7/21)\
+2025-07-24,Asheville,NC,overnight,-82.5515,35.5951,2025-07-24T15:00:00,2025-07-25T08:00:00,140,11016,Mount Pisgah Campground,408 Blue Ridge Pkwy, Asheville, NC,Yes,Appalachian Trail region\
+2025-07-25,Spartanburg,SC,overnight,-81.9320,34.9496,2025-07-25T15:00:00,2025-07-26T08:00:00,70,11086,Max Mosley's Place,Spartanburg, SC,Yes,Visit Max Mosley\
+2025-07-26,Savannah,GA,overnight,-81.0998,32.0835,2025-07-26T15:00:00,2025-07-27T08:00:00,220,11306,Skidaway Island State Park,52 Diamond Cswy, Savannah, GA,Yes,Scenic camping\
+2025-07-27,Sarasota,FL,overnight,-82.5307,27.3364,2025-07-27T18:00:00,2025-07-28T08:00:00,350,11656,John & Sarah's Place,Sarasota, FL,Yes,Visit John & Sarah\
+2025-07-28,Tallahassee,FL,overnight,-84.2807,30.4383,2025-07-28T16:00:00,2025-07-29T08:00:00,300,11956,Ochlockonee River State Park,429 State Park Rd, Sopchoppy, FL,Yes,Camping, Supercharger nearby\
+2025-07-29,Knoxville,TN,overnight,-83.9207,35.9606,2025-07-29T18:00:00,2025-07-30T08:00:00,470,12426,Barton''s Place,Knoxville, TN,Yes,Visit Barton\
+2025-07-30,Mobile,AL,overnight,-88.0399,30.6954,2025-07-30T18:00:00,2025-07-31T08:00:00,400,12826,Blakeley State Park,34745 State Hwy 225, Spanish Fort, AL,Yes,Camping, Supercharger nearby\
+2025-07-31,New Orleans,LA,overnight,-90.0715,29.9511,2025-07-31T18:00:00,2025-08-01T08:00:00,145,12971,Jean Lafitte Park,419 Decatur St, New Orleans, LA,Yes,Scenic park, city stay\
+2025-08-01,Jackson,MS,overnight,-90.1848,32.2988,2025-08-01T16:00:00,2025-08-02T08:00:00,185,13156,LeFleur's Bluff State Park,2140 Riverside Dr, Jackson, MS,Yes,Park camping\
+2025-08-02,Little Rock,AR,overnight,-92.2896,34.7465,2025-08-02T18:00:00,2025-08-03T08:00:00,200,13356,Maumelle Park,9009 Pinnacle Valley Rd, Little Rock, AR,Yes,Scenic camping\
+2025-08-03,Oklahoma City,OK,overnight,-97.5164,35.4676,2025-08-03T17:00:00,2025-08-04T08:00:00,350,13706,Lake Thunderbird State Park,13101 Alameda Dr, Norman, OK,Yes,Camping\
+2025-08-04,Austin,TX,end,-97.7431,30.2672,2025-08-04T17:00:00,,200,13906,Home,Austin, TX,Yes,Trip ends '96 home

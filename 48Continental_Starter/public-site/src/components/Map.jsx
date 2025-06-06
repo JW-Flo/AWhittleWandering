@@ -16,7 +16,9 @@ import Hammer from 'hammerjs';
 import TripStatistics from './TripStatistics';
 import MapDebugPanel from './MapDebugPanel';
 import './Map.css';
-import './MapEnhancements.css';
+import './MapEnhancements.css'; import { ensureMapboxFormat } from "../utils/mapUtils";
+
+
 
 // IMPORTANT: Directly set the MapBox token to fix the "Invalid Mapbox access token" error
 // This is a public token (pk.) for client-side application
@@ -53,75 +55,11 @@ const createMarkerElement = (type) => {
   return el;
 };
 
-// Validate and normalize GeoJSON coordinates
-const validateGeoJSONCoordinates = (lng, lat) => {
-  // Convert string values to numbers if needed
-  if (typeof lng === 'string') lng = parseFloat(lng);
-  if (typeof lat === 'string') lat = parseFloat(lat);
+// We've replaced the custom coordinate validation functions with the centralized
+// ensureMapboxFormat utility from mapUtils.js
 
-  // Check if values are valid numbers and within range
-  // Longitude: -180 to 180, Latitude: -90 to 90
-  const validLng = typeof lng === 'number' && !isNaN(lng) && lng >= -180 && lng <= 180;
-  const validLat = typeof lat === 'number' && !isNaN(lat) && lat >= -90 && lat <= 90;
-
-  if (!validLng || !validLat) {
-    return null;
-  }
-
-  return [lng, lat];
-};
-
-// Attempt to fix potentially swapped coordinates
-const fixCoordinateFormat = (point) => {
-  if (!point) return null;
-
-  // Handle if point is already an array
-  if (Array.isArray(point) && point.length === 2) {
-    const [first, second] = point.map(p => typeof p === 'string' ? parseFloat(p) : p);
-
-    // Skip invalid values
-    if (isNaN(first) || isNaN(second)) return null;
-
-    // If first value looks like latitude and second like longitude
-    if (Math.abs(first) <= 90 && Math.abs(second) <= 180 && Math.abs(second) > 90) {
-      console.log('Fixing swapped array coordinates:', [first, second], '→', [second, first]);
-      return validateGeoJSONCoordinates(second, first);
-    }
-
-    return validateGeoJSONCoordinates(first, second);
-  }
-
-  // Handle if point has lat/lng properties
-  if (point.latitude !== undefined && point.longitude !== undefined) {
-    const lat = typeof point.latitude === 'string' ? parseFloat(point.latitude) : point.latitude;
-    const lng = typeof point.longitude === 'string' ? parseFloat(point.longitude) : point.longitude;
-
-    // Skip invalid values
-    if (isNaN(lat) || isNaN(lng)) return null;
-
-    // If longitude looks like it might be a latitude value and vice versa
-    if (Math.abs(lng) <= 90 && Math.abs(lat) > 90) {
-      console.log('Fixing swapped lat/lng properties:', { lat, lng }, '→', { lat: lng, lng: lat });
-      return validateGeoJSONCoordinates(lat, lng);
-    }
-
-    return validateGeoJSONCoordinates(lng, lat);
-  }
-
-  // Handle if point has lng/lat properties (GeoJSON style)
-  if (point.lng !== undefined && point.lat !== undefined) {
-    const lng = typeof point.lng === 'string' ? parseFloat(point.lng) : point.lng;
-    const lat = typeof point.lat === 'string' ? parseFloat(point.lat) : point.lat;
-    return validateGeoJSONCoordinates(lng, lat);
-  }
-
-  // Handle if point has coordinates array property
-  if (point.coordinates && Array.isArray(point.coordinates) && point.coordinates.length === 2) {
-    return fixCoordinateFormat(point.coordinates);
-  }
-
-  return null;
-};
+// Log to confirm we're using the centralized utility
+console.log('Map component using centralized coordinate format utility from mapUtils.js');
 
 /**
  * Initialize map markers and layers with enhanced error handling and coordinate validation
@@ -161,20 +99,13 @@ const initializeMapLayers = async (map, tripData) => {
       const validRoutePoints = [];
 
       tripData.route.forEach(point => {
-        // First try to validate with expected format
-        let coords = null;
-
-        if (point && typeof point.longitude !== 'undefined' && typeof point.latitude !== 'undefined') {
-          coords = validateGeoJSONCoordinates(point.longitude, point.latitude);
-        }
-
-        // If validation failed, try to fix potential format issues
-        if (!coords) {
-          coords = fixCoordinateFormat(point);
-        }
+        // Use the centralized ensureMapboxFormat utility to handle all coordinate formats
+        const coords = ensureMapboxFormat(point);
 
         if (coords) {
           validRoutePoints.push(coords);
+        } else {
+          console.warn('Invalid coordinate point skipped:', point);
         }
       });
 
@@ -228,28 +159,24 @@ const initializeMapLayers = async (map, tripData) => {
       tripData.stops.forEach(stop => {
         if (!stop) return;
 
-        let coords = null;
+        // Determine the location to validate
+        let locationToValidate = stop;
 
-        // First try standard format
-        if (typeof stop.longitude !== 'undefined' && typeof stop.latitude !== 'undefined') {
-          coords = validateGeoJSONCoordinates(stop.longitude, stop.latitude);
+        // If stop has a dedicated location property, use that instead
+        if (stop.location) {
+          locationToValidate = stop.location;
         }
 
-        // If that fails, try GeoJSON coordinates array if available
-        if (!coords && stop.coordinates && Array.isArray(stop.coordinates) && stop.coordinates.length === 2) {
-          coords = validateGeoJSONCoordinates(stop.coordinates[0], stop.coordinates[1]);
-        }
-
-        // Last resort - try to fix potential format issues
-        if (!coords) {
-          coords = fixCoordinateFormat(stop);
-        }
+        // Use the centralized ensureMapboxFormat utility
+        const coords = ensureMapboxFormat(locationToValidate);
 
         if (coords) {
           validStops.push({
             ...stop,
             _validatedCoordinates: coords
           });
+        } else {
+          console.warn('Invalid stop skipped:', stop);
         }
       });
 
@@ -783,12 +710,12 @@ const Map = ({
     if (!mapReady || !map.current || !vehicleData) return;
 
     try {
-      // Extract coordinates with proper fallbacks
-      const latitude = vehicleData.location?.latitude || vehicleData.latitude;
-      const longitude = vehicleData.location?.longitude || vehicleData.longitude;
+      // Use our ensureMapboxFormat utility to handle any coordinate format
+      // This will work whether vehicleData.location is an array, object, etc.
+      const coordinates = ensureMapboxFormat(vehicleData.location || vehicleData);
 
-      if (latitude == null || longitude == null || isNaN(latitude) || isNaN(longitude)) {
-        console.warn('Invalid vehicle coordinates:', { latitude, longitude });
+      if (!coordinates) {
+        console.warn('Invalid vehicle coordinates:', vehicleData.location || vehicleData);
         return;
       }
 
@@ -820,7 +747,7 @@ const Map = ({
               rotation: vehicleData.heading || 0,
               rotationAlignment: 'map'
             })
-              .setLngLat([longitude, latitude])
+              .setLngLat(coordinates)
               .addTo(map.current);
 
             // Add popup for vehicle with better formatting
@@ -859,7 +786,7 @@ const Map = ({
           } else {
             // Update existing marker
             vehicleMarker.current
-              .setLngLat([longitude, latitude])
+              .setLngLat(coordinates)
               .setRotation(vehicleData.heading || 0);
 
             // Update marker appearance based on battery level

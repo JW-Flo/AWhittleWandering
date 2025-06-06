@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>48 Continental USA - Map Test</title>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+        Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+    #map {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .map-container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+    }
+    .map-overlay {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px;
+      border-radius: 4px;
+      z-index: 1;
+      max-width: 300px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+    .marker-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .marker-waypoint {
+      background-color: #FFC107;
+    }
+    .marker-lodging {
+      background-color: #2196F3;
+    }
+    .marker-charging-station {
+      background-color: #4CAF50;
+    }
+    .vehicle-marker {
+      width: 36px;
+      height: 36px;
+      background-color: #F44336;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-weight: bold;
+    }
+    button {
+      background-color: #0066cc;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #0055aa;
+    }
+    .status {
+      margin-top: 10px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="map-container">
+    <div id="map"></div>
+    <div class="map-overlay">
+      <h3>48 Continental USA</h3>
+      <p>Map visualization test for the journey across all 48 continental states.</p>
+      <button id="loadData">Load Trip Data</button>
+      <button id="resetMap">Reset Map</button>
+      <div class="status" id="status">Ready to load map data.</div>
+    </div>
+  </div>
+
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <script>
+    // Use the same token from the Map.jsx component
+    const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2liaTA4enIwIn0.tU9_tLaaxXxhfcVX4WhOeA';
+    mapboxgl.accessToken = MAPBOX_TOKEN;
+    
+    // Status display helper
+    const setStatus = (message, isError = false) => {
+      const statusEl = document.getElementById('status');
+      statusEl.textContent = message;
+      statusEl.style.color = isError ? '#F44336' : '#333';
+    };
+
+    // SVG icons for map markers
+    const SVG_ICONS = {
+      'charging-station': `
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <path fill="#4CAF50" d="M14.5,11l-1.5,-3h2l3,7h-5v4l-6,-8h3l1.5,-3h3z"/>
+        </svg>
+      `,
+      'lodging': `
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <path fill="#2196F3" d="M19,7h-8v7H3V5H1v15h2v-3h18v3h2v-9C23,8.79,21.21,7,19,7z M15,13.5A1.5,1.5,0,1,1,16.5,12,1.5,1.5,0,0,1,15,13.5z"/>
+        </svg>
+      `,
+      'waypoint': `
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <path fill="#FFC107" d="M12,2C8.13,2,5,5.13,5,9c0,5.25,7,13,7,13s7-7.75,7-13C19,5.13,15.87,2,12,2z M12,11.5c-1.38,0-2.5-1.12-2.5-2.5s1.12-2.5,2.5-2.5s2.5,1.12,2.5,2.5S13.38,11.5,12,11.5z"/>
+        </svg>
+      `
+    };
+
+    // Create SVG marker element
+    const createMarkerElement = (type) => {
+      const el = document.createElement('div');
+      el.className = `marker-icon marker-${type}`;
+      el.innerHTML = SVG_ICONS[type] || SVG_ICONS['waypoint'];
+      return el;
+    };
+
+    // Initialize map
+    try {
+      const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/streets-v11',
+        center: [-98.5795, 39.8283], // Center of continental US
+        zoom: 3.5,
+        minZoom: 2,
+        maxZoom: 18,
+      });
+
+      map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      map.addControl(new mapboxgl.FullscreenControl(), 'top-right');
+      map.addControl(new mapboxgl.ScaleControl({
+        maxWidth: 100,
+        unit: 'imperial'
+      }), 'bottom-left');
+
+      // Validate and normalize GeoJSON coordinates
+      const validateGeoJSONCoordinates = (lng, lat) => {
+        // Convert string values to numbers if needed
+        if (typeof lng === 'string') lng = parseFloat(lng);
+        if (typeof lat === 'string') lat = parseFloat(lat);
+
+        // Check if values are valid numbers and within range
+        // Longitude: -180 to 180, Latitude: -90 to 90
+        const validLng = typeof lng === 'number' && !isNaN(lng) && lng >= -180 && lng <= 180;
+        const validLat = typeof lat === 'number' && !isNaN(lat) && lat >= -90 && lat <= 90;
+
+        if (!validLng || !validLat) {
+          return null;
+        }
+
+        return [lng, lat];
+      };
+
+      // Attempt to fix potentially swapped coordinates
+      const fixCoordinateFormat = (point) => {
+        if (!point) return null;
+
+        // Handle if point is already an array
+        if (Array.isArray(point) && point.length === 2) {
+          const [first, second] = point.map(p => typeof p === 'string' ? parseFloat(p) : p);
+
+          // Skip invalid values
+          if (isNaN(first) || isNaN(second)) return null;
+
+          // If first value looks like latitude and second like longitude
+          if (Math.abs(first) <= 90 && Math.abs(second) <= 180 && Math.abs(second) > 90) {
+            console.log('Fixing swapped array coordinates:', [first, second], '→', [second, first]);
+            return validateGeoJSONCoordinates(second, first);
+          }
+
+          return validateGeoJSONCoordinates(first, second);
+        }
+
+        // Handle if point has lat/lng properties
+        if (point.latitude !== undefined && point.longitude !== undefined) {
+          const lat = typeof point.latitude === 'string' ? parseFloat(point.latitude) : point.latitude;
+          const lng = typeof point.longitude === 'string' ? parseFloat(point.longitude) : point.longitude;
+
+          // Skip invalid values
+          if (isNaN(lat) || isNaN(lng)) return null;
+
+          // If longitude looks like it might be a latitude value and vice versa
+          if (Math.abs(lng) <= 90 && Math.abs(lat) > 90) {
+            console.log('Fixing swapped lat/lng properties:', { lat, lng }, '→', { lat: lng, lng: lat });
+            return validateGeoJSONCoordinates(lat, lng);
+          }
+
+          return validateGeoJSONCoordinates(lng, lat);
+        }
+
+        // Handle if point has lng/lat properties (GeoJSON style)
+        if (point.lng !== undefined && point.lat !== undefined) {
+          const lng = typeof point.lng === 'string' ? parseFloat(point.lng) : point.lng;
+          const lat = typeof point.lat === 'string' ? parseFloat(point.lat) : point.lat;
+          return validateGeoJSONCoordinates(lng, lat);
+        }
+
+        // Handle if point has coordinates array property
+        if (point.coordinates && Array.isArray(point.coordinates) && point.coordinates.length === 2) {
+          return fixCoordinateFormat(point.coordinates);
+        }
+
+        return null;
+      };
+
+      // Initialize map layers
+      const initializeMapLayers = async (tripData) => {
+        if (!tripData) {
+          setStatus('No trip data available', true);
+          return;
+        }
+
+        setStatus('Initializing map with trip data...');
+
+        try {
+          // Clear existing layers if they exist
+          ['route-line', 'stops-markers'].forEach(layerId => {
+            if (map.getLayer(layerId)) {
+              map.removeLayer(layerId);
+            }
+          });
+
+          ['route', 'stops'].forEach(sourceId => {
+            if (map.getSource(sourceId)) {
+              map.removeSource(sourceId);
+            }
+          });
+
+          // Add route layer if route data exists and has enough points
+          if (tripData.route?.length > 1) {
+            // Filter out invalid coordinates and fix any format issues
+            const validRoutePoints = [];
+
+            tripData.route.forEach(point => {
+              // First try to validate with expected format
+              let coords = null;
+
+              if (point && typeof point.longitude !== 'undefined' && typeof point.latitude !== 'undefined') {
+                coords = validateGeoJSONCoordinates(point.longitude, point.latitude);
+              }
+
+              // If validation failed, try to fix potential format issues
+              if (!coords) {
+                coords = fixCoordinateFormat(point);
+              }
+
+              if (coords) {
+                validRoutePoints.push(coords);
+              }
+            });
+
+            if (validRoutePoints.length > 1) {
+              console.log(`Successfully validated ${validRoutePoints.length} route points`);
+
+              const routeGeoJSON = {
+                type: 'Feature',
+                properties: {},
+                geometry: {
+                  type: 'LineString',
+                  coordinates: validRoutePoints
+                }
+              };
+
+              // Safe add source with error handling
+              try {
+                map.addSource('route', {
+                  type: 'geojson',
+                  data: routeGeoJSON
+                });
+
+                map.addLayer({
+                  id: 'route-line',
+                  type: 'line',
+                  source: 'route',
+                  layout: {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                  },
+                  paint: {
+                    'line-color': '#0066cc',
+                    'line-width': 4,
+                    'line-opacity': 0.8
+                  }
+                });
+                console.log('Successfully added route layer with', validRoutePoints.length, 'points');
+              } catch (error) {
+                console.error('Error adding route layer:', error);
+                setStatus('Error adding route layer: ' + error.message, true);
+              }
+            } else {
+              console.warn('Not enough valid route points to render route line');
+              setStatus('Not enough valid route points to render route line', true);
+            }
+          }
+
+          // Add stops layer if stop data exists
+          if (tripData.stops?.length > 0) {
+            // Process stops with enhanced validation
+            const validStops = [];
+
+            tripData.stops.forEach(stop => {
+              if (!stop) return;
+
+              let coords = null;
+
+              // First try standard format
+              if (typeof stop.longitude !== 'undefined' && typeof stop.latitude !== 'undefined') {
+                coords = validateGeoJSONCoordinates(stop.longitude, stop.latitude);
+              }
+
+              // If that fails, try GeoJSON coordinates array if available
+              if (!coords && stop.coordinates && Array.isArray(stop.coordinates) && stop.coordinates.length === 2) {
+                coords = validateGeoJSONCoordinates(stop.coordinates[0], stop.coordinates[1]);
+              }
+
+              // Last resort - try to fix potential format issues
+              if (!coords) {
+                coords = fixCoordinateFormat(stop);
+              }
+
+              if (coords) {
+                validStops.push({
+                  ...stop,
+                  _validatedCoordinates: coords
+                });
+              }
+            });
+
+            if (validStops.length > 0) {
+              console.log(`Successfully validated ${validStops.length} stops`);
+
+              const stopsGeoJSON = {
+                type: 'FeatureCollection',
+                features: validStops.map(stop => ({
+                  type: 'Feature',
+                  properties: {
+                    id: stop.id || 'stop-' + Math.random().toString(36).substring(2, 9),
+                    name: stop.name || 'Unknown',
+                    description: stop.description || 'No description',
+                    type: stop.type || 'waypoint',
+                    charging: !!stop.charging,
+                    overnight: !!stop.overnight
+                  },
+                  geometry: {
+                    type: 'Point',
+                    coordinates: stop._validatedCoordinates
+                  }
+                }))
+              };
+
+              // Safe add source with error handling
+              try {
+                map.addSource('stops', {
+                  type: 'geojson',
+                  data: stopsGeoJSON
+                });
+
+                // Add markers for each stop
+                stopsGeoJSON.features.forEach(stop => {
+                  try {
+                    const markerType = stop.properties.overnight ? 'lodging' :
+                      stop.properties.charging ? 'charging-station' : 'waypoint';
+
+                    const el = createMarkerElement(markerType);
+
+                    new mapboxgl.Marker({
+                      element: el,
+                      anchor: 'bottom'
+                    })
+                      .setLngLat(stop.geometry.coordinates)
+                      .setPopup(
+                        new mapboxgl.Popup({
+                          offset: 25,
+                          closeButton: false,
+                          maxWidth: '300px'
+                        })
+                          .setHTML(`
+                        <div class="map-popup">
+                          <h4>${stop.properties.name}</h4>
+                          <p>${stop.properties.description}</p>
+                          <p class="stop-type">Type: ${stop.properties.type.charAt(0).toUpperCase() + stop.properties.type.slice(1)}</p>
+                        </div>
+                      `)
+                      )
+                      .addTo(map);
+                  } catch (markerError) {
+                    console.error('Error adding marker for stop:', stop.properties.name, markerError);
+                  }
+                });
+                console.log('Successfully added', validStops.length, 'stop markers');
+                setStatus(`Map loaded with ${validRoutePoints?.length || 0} route points and ${validStops.length} stops.`);
+              } catch (error) {
+                console.error('Error adding stops layer:', error);
+                setStatus('Error adding stops layer: ' + error.message, true);
+              }
+            } else {
+              console.warn('No valid stops to render on map');
+              setStatus('No valid stops to render on map', true);
+            }
+          }
+        } catch (error) {
+          console.error('Error initializing map layers:', error);
+          setStatus('Error initializing map layers: ' + error.message, true);
+        }
+      };
+
+      // Load trip data button
+      document.getElementById('loadData').addEventListener('click', async () => {
+        try {
+          setStatus('Loading trip data...');
+          // First try loading from the pre-processed JSON in the public folder
+          const response = await fetch('/data/itinerary-geo.json');
+          if (response.ok) {
+            const tripData = await response.json();
+            setStatus('Trip data loaded successfully!');
+            initializeMapLayers(tripData);
+          } else {
+            // Fall back to the React data folder
+            const fallbackResponse = await fetch('/src/data/trip-data.json');
+            if (fallbackResponse.ok) {
+              const tripData = await fallbackResponse.json();
+              setStatus('Trip data loaded successfully (fallback)!');
+              initializeMapLayers(tripData);
+            } else {
+              throw new Error('Failed to load trip data from both sources');
+            }
+          }
+        } catch (error) {
+          console.error('Error loading trip data:', error);
+          setStatus('Error loading trip data: ' + error.message, true);
+        }
+      });
+
+      // Reset map button
+      document.getElementById('resetMap').addEventListener('click', () => {
+        try {
+          // Clear existing layers if they exist
+          ['route-line', 'stops-markers'].forEach(layerId => {
+            if (map.getLayer(layerId)) {
+              map.removeLayer(layerId);
+            }
+          });
+
+          ['route', 'stops'].forEach(sourceId => {
+            if (map.getSource(sourceId)) {
+              map.removeSource(sourceId);
+            }
+          });
+
+          // Remove all markers
+          document.querySelectorAll('.mapboxgl-marker').forEach(marker => {
+            marker.remove();
+          });
+
+          // Reset the map view
+          map.flyTo({
+            center: [-98.5795, 39.8283],
+            zoom: 3.5,
+            essential: true
+          });
+
+          setStatus('Map reset successfully.');
+        } catch (error) {
+          console.error('Error resetting map:', error);
+          setStatus('Error resetting map: ' + error.message, true);
+        }
+      });
+
+      map.on('load', () => {
+        setStatus('Map loaded successfully! Click "Load Trip Data" to show the route.');
+      });
+
+      map.on('error', (e) => {
+        console.error('Map error:', e);
+        setStatus('Map error: ' + (e.error?.message || 'Unknown error'), true);
+      });
+
+    } catch (error) {
+      console.error('Error initializing map:', error);
+      setStatus('Error initializing map: ' + error.message, true);
+    }
+  </script>
+</body>
+</html>

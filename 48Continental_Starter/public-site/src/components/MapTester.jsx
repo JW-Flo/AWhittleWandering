@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import MinimalMapTest from './MinimalMapTest';
 import './MapTester.css';
 
+import { ensureMapboxFormat } from "../utils/mapUtils";
+
 /**
  * MapTester component for debugging map issues
  */
