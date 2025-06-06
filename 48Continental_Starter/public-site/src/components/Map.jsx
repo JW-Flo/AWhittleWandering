@@ -15,7 +15,7 @@ import './Map.css';
 
 // Set MapBox token from environment variables
 // Using public token (pk.) for client-side application
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.placeholder'; // Placeholder to prevent crashes
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoidGhld2FuZGVyaW5nd2hpdHRsZSIsImEiOiJjbHQxaXhzejYwYmU2MmpxdHl0MHowN3UzIn0.Q7xKTRlXvtimBHd39JqN1A'; // Fallback to the token in .env.production
 
 // Load map icons if they're not already loaded
 const loadMapIcons = (map) => {
