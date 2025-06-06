@@ -174,8 +174,18 @@ const kvData = [
   },
 ];
 
+// Ensure edge-worker directory exists
+const edgeWorkerDir = path.resolve(__dirname, "../edge-worker");
+if (!fs.existsSync(edgeWorkerDir)) {
+  console.log("Creating edge-worker directory...");
+  fs.mkdirSync(edgeWorkerDir, { recursive: true });
+}
+
 // Save the KV data
-fs.writeFileSync("edge-worker/trip-data.json", JSON.stringify(kvData, null, 2));
+fs.writeFileSync(
+  path.resolve(edgeWorkerDir, "trip-data.json"),
+  JSON.stringify(kvData, null, 2)
+);
 console.log("Created edge-worker/trip-data.json for KV upload");
 
 // Create a simplified version for the vehicle API to use
