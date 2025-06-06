@@ -17,36 +17,146 @@ import './Map.css';
 // Using public token (pk.) for client-side application
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoidGhld2FuZGVyaW5nd2hpdHRsZSIsImEiOiJjbHQxaXhzejYwYmU2MmpxdHl0MHowN3UzIn0.Q7xKTRlXvtimBHd39JqN1A'; // Fallback to the token in .env.production
 
-// Load map icons if they're not already loaded
-const loadMapIcons = (map) => {
-  return new Promise((resolve) => {
-    if (!map.hasImage('charging-station')) {
-      map.loadImage('/assets/charging-station.png', (error, image) => {
-        if (!error) map.addImage('charging-station', image);
+// SVG icons for map markers
+const SVG_ICONS = {
+  'charging-station': `
+    <svg viewBox="0 0 24 24" width="24" height="24">
+      <path fill="#4CAF50" d="M14.5,11l-1.5,-3h2l3,7h-5v4l-6,-8h3l1.5,-3h3z"/>
+    </svg>
+  `,
+  'lodging': `
+    <svg viewBox="0 0 24 24" width="24" height="24">
+      <path fill="#2196F3" d="M19,7h-8v7H3V5H1v15h2v-3h18v3h2v-9C23,8.79,21.21,7,19,7z M15,13.5A1.5,1.5,0,1,1,16.5,12,1.5,1.5,0,0,1,15,13.5z"/>
+    </svg>
+  `,
+  'waypoint': `
+    <svg viewBox="0 0 24 24" width="24" height="24">
+      <path fill="#FFC107" d="M12,2C8.13,2,5,5.13,5,9c0,5.25,7,13,7,13s7-7.75,7-13C19,5.13,15.87,2,12,2z M12,11.5c-1.38,0-2.5-1.12-2.5-2.5s1.12-2.5,2.5-2.5s2.5,1.12,2.5,2.5S13.38,11.5,12,11.5z"/>
+    </svg>
+  `
+};
 
-        // Load lodging icon for overnight stops
-        if (!map.hasImage('lodging')) {
-          map.loadImage('/assets/lodging.png', (error, image) => {
-            if (!error) map.addImage('lodging', image);
+// Create SVG marker element
+const createMarkerElement = (type) => {
+  const el = document.createElement('div');
+  el.className = `marker-icon marker-${type}`;
+  el.innerHTML = SVG_ICONS[type] || SVG_ICONS['waypoint'];
+  return el;
+};
 
-            // Load waypoint icon
-            if (!map.hasImage('waypoint')) {
-              map.loadImage('/assets/waypoint.png', (error, image) => {
-                if (!error) map.addImage('waypoint', image);
-                resolve();
-              });
-            } else {
-              resolve();
-            }
-          });
-        } else {
-          resolve();
+// Initialize map markers and layers
+const initializeMapLayers = async (map, tripData) => {
+  if (!map || !tripData) return;
+
+  try {
+    // Clear existing layers if they exist
+    ['route-line', 'stops-markers'].forEach(layerId => {
+      if (map.getLayer(layerId)) {
+        map.removeLayer(layerId);
+      }
+    });
+
+    ['route', 'stops'].forEach(sourceId => {
+      if (map.getSource(sourceId)) {
+        map.removeSource(sourceId);
+      }
+    });
+
+    // Add route layer
+    if (tripData.route?.length > 1) {
+      const routeGeoJSON = {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: tripData.route
+            .filter(point => point.longitude && point.latitude)
+            .map(point => [point.longitude, point.latitude])
+        }
+      };
+
+      map.addSource('route', {
+        type: 'geojson',
+        data: routeGeoJSON
+      });
+
+      map.addLayer({
+        id: 'route-line',
+        type: 'line',
+        source: 'route',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#0066cc',
+          'line-width': 4,
+          'line-opacity': 0.8
         }
       });
-    } else {
-      resolve();
     }
-  });
+
+    // Add stops layer
+    if (tripData.stops?.length > 0) {
+      const stopsGeoJSON = {
+        type: 'FeatureCollection',
+        features: tripData.stops
+          .filter(stop => stop.latitude && stop.longitude)
+          .map(stop => ({
+            type: 'Feature',
+            properties: {
+              id: stop.id,
+              name: stop.name,
+              description: stop.description,
+              type: stop.type,
+              charging: stop.charging,
+              overnight: stop.overnight
+            },
+            geometry: {
+              type: 'Point',
+              coordinates: [stop.longitude, stop.latitude]
+            }
+          }))
+      };
+
+      map.addSource('stops', {
+        type: 'geojson',
+        data: stopsGeoJSON
+      });
+
+      // Add markers for each stop
+      stopsGeoJSON.features.forEach(stop => {
+        const markerType = stop.properties.overnight ? 'lodging' :
+          stop.properties.charging ? 'charging-station' : 'waypoint';
+
+        const el = createMarkerElement(markerType);
+
+        new mapboxgl.Marker({
+          element: el,
+          anchor: 'bottom'
+        })
+          .setLngLat(stop.geometry.coordinates)
+          .setPopup(
+            new mapboxgl.Popup({
+              offset: 25,
+              closeButton: false,
+              maxWidth: '300px'
+            })
+              .setHTML(`
+            <div class="map-popup">
+              <h4>${stop.properties.name}</h4>
+              <p>${stop.properties.description}</p>
+              <p class="stop-type">Type: ${stop.properties.type.charAt(0).toUpperCase() + stop.properties.type.slice(1)}</p>
+            </div>
+          `)
+          )
+          .addTo(map);
+      });
+    }
+  } catch (error) {
+    console.error('Error initializing map layers:', error);
+    throw new Error('Failed to initialize map layers');
+  }
 };
 
 /**
@@ -136,16 +246,16 @@ const Map = ({
       // Mark map as ready when loaded and initialize layers
       map.current.on('load', async () => {
         try {
-          // Load icons first
-          await loadMapIcons(map.current);
-
-          // Initialize layers
-          await initializeMapLayers();
+          // Initialize layers with trip data
+          if (tripData) {
+            await initializeMapLayers(map.current, tripData);
+          }
 
           // Set map as ready
           setMapReady(true);
         } catch (error) {
           console.error('Error initializing map:', error);
+          setMapError('Failed to initialize map layers. Please try refreshing the page.');
           // Still set map as ready even if initialization fails
           setMapReady(true);
         }
@@ -164,112 +274,6 @@ const Map = ({
     };
   }, []);
 
-  // Function to initialize map layers and sources
-  const initializeMapLayers = async () => {
-    if (!map.current) return;
-
-    try {
-      // Load map icons first
-      await loadMapIcons(map.current);
-
-      // Re-add route if it exists
-      if (tripData?.route) {
-        const routeGeoJSON = {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: tripData.route.map(point => [point.longitude, point.latitude])
-          }
-        };
-
-        if (!map.current.getSource('route')) {
-          map.current.addSource('route', {
-            type: 'geojson',
-            data: routeGeoJSON
-          });
-
-          map.current.addLayer({
-            id: 'route-line',
-            type: 'line',
-            source: 'route',
-            layout: {
-              'line-join': 'round',
-              'line-cap': 'round'
-            },
-            paint: {
-              'line-color': '#0066cc',
-              'line-width': 4,
-              'line-opacity': 0.8
-            }
-          });
-        } else {
-          map.current.getSource('route').setData(routeGeoJSON);
-        }
-      }
-
-      // Re-add stops if they exist
-      if (tripData?.stops) {
-        const stopsGeoJSON = {
-          type: 'FeatureCollection',
-          features: tripData.stops.map(stop => ({
-            type: 'Feature',
-            properties: {
-              id: stop.id,
-              name: stop.name,
-              description: stop.description,
-              type: stop.type,
-              charging: stop.charging,
-              overnight: stop.overnight
-            },
-            geometry: {
-              type: 'Point',
-              coordinates: [stop.longitude, stop.latitude]
-            }
-          }))
-        };
-
-        if (!map.current.getSource('stops')) {
-          map.current.addSource('stops', {
-            type: 'geojson',
-            data: stopsGeoJSON
-          });
-
-          map.current.addLayer({
-            id: 'stops-markers',
-            type: 'symbol',
-            source: 'stops',
-            layout: {
-              'icon-image': [
-                'match',
-                ['get', 'type'],
-                'overnight', 'lodging',
-                'charging', 'charging-station',
-                'waypoint'
-              ],
-              'icon-size': 1.2,
-              'icon-allow-overlap': true,
-              'text-field': ['get', 'name'],
-              'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-              'text-offset': [0, 1.2],
-              'text-anchor': 'top',
-              'text-size': 12,
-              'text-optional': true
-            },
-            paint: {
-              'text-color': '#333',
-              'text-halo-color': '#fff',
-              'text-halo-width': 1
-            }
-          });
-        } else {
-          map.current.getSource('stops').setData(stopsGeoJSON);
-        }
-      }
-    } catch (error) {
-      console.error('Error initializing map layers:', error);
-    }
-  };
 
   // Update map style based on layer toggles
   useEffect(() => {
@@ -288,7 +292,7 @@ const Map = ({
     if (map.current.getStyle().name !== newStyle) {
       map.current.once('style.load', async () => {
         // Re-initialize all layers after style change
-        await initializeMapLayers();
+        await initializeMapLayers(map.current, tripData);
 
         // Restore the previous view
         map.current.setCenter(currentCenter);
@@ -415,160 +419,16 @@ const Map = ({
     }
   }, [mapLayers.chargingStations, stationsData, mapReady]);
 
-  // Add and update route on the map
+  // Update map data when tripData changes
   useEffect(() => {
-    if (!mapReady || !map.current || !tripData?.route) return;
+    if (!mapReady || !map.current) return;
 
-    // Check if route layer already exists
-    if (!map.current.getSource('route')) {
-      // Convert route format to GeoJSON
-      const routeGeoJSON = {
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates: tripData.route.map(point => [point.longitude, point.latitude])
-        }
-      };
-
-      // Add route source and layer
-      map.current.addSource('route', {
-        type: 'geojson',
-        data: routeGeoJSON
-      });
-
-      map.current.addLayer({
-        id: 'route-line',
-        type: 'line',
-        source: 'route',
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': '#0066cc',
-          'line-width': 4,
-          'line-opacity': 0.8
-        }
-      });
-    } else {
-      // Update existing route
-      map.current.getSource('route').setData({
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates: tripData.route.map(point => [point.longitude, point.latitude])
-        }
-      });
-    }
-
-    // Add stop markers
-    if (tripData.stops && !map.current.getSource('stops')) {
-      const stopsGeoJSON = {
-        type: 'FeatureCollection',
-        features: tripData.stops.map(stop => ({
-          type: 'Feature',
-          properties: {
-            id: stop.id,
-            name: stop.name,
-            description: stop.description,
-            type: stop.type,
-            charging: stop.charging,
-            overnight: stop.overnight
-          },
-          geometry: {
-            type: 'Point',
-            coordinates: [stop.longitude, stop.latitude]
-          }
-        }))
-      };
-
-      map.current.addSource('stops', {
-        type: 'geojson',
-        data: stopsGeoJSON
-      });
-
-      // Add a symbol layer for stops
-      map.current.addLayer({
-        id: 'stops-markers',
-        type: 'symbol',
-        source: 'stops',
-        layout: {
-          'icon-image': [
-            'match',
-            ['get', 'type'],
-            'overnight', 'lodging',
-            'charging', 'charging-station',
-            'waypoint'
-          ],
-          'icon-size': 1.2,
-          'icon-allow-overlap': true,
-          'text-field': ['get', 'name'],
-          'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-          'text-offset': [0, 1.2],
-          'text-anchor': 'top',
-          'text-size': 12,
-          'text-optional': true
-        },
-        paint: {
-          'text-color': '#333',
-          'text-halo-color': '#fff',
-          'text-halo-width': 1
-        }
-      });
-
-      // Add click handler for stops
-      map.current.on('click', 'stops-markers', (e) => {
-        const coordinates = e.features[0].geometry.coordinates.slice();
-        const { name, description, type } = e.features[0].properties;
-
-        // Create popup content
-        const popupContent = `
-          <div class="map-popup">
-            <h4>${name}</h4>
-            <p>${description}</p>
-            <p class="stop-type">Type: ${type.charAt(0).toUpperCase() + type.slice(1)}</p>
-          </div>
-        `;
-
-        // Create popup
-        new mapboxgl.Popup()
-          .setLngLat(coordinates)
-          .setHTML(popupContent)
-          .addTo(map.current);
-      });
-
-      // Change cursor on hover
-      map.current.on('mouseenter', 'stops-markers', () => {
-        map.current.getCanvas().style.cursor = 'pointer';
-      });
-
-      map.current.on('mouseleave', 'stops-markers', () => {
-        map.current.getCanvas().style.cursor = '';
-      });
-    } else if (tripData.stops && map.current.getSource('stops')) {
-      // Update existing stops
-      const stopsGeoJSON = {
-        type: 'FeatureCollection',
-        features: tripData.stops.map(stop => ({
-          type: 'Feature',
-          properties: {
-            id: stop.id,
-            name: stop.name,
-            description: stop.description,
-            type: stop.type,
-            charging: stop.charging,
-            overnight: stop.overnight
-          },
-          geometry: {
-            type: 'Point',
-            coordinates: [stop.longitude, stop.latitude]
-          }
-        }))
-      };
-
-      map.current.getSource('stops').setData(stopsGeoJSON);
+    try {
+      // Re-initialize layers with new data
+      initializeMapLayers(map.current, tripData);
+    } catch (error) {
+      console.error('Error updating map data:', error);
+      setMapError('Failed to update map data');
     }
   }, [tripData, mapReady]);
 
