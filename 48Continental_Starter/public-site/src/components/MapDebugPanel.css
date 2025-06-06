@@ -1,222 +1,333 @@
 /**
- * Map Debug Panel CSS
- * 
- * Styling for the map debugging panel that provides information
- * about map data, events, and tools for troubleshooting.
+ * MapDebugPanel Component Styles
  */
 
 .map-debug-panel {
   position: absolute;
-  top: 10px;
+  bottom: 10px;
   right: 10px;
-  width: 350px;
-  max-height: calc(100% - 20px);
-  background-color: rgba(255, 255, 255, 0.95);
-  border-radius: 6px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  z-index: 100;
-  overflow-y: auto;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  width: 320px;
+  max-width: 95vw;
+  max-height: 500px;
+  overflow: auto;
+  z-index: 999;
+  font-size: 12px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
-  color: #333;
-  font-size: 14px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9ecef;
 }
 
-.debug-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 15px;
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
-  border-radius: 6px 6px 0 0;
-}
-
-.debug-header h3 {
+.map-debug-panel h3 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #212529;
-}
-
-.debug-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.debug-button {
-  padding: 4px 8px;
-  background-color: #e9ecef;
-  border: none;
-  border-radius: 4px;
+  padding: 10px 15px;
+  font-size: 14px;
+  border-bottom: 1px solid #e9ecef;
+  background-color: #f8f9fa;
   color: #495057;
-  font-size: 12px;
+}
+
+.debug-tabs {
+  display: flex;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.debug-tabs button {
+  flex: 1;
+  padding: 8px 0;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
   cursor: pointer;
+  font-size: 12px;
+  color: #6c757d;
   transition: all 0.2s ease;
 }
 
-.debug-button:hover {
-  background-color: #dee2e6;
-  color: #212529;
-}
-
-.debug-status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 15px;
-  background-color: #f1f3f5;
-  font-size: 13px;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.status-indicator {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.status-ok {
-  background-color: #40c057;
-}
-
-.status-error {
-  background-color: #fa5252;
-}
-
-.debug-section {
-  border-bottom: 1px solid #e9ecef;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 15px;
-  cursor: pointer;
+.debug-tabs button:hover {
   background-color: #f8f9fa;
-  transition: background-color 0.2s ease;
-}
-
-.section-header:hover {
-  background-color: #e9ecef;
-}
-
-.section-header h4 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
   color: #495057;
 }
 
-.toggle-icon {
-  color: #adb5bd;
-  font-size: 12px;
-}
-
-.section-content {
-  padding: 10px 15px 15px;
-  background-color: #fff;
-}
-
-.data-item {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 13px;
-}
-
-.data-label {
-  color: #6c757d;
+.debug-tabs button.active {
+  color: #007bff;
+  border-bottom-color: #007bff;
   font-weight: 500;
 }
 
-.data-value {
-  color: #212529;
-  font-weight: 600;
+.debug-section {
+  padding: 12px 15px;
 }
 
-.nested-data {
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px dashed #dee2e6;
-}
-
-.nested-data h5 {
-  margin: 0 0 8px 0;
+.debug-section h4 {
+  margin: 0 0 10px 0;
   font-size: 13px;
+  color: #343a40;
+}
+
+.debug-section h5 {
+  margin: 15px 0 8px 0;
+  font-size: 12px;
   color: #495057;
 }
 
-.nested-data pre {
-  background-color: #f8f9fa;
-  padding: 8px;
-  border-radius: 4px;
+.debug-info {
+  margin-bottom: 15px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #f8f9fa;
+}
+
+.info-label {
+  font-weight: 500;
+  color: #6c757d;
+}
+
+.info-value {
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+
+.info-value.success {
+  color: #28a745;
+  font-weight: 500;
+}
+
+.info-value.error {
+  color: #dc3545;
+  font-weight: 500;
+}
+
+.toggle-raw-data {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
   font-size: 12px;
-  overflow-x: auto;
-  color: #212529;
+  color: #495057;
+}
+
+.toggle-raw-data input {
+  margin-right: 6px;
+}
+
+.raw-data-container {
+  margin-top: 10px;
+}
+
+.raw-data {
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  padding: 8px;
+  font-family: monospace;
+  font-size: 11px;
   max-height: 150px;
-  overflow-y: auto;
+  overflow: auto;
+  white-space: pre-wrap;
+  color: #212529;
+  border: 1px solid #e9ecef;
+}
+
+.coords-list {
+  margin-bottom: 12px;
+}
+
+.coord-item {
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  padding: 6px 8px;
+  margin-bottom: 5px;
+  font-size: 11px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.coord-label {
+  font-weight: 500;
+  color: #6c757d;
+  margin-right: 8px;
+}
+
+.coord-value {
+  font-family: monospace;
+  word-break: break-all;
+  text-align: right;
+  max-width: 75%;
+}
+
+.coord-value small {
+  display: block;
+  color: #6c757d;
+  margin-top: 3px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
 }
 
 .no-data {
-  padding: 15px;
   color: #6c757d;
-  text-align: center;
   font-style: italic;
+  padding: 5px;
+  text-align: center;
 }
 
-.event-logger {
-  max-height: 150px;
-  overflow-y: auto;
+.debug-action-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 15px;
 }
 
-.event-item {
-  padding: 5px 0;
-  border-bottom: 1px dashed #dee2e6;
+.debug-action-buttons button {
+  flex: 1;
+  padding: 6px 0;
   font-size: 12px;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.2s ease;
   color: #495057;
 }
 
-.event-item:last-child {
-  border-bottom: none;
+.debug-action-buttons button:hover {
+  background-color: #e9ecef;
 }
 
-.tips-list {
-  margin: 0;
-  padding-left: 25px;
+.debug-action-buttons button.reset {
+  border-color: #f5c6cb;
+  background-color: #f8d7da;
+  color: #721c24;
 }
 
-.tips-list li {
-  margin-bottom: 6px;
-  color: #495057;
-  font-size: 13px;
+.debug-action-buttons button.reset:hover {
+  background-color: #f5c6cb;
 }
 
 .debug-footer {
   padding: 8px 15px;
-  font-size: 12px;
+  border-top: 1px solid #e9ecef;
   color: #6c757d;
+  font-size: 11px;
   text-align: center;
-  background-color: #f8f9fa;
-  border-radius: 0 0 6px 6px;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
   .map-debug-panel {
-    width: 90%;
-    max-width: 320px;
-    right: 5px;
-    top: 5px;
+    background-color: #212529;
+    border-color: #343a40;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
   }
 
-  .section-content {
-    padding: 8px 10px 12px;
+  .map-debug-panel h3 {
+    background-color: #343a40;
+    border-color: #495057;
+    color: #f8f9fa;
   }
 
-  .nested-data pre {
-    max-height: 100px;
+  .debug-tabs {
+    border-color: #343a40;
+  }
+
+  .debug-tabs button {
+    color: #adb5bd;
+  }
+
+  .debug-tabs button:hover {
+    background-color: #343a40;
+    color: #e9ecef;
+  }
+
+  .debug-tabs button.active {
+    color: #0d6efd;
+  }
+
+  .debug-section h4,
+  .debug-section h5 {
+    color: #e9ecef;
+  }
+
+  .info-row {
+    border-color: #343a40;
+  }
+
+  .info-label {
+    color: #adb5bd;
+  }
+
+  .info-value {
+    color: #e9ecef;
+  }
+
+  .info-value.success {
+    color: #28a745;
+  }
+
+  .info-value.error {
+    color: #dc3545;
+  }
+
+  .toggle-raw-data {
+    color: #e9ecef;
+  }
+
+  .raw-data {
+    background-color: #343a40;
+    border-color: #495057;
+    color: #e9ecef;
+  }
+
+  .coord-item {
+    background-color: #343a40;
+  }
+
+  .coord-label {
+    color: #adb5bd;
+  }
+
+  .coord-value {
+    color: #e9ecef;
+  }
+
+  .coord-value small {
+    color: #adb5bd;
+  }
+
+  .no-data {
+    color: #adb5bd;
+  }
+
+  .debug-action-buttons button {
+    border-color: #495057;
+    background-color: #343a40;
+    color: #e9ecef;
+  }
+
+  .debug-action-buttons button:hover {
+    background-color: #495057;
+  }
+
+  .debug-action-buttons button.reset {
+    border-color: #842029;
+    background-color: #2c2124;
+    color: #ea868f;
+  }
+
+  .debug-action-buttons button.reset:hover {
+    background-color: #842029;
+  }
+
+  .debug-footer {
+    border-color: #343a40;
+    color: #adb5bd;
   }
 }

@@ -18,36 +18,13 @@ import MapDebugPanel from './MapDebugPanel';
 import './Map.css';
 import './MapEnhancements.css';
 
-// Set MapBox token from environment variables with robust fallback handling
-// Using public token (pk.) for client-side application
-const MAPBOX_FALLBACK_TOKEN = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2liaTA4enIwIn0.tU9_tLaaxXxhfcVX4WhOeA';
+// IMPORTANT: Directly set the MapBox token to fix the "Invalid Mapbox access token" error
+// This is a public token (pk.) for client-side application
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2liaTA4enIwIn0.tU9_tLaaxXxhfcVX4WhOeA';
 
-// Safely retrieve the token with enhanced error handling
-try {
-  // More verbose logging to track what's happening
-  console.log('Environment variables available:', import.meta.env ? 'Yes' : 'No');
-
-  // Check if VITE_MAPBOX_TOKEN exists and log its status
-  const envToken = import.meta.env.VITE_MAPBOX_TOKEN;
-  console.log('VITE_MAPBOX_TOKEN status:',
-    envToken ? `Found (starts with ${envToken.substring(0, 10)}...)` : 'Not found or empty');
-
-  // Set the token with improved validation
-  if (envToken && envToken !== 'undefined' && envToken.startsWith('pk.')) {
-    mapboxgl.accessToken = envToken;
-    console.log('Using Mapbox token from environment variables');
-  } else {
-    console.warn('Environment token invalid or missing, using fallback token');
-    mapboxgl.accessToken = MAPBOX_FALLBACK_TOKEN;
-  }
-
-  // Log the final token being used (first 10 chars only for security)
-  console.log('Final Mapbox token in use:', mapboxgl.accessToken.substring(0, 10) + '...');
-} catch (error) {
-  console.error('Error setting Mapbox token:', error);
-  console.log('Falling back to hardcoded token');
-  mapboxgl.accessToken = MAPBOX_FALLBACK_TOKEN;
-}
+// Explicitly set the token without complex fallback logic
+mapboxgl.accessToken = MAPBOX_TOKEN;
+console.log('Map.jsx: Using MapBox token:', MAPBOX_TOKEN.substring(0, 10) + '...');
 
 // SVG icons for map markers
 const SVG_ICONS = {
