@@ -31,7 +31,5 @@ new_classes = ["SyncServiceDurableObject"]
 # zone_name = "thewanderingwhittle.com"
 
 # Workers Logs configuration
-[logs]
+[observability.logs]
 enabled = true
-sampling_rate = 1.0 # 100%
-include_invocation_logs = true
