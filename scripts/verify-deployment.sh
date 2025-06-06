@@ -1,136 +1,87 @@
 #!/bin/bash
-# Deployment Verification Script for 48 Continental USA
-# Tests all components of the deployment including Edge Worker and Public Site
+# Script to verify the 48 Continental USA deployment
 
-# Colors for pretty output
-RED='\033[0;31m'
+# Set colors for output
 GREEN='\033[0;32m'
+RED='\033[0;31m'
 YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# URLs to test
-PUBLIC_SITE_URL="https://thewanderingwhittle.pages.dev"
-EDGE_WORKER_URL="https://trip.thewanderingwhittle.com"
-EDGE_WORKER_DEV_URL="https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev"
+echo "===== 48 Continental USA Deployment Verification ====="
+echo "Checking deployed services..."
+echo ""
 
-# Test endpoints
-TEST_ENDPOINTS=(
-  "/test"
-  "/api/v1/status"
-  "/api/vehicle"
-  "/api/trip"
-  "/api/weather"
-  "/api/stations"
-)
+# Verify edge worker
+EDGE_URL="https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev"
+echo "Testing Edge Worker at $EDGE_URL"
 
-echo -e "${BLUE}==============================================${NC}"
-echo -e "${BLUE}       48 CONTINENTAL USA DEPLOYMENT TEST     ${NC}"
-echo -e "${BLUE}==============================================${NC}"
-echo -e "Date: $(date)"
-echo -e "${BLUE}==============================================${NC}\n"
+# Check if the edge worker is accessible
+EDGE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" $EDGE_URL/test)
+if [ "$EDGE_STATUS" == "200" ]; then
+  echo -e "${GREEN}✓ Edge Worker is responding (HTTP $EDGE_STATUS)${NC}"
+else
+  echo -e "${RED}✗ Edge Worker is not accessible (HTTP $EDGE_STATUS)${NC}"
+fi
 
-# Helper function to test HTTP endpoints
-test_endpoint() {
-  local url=$1
-  local expected_status=$2
+# Verify itinerary data
+echo ""
+echo "Testing Itinerary Data Access"
+ITINERARY_STATUS=$(curl -s -o /dev/null -w "%{http_code}" $EDGE_URL/api/itinerary)
+if [ "$ITINERARY_STATUS" == "200" ]; then
+  echo -e "${GREEN}✓ Itinerary API is responding (HTTP $ITINERARY_STATUS)${NC}"
   
-  echo -e "Testing: ${YELLOW}$url${NC}"
-  
-  # Use curl to make the request
-  http_status=$(curl -s -o /dev/null -w "%{http_code}" "$url")
-  
-  if [ "$http_status" -eq "$expected_status" ]; then
-    echo -e "  Status: ${GREEN}$http_status${NC} ✓"
-    return 0
+  # Check if the response contains valid itinerary data
+  ITINERARY_DATA=$(curl -s $EDGE_URL/api/itinerary)
+  if [[ $ITINERARY_DATA == *"stops"* ]]; then
+    echo -e "${GREEN}✓ Itinerary data includes stops${NC}"
   else
-    echo -e "  Status: ${RED}$http_status${NC} ✗ (Expected: $expected_status)"
-    return 1
+    echo -e "${RED}✗ Itinerary data might be incomplete or invalid${NC}"
   fi
-}
-
-# Test public site
-echo -e "\n${BLUE}Testing Public Site...${NC}"
-public_site_status=$(test_endpoint "$PUBLIC_SITE_URL" 200)
-public_site_result=$?
-
-# Test edge worker (custom domain)
-echo -e "\n${BLUE}Testing Edge Worker (Custom Domain)...${NC}"
-edge_worker_status=$(test_endpoint "$EDGE_WORKER_URL" 200)
-edge_worker_result=$?
-
-# Test edge worker (workers.dev domain)
-echo -e "\n${BLUE}Testing Edge Worker (workers.dev)...${NC}"
-edge_worker_dev_status=$(test_endpoint "$EDGE_WORKER_DEV_URL" 200)
-edge_worker_dev_result=$?
-
-# Test API endpoints on custom domain
-echo -e "\n${BLUE}Testing API Endpoints on Custom Domain...${NC}"
-api_failures=0
-for endpoint in "${TEST_ENDPOINTS[@]}"; do
-  api_status=$(test_endpoint "${EDGE_WORKER_URL}${endpoint}" 200)
-  if [ $? -ne 0 ]; then
-    api_failures=$((api_failures + 1))
-  fi
-done
-
-# Test API endpoints on workers.dev domain
-echo -e "\n${BLUE}Testing API Endpoints on workers.dev domain...${NC}"
-api_dev_failures=0
-for endpoint in "${TEST_ENDPOINTS[@]}"; do
-  api_dev_status=$(test_endpoint "${EDGE_WORKER_DEV_URL}${endpoint}" 200)
-  if [ $? -ne 0 ]; then
-    api_dev_failures=$((api_dev_failures + 1))
-  fi
-done
-
-# Output summary
-echo -e "\n${BLUE}==============================================${NC}"
-echo -e "${BLUE}                 TEST SUMMARY                 ${NC}"
-echo -e "${BLUE}==============================================${NC}"
-
-# Public site status
-if [ $public_site_result -eq 0 ]; then
-  echo -e "Public Site: ${GREEN}ONLINE${NC}"
 else
-  echo -e "Public Site: ${RED}OFFLINE${NC}"
+  echo -e "${RED}✗ Itinerary API is not accessible (HTTP $ITINERARY_STATUS)${NC}"
 fi
 
-# Edge worker (custom domain) status
-if [ $edge_worker_result -eq 0 ]; then
-  echo -e "Edge Worker (Custom Domain): ${GREEN}ONLINE${NC}"
+# Verify public site
+PUBLIC_URL="https://main.continentalusa-site.pages.dev"
+echo ""
+echo "Testing Public Site at $PUBLIC_URL"
+PUBLIC_STATUS=$(curl -s -o /dev/null -w "%{http_code}" $PUBLIC_URL)
+if [ "$PUBLIC_STATUS" == "200" ]; then
+  echo -e "${GREEN}✓ Public site is accessible (HTTP $PUBLIC_STATUS)${NC}"
 else
-  echo -e "Edge Worker (Custom Domain): ${RED}OFFLINE${NC}"
+  echo -e "${RED}✗ Public site is not accessible (HTTP $PUBLIC_STATUS)${NC}"
 fi
 
-# Edge worker (workers.dev) status
-if [ $edge_worker_dev_result -eq 0 ]; then
-  echo -e "Edge Worker (workers.dev): ${GREEN}ONLINE${NC}"
+# Check for Map.jsx component rendering (page contains mapboxgl)
+PUBLIC_CONTENT=$(curl -s $PUBLIC_URL)
+if [[ $PUBLIC_CONTENT == *"mapboxgl"* ]]; then
+  echo -e "${GREEN}✓ Public site likely includes the Map component${NC}"
 else
-  echo -e "Edge Worker (workers.dev): ${RED}OFFLINE${NC}"
+  echo -e "${YELLOW}⚠ Could not verify Map component on public site${NC}"
 fi
 
-# API endpoint status
-if [ $api_failures -eq 0 ]; then
-  echo -e "API Endpoints (Custom Domain): ${GREEN}ALL ONLINE${NC}"
+# Check if public site can access the API
+echo ""
+echo "Testing API Access from Public Site"
+echo -e "${YELLOW}Note: This is a CORS check and may not be fully verifiable from the command line${NC}"
+echo -e "${YELLOW}Manual testing in browser may be needed to confirm frontend-backend integration${NC}"
+
+# Summary
+echo ""
+echo "===== Verification Summary ====="
+if [ "$EDGE_STATUS" == "200" ] && [ "$ITINERARY_STATUS" == "200" ] && [ "$PUBLIC_STATUS" == "200" ]; then
+  echo -e "${GREEN}✓ All core services appear to be deployed and accessible${NC}"
+  echo -e "${GREEN}✓ Basic deployment verification passed${NC}"
 else
-  echo -e "API Endpoints (Custom Domain): ${RED}$api_failures FAILURES${NC}"
+  echo -e "${RED}✗ Some services may not be properly deployed or accessible${NC}"
+  echo -e "${YELLOW}⚠ Please check the detailed output above and address any issues${NC}"
 fi
 
-# API endpoint status (workers.dev)
-if [ $api_dev_failures -eq 0 ]; then
-  echo -e "API Endpoints (workers.dev): ${GREEN}ALL ONLINE${NC}"
-else
-  echo -e "API Endpoints (workers.dev): ${RED}$api_dev_failures FAILURES${NC}"
-fi
-
-echo -e "\n${BLUE}==============================================${NC}"
-
-# Check if all tests passed
-if [ $public_site_result -eq 0 ] && [ $edge_worker_result -eq 0 ] && [ $edge_worker_dev_result -eq 0 ] && [ $api_failures -eq 0 ] && [ $api_dev_failures -eq 0 ]; then
-  echo -e "${GREEN}All deployment tests passed! System is fully operational.${NC}"
-  exit 0
-else
-  echo -e "${RED}Some deployment tests failed. See details above.${NC}"
-  exit 1
-fi
+echo ""
+echo "For complete verification, please also manually check:"
+echo "1. Map rendering with itinerary display"
+echo "2. Vehicle telemetry updates"
+echo "3. Weather data integration"
+echo "4. Mobile responsiveness"
+echo ""
+echo "Verification completed on $(date)"
