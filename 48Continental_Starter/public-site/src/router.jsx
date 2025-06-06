@@ -13,6 +13,8 @@ import TestPage from './pages/TestPage';
 import MapFixTestPage from './pages/MapFixTestPage';
 import MapErrorTestPage from './pages/MapErrorTestPage';
 import SimpleMapTestPage from './pages/SimpleMapTestPage';
+import LiveVehicleMapTestPage from './pages/LiveVehicleMapTestPage';
+import EnhancedVehicleMapTestPage from './pages/EnhancedVehicleMapTestPage';
 
 // Define routes
 const router = createBrowserRouter([
@@ -35,6 +37,14 @@ const router = createBrowserRouter([
     {
         path: '/simple-map-test',
         element: <SimpleMapTestPage />
+    },
+    {
+        path: '/vehicle-tracker',
+        element: <LiveVehicleMapTestPage />
+    },
+    {
+        path: '/enhanced-vehicle-tracker',
+        element: <EnhancedVehicleMapTestPage />
     }
 ]);
 
