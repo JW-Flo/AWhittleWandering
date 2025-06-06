@@ -112,8 +112,9 @@ function generateWeatherRecommendations(weather: Weather, riskLevel: 'low' | 'me
 function addCorsHeaders(response: Response): Response {
     const headers = new Headers(response.headers);
     headers.set('Access-Control-Allow-Origin', '*');
-    headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-signature');
+    headers.set('Access-Control-Max-Age', '86400');
     
     return new Response(response.body, {
         status: response.status,
@@ -882,30 +883,46 @@ export default {
             return await handleItineraryRequest(request, env);
         }
 
-        // Handle CORS preflight requests
-        if (request.method === 'OPTIONS') {
-            return new Response(null, {
-                headers: {
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-                    'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-signature',
-                    'Access-Control-Max-Age': '86400'
-                }
-            });
+// Handle CORS preflight requests
+if (request.method === 'OPTIONS') {
+    return new Response(null, {
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-signature',
+            'Access-Control-Max-Age': '86400'
         }
+    });
+}
         
         try {
+            // Apply CORS to all responses
+            let response;
+            
             if (url.pathname === "/weather-risk") {
-                const response = await handleWeatherRisk(request, env);
-                return addCorsHeaders(response);
+                response = await handleWeatherRisk(request, env);
             } else if (url.pathname === "/optimize-route") {
-                const response = await handleRouteOptimization(request, env);
-                return addCorsHeaders(response);
+                response = await handleRouteOptimization(request, env);
+            } else if (url.pathname === "/test" || url.pathname === "/api/v1/status") {
+                // Ensure test endpoints have CORS headers too
+                response = new Response(JSON.stringify({
+                    status: "ok",
+                    version: "1.0.0",
+                    time: new Date().toISOString(),
+                    environment: "production"
+                }), {
+                    status: 200,
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                });
             } else {
                 // Serve static files for all other routes
-                const response = await handleStaticFile(request, env);
-                return addCorsHeaders(response);
+                response = await handleStaticFile(request, env);
             }
+            
+            // Apply CORS headers to all responses
+            return addCorsHeaders(response);
         } catch (error) {
             console.error('Error:', error);
             const errorResponse = new Response(JSON.stringify({ error: "Internal server error" }), {
