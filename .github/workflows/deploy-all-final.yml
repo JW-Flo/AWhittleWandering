@@ -48,10 +48,10 @@ jobs:
         run: |
           node scripts/setup-env.cjs
         env:
-          EDGE_WORKER_URL: "https://thewanderingwhittle-edge.workers.dev"
-          API_BASE_URL: "https://thewanderingwhittle-edge.workers.dev"
+          EDGE_WORKER_URL: "https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev"
+          API_BASE_URL: "https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev"
           MAPBOX_TOKEN: ${{ secrets.MAP_API_TOKEN }}
-          OPENWEATHERMAP_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
           TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
           TESSIE_VIN: ${{ secrets.TESSIE_VIN }}
 
@@ -59,6 +59,7 @@ jobs:
         run: |
           cd 48Continental_Starter/public-site
           npm ci
+          cp .env.production .env
           npm run build
           npm install -D wrangler@latest
           npx wrangler pages deploy dist --project-name=continentalusa-site
@@ -69,5 +70,5 @@ jobs:
       - name: Deployment Status
         run: |
           echo "✅ Deployment completed"
-          echo "Edge Worker: https://thewanderingwhittle-edge.workers.dev"
+          echo "Edge Worker: https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev"
           echo "Public Site: https://continentalusa-site.pages.dev"
