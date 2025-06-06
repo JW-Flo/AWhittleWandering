@@ -79,71 +79,99 @@ export class TessieAPIClient {
    * Get current vehicle state from Tessie
    */
   async getVehicleState(): Promise<TessieVehicleData> {
-    const url = `${this.baseUrl}/${this.vin}/state`;
+    // Correct endpoint format for Tessie API
+    const url = `${this.baseUrl}/api/vehicles/${this.vin}/vehicle_data`;
     
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${this.token}`,
-        'Accept': 'application/json'
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Tessie API error: ${response.status}`, errorText);
+        
+        // Check if vehicle is asleep
+        if (response.status === 408 || errorText.includes('asleep')) {
+          throw new Error('Vehicle is asleep');
+        }
+        
+        throw new Error(`Tessie API error: ${response.status} - ${errorText}`);
       }
-    });
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Tessie API error: ${response.status} - ${error}`);
+      const data = await response.json();
+      return data.response || data; // Handle different response formats
+    } catch (error) {
+      console.error('Error fetching vehicle state:', error);
+      throw error;
     }
-
-    const data = await response.json();
-    return data;
   }
 
   /**
    * Wake up the vehicle if needed
    */
   async wakeVehicle(): Promise<boolean> {
-    const url = `${this.baseUrl}/${this.vin}/wake`;
+    // Correct endpoint format for Tessie API
+    const url = `${this.baseUrl}/api/vehicles/${this.vin}/wake_up`;
     
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.token}`,
-        'Accept': 'application/json'
-      }
-    });
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+          'Accept': 'application/json'
+        }
+      });
 
-    if (!response.ok) {
-      console.error('Failed to wake vehicle:', response.status);
+      if (!response.ok) {
+        console.error('Failed to wake vehicle:', response.status);
+        return false;
+      }
+
+      const result = await response.json();
+      return result.response?.state === 'online' || result.result === true;
+    } catch (error) {
+      console.error('Error waking vehicle:', error);
       return false;
     }
-
-    const result = await response.json();
-    return result.result === true;
   }
 
   /**
    * Get live status (lighter weight than full state)
    */
-  async getLiveStatus(): Promise<any> {
-    const url = `${this.baseUrl}/${this.vin}/status`;
+  async getLiveStatus(): Promise<Record<string, unknown>> {
+    // Correct endpoint format for Tessie API
+    const url = `${this.baseUrl}/api/vehicles/${this.vin}/vehicle_state`;
     
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${this.token}`,
-        'Accept': 'application/json'
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Tessie API error: ${response.status}`, errorText);
+        throw new Error(`Tessie API error: ${response.status}`);
       }
-    });
 
-    if (!response.ok) {
-      throw new Error(`Tessie API error: ${response.status}`);
+      const data = await response.json();
+      return data.response || data; // Handle different response formats
+    } catch (error) {
+      console.error('Error fetching vehicle status:', error);
+      throw error;
     }
-
-    return response.json();
   }
 
   /**
    * Transform Tessie data to our standard format
    */
-  transformToStandardFormat(tessieData: TessieVehicleData): any {
+  transformToStandardFormat(tessieData: TessieVehicleData): Record<string, unknown> {
     return {
       id: tessieData.vin,
       name: tessieData.display_name || 'Tesla',
@@ -188,7 +216,7 @@ export class TessieAPIClient {
   /**
    * Transform streaming data to standard format
    */
-  transformStreamData(streamData: TessieStreamData): any {
+  transformStreamData(streamData: TessieStreamData): Record<string, unknown> {
     const data = streamData.data;
     return {
       batteryLevel: data.Soc,

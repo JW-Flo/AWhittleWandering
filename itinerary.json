@@ -1,0 +1,539 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-06-06T05:47:03.413Z",
+  "stops": [
+    {
+      "startDate": "2025-06-04",
+      "endDate": "2025-06-05",
+      "location": "Corpus Christi",
+      "state": "TX",
+      "duration": "End of Day 6/5",
+      "notes": "Trip begins here",
+      "coordinates": {
+        "latitude": 27.8006,
+        "longitude": -97.3964
+      }
+    },
+    {
+      "startDate": "2025-06-06",
+      "location": "Tucson",
+      "state": "AZ",
+      "duration": "Day Only",
+      "notes": "Scenic desert drive and transition west",
+      "coordinates": {
+        "latitude": 32.2226,
+        "longitude": -110.9747
+      }
+    },
+    {
+      "startDate": "2025-06-07",
+      "location": "Grand Canyon",
+      "state": "AZ",
+      "duration": "1 Night",
+      "notes": "24-hour visit with hike suitable for Sasha",
+      "coordinates": {
+        "latitude": 36.1069,
+        "longitude": -112.1129
+      }
+    },
+    {
+      "startDate": "2025-06-08",
+      "location": "Las Vegas",
+      "state": "NV",
+      "duration": "Day Only",
+      "notes": "Transit and Supercharging stop",
+      "coordinates": {
+        "latitude": 36.1699,
+        "longitude": -115.1398
+      }
+    },
+    {
+      "startDate": "2025-06-09",
+      "location": "Los Angeles",
+      "state": "CA",
+      "personSeen": "Laurent",
+      "duration": "Overnight",
+      "notes": "Friend visit",
+      "coordinates": {
+        "latitude": 34.0522,
+        "longitude": -118.2437
+      }
+    },
+    {
+      "startDate": "2025-06-10",
+      "location": "Yosemite",
+      "state": "CA",
+      "duration": "Full Day",
+      "notes": "Iconic National Park hike",
+      "coordinates": {
+        "latitude": 37.8651,
+        "longitude": -119.5383
+      }
+    },
+    {
+      "startDate": "2025-06-11",
+      "endDate": "2025-06-12",
+      "location": "Colfax",
+      "state": "CA",
+      "personSeen": "Stefan Morris",
+      "duration": "1.5 Days",
+      "notes": "Friend visit",
+      "coordinates": {
+        "latitude": 39.1021,
+        "longitude": -120.9531
+      }
+    },
+    {
+      "startDate": "2025-06-13",
+      "location": "Cannon Beach",
+      "state": "OR",
+      "duration": "Full Day",
+      "notes": "Oregon coast rest and recharge",
+      "coordinates": {
+        "latitude": 45.8918,
+        "longitude": -123.9615
+      }
+    },
+    {
+      "startDate": "2025-06-14",
+      "location": "Seattle",
+      "state": "WA",
+      "personSeen": "Troy",
+      "duration": "Half Day",
+      "notes": "Friend visit",
+      "coordinates": {
+        "latitude": 47.6062,
+        "longitude": -122.3321
+      }
+    },
+    {
+      "startDate": "2025-06-15",
+      "location": "Olympia",
+      "state": "WA",
+      "personSeen": "Brian",
+      "duration": "Overnight",
+      "notes": "Friend visit",
+      "coordinates": {
+        "latitude": 47.0379,
+        "longitude": -122.9007
+      }
+    },
+    {
+      "startDate": "2025-06-16",
+      "endDate": "2025-06-17",
+      "location": "Yellowstone",
+      "state": "WY",
+      "duration": "2 Nights",
+      "notes": "Camp and hike in nature",
+      "coordinates": {
+        "latitude": 44.428,
+        "longitude": -110.5885
+      }
+    },
+    {
+      "startDate": "2025-06-18",
+      "endDate": "2025-06-19",
+      "location": "Provo",
+      "state": "UT",
+      "personSeen": "Erin Lane",
+      "duration": "2 Nights",
+      "notes": "\"Visiting Erin Lane",
+      "coordinates": {
+        "latitude": 40.2338,
+        "longitude": -111.6585
+      }
+    },
+    {
+      "startDate": "2025-06-20",
+      "location": "Salt Lake City",
+      "state": "UT",
+      "personSeen": "Brady Covington",
+      "duration": "Overnight",
+      "notes": "\"Visiting Brady Covington",
+      "coordinates": {
+        "latitude": 40.7608,
+        "longitude": -111.891
+      }
+    },
+    {
+      "startDate": "2025-06-21",
+      "endDate": "2025-06-24",
+      "location": "Lincoln",
+      "state": "NE",
+      "duration": "4 Days",
+      "notes": "\"Extended stay",
+      "coordinates": {
+        "latitude": 40.8136,
+        "longitude": -96.7026
+      }
+    },
+    {
+      "startDate": "2025-06-25",
+      "location": "Des Moines",
+      "state": "IA",
+      "duration": "Day Only",
+      "notes": "Transit and Supercharger stop",
+      "coordinates": {
+        "latitude": 41.5868,
+        "longitude": -93.625
+      }
+    },
+    {
+      "startDate": "2025-06-26",
+      "location": "Chicago",
+      "state": "IL",
+      "personSeen": "Connor McBride",
+      "duration": "Few Hours",
+      "notes": "Friend visit",
+      "coordinates": {
+        "latitude": 41.8781,
+        "longitude": -87.6298
+      }
+    },
+    {
+      "startDate": "2025-06-27",
+      "location": "Madison",
+      "state": "WI",
+      "duration": "Overnight",
+      "notes": "Rest day in university town",
+      "coordinates": {
+        "latitude": 43.0731,
+        "longitude": -89.4012
+      }
+    },
+    {
+      "startDate": "2025-06-28",
+      "location": "Traverse City",
+      "state": "MI",
+      "duration": "Half Day",
+      "notes": "Lakeshore rest and paddle opportunity",
+      "coordinates": {
+        "latitude": 44.7631,
+        "longitude": -85.6206
+      }
+    },
+    {
+      "startDate": "2025-06-29",
+      "location": "Cleveland",
+      "state": "OH",
+      "duration": "Day Only",
+      "notes": "Transit stop",
+      "coordinates": {
+        "latitude": 41.4993,
+        "longitude": -81.6944
+      }
+    },
+    {
+      "startDate": "2025-06-30",
+      "location": "Erie",
+      "state": "PA",
+      "duration": "Day Only",
+      "notes": "Supercharger break and lakeshore view",
+      "coordinates": {
+        "latitude": 42.1292,
+        "longitude": -80.0851
+      }
+    },
+    {
+      "startDate": "2025-07-01",
+      "location": "Niagara Falls",
+      "state": "NY",
+      "duration": "Overnight",
+      "notes": "Scenic overnight and light hike",
+      "coordinates": {
+        "latitude": 43.0962,
+        "longitude": -79.0377
+      }
+    },
+    {
+      "startDate": "2025-07-02",
+      "location": "Burlington",
+      "state": "VT",
+      "duration": "Overnight",
+      "notes": "Transit through Vermont greenery",
+      "coordinates": {
+        "latitude": 44.4759,
+        "longitude": -73.2121
+      }
+    },
+    {
+      "startDate": "2025-07-03",
+      "endDate": "2025-07-07",
+      "location": "Hartford",
+      "state": "CT",
+      "personSeen": "Deanna",
+      "duration": "4 Days",
+      "notes": "Family visit",
+      "coordinates": {
+        "latitude": 41.7658,
+        "longitude": -72.6734
+      }
+    },
+    {
+      "startDate": "2025-07-08",
+      "location": "Portland / Bar Harbor",
+      "state": "ME",
+      "duration": "Full Day",
+      "notes": "Maine coastal drive and seafood",
+      "coordinates": null
+    },
+    {
+      "startDate": "2025-07-09",
+      "location": "Boston",
+      "state": "MA",
+      "duration": "Day Only",
+      "notes": "Brief historical pass-through",
+      "coordinates": {
+        "latitude": 42.3601,
+        "longitude": -71.0589
+      }
+    },
+    {
+      "startDate": "2025-07-10",
+      "location": "Providence",
+      "state": "RI",
+      "duration": "Day Only",
+      "notes": "Drive-through state marker",
+      "coordinates": {
+        "latitude": 41.824,
+        "longitude": -71.4128
+      }
+    },
+    {
+      "startDate": "2025-07-11",
+      "location": "Hudson Valley",
+      "state": "NY",
+      "duration": "Overnight",
+      "notes": "\"Scenic rest",
+      "coordinates": {
+        "latitude": 41.7065,
+        "longitude": -73.9283
+      }
+    },
+    {
+      "startDate": "2025-07-12",
+      "location": "Newark",
+      "state": "NJ",
+      "duration": "Day Only",
+      "notes": "State check",
+      "coordinates": {
+        "latitude": 40.7357,
+        "longitude": -74.1724
+      }
+    },
+    {
+      "startDate": "2025-07-13",
+      "location": "Baltimore",
+      "state": "MD",
+      "duration": "Day Only",
+      "notes": "\"Transit",
+      "coordinates": {
+        "latitude": 39.2904,
+        "longitude": -76.6122
+      }
+    },
+    {
+      "startDate": "2025-07-14",
+      "location": "Richmond",
+      "state": "VA",
+      "duration": "Day Only",
+      "notes": "Southbound transition",
+      "coordinates": {
+        "latitude": 37.5407,
+        "longitude": -77.436
+      }
+    },
+    {
+      "startDate": "2025-07-15",
+      "location": "Charleston",
+      "state": "SC",
+      "duration": "Day Only",
+      "notes": "Historic strolls",
+      "coordinates": {
+        "latitude": 32.7765,
+        "longitude": -79.9311
+      }
+    },
+    {
+      "startDate": "2025-07-16",
+      "location": "Columbia",
+      "state": "SC",
+      "duration": "Day Only",
+      "notes": "Final state check",
+      "coordinates": {
+        "latitude": 34.0007,
+        "longitude": -81.0348
+      }
+    },
+    {
+      "startDate": "2025-07-17",
+      "location": "Savannah",
+      "state": "GA",
+      "duration": "Day Only",
+      "notes": "Southern charm",
+      "coordinates": {
+        "latitude": 32.0809,
+        "longitude": -81.0912
+      }
+    },
+    {
+      "startDate": "2025-07-18",
+      "location": "Gainesville",
+      "state": "FL",
+      "duration": "Overnight",
+      "notes": "Recharge + reposition",
+      "coordinates": {
+        "latitude": 29.6516,
+        "longitude": -82.3248
+      }
+    },
+    {
+      "startDate": "2025-07-19",
+      "endDate": "2025-07-21",
+      "location": "Sarasota",
+      "state": "FL",
+      "personSeen": "John & Sarah",
+      "duration": "3 Days",
+      "notes": "Family visit",
+      "coordinates": {
+        "latitude": 27.3364,
+        "longitude": -82.5307
+      }
+    },
+    {
+      "startDate": "2025-07-22",
+      "endDate": "2025-07-25",
+      "location": "Monroe",
+      "state": "NC",
+      "personSeen": "Nana and Oawpaw",
+      "duration": "4 Days",
+      "notes": "Family visit + Pawpaw’s birthday",
+      "coordinates": {
+        "latitude": 34.9855,
+        "longitude": -80.5495
+      }
+    },
+    {
+      "startDate": "2025-07-26",
+      "location": "Max Patch",
+      "state": "NC",
+      "duration": "Overnight",
+      "notes": "Camp + hike Appalachian Trail",
+      "coordinates": {
+        "latitude": 35.7971,
+        "longitude": -82.9567
+      }
+    },
+    {
+      "startDate": "2025-07-27",
+      "location": "Max Patch",
+      "state": "NC",
+      "duration": "2nd Night",
+      "notes": "Extended trail time",
+      "coordinates": {
+        "latitude": 35.7971,
+        "longitude": -82.9567
+      }
+    },
+    {
+      "startDate": "2025-07-28",
+      "location": "Knoxville",
+      "state": "TN",
+      "personSeen": "Barton",
+      "duration": "Full Day",
+      "notes": "Friend visit",
+      "coordinates": {
+        "latitude": 35.9606,
+        "longitude": -83.9207
+      }
+    },
+    {
+      "startDate": "2025-07-29",
+      "location": "Lexington",
+      "state": "KY",
+      "duration": "Overnight",
+      "notes": "East-west staging stop",
+      "coordinates": {
+        "latitude": 38.0406,
+        "longitude": -84.5037
+      }
+    },
+    {
+      "startDate": "2025-07-30",
+      "location": "St. Louis",
+      "state": "MO",
+      "duration": "Overnight",
+      "notes": "Gateway Arch and rest",
+      "coordinates": {
+        "latitude": 38.627,
+        "longitude": -90.1994
+      }
+    },
+    {
+      "startDate": "2025-07-31",
+      "location": "Memphis",
+      "state": "TN",
+      "duration": "Overnight",
+      "notes": "BBQ + music",
+      "coordinates": {
+        "latitude": 35.1495,
+        "longitude": -90.049
+      }
+    },
+    {
+      "startDate": "2025-08-01",
+      "location": "Ozarks",
+      "state": "AR",
+      "duration": "Overnight",
+      "notes": "Camp or hike",
+      "coordinates": {
+        "latitude": 37.8723,
+        "longitude": -92.9199
+      }
+    },
+    {
+      "startDate": "2025-08-02",
+      "location": "Oklahoma City",
+      "state": "OK",
+      "duration": "Day Only",
+      "notes": "Final check westbound",
+      "coordinates": {
+        "latitude": 35.4676,
+        "longitude": -97.5164
+      }
+    },
+    {
+      "startDate": "2025-08-03",
+      "location": "Amarillo",
+      "state": "TX",
+      "duration": "Overnight",
+      "notes": "Canyon views",
+      "coordinates": {
+        "latitude": 35.222,
+        "longitude": -101.8313
+      }
+    },
+    {
+      "startDate": "2025-08-04",
+      "location": "San Angelo",
+      "state": "TX",
+      "duration": "Overnight",
+      "notes": "Last camp",
+      "coordinates": {
+        "latitude": 31.4638,
+        "longitude": -100.437
+      }
+    },
+    {
+      "startDate": "2025-08-05",
+      "location": "Austin",
+      "state": "TX",
+      "duration": "Return",
+      "notes": "Trip complete",
+      "coordinates": {
+        "latitude": 30.2672,
+        "longitude": -97.7431
+      }
+    }
+  ]
+}
