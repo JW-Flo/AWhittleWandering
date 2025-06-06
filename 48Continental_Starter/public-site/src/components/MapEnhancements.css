@@ -1,157 +1,270 @@
 /**
- * Map Component UI Enhancements
+ * Map Enhancements CSS
  * 
- * Additional styles to improve the map's appearance and user experience
+ * Enhanced styling for the map component to improve visualization and interaction.
+ * Includes improved route visualization, marker styling, and responsive design.
  */
 
-/* Marker Improvements */
+/* Main map container enhancements */
+.map-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Fullscreen mode adjustments */
+.map-fullscreen-mode {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
+}
+
+.map-fullscreen-mode .map {
+  border-radius: 0;
+}
+
+/* Map controls positioning and styling */
+.mapboxgl-ctrl-top-right {
+  margin-top: 10px;
+  margin-right: 10px;
+}
+
+.mapboxgl-ctrl-group {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.mapboxgl-ctrl button {
+  width: 32px;
+  height: 32px;
+}
+
+/* Enhanced marker styles */
 .marker-icon {
-  width: 36px;
-  height: 36px;
   cursor: pointer;
-  transform-origin: bottom center;
-  transform: translateY(-50%);
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.3));
-  transition: transform 0.2s ease-out, filter 0.2s ease;
+  width: 30px;
+  height: 30px;
+  transition: transform 0.2s ease, filter 0.2s ease;
 }
 
 .marker-icon:hover {
-  transform: translateY(-50%) scale(1.15);
-  filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.4));
-  z-index: 10;
-}
-
-.marker-charging-station {
-  filter: drop-shadow(0 2px 4px rgba(76, 175, 80, 0.4));
-}
-
-.marker-lodging {
-  filter: drop-shadow(0 2px 4px rgba(33, 150, 243, 0.4));
+  transform: scale(1.2);
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.4));
 }
 
 .marker-waypoint {
-  filter: drop-shadow(0 2px 4px rgba(255, 193, 7, 0.4));
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
 }
 
-/* Animated Vehicle Marker */
+.marker-charging-station {
+  filter: drop-shadow(0 2px 2px rgba(0, 150, 0, 0.3));
+}
+
+.marker-lodging {
+  filter: drop-shadow(0 2px 2px rgba(33, 150, 243, 0.3));
+}
+
+/* Vehicle marker enhancements */
 .vehicle-marker {
-  z-index: 100 !important;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
 }
 
 .vehicle-marker svg {
-  transition: transform 0.3s ease-out;
+  filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.4));
 }
 
-.vehicle-marker.vehicle-moving svg {
-  animation: vehicle-bounce 1.5s infinite alternate ease-in-out;
+.vehicle-moving {
+  animation: pulse 1.5s infinite alternate;
 }
 
-@keyframes vehicle-bounce {
+@keyframes pulse {
   0% {
-    transform: translateY(0px);
+    transform: scale(1);
   }
   100% {
-    transform: translateY(-4px);
+    transform: scale(1.15);
   }
 }
 
-/* Improved Route Line */
-.mapboxgl-canvas {
-  outline: none;
-}
-
-/* Custom Popup Styling */
+/* Popup styling improvements */
 .mapboxgl-popup {
-  z-index: 5;
+  max-width: 320px !important;
 }
 
 .mapboxgl-popup-content {
-  border-radius: 12px;
-  padding: 0;
-  overflow: hidden;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.mapboxgl-popup-close-button {
+  font-size: 18px;
+  color: #555;
+  padding: 5px 8px;
 }
 
 .map-popup {
-  padding: 15px;
-  max-width: 280px;
+  font-family: "Arial", sans-serif;
 }
 
 .map-popup h4 {
-  margin: 0 0 10px 0;
+  margin: 0 0 8px 0;
+  color: #0066cc;
   font-size: 16px;
-  font-weight: 600;
-  border-bottom: 2px solid #f0f0f0;
-  padding-bottom: 8px;
 }
 
 .map-popup p {
-  margin: 6px 0;
+  margin: 5px 0;
+  color: #333;
+  font-size: 13px;
+}
+
+/* Vehicle popup specific styling */
+.vehicle-popup {
+  min-width: 220px;
+}
+
+.vehicle-popup-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.popup-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.popup-stat-icon {
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.popup-stat-value {
+  font-weight: bold;
   font-size: 14px;
-  line-height: 1.4;
 }
 
-.map-popup .stop-type {
-  display: inline-block;
-  margin-top: 8px;
-  padding: 4px 10px;
-  background: #f0f4f8;
-  border-radius: 12px;
+.battery-low {
+  color: #f44336;
+}
+
+.battery-high {
+  color: #4caf50;
+}
+
+/* Stop type indicators */
+.stop-type {
   font-size: 12px;
-  font-weight: 500;
+  font-style: italic;
+  color: #666;
 }
 
-/* Map Controls Positioning */
-.mapboxgl-ctrl-top-right {
-  top: 15px;
-  right: 15px;
+/* Center vehicle button */
+.center-vehicle-btn {
+  position: absolute;
+  bottom: 80px;
+  right: 10px;
+  width: 40px;
+  height: 40px;
+  background: white;
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: transform 0.2s ease;
 }
 
-.mapboxgl-ctrl-bottom-left {
-  bottom: 15px;
-  left: 15px;
+.center-vehicle-btn:hover {
+  transform: scale(1.1);
 }
 
-/* Responsive improvements */
-@media (max-width: 768px) {
-  .marker-icon {
-    width: 28px;
-    height: 28px;
-  }
+.center-icon {
+  font-size: 20px;
+}
 
-  .map-popup {
-    padding: 12px;
-    max-width: 240px;
-  }
+/* Route line customization */
+.route-line {
+  stroke-dasharray: 5, 5;
+  animation: dash 30s linear infinite;
+}
 
-  .map-popup h4 {
-    font-size: 14px;
-  }
-
-  .map-popup p {
-    font-size: 13px;
+@keyframes dash {
+  to {
+    stroke-dashoffset: 1000;
   }
 }
 
-/* Loading state */
+/* Improved error display */
+.map-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  max-width: 80%;
+}
+
+.map-error h3 {
+  color: #f44336;
+  margin-top: 0;
+}
+
+.map-retry-button {
+  background: #0066cc;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  margin-top: 15px;
+  cursor: pointer;
+}
+
+/* Loading indicator */
 .map-loading {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 5;
 }
 
 .map-loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #007bff;
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #0066cc;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -165,21 +278,24 @@
   }
 }
 
-/* Custom state highlighting styles */
-.state-visited {
-  fill: rgba(0, 122, 255, 0.2);
-  stroke: rgba(0, 122, 255, 0.8);
-  stroke-width: 1px;
-}
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .mapboxgl-popup {
+    max-width: 250px !important;
+  }
 
-.state-current {
-  fill: rgba(0, 122, 255, 0.4);
-  stroke: rgba(0, 122, 255, 1);
-  stroke-width: 2px;
-}
+  .vehicle-popup-stats {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 
-.state-next {
-  fill: rgba(255, 149, 0, 0.2);
-  stroke: rgba(255, 149, 0, 0.8);
-  stroke-width: 1px;
+  .popup-stat {
+    flex-direction: row;
+    margin-bottom: 5px;
+  }
+
+  .popup-stat-icon {
+    margin-right: 8px;
+    margin-bottom: 0;
+  }
 }

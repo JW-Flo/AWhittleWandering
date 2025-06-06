@@ -1,8 +1,11 @@
 /**
  * Map Component
  * 
- * Displays an interactive map of The Wandering Whittle's journey
+ * Displays an interactive map of the 48 Continental USA journey
  * with route, stops, and current vehicle location.
+ * 
+ * This version includes enhanced coordinate validation and formatting,
+ * improved error handling, and integration with the MapDebugPanel.
  */
 
 /* eslint-env browser */
@@ -120,7 +123,10 @@ const fixCoordinateFormat = (point) => {
   return null;
 };
 
-// Initialize map markers and layers with enhanced error handling and coordinate validation
+/**
+ * Initialize map markers and layers with enhanced error handling and coordinate validation
+ * This function is responsible for creating all visual elements on the map based on trip data
+ */
 const initializeMapLayers = async (map, tripData) => {
   if (!map || !tripData) {
     console.warn('Cannot initialize map layers: map or tripData is missing', {
@@ -342,6 +348,7 @@ const Map = ({
   const map = useRef(null);
   const vehicleMarker = useRef(null);
   const [mapReady, setMapReady] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [mapError, setMapError] = useState(null);
   const [mapInitAttempted, setMapInitAttempted] = useState(false);
 
@@ -356,6 +363,7 @@ const Map = ({
     if (!mapboxgl.accessToken || mapboxgl.accessToken === 'pk.placeholder') {
       console.error('Mapbox token is invalid or missing');
       setMapError('Mapbox access token is missing. Please check your configuration.');
+      setLoading(false);
       return;
     }
 
@@ -363,6 +371,7 @@ const Map = ({
     if (!mapContainer.current) {
       console.error('Map container ref is missing');
       setMapError('Map container not found. Please refresh the page.');
+      setLoading(false);
       return;
     }
 
@@ -452,6 +461,7 @@ const Map = ({
       map.current.on('load', () => {
         console.log('Map loaded successfully');
         setMapReady(true);
+        setLoading(false);
 
         // Initialize layers if we have trip data
         if (tripData) {
@@ -468,12 +478,14 @@ const Map = ({
         if (!mapReady && map.current) {
           console.warn('Map load event did not fire within timeout, forcing mapReady=true');
           setMapReady(true);
+          setLoading(false);
         }
       }, 5000);
 
     } catch (error) {
       console.error('Fatal error initializing map:', error);
       setMapError(`Could not initialize map: ${error.message}`);
+      setLoading(false);
     }
 
     // Cleanup on unmount
@@ -551,6 +563,7 @@ const Map = ({
 
       // Only add the layer if it's enabled and we have data
       if (mapLayers.chargingStations && stationsData?.stations?.length > 0) {
+        console.log(`Adding ${stationsData.stations.length} charging stations to map`);
         // Convert stations to GeoJSON
         const stationsGeoJSON = {
           type: 'FeatureCollection',
@@ -767,154 +780,4 @@ const Map = ({
               // Update car color based on battery
               const svgPath = markerEl.querySelector('svg');
               if (svgPath) {
-                svgPath.style.fill = vehicleData.batteryLevel < 20 ? '#f44336' : '#4CAF50';
-              }
-            }
-
-            // Update popup content
-            if (vehicleMarker.current.getPopup()) {
-              const batteryClass = vehicleData.batteryLevel < 20 ? 'battery-low' :
-                vehicleData.batteryLevel > 80 ? 'battery-high' : '';
-
-              vehicleMarker.current.getPopup().setHTML(`
-                <div class="vehicle-popup">
-                  <h4>Whittle Wagon</h4>
-                  <div class="vehicle-popup-stats">
-                    <div class="popup-stat">
-                      <span class="popup-stat-icon">🔋</span>
-                      <span class="popup-stat-value ${batteryClass}">${Math.round(vehicleData.batteryLevel || 0)}%</span>
-                    </div>
-                    <div class="popup-stat">
-                      <span class="popup-stat-icon">⚡</span>
-                      <span class="popup-stat-value">${Math.round(vehicleData.range || 0)} mi</span>
-                    </div>
-                    <div class="popup-stat">
-                      <span class="popup-stat-icon">🚀</span>
-                      <span class="popup-stat-value">${Math.round(vehicleData.speed || 0)} mph</span>
-                    </div>
-                  </div>
-                </div>
-              `);
-            }
-          }
-        } catch (error) {
-          console.error('Error updating vehicle marker:', error);
-        }
-      };
-
-      // Try to update the vehicle marker
-      updateVehicleMarker();
-    } catch (error) {
-      console.error('Error in vehicle marker effect:', error);
-    }
-  }, [vehicleData, mapReady]);
-
-  // Center map on vehicle location when asked
-  const centerMapOnVehicle = () => {
-    if (!map.current || !vehicleData) return;
-
-    try {
-      const latitude = vehicleData.location?.latitude || vehicleData.latitude;
-      const longitude = vehicleData.location?.longitude || vehicleData.longitude;
-
-      if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
-        console.warn('Cannot center on vehicle - invalid coordinates');
-        return;
-      }
-
-      map.current.flyTo({
-        center: [longitude, latitude],
-        zoom: 12,
-        essential: true
-      });
-    } catch (error) {
-      console.error('Error centering on vehicle:', error);
-    }
-  };
-
-  return (
-    <div className={`map-container ${fullscreen ? 'map-fullscreen-mode' : ''}`}>
-      {mapError ? (
-        <div className="map-error">
-          <h3>Error loading map</h3>
-          <p>{mapError}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="map-retry-button"
-          >
-            Reload
-          </button>
-        </div>
-      ) : (
-        <>
-          <div ref={mapContainer} className="map" />
-
-          {/* Trip statistics overlay - only show when not in fullscreen mode */}
-          {mapReady && !fullscreen && (
-            <TripStatistics
-              mapRef={map}
-              vehicle={vehicleData}
-            />
-          )}
-
-          {vehicleData && !fullscreen && (
-            <button
-              className="center-vehicle-btn"
-              onClick={centerMapOnVehicle}
-              aria-label="Center map on vehicle"
-            >
-              <span className="center-icon">🎯</span>
-            </button>
-          )}
-
-          {/* Debug panel - only show in development and not in fullscreen */}
-          {mapReady && !fullscreen && import.meta.env.MODE !== 'production' && (
-            <MapDebugPanel
-              tripData={tripData}
-              vehicleData={vehicleData}
-              mapReady={mapReady}
-              onResetMap={() => window.location.reload()}
-              onRefreshData={() => {
-                if (map.current) {
-                  initializeMapLayers(map.current, tripData);
-                }
-              }}
-            />
-          )}
-        </>
-      )}
-    </div>
-  );
-};
-
-Map.propTypes = {
-  vehicleData: PropTypes.shape({
-    latitude: PropTypes.number,
-    longitude: PropTypes.number,
-    batteryLevel: PropTypes.number,
-    range: PropTypes.number,
-    speed: PropTypes.number,
-    heading: PropTypes.number,
-    location: PropTypes.shape({
-      latitude: PropTypes.number,
-      longitude: PropTypes.number
-    })
-  }),
-  tripData: PropTypes.shape({
-    route: PropTypes.array,
-    stops: PropTypes.array,
-    visitedStates: PropTypes.array,
-    currentState: PropTypes.string
-  }),
-  weatherData: PropTypes.object,
-  stationsData: PropTypes.object,
-  fullscreen: PropTypes.bool,
-  mapLayers: PropTypes.shape({
-    weather: PropTypes.bool,
-    traffic: PropTypes.bool,
-    satellite: PropTypes.bool,
-    chargingStations: PropTypes.bool
-  })
-};
-
-export default Map;
+                svgPath.style.fill = vehicleData.batteryLevel <
