@@ -432,8 +432,8 @@ export const useTripData = ({ vehicleData, pollInterval = 60000 } = {}) => {
           })
         );
 
-        const stops = data.features[0].properties.stops.map((stop) => ({
-          id: stop.location,
+        const stops = data.features[0].properties.stops.map((stop, idx) => ({
+          id: `${stop.location}-${idx}`,
           name: stop.location.split(",")[0].trim(),
           latitude: stop.latitude,
           longitude: stop.longitude,
