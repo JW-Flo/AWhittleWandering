@@ -23,6 +23,7 @@ const Dashboard = ({
   error
 }) => {
   const [showDetails, setShowDetails] = useState(false);
+  const [panelVisible, setPanelVisible] = useState(false);
   const [activePanel, setActivePanel] = useState('journey'); // 'journey', 'vehicle', 'states'
   const [mapLayers, setMapLayers] = useState({
     weather: false,
@@ -172,7 +173,10 @@ const Dashboard = ({
       <div className="floating-controls">
         <button
           className="fab fab-primary"
-          onClick={() => setShowDetails(!showDetails)}
+          onClick={() => {
+            setShowDetails(!showDetails);
+            setPanelVisible(!showDetails);
+          }}
           aria-label="Toggle details"
         >
           {showDetails ? '✕' : 'ℹ️'}
@@ -213,7 +217,7 @@ const Dashboard = ({
 
       {/* Slide-out Details Panel */}
       {showDetails && (
-        <div className="details-panel">
+        <div className={`details-panel ${panelVisible ? 'panel-visible' : ''}`}>
           <div className="panel-tabs">
             <button
               className={`panel-tab ${activePanel === 'journey' ? 'active' : ''}`}
