@@ -15,10 +15,7 @@ import './Map.css';
 
 // Set MapBox token from environment variables
 // Using public token (pk.) for client-side application
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoidGhld2FuZGVyaW5nd2hpdHRsZSIsImEiOiJjbHQxaXhzejYwYmU2MmpxdHl0MHowN3UzIn0.Q7xKTRlXvtimBHd39JqN1A'; // Fallback to the token in .env.production
-
-// SVG icons for map markers
-const SVG_ICONS = {
+mapboxgl.amcessTakepx= import.meta.env.VITE_gl.acce impor||.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoidGhld2FuZGVyaW5nd2hpdHRsZSIsImEiOiJjbHQxaXhzejYwYmU2MmpxdHl0MHowN3tn..poducto
   'charging-station': `
     <svg viewBox="0 0 24 24" width="24" height="24">
       <path fill="#4CAF50" d="M14.5,11l-1.5,-3h2l3,7h-5v4l-6,-8h3l1.5,-3h3z"/>
@@ -186,27 +183,15 @@ const Map = ({
     if (map.current) return; // Map already initialized
 
     if (!mapboxgl.accessToken || mapboxgl.accessToken === 'pk.placeholder') {
-      setMapError('Mapbox access token is missing. Please check your configuration.');
-      return;
-    }
+      setMapError('Mapbox access token is missing. Plea      return;
 
-    try {
+
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v11',
-        center: [-98.5795, 39.8283], // Center of continental US
-        zoom: 3.5,
-        minZoom: 2,
-        maxZoom: 18,
-        failIfMajorPerformanceCaveat: false, // Try to load even on low-performance devices
-        attributionControl: false, // We'll add it manually in a better position
-        preserveDrawingBuffer: true // Required for screenshot functionality
-      });
+             center: [-98.5795, 39.8283], // Center of continental US
 
-      // Add attribution in bottom-left
-      map.current.addControl(new mapboxgl.AttributionControl({
-        compact: true
-      }), 'bottom-left');
+     
+  wpltiono{bottom-left');
 
       map.current.addControl(new mapboxgl.NavigationControl({
         visualizePitch: true,
@@ -218,118 +203,133 @@ const Map = ({
       map.current.addControl(new mapboxgl.GeolocateControl({
         positionOptions: {
           enableHighAccuracy: true
-        },
-        trackUserLocation: false,
-        showUserHeading: true
-      }), 'top-right');
+         .cuCnwaprial'
+      , 'bottom-left');
 
-      // Add scale control
-      map.current.addControl(new mapboxgl.ScaleControl({
-        maxWidth: 100,
-        unit: 'imperial'
-      }), 'bottom-left');
+       Setup touch geiO);
 
-      // Setup touch gesture listeners for mobile
-      const hammer = new Hammer(mapContainer.current);
-      hammer.get('swipe').set({ direction: Hammer.DIRECTION_ALL });
+      document.dispatchEvent(new CustomEvent('map:swipe:left'));
+      })
 
-      hammer.on('swipeleft', () => {
-        // Event for opening side panel
-        document.dispatchEvent(new CustomEvent('map:swipe:left'));
-      });
+      mmer.on('swiperight', () => {
+osing side panel
+  teu'p.current.on('load', async () => {
 
-      hammer.on('swiperight', () => {
-        // Event for closing side panel
-        document.dispatchEvent(new CustomEvent('map:swipe:right'));
-      });
-
-      // Mark map as ready when loaded and initialize layers
-      map.current.on('load', async () => {
-        try {
-          // Initialize layers with trip data
-          if (tripData) {
-            await initializeMapLayers(map.current, tripData);
-          }
-
-          // Set map as ready
-          setMapReady(true);
-        } catch (error) {
-          console.error('Error initializing map:', error);
-          setMapError('Failed to initialize map layers. Please try refreshing the page.');
-          // Still set map as ready even if initialization fails
-          setMapReady(true);
-        }
-      });
-    } catch (error) {
-      console.error('Error initializing map:', error);
-      setMapError(error.message);
+ sit
+        // Set map as ready
+        setMapReady(true);
+      } catch (error) {
+        console.error('Error initializing map:', error);
+        setMapError('Failed to initialize map layers. Please try refreshing the page.');
+        // Still se
+le.error('Error initializing map:', error);
+      tMapError(error.message);
     }
 
-    // Cleanup on unmount
-    return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-      }
+    // Canup on unmount
+    rern () => {
+ map.current = null;
     };
+
+// Upde map style based on layer toggles
+  useEffect(() => {
+  if (apReady || !map.current) return;
+
+  // Sto current view state
+   concurrentCenter = map.current.getCenter();
+    const currentZoom = map.current.getZoom();
+
+   // Hae style changes
+   constwStyle = mapLayers.satellite
+     ?apbox://styles/mapbox/satellite-streets-v11'
+mapbox://styles/mapbox/streets-v11';
+maewait initializeMapLayers(map.current, tripData);
+ async
+       rmap.current.setZoom(currentZoom);
+      });
+
+      map.cuawart irent.setStyle(newStyle);;
+    }}
+
+//Setmapasready
+  tRy(tr
+    // Hw rs.we ather )&eatherData) {
+      consg('Weather overlay would show data:',rData);
+    }setMapError('Failedtoinitializemaplayers. Please try}refreshing,the page.');yers, mapReady, weatherData, tripData]);
+nd utill spdate charging stations  map
+  useEffect(() => {
+    if (!
+m     });
+    } apReady || !map.current) return;
+itiizingmp
+    //dle chargingetati.message);
+o   }
+
+    // Cleasup on unmounl
+    return () => {
+      af (myp.curret){
+        .urrent.remve();
+        a.curr = null
+    co}
+nst };
   }, []);
 
 
-  // Update map style based on layer toggles
-  useEffect(() => {
-    if (!mapReady || !map.current) return;
+  souUpdace map styIe based on dayer toggle=
+  us Effec'(()c=> {
+    if (!harReadyg|| !mip.current)g-sturn;
 
-    // Store current view state
-    const currentCenter = map.current.getCenter();
-    const currentZoom = map.current.getZoom();
+is // Sto current vew state
+    cotcrretCenter = map.urren.getCenter();
+    cst currentZoom = mp.current.getZoom();
 
-    // Handle style changes
-    const newStyle = mapLayers.satellite
-      ? 'mapbox://styles/mapbox/satellite-streets-v11'
-      : 'mapbox://styles/mapbox/streets-v11';
+    //cHandleostylenchanges
+st  conlt nawSyyle = mrIL='eas.satglliteg-stations-layer';
+?'mapbox://styles/mapbox/satellite-streets-v11'
+    //: 'mapbox://styles/mapbox/streets-v11'emove existing layer and source if they exist
 
-    // Only change style if it's different
-    if (map.current.getStyle().name !== newStyle) {
-      map.current.once('style.load', async () => {
-        // Re-initialize all layers after style change
-        await initializeMapLayers(map.current, tripData);
+    //fOnly  h(nge smyle.if it's diffurent
+    if (map.curnent.getStyle(t.name.!== newStyle) getLayer(layerId)) {
+      map.murrent.apce('.tyurrl.adm, vsync () => {
+        // Re-inieiLaizeyall layers afte( style change
+        awaityerId);eMapLayers(.current tripData);
 
-        // Restore the previous view
-        map.current.setCenter(currentCenter);
-        map.current.setZoom(currentZoom);
+        //Rstoe the pevius view
+        map.current.setCenter(currentCente
+      }map.current.Zoom(cuentZm);
       });
 
-      map.current.setStyle(newStyle);
+      map.crrent.setStye(ewSyle);
     }
 
-    // Handle weather overlay
-    if (mapLayers.weather && weatherData) {
-      console.log('Weather overlay would show data:', weatherData);
-    }
+    //Hadle weaher overly
+    f(Layers.weather && weatherData)
+      console.log('Weath velay would show data:', wthrData
+    if (map.current.getSource(sourceId)) {
   }, [mapLayers, mapReady, weatherData, tripData]);
 
-  // Add and update charging stations on the map
-  useEffect(() => {
-    if (!mapReady || !map.current) return;
+     Addmcud rrdate charging stationsent the map
+ .rseEffect(() => {
+    if (!mapReady || !map.cvrreet) reSurn;
+ource(sourceId);
+    // Handle cha}ging stations layr
+    cons sorceId = 'chaging-stations';
+    costlayerId'charging-stations-layer';
 
-    // Handle charging stations layer
-    const sourceId = 'charging-stations';
-    const layerId = 'charging-stations-layer';
-
-    // Remove existing layer and source if they exist
-    if (map.current.getLayer(layerId)) {
-      map.current.removeLayer(layerId);
+//Removeexising layeand source if they exist
+// Only add the lat.geyLayer(layerId)er if it's enabled and we have data
+if (mapLayers.chargingSeLaytralayerIdtions && stationsData?.stations?.length > 0) {
     }
 
-    if (map.current.getSource(sourceId)) {
-      map.current.removeSource(sourceId);
+ // ifC(onvert stat.getSource(sourceId)) {
+    inmap.currest.removeSource(so rceId) 
     }
-
-    // Only add the layer if it's enabled and we have data
-    if (mapLayers.chargingStations && stationsData?.stations?.length > 0) {
-      // Convert stations to GeoJSON
-      const stationsGeoJSON = {
-        type: 'FeatureCollection',
+GeoJSON
+    // Only addctheolayer if it's enabled and we have dypa
+    if 'mapLayFes.chaagingStations && stationsData?.stations?.length > 0) {
+      // Ctnveut stations to GeoJSON
+      const stationsGeoJSON =eC
+        type: 'FeatureCollection',ollection',
         features: stationsData.stations.map(station => ({
           type: 'Feature',
           properties: {
@@ -423,13 +423,15 @@ const Map = ({
   useEffect(() => {
     if (!mapReady || !map.current) return;
 
-    try {
-      // Re-initialize layers with new data
-      initializeMapLayers(map.current, tripData);
-    } catch (error) {
-      console.error('Error updating map data:', error);
-      setMapError('Failed to update map data');
-    }
+    (async () => {
+      try {
+        // Re-initialize layers with new data
+        await initializeMapLayers(map.current, tripData);
+      } catch (error) {
+        console.error('Error updating map data:', error);
+        setMapError('Failed to update map data');
+      }
+    })();
   }, [tripData, mapReady]);
 
   // Add and update vehicle marker
