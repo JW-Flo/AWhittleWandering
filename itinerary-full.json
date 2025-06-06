@@ -1,0 +1,544 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "generatedAt": "2025-06-06T08:05:00.000Z",
+    "totalStops": 49,
+    "title": "48 Continental USA Road Trip",
+    "description": "Tesla road trip through all 48 contiguous US states",
+    "totalDistance": 12800,
+    "totalDays": 60
+  },
+  "vehicle": {
+    "name": "Tesla Model 3",
+    "batteryLevel": 97,
+    "range": 262.93,
+    "odometer": 58068.58,
+    "location": {
+      "latitude": 27.8006,
+      "longitude": -97.3964,
+      "city": "Corpus Christi",
+      "state": "TX"
+    },
+    "climate": {
+      "insideTemp": 72,
+      "outsideTemp": 86
+    }
+  },
+  "progress": {
+    "currentDay": 1,
+    "totalDays": 60,
+    "statesVisited": ["TX"],
+    "currentState": "TX",
+    "percentComplete": 2,
+    "milesCompleted": 238,
+    "milesRemaining": 12562
+  },
+  "stops": [
+    {
+      "dates": "6/6",
+      "location": "Corpus Christi",
+      "state": "TX",
+      "notes": "Trip begins – depart early morning",
+      "coordinates": {
+        "latitude": 27.8006,
+        "longitude": -97.3964
+      },
+      "isCurrent": true,
+      "isVisited": false
+    },
+    {
+      "dates": "6/6–6/7",
+      "location": "Austin",
+      "state": "TX",
+      "notes": "First overnight stop - 176 miles",
+      "coordinates": {
+        "latitude": 30.2672,
+        "longitude": -97.7431
+      },
+      "isCurrent": false,
+      "isVisited": false,
+      "distanceFromPrevious": 176,
+      "eta": "2025-06-06T06:05:00.000Z"
+    },
+    {
+      "dates": "6/7–6/8",
+      "location": "Tucson",
+      "state": "AZ",
+      "notes": "Drive day + overnight recharge",
+      "coordinates": {
+        "latitude": 32.2226,
+        "longitude": -110.9747
+      }
+    },
+    {
+      "dates": "6/8–6/9",
+      "location": "Grand Canyon",
+      "state": "AZ",
+      "notes": "National Park + scenic content",
+      "coordinates": {
+        "latitude": 36.0544,
+        "longitude": -112.1401
+      }
+    },
+    {
+      "dates": "6/9–6/10",
+      "location": "Los Angeles",
+      "state": "CA",
+      "notes": "Visit Laurent (1 day)",
+      "coordinates": {
+        "latitude": 34.0522,
+        "longitude": -118.2437
+      }
+    },
+    {
+      "dates": "6/10–6/11",
+      "location": "Santa Barbara → Big Sur",
+      "state": "CA",
+      "notes": "Coastal beach drive north",
+      "coordinates": {
+        "latitude": 36.2704,
+        "longitude": -121.8081
+      }
+    },
+    {
+      "dates": "6/11–6/12",
+      "location": "Redwoods",
+      "state": "CA",
+      "notes": "1.5-day stay in the forest",
+      "coordinates": {
+        "latitude": 41.2132,
+        "longitude": -124.0046
+      }
+    },
+    {
+      "dates": "6/12–6/13",
+      "location": "Colfax",
+      "state": "WA",
+      "notes": "Visit Stefan Morris",
+      "coordinates": {
+        "latitude": 46.8787,
+        "longitude": -117.3644
+      }
+    },
+    {
+      "dates": "6/13–6/14",
+      "location": "Oregon Coast",
+      "state": "OR",
+      "notes": "Scenic stop after Colfax",
+      "coordinates": {
+        "latitude": 45.8918,
+        "longitude": -123.9615
+      }
+    },
+    {
+      "dates": "6/14–6/15",
+      "location": "Olympia",
+      "state": "WA",
+      "notes": "Visit Brian",
+      "coordinates": {
+        "latitude": 47.0379,
+        "longitude": -122.9007
+      }
+    },
+    {
+      "dates": "6/15–6/16",
+      "location": "Seattle",
+      "state": "WA",
+      "notes": "Visit Troy (before his 6/20 camping)",
+      "coordinates": {
+        "latitude": 47.6062,
+        "longitude": -122.3321
+      }
+    },
+    {
+      "dates": "6/16–6/18",
+      "location": "Yellowstone",
+      "state": "MT/WY",
+      "notes": "2-night park stay",
+      "coordinates": {
+        "latitude": 44.428,
+        "longitude": -110.5885
+      }
+    },
+    {
+      "dates": "6/18–6/19",
+      "location": "Provo",
+      "state": "UT",
+      "notes": "Visit Erin Lane (after blackout)",
+      "coordinates": {
+        "latitude": 40.2338,
+        "longitude": -111.6585
+      }
+    },
+    {
+      "dates": "6/19–6/20",
+      "location": "Salt Lake City",
+      "state": "UT",
+      "notes": "Visit Brady Covington",
+      "coordinates": {
+        "latitude": 40.7608,
+        "longitude": -111.891
+      }
+    },
+    {
+      "dates": "6/20–6/22",
+      "location": "Denver",
+      "state": "CO",
+      "notes": "Visit Josh (music festival 6/19–6/22)",
+      "coordinates": {
+        "latitude": 39.7392,
+        "longitude": -104.9903
+      }
+    },
+    {
+      "dates": "6/22–6/23",
+      "location": "Fort Collins",
+      "state": "CO",
+      "notes": "Visit Caleb Blakeman",
+      "coordinates": {
+        "latitude": 40.5853,
+        "longitude": -105.0844
+      }
+    },
+    {
+      "dates": "6/23–6/27",
+      "location": "Lincoln",
+      "state": "NE",
+      "notes": "Visit Parents & Hayden (4 days)",
+      "coordinates": {
+        "latitude": 40.8136,
+        "longitude": -96.7026
+      }
+    },
+    {
+      "dates": "6/27–6/28",
+      "location": "Des Moines",
+      "state": "IA",
+      "notes": "Midwest drive buffer",
+      "coordinates": {
+        "latitude": 41.5868,
+        "longitude": -93.625
+      }
+    },
+    {
+      "dates": "6/28–6/29",
+      "location": "Chicago",
+      "state": "IL",
+      "notes": "Lunch with Connor McBride",
+      "coordinates": {
+        "latitude": 41.8781,
+        "longitude": -87.6298
+      }
+    },
+    {
+      "dates": "6/29–6/30",
+      "location": "Terre Haute",
+      "state": "IN",
+      "notes": "Visit Jack Lavey",
+      "coordinates": {
+        "latitude": 39.4667,
+        "longitude": -87.4139
+      }
+    },
+    {
+      "dates": "6/30–7/1",
+      "location": "Columbus",
+      "state": "OH",
+      "notes": "Visit Cameron Hynes",
+      "coordinates": {
+        "latitude": 39.9612,
+        "longitude": -82.9988
+      }
+    },
+    {
+      "dates": "7/1–7/2",
+      "location": "Philadelphia",
+      "state": "PA",
+      "notes": "City stop / route setup",
+      "coordinates": {
+        "latitude": 39.9526,
+        "longitude": -75.1652
+      }
+    },
+    {
+      "dates": "7/2–7/3",
+      "location": "Albany",
+      "state": "NY",
+      "notes": "Visit Philip Dalton (optional)",
+      "coordinates": {
+        "latitude": 42.6526,
+        "longitude": -73.7562
+      }
+    },
+    {
+      "dates": "7/3–7/4",
+      "location": "Montpelier / Concord",
+      "state": "VT/NH",
+      "notes": "Check off New England states",
+      "coordinates": {
+        "latitude": 44.26,
+        "longitude": -72.575
+      }
+    },
+    {
+      "dates": "7/4–7/5",
+      "location": "Bar Harbor",
+      "state": "ME",
+      "notes": "Scenic East Coast top",
+      "coordinates": {
+        "latitude": 44.3876,
+        "longitude": -68.2039
+      }
+    },
+    {
+      "dates": "7/5–7/8",
+      "location": "Hartford",
+      "state": "CT",
+      "notes": "Visit Deanna for July 4th holiday",
+      "coordinates": {
+        "latitude": 41.7658,
+        "longitude": -72.6734
+      }
+    },
+    {
+      "dates": "7/8–7/9",
+      "location": "Boston",
+      "state": "MA",
+      "notes": "Wrap-up of Northeast cities",
+      "coordinates": {
+        "latitude": 42.3601,
+        "longitude": -71.0589
+      }
+    },
+    {
+      "dates": "7/9–7/10",
+      "location": "Providence",
+      "state": "RI",
+      "notes": "Quick New England state check-in",
+      "coordinates": {
+        "latitude": 41.824,
+        "longitude": -71.4128
+      }
+    },
+    {
+      "dates": "7/10–7/11",
+      "location": "Newark",
+      "state": "NJ",
+      "notes": "Route southbound",
+      "coordinates": {
+        "latitude": 40.7357,
+        "longitude": -74.1724
+      }
+    },
+    {
+      "dates": "7/11–7/12",
+      "location": "Wilmington",
+      "state": "DE",
+      "notes": "State visit",
+      "coordinates": {
+        "latitude": 39.7391,
+        "longitude": -75.5398
+      }
+    },
+    {
+      "dates": "7/12–7/13",
+      "location": "Harpers Ferry",
+      "state": "WV",
+      "notes": "Scenic stop, check off WV",
+      "coordinates": {
+        "latitude": 39.3254,
+        "longitude": -77.7389
+      }
+    },
+    {
+      "dates": "7/13–7/14",
+      "location": "Raleigh",
+      "state": "NC",
+      "notes": "Visit Brad Gross",
+      "coordinates": {
+        "latitude": 35.7796,
+        "longitude": -78.6382
+      }
+    },
+    {
+      "dates": "7/14–7/19",
+      "location": "Monroe",
+      "state": "NC",
+      "notes": "Visit Nana & Pawpaw — Pawpaw's birthday 7/21",
+      "coordinates": {
+        "latitude": 34.9855,
+        "longitude": -80.5496
+      }
+    },
+    {
+      "dates": "7/19–7/20",
+      "location": "Spartanburg",
+      "state": "SC",
+      "notes": "Visit Max Mosley",
+      "coordinates": {
+        "latitude": 34.9496,
+        "longitude": -81.9321
+      }
+    },
+    {
+      "dates": "7/20–7/21",
+      "location": "Savannah",
+      "state": "GA",
+      "notes": "Lowcountry drive-through",
+      "coordinates": {
+        "latitude": 32.0809,
+        "longitude": -81.0912
+      }
+    },
+    {
+      "dates": "7/21–7/22",
+      "location": "Sarasota",
+      "state": "FL",
+      "notes": "Visit John & Sarah",
+      "coordinates": {
+        "latitude": 27.3364,
+        "longitude": -82.5307
+      }
+    },
+    {
+      "dates": "7/22–7/23",
+      "location": "Columbia",
+      "state": "SC",
+      "notes": "Re-cross buffer",
+      "coordinates": {
+        "latitude": 34.0007,
+        "longitude": -81.0348
+      }
+    },
+    {
+      "dates": "7/23–7/24",
+      "location": "Atlanta",
+      "state": "GA",
+      "notes": "Transit stop heading west",
+      "coordinates": {
+        "latitude": 33.749,
+        "longitude": -84.388
+      }
+    },
+    {
+      "dates": "7/24–7/25",
+      "location": "Jackson",
+      "state": "MS",
+      "notes": "Southern swing",
+      "coordinates": {
+        "latitude": 32.2988,
+        "longitude": -90.1848
+      }
+    },
+    {
+      "dates": "7/25–7/26",
+      "location": "Little Rock",
+      "state": "AR",
+      "notes": "Quick overnight",
+      "coordinates": {
+        "latitude": 34.7465,
+        "longitude": -92.2896
+      }
+    },
+    {
+      "dates": "7/26–7/27",
+      "location": "Oklahoma City",
+      "state": "OK",
+      "notes": "Final out-of-state visit",
+      "coordinates": {
+        "latitude": 35.4676,
+        "longitude": -97.5164
+      }
+    },
+    {
+      "dates": "7/27–7/28",
+      "location": "Corpus Christi",
+      "state": "TX",
+      "notes": "Home return — trip complete",
+      "coordinates": {
+        "latitude": 27.8006,
+        "longitude": -97.3964
+      }
+    },
+    {
+      "dates": "7/28–7/29",
+      "location": "New Orleans",
+      "state": "LA",
+      "notes": "Jazz, food, recharge",
+      "coordinates": {
+        "latitude": 29.9511,
+        "longitude": -90.0715
+      }
+    },
+    {
+      "dates": "7/29–7/30",
+      "location": "Gulfport",
+      "state": "MS",
+      "notes": "Coastal Mississippi overnight",
+      "coordinates": {
+        "latitude": 30.3674,
+        "longitude": -89.0928
+      }
+    },
+    {
+      "dates": "7/30–7/31",
+      "location": "Pensacola",
+      "state": "FL",
+      "notes": "Panhandle drive + beach",
+      "coordinates": {
+        "latitude": 30.4213,
+        "longitude": -87.2169
+      }
+    },
+    {
+      "dates": "7/31–8/1",
+      "location": "Destin",
+      "state": "FL",
+      "notes": "Beach chill day",
+      "coordinates": {
+        "latitude": 30.393,
+        "longitude": -86.4958
+      }
+    },
+    {
+      "dates": "8/1–8/2",
+      "location": "Mobile",
+      "state": "AL",
+      "notes": "Historic stop",
+      "coordinates": {
+        "latitude": 30.6954,
+        "longitude": -88.0399
+      }
+    },
+    {
+      "dates": "8/2–8/3",
+      "location": "Houston",
+      "state": "TX",
+      "notes": "Re-enter Texas, city break",
+      "coordinates": {
+        "latitude": 29.7604,
+        "longitude": -95.3698
+      }
+    },
+    {
+      "dates": "8/3–8/4",
+      "location": "Marfa",
+      "state": "TX",
+      "notes": "Desert reset, artsy detour",
+      "coordinates": {
+        "latitude": 30.3095,
+        "longitude": -104.0206
+      }
+    },
+    {
+      "dates": "8/4–8/5",
+      "location": "Corpus Christi",
+      "state": "TX",
+      "notes": "Final return — trip ends at 60 days",
+      "coordinates": {
+        "latitude": 27.8006,
+        "longitude": -97.3964
+      }
+    }
+  ]
+}

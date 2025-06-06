@@ -1,43 +1,32 @@
 {
   "currentDay": {
     "date": "2025-06-06",
-    "location": "Tucson",
-    "state": "AZ",
-    "personSeen": null,
-    "duration": "Day Only",
-    "notes": "Scenic desert drive and transition west",
-    "isFirstDay": true,
-    "isLastDay": true,
+    "location": "Corpus Christi",
+    "state": "TX",
+    "notes": "Trip begins – depart early morning",
     "coordinates": {
-      "lat": 32.2226,
-      "lng": -110.9747
+      "latitude": 27.8006,
+      "longitude": -97.3964
     },
-    "stateFullName": "Arizona",
-    "stateNickname": "Grand Canyon State",
+    "isFirstDay": true,
+    "isLastDay": false,
     "id": "day_20250606"
   },
   "nextDay": {
-    "date": "2025-06-07",
-    "location": "Grand Canyon",
-    "state": "AZ",
-    "personSeen": null,
-    "duration": "1 Night",
-    "notes": "24-hour visit with hike suitable for Sasha",
-    "isFirstDay": true,
-    "isLastDay": true,
+    "date": "2025-06-06",
+    "location": "Austin",
+    "state": "TX",
+    "notes": "First overnight stop - 176 miles",
     "coordinates": {
-      "lat": 36.0544,
-      "lng": -112.1401
+      "latitude": 30.2672,
+      "longitude": -97.7431
     },
-    "stateFullName": "Arizona",
-    "stateNickname": "Grand Canyon State",
-    "id": "day_20250607"
+    "eta": "2025-06-06T06:05:00.000Z"
   },
   "visitedStates": [
-    "TX",
-    "AZ"
+    "TX"
   ],
-  "currentDayIndex": 2,
+  "currentDayIndex": 0,
   "tripComplete": false,
-  "lastUpdated": "2025-06-06T07:58:56.170Z"
+  "lastUpdated": "2025-06-06T08:15:28.048Z"
 }

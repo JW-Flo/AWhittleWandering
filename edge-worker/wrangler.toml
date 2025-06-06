@@ -23,8 +23,9 @@ bindings = [
 tag = "v1"
 new_classes = ["SyncServiceDurableObject"]
 
-# Custom domain settings
-[[routes]]
-pattern = "www.thewanderingwhittle.com"
-custom_domain = true
-zone_name = "thewanderingwhittle.com"
+# Custom domain settings (commented out until domain is registered)
+# To use a custom domain, uncomment these lines and register the domain in Cloudflare
+# [[routes]]
+# pattern = "https://trip.thewanderingwhittle.com/*"
+# custom_domain = true
+# zone_name = "thewanderingwhittle.com"

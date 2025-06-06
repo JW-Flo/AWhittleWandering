@@ -267,98 +267,96 @@ const Dashboard = ({
         </div>
       </div>
 
-      {/* Slide-out Details Panel */}
-      {showDetails && (
-        <div className={`details-panel ${panelVisible ? 'panel-visible' : ''}`}>
-          <div className="panel-tabs">
-            <button
-              className={`panel-tab ${activePanel === 'journey' ? 'active' : ''}`}
-              onClick={() => setActivePanel('journey')}
-            >
-              Journey
-            </button>
-            <button
-              className={`panel-tab ${activePanel === 'vehicle' ? 'active' : ''}`}
-              onClick={() => setActivePanel('vehicle')}
-            >
-              Vehicle
-            </button>
-            <button
-              className={`panel-tab ${activePanel === 'states' ? 'active' : ''}`}
-              onClick={() => setActivePanel('states')}
-            >
-              States
-            </button>
-          </div>
-
-          <div className="panel-content">
-            {activePanel === 'journey' && (
-              <div className="journey-details">
-                <JourneyTab vehicleData={finalVehicleData} />
-              </div>
-            )}
-
-            {activePanel === 'vehicle' && (
-              <div className="vehicle-details">
-                <h3>Vehicle Status</h3>
-
-                <div className="battery-display">
-                  <div className="battery-icon">
-                    <div
-                      className="battery-fill"
-                      style={{ width: `${finalVehicleData?.batteryLevel || 72}%` }}
-                    />
-                  </div>
-                  <span className="battery-text">{finalVehicleData?.batteryLevel || 72}%</span>
-                </div>
-
-                <div className="stat-group">
-                  <div className="stat-row">
-                    <span className="stat-label">Range</span>
-                    <span className="stat-value">{finalVehicleData?.range || 218} miles</span>
-                  </div>
-                  <div className="stat-row">
-                    <span className="stat-label">Odometer</span>
-                    <span className="stat-value">{finalVehicleData?.odometer?.toLocaleString() || '45,123'} mi</span>
-                  </div>
-                  <div className="stat-row">
-                    <span className="stat-label">Location</span>
-                    <span className="stat-value">{finalTripData?.currentCity || 'Corpus Christi'}, {currentState || 'TX'}</span>
-                  </div>
-                </div>
-
-                {finalVehicleData?.climate && (
-                  <>
-                    <h4>Climate</h4>
-                    <div className="stat-group">
-                      <div className="stat-row">
-                        <span className="stat-label">Interior</span>
-                        <span className="stat-value">{finalVehicleData.climate.insideTemp}°F</span>
-                      </div>
-                      <div className="stat-row">
-                        <span className="stat-label">Exterior</span>
-                        <span className="stat-value">{finalVehicleData.climate.outsideTemp}°F</span>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
-            {activePanel === 'states' && (
-              <div className="states-details">
-                <StatesTracker
-                  visitedStates={visitedStates || finalTripData?.visitedStates || ['TX', 'LA', 'MS', 'AL', 'FL']}
-                  currentState={currentState || finalTripData?.currentState || 'TX'}
-                  tripData={finalTripData}
-                  vehicleData={finalVehicleData}
-                  compact={true}
-                />
-              </div>
-            )}
-          </div>
+      {/* Slide-out Details Panel - Always in DOM but controlled by visibility */}
+      <div className={`details-panel ${showDetails && panelVisible ? 'panel-visible' : ''}`}>
+        <div className="panel-tabs">
+          <button
+            className={`panel-tab ${activePanel === 'journey' ? 'active' : ''}`}
+            onClick={() => setActivePanel('journey')}
+          >
+            Journey
+          </button>
+          <button
+            className={`panel-tab ${activePanel === 'vehicle' ? 'active' : ''}`}
+            onClick={() => setActivePanel('vehicle')}
+          >
+            Vehicle
+          </button>
+          <button
+            className={`panel-tab ${activePanel === 'states' ? 'active' : ''}`}
+            onClick={() => setActivePanel('states')}
+          >
+            States
+          </button>
         </div>
-      )}
+
+        <div className="panel-content">
+          {activePanel === 'journey' && (
+            <div className="journey-details">
+              <JourneyTab vehicleData={finalVehicleData} />
+            </div>
+          )}
+
+          {activePanel === 'vehicle' && (
+            <div className="vehicle-details">
+              <h3>Vehicle Status</h3>
+
+              <div className="battery-display">
+                <div className="battery-icon">
+                  <div
+                    className="battery-fill"
+                    style={{ width: `${finalVehicleData?.batteryLevel || 72}%` }}
+                  />
+                </div>
+                <span className="battery-text">{finalVehicleData?.batteryLevel || 72}%</span>
+              </div>
+
+              <div className="stat-group">
+                <div className="stat-row">
+                  <span className="stat-label">Range</span>
+                  <span className="stat-value">{finalVehicleData?.range || 218} miles</span>
+                </div>
+                <div className="stat-row">
+                  <span className="stat-label">Odometer</span>
+                  <span className="stat-value">{finalVehicleData?.odometer?.toLocaleString() || '45,123'} mi</span>
+                </div>
+                <div className="stat-row">
+                  <span className="stat-label">Location</span>
+                  <span className="stat-value">{finalTripData?.currentCity || 'Corpus Christi'}, {currentState || 'TX'}</span>
+                </div>
+              </div>
+
+              {finalVehicleData?.climate && (
+                <>
+                  <h4>Climate</h4>
+                  <div className="stat-group">
+                    <div className="stat-row">
+                      <span className="stat-label">Interior</span>
+                      <span className="stat-value">{finalVehicleData.climate.insideTemp}°F</span>
+                    </div>
+                    <div className="stat-row">
+                      <span className="stat-label">Exterior</span>
+                      <span className="stat-value">{finalVehicleData.climate.outsideTemp}°F</span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {activePanel === 'states' && (
+            <div className="states-details">
+              <StatesTracker
+                visitedStates={visitedStates || finalTripData?.visitedStates || ['TX', 'LA', 'MS', 'AL', 'FL']}
+                currentState={currentState || finalTripData?.currentState || 'TX'}
+                tripData={finalTripData}
+                vehicleData={finalVehicleData}
+                compact={true}
+              />
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
