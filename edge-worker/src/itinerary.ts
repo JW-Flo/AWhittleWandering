@@ -10,7 +10,7 @@
 import { Itinerary, getCurrentStop, getStopsByState } from '../../shared/models/itinerary';
 import { WorkerEnvironment } from './types/cloudflare';
 
-const ITINERARY_KEY = 'itinerary_v1';
+const ITINERARY_KEY = 'itinerary';
 
 /**
  * Get the full itinerary
