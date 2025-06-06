@@ -140,7 +140,11 @@ const itineraryData = {
       },
       geometry: {
         type: "LineString",
-        coordinates: processedStops.map((stop) => stop.coordinates),
+        // Fix coordinate order for GeoJSON: MapBox requires [longitude, latitude]
+        coordinates: processedStops.map((stop) => [
+          stop.coordinates[1],
+          stop.coordinates[0],
+        ]),
       },
     },
   ],
@@ -176,8 +180,12 @@ const simplifiedItinerary = {
     location: stop.location.split(",")[0].trim(),
     state: stop.state,
     notes: stop.notes,
+    // Keep the same property names but ensure values are correctly assigned
+    // These properties will be used by Map.jsx which expects latitude/longitude properties
     latitude: stop.coordinates[0],
     longitude: stop.coordinates[1],
+    // Also add GeoJSON formatted coordinates for convenience
+    coordinates: [stop.coordinates[1], stop.coordinates[0]], // [longitude, latitude] for GeoJSON
     type: stop.type,
   })),
 };
