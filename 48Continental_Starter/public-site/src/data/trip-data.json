@@ -1,0 +1,424 @@
+{
+  "tripName": "The Wandering Whittle",
+  "startDate": "2025-06-06T00:00:00.000Z",
+  "endDate": "2025-08-05T00:00:00.000Z",
+  "currentStopIndex": 0,
+  "currentLocation": {
+    "latitude": 27.8006,
+    "longitude": -97.3964,
+    "coordinates": [-97.3964, 27.8006],
+    "city": "Corpus Christi",
+    "state": "TX"
+  },
+  "nextStop": {
+    "city": "Houston",
+    "state": "TX",
+    "eta": "2025-06-07T12:00:00.000Z"
+  },
+  "distanceToNext": 210,
+  "totalMiles": 0,
+  "daysOnRoad": 0,
+  "visitedStates": ["TX"],
+  "statesRemaining": 47,
+  "routeProgress": 2,
+  "averageMilesPerDay": 0,
+  "lastUpdated": "2025-06-06T08:18:00.000Z",
+  "stops": [
+    {
+      "id": "1",
+      "name": "Corpus Christi",
+      "description": "Corpus Christi, TX - Start Point",
+      "latitude": 27.8006,
+      "longitude": -97.3964,
+      "coordinates": [-97.3964, 27.8006],
+      "type": "start",
+      "charging": true,
+      "overnight": true,
+      "state": "TX"
+    },
+    {
+      "id": "2",
+      "name": "Houston",
+      "description": "Houston, TX - Supercharger Stop",
+      "latitude": 29.7604,
+      "longitude": -95.3698,
+      "coordinates": [-95.3698, 29.7604],
+      "type": "waypoint",
+      "charging": true,
+      "overnight": false,
+      "state": "TX"
+    },
+    {
+      "id": "3",
+      "name": "Austin",
+      "description": "Austin, TX - Overnight Stay",
+      "latitude": 30.2672,
+      "longitude": -97.7431,
+      "coordinates": [-97.7431, 30.2672],
+      "type": "waypoint",
+      "charging": true,
+      "overnight": true,
+      "state": "TX"
+    },
+    {
+      "id": "4",
+      "name": "Dallas",
+      "description": "Dallas, TX - Supercharger Stop",
+      "latitude": 32.7767,
+      "longitude": -96.7970,
+      "coordinates": [-96.7970, 32.7767],
+      "type": "waypoint",
+      "charging": true,
+      "overnight": false,
+      "state": "TX"
+    },
+    {
+      "id": "5",
+      "name": "New Orleans",
+      "description": "New Orleans, LA - Overnight Stay",
+      "latitude": 29.9511,
+      "longitude": -90.0715,
+      "coordinates": [-90.0715, 29.9511],
+      "type": "overnight",
+      "charging": true,
+      "overnight": true,
+      "state": "LA"
+    },
+    {
+      "id": "6",
+      "name": "Biloxi",
+      "description": "Biloxi, MS - Supercharger Stop",
+      "latitude": 30.6944,
+      "longitude": -88.0431,
+      "coordinates": [-88.0431, 30.6944],
+      "type": "waypoint",
+      "charging": true,
+      "overnight": false,
+      "state": "MS"
+    },
+    {
+      "id": "7",
+      "name": "Montgomery",
+      "description": "Montgomery, AL - Supercharger Stop",
+      "latitude": 32.3617,
+      "longitude": -86.2792,
+      "coordinates": [-86.2792, 32.3617],
+      "type": "waypoint",
+      "charging": true,
+      "overnight": false,
+      "state": "AL"
+    },
+    {
+      "id": "8",
+      "name": "Miami",
+      "description": "Miami, FL - Overnight Stay",
+      "latitude": 25.7617,
+      "longitude": -80.1918,
+      "coordinates": [-80.1918, 25.7617],
+      "type": "overnight",
+      "charging": true,
+      "overnight": true,
+      "state": "FL"
+    },
+    {
+      "id": "9",
+      "name": "Orlando",
+      "description": "Orlando, FL - Supercharger Stop",
+      "latitude": 28.5383,
+      "longitude": -81.3792,
+      "coordinates": [-81.3792, 28.5383],
+      "type": "waypoint",
+      "charging": true,
+      "overnight": false,
+      "state": "FL"
+    },
+    {
+      "id": "10",
+      "name": "Atlanta",
+      "description": "Atlanta, GA - Overnight Stay",
+      "latitude": 33.7490,
+      "longitude": -84.3880,
+      "coordinates": [-84.3880, 33.7490],
+      "type": "overnight",
+      "charging": true,
+      "overnight": true,
+      "state": "GA"
+    },
+    {
+      "id": "11",
+      "name": "Charlotte",
+      "description": "Charlotte, NC - Supercharger Stop",
+      "latitude": 35.2271,
+      "longitude": -80.8431,
+      "coordinates": [-80.8431, 35.2271],
+      "type": "waypoint",
+      "charging": true,
+      "overnight": false,
+      "state": "NC"
+    },
+    {
+      "id": "12",
+      "name": "Washington DC",
+      "description": "Washington, DC - Overnight Stay",
+      "latitude": 38.9072,
+      "longitude": -77.0369,
+      "coordinates": [-77.0369, 38.9072],
+      "type": "overnight",
+      "charging": true,
+      "overnight": true,
+      "state": "DC"
+    },
+    {
+      "id": "13",
+      "name": "New York",
+      "description": "New York, NY - Overnight Stay",
+      "latitude": 40.7128,
+      "longitude": -74.0060,
+      "coordinates": [-74.0060, 40.7128],
+      "type": "overnight",
+      "charging": true,
+      "overnight": true,
+      "state": "NY"
+    },
+    {
+      "id": "14",
+      "name": "Boston",
+      "description": "Boston, MA - Supercharger Stop",
+      "latitude": 42.3601,
+      "longitude": -71.0589,
+      "coordinates": [-71.0589, 42.3601],
+      "type": "waypoint",
+      "charging": true,
+      "overnight": false,
+      "state": "MA"
+    },
+    {
+      "id": "15",
+      "name": "Chicago",
+      "description": "Chicago, IL - Overnight Stay",
+      "latitude": 41.8781,
+      "longitude": -87.6298,
+      "coordinates": [-87.6298, 41.8781],
+      "type": "overnight",
+      "charging": true,
+      "overnight": true,
+      "state": "IL"
+    },
+    {
+      "id": "16",
+      "name": "Minneapolis",
+      "description": "Minneapolis, MN - Supercharger Stop",
+      "latitude": 44.9778,
+      "longitude": -93.2650,
+      "coordinates": [-93.2650, 44.9778],
+      "type": "waypoint",
+      "charging": true,
+      "overnight": false,
+      "state": "MN"
+    },
+    {
+      "id": "17",
+      "name": "Denver",
+      "description": "Denver, CO - Overnight Stay",
+      "latitude": 39.7392,
+      "longitude": -104.9903,
+      "coordinates": [-104.9903, 39.7392],
+      "type": "overnight",
+      "charging": true,
+      "overnight": true,
+      "state": "CO"
+    },
+    {
+      "id": "18",
+      "name": "Las Vegas",
+      "description": "Las Vegas, NV - Supercharger Stop",
+      "latitude": 36.1699,
+      "longitude": -115.1398,
+      "coordinates": [-115.1398, 36.1699],
+      "type": "waypoint",
+      "charging": true,
+      "overnight": false,
+      "state": "NV"
+    },
+    {
+      "id": "19",
+      "name": "Los Angeles",
+      "description": "Los Angeles, CA - Overnight Stay",
+      "latitude": 34.0522,
+      "longitude": -118.2437,
+      "coordinates": [-118.2437, 34.0522],
+      "type": "overnight",
+      "charging": true,
+      "overnight": true,
+      "state": "CA"
+    },
+    {
+      "id": "20",
+      "name": "San Francisco",
+      "description": "San Francisco, CA - Supercharger Stop",
+      "latitude": 37.7749,
+      "longitude": -122.4194,
+      "coordinates": [-122.4194, 37.7749],
+      "type": "waypoint",
+      "charging": true,
+      "overnight": false,
+      "state": "CA"
+    },
+    {
+      "id": "21",
+      "name": "Seattle",
+      "description": "Seattle, WA - End Point",
+      "latitude": 47.6062,
+      "longitude": -122.3321,
+      "coordinates": [-122.3321, 47.6062],
+      "type": "end",
+      "charging": true,
+      "overnight": true,
+      "state": "WA"
+    }
+  ],
+  "route": [
+    {
+      "latitude": 27.8006,
+      "longitude": -97.3964,
+      "coordinates": [-97.3964, 27.8006]
+    },
+    {
+      "latitude": 29.7604,
+      "longitude": -95.3698,
+      "coordinates": [-95.3698, 29.7604]
+    },
+    {
+      "latitude": 30.2672,
+      "longitude": -97.7431,
+      "coordinates": [-97.7431, 30.2672]
+    },
+    {
+      "latitude": 32.7767,
+      "longitude": -96.7970,
+      "coordinates": [-96.7970, 32.7767]
+    },
+    {
+      "latitude": 29.9511,
+      "longitude": -90.0715,
+      "coordinates": [-90.0715, 29.9511]
+    },
+    {
+      "latitude": 30.6944,
+      "longitude": -88.0431,
+      "coordinates": [-88.0431, 30.6944]
+    },
+    {
+      "latitude": 32.3617,
+      "longitude": -86.2792,
+      "coordinates": [-86.2792, 32.3617]
+    },
+    {
+      "latitude": 25.7617,
+      "longitude": -80.1918,
+      "coordinates": [-80.1918, 25.7617]
+    },
+    {
+      "latitude": 28.5383,
+      "longitude": -81.3792,
+      "coordinates": [-81.3792, 28.5383]
+    },
+    {
+      "latitude": 33.7490,
+      "longitude": -84.3880,
+      "coordinates": [-84.3880, 33.7490]
+    },
+    {
+      "latitude": 35.2271,
+      "longitude": -80.8431,
+      "coordinates": [-80.8431, 35.2271]
+    },
+    {
+      "latitude": 38.9072,
+      "longitude": -77.0369,
+      "coordinates": [-77.0369, 38.9072]
+    },
+    {
+      "latitude": 40.7128,
+      "longitude": -74.0060,
+      "coordinates": [-74.0060, 40.7128]
+    },
+    {
+      "latitude": 42.3601,
+      "longitude": -71.0589,
+      "coordinates": [-71.0589, 42.3601]
+    },
+    {
+      "latitude": 41.8781,
+      "longitude": -87.6298,
+      "coordinates": [-87.6298, 41.8781]
+    },
+    {
+      "latitude": 44.9778,
+      "longitude": -93.2650,
+      "coordinates": [-93.2650, 44.9778]
+    },
+    {
+      "latitude": 39.7392,
+      "longitude": -104.9903,
+      "coordinates": [-104.9903, 39.7392]
+    },
+    {
+      "latitude": 36.1699,
+      "longitude": -115.1398,
+      "coordinates": [-115.1398, 36.1699]
+    },
+    {
+      "latitude": 34.0522,
+      "longitude": -118.2437,
+      "coordinates": [-118.2437, 34.0522]
+    },
+    {
+      "latitude": 37.7749,
+      "longitude": -122.4194,
+      "coordinates": [-122.4194, 37.7749]
+    },
+    {
+      "latitude": 47.6062,
+      "longitude": -122.3321,
+      "coordinates": [-122.3321, 47.6062]
+    }
+  ],
+  "geoJSON": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "The Wandering Whittle Route"
+        },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [-97.3964, 27.8006],
+            [-95.3698, 29.7604],
+            [-97.7431, 30.2672],
+            [-96.7970, 32.7767],
+            [-90.0715, 29.9511],
+            [-88.0431, 30.6944],
+            [-86.2792, 32.3617],
+            [-80.1918, 25.7617],
+            [-81.3792, 28.5383],
+            [-84.3880, 33.7490],
+            [-80.8431, 35.2271],
+            [-77.0369, 38.9072],
+            [-74.0060, 40.7128],
+            [-71.0589, 42.3601],
+            [-87.6298, 41.8781],
+            [-93.2650, 44.9778],
+            [-104.9903, 39.7392],
+            [-115.1398, 36.1699],
+            [-118.2437, 34.0522],
+            [-122.4194, 37.7749],
+            [-122.3321, 47.6062]
+          ]
+        }
+      }
+    ]
+  }
+}

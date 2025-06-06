@@ -3,428 +3,582 @@
 /* eslint-env node */
 
 /**
- * Map Functionality Fix Utility
+ * Map Functionality Fix Script
  *
- * This script fixes common issues with the map functionality:
- * 1. Copies and ensures correct itinerary data files are in place
- * 2. Fixes coordinate formats in the data files
- * 3. Validates MapBox token configuration
- * 4. Checks API endpoints
+ * This script diagnoses and fixes issues with the map functionality, focusing on:
+ * 1. Coordinate format consistency checking ([longitude, latitude] for GeoJSON)
+ * 2. MapBox token validation
+ * 3. Data pipeline verification
+ * 4. GeoJSON structure validation
  */
 
 const fs = require("fs");
 const path = require("path");
-const { execSync } = require("child_process");
+const https = require("https");
 
-// File paths
-const ROOT_DIR = path.resolve(__dirname, "../..");
-const PUBLIC_SITE_DIR = __dirname;
-const SCRIPTS_DIR = path.resolve(ROOT_DIR, "scripts");
+console.log("🗺️ Map Functionality Fix Script");
+console.log("===============================");
 
-const ROOT_ITINERARY_FILE = path.resolve(ROOT_DIR, "itinerary.json");
-const ROOT_FULL_ITINERARY_FILE = path.resolve(ROOT_DIR, "itinerary-full.json");
-const ROOT_EDGE_WORKER_DATA_FILE = path.resolve(
-  ROOT_DIR,
-  "edge-worker/trip-data.json"
+// Configuration
+// Fix paths to point to the correct locations
+const ITINERARY_PATH = path.resolve(__dirname, "../../itinerary.json");
+const ITINERARY_FULL_PATH = path.resolve(
+  __dirname,
+  "../../itinerary-full.json"
 );
+const TRIP_DATA_PATH = path.resolve(__dirname, "./src/data/trip-data.json");
+const MAP_COMPONENT_PATH = path.resolve(__dirname, "./src/components/Map.jsx");
 
-const PUBLIC_ITINERARY_FILE = path.resolve(PUBLIC_SITE_DIR, "itinerary.json");
-const PUBLIC_FULL_ITINERARY_FILE = path.resolve(
-  PUBLIC_SITE_DIR,
-  "itinerary-full.json"
-);
-const PUBLIC_EDGE_WORKER_DIR = path.resolve(PUBLIC_SITE_DIR, "edge-worker");
-const PUBLIC_EDGE_WORKER_DATA_FILE = path.resolve(
-  PUBLIC_EDGE_WORKER_DIR,
-  "trip-data.json"
-);
+// Helper function to validate GeoJSON coordinates
+function validateCoordinates(coordinates, name = "Unknown") {
+  let isValid = true;
+  let issues = [];
 
-const ENV_FILE = path.resolve(PUBLIC_SITE_DIR, ".env");
-const MAP_JSX_FILE = path.resolve(PUBLIC_SITE_DIR, "src/components/Map.jsx");
-const USE_TRIP_DATA_FILE = path.resolve(
-  PUBLIC_SITE_DIR,
-  "src/hooks/useTripData.js"
-);
-const COORDINATE_FIX_SCRIPT = path.resolve(
-  SCRIPTS_DIR,
-  "fix-coordinate-format.cjs"
-);
-
-// Helper to check if a file exists
-const fileExists = (filePath) => {
-  try {
-    return fs.existsSync(filePath);
-  } catch (error) {
-    return false;
+  if (!Array.isArray(coordinates)) {
+    return {
+      isValid: false,
+      issues: [`${name}: Coordinates are not an array`],
+    };
   }
-};
 
-// Create directory if it doesn't exist
-const ensureDirExists = (dirPath) => {
-  if (!fileExists(dirPath)) {
-    try {
-      fs.mkdirSync(dirPath, { recursive: true });
-      console.log(`Created directory: ${dirPath}`);
-      return true;
-    } catch (error) {
-      console.error(`Error creating directory ${dirPath}:`, error);
-      return false;
+  // For Point geometries, coordinates should be [longitude, latitude]
+  if (
+    coordinates.length === 2 &&
+    typeof coordinates[0] === "number" &&
+    typeof coordinates[1] === "number"
+  ) {
+    // Check longitude range (-180 to 180)
+    if (coordinates[0] < -180 || coordinates[0] > 180) {
+      isValid = false;
+      issues.push(
+        `${name}: Longitude ${coordinates[0]} is out of range (-180 to 180)`
+      );
+    }
+
+    // Check latitude range (-90 to 90)
+    if (coordinates[1] < -90 || coordinates[1] > 90) {
+      isValid = false;
+      issues.push(
+        `${name}: Latitude ${coordinates[1]} is out of range (-90 to 90)`
+      );
+    }
+
+    // Check if coordinates might be in wrong order (common issue)
+    if (Math.abs(coordinates[0]) > 90 && Math.abs(coordinates[1]) <= 90) {
+      // This is probably correct [longitude, latitude]
+    } else if (
+      Math.abs(coordinates[0]) <= 90 &&
+      Math.abs(coordinates[1]) > 90
+    ) {
+      isValid = false;
+      issues.push(
+        `${name}: Coordinates appear to be in [latitude, longitude] format, but GeoJSON requires [longitude, latitude]`
+      );
     }
   }
-  return true;
-};
+  // For LineString, Polygon, etc., coordinates are nested arrays
+  else if (Array.isArray(coordinates[0])) {
+    coordinates.forEach((coord, index) => {
+      const result = validateCoordinates(coord, `${name}[${index}]`);
+      if (!result.isValid) {
+        isValid = false;
+        issues = [...issues, ...result.issues];
+      }
+    });
+  }
 
-// Copy file if source exists
-const copyFileIfExists = (source, destination) => {
-  if (fileExists(source)) {
-    try {
-      const destinationDir = path.dirname(destination);
-      ensureDirExists(destinationDir);
+  return { isValid, issues };
+}
 
-      fs.copyFileSync(source, destination);
-      console.log(`✓ Copied ${source} to ${destination}`);
-      return true;
-    } catch (error) {
-      console.error(`Error copying ${source} to ${destination}:`, error);
-      return false;
-    }
+// Helper function to validate a GeoJSON Feature
+function validateGeoJSONFeature(feature, name = "Feature") {
+  let isValid = true;
+  let issues = [];
+
+  if (!feature) {
+    return { isValid: false, issues: ["Feature is null or undefined"] };
+  }
+
+  if (feature.type !== "Feature") {
+    isValid = false;
+    issues.push(`${name}: Type is "${feature.type}" but should be "Feature"`);
+  }
+
+  if (!feature.geometry) {
+    isValid = false;
+    issues.push(`${name}: Missing geometry property`);
   } else {
-    console.log(`Source file ${source} not found. Skipping copy.`);
-    return false;
-  }
-};
+    if (!feature.geometry.type) {
+      isValid = false;
+      issues.push(`${name}: Missing geometry type`);
+    }
 
-// Generate MapBox token if not exists
-const ensureMapBoxToken = () => {
-  if (!fileExists(ENV_FILE)) {
-    try {
-      const envContent = `VITE_MAPBOX_TOKEN=pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2liaTA4enIwIn0.tU9_tLaaxXxhfcVX4WhOeA\n`;
-      fs.writeFileSync(ENV_FILE, envContent);
-      console.log(`✓ Created .env file with MapBox token`);
-      return true;
-    } catch (error) {
-      console.error(`Error creating .env file:`, error);
-      return false;
+    if (!feature.geometry.coordinates) {
+      isValid = false;
+      issues.push(`${name}: Missing geometry coordinates`);
+    } else {
+      const coordResult = validateCoordinates(
+        feature.geometry.coordinates,
+        `${name}.coordinates`
+      );
+      if (!coordResult.isValid) {
+        isValid = false;
+        issues = [...issues, ...coordResult.issues];
+      }
     }
   }
 
-  // Check if MapBox token exists in .env file
-  try {
-    const envContent = fs.readFileSync(ENV_FILE, "utf8");
-    if (!envContent.includes("VITE_MAPBOX_TOKEN=")) {
-      const newEnvContent =
-        envContent +
-        `\nVITE_MAPBOX_TOKEN=pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2liaTA4enIwIn0.tU9_tLaaxXxhfcVX4WhOeA\n`;
-      fs.writeFileSync(ENV_FILE, newEnvContent);
-      console.log(`✓ Added MapBox token to .env file`);
-      return true;
-    }
-    return true;
-  } catch (error) {
-    console.error(`Error checking/updating .env file:`, error);
-    return false;
-  }
-};
+  return { isValid, issues };
+}
 
-// Run fix-coordinate-format.cjs script
-const runCoordinateFix = () => {
-  if (fileExists(COORDINATE_FIX_SCRIPT)) {
-    try {
-      console.log(`Running coordinate fix script...`);
-      execSync(`node ${COORDINATE_FIX_SCRIPT}`, { stdio: "inherit" });
-      return true;
-    } catch (error) {
-      console.error(`Error running coordinate fix script:`, error);
-      return false;
-    }
+// Helper function to validate a GeoJSON FeatureCollection
+function validateGeoJSONFeatureCollection(
+  featureCollection,
+  name = "FeatureCollection"
+) {
+  let isValid = true;
+  let issues = [];
+
+  if (!featureCollection) {
+    return {
+      isValid: false,
+      issues: ["FeatureCollection is null or undefined"],
+    };
+  }
+
+  if (featureCollection.type !== "FeatureCollection") {
+    isValid = false;
+    issues.push(
+      `${name}: Type is "${featureCollection.type}" but should be "FeatureCollection"`
+    );
+  }
+
+  if (!Array.isArray(featureCollection.features)) {
+    isValid = false;
+    issues.push(`${name}: Missing or invalid features array`);
   } else {
-    console.log(`Coordinate fix script not found. Skipping this step.`);
-    return false;
+    featureCollection.features.forEach((feature, index) => {
+      const featureResult = validateGeoJSONFeature(
+        feature,
+        `${name}.features[${index}]`
+      );
+      if (!featureResult.isValid) {
+        isValid = false;
+        issues = [...issues, ...featureResult.issues];
+      }
+    });
   }
-};
 
-// Validate coordinate data
-const validateCoordinateData = () => {
-  const files = [
-    { path: PUBLIC_ITINERARY_FILE, name: "itinerary.json" },
-    { path: PUBLIC_FULL_ITINERARY_FILE, name: "itinerary-full.json" },
-    { path: PUBLIC_EDGE_WORKER_DATA_FILE, name: "edge-worker/trip-data.json" },
-  ];
+  return { isValid, issues };
+}
 
-  let allValid = true;
+// Check and fix itinerary.json
+function checkItinerary() {
+  console.log("\n📍 Checking itinerary data...");
 
-  for (const file of files) {
-    if (!fileExists(file.path)) {
-      console.log(`${file.name} not found. Skipping validation.`);
-      allValid = false;
-      continue;
+  if (!fs.existsSync(ITINERARY_PATH)) {
+    console.log(`❌ Error: Itinerary file not found at ${ITINERARY_PATH}`);
+    return;
+  }
+
+  try {
+    const itineraryData = JSON.parse(fs.readFileSync(ITINERARY_PATH, "utf8"));
+    console.log(`✅ Itinerary file loaded successfully`);
+
+    // Check if itinerary has locations array
+    if (!Array.isArray(itineraryData.locations)) {
+      console.log("❌ Error: Itinerary does not have a locations array");
+      return;
     }
 
-    try {
-      const data = JSON.parse(fs.readFileSync(file.path, "utf8"));
+    console.log(
+      `📌 Found ${itineraryData.locations.length} locations in itinerary`
+    );
 
-      if (file.name === "itinerary.json") {
-        if (!data.stops || !Array.isArray(data.stops)) {
-          console.log(
-            `Invalid format in ${file.name}: missing or invalid 'stops' array.`
-          );
-          allValid = false;
-          continue;
-        }
+    // Check for coordinate issues in locations
+    let locationIssues = 0;
+    let fixedLocations = 0;
 
-        // Check if stops have valid coordinates
-        let validStops = 0;
-        for (const stop of data.stops) {
-          if (
-            typeof stop.longitude === "number" &&
-            typeof stop.latitude === "number" &&
-            !isNaN(stop.longitude) &&
-            !isNaN(stop.latitude) &&
-            Math.abs(stop.longitude) <= 180 &&
-            Math.abs(stop.latitude) <= 90
-          ) {
-            validStops++;
-          }
-        }
+    const fixedItinerary = { ...itineraryData };
 
-        if (validStops === data.stops.length) {
-          console.log(
-            `✓ All ${validStops} stops in ${file.name} have valid coordinates.`
-          );
-        } else {
-          console.log(
-            `⚠ Only ${validStops} out of ${data.stops.length} stops in ${file.name} have valid coordinates.`
-          );
-          allValid = false;
-        }
-      } else if (file.name === "itinerary-full.json") {
+    fixedItinerary.locations = itineraryData.locations.map((location) => {
+      const updatedLocation = { ...location };
+
+      // Check if location has coordinates
+      if (!location.coordinates || !Array.isArray(location.coordinates)) {
+        console.log(
+          `❌ Location "${location.name}" has missing or invalid coordinates`
+        );
+        locationIssues++;
+        return updatedLocation;
+      }
+
+      // Validate coordinate format
+      const { isValid, issues } = validateCoordinates(
+        location.coordinates,
+        location.name
+      );
+
+      if (!isValid) {
+        locationIssues++;
+        issues.forEach((issue) => console.log(`  ❌ ${issue}`));
+
+        // Try to fix coordinates if they appear to be in wrong order
         if (
-          !data.features ||
-          !Array.isArray(data.features) ||
-          data.features.length === 0
+          issues.some((issue) =>
+            issue.includes("appear to be in [latitude, longitude] format")
+          )
         ) {
+          // Swap coordinates to [longitude, latitude] format
+          const [lat, lng] = location.coordinates;
+          updatedLocation.coordinates = [lng, lat];
           console.log(
-            `Invalid format in ${file.name}: missing or invalid 'features' array.`
+            `  🔄 Fixed coordinates for "${location.name}": [${lat}, ${lng}] -> [${lng}, ${lat}]`
           );
-          allValid = false;
-          continue;
-        }
-
-        const feature = data.features[0];
-        if (
-          !feature.geometry ||
-          feature.geometry.type !== "LineString" ||
-          !Array.isArray(feature.geometry.coordinates) ||
-          feature.geometry.coordinates.length < 2
-        ) {
-          console.log(`Invalid geometry in ${file.name}.`);
-          allValid = false;
-          continue;
-        }
-
-        // Check if coordinates are valid
-        let validCoords = 0;
-        for (const coord of feature.geometry.coordinates) {
-          if (
-            Array.isArray(coord) &&
-            coord.length === 2 &&
-            typeof coord[0] === "number" &&
-            typeof coord[1] === "number" &&
-            !isNaN(coord[0]) &&
-            !isNaN(coord[1]) &&
-            Math.abs(coord[0]) <= 180 &&
-            Math.abs(coord[1]) <= 90
-          ) {
-            validCoords++;
-          }
-        }
-
-        if (validCoords === feature.geometry.coordinates.length) {
-          console.log(
-            `✓ All ${validCoords} coordinates in ${file.name} are valid.`
-          );
-        } else {
-          console.log(
-            `⚠ Only ${validCoords} out of ${feature.geometry.coordinates.length} coordinates in ${file.name} are valid.`
-          );
-          allValid = false;
-        }
-      } else if (file.name === "edge-worker/trip-data.json") {
-        if (!Array.isArray(data) || data.length === 0) {
-          console.log(
-            `Invalid format in ${file.name}: expected array of KV objects.`
-          );
-          allValid = false;
-          continue;
-        }
-
-        let validKVItems = 0;
-        for (const item of data) {
-          if (typeof item.key === "string" && typeof item.value === "string") {
-            try {
-              JSON.parse(item.value);
-              validKVItems++;
-            } catch (error) {
-              console.log(`Invalid JSON in ${file.name} for key ${item.key}.`);
-            }
-          }
-        }
-
-        if (validKVItems === data.length) {
-          console.log(
-            `✓ All ${validKVItems} KV items in ${file.name} are valid.`
-          );
-        } else {
-          console.log(
-            `⚠ Only ${validKVItems} out of ${data.length} KV items in ${file.name} are valid.`
-          );
-          allValid = false;
+          fixedLocations++;
         }
       }
-    } catch (error) {
-      console.error(`Error validating ${file.name}:`, error);
-      allValid = false;
-    }
-  }
 
-  return allValid;
-};
+      return updatedLocation;
+    });
 
-// Check MapBox token configuration
-const checkMapBoxToken = () => {
-  try {
-    if (!fileExists(MAP_JSX_FILE)) {
-      console.log(`Map.jsx not found. Skipping MapBox token check.`);
-      return false;
-    }
-
-    const mapJsxContent = fs.readFileSync(MAP_JSX_FILE, "utf8");
-    const envContent = fileExists(ENV_FILE)
-      ? fs.readFileSync(ENV_FILE, "utf8")
-      : "";
-
-    const hasMapBoxTokenInEnv = envContent.includes("VITE_MAPBOX_TOKEN=");
-    const usesEnvToken = mapJsxContent.includes(
-      "import.meta.env.VITE_MAPBOX_TOKEN"
-    );
-    const hasFallbackToken = mapJsxContent.includes("MAPBOX_FALLBACK_TOKEN");
-
-    if (hasMapBoxTokenInEnv && (usesEnvToken || hasFallbackToken)) {
-      console.log(`✓ MapBox token is properly configured.`);
-      return true;
+    if (locationIssues > 0) {
+      if (fixedLocations > 0) {
+        // Save fixed itinerary
+        fs.writeFileSync(
+          ITINERARY_PATH,
+          JSON.stringify(fixedItinerary, null, 2),
+          "utf8"
+        );
+        console.log(
+          `✅ Fixed ${fixedLocations} locations and saved to ${ITINERARY_PATH}`
+        );
+      } else {
+        console.log(
+          `❌ Found ${locationIssues} locations with issues but couldn't automatically fix them`
+        );
+      }
     } else {
-      console.log(`⚠ MapBox token configuration is incomplete.`);
-      console.log(
-        `- ${hasMapBoxTokenInEnv ? "✓" : "✗"} VITE_MAPBOX_TOKEN in .env`
+      console.log("✅ All location coordinates appear to be valid");
+    }
+
+    // Check if itinerary has a route property with GeoJSON
+    if (itineraryData.route) {
+      console.log("\n📍 Checking route GeoJSON...");
+
+      const { isValid, issues } = validateGeoJSONFeature(
+        itineraryData.route,
+        "route"
       );
-      console.log(
-        `- ${
-          usesEnvToken ? "✓" : "✗"
-        } Using import.meta.env.VITE_MAPBOX_TOKEN in Map.jsx`
-      );
-      console.log(
-        `- ${hasFallbackToken ? "✓" : "✗"} Has fallback token in Map.jsx`
-      );
-      return false;
+
+      if (!isValid) {
+        console.log("❌ Route GeoJSON has issues:");
+        issues.forEach((issue) => console.log(`  ❌ ${issue}`));
+      } else {
+        console.log("✅ Route GeoJSON appears to be valid");
+      }
     }
   } catch (error) {
-    console.error(`Error checking MapBox token configuration:`, error);
-    return false;
+    console.log(`❌ Error processing itinerary: ${error.message}`);
   }
-};
+}
 
-// Check API endpoints
-const checkAPIEndpoints = () => {
+// Check full itinerary (if available)
+function checkFullItinerary() {
+  console.log("\n📍 Checking full itinerary data...");
+
+  if (!fs.existsSync(ITINERARY_FULL_PATH)) {
+    console.log(`ℹ️ Full itinerary file not found at ${ITINERARY_FULL_PATH}`);
+    return;
+  }
+
   try {
-    if (!fileExists(USE_TRIP_DATA_FILE)) {
-      console.log(`useTripData.js not found. Skipping API endpoint check.`);
-      return false;
-    }
+    const itineraryData = JSON.parse(
+      fs.readFileSync(ITINERARY_FULL_PATH, "utf8")
+    );
+    console.log(`✅ Full itinerary file loaded successfully`);
 
-    const useTripDataContent = fs.readFileSync(USE_TRIP_DATA_FILE, "utf8");
-    const hasAPIEndpoint =
-      useTripDataContent.includes("fetch(") ||
-      useTripDataContent.includes("axios.get(");
-    const hasFallbackData =
-      useTripDataContent.includes("localData") ||
-      useTripDataContent.includes("fallbackData");
+    // Check for GeoJSON feature collection structure
+    if (itineraryData.geoJSON) {
+      console.log("\n📍 Checking GeoJSON in full itinerary...");
 
-    if (hasAPIEndpoint) {
-      console.log(`✓ API endpoints are configured.`);
-      return true;
-    } else if (hasFallbackData) {
-      console.log(`✓ Using fallback data instead of API endpoints.`);
-      return true;
-    } else {
-      console.log(
-        `⚠ No API endpoints or fallback data found in useTripData.js.`
+      const { isValid, issues } = validateGeoJSONFeatureCollection(
+        itineraryData.geoJSON,
+        "geoJSON"
       );
-      return false;
+
+      if (!isValid) {
+        console.log("❌ GeoJSON has issues:");
+        issues.forEach((issue) => console.log(`  ❌ ${issue}`));
+      } else {
+        console.log("✅ GeoJSON appears to be valid");
+      }
     }
   } catch (error) {
-    console.error(`Error checking API endpoints:`, error);
-    return false;
+    console.log(`❌ Error processing full itinerary: ${error.message}`);
   }
-};
+}
 
-// Main function
-const main = async () => {
-  console.log("Map Functionality Fixing Utility");
-  console.log("===============================\n");
+// Check the map component for initialization issues
+function checkMapComponent() {
+  console.log("\n📍 Analyzing Map component...");
 
-  // 1. Copy itinerary files to public-site directory
-  console.log("1. Copying itinerary files to public-site directory...");
-  copyFileIfExists(ROOT_ITINERARY_FILE, PUBLIC_ITINERARY_FILE);
-  copyFileIfExists(ROOT_FULL_ITINERARY_FILE, PUBLIC_FULL_ITINERARY_FILE);
-  ensureDirExists(PUBLIC_EDGE_WORKER_DIR);
-  copyFileIfExists(ROOT_EDGE_WORKER_DATA_FILE, PUBLIC_EDGE_WORKER_DATA_FILE);
+  if (!fs.existsSync(MAP_COMPONENT_PATH)) {
+    console.log(`❌ Error: Map component not found at ${MAP_COMPONENT_PATH}`);
+    return;
+  }
 
-  // 2. Ensure MapBox token is configured
-  console.log("\n2. Ensuring MapBox token is configured...");
-  ensureMapBoxToken();
+  try {
+    const mapCode = fs.readFileSync(MAP_COMPONENT_PATH, "utf8");
+    console.log("✅ Map component file loaded successfully");
 
-  // 3. Fix coordinate formats in data files
-  console.log("\n3. Fixing coordinate formats in data files...");
-  runCoordinateFix();
+    // Check for token initialization issues
+    if (!mapCode.includes("mapboxgl.accessToken =")) {
+      console.log(
+        "❌ Map component is missing mapboxgl.accessToken initialization"
+      );
+    } else {
+      console.log("✅ Found mapboxgl.accessToken initialization");
 
-  // 4. Validate coordinate data
-  console.log("\n4. Validating coordinate data...");
-  const dataValid = validateCoordinateData();
-  if (!dataValid) {
-    console.log(
-      "Some coordinate data validation failed. The fix script should have corrected issues, but manual review may be needed."
+      // Check how token is initialized
+      if (mapCode.includes("import.meta.env.VITE_MAPBOX_TOKEN")) {
+        console.log("✅ Token is loaded from environment variables correctly");
+      } else {
+        console.log(
+          "⚠️ Token might be hardcoded instead of using environment variables"
+        );
+      }
+    }
+
+    // Check for appropriate error handling in map initialization
+    if (mapCode.includes("try") && mapCode.includes("catch")) {
+      console.log("✅ Map initialization appears to have error handling");
+    } else {
+      console.log("⚠️ Map initialization might be missing error handling");
+    }
+
+    // Check for layer initialization patterns
+    if (mapCode.includes("map.on('load'")) {
+      console.log("✅ Map has load event handler for layer initialization");
+    } else {
+      console.log(
+        "⚠️ Map might be missing load event handler for layer initialization"
+      );
+    }
+
+    // Check for coordinate transformation functions
+    const hasCoordinateTransformation =
+      mapCode.includes("reverse()") ||
+      mapCode.includes("[lng, lat]") ||
+      mapCode.includes("[lon, lat]") ||
+      (mapCode.includes("swap") && mapCode.includes("coordinate"));
+
+    if (hasCoordinateTransformation) {
+      console.log(
+        "⚠️ Map component contains coordinate transformations which might cause issues"
+      );
+      console.log("   Remember: MapBox requires [longitude, latitude] format");
+    }
+  } catch (error) {
+    console.log(`❌ Error analyzing Map component: ${error.message}`);
+  }
+}
+
+// Check the trip data for format issues
+function checkTripData() {
+  console.log("\n📍 Checking trip data...");
+
+  if (!fs.existsSync(TRIP_DATA_PATH)) {
+    console.log(`ℹ️ Trip data file not found at ${TRIP_DATA_PATH}`);
+    return;
+  }
+
+  try {
+    const tripData = JSON.parse(fs.readFileSync(TRIP_DATA_PATH, "utf8"));
+    console.log(`✅ Trip data file loaded successfully`);
+
+    // Check if trip data has expected properties
+    const requiredProperties = [
+      "tripName",
+      "startDate",
+      "endDate",
+      "currentLocation",
+    ];
+    const missingProperties = requiredProperties.filter(
+      (prop) => !tripData[prop]
     );
+
+    if (missingProperties.length > 0) {
+      console.log(
+        `⚠️ Trip data is missing properties: ${missingProperties.join(", ")}`
+      );
+    } else {
+      console.log("✅ Trip data has all required basic properties");
+    }
+
+    // Check current location coordinates if available
+    if (tripData.currentLocation && tripData.currentLocation.coordinates) {
+      console.log("📌 Checking current location coordinates...");
+
+      const { isValid, issues } = validateCoordinates(
+        tripData.currentLocation.coordinates,
+        "currentLocation"
+      );
+
+      if (!isValid) {
+        console.log("❌ Current location coordinates have issues:");
+        issues.forEach((issue) => console.log(`  ❌ ${issue}`));
+      } else {
+        console.log("✅ Current location coordinates appear to be valid");
+      }
+    }
+
+    // Check route data if available
+    if (tripData.route) {
+      console.log("📌 Checking route data...");
+
+      if (tripData.route.type === "Feature") {
+        const { isValid, issues } = validateGeoJSONFeature(
+          tripData.route,
+          "route"
+        );
+
+        if (!isValid) {
+          console.log("❌ Route GeoJSON has issues:");
+          issues.forEach((issue) => console.log(`  ❌ ${issue}`));
+        } else {
+          console.log("✅ Route GeoJSON appears to be valid");
+        }
+      } else {
+        console.log(
+          `⚠️ Route data does not appear to be a valid GeoJSON Feature`
+        );
+      }
+    }
+  } catch (error) {
+    console.log(`❌ Error processing trip data: ${error.message}`);
+  }
+}
+
+// Check MapBox token
+function checkMapBoxToken() {
+  console.log("\n📍 Checking MapBox token...");
+
+  const envPath = path.resolve(__dirname, ".env");
+
+  // Check if .env file exists
+  if (!fs.existsSync(envPath)) {
+    console.log(`⚠️ .env file not found at ${envPath}`);
+    console.log("   You might be missing the MapBox token configuration");
+    return;
   }
 
-  // 5. Check MapBox token configuration
-  console.log("\n5. Checking MapBox token configuration...");
-  const tokenValid = checkMapBoxToken();
+  try {
+    const envContent = fs.readFileSync(envPath, "utf8");
+    const envLines = envContent.split("\n");
 
-  // 6. Check API endpoints
-  console.log("\n6. Checking API endpoints...");
-  const apiValid = checkAPIEndpoints();
+    // Find MapBox token in .env file
+    let mapboxToken = null;
+    for (const line of envLines) {
+      if (line.trim().startsWith("VITE_MAPBOX_TOKEN=")) {
+        mapboxToken = line.trim().split("=")[1];
+        // Remove quotes if present
+        if (mapboxToken.startsWith('"') && mapboxToken.endsWith('"')) {
+          mapboxToken = mapboxToken.slice(1, -1);
+        }
+        if (mapboxToken.startsWith("'") && mapboxToken.endsWith("'")) {
+          mapboxToken = mapboxToken.slice(1, -1);
+        }
+        break;
+      }
+    }
 
-  // Summary
-  console.log("\nFix Summary:");
-  console.log("===========");
-  console.log(`Coordinate Data: ${dataValid ? "✓ Valid" : "⚠ Needs review"}`);
-  console.log(
-    `MapBox Token: ${tokenValid ? "✓ Configured" : "⚠ Needs review"}`
-  );
-  console.log(`API Endpoints: ${apiValid ? "✓ Configured" : "⚠ Needs review"}`);
+    if (!mapboxToken) {
+      console.log("❌ VITE_MAPBOX_TOKEN not found in .env file");
+      return;
+    }
 
-  console.log("\nNext Steps:");
-  console.log("===========");
-  console.log("1. Start the development server:");
-  console.log("   cd 48Continental_Starter/public-site && npm run dev");
-  console.log(
-    "2. Check the map functionality and use the debug panel (Ctrl+Shift+D)"
-  );
-  console.log("3. If issues persist, review the data files manually");
-};
+    console.log(`🔑 Found MapBox token: ${mapboxToken.substring(0, 10)}...`);
 
-// Run the main function
-main().catch((error) => {
-  console.error("Error running fix utility:", error);
-  process.exit(1);
-});
+    // Validate token format
+    if (!mapboxToken.startsWith("pk.")) {
+      console.log(
+        '❌ MapBox token does not start with "pk." (public token prefix)'
+      );
+      return;
+    }
+
+    console.log("✅ Token format validation passed (starts with pk.)");
+    console.log("🔄 Testing token against MapBox API...");
+
+    // Test against MapBox API to verify the token is valid
+    const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v11?access_token=${mapboxToken}`;
+
+    https
+      .get(url, (res) => {
+        let data = "";
+
+        res.on("data", (chunk) => {
+          data += chunk;
+        });
+
+        res.on("end", () => {
+          if (res.statusCode === 200) {
+            console.log("✅ MapBox API validation successful!");
+            console.log(
+              "✅ The token is valid and able to access MapBox styles."
+            );
+
+            // Continue with other checks after token validation
+            checkItinerary();
+            checkFullItinerary();
+            checkMapComponent();
+            checkTripData();
+
+            console.log("\n🚀 Fix Recommendations:");
+            console.log(
+              "1. Check browser console for MapBox errors when map fails to load"
+            );
+            console.log(
+              "2. Ensure all GeoJSON uses [longitude, latitude] format (not [latitude, longitude])"
+            );
+            console.log(
+              "3. Verify that the map container has a proper height/width set in CSS"
+            );
+            console.log(
+              "4. Use the MapDebug.jsx component to isolate map initialization issues"
+            );
+            console.log(
+              "5. Ensure the trip data fetch completes before initializing map layers"
+            );
+          } else {
+            console.log(
+              `❌ MapBox API validation failed with status ${res.statusCode}`
+            );
+            console.log(`❌ Response: ${data}`);
+            console.log(
+              "\n❌ The token might be invalid, expired, or rate-limited."
+            );
+            console.log(
+              "   Please check the MapBox dashboard to verify the token status."
+            );
+          }
+        });
+      })
+      .on("error", (error) => {
+        console.log(`❌ Error testing MapBox token: ${error.message}`);
+        console.log("   This might indicate a network connectivity issue.");
+
+        // Continue with other checks even if token validation fails
+        checkItinerary();
+        checkFullItinerary();
+        checkMapComponent();
+        checkTripData();
+      });
+  } catch (error) {
+    console.log(`❌ Error checking MapBox token: ${error.message}`);
+  }
+}
+
+// Start diagnostics with MapBox token check
+checkMapBoxToken();
