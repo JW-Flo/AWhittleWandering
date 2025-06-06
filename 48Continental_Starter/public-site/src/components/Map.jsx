@@ -9,12 +9,45 @@
 import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import mapboxgl from 'mapbox-gl';
+import Hammer from 'hammerjs';
 import TripStatistics from './TripStatistics';
 import './Map.css';
 
 // Set MapBox token from environment variables
 // Using public token (pk.) for client-side application
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.placeholder'; // Placeholder to prevent crashes
+
+// Load map icons if they're not already loaded
+const loadMapIcons = (map) => {
+  return new Promise((resolve) => {
+    if (!map.hasImage('charging-station')) {
+      map.loadImage('/assets/charging-station.png', (error, image) => {
+        if (!error) map.addImage('charging-station', image);
+
+        // Load lodging icon for overnight stops
+        if (!map.hasImage('lodging')) {
+          map.loadImage('/assets/lodging.png', (error, image) => {
+            if (!error) map.addImage('lodging', image);
+
+            // Load waypoint icon
+            if (!map.hasImage('waypoint')) {
+              map.loadImage('/assets/waypoint.png', (error, image) => {
+                if (!error) map.addImage('waypoint', image);
+                resolve();
+              });
+            } else {
+              resolve();
+            }
+          });
+        } else {
+          resolve();
+        }
+      });
+    } else {
+      resolve();
+    }
+  });
+};
 
 /**
  * Interactive map component using Mapbox GL
@@ -42,6 +75,11 @@ const Map = ({
   useEffect(() => {
     if (map.current) return; // Map already initialized
 
+    if (!mapboxgl.accessToken || mapboxgl.accessToken === 'pk.placeholder') {
+      setMapError('Mapbox access token is missing. Please check your configuration.');
+      return;
+    }
+
     try {
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
@@ -49,16 +87,30 @@ const Map = ({
         center: [-98.5795, 39.8283], // Center of continental US
         zoom: 3.5,
         minZoom: 2,
-        maxZoom: 18
+        maxZoom: 18,
+        failIfMajorPerformanceCaveat: false, // Try to load even on low-performance devices
+        attributionControl: false, // We'll add it manually in a better position
+        preserveDrawingBuffer: true // Required for screenshot functionality
       });
 
-      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      // Add attribution in bottom-left
+      map.current.addControl(new mapboxgl.AttributionControl({
+        compact: true
+      }), 'bottom-left');
+
+      map.current.addControl(new mapboxgl.NavigationControl({
+        visualizePitch: true,
+        showCompass: true
+      }), 'top-right');
+
       map.current.addControl(new mapboxgl.FullscreenControl(), 'top-right');
+
       map.current.addControl(new mapboxgl.GeolocateControl({
         positionOptions: {
           enableHighAccuracy: true
         },
-        trackUserLocation: false
+        trackUserLocation: false,
+        showUserHeading: true
       }), 'top-right');
 
       // Add scale control
@@ -67,9 +119,30 @@ const Map = ({
         unit: 'imperial'
       }), 'bottom-left');
 
-      // Mark map as ready when loaded
-      map.current.on('load', () => {
-        setMapReady(true);
+      // Setup touch gesture listeners for mobile
+      const hammer = new Hammer(mapContainer.current);
+      hammer.get('swipe').set({ direction: Hammer.DIRECTION_ALL });
+
+      hammer.on('swipeleft', () => {
+        // Event for opening side panel
+        document.dispatchEvent(new CustomEvent('map:swipe:left'));
+      });
+
+      hammer.on('swiperight', () => {
+        // Event for closing side panel
+        document.dispatchEvent(new CustomEvent('map:swipe:right'));
+      });
+
+      // Mark map as ready when loaded and icons are loaded
+      map.current.on('load', async () => {
+        try {
+          await loadMapIcons(map.current);
+          setMapReady(true);
+        } catch (error) {
+          console.error('Error loading map icons:', error);
+          // Still set map as ready even if icons fail to load
+          setMapReady(true);
+        }
       });
     } catch (error) {
       console.error('Error initializing map:', error);
@@ -385,46 +458,124 @@ const Map = ({
 
     if (!latitude || !longitude) return;
 
-    if (!vehicleMarker.current) {
-      // Create a vehicle marker element
-      const el = document.createElement('div');
-      el.className = 'vehicle-marker';
-      el.innerHTML = '🚙';
-      el.style.fontSize = '32px';
+    // Function to create/update the vehicle marker
+    const updateVehicleMarker = () => {
+      try {
+        if (!vehicleMarker.current) {
+          // Create a vehicle marker element
+          const el = document.createElement('div');
+          el.className = 'vehicle-marker';
 
-      // Add vehicle marker to map
-      vehicleMarker.current = new mapboxgl.Marker(el)
-        .setLngLat([longitude, latitude])
-        .addTo(map.current);
+          // Use a better SVG car icon for better visibility
+          el.innerHTML = `
+            <svg viewBox="0 0 24 24" width="36" height="36" fill="${vehicleData.batteryLevel < 20 ? '#f44336' : '#4CAF50'}">
+              <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+            </svg>
+          `;
 
-      // Add popup for vehicle
-      const popup = new mapboxgl.Popup({ offset: 25, closeButton: false })
-        .setHTML(`
-          <div class="vehicle-popup">
-            <h4>Whittle Wagon</h4>
-            <p>Battery: ${Math.round(vehicleData.batteryLevel)}%</p>
-            <p>Range: ~${Math.round(vehicleData.range)} mi</p>
-            <p>Speed: ${Math.round(vehicleData.speed)} mph</p>
-          </div>
-        `);
+          // Add pulse effect if car is moving
+          if (vehicleData.speed > 0) {
+            el.classList.add('vehicle-moving');
+          }
 
-      vehicleMarker.current.setPopup(popup);
-    } else {
-      // Update marker position
-      vehicleMarker.current.setLngLat([longitude, latitude]);
+          // Add vehicle marker to map
+          vehicleMarker.current = new mapboxgl.Marker({
+            element: el,
+            anchor: 'center',
+            rotation: vehicleData.heading || 0,
+            rotationAlignment: 'map'
+          })
+            .setLngLat([longitude, latitude])
+            .addTo(map.current);
 
-      // Update popup content
-      if (vehicleMarker.current.getPopup()) {
-        vehicleMarker.current.getPopup().setHTML(`
-          <div class="vehicle-popup">
-            <h4>Whittle Wagon</h4>
-            <p>Battery: ${Math.round(vehicleData.batteryLevel)}%</p>
-            <p>Range: ~${Math.round(vehicleData.range)} mi</p>
-            <p>Speed: ${Math.round(vehicleData.speed)} mph</p>
-          </div>
-        `);
+          // Add popup for vehicle with better formatting
+          const batteryClass = vehicleData.batteryLevel < 20 ? 'battery-low' :
+            vehicleData.batteryLevel > 80 ? 'battery-high' : '';
+
+          const popup = new mapboxgl.Popup({
+            offset: 25,
+            closeButton: false,
+            closeOnClick: false,
+            maxWidth: '300px',
+            className: 'vehicle-marker-popup'
+          })
+            .setHTML(`
+              <div class="vehicle-popup">
+                <h4>Whittle Wagon</h4>
+                <div class="vehicle-popup-stats">
+                  <div class="popup-stat">
+                    <span class="popup-stat-icon">🔋</span>
+                    <span class="popup-stat-value ${batteryClass}">${Math.round(vehicleData.batteryLevel)}%</span>
+                  </div>
+                  <div class="popup-stat">
+                    <span class="popup-stat-icon">⚡</span>
+                    <span class="popup-stat-value">${Math.round(vehicleData.range)} mi</span>
+                  </div>
+                  <div class="popup-stat">
+                    <span class="popup-stat-icon">🚀</span>
+                    <span class="popup-stat-value">${Math.round(vehicleData.speed)} mph</span>
+                  </div>
+                </div>
+              </div>
+            `);
+
+          vehicleMarker.current.setPopup(popup);
+        } else {
+          // Update marker position and rotation
+          vehicleMarker.current.setLngLat([longitude, latitude]);
+
+          // Update rotation if heading is available
+          if (vehicleData.heading !== undefined) {
+            const markerEl = vehicleMarker.current.getElement();
+            vehicleMarker.current.setRotation(vehicleData.heading);
+
+            // Update moving state
+            if (vehicleData.speed > 0) {
+              markerEl.classList.add('vehicle-moving');
+            } else {
+              markerEl.classList.remove('vehicle-moving');
+            }
+
+            // Update car color based on battery
+            const svgPath = markerEl.querySelector('svg');
+            if (svgPath) {
+              svgPath.style.fill = vehicleData.batteryLevel < 20 ? '#f44336' : '#4CAF50';
+            }
+          }
+
+          // Update popup content
+          if (vehicleMarker.current.getPopup()) {
+            const batteryClass = vehicleData.batteryLevel < 20 ? 'battery-low' :
+              vehicleData.batteryLevel > 80 ? 'battery-high' : '';
+
+            vehicleMarker.current.getPopup().setHTML(`
+              <div class="vehicle-popup">
+                <h4>Whittle Wagon</h4>
+                <div class="vehicle-popup-stats">
+                  <div class="popup-stat">
+                    <span class="popup-stat-icon">🔋</span>
+                    <span class="popup-stat-value ${batteryClass}">${Math.round(vehicleData.batteryLevel)}%</span>
+                  </div>
+                  <div class="popup-stat">
+                    <span class="popup-stat-icon">⚡</span>
+                    <span class="popup-stat-value">${Math.round(vehicleData.range)} mi</span>
+                  </div>
+                  <div class="popup-stat">
+                    <span class="popup-stat-icon">🚀</span>
+                    <span class="popup-stat-value">${Math.round(vehicleData.speed)} mph</span>
+                  </div>
+                </div>
+              </div>
+            `);
+          }
+        }
+      } catch (error) {
+        console.error('Error updating vehicle marker:', error);
       }
-    }
+    };
+
+    // Try to update the vehicle marker
+    updateVehicleMarker();
   }, [vehicleData, mapReady]);
 
   // Center map on vehicle location when asked

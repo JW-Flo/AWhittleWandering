@@ -1,0 +1,43 @@
+{
+  "currentDay": {
+    "date": "2025-06-06",
+    "location": "Tucson",
+    "state": "AZ",
+    "personSeen": null,
+    "duration": "Day Only",
+    "notes": "Scenic desert drive and transition west",
+    "isFirstDay": true,
+    "isLastDay": true,
+    "coordinates": {
+      "lat": 32.2226,
+      "lng": -110.9747
+    },
+    "stateFullName": "Arizona",
+    "stateNickname": "Grand Canyon State",
+    "id": "day_20250606"
+  },
+  "nextDay": {
+    "date": "2025-06-07",
+    "location": "Grand Canyon",
+    "state": "AZ",
+    "personSeen": null,
+    "duration": "1 Night",
+    "notes": "24-hour visit with hike suitable for Sasha",
+    "isFirstDay": true,
+    "isLastDay": true,
+    "coordinates": {
+      "lat": 36.0544,
+      "lng": -112.1401
+    },
+    "stateFullName": "Arizona",
+    "stateNickname": "Grand Canyon State",
+    "id": "day_20250607"
+  },
+  "visitedStates": [
+    "TX",
+    "AZ"
+  ],
+  "currentDayIndex": 2,
+  "tripComplete": false,
+  "lastUpdated": "2025-06-06T07:58:56.170Z"
+}

@@ -9,6 +9,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import Map from './Map';
 import StatesTracker from './StatesTracker';
+import JourneyTab from './JourneyTab';
+import ErrorBoundary from './ErrorBoundary';
 import { useVehicleData } from '../hooks/useVehicleData';
 import { useTripData } from '../hooks/useTripData';
 import './Dashboard.css';
@@ -42,11 +44,12 @@ const Dashboard = ({
   const isCurrentlyLoading = isLoading || vehicleLoading || tripLoading;
   const currentError = error || vehicleError;
 
-  // Handle keyboard shortcuts for panel toggle
+  // Handle keyboard shortcuts and touch gestures for panel toggle
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'i' || e.key === 'I') {
         setShowDetails(prev => !prev);
+        setPanelVisible(prev => !prev);
       }
 
       if (showDetails) {
@@ -57,8 +60,30 @@ const Dashboard = ({
       }
     };
 
+    // Listen for map swipe events
+    const handleSwipeLeft = () => {
+      if (!showDetails) {
+        setShowDetails(true);
+        setPanelVisible(true);
+      }
+    };
+
+    const handleSwipeRight = () => {
+      if (showDetails) {
+        setShowDetails(false);
+        setPanelVisible(false);
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener('map:swipe:left', handleSwipeLeft);
+    document.addEventListener('map:swipe:right', handleSwipeRight);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('map:swipe:left', handleSwipeLeft);
+      document.removeEventListener('map:swipe:right', handleSwipeRight);
+    };
   }, [showDetails]);
 
   // Toggle map layers
@@ -153,20 +178,47 @@ const Dashboard = ({
                 <span className="stat-value">{finalVehicleData.speed} mph</span>
               </div>
             )}
+
+            {/* Connection status indicator */}
+            <div className={`connection-status ${connectionStatus || 'unknown'}`}>
+              <span className="status-dot"></span>
+              <span className="status-text">
+                {connectionStatus === 'connected' && 'Live'}
+                {connectionStatus === 'connecting' && 'Connecting...'}
+                {connectionStatus === 'disconnected' && 'Offline'}
+                {!connectionStatus && 'Status: Unknown'}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Full Screen Map */}
       <div className="map-fullscreen">
-        <Map
-          vehicleData={finalVehicleData}
-          tripData={finalTripData}
-          stationsData={stationsData}
-          weatherData={weatherData}
-          fullscreen={true}
-          mapLayers={mapLayers}
-        />
+        <ErrorBoundary
+          fallback={(error) => (
+            <div className="map-error-container">
+              <h3>Map Error</h3>
+              <p>There was a problem loading the map.</p>
+              <p className="error-details">{error?.message || 'Unknown error'}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="retry-button"
+              >
+                Reload Map
+              </button>
+            </div>
+          )}
+        >
+          <Map
+            vehicleData={finalVehicleData}
+            tripData={finalTripData}
+            stationsData={stationsData}
+            weatherData={weatherData}
+            fullscreen={true}
+            mapLayers={mapLayers}
+          />
+        </ErrorBoundary>
       </div>
 
       {/* Floating Controls */}
@@ -242,51 +294,7 @@ const Dashboard = ({
           <div className="panel-content">
             {activePanel === 'journey' && (
               <div className="journey-details">
-                <h3>Journey Statistics</h3>
-
-                <div className="stat-group">
-                  <div className="stat-row">
-                    <span className="stat-label">Total Distance</span>
-                    <span className="stat-value">12,847 miles</span>
-                  </div>
-                  <div className="stat-row">
-                    <span className="stat-label">Days on Road</span>
-                    <span className="stat-value">28 days</span>
-                  </div>
-                  <div className="stat-row">
-                    <span className="stat-label">Average Speed</span>
-                    <span className="stat-value">458 mi/day</span>
-                  </div>
-                </div>
-
-                <h4>Charging Summary</h4>
-                <div className="stat-group">
-                  <div className="stat-row">
-                    <span className="stat-label">Total Sessions</span>
-                    <span className="stat-value">47</span>
-                  </div>
-                  <div className="stat-row">
-                    <span className="stat-label">Energy Used</span>
-                    <span className="stat-value">892 kWh</span>
-                  </div>
-                  <div className="stat-row">
-                    <span className="stat-label">Efficiency</span>
-                    <span className="stat-value">3.8 mi/kWh</span>
-                  </div>
-                </div>
-
-                <div className="charging-types">
-                  <div className="charging-type">
-                    <span className="type-icon">⚡</span>
-                    <span className="type-count">31</span>
-                    <span className="type-label">Superchargers</span>
-                  </div>
-                  <div className="charging-type">
-                    <span className="type-icon">🔌</span>
-                    <span className="type-count">16</span>
-                    <span className="type-label">Destination</span>
-                  </div>
-                </div>
+                <JourneyTab vehicleData={finalVehicleData} />
               </div>
             )}
 
