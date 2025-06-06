@@ -1,16 +1,14 @@
-/**
- * Map Debug Panel Component
- * 
- * A utility panel for debugging map issues and providing information
- * about the map data, layers, and performance.
- * 
- * This panel is hidden by default and can be toggled with Ctrl+Shift+D
- */
-
+/* eslint-env browser */
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import './MapDebugPanel.css';
 
+/**
+ * MapDebugPanel Component
+ * 
+ * A debugging panel that displays information about the current state
+ * of the map and provides controls for resetting and refreshing map data.
+ */
 const MapDebugPanel = ({
     tripData,
     vehicleData,
@@ -18,178 +16,236 @@ const MapDebugPanel = ({
     onResetMap,
     onRefreshData
 }) => {
-    const [expandedSection, setExpandedSection] = useState('trip');
+    const [showRawData, setShowRawData] = useState(false);
+    const [activeTab, setActiveTab] = useState('map');
 
-    // Toggle section expansion
-    const toggleSection = (section) => {
-        setExpandedSection(expandedSection === section ? null : section);
+    // Format raw data for display
+    const formatData = (data) => {
+        if (!data) return 'No data available';
+
+        try {
+            return JSON.stringify(data, null, 2);
+        } catch (e) {
+            return `Error formatting data: ${e.message}`;
+        }
+    };
+
+    // Get coordinate information in a readable format
+    const getCoordinateInfo = () => {
+        if (!vehicleData) return 'No vehicle data';
+
+        const lat = vehicleData.latitude || vehicleData.location?.latitude;
+        const lng = vehicleData.longitude || vehicleData.location?.longitude;
+
+        if (!lat || !lng) return 'No coordinates available';
+
+        return `[${lng.toFixed(6)}, ${lat.toFixed(6)}] (longitude, latitude)`;
+    };
+
+    // Get route information
+    const getRouteInfo = () => {
+        if (!tripData || !tripData.route) return 'No route data';
+
+        return `${tripData.route.length} points`;
+    };
+
+    // Get stops information
+    const getStopsInfo = () => {
+        if (!tripData || !tripData.stops) return 'No stops data';
+
+        return `${tripData.stops.length} stops`;
     };
 
     return (
         <div className="map-debug-panel">
-            <div className="debug-header">
-                <h3>Map Debug Panel</h3>
-                <div className="debug-actions">
-                    <button
-                        className="debug-button"
-                        onClick={onResetMap}
-                        title="Reset map instance"
-                    >
-                        Reset Map
-                    </button>
-                    <button
-                        className="debug-button"
-                        onClick={onRefreshData}
-                        title="Refresh map data"
-                    >
-                        Refresh Data
-                    </button>
-                </div>
-            </div>
+            <h3>Map Debug Panel</h3>
 
-            <div className="debug-status">
-                <span className={`status-indicator ${mapReady ? 'status-ok' : 'status-error'}`}></span>
-                Map Status: {mapReady ? 'Ready' : 'Not Ready'}
-            </div>
-
-            {/* Trip Data Section */}
-            <div className="debug-section">
-                <div
-                    className="section-header"
-                    onClick={() => toggleSection('trip')}
+            <div className="debug-tabs">
+                <button
+                    className={activeTab === 'map' ? 'active' : ''}
+                    onClick={() => setActiveTab('map')}
                 >
-                    <h4>Trip Data</h4>
-                    <span className="toggle-icon">{expandedSection === 'trip' ? '▼' : '►'}</span>
-                </div>
+                    Map
+                </button>
+                <button
+                    className={activeTab === 'data' ? 'active' : ''}
+                    onClick={() => setActiveTab('data')}
+                >
+                    Data
+                </button>
+                <button
+                    className={activeTab === 'coords' ? 'active' : ''}
+                    onClick={() => setActiveTab('coords')}
+                >
+                    Coords
+                </button>
+            </div>
 
-                {expandedSection === 'trip' && (
-                    <div className="section-content">
-                        <div className="data-item">
-                            <span className="data-label">Stops:</span>
-                            <span className="data-value">{tripData?.stops?.length || 0}</span>
+            {activeTab === 'map' && (
+                <div className="debug-section">
+                    <h4>Map Status</h4>
+                    <div className="debug-info">
+                        <div className="info-row">
+                            <span className="info-label">Map Ready:</span>
+                            <span className={`info-value ${mapReady ? 'success' : 'error'}`}>
+                                {mapReady ? 'Yes' : 'No'}
+                            </span>
                         </div>
-                        <div className="data-item">
-                            <span className="data-label">Route Points:</span>
-                            <span className="data-value">{tripData?.route?.length || 0}</span>
+                        <div className="info-row">
+                            <span className="info-label">Vehicle:</span>
+                            <span className="info-value">
+                                {vehicleData ? 'Available' : 'Not Available'}
+                            </span>
                         </div>
-                        <div className="data-item">
-                            <span className="data-label">Data Source:</span>
-                            <span className="data-value">{tripData?.source || 'Unknown'}</span>
+                        <div className="info-row">
+                            <span className="info-label">Trip Data:</span>
+                            <span className="info-value">
+                                {tripData ? 'Available' : 'Not Available'}
+                            </span>
                         </div>
-
-                        {tripData?.stops && tripData.stops.length > 0 && (
-                            <div className="nested-data">
-                                <h5>First Stop:</h5>
-                                <pre>
-                                    {JSON.stringify(tripData.stops[0], null, 2)}
-                                </pre>
-
-                                <h5>Last Stop:</h5>
-                                <pre>
-                                    {JSON.stringify(tripData.stops[tripData.stops.length - 1], null, 2)}
-                                </pre>
-                            </div>
-                        )}
                     </div>
-                )}
-            </div>
 
-            {/* Vehicle Data Section */}
-            <div className="debug-section">
-                <div
-                    className="section-header"
-                    onClick={() => toggleSection('vehicle')}
-                >
-                    <h4>Vehicle Data</h4>
-                    <span className="toggle-icon">{expandedSection === 'vehicle' ? '▼' : '►'}</span>
+                    <div className="debug-action-buttons">
+                        <button onClick={onResetMap} className="reset">
+                            Reset Map
+                        </button>
+                        <button onClick={onRefreshData}>
+                            Refresh Data
+                        </button>
+                    </div>
                 </div>
+            )}
 
-                {expandedSection === 'vehicle' && (
-                    <div className="section-content">
-                        {vehicleData ? (
+            {activeTab === 'data' && (
+                <div className="debug-section">
+                    <h4>Trip Data</h4>
+                    <div className="debug-info">
+                        <div className="info-row">
+                            <span className="info-label">Route:</span>
+                            <span className="info-value">{getRouteInfo()}</span>
+                        </div>
+                        <div className="info-row">
+                            <span className="info-label">Stops:</span>
+                            <span className="info-value">{getStopsInfo()}</span>
+                        </div>
+                        <div className="info-row">
+                            <span className="info-label">States:</span>
+                            <span className="info-value">
+                                {tripData?.visitedStates ? tripData.visitedStates.join(', ') : 'None'}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div style={{ marginTop: '10px' }}>
+                        <label className="toggle-raw-data">
+                            <input
+                                type="checkbox"
+                                checked={showRawData}
+                                onChange={() => setShowRawData(!showRawData)}
+                            />
+                            Show Raw Data
+                        </label>
+                    </div>
+
+                    {showRawData && (
+                        <div className="raw-data-container">
+                            <h5>Raw Trip Data</h5>
+                            <pre className="raw-data">{formatData(tripData)}</pre>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {activeTab === 'coords' && (
+                <div className="debug-section">
+                    <h4>Coordinate Data</h4>
+                    <div className="debug-info">
+                        <div className="info-row">
+                            <span className="info-label">Current:</span>
+                            <span className="info-value">{getCoordinateInfo()}</span>
+                        </div>
+                        {vehicleData && (
                             <>
-                                <div className="data-item">
-                                    <span className="data-label">Coordinates:</span>
-                                    <span className="data-value">
-                                        [{vehicleData.longitude || 'N/A'}, {vehicleData.latitude || 'N/A'}]
+                                <div className="info-row">
+                                    <span className="info-label">Format:</span>
+                                    <span className="info-value">
+                                        {vehicleData.latitude && vehicleData.longitude
+                                            ? 'lat/lng properties'
+                                            : vehicleData.location
+                                                ? 'location object'
+                                                : 'unknown'}
                                     </span>
                                 </div>
-                                <div className="data-item">
-                                    <span className="data-label">Heading:</span>
-                                    <span className="data-value">{vehicleData.heading || 'N/A'}°</span>
-                                </div>
-                                <div className="data-item">
-                                    <span className="data-label">Speed:</span>
-                                    <span className="data-value">{vehicleData.speed || 0} mph</span>
-                                </div>
-                                <div className="data-item">
-                                    <span className="data-label">Battery:</span>
-                                    <span className="data-value">
-                                        {vehicleData.batteryLevel || 0}% ({vehicleData.range || 0} mi)
-                                    </span>
-                                </div>
-                                <div className="data-item">
-                                    <span className="data-label">Timestamp:</span>
-                                    <span className="data-value">
-                                        {vehicleData.timestamp ? new Date(vehicleData.timestamp).toLocaleString() : 'N/A'}
+                                <div className="info-row">
+                                    <span className="info-label">Heading:</span>
+                                    <span className="info-value">
+                                        {vehicleData.heading !== undefined
+                                            ? `${vehicleData.heading}°`
+                                            : 'Not available'}
                                     </span>
                                 </div>
                             </>
-                        ) : (
-                            <div className="no-data">No vehicle data available</div>
                         )}
                     </div>
-                )}
-            </div>
 
-            {/* Map Events Section */}
-            <div className="debug-section">
-                <div
-                    className="section-header"
-                    onClick={() => toggleSection('events')}
-                >
-                    <h4>Map Events</h4>
-                    <span className="toggle-icon">{expandedSection === 'events' ? '▼' : '►'}</span>
-                </div>
-
-                {expandedSection === 'events' && (
-                    <div className="section-content">
-                        <div className="event-logger">
-                            <div className="event-item">Map initialized at {new Date().toLocaleTimeString()}</div>
-                            {mapReady && <div className="event-item">Map ready event fired</div>}
-                            <div className="event-item">Data loaded: {tripData ? 'Success' : 'Pending'}</div>
-                            <div className="event-item">Vehicle marker: {vehicleData ? 'Added' : 'Not added'}</div>
-                        </div>
+                    <h5>First/Last Route Points</h5>
+                    <div className="coords-list">
+                        {tripData?.route && tripData.route.length > 0 ? (
+                            <>
+                                <div className="coord-item">
+                                    <span className="coord-label">Start:</span>
+                                    <span className="coord-value">
+                                        [{tripData.route[0].longitude}, {tripData.route[0].latitude}]
+                                    </span>
+                                </div>
+                                {tripData.route.length > 1 && (
+                                    <div className="coord-item">
+                                        <span className="coord-label">End:</span>
+                                        <span className="coord-value">
+                                            [{tripData.route[tripData.route.length - 1].longitude},
+                                            {tripData.route[tripData.route.length - 1].latitude}]
+                                        </span>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <div className="no-data">No route points available</div>
+                        )}
                     </div>
-                )}
-            </div>
 
-            {/* Tips Section */}
-            <div className="debug-section">
-                <div
-                    className="section-header"
-                    onClick={() => toggleSection('tips')}
-                >
-                    <h4>Debugging Tips</h4>
-                    <span className="toggle-icon">{expandedSection === 'tips' ? '▼' : '►'}</span>
-                </div>
-
-                {expandedSection === 'tips' && (
-                    <div className="section-content">
-                        <ul className="tips-list">
-                            <li>Check browser console for MapBox errors</li>
-                            <li>Verify coordinates are in [longitude, latitude] format (GeoJSON standard)</li>
-                            <li>Ensure MapBox token is valid</li>
-                            <li>Check network requests for API data</li>
-                            <li>Try resetting the map if layers don't appear</li>
-                            <li>Verify map container has a defined height</li>
-                        </ul>
+                    <h5>First/Last Stop Points</h5>
+                    <div className="coords-list">
+                        {tripData?.stops && tripData.stops.length > 0 ? (
+                            <>
+                                <div className="coord-item">
+                                    <span className="coord-label">First:</span>
+                                    <span className="coord-value">
+                                        [{tripData.stops[0].longitude}, {tripData.stops[0].latitude}]
+                                        <small>{tripData.stops[0].name}</small>
+                                    </span>
+                                </div>
+                                {tripData.stops.length > 1 && (
+                                    <div className="coord-item">
+                                        <span className="coord-label">Last:</span>
+                                        <span className="coord-value">
+                                            [{tripData.stops[tripData.stops.length - 1].longitude},
+                                            {tripData.stops[tripData.stops.length - 1].latitude}]
+                                            <small>{tripData.stops[tripData.stops.length - 1].name}</small>
+                                        </span>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <div className="no-data">No stop points available</div>
+                        )}
                     </div>
-                )}
-            </div>
+                </div>
+            )}
 
             <div className="debug-footer">
-                <p>Press Ctrl+Shift+D to hide this panel</p>
+                <small>
+                    Press Ctrl+Shift+D to toggle debug panel
+                </small>
             </div>
         </div>
     );
@@ -199,8 +255,8 @@ MapDebugPanel.propTypes = {
     tripData: PropTypes.object,
     vehicleData: PropTypes.object,
     mapReady: PropTypes.bool,
-    onResetMap: PropTypes.func,
-    onRefreshData: PropTypes.func
+    onResetMap: PropTypes.func.isRequired,
+    onRefreshData: PropTypes.func.isRequired
 };
 
 export default MapDebugPanel;
