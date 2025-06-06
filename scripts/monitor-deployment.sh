@@ -14,7 +14,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # URLs to check
-PUBLIC_SITE_URL="https://thewanderingwhittle.pages.dev"
+PUBLIC_SITE_URL="https://main.continentalusa-site.pages.dev"
 EDGE_WORKER_CUSTOM_URL="https://trip.thewanderingwhittle.com"
 EDGE_WORKER_DEV_URL="https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev"
 
@@ -108,10 +108,10 @@ check_cors() {
   # Use curl with OPTIONS method to check CORS headers
   CORS_HEADERS=$(curl -s -X OPTIONS -I --max-time 5 "$url")
   
-  if [[ "$CORS_HEADERS" == *"Access-Control-Allow-Origin"* ]]; then
+  if [[ "$CORS_HEADERS" == *"access-control-allow-origin"* ]] || [[ "$CORS_HEADERS" == *"Access-Control-Allow-Origin"* ]]; then
     echo -e "  ${GREEN}✓ CORS headers are properly set${NC}"
     echo -e "  Headers found:"
-    echo "$CORS_HEADERS" | grep -i "Access-Control" | sed 's/^/    /'
+    echo "$CORS_HEADERS" | grep -i "access-control" | sed 's/^/    /'
   else
     echo -e "  ${RED}✗ CORS headers are missing${NC}"
   fi
