@@ -1,5 +1,6 @@
 /* eslint-env browser */
 import { useState, useEffect, useCallback } from "react";
+import { ensureMapboxFormat } from "../utils/mapUtils";
 
 /**
  * US State boundaries for accurate state detection
@@ -405,124 +406,11 @@ export const useTripData = ({ vehicleData, pollInterval = 60000 } = {}) => {
     }
   }, [vehicleData?.latitude, vehicleData?.longitude, visitedStates]);
 
-  /**
-   * Validate and normalize coordinates to ensure they are in [longitude, latitude] format
-   * This ensures coordinate consistency across all data sources
-   *
-   * IMPORTANT: MapBox requires coordinates in [longitude, latitude] format.
-   * Many data sources provide them as [latitude, longitude], causing render issues.
-   *
-   * @param {Array|Object} coords - Coordinates to validate and normalize
-   * @returns {Array|null} - Normalized [longitude, latitude] array or null if invalid
-   */
-  const validateAndNormalizeCoordinates = useCallback((coords) => {
-    // Already an array [lng, lat] or [lat, lng]
-    if (Array.isArray(coords) && coords.length === 2) {
-      const [first, second] = coords.map((v) =>
-        typeof v === "string" ? parseFloat(v) : v
-      );
-
-      // Skip if invalid numbers
-      if (isNaN(first) || isNaN(second)) return null;
-
-      // Check if values are within valid ranges
-      // Longitude: -180 to 180, Latitude: -90 to 90
-      const isFirstLongitude =
-        Math.abs(first) <= 180 &&
-        (Math.abs(first) > 90 || Math.abs(second) > 90);
-      const isSecondLatitude = Math.abs(second) <= 90;
-
-      // If first is longitude and second is latitude (correct GeoJSON order)
-      if (isFirstLongitude && isSecondLatitude) {
-        return [first, second]; // [longitude, latitude]
-      }
-
-      // If first looks like latitude and second like longitude (swapped)
-      if (
-        Math.abs(first) <= 90 &&
-        Math.abs(second) <= 180 &&
-        Math.abs(second) > 90
-      ) {
-        console.log("Fixed swapped coordinates:", [first, second], "→", [
-          second,
-          first,
-        ]);
-        return [second, first]; // [longitude, latitude]
-      }
-
-      // If both values are within latitude range, make a best guess
-      if (Math.abs(first) <= 90 && Math.abs(second) <= 90) {
-        // In the US, longitude values are typically larger than latitude values
-        if (Math.abs(first) > Math.abs(second)) {
-          return [first, second]; // first is likely longitude
-        } else {
-          return [second, first]; // second is likely longitude
-        }
-      }
-
-      // Fallback to original order if we can't determine
-      return [first, second];
-    }
-
-    // Object with lat/lng or latitude/longitude properties
-    if (coords && typeof coords === "object") {
-      let lng, lat;
-
-      // Handle latitude/longitude properties
-      if (coords.latitude !== undefined && coords.longitude !== undefined) {
-        lat =
-          typeof coords.latitude === "string"
-            ? parseFloat(coords.latitude)
-            : coords.latitude;
-        lng =
-          typeof coords.longitude === "string"
-            ? parseFloat(coords.longitude)
-            : coords.longitude;
-      }
-      // Handle lat/lng properties (GeoJSON style)
-      else if (coords.lat !== undefined && coords.lng !== undefined) {
-        lat =
-          typeof coords.lat === "string" ? parseFloat(coords.lat) : coords.lat;
-        lng =
-          typeof coords.lng === "string" ? parseFloat(coords.lng) : coords.lng;
-      }
-      // Handle coordinates array property
-      else if (
-        coords.coordinates &&
-        Array.isArray(coords.coordinates) &&
-        coords.coordinates.length === 2
-      ) {
-        return validateAndNormalizeCoordinates(coords.coordinates);
-      }
-
-      // Skip if invalid numbers
-      if (lng === undefined || lat === undefined || isNaN(lng) || isNaN(lat))
-        return null;
-
-      // Check if values are within valid ranges
-      // Longitude: -180 to 180, Latitude: -90 to 90
-      const validLng = Math.abs(lng) <= 180;
-      const validLat = Math.abs(lat) <= 90;
-
-      if (!validLng || !validLat) {
-        // Check if they're swapped
-        if (Math.abs(lng) <= 90 && Math.abs(lat) <= 180 && Math.abs(lat) > 90) {
-          console.log("Fixed swapped lat/lng properties:", { lat, lng }, "→", {
-            lat: lng,
-            lng: lat,
-          });
-          return [lat, lng]; // [longitude, latitude] with swapped values
-        }
-        return null;
-      }
-
-      return [lng, lat]; // [longitude, latitude]
-    }
-
-    return null;
-  }, []);
-
-  // We're now using validateAndNormalizeCoordinates directly for better coordinate handling
+  // We're now using the centralized ensureMapboxFormat utility for coordinate handling
+  // instead of the internal validateAndNormalizeCoordinates function
+  console.log(
+    "useTripData: Using centralized coordinate format utility from mapUtils.js"
+  );
 
   const fetchTripData = useCallback(async () => {
     try {
@@ -565,7 +453,7 @@ export const useTripData = ({ vehicleData, pollInterval = 60000 } = {}) => {
           ) {
             extractedRoute = routeFeature.geometry.coordinates
               .map((coord) => {
-                const normalized = validateAndNormalizeCoordinates(coord);
+                const normalized = ensureMapboxFormat(coord);
                 if (normalized) {
                   const [longitude, latitude] = normalized;
                   return {
@@ -587,7 +475,7 @@ export const useTripData = ({ vehicleData, pollInterval = 60000 } = {}) => {
           if (stopFeatures.length > 0) {
             extractedStops = stopFeatures
               .map((feature, idx) => {
-                const normalized = validateAndNormalizeCoordinates(
+                const normalized = ensureMapboxFormat(
                   feature.geometry.coordinates
                 );
 
@@ -633,9 +521,7 @@ export const useTripData = ({ vehicleData, pollInterval = 60000 } = {}) => {
 
                 // Try coordinates array first
                 if (stop.coordinates && Array.isArray(stop.coordinates)) {
-                  normalized = validateAndNormalizeCoordinates(
-                    stop.coordinates
-                  );
+                  normalized = ensureMapboxFormat(stop.coordinates);
                 }
 
                 // Then try lat/lng or latitude/longitude
@@ -643,7 +529,7 @@ export const useTripData = ({ vehicleData, pollInterval = 60000 } = {}) => {
                   !normalized &&
                   (stop.latitude !== undefined || stop.lat !== undefined)
                 ) {
-                  normalized = validateAndNormalizeCoordinates(stop);
+                  normalized = ensureMapboxFormat(stop);
                 }
 
                 if (!normalized) {
@@ -687,7 +573,7 @@ export const useTripData = ({ vehicleData, pollInterval = 60000 } = {}) => {
           if (Array.isArray(data.route)) {
             extractedRoute = data.route
               .map((point) => {
-                const normalized = validateAndNormalizeCoordinates(point);
+                const normalized = ensureMapboxFormat(point);
                 if (normalized) {
                   const [longitude, latitude] = normalized;
                   return {
@@ -705,7 +591,7 @@ export const useTripData = ({ vehicleData, pollInterval = 60000 } = {}) => {
           if (Array.isArray(data.stops)) {
             extractedStops = data.stops
               .map((stop, idx) => {
-                const normalized = validateAndNormalizeCoordinates(stop);
+                const normalized = ensureMapboxFormat(stop);
                 if (!normalized) {
                   console.warn("Invalid stop data:", stop);
                   return null;
@@ -778,7 +664,7 @@ export const useTripData = ({ vehicleData, pollInterval = 60000 } = {}) => {
     setTripData(enhancedData);
     setError(null);
     console.log("📍 Using enhanced local trip data as fallback");
-  }, [vehicleData, generateEnhancedTripData, validateAndNormalizeCoordinates]);
+  }, [vehicleData, generateEnhancedTripData]);
 
   // Fetch trip data on mount and when vehicle data changes
   useEffect(() => {
