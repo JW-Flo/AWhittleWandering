@@ -80,7 +80,7 @@ export class TessieAPIClient {
    */
   async getVehicleState(): Promise<TessieVehicleData> {
     // Correct endpoint format for Tessie API
-    const url = `${this.baseUrl}/api/vehicles/${this.vin}/vehicle_data`;
+    const url = `${this.baseUrl}/api/1/vehicles/${this.vin}/vehicle_data`;
     
     try {
       const response = await fetch(url, {
@@ -115,7 +115,7 @@ export class TessieAPIClient {
    */
   async wakeVehicle(): Promise<boolean> {
     // Correct endpoint format for Tessie API
-    const url = `${this.baseUrl}/api/vehicles/${this.vin}/wake_up`;
+    const url = `${this.baseUrl}/api/1/vehicles/${this.vin}/wake_up`;
     
     try {
       const response = await fetch(url, {
@@ -144,7 +144,7 @@ export class TessieAPIClient {
    */
   async getLiveStatus(): Promise<Record<string, unknown>> {
     // Correct endpoint format for Tessie API
-    const url = `${this.baseUrl}/api/vehicles/${this.vin}/vehicle_state`;
+    const url = `${this.baseUrl}/api/1/vehicles/${this.vin}/vehicle_state`;
     
     try {
       const response = await fetch(url, {
