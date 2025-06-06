@@ -133,14 +133,20 @@ const Map = ({
         document.dispatchEvent(new CustomEvent('map:swipe:right'));
       });
 
-      // Mark map as ready when loaded and icons are loaded
+      // Mark map as ready when loaded and initialize layers
       map.current.on('load', async () => {
         try {
+          // Load icons first
           await loadMapIcons(map.current);
+
+          // Initialize layers
+          await initializeMapLayers();
+
+          // Set map as ready
           setMapReady(true);
         } catch (error) {
-          console.error('Error loading map icons:', error);
-          // Still set map as ready even if icons fail to load
+          console.error('Error initializing map:', error);
+          // Still set map as ready even if initialization fails
           setMapReady(true);
         }
       });
@@ -158,27 +164,145 @@ const Map = ({
     };
   }, []);
 
+  // Function to initialize map layers and sources
+  const initializeMapLayers = async () => {
+    if (!map.current) return;
+
+    try {
+      // Load map icons first
+      await loadMapIcons(map.current);
+
+      // Re-add route if it exists
+      if (tripData?.route) {
+        const routeGeoJSON = {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: tripData.route.map(point => [point.longitude, point.latitude])
+          }
+        };
+
+        if (!map.current.getSource('route')) {
+          map.current.addSource('route', {
+            type: 'geojson',
+            data: routeGeoJSON
+          });
+
+          map.current.addLayer({
+            id: 'route-line',
+            type: 'line',
+            source: 'route',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': '#0066cc',
+              'line-width': 4,
+              'line-opacity': 0.8
+            }
+          });
+        } else {
+          map.current.getSource('route').setData(routeGeoJSON);
+        }
+      }
+
+      // Re-add stops if they exist
+      if (tripData?.stops) {
+        const stopsGeoJSON = {
+          type: 'FeatureCollection',
+          features: tripData.stops.map(stop => ({
+            type: 'Feature',
+            properties: {
+              id: stop.id,
+              name: stop.name,
+              description: stop.description,
+              type: stop.type,
+              charging: stop.charging,
+              overnight: stop.overnight
+            },
+            geometry: {
+              type: 'Point',
+              coordinates: [stop.longitude, stop.latitude]
+            }
+          }))
+        };
+
+        if (!map.current.getSource('stops')) {
+          map.current.addSource('stops', {
+            type: 'geojson',
+            data: stopsGeoJSON
+          });
+
+          map.current.addLayer({
+            id: 'stops-markers',
+            type: 'symbol',
+            source: 'stops',
+            layout: {
+              'icon-image': [
+                'match',
+                ['get', 'type'],
+                'overnight', 'lodging',
+                'charging', 'charging-station',
+                'waypoint'
+              ],
+              'icon-size': 1.2,
+              'icon-allow-overlap': true,
+              'text-field': ['get', 'name'],
+              'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+              'text-offset': [0, 1.2],
+              'text-anchor': 'top',
+              'text-size': 12,
+              'text-optional': true
+            },
+            paint: {
+              'text-color': '#333',
+              'text-halo-color': '#fff',
+              'text-halo-width': 1
+            }
+          });
+        } else {
+          map.current.getSource('stops').setData(stopsGeoJSON);
+        }
+      }
+    } catch (error) {
+      console.error('Error initializing map layers:', error);
+    }
+  };
+
   // Update map style based on layer toggles
   useEffect(() => {
     if (!mapReady || !map.current) return;
 
-    // Handle satellite view toggle
-    if (mapLayers.satellite) {
-      map.current.setStyle('mapbox://styles/mapbox/satellite-streets-v11');
-    } else {
-      map.current.setStyle('mapbox://styles/mapbox/streets-v11');
+    // Store current view state
+    const currentCenter = map.current.getCenter();
+    const currentZoom = map.current.getZoom();
+
+    // Handle style changes
+    const newStyle = mapLayers.satellite
+      ? 'mapbox://styles/mapbox/satellite-streets-v11'
+      : 'mapbox://styles/mapbox/streets-v11';
+
+    // Only change style if it's different
+    if (map.current.getStyle().name !== newStyle) {
+      map.current.once('style.load', async () => {
+        // Re-initialize all layers after style change
+        await initializeMapLayers();
+
+        // Restore the previous view
+        map.current.setCenter(currentCenter);
+        map.current.setZoom(currentZoom);
+      });
+
+      map.current.setStyle(newStyle);
     }
 
-    // Note: Traffic and weather layers would be added here
-    // For traffic, you'd use Mapbox's traffic layers
-    // For weather, you'd need to integrate with a weather API that provides tile overlays
-
-    // Placeholder for future weather overlay implementation
+    // Handle weather overlay
     if (mapLayers.weather && weatherData) {
-      // Weather overlay would be implemented here
       console.log('Weather overlay would show data:', weatherData);
     }
-  }, [mapLayers, mapReady, weatherData]);
+  }, [mapLayers, mapReady, weatherData, tripData]);
 
   // Add and update charging stations on the map
   useEffect(() => {

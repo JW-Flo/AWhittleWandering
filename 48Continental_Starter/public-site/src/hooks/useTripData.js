@@ -413,7 +413,7 @@ export const useTripData = ({ vehicleData, pollInterval = 60000 } = {}) => {
         import.meta.env.VITE_API_BASE_URL ||
         "http://localhost:8787";
 
-      const response = await fetch(`${apiUrl}/api/trip`, {
+      const response = await fetch(`${apiUrl}/api/itinerary`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -424,16 +424,33 @@ export const useTripData = ({ vehicleData, pollInterval = 60000 } = {}) => {
       if (response.ok) {
         const data = await response.json();
 
+        // Extract route and stops from GeoJSON format
+        const route = data.features[0].geometry.coordinates.map(
+          ([lng, lat]) => ({
+            longitude: lng,
+            latitude: lat,
+          })
+        );
+
+        const stops = data.features[0].properties.stops.map((stop) => ({
+          id: stop.location,
+          name: stop.location.split(",")[0].trim(),
+          latitude: stop.latitude,
+          longitude: stop.longitude,
+          type: stop.type,
+          description: stop.description,
+          charging: stop.type === "charging",
+          overnight: stop.type === "overnight",
+          state: stop.state,
+        }));
+
         // Merge API data with our enhanced local data
         const enhancedData = generateEnhancedTripData(vehicleData);
         const mergedData = {
-          ...data,
           ...enhancedData,
-          // Prefer API data for certain fields if available
-          visitedStates:
-            data.visitedStates?.length > 0
-              ? data.visitedStates
-              : enhancedData.visitedStates,
+          route,
+          stops,
+          visitedStates: Array.from(visitedStates),
         };
 
         setTripData(mergedData);

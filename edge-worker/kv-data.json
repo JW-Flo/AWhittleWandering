@@ -1,0 +1,1 @@
+{"key": "itinerary", "value": "$(cat ../itinerary-full.json)"}
