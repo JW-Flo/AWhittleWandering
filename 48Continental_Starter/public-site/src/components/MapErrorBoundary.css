@@ -1,0 +1,142 @@
+/**
+ * MapErrorBoundary Component Styles
+ */
+
+.map-error-boundary {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.map-error-content {
+  width: 90%;
+  max-width: 800px;
+  padding: 24px;
+  background-color: white;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.map-error-icon {
+  font-size: 1.5em;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.map-error-message {
+  font-size: 1.1em;
+  color: #dc3545;
+  margin: 16px 0;
+}
+
+.map-error-details {
+  background-color: #f8f9fa;
+  padding: 12px;
+  border-radius: 4px;
+  font-family: monospace;
+  word-break: break-word;
+  margin: 16px 0;
+  text-align: left;
+  font-size: 0.9em;
+}
+
+.map-troubleshooting {
+  text-align: left;
+  margin: 24px 0;
+}
+
+.map-troubleshooting h4 {
+  margin-bottom: 12px;
+  color: #343a40;
+}
+
+.map-troubleshooting ul {
+  padding-left: 24px;
+}
+
+.map-troubleshooting li {
+  margin-bottom: 8px;
+  color: #495057;
+}
+
+.map-error-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.retry-button,
+.reload-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.retry-button {
+  background-color: #007bff;
+  color: white;
+}
+
+.retry-button:hover {
+  background-color: #0069d9;
+}
+
+.reload-button {
+  background-color: #6c757d;
+  color: white;
+}
+
+.reload-button:hover {
+  background-color: #5a6268;
+}
+
+.map-static-fallback {
+  margin-top: 32px;
+  border-top: 1px solid #dee2e6;
+  padding-top: 24px;
+}
+
+.map-static-fallback h4 {
+  margin-bottom: 16px;
+  color: #343a40;
+}
+
+.static-map-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.static-map-caption {
+  margin-top: 12px;
+  font-style: italic;
+  color: #6c757d;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .map-error-content {
+    padding: 16px;
+  }
+
+  .map-error-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .retry-button,
+  .reload-button {
+    width: 100%;
+  }
+}

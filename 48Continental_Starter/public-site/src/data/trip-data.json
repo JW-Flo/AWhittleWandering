@@ -1,625 +1,1088 @@
 {
-  "meta": {
-    "version": "1.0.0",
-    "generatedAt": "2025-06-06T11:15:50.359Z",
-    "totalStops": 47,
-    "title": "48 Continental USA Road Trip",
-    "description": "Tesla road trip through all 48 contiguous US states",
-    "coordinatesFixed": true,
-    "fixedAt": "2025-06-06T15:21:22.114Z",
-    "formatInfo": "All coordinates use GeoJSON [longitude, latitude] format"
-  },
-  "stops": [
+  "route": [
     {
-      "dates": "6/6",
-      "location": "Corpus Christi",
-      "state": "TX",
-      "notes": "Trip begins – depart early morning",
-      "latitude": 27.8006,
       "longitude": -97.3964,
+      "latitude": 27.8006,
       "coordinates": [
         -97.3964,
         27.8006
-      ],
-      "type": "start"
+      ]
     },
     {
-      "dates": "6/6–6/7",
-      "location": "Tucson",
-      "state": "AZ",
-      "notes": "Drive day + overnight recharge",
-      "latitude": 32.2226,
+      "longitude": -101.8313,
+      "latitude": 35.221997,
+      "coordinates": [
+        -101.8313,
+        35.221997
+      ]
+    },
+    {
       "longitude": -110.9747,
+      "latitude": 32.2226,
       "coordinates": [
         -110.9747,
         32.2226
-      ],
-      "type": "overnight"
+      ]
     },
     {
-      "dates": "6/7–6/9",
-      "location": "Grand Canyon",
-      "state": "AZ",
-      "notes": "1.5-day scenic visit",
-      "latitude": 36.0544,
       "longitude": -112.1401,
+      "latitude": 36.0544,
       "coordinates": [
         -112.1401,
         36.0544
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "6/9–6/10",
-      "location": "Los Angeles",
-      "state": "CA",
-      "notes": "Visit Laurent (1 day)",
-      "latitude": 34.0522,
       "longitude": -118.2437,
+      "latitude": 34.0522,
       "coordinates": [
         -118.2437,
         34.0522
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "6/10–6/11",
-      "location": "Santa Barbara → Big Sur",
-      "state": "CA",
-      "notes": "Coastal beach drive north",
-      "latitude": 36.0074,
-      "longitude": -121.5008,
+      "longitude": -121.8041,
+      "latitude": 36.2704,
       "coordinates": [
-        -121.5008,
-        36.0074
-      ],
-      "type": "waypoint"
+        -121.8041,
+        36.2704
+      ]
     },
     {
-      "dates": "6/11–6/12",
-      "location": "Redwoods",
-      "state": "CA",
-      "notes": "1.5-day stay in the forest",
+      "longitude": -124.0621,
       "latitude": 41.2132,
-      "longitude": -124.0046,
       "coordinates": [
-        -124.0046,
+        -124.0621,
         41.2132
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "6/12–6/14",
-      "location": "Colfax",
-      "state": "WA",
-      "notes": "Visit Stefan Morris (2 full days)",
-      "latitude": 46.8791,
-      "longitude": -117.3644,
+      "longitude": -120.953,
+      "latitude": 39.1007,
       "coordinates": [
-        -117.3644,
-        46.8791
-      ],
-      "type": "waypoint"
+        -120.953,
+        39.1007
+      ]
     },
     {
-      "dates": "6/14–6/15",
-      "location": "Oregon Coast",
-      "state": "OR",
-      "notes": "1 full day beach stop",
-      "latitude": 45.8918,
       "longitude": -123.9615,
+      "latitude": 45.8918,
       "coordinates": [
         -123.9615,
         45.8918
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "6/15–6/16",
-      "location": "Olympia",
-      "state": "WA",
-      "notes": "Visit Brian",
-      "latitude": 47.0379,
       "longitude": -122.9007,
+      "latitude": 47.0379,
       "coordinates": [
         -122.9007,
         47.0379
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "6/16–6/17",
-      "location": "Seattle",
-      "state": "WA",
-      "notes": "Visit Troy before 6/20 camping",
-      "latitude": 47.6062,
       "longitude": -122.3321,
+      "latitude": 47.6062,
       "coordinates": [
         -122.3321,
         47.6062
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "6/17–6/19",
-      "location": "Yellowstone",
-      "state": "MT/WY",
-      "notes": "2-night park stay",
-      "latitude": 44.428,
       "longitude": -110.5885,
+      "latitude": 44.4279,
       "coordinates": [
         -110.5885,
-        44.428
-      ],
-      "type": "waypoint"
+        44.4279
+      ]
     },
     {
-      "dates": "6/19–6/20",
-      "location": "Salt Lake City",
-      "state": "UT",
-      "notes": "Visit Brady Covington",
-      "latitude": 40.7608,
       "longitude": -111.891,
+      "latitude": 40.7608,
       "coordinates": [
         -111.891,
         40.7608
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "6/21–6/23",
-      "location": "Provo",
-      "state": "UT",
-      "notes": "Visit Erin Lane (after her travel blackout)",
-      "latitude": 40.2338,
       "longitude": -111.6585,
+      "latitude": 40.2338,
       "coordinates": [
         -111.6585,
         40.2338
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "6/23–6/24",
-      "location": "Denver",
-      "state": "CO",
-      "notes": "Visit Josh",
-      "latitude": 39.7392,
       "longitude": -104.9903,
+      "latitude": 39.7392,
       "coordinates": [
         -104.9903,
         39.7392
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "6/24–6/25",
-      "location": "Fort Collins",
-      "state": "CO",
-      "notes": "Visit Caleb Blakeman",
-      "latitude": 40.5853,
       "longitude": -105.0844,
+      "latitude": 40.5853,
       "coordinates": [
         -105.0844,
         40.5853
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "6/25–6/26",
-      "location": "Fargo",
-      "state": "ND",
-      "notes": "North Dakota overnight",
-      "latitude": 46.8772,
       "longitude": -96.7898,
+      "latitude": 46.8772,
       "coordinates": [
         -96.7898,
         46.8772
-      ],
-      "type": "overnight"
+      ]
     },
     {
-      "dates": "6/26–6/27",
-      "location": "Sioux Falls",
-      "state": "SD",
-      "notes": "South Dakota stop",
-      "latitude": 43.5446,
       "longitude": -96.7311,
+      "latitude": 43.5446,
       "coordinates": [
         -96.7311,
         43.5446
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "6/27–7/1",
-      "location": "Lincoln",
-      "state": "NE",
-      "notes": "Visit Parents & Hayden (4 days)",
+      "longitude": -96.6852,
       "latitude": 40.8136,
-      "longitude": -96.7026,
       "coordinates": [
-        -96.7026,
+        -96.6852,
         40.8136
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "7/1",
-      "location": "Chicago",
-      "state": "IL",
-      "notes": "Visit Connor McBride",
-      "latitude": 41.8781,
       "longitude": -87.6298,
+      "latitude": 41.8781,
       "coordinates": [
         -87.6298,
         41.8781
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "7/2",
-      "location": "Milwaukee",
-      "state": "WI",
-      "notes": "Wisconsin stopover",
-      "latitude": 43.0389,
       "longitude": -87.9065,
+      "latitude": 43.0389,
       "coordinates": [
         -87.9065,
         43.0389
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "7/3",
-      "location": "Minneapolis",
-      "state": "MN",
-      "notes": "Minnesota drive-through",
-      "latitude": 44.9778,
       "longitude": -93.265,
+      "latitude": 44.9778,
       "coordinates": [
         -93.265,
         44.9778
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "7/4",
-      "location": "Traverse City",
-      "state": "MI",
-      "notes": "\"Scenic lakeshore",
-      "latitude": 44.7631,
-      "longitude": -85.6206,
+      "longitude": -85.5872,
+      "latitude": 42.2917,
       "coordinates": [
-        -85.6206,
-        44.7631
-      ],
-      "type": "waypoint"
+        -85.5872,
+        42.2917
+      ]
     },
     {
-      "dates": "7/5",
-      "location": "Columbus",
-      "state": "OH",
-      "notes": "Visit Cameron Hynes",
-      "latitude": 39.9612,
       "longitude": -82.9988,
+      "latitude": 39.9612,
       "coordinates": [
         -82.9988,
         39.9612
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "7/6",
-      "location": "Terre Haute",
-      "state": "IN",
-      "notes": "Visit Jack Lavey",
-      "latitude": 39.4667,
       "longitude": -87.4139,
+      "latitude": 39.4667,
       "coordinates": [
         -87.4139,
         39.4667
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "7/7",
-      "location": "Philadelphia",
-      "state": "PA",
-      "notes": "City stop / route setup",
-      "latitude": 39.9526,
       "longitude": -75.1652,
+      "latitude": 39.9526,
       "coordinates": [
         -75.1652,
         39.9526
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "7/8",
-      "location": "Albany",
-      "state": "NY",
-      "notes": "Visit Philip Dalton (optional)",
-      "latitude": 42.6526,
       "longitude": -73.7562,
+      "latitude": 42.6526,
       "coordinates": [
         -73.7562,
         42.6526
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "7/9",
-      "location": "Montpelier / Concord",
-      "state": "VT/NH",
-      "notes": "Check off New England states",
-      "latitude": 43.734,
-      "longitude": -72.454,
+      "longitude": -72.5767,
+      "latitude": 44.2601,
       "coordinates": [
-        -72.454,
-        43.734
-      ],
-      "type": "waypoint"
+        -72.5767,
+        44.2601
+      ]
     },
     {
-      "dates": "7/10–7/11",
-      "location": "Bar Harbor",
-      "state": "ME",
-      "notes": "1.5-day scenic East Coast top",
+      "longitude": -68.2042,
       "latitude": 44.3876,
-      "longitude": -68.2039,
       "coordinates": [
-        -68.2039,
+        -68.2042,
         44.3876
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "7/11–7/15",
-      "location": "Hartford",
-      "state": "CT",
-      "notes": "Visit Deanna for July 4th (4 days)",
-      "latitude": 41.7658,
-      "longitude": -72.6734,
+      "longitude": -72.6851,
+      "latitude": 41.7637,
       "coordinates": [
-        -72.6734,
-        41.7658
-      ],
-      "type": "waypoint"
+        -72.6851,
+        41.7637
+      ]
     },
     {
-      "dates": "7/15–7/16",
-      "location": "Boston",
-      "state": "MA",
-      "notes": "Wrap-up Northeast",
-      "latitude": 42.3601,
       "longitude": -71.0589,
+      "latitude": 42.3601,
       "coordinates": [
         -71.0589,
         42.3601
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "7/16–7/17",
-      "location": "Providence",
-      "state": "RI",
-      "notes": "Quick state check-in",
-      "latitude": 41.824,
-      "longitude": -71.4128,
+      "longitude": -75.5466,
+      "latitude": 39.7447,
       "coordinates": [
-        -71.4128,
-        41.824
-      ],
-      "type": "waypoint"
+        -75.5466,
+        39.7447
+      ]
     },
     {
-      "dates": "7/17–7/18",
-      "location": "Newark",
-      "state": "NJ",
-      "notes": "Southbound entry",
-      "latitude": 40.7357,
-      "longitude": -74.1724,
-      "coordinates": [
-        -74.1724,
-        40.7357
-      ],
-      "type": "waypoint"
-    },
-    {
-      "dates": "7/18–7/19",
-      "location": "Wilmington",
-      "state": "DE",
-      "notes": "Check off DE",
-      "latitude": 39.7391,
-      "longitude": -75.5398,
-      "coordinates": [
-        -75.5398,
-        39.7391
-      ],
-      "type": "waypoint"
-    },
-    {
-      "dates": "7/19–7/20",
-      "location": "Harpers Ferry",
-      "state": "WV",
-      "notes": "Scenic + historic",
+      "longitude": -77.7397,
       "latitude": 39.3254,
-      "longitude": -77.7389,
       "coordinates": [
-        -77.7389,
+        -77.7397,
         39.3254
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "7/20–7/21",
-      "location": "Raleigh",
-      "state": "NC",
-      "notes": "Visit Brad Gross",
-      "latitude": 35.7796,
       "longitude": -78.6382,
+      "latitude": 35.7796,
       "coordinates": [
         -78.6382,
         35.7796
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "7/21–7/25",
-      "location": "Monroe",
-      "state": "NC",
-      "notes": "Visit Nana & Pawpaw — birthday 7/21",
-      "latitude": 34.9854,
       "longitude": -80.5495,
+      "latitude": 34.985,
       "coordinates": [
         -80.5495,
-        34.9854
-      ],
-      "type": "waypoint"
+        34.985
+      ]
     },
     {
-      "dates": "7/25–7/26",
-      "location": "Asheville",
-      "state": "NC",
-      "notes": "Appalachian Trail area after Monroe",
-      "latitude": 35.5951,
       "longitude": -82.5515,
+      "latitude": 35.5951,
       "coordinates": [
         -82.5515,
         35.5951
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "7/26–7/27",
-      "location": "Spartanburg",
-      "state": "SC",
-      "notes": "Visit Max Mosley",
-      "latitude": 34.9496,
       "longitude": -81.932,
+      "latitude": 34.9496,
       "coordinates": [
         -81.932,
         34.9496
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "7/27–7/28",
-      "location": "Savannah",
-      "state": "GA",
-      "notes": "Lowcountry drive",
-      "latitude": 32.0809,
-      "longitude": -81.0912,
+      "longitude": -81.0998,
+      "latitude": 32.0835,
       "coordinates": [
-        -81.0912,
-        32.0809
-      ],
-      "type": "waypoint"
+        -81.0998,
+        32.0835
+      ]
     },
     {
-      "dates": "7/28–7/29",
-      "location": "Sarasota",
-      "state": "FL",
-      "notes": "Visit John & Sarah",
-      "latitude": 27.3364,
       "longitude": -82.5307,
+      "latitude": 27.3364,
       "coordinates": [
         -82.5307,
         27.3364
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "7/29–7/30",
-      "location": "Tallahassee",
-      "state": "FL",
-      "notes": "Florida panhandle drive",
-      "latitude": 30.4383,
       "longitude": -84.2807,
+      "latitude": 30.4383,
       "coordinates": [
         -84.2807,
         30.4383
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "7/30–7/31",
-      "location": "Knoxville",
-      "state": "TN",
-      "notes": "Visit Barton after Florida",
-      "latitude": 35.9606,
       "longitude": -83.9207,
+      "latitude": 35.9606,
       "coordinates": [
         -83.9207,
         35.9606
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "7/30–7/31",
-      "location": "Mobile",
-      "state": "AL",
-      "notes": "Gulf Coast rest stop",
-      "latitude": 30.6954,
       "longitude": -88.0399,
+      "latitude": 30.6954,
       "coordinates": [
         -88.0399,
         30.6954
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "7/31–8/1",
-      "location": "New Orleans",
-      "state": "LA",
-      "notes": "Jazz & culture stop",
-      "latitude": 29.9511,
       "longitude": -90.0715,
+      "latitude": 29.9511,
       "coordinates": [
         -90.0715,
         29.9511
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "8/1–8/2",
-      "location": "Jackson",
-      "state": "MS",
-      "notes": "Southern swing",
-      "latitude": 32.2988,
       "longitude": -90.1848,
+      "latitude": 32.2988,
       "coordinates": [
         -90.1848,
         32.2988
-      ],
-      "type": "waypoint"
+      ]
     },
     {
-      "dates": "8/2–8/3",
-      "location": "Little Rock",
-      "state": "AR",
-      "notes": "Quick overnight",
-      "latitude": 34.7465,
       "longitude": -92.2896,
+      "latitude": 34.7465,
       "coordinates": [
         -92.2896,
         34.7465
-      ],
-      "type": "overnight"
+      ]
     },
     {
-      "dates": "8/3–8/4",
-      "location": "Austin",
-      "state": "TX",
-      "notes": "Final return — trip ends at 60 days",
-      "latitude": 30.2672,
+      "longitude": -97.5164,
+      "latitude": 35.4676,
+      "coordinates": [
+        -97.5164,
+        35.4676
+      ]
+    },
+    {
       "longitude": -97.7431,
+      "latitude": 30.2672,
       "coordinates": [
         -97.7431,
         30.2672
-      ],
-      "type": "end"
+      ]
     }
-  ]
+  ],
+  "stops": [
+    {
+      "id": "stop-1",
+      "name": "Stop 0",
+      "description": "Corpus Christi",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "TX",
+      "longitude": -97.3964,
+      "latitude": 27.8006,
+      "coordinates": [
+        -97.3964,
+        27.8006
+      ]
+    },
+    {
+      "id": "stop-2",
+      "name": "Stop 1",
+      "description": "Big Texan Motel",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "TX",
+      "longitude": -101.8313,
+      "latitude": 35.221997,
+      "coordinates": [
+        -101.8313,
+        35.221997
+      ]
+    },
+    {
+      "id": "stop-3",
+      "name": "Stop 2",
+      "description": "Catalina State Park",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "AZ",
+      "longitude": -110.9747,
+      "latitude": 32.2226,
+      "coordinates": [
+        -110.9747,
+        32.2226
+      ]
+    },
+    {
+      "id": "stop-4",
+      "name": "Stop 3",
+      "description": "Mather Campground",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "AZ",
+      "longitude": -112.1401,
+      "latitude": 36.0544,
+      "coordinates": [
+        -112.1401,
+        36.0544
+      ]
+    },
+    {
+      "id": "stop-5",
+      "name": "Stop 4",
+      "description": "Laurents Place",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "CA",
+      "longitude": -118.2437,
+      "latitude": 34.0522,
+      "coordinates": [
+        -118.2437,
+        34.0522
+      ]
+    },
+    {
+      "id": "stop-6",
+      "name": "Stop 5",
+      "description": "Limekiln State Park",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "CA",
+      "longitude": -121.8041,
+      "latitude": 36.2704,
+      "coordinates": [
+        -121.8041,
+        36.2704
+      ]
+    },
+    {
+      "id": "stop-7",
+      "name": "Stop 6",
+      "description": "Prairie Creek Redwoods",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "CA",
+      "longitude": -124.0621,
+      "latitude": 41.2132,
+      "coordinates": [
+        -124.0621,
+        41.2132
+      ]
+    },
+    {
+      "id": "stop-8",
+      "name": "Stop 7",
+      "description": "Stefan Morris92 House",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "CA",
+      "longitude": -120.953,
+      "latitude": 39.1007,
+      "coordinates": [
+        -120.953,
+        39.1007
+      ]
+    },
+    {
+      "id": "stop-9",
+      "name": "Stop 8",
+      "description": "Wrights for Camping",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "OR",
+      "longitude": -123.9615,
+      "latitude": 45.8918,
+      "coordinates": [
+        -123.9615,
+        45.8918
+      ]
+    },
+    {
+      "id": "stop-10",
+      "name": "Stop 9",
+      "description": "Brians House",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "WA",
+      "longitude": -122.9007,
+      "latitude": 47.0379,
+      "coordinates": [
+        -122.9007,
+        47.0379
+      ]
+    },
+    {
+      "id": "stop-11",
+      "name": "Stop 10",
+      "description": "Troys House",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "WA",
+      "longitude": -122.3321,
+      "latitude": 47.6062,
+      "coordinates": [
+        -122.3321,
+        47.6062
+      ]
+    },
+    {
+      "id": "stop-12",
+      "name": "Stop 11",
+      "description": "Canyon Campground",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "MT",
+      "longitude": -110.5885,
+      "latitude": 44.4279,
+      "coordinates": [
+        -110.5885,
+        44.4279
+      ]
+    },
+    {
+      "id": "stop-13",
+      "name": "Stop 12",
+      "description": "Brady Covingtons Place",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "UT",
+      "longitude": -111.891,
+      "latitude": 40.7608,
+      "coordinates": [
+        -111.891,
+        40.7608
+      ]
+    },
+    {
+      "id": "stop-14",
+      "name": "Stop 13",
+      "description": "Erin Lanes Place",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "UT",
+      "longitude": -111.6585,
+      "latitude": 40.2338,
+      "coordinates": [
+        -111.6585,
+        40.2338
+      ]
+    },
+    {
+      "id": "stop-15",
+      "name": "Stop 14",
+      "description": "Joshs House",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "CO",
+      "longitude": -104.9903,
+      "latitude": 39.7392,
+      "coordinates": [
+        -104.9903,
+        39.7392
+      ]
+    },
+    {
+      "id": "stop-16",
+      "name": "Stop 15",
+      "description": "Caleb Blakemans Place",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "CO",
+      "longitude": -105.0844,
+      "latitude": 40.5853,
+      "coordinates": [
+        -105.0844,
+        40.5853
+      ]
+    },
+    {
+      "id": "stop-17",
+      "name": "Stop 16",
+      "description": "Buffalo River State Park",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "ND",
+      "longitude": -96.7898,
+      "latitude": 46.8772,
+      "coordinates": [
+        -96.7898,
+        46.8772
+      ]
+    },
+    {
+      "id": "stop-18",
+      "name": "Stop 17",
+      "description": "Good Earth State Park",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "SD",
+      "longitude": -96.7311,
+      "latitude": 43.5446,
+      "coordinates": [
+        -96.7311,
+        43.5446
+      ]
+    },
+    {
+      "id": "stop-19",
+      "name": "Stop 18",
+      "description": "Parents92 House",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "NE",
+      "longitude": -96.6852,
+      "latitude": 40.8136,
+      "coordinates": [
+        -96.6852,
+        40.8136
+      ]
+    },
+    {
+      "id": "stop-20",
+      "name": "Stop 19",
+      "description": "Connor McBrides Place",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "IL",
+      "longitude": -87.6298,
+      "latitude": 41.8781,
+      "coordinates": [
+        -87.6298,
+        41.8781
+      ]
+    },
+    {
+      "id": "stop-21",
+      "name": "Stop 20",
+      "description": "Kettle Moraine Forest",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "WI",
+      "longitude": -87.9065,
+      "latitude": 43.0389,
+      "coordinates": [
+        -87.9065,
+        43.0389
+      ]
+    },
+    {
+      "id": "stop-22",
+      "name": "Stop 21",
+      "description": "Afton State Park",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "MN",
+      "longitude": -93.265,
+      "latitude": 44.9778,
+      "coordinates": [
+        -93.265,
+        44.9778
+      ]
+    },
+    {
+      "id": "stop-23",
+      "name": "Stop 22",
+      "description": "Markin Glen Park",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "MI",
+      "longitude": -85.5872,
+      "latitude": 42.2917,
+      "coordinates": [
+        -85.5872,
+        42.2917
+      ]
+    },
+    {
+      "id": "stop-24",
+      "name": "Stop 23",
+      "description": "Cameron Hynes Place",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "OH",
+      "longitude": -82.9988,
+      "latitude": 39.9612,
+      "coordinates": [
+        -82.9988,
+        39.9612
+      ]
+    },
+    {
+      "id": "stop-25",
+      "name": "Stop 24",
+      "description": "Jack Laveys Place",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "IN",
+      "longitude": -87.4139,
+      "latitude": 39.4667,
+      "coordinates": [
+        -87.4139,
+        39.4667
+      ]
+    },
+    {
+      "id": "stop-26",
+      "name": "Stop 25",
+      "description": "Fairmount Park",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "PA",
+      "longitude": -75.1652,
+      "latitude": 39.9526,
+      "coordinates": [
+        -75.1652,
+        39.9526
+      ]
+    },
+    {
+      "id": "stop-27",
+      "name": "Stop 26",
+      "description": "Philip Daltons Place",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "NY",
+      "longitude": -73.7562,
+      "latitude": 42.6526,
+      "coordinates": [
+        -73.7562,
+        42.6526
+      ]
+    },
+    {
+      "id": "stop-28",
+      "name": "Stop 27",
+      "description": "Quechee State Park",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "VT",
+      "longitude": -72.5767,
+      "latitude": 44.2601,
+      "coordinates": [
+        -72.5767,
+        44.2601
+      ]
+    },
+    {
+      "id": "stop-29",
+      "name": "Stop 28",
+      "description": "Blackwoods Campground",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "ME",
+      "longitude": -68.2042,
+      "latitude": 44.3876,
+      "coordinates": [
+        -68.2042,
+        44.3876
+      ]
+    },
+    {
+      "id": "stop-30",
+      "name": "Stop 29",
+      "description": "Deannas Place",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "CT",
+      "longitude": -72.6851,
+      "latitude": 41.7637,
+      "coordinates": [
+        -72.6851,
+        41.7637
+      ]
+    },
+    {
+      "id": "stop-31",
+      "name": "Stop 30",
+      "description": "Boston Common",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "MA",
+      "longitude": -71.0589,
+      "latitude": 42.3601,
+      "coordinates": [
+        -71.0589,
+        42.3601
+      ]
+    },
+    {
+      "id": "stop-32",
+      "name": "Stop 31",
+      "description": "Brandywine Creek State Park",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "DE",
+      "longitude": -75.5466,
+      "latitude": 39.7447,
+      "coordinates": [
+        -75.5466,
+        39.7447
+      ]
+    },
+    {
+      "id": "stop-33",
+      "name": "Stop 32",
+      "description": "Harpers Ferry KOA",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "WV",
+      "longitude": -77.7397,
+      "latitude": 39.3254,
+      "coordinates": [
+        -77.7397,
+        39.3254
+      ]
+    },
+    {
+      "id": "stop-34",
+      "name": "Stop 33",
+      "description": "Brad Gross Place",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "NC",
+      "longitude": -78.6382,
+      "latitude": 35.7796,
+      "coordinates": [
+        -78.6382,
+        35.7796
+      ]
+    },
+    {
+      "id": "stop-35",
+      "name": "Stop 34",
+      "description": "Nana & Pawpaws",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "NC",
+      "longitude": -80.5495,
+      "latitude": 34.985,
+      "coordinates": [
+        -80.5495,
+        34.985
+      ]
+    },
+    {
+      "id": "stop-36",
+      "name": "Stop 35",
+      "description": "Mount Pisgah Campground",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "NC",
+      "longitude": -82.5515,
+      "latitude": 35.5951,
+      "coordinates": [
+        -82.5515,
+        35.5951
+      ]
+    },
+    {
+      "id": "stop-37",
+      "name": "Stop 36",
+      "description": "Max Mosleys Place",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "SC",
+      "longitude": -81.932,
+      "latitude": 34.9496,
+      "coordinates": [
+        -81.932,
+        34.9496
+      ]
+    },
+    {
+      "id": "stop-38",
+      "name": "Stop 37",
+      "description": "Skidaway Island State Park",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "GA",
+      "longitude": -81.0998,
+      "latitude": 32.0835,
+      "coordinates": [
+        -81.0998,
+        32.0835
+      ]
+    },
+    {
+      "id": "stop-39",
+      "name": "Stop 38",
+      "description": "John & Sarahs Place",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "FL",
+      "longitude": -82.5307,
+      "latitude": 27.3364,
+      "coordinates": [
+        -82.5307,
+        27.3364
+      ]
+    },
+    {
+      "id": "stop-40",
+      "name": "Stop 39",
+      "description": "Ochlockonee River State Park",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "FL",
+      "longitude": -84.2807,
+      "latitude": 30.4383,
+      "coordinates": [
+        -84.2807,
+        30.4383
+      ]
+    },
+    {
+      "id": "stop-41",
+      "name": "Stop 40",
+      "description": "Bartons Place",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "TN",
+      "longitude": -83.9207,
+      "latitude": 35.9606,
+      "coordinates": [
+        -83.9207,
+        35.9606
+      ]
+    },
+    {
+      "id": "stop-42",
+      "name": "Stop 41",
+      "description": "Blakeley State Park",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "AL",
+      "longitude": -88.0399,
+      "latitude": 30.6954,
+      "coordinates": [
+        -88.0399,
+        30.6954
+      ]
+    },
+    {
+      "id": "stop-43",
+      "name": "Stop 42",
+      "description": "Jean Lafitte Park",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "LA",
+      "longitude": -90.0715,
+      "latitude": 29.9511,
+      "coordinates": [
+        -90.0715,
+        29.9511
+      ]
+    },
+    {
+      "id": "stop-44",
+      "name": "Stop 43",
+      "description": "LeFleurs Bluff State Park",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "MS",
+      "longitude": -90.1848,
+      "latitude": 32.2988,
+      "coordinates": [
+        -90.1848,
+        32.2988
+      ]
+    },
+    {
+      "id": "stop-45",
+      "name": "Stop 44",
+      "description": "Maumelle Park",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "AR",
+      "longitude": -92.2896,
+      "latitude": 34.7465,
+      "coordinates": [
+        -92.2896,
+        34.7465
+      ]
+    },
+    {
+      "id": "stop-46",
+      "name": "Stop 45",
+      "description": "Lake Thunderbird State Park",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "OK",
+      "longitude": -97.5164,
+      "latitude": 35.4676,
+      "coordinates": [
+        -97.5164,
+        35.4676
+      ]
+    },
+    {
+      "id": "stop-47",
+      "name": "Stop 46",
+      "description": "Home",
+      "type": "waypoint",
+      "overnight": false,
+      "charging": false,
+      "state": "TX",
+      "longitude": -97.7431,
+      "latitude": 30.2672,
+      "coordinates": [
+        -97.7431,
+        30.2672
+      ]
+    }
+  ],
+  "lastUpdated": "2025-06-06T15:57:03.011Z"
 }
