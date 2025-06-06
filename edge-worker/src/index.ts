@@ -398,6 +398,9 @@ async function handleRouteOptimization(request: Request, env: Env): Promise<Resp
 
 // --- TESSIE API HANDLERS ---
 
+// Global variable to store the last successful vehicle data
+let lastKnownVehicleData: Record<string, any> | null = null;
+
 async function handleTessieVehicle(request: Request, env: Env): Promise<Response> {
     const corsHeaders = {
         'Content-Type': 'application/json',
@@ -410,14 +413,33 @@ async function handleTessieVehicle(request: Request, env: Env): Promise<Response
         // First attempt to use the real Tessie API if configured
         if (env.TESSIE_API_TOKEN && env.TESSIE_VIN) {
             try {
+                // Log attempt to use Tessie API
+                console.log('Attempting to use Tessie API with VIN:', env.TESSIE_VIN);
+                
                 // Create Tessie client
                 const tessieClient = new TessieAPIClient(env);
                 
-                // Get vehicle state from Tessie
-                const vehicleData = await tessieClient.getVehicleState();
+                // Get vehicle state from Tessie with timeout to prevent hanging requests
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('Tessie API request timed out')), 5000);
+                });
+                
+                const vehicleDataPromise = tessieClient.getVehicleState();
+                
+                // Race the API call against a timeout
+                const vehicleData = await Promise.race([vehicleDataPromise, timeoutPromise]) as Record<string, any>;
+                
+                if (!vehicleData || !vehicleData.drive_state) {
+                    throw new Error('Invalid vehicle data received from Tessie API');
+                }
                 
                 // Transform to standard format
                 const transformedData = tessieClient.transformToStandardFormat(vehicleData);
+                
+                // Store successful data for future use
+                lastKnownVehicleData = transformedData;
+                
+                console.log('Successfully retrieved vehicle data from Tessie API');
                 
                 return new Response(JSON.stringify(transformedData), {
                     status: 200,
@@ -425,67 +447,58 @@ async function handleTessieVehicle(request: Request, env: Env): Promise<Response
                 });
             } catch (tessieError) {
                 console.error('Tessie API error:', tessieError);
-                // Continue to mock data if Tessie API fails
+                
+                // Use last known data if available
+                if (lastKnownVehicleData) {
+                    console.log('Using cached vehicle data from previous successful request');
+                    
+                    // Update timestamp to show it's cached data
+                    const cachedData = {
+                        ...lastKnownVehicleData,
+                        last_updated: new Date().toISOString(),
+                        cached: true
+                    };
+                    
+                    return new Response(JSON.stringify(cachedData), {
+                        status: 200,
+                        headers: corsHeaders
+                    });
+                } else {
+                    // If no cached data, we need to return a proper error
+                    console.error('No cached vehicle data available');
+                    throw new Error('No vehicle data available and Tessie API request failed');
+                }
             }
+        } else {
+            console.log('Tessie API not configured properly');
+            throw new Error('Tessie API token or VIN missing from configuration');
         }
-
-        // If API fails or isn't configured, return mock data
-        console.log('Using mock vehicle data for development');
-        
-        // Generate mock vehicle data with realistic values
-        const mockVehicleData = {
-            id: env.TESSIE_VIN || "5YJ3E1EA1JF000000",
-            name: "Model 3",
-            model: "Model 3",
-            batteryLevel: 72,
-            range: 234.5,
-            estimatedRange: 220.8,
-            speed: 0,
-            power: 0,
-            charging: false,
-            chargingState: "Disconnected",
-            chargeRate: 0,
-            timeToFullCharge: 0,
-            location: {
-                // Start location from itinerary (Corpus Christi)
-                latitude: 27.8006,
-                longitude: -97.3964,
-                heading: 90
-            },
-            temperature: {
-                inside: 72.5,
-                outside: 78.2
-            },
-            climate: {
-                enabled: false,
-                temperature: 70
-            },
-            locked: true,
-            sentry_mode: true,
-            odometer: 12564,
-            tire_pressure: {
-                front_left: 42,
-                front_right: 42,
-                rear_left: 42,
-                rear_right: 42
-            },
-            state: "online",
-            last_seen: Date.now(),
-            last_updated: new Date().toISOString()
-        };
-        
-        return new Response(JSON.stringify(mockVehicleData), {
-            status: 200,
-            headers: corsHeaders
-        });
     } catch (error) {
         console.error('Vehicle API error:', error);
         
+        // If we have last known data, return it even in case of errors
+        if (lastKnownVehicleData) {
+            console.log('Using cached vehicle data after error');
+            
+            const cachedData = {
+                ...lastKnownVehicleData,
+                last_updated: new Date().toISOString(),
+                cached: true,
+                error_message: error instanceof Error ? error.message : 'Unknown error'
+            };
+            
+            return new Response(JSON.stringify(cachedData), {
+                status: 200,
+                headers: corsHeaders
+            });
+        }
+        
+        // If no cached data at all, we have to return an error
         return new Response(JSON.stringify({ 
             error: 'Failed to fetch vehicle data',
             message: error instanceof Error ? error.message : 'Unknown error'
         }), {
-            status: 500,
+            status: 503, // Service Unavailable - first-time initialization failed
             headers: corsHeaders
         });
     }
