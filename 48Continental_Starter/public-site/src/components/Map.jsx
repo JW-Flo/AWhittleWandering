@@ -13,9 +13,22 @@ import Hammer from 'hammerjs';
 import TripStatistics from './TripStatistics';
 import './Map.css';
 
-// Set MapBox token from environment variables
+// Set MapBox token from environment variables with robust fallback handling
 // Using public token (pk.) for client-side application
-mapboxgl.amcessTakepx= import.meta.env.VITE_gl.acce impor||.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoidGhld2FuZGVyaW5nd2hpdHRsZSIsImEiOiJjbHQxaXhzejYwYmU2MmpxdHl0MHowN3tn..poducto
+const MAPBOX_FALLBACK_TOKEN = 'pk.eyJ1IjoidGhld2FuZGVyaW5nd2hpdHRsZSIsImEiOiJjbHQxaXhzejYwYmU2MmpxdHl0MHowN3UzIn0.Q7xKTRlXvtimBHd39JqN1A';
+
+// Safely retrieve the token
+try {
+  const envToken = import.meta.env.VITE_MAPBOX_TOKEN;
+  mapboxgl.accessToken = (envToken && envToken !== 'undefined') ? envToken : MAPBOX_FALLBACK_TOKEN;
+  console.log('Using Mapbox token:', mapboxgl.accessToken.substring(0, 10) + '...');
+} catch (error) {
+  console.error('Error setting Mapbox token:', error);
+  mapboxgl.accessToken = MAPBOX_FALLBACK_TOKEN;
+}
+
+// SVG icons for map markers
+const SVG_ICONS = {
   'charging-station': `
     <svg viewBox="0 0 24 24" width="24" height="24">
       <path fill="#4CAF50" d="M14.5,11l-1.5,-3h2l3,7h-5v4l-6,-8h3l1.5,-3h3z"/>
@@ -41,9 +54,20 @@ const createMarkerElement = (type) => {
   return el;
 };
 
-// Initialize map markers and layers
+// Initialize map markers and layers with error handling
 const initializeMapLayers = async (map, tripData) => {
-  if (!map || !tripData) return;
+  if (!map || !tripData) {
+    console.warn('Cannot initialize map layers: map or tripData is missing', {
+      mapExists: !!map,
+      tripDataExists: !!tripData
+    });
+    return;
+  }
+
+  console.log('Initializing map layers with trip data', {
+    routePoints: tripData.route?.length || 0,
+    stops: tripData.stops?.length || 0
+  });
 
   try {
     // Clear existing layers if they exist
@@ -59,100 +83,129 @@ const initializeMapLayers = async (map, tripData) => {
       }
     });
 
-    // Add route layer
+    // Add route layer if route data exists and has enough points
     if (tripData.route?.length > 1) {
-      const routeGeoJSON = {
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates: tripData.route
-            .filter(point => point.longitude && point.latitude)
-            .map(point => [point.longitude, point.latitude])
-        }
-      };
+      // Filter out invalid coordinates first
+      const validRoutePoints = tripData.route
+        .filter(point => point && point.longitude && point.latitude
+          && !isNaN(point.longitude) && !isNaN(point.latitude));
 
-      map.addSource('route', {
-        type: 'geojson',
-        data: routeGeoJSON
-      });
+      if (validRoutePoints.length > 1) {
+        const routeGeoJSON = {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: validRoutePoints.map(point => [point.longitude, point.latitude])
+          }
+        };
 
-      map.addLayer({
-        id: 'route-line',
-        type: 'line',
-        source: 'route',
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': '#0066cc',
-          'line-width': 4,
-          'line-opacity': 0.8
+        // Safe add source with error handling
+        try {
+          map.addSource('route', {
+            type: 'geojson',
+            data: routeGeoJSON
+          });
+
+          map.addLayer({
+            id: 'route-line',
+            type: 'line',
+            source: 'route',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': '#0066cc',
+              'line-width': 4,
+              'line-opacity': 0.8
+            }
+          });
+          console.log('Successfully added route layer with', validRoutePoints.length, 'points');
+        } catch (error) {
+          console.error('Error adding route layer:', error);
         }
-      });
+      } else {
+        console.warn('Not enough valid route points to render route line');
+      }
     }
 
-    // Add stops layer
+    // Add stops layer if stop data exists
     if (tripData.stops?.length > 0) {
-      const stopsGeoJSON = {
-        type: 'FeatureCollection',
-        features: tripData.stops
-          .filter(stop => stop.latitude && stop.longitude)
-          .map(stop => ({
+      // Filter out invalid stops first
+      const validStops = tripData.stops
+        .filter(stop => stop && stop.latitude && stop.longitude
+          && !isNaN(stop.latitude) && !isNaN(stop.longitude));
+
+      if (validStops.length > 0) {
+        const stopsGeoJSON = {
+          type: 'FeatureCollection',
+          features: validStops.map(stop => ({
             type: 'Feature',
             properties: {
-              id: stop.id,
-              name: stop.name,
-              description: stop.description,
-              type: stop.type,
-              charging: stop.charging,
-              overnight: stop.overnight
+              id: stop.id || 'stop-' + Math.random().toString(36).substring(2, 9),
+              name: stop.name || 'Unknown',
+              description: stop.description || 'No description',
+              type: stop.type || 'waypoint',
+              charging: !!stop.charging,
+              overnight: !!stop.overnight
             },
             geometry: {
               type: 'Point',
               coordinates: [stop.longitude, stop.latitude]
             }
           }))
-      };
+        };
 
-      map.addSource('stops', {
-        type: 'geojson',
-        data: stopsGeoJSON
-      });
+        // Safe add source with error handling
+        try {
+          map.addSource('stops', {
+            type: 'geojson',
+            data: stopsGeoJSON
+          });
 
-      // Add markers for each stop
-      stopsGeoJSON.features.forEach(stop => {
-        const markerType = stop.properties.overnight ? 'lodging' :
-          stop.properties.charging ? 'charging-station' : 'waypoint';
+          // Add markers for each stop
+          stopsGeoJSON.features.forEach(stop => {
+            try {
+              const markerType = stop.properties.overnight ? 'lodging' :
+                stop.properties.charging ? 'charging-station' : 'waypoint';
 
-        const el = createMarkerElement(markerType);
+              const el = createMarkerElement(markerType);
 
-        new mapboxgl.Marker({
-          element: el,
-          anchor: 'bottom'
-        })
-          .setLngLat(stop.geometry.coordinates)
-          .setPopup(
-            new mapboxgl.Popup({
-              offset: 25,
-              closeButton: false,
-              maxWidth: '300px'
-            })
-              .setHTML(`
-            <div class="map-popup">
-              <h4>${stop.properties.name}</h4>
-              <p>${stop.properties.description}</p>
-              <p class="stop-type">Type: ${stop.properties.type.charAt(0).toUpperCase() + stop.properties.type.slice(1)}</p>
-            </div>
-          `)
-          )
-          .addTo(map);
-      });
+              new mapboxgl.Marker({
+                element: el,
+                anchor: 'bottom'
+              })
+                .setLngLat(stop.geometry.coordinates)
+                .setPopup(
+                  new mapboxgl.Popup({
+                    offset: 25,
+                    closeButton: false,
+                    maxWidth: '300px'
+                  })
+                    .setHTML(`
+                  <div class="map-popup">
+                    <h4>${stop.properties.name}</h4>
+                    <p>${stop.properties.description}</p>
+                    <p class="stop-type">Type: ${stop.properties.type.charAt(0).toUpperCase() + stop.properties.type.slice(1)}</p>
+                  </div>
+                `)
+                )
+                .addTo(map);
+            } catch (markerError) {
+              console.error('Error adding marker for stop:', stop.properties.name, markerError);
+            }
+          });
+          console.log('Successfully added', validStops.length, 'stop markers');
+        } catch (error) {
+          console.error('Error adding stops layer:', error);
+        }
+      } else {
+        console.warn('No valid stops to render on map');
+      }
     }
   } catch (error) {
     console.error('Error initializing map layers:', error);
-    throw new Error('Failed to initialize map layers');
   }
 };
 
@@ -177,407 +230,493 @@ const Map = ({
   const vehicleMarker = useRef(null);
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState(null);
+  const [mapInitAttempted, setMapInitAttempted] = useState(false);
 
   // Initialize map on component mount
   useEffect(() => {
-    if (map.current) return; // Map already initialized
+    if (map.current || mapInitAttempted) return; // Map already initialized or attempt made
 
+    console.log('Initializing map with token:', mapboxgl.accessToken.substring(0, 10) + '...');
+    setMapInitAttempted(true);
+
+    // Verify token is valid
     if (!mapboxgl.accessToken || mapboxgl.accessToken === 'pk.placeholder') {
-      setMapError('Mapbox access token is missing. Plea      return;
+      console.error('Mapbox token is invalid or missing');
+      setMapError('Mapbox access token is missing. Please check your configuration.');
+      return;
+    }
 
+    // Safely check if map container exists
+    if (!mapContainer.current) {
+      console.error('Map container ref is missing');
+      setMapError('Map container not found. Please refresh the page.');
+      return;
+    }
 
+    try {
+      // Initialize map with safe defaults
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-             center: [-98.5795, 39.8283], // Center of continental US
-
-     
-  wpltiono{bottom-left');
-
-      map.current.addControl(new mapboxgl.NavigationControl({
-        visualizePitch: true,
-        showCompass: true
-      }), 'top-right');
-
-      map.current.addControl(new mapboxgl.FullscreenControl(), 'top-right');
-
-      map.current.addControl(new mapboxgl.GeolocateControl({
-        positionOptions: {
-          enableHighAccuracy: true
-         .cuCnwaprial'
-      , 'bottom-left');
-
-       Setup touch geiO);
-
-      document.dispatchEvent(new CustomEvent('map:swipe:left'));
-      })
-
-      mmer.on('swiperight', () => {
-osing side panel
-  teu'p.current.on('load', async () => {
-
- sit
-        // Set map as ready
-        setMapReady(true);
-      } catch (error) {
-        console.error('Error initializing map:', error);
-        setMapError('Failed to initialize map layers. Please try refreshing the page.');
-        // Still se
-le.error('Error initializing map:', error);
-      tMapError(error.message);
-    }
-
-    // Canup on unmount
-    rern () => {
- map.current = null;
-    };
-
-// Upde map style based on layer toggles
-  useEffect(() => {
-  if (apReady || !map.current) return;
-
-  // Sto current view state
-   concurrentCenter = map.current.getCenter();
-    const currentZoom = map.current.getZoom();
-
-   // Hae style changes
-   constwStyle = mapLayers.satellite
-     ?apbox://styles/mapbox/satellite-streets-v11'
-mapbox://styles/mapbox/streets-v11';
-maewait initializeMapLayers(map.current, tripData);
- async
-       rmap.current.setZoom(currentZoom);
+        style: 'mapbox://styles/mapbox/streets-v11',
+        center: [-98.5795, 39.8283], // Center of continental US
+        zoom: 3.5,
+        minZoom: 2,
+        maxZoom: 18,
+        failIfMajorPerformanceCaveat: false, // Try to load even on low-performance devices
+        attributionControl: false, // We'll add it manually in a better position
+        preserveDrawingBuffer: true // Required for screenshot functionality
       });
 
-      map.cuawart irent.setStyle(newStyle);;
-    }}
-
-//Setmapasready
-  tRy(tr
-    // Hw rs.we ather )&eatherData) {
-      consg('Weather overlay would show data:',rData);
-    }setMapError('Failedtoinitializemaplayers. Please try}refreshing,the page.');yers, mapReady, weatherData, tripData]);
-nd utill spdate charging stations  map
-  useEffect(() => {
-    if (!
-m     });
-    } apReady || !map.current) return;
-itiizingmp
-    //dle chargingetati.message);
-o   }
-
-    // Cleasup on unmounl
-    return () => {
-      af (myp.curret){
-        .urrent.remve();
-        a.curr = null
-    co}
-nst };
-  }, []);
-
-
-  souUpdace map styIe based on dayer toggle=
-  us Effec'(()c=> {
-    if (!harReadyg|| !mip.current)g-sturn;
-
-is // Sto current vew state
-    cotcrretCenter = map.urren.getCenter();
-    cst currentZoom = mp.current.getZoom();
-
-    //cHandleostylenchanges
-st  conlt nawSyyle = mrIL='eas.satglliteg-stations-layer';
-?'mapbox://styles/mapbox/satellite-streets-v11'
-    //: 'mapbox://styles/mapbox/streets-v11'emove existing layer and source if they exist
-
-    //fOnly  h(nge smyle.if it's diffurent
-    if (map.curnent.getStyle(t.name.!== newStyle) getLayer(layerId)) {
-      map.murrent.apce('.tyurrl.adm, vsync () => {
-        // Re-inieiLaizeyall layers afte( style change
-        awaityerId);eMapLayers(.current tripData);
-
-        //Rstoe the pevius view
-        map.current.setCenter(currentCente
-      }map.current.Zoom(cuentZm);
+      // Add map error handler
+      map.current.on('error', (e) => {
+        console.error('Mapbox map error:', e);
       });
 
-      map.crrent.setStye(ewSyle);
-    }
+      // Safely add controls one by one with error handling
+      try {
+        map.current.addControl(new mapboxgl.AttributionControl({
+          compact: true
+        }), 'bottom-left');
+      } catch (e) {
+        console.warn('Failed to add attribution control:', e);
+      }
 
-    //Hadle weaher overly
-    f(Layers.weather && weatherData)
-      console.log('Weath velay would show data:', wthrData
-    if (map.current.getSource(sourceId)) {
-  }, [mapLayers, mapReady, weatherData, tripData]);
+      try {
+        map.current.addControl(new mapboxgl.NavigationControl({
+          visualizePitch: true,
+          showCompass: true
+        }), 'top-right');
+      } catch (e) {
+        console.warn('Failed to add navigation control:', e);
+      }
 
-     Addmcud rrdate charging stationsent the map
- .rseEffect(() => {
-    if (!mapReady || !map.cvrreet) reSurn;
-ource(sourceId);
-    // Handle cha}ging stations layr
-    cons sorceId = 'chaging-stations';
-    costlayerId'charging-stations-layer';
+      try {
+        map.current.addControl(new mapboxgl.FullscreenControl(), 'top-right');
+      } catch (e) {
+        console.warn('Failed to add fullscreen control:', e);
+      }
 
-//Removeexising layeand source if they exist
-// Only add the lat.geyLayer(layerId)er if it's enabled and we have data
-if (mapLayers.chargingSeLaytralayerIdtions && stationsData?.stations?.length > 0) {
-    }
-
- // ifC(onvert stat.getSource(sourceId)) {
-    inmap.currest.removeSource(so rceId) 
-    }
-GeoJSON
-    // Only addctheolayer if it's enabled and we have dypa
-    if 'mapLayFes.chaagingStations && stationsData?.stations?.length > 0) {
-      // Ctnveut stations to GeoJSON
-      const stationsGeoJSON =eC
-        type: 'FeatureCollection',ollection',
-        features: stationsData.stations.map(station => ({
-          type: 'Feature',
-          properties: {
-            id: station.id,
-            name: station.name,
-            available: station.available,
-            power: station.power,
-            connectorType: station.connectorType,
-            description: station.description
+      try {
+        map.current.addControl(new mapboxgl.GeolocateControl({
+          positionOptions: {
+            enableHighAccuracy: true
           },
-          geometry: {
-            type: 'Point',
-            coordinates: [station.longitude, station.latitude]
-          }
-        }))
-      };
+          trackUserLocation: false,
+          showUserHeading: true
+        }), 'top-right');
+      } catch (e) {
+        console.warn('Failed to add geolocate control:', e);
+      }
 
-      // Add stations source
-      map.current.addSource(sourceId, {
-        type: 'geojson',
-        data: stationsGeoJSON
-      });
+      try {
+        map.current.addControl(new mapboxgl.ScaleControl({
+          maxWidth: 100,
+          unit: 'imperial'
+        }), 'bottom-left');
+      } catch (e) {
+        console.warn('Failed to add scale control:', e);
+      }
 
-      // Add a symbol layer for stations
-      map.current.addLayer({
-        id: layerId,
-        type: 'symbol',
-        source: sourceId,
-        layout: {
-          'icon-image': 'charging-station',
-          'icon-size': 1.2,
-          'icon-allow-overlap': true,
-          'text-field': ['get', 'name'],
-          'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-          'text-offset': [0, 1.2],
-          'text-anchor': 'top',
-          'text-size': 12,
-          'text-optional': true
-        },
-        paint: {
-          'text-color': '#333',
-          'text-halo-color': '#fff',
-          'text-halo-width': 1,
-          'icon-color': [
-            'case',
-            ['get', 'available'],
-            '#4CAF50', // Available (green)
-            '#F44336'  // Unavailable (red)
-          ]
+      // Setup touch gesture listeners for mobile
+      try {
+        if (typeof Hammer !== 'undefined') {
+          const hammer = new Hammer(mapContainer.current);
+          hammer.get('swipe').set({ direction: Hammer.DIRECTION_ALL });
+
+          hammer.on('swipeleft', () => {
+            document.dispatchEvent(new CustomEvent('map:swipe:left'));
+          });
+
+          hammer.on('swiperight', () => {
+            document.dispatchEvent(new CustomEvent('map:swipe:right'));
+          });
+        }
+      } catch (e) {
+        console.warn('Failed to initialize touch gestures, continuing without them:', e);
+      }
+
+      // Mark map as ready when loaded and initialize layers
+      map.current.on('load', () => {
+        console.log('Map loaded successfully');
+        setMapReady(true);
+
+        // Initialize layers if we have trip data
+        if (tripData) {
+          console.log('Initializing map layers with tripData on load');
+          initializeMapLayers(map.current, tripData)
+            .catch(error => console.error('Error initializing map layers on load:', error));
+        } else {
+          console.log('No tripData available yet, will initialize layers when data arrives');
         }
       });
 
-      // Add click handler for stations
-      map.current.on('click', layerId, (e) => {
-        const coordinates = e.features[0].geometry.coordinates.slice();
-        const { name, available, power, connectorType, description } = e.features[0].properties;
+      // Add a timeout to set map as ready even if load event doesn't fire
+      setTimeout(() => {
+        if (!mapReady && map.current) {
+          console.warn('Map load event did not fire within timeout, forcing mapReady=true');
+          setMapReady(true);
+        }
+      }, 5000);
 
-        // Create popup content
-        const statusText = available ? 'Available' : 'In Use';
-        const statusClass = available ? 'status-available' : 'status-unavailable';
+    } catch (error) {
+      console.error('Fatal error initializing map:', error);
+      setMapError(`Could not initialize map: ${error.message}`);
+    }
 
-        const popupContent = `
-          <div class="map-popup charging-popup">
-            <h4>${name}</h4>
-            <p>${description || 'Tesla Supercharger'}</p>
-            <p class="station-power">Power: ${power || 'Unknown'} kW</p>
-            <p class="station-connector">Connector: ${connectorType || 'Tesla'}</p>
-            <p class="station-status ${statusClass}">Status: ${statusText}</p>
-          </div>
-        `;
+    // Cleanup on unmount
+    return () => {
+      try {
+        if (map.current) {
+          map.current.remove();
+          map.current = null;
+        }
+      } catch (e) {
+        console.error('Error cleaning up map:', e);
+      }
+    };
+  }, []);
 
-        // Create popup
-        new mapboxgl.Popup()
-          .setLngLat(coordinates)
-          .setHTML(popupContent)
-          .addTo(map.current);
-      });
+  // Update map style based on layer toggles
+  useEffect(() => {
+    if (!mapReady || !map.current) return;
 
-      // Change cursor on hover
-      map.current.on('mouseenter', layerId, () => {
-        map.current.getCanvas().style.cursor = 'pointer';
-      });
+    try {
+      // Store current view state
+      const currentCenter = map.current.getCenter();
+      const currentZoom = map.current.getZoom();
 
-      map.current.on('mouseleave', layerId, () => {
-        map.current.getCanvas().style.cursor = '';
-      });
+      // Handle style changes
+      const newStyle = mapLayers.satellite
+        ? 'mapbox://styles/mapbox/satellite-streets-v11'
+        : 'mapbox://styles/mapbox/streets-v11';
+
+      // Only change style if it's different
+      if (map.current.getStyle().name !== newStyle) {
+        map.current.once('style.load', () => {
+          try {
+            // Re-initialize all layers after style change
+            initializeMapLayers(map.current, tripData)
+              .catch(error => console.error('Error reinitializing layers after style change:', error));
+
+            // Restore the previous view
+            map.current.setCenter(currentCenter);
+            map.current.setZoom(currentZoom);
+          } catch (e) {
+            console.error('Error in style.load handler:', e);
+          }
+        });
+
+        map.current.setStyle(newStyle);
+      }
+
+      // Handle weather overlay (placeholder for now)
+      if (mapLayers.weather && weatherData) {
+        console.log('Weather overlay would show data:', weatherData);
+      }
+    } catch (error) {
+      console.error('Error updating map style:', error);
+    }
+  }, [mapLayers, mapReady, weatherData, tripData]);
+
+  // Add and update charging stations on the map
+  useEffect(() => {
+    if (!mapReady || !map.current) return;
+
+    try {
+      // Handle charging stations layer
+      const sourceId = 'charging-stations';
+      const layerId = 'charging-stations-layer';
+
+      // Remove existing layer and source if they exist
+      if (map.current.getLayer(layerId)) {
+        map.current.removeLayer(layerId);
+      }
+
+      if (map.current.getSource(sourceId)) {
+        map.current.removeSource(sourceId);
+      }
+
+      // Only add the layer if it's enabled and we have data
+      if (mapLayers.chargingStations && stationsData?.stations?.length > 0) {
+        // Convert stations to GeoJSON
+        const stationsGeoJSON = {
+          type: 'FeatureCollection',
+          features: stationsData.stations
+            .filter(station => station && station.latitude && station.longitude)
+            .map(station => ({
+              type: 'Feature',
+              properties: {
+                id: station.id || `station-${Math.random().toString(36).substring(2, 9)}`,
+                name: station.name || 'Unknown Station',
+                available: !!station.available,
+                power: station.power || 0,
+                connectorType: station.connectorType || 'Unknown',
+                description: station.description || ''
+              },
+              geometry: {
+                type: 'Point',
+                coordinates: [station.longitude, station.latitude]
+              }
+            }))
+        };
+
+        // Add stations source
+        map.current.addSource(sourceId, {
+          type: 'geojson',
+          data: stationsGeoJSON
+        });
+
+        // Add a symbol layer for stations
+        map.current.addLayer({
+          id: layerId,
+          type: 'symbol',
+          source: sourceId,
+          layout: {
+            'icon-image': 'charging-station',
+            'icon-size': 1.2,
+            'icon-allow-overlap': true,
+            'text-field': ['get', 'name'],
+            'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+            'text-offset': [0, 1.2],
+            'text-anchor': 'top',
+            'text-size': 12,
+            'text-optional': true
+          },
+          paint: {
+            'text-color': '#333',
+            'text-halo-color': '#fff',
+            'text-halo-width': 1,
+            'icon-color': [
+              'case',
+              ['get', 'available'],
+              '#4CAF50', // Available (green)
+              '#F44336'  // Unavailable (red)
+            ]
+          }
+        });
+
+        // Add click handler for stations
+        map.current.on('click', layerId, (e) => {
+          if (!e.features || !e.features[0]) return;
+
+          const coordinates = e.features[0].geometry.coordinates.slice();
+          const { name, available, power, connectorType, description } = e.features[0].properties;
+
+          // Create popup content
+          const statusText = available ? 'Available' : 'In Use';
+          const statusClass = available ? 'status-available' : 'status-unavailable';
+
+          const popupContent = `
+            <div class="map-popup charging-popup">
+              <h4>${name || 'Charging Station'}</h4>
+              <p>${description || 'Tesla Supercharger'}</p>
+              <p class="station-power">Power: ${power || 'Unknown'} kW</p>
+              <p class="station-connector">Connector: ${connectorType || 'Tesla'}</p>
+              <p class="station-status ${statusClass}">Status: ${statusText}</p>
+            </div>
+          `;
+
+          // Create popup
+          new mapboxgl.Popup()
+            .setLngLat(coordinates)
+            .setHTML(popupContent)
+            .addTo(map.current);
+        });
+
+        // Change cursor on hover
+        map.current.on('mouseenter', layerId, () => {
+          map.current.getCanvas().style.cursor = 'pointer';
+        });
+
+        map.current.on('mouseleave', layerId, () => {
+          map.current.getCanvas().style.cursor = '';
+        });
+      }
+    } catch (error) {
+      console.error('Error updating charging stations:', error);
     }
   }, [mapLayers.chargingStations, stationsData, mapReady]);
 
   // Update map data when tripData changes
   useEffect(() => {
-    if (!mapReady || !map.current) return;
+    if (!mapReady || !map.current || !tripData) return;
 
-    (async () => {
-      try {
-        // Re-initialize layers with new data
-        await initializeMapLayers(map.current, tripData);
-      } catch (error) {
-        console.error('Error updating map data:', error);
-        setMapError('Failed to update map data');
-      }
-    })();
+    console.log('Trip data changed, updating map layers', {
+      hasRoute: !!tripData.route,
+      hasStops: !!tripData.stops
+    });
+
+    try {
+      // Re-initialize layers with new data
+      initializeMapLayers(map.current, tripData)
+        .catch(error => {
+          console.error('Error updating map data:', error);
+          setMapError('Failed to update map data, but map is still functional');
+        });
+    } catch (error) {
+      console.error('Error in tripData effect:', error);
+    }
   }, [tripData, mapReady]);
 
   // Add and update vehicle marker
   useEffect(() => {
     if (!mapReady || !map.current || !vehicleData) return;
 
-    // Extract coordinates with proper fallbacks
-    const latitude = vehicleData.location?.latitude || vehicleData.latitude;
-    const longitude = vehicleData.location?.longitude || vehicleData.longitude;
+    try {
+      // Extract coordinates with proper fallbacks
+      const latitude = vehicleData.location?.latitude || vehicleData.latitude;
+      const longitude = vehicleData.location?.longitude || vehicleData.longitude;
 
-    if (!latitude || !longitude) return;
+      if (latitude == null || longitude == null || isNaN(latitude) || isNaN(longitude)) {
+        console.warn('Invalid vehicle coordinates:', { latitude, longitude });
+        return;
+      }
 
-    // Function to create/update the vehicle marker
-    const updateVehicleMarker = () => {
-      try {
-        if (!vehicleMarker.current) {
-          // Create a vehicle marker element
-          const el = document.createElement('div');
-          el.className = 'vehicle-marker';
+      // Function to create/update the vehicle marker
+      const updateVehicleMarker = () => {
+        try {
+          if (!vehicleMarker.current) {
+            // Create a vehicle marker element
+            const el = document.createElement('div');
+            el.className = 'vehicle-marker';
 
-          // Use a better SVG car icon for better visibility
-          el.innerHTML = `
-            <svg viewBox="0 0 24 24" width="36" height="36" fill="${vehicleData.batteryLevel < 20 ? '#f44336' : '#4CAF50'}">
-              <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
-            </svg>
-          `;
+            // Use a better SVG car icon for better visibility
+            const batteryLevel = vehicleData.batteryLevel || 100;
+            el.innerHTML = `
+              <svg viewBox="0 0 24 24" width="36" height="36" fill="${batteryLevel < 20 ? '#f44336' : '#4CAF50'}">
+                <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+              </svg>
+            `;
 
-          // Add pulse effect if car is moving
-          if (vehicleData.speed > 0) {
-            el.classList.add('vehicle-moving');
-          }
-
-          // Add vehicle marker to map
-          vehicleMarker.current = new mapboxgl.Marker({
-            element: el,
-            anchor: 'center',
-            rotation: vehicleData.heading || 0,
-            rotationAlignment: 'map'
-          })
-            .setLngLat([longitude, latitude])
-            .addTo(map.current);
-
-          // Add popup for vehicle with better formatting
-          const batteryClass = vehicleData.batteryLevel < 20 ? 'battery-low' :
-            vehicleData.batteryLevel > 80 ? 'battery-high' : '';
-
-          const popup = new mapboxgl.Popup({
-            offset: 25,
-            closeButton: false,
-            closeOnClick: false,
-            maxWidth: '300px',
-            className: 'vehicle-marker-popup'
-          })
-            .setHTML(`
-              <div class="vehicle-popup">
-                <h4>Whittle Wagon</h4>
-                <div class="vehicle-popup-stats">
-                  <div class="popup-stat">
-                    <span class="popup-stat-icon">🔋</span>
-                    <span class="popup-stat-value ${batteryClass}">${Math.round(vehicleData.batteryLevel)}%</span>
-                  </div>
-                  <div class="popup-stat">
-                    <span class="popup-stat-icon">⚡</span>
-                    <span class="popup-stat-value">${Math.round(vehicleData.range)} mi</span>
-                  </div>
-                  <div class="popup-stat">
-                    <span class="popup-stat-icon">🚀</span>
-                    <span class="popup-stat-value">${Math.round(vehicleData.speed)} mph</span>
-                  </div>
-                </div>
-              </div>
-            `);
-
-          vehicleMarker.current.setPopup(popup);
-        } else {
-          // Update marker position and rotation
-          vehicleMarker.current.setLngLat([longitude, latitude]);
-
-          // Update rotation if heading is available
-          if (vehicleData.heading !== undefined) {
-            const markerEl = vehicleMarker.current.getElement();
-            vehicleMarker.current.setRotation(vehicleData.heading);
-
-            // Update moving state
+            // Add pulse effect if car is moving
             if (vehicleData.speed > 0) {
-              markerEl.classList.add('vehicle-moving');
-            } else {
-              markerEl.classList.remove('vehicle-moving');
+              el.classList.add('vehicle-moving');
             }
 
-            // Update car color based on battery
-            const svgPath = markerEl.querySelector('svg');
-            if (svgPath) {
-              svgPath.style.fill = vehicleData.batteryLevel < 20 ? '#f44336' : '#4CAF50';
-            }
-          }
+            // Add vehicle marker to map
+            vehicleMarker.current = new mapboxgl.Marker({
+              element: el,
+              anchor: 'center',
+              rotation: vehicleData.heading || 0,
+              rotationAlignment: 'map'
+            })
+              .setLngLat([longitude, latitude])
+              .addTo(map.current);
 
-          // Update popup content
-          if (vehicleMarker.current.getPopup()) {
+            // Add popup for vehicle with better formatting
             const batteryClass = vehicleData.batteryLevel < 20 ? 'battery-low' :
               vehicleData.batteryLevel > 80 ? 'battery-high' : '';
 
-            vehicleMarker.current.getPopup().setHTML(`
-              <div class="vehicle-popup">
-                <h4>Whittle Wagon</h4>
-                <div class="vehicle-popup-stats">
-                  <div class="popup-stat">
-                    <span class="popup-stat-icon">🔋</span>
-                    <span class="popup-stat-value ${batteryClass}">${Math.round(vehicleData.batteryLevel)}%</span>
-                  </div>
-                  <div class="popup-stat">
-                    <span class="popup-stat-icon">⚡</span>
-                    <span class="popup-stat-value">${Math.round(vehicleData.range)} mi</span>
-                  </div>
-                  <div class="popup-stat">
-                    <span class="popup-stat-icon">🚀</span>
-                    <span class="popup-stat-value">${Math.round(vehicleData.speed)} mph</span>
+            const popup = new mapboxgl.Popup({
+              offset: 25,
+              closeButton: false,
+              closeOnClick: false,
+              maxWidth: '300px',
+              className: 'vehicle-marker-popup'
+            })
+              .setHTML(`
+                <div class="vehicle-popup">
+                  <h4>Whittle Wagon</h4>
+                  <div class="vehicle-popup-stats">
+                    <div class="popup-stat">
+                      <span class="popup-stat-icon">🔋</span>
+                      <span class="popup-stat-value ${batteryClass}">${Math.round(vehicleData.batteryLevel || 0)}%</span>
+                    </div>
+                    <div class="popup-stat">
+                      <span class="popup-stat-icon">⚡</span>
+                      <span class="popup-stat-value">${Math.round(vehicleData.range || 0)} mi</span>
+                    </div>
+                    <div class="popup-stat">
+                      <span class="popup-stat-icon">🚀</span>
+                      <span class="popup-stat-value">${Math.round(vehicleData.speed || 0)} mph</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            `);
-          }
-        }
-      } catch (error) {
-        console.error('Error updating vehicle marker:', error);
-      }
-    };
+              `);
 
-    // Try to update the vehicle marker
-    updateVehicleMarker();
+            vehicleMarker.current.setPopup(popup);
+          } else {
+            // Update marker position and rotation
+            vehicleMarker.current.setLngLat([longitude, latitude]);
+
+            // Update rotation if heading is available
+            if (vehicleData.heading !== undefined) {
+              const markerEl = vehicleMarker.current.getElement();
+              vehicleMarker.current.setRotation(vehicleData.heading);
+
+              // Update moving state
+              if (vehicleData.speed > 0) {
+                markerEl.classList.add('vehicle-moving');
+              } else {
+                markerEl.classList.remove('vehicle-moving');
+              }
+
+              // Update car color based on battery
+              const svgPath = markerEl.querySelector('svg');
+              if (svgPath) {
+                svgPath.style.fill = vehicleData.batteryLevel < 20 ? '#f44336' : '#4CAF50';
+              }
+            }
+
+            // Update popup content
+            if (vehicleMarker.current.getPopup()) {
+              const batteryClass = vehicleData.batteryLevel < 20 ? 'battery-low' :
+                vehicleData.batteryLevel > 80 ? 'battery-high' : '';
+
+              vehicleMarker.current.getPopup().setHTML(`
+                <div class="vehicle-popup">
+                  <h4>Whittle Wagon</h4>
+                  <div class="vehicle-popup-stats">
+                    <div class="popup-stat">
+                      <span class="popup-stat-icon">🔋</span>
+                      <span class="popup-stat-value ${batteryClass}">${Math.round(vehicleData.batteryLevel || 0)}%</span>
+                    </div>
+                    <div class="popup-stat">
+                      <span class="popup-stat-icon">⚡</span>
+                      <span class="popup-stat-value">${Math.round(vehicleData.range || 0)} mi</span>
+                    </div>
+                    <div class="popup-stat">
+                      <span class="popup-stat-icon">🚀</span>
+                      <span class="popup-stat-value">${Math.round(vehicleData.speed || 0)} mph</span>
+                    </div>
+                  </div>
+                </div>
+              `);
+            }
+          }
+        } catch (error) {
+          console.error('Error updating vehicle marker:', error);
+        }
+      };
+
+      // Try to update the vehicle marker
+      updateVehicleMarker();
+    } catch (error) {
+      console.error('Error in vehicle marker effect:', error);
+    }
   }, [vehicleData, mapReady]);
 
   // Center map on vehicle location when asked
   const centerMapOnVehicle = () => {
     if (!map.current || !vehicleData) return;
 
-    const latitude = vehicleData.location?.latitude || vehicleData.latitude;
-    const longitude = vehicleData.location?.longitude || vehicleData.longitude;
+    try {
+      const latitude = vehicleData.location?.latitude || vehicleData.latitude;
+      const longitude = vehicleData.location?.longitude || vehicleData.longitude;
 
-    if (!latitude || !longitude) return;
+      if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
+        console.warn('Cannot center on vehicle - invalid coordinates');
+        return;
+      }
 
-    map.current.flyTo({
-      center: [longitude, latitude],
-      zoom: 12,
-      essential: true
-    });
+      map.current.flyTo({
+        center: [longitude, latitude],
+        zoom: 12,
+        essential: true
+      });
+    } catch (error) {
+      console.error('Error centering on vehicle:', error);
+    }
   };
 
   return (
@@ -586,6 +725,12 @@ GeoJSON
         <div className="map-error">
           <h3>Error loading map</h3>
           <p>{mapError}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="map-retry-button"
+          >
+            Reload
+          </button>
         </div>
       ) : (
         <>
@@ -621,44 +766,20 @@ Map.propTypes = {
     batteryLevel: PropTypes.number,
     range: PropTypes.number,
     speed: PropTypes.number,
-    name: PropTypes.string
+    heading: PropTypes.number,
+    location: PropTypes.shape({
+      latitude: PropTypes.number,
+      longitude: PropTypes.number
+    })
   }),
   tripData: PropTypes.shape({
-    route: PropTypes.arrayOf(
-      PropTypes.shape({
-        latitude: PropTypes.number,
-        longitude: PropTypes.number
-      })
-    ),
-    stops: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.string,
-        name: PropTypes.string,
-        latitude: PropTypes.number,
-        longitude: PropTypes.number,
-        type: PropTypes.string,
-        description: PropTypes.string,
-        charging: PropTypes.bool,
-        overnight: PropTypes.bool
-      })
-    )
+    route: PropTypes.array,
+    stops: PropTypes.array,
+    visitedStates: PropTypes.array,
+    currentState: PropTypes.string
   }),
   weatherData: PropTypes.object,
-  stationsData: PropTypes.shape({
-    stations: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.string,
-        name: PropTypes.string,
-        latitude: PropTypes.number,
-        longitude: PropTypes.number,
-        available: PropTypes.bool,
-        power: PropTypes.number,
-        connectorType: PropTypes.string,
-        description: PropTypes.string
-      })
-    ),
-    radius: PropTypes.number
-  }),
+  stationsData: PropTypes.object,
   fullscreen: PropTypes.bool,
   mapLayers: PropTypes.shape({
     weather: PropTypes.bool,

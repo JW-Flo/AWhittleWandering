@@ -1,164 +1,125 @@
-# 48 Continental USA - Deployment Instructions
+# 48 Continental USA Deployment Instructions
 
-**Last Updated:** June 6, 2025, 4:50 AM CDT
-
-## Overview
-
-This document provides step-by-step instructions for completing the deployment of the 48 Continental USA project. With the critical issues now fixed, these instructions will guide you through deploying the components and verifying their functionality.
+This document provides comprehensive instructions for deploying the 48 Continental USA project to Cloudflare. The deployment process involves several components including the edge worker API, public site, and data management.
 
 ## Prerequisites
 
-Before proceeding with deployment, ensure you have:
+Before deploying, ensure you have:
 
-1. **Cloudflare Credentials:**
-   - Cloudflare API Token with appropriate permissions
-   - Cloudflare Account ID
+1. Node.js v18+ installed
+2. Wrangler CLI installed (`npm install -g wrangler`)
+3. Cloudflare account with proper permissions
+4. All required API keys:
+   - Tessie API token
+   - OpenWeather API key
+   - Mapbox token
+   - Edge HMAC key
 
-2. **Environment Variables:**
-   - Tessie API Token
-   - Mapbox API Token
-   - OpenWeather API Key
+## Deployment Steps
 
-3. **Development Environment:**
-   - Node.js 24.x or later
-   - npm 10.x or later
+### 1. Prepare Environment Variables
 
-## Step 1: Deploy the Edge Worker API
+Ensure all required environment variables are configured in the appropriate files:
 
-The Edge Worker API has been fixed and is currently operational. If you need to redeploy it:
+- Edge worker: `.dev.vars` file in the `edge-worker` directory
+- Public site: `.env.production` file in the `48Continental_Starter/public-site` directory
+
+### 2. Process Itinerary Data
+
+The itinerary is the core data structure for the entire application. Process it with:
 
 ```bash
+# Convert itinerary CSV to JSON with coordinates
+node scripts/update-itinerary-with-coords.cjs
+
+# Verify generated files:
+# - itinerary.json (simplified format for local use)
+# - itinerary-full.json (GeoJSON format)
+# - edge-worker/trip-data.json (KV upload format)
+```
+
+### 3. Deploy Edge Worker
+
+The edge worker provides the API layer for the application:
+
+```bash
+# Upload itinerary data to Cloudflare KV
 cd edge-worker
-npm ci
+npx wrangler kv bulk put trip-data.json --binding=ITINERARY_KV --remote
+
+# Deploy the edge worker
 npx wrangler deploy
 ```
 
-**Verification:**
-```bash
-# Check vehicle endpoint
-curl -s "https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev/api/vehicle" | jq
+### 4. Deploy Public Site
 
-# Check trip endpoint
-curl -s "https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev/api/trip" | jq
-
-# Check weather endpoint
-curl -s "https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev/api/weather" | jq
-```
-
-## Step 2: Deploy the Public Site
-
-The public site needs to be redeployed to connect to the fixed Edge Worker API. Use the provided deployment script:
+The public site is the frontend interface for users:
 
 ```bash
-# Set required environment variables
-export CLOUDFLARE_API_TOKEN="your-api-token"
-export CLOUDFLARE_ACCOUNT_ID="your-account-id"
-
-# Run the deployment script
-./scripts/deploy-public-site.sh
-```
-
-**Manual Deployment (if needed):**
-```bash
+# Build and deploy the site
 cd 48Continental_Starter/public-site
-npm ci
-cp .env.production .env
-echo "VITE_API_BASE_URL=https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev" >> .env
 npm run build
-npx wrangler pages deploy dist --project-name=continentalusa-site
+npx wrangler pages deploy dist
 ```
 
-**Verification:**
-- Open https://continentalusa-site.pages.dev in your browser
-- Verify that the map loads correctly
-- Confirm that vehicle data is displayed
-- Check that the route and stops are visible
+### 5. Verify Deployment
 
-## Step 3: Test iOS Client (if applicable)
-
-If you're using the iOS client:
+Verify that all components are correctly deployed and functioning:
 
 ```bash
-cd ios-client
-./Scripts/setup-environment.sh
-cd fastlane
-bundle exec fastlane test
+./scripts/verify-deployment.sh
 ```
 
-**Testing Notes:**
-- Ensure the API base URL is set correctly in the iOS client
-- Verify that the Map component displays vehicle location
-- Confirm that telemetry data is refreshing correctly
+The verification script checks:
+- Edge worker connectivity
+- Itinerary API accessibility
+- Public site availability
+- Basic data integrity
 
-## Step 4: Start the MCP Server
+## Troubleshooting
 
-The MCP (Mission Control Platform) server coordinates the entire system:
+### Common Issues
 
-```bash
-cd mcp-server
-npm ci
-npm run start
-```
+1. **Environment Variables Missing**
+   - Check that all required environment variables are properly set in both the edge worker and public site
 
-**Configuration:**
-- Ensure the `.env` file in `mcp-server` has the correct API endpoint
-- Verify that the MCP server can connect to the Edge Worker API
-- Confirm that agent orchestration is functioning correctly
+2. **KV Data Not Available**
+   - Ensure the KV namespaces are correctly configured in `wrangler.toml`
+   - Verify KV data was uploaded successfully with `wrangler kv key get itinerary --binding=ITINERARY_KV`
 
-## Monitoring the Deployment
+3. **CORS Issues**
+   - If the frontend can't access the API, check CORS headers in the edge worker
 
-To monitor the health of the deployment:
+4. **Build Failures**
+   - For public site build issues, check npm dependencies and ensure all required files exist
 
-```bash
-# Check Edge Worker logs
-cd edge-worker
-npx wrangler tail
+### Recovering from Failed Deployments
 
-# Monitor site deployment status
-cd 48Continental_Starter/public-site
-npx wrangler pages deployment list --project-name=continentalusa-site
-```
+If a deployment fails:
 
-## Troubleshooting Common Issues
+1. Check Cloudflare logs in the dashboard
+2. Rollback to previous version if necessary
+3. Address the specific error and redeploy
 
-### 1. Public Site 404 Error
-If the site still returns a 404 after deployment:
-- Verify that the deployment completed successfully
-- Check Cloudflare Pages dashboard for any build errors
-- Ensure the project name is correct (`continentalusa-site`)
+## Custom Domain Setup
 
-### 2. API Connection Issues
-If the site loads but can't connect to the API:
-- Check CORS settings in the Edge Worker
-- Verify environment variables in the public site build
-- Check browser console for specific error messages
+Once deployment is verified, configure a custom domain:
 
-### 3. Map Not Displaying
-If the map component doesn't render:
-- Verify Mapbox token is correctly set
-- Check browser console for specific React errors
-- Ensure the Map.jsx fixes were applied correctly
+1. Register domain in Cloudflare (if not already done)
+2. Uncomment the domain settings in `edge-worker/wrangler.toml`
+3. Add custom domain to Pages project in Cloudflare dashboard
+4. Update DNS settings to point to Cloudflare
 
-## Next Steps
+## Monitoring and Maintenance
 
-Once the deployment is complete:
+After successful deployment:
 
-1. **Update Documentation:**
-   - Update `docs/DEPLOYMENT_STATUS.md` with the current status
-   - Mark completed items in `docs/DEPLOYMENT_FIX_SUMMARY.md`
+1. Monitor application performance using Cloudflare analytics
+2. Set up alerts for any critical failures
+3. Schedule regular updates for API keys and dependencies
 
-2. **Plan Monitoring Strategy:**
-   - Set up uptime monitoring for the APIs
-   - Configure alerts for critical failures
-   - Establish a backup and recovery procedure
+## Additional Resources
 
-3. **Prepare for Launch:**
-   - Conduct a final end-to-end test of all systems
-   - Verify mobile responsiveness of the public site
-   - Create a launch checklist for the road trip start date
-
-## Conclusion
-
-With these deployment steps completed, the 48 Continental USA tracking system should be fully operational. The fixed Edge Worker API ensures reliable vehicle data retrieval, and the repaired Map component will correctly display the journey's progress.
-
-Remember to maintain regular backups of critical data and monitor the system's performance throughout the road trip. Good luck with your 48-state Tesla adventure!
+- [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
+- [Cloudflare Pages Documentation](https://developers.cloudflare.com/pages/)
+- [Wrangler CLI Reference](https://developers.cloudflare.com/workers/wrangler/commands/)
