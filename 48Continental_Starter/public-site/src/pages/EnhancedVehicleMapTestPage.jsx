@@ -11,6 +11,44 @@ import EnhancedVehicleMap from '../components/EnhancedVehicleMap';
 import './LiveVehicleMapTestPage.css'; // Reuse the same CSS
 
 const EnhancedVehicleMapTestPage = () => {
+    // Get URL params to check for coordinate format test mode
+    const urlParams = new URLSearchParams(window.location.search);
+    const isCoordinateTest = urlParams.get('test') === 'coordinates';
+
+    // Special test data for coordinate format testing
+    const coordinateFormatTest = {
+        days: [
+            {
+                day: 1,
+                route: [
+                    { lat: 39.7392, lng: -104.9903 }, // Denver (standard format)
+                    { latitude: 40.7608, longitude: -111.8910 }, // Salt Lake City (alternate property names)
+                    [-118.2437, 34.0522], // Los Angeles (longitude, latitude array)
+                    [37.7749, -122.4194], // San Francisco (latitude, longitude array - swapped)
+                    { coordinates: [47.6062, -122.3321] } // Seattle (nested coordinates array - swapped)
+                ],
+                stops: [
+                    {
+                        name: "Denver, CO",
+                        lat: 39.7392,
+                        lng: -104.9903,
+                        type: "overnight"
+                    },
+                    {
+                        name: "Salt Lake City, UT",
+                        latitude: 40.7608,
+                        longitude: -111.8910,
+                        type: "charging"
+                    },
+                    {
+                        name: "Los Angeles, CA",
+                        coordinates: [-118.2437, 34.0522], // Array format
+                        type: "attraction"
+                    }
+                ]
+            }
+        ]
+    };
     // Component state
     const [useMock, setUseMock] = useState(true);
     const [useWebSocket, setUseWebSocket] = useState(false);
@@ -203,15 +241,13 @@ const EnhancedVehicleMapTestPage = () => {
                             This page demonstrates the enhanced vehicle tracking functionality
                             using the <code>EnhancedVehicleMap</code> component and <code>useVehicleData</code> hook.
                         </p>
-                        <p>
-                            Key improvements:
-                            <ul>
-                                <li>Cleaner separation of data and UI concerns</li>
-                                <li>More responsive vehicle updates</li>
-                                <li>Better error handling</li>
-                                <li>Interactive vehicle controls</li>
-                            </ul>
-                        </p>
+                        <p>Key improvements:</p>
+                        <ul>
+                            <li>Cleaner separation of data and UI concerns</li>
+                            <li>More responsive vehicle updates</li>
+                            <li>Better error handling</li>
+                            <li>Interactive vehicle controls</li>
+                        </ul>
                         {!useMock && !import.meta.env.VITE_TESSIE_TOKEN && (
                             <div className="warning-message">
                                 <strong>Note:</strong> To use live data, you need to set a Tessie API
@@ -225,20 +261,27 @@ const EnhancedVehicleMapTestPage = () => {
                     {loading ? (
                         <div className="loading-indicator">Loading trip data...</div>
                     ) : (
-                        <EnhancedVehicleMap
-                            tripData={tripData}
-                            useMock={useMock}
-                            useWebSocket={useWebSocket}
-                            pollingInterval={pollingInterval}
-                            fullscreen={fullscreen}
-                            mapLayers={mapLayers}
-                        />
-                    )}
-
-                    {error && (
-                        <div className="error-banner">
-                            {error}
-                        </div>
+                        <>
+                            {isCoordinateTest && (
+                                <div className="coordinate-test-banner">
+                                    <h3>🧪 Coordinate Format Test Mode</h3>
+                                    <p>Testing various coordinate formats with the ensureMapboxFormat utility</p>
+                                </div>
+                            )}
+                            <EnhancedVehicleMap
+                                tripData={isCoordinateTest ? coordinateFormatTest : tripData}
+                                useMock={useMock}
+                                useWebSocket={useWebSocket}
+                                pollingInterval={pollingInterval}
+                                fullscreen={fullscreen}
+                                mapLayers={mapLayers}
+                            />
+                            {error && (
+                                <div className="error-banner">
+                                    {error}
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

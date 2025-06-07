@@ -4,12 +4,15 @@
  * 
  * An improved version of LiveVehicleMap that uses the useVehicleData hook
  * for better data management and cleaner separation of concerns.
+ * 
+ * Now includes proper coordinate format handling via the ensureMapboxFormat utility.
  */
 
 import React, { useState, useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import useVehicleData from '../hooks/useVehicleData';
+import { ensureMapboxFormat } from '../utils/mapUtils';
 import './LiveVehicleMap.css'; // Reuse the same CSS
 
 // Set Mapbox token from environment variable
@@ -48,8 +51,8 @@ const EnhancedVehicleMap = ({
     const followPath = tripData?.days?.reduce((path, day) => {
         if (day.route && Array.isArray(day.route)) {
             return [...path, ...day.route.map(point => ({
-                latitude: point.lat,
-                longitude: point.lng
+                latitude: point.lat || point.latitude,
+                longitude: point.lng || point.longitude
             }))];
         }
         return path;
@@ -86,17 +89,21 @@ const EnhancedVehicleMap = ({
                 tripData.days.forEach(day => {
                     if (day.route && Array.isArray(day.route)) {
                         day.route.forEach(point => {
-                            if (point.lat && point.lng) {
-                                allPoints.push([point.lng, point.lat]);
+                            // Use ensureMapboxFormat to handle any coordinate format
+                            const coordinates = ensureMapboxFormat(point);
+                            if (coordinates) {
+                                allPoints.push(coordinates);
                             }
                         });
                     }
 
                     if (day.stops && Array.isArray(day.stops)) {
                         day.stops.forEach(stop => {
-                            if (stop.lat && stop.lng) {
+                            // Use ensureMapboxFormat to handle any coordinate format
+                            const coordinates = ensureMapboxFormat(stop);
+                            if (coordinates) {
                                 stops.push({
-                                    coordinates: [stop.lng, stop.lat],
+                                    coordinates: coordinates,
                                     name: stop.name || 'Stop',
                                     type: stop.type || 'other'
                                 });
@@ -391,6 +398,14 @@ const EnhancedVehicleMap = ({
 
         if (!latitude || !longitude) return;
 
+        // Use ensureMapboxFormat to handle coordinate format
+        const vehicleCoordinates = ensureMapboxFormat({
+            latitude: latitude,
+            longitude: longitude
+        });
+
+        if (!vehicleCoordinates) return;
+
         const isCharging = charging_state && charging_state !== 'Disconnected';
         const iconId = isCharging ? 'charging-icon' : 'vehicle-icon';
 
@@ -404,7 +419,7 @@ const EnhancedVehicleMap = ({
                         type: 'Feature',
                         geometry: {
                             type: 'Point',
-                            coordinates: [longitude, latitude]
+                            coordinates: vehicleCoordinates
                         },
                         properties: {
                             heading: heading || 0,
@@ -440,7 +455,7 @@ const EnhancedVehicleMap = ({
                     type: 'Feature',
                     geometry: {
                         type: 'Point',
-                        coordinates: [longitude, latitude]
+                        coordinates: vehicleCoordinates
                     },
                     properties: {
                         heading: heading || 0,
@@ -456,7 +471,7 @@ const EnhancedVehicleMap = ({
         // Fly to vehicle location if it's the first update
         if (vehicleData && routePoints.length === 0) {
             map.current.flyTo({
-                center: [longitude, latitude],
+                center: vehicleCoordinates,
                 zoom: 14,
                 duration: 2000
             });
