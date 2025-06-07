@@ -1,0 +1,29 @@
+name = "github-mcp"
+main = "src/index.js"
+compatibility_date = "2023-12-01"
+
+[vars]
+GITHUB_APP_ID = ""
+GITHUB_APP_INSTALLATION_ID = ""
+# These will be set through wrangler secret commands for security
+
+# Create KV Namespace for storing state
+[[kv_namespaces]]
+binding = "GITHUB_MCP_KV"
+id = ""
+preview_id = ""
+
+# Define routes
+[routes]
+pattern = "github-mcp.48continental.com/*"
+zone_name = "48continental.com"
+
+# Environment
+[env.production]
+workers_dev = false
+routes = [
+  { pattern = "github-mcp.48continental.com/*", zone_name = "48continental.com" }
+]
+
+[env.staging]
+workers_dev = true
