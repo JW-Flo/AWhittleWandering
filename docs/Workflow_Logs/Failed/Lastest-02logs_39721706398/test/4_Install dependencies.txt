@@ -1,0 +1,18 @@
+﻿2025-06-06T11:39:06.0648929Z ##[group]Run npm ci
+2025-06-06T11:39:06.0649247Z [36;1mnpm ci[0m
+2025-06-06T11:39:06.0833022Z shell: /usr/bin/bash -e {0}
+2025-06-06T11:39:06.0833366Z ##[endgroup]
+2025-06-06T11:39:08.7342591Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2025-06-06T11:39:08.8704155Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-06-06T11:39:12.5360960Z 
+2025-06-06T11:39:12.5361818Z added 221 packages, and audited 222 packages in 6s
+2025-06-06T11:39:12.5362296Z 
+2025-06-06T11:39:12.5362585Z 45 packages are looking for funding
+2025-06-06T11:39:12.5363119Z   run `npm fund` for details
+2025-06-06T11:39:12.5750146Z 
+2025-06-06T11:39:12.5754552Z 5 moderate severity vulnerabilities
+2025-06-06T11:39:12.5755032Z 
+2025-06-06T11:39:12.5755474Z To address all issues (including breaking changes), run:
+2025-06-06T11:39:12.5756194Z   npm audit fix --force
+2025-06-06T11:39:12.5756456Z 
+2025-06-06T11:39:12.5756783Z Run `npm audit` for details.
