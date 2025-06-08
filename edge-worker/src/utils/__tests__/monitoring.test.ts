@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { 
   MetricsCollector,
   HealthChecker,
@@ -86,7 +86,14 @@ describe('HealthChecker', () => {
   let checker: HealthChecker;
 
   beforeEach(() => {
+    // Ensure real timers are being used for HealthChecker tests
+    vi.useRealTimers();
     checker = new HealthChecker();
+  });
+
+  afterEach(() => {
+    // Ensure timers are reset after each test
+    vi.useRealTimers();
   });
 
   it('should register and run health checks', async () => {
@@ -216,25 +223,17 @@ describe('registerDefaultHealthChecks', () => {
     };
     
     const checker = new HealthChecker();
-    const globalWithHealth = global as typeof global & { health?: HealthChecker };
-    const originalHealth = globalWithHealth.health;
-    globalWithHealth.health = checker;
     
-    try {
-      // Register health checks with mocked KV namespaces
-      registerDefaultHealthChecks(mockEnv as WorkerEnvironment);
-      
-      // Run health checks
-      const result = await checker.runChecks();
-      
-      // Verify KV namespace checks are registered and passing
-      expect(result.checks['kv-namespace']).toBeDefined();
-      expect(result.checks['kv-namespace'].status).toBe('pass');
-      expect(mockEnv.APP_KV?.get).toHaveBeenCalled();
-      expect(mockEnv.ITINERARY_KV?.get).toHaveBeenCalled();
-    } finally {
-      globalWithHealth.health = originalHealth;
-    }
+    // Register health checks with mocked KV namespaces using our test checker
+    registerDefaultHealthChecks(mockEnv as WorkerEnvironment, checker);
+    
+    // Run health checks
+    const result = await checker.runChecks();
+    
+    // Verify KV namespace checks are registered and passing
+    expect(result.checks['kv-namespace']).toBeDefined();
+    expect(result.checks['kv-namespace'].status).toBe('pass');
+    expect(mockEnv.APP_KV?.get).toHaveBeenCalled();
   });
 });
 

@@ -105,7 +105,8 @@ export async function withRetry<T>(
     } catch (error) {
       lastError = error as Error;
       if (i < maxRetries - 1) {
-        await new Promise(r => setTimeout(r, backoffMs * Math.pow(2, i)));
+        // Use a proper promise-based delay that works with fake timers
+        await new Promise(resolve => setTimeout(resolve, backoffMs * Math.pow(2, i)));
       }
     }
   }
