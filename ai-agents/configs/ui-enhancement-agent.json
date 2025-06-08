@@ -1,0 +1,118 @@
+{
+  "name": "ui-enhancement-agent",
+  "version": "1.0.0",
+  "description": "Specialized agent for UI/UX enhancements, timeline controls, and mobile optimization",
+  "modelConfig": {
+    "model": "gpt-4",
+    "temperature": 0.4,
+    "maxTokens": 4096
+  },
+  "promptFiles": [
+    "../prompts/ui-enhancement-agent.md"
+  ],
+  "tools": [
+    {
+      "name": "componentDesigner",
+      "description": "Design and implement UI components for the application",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "componentType": {
+            "type": "string",
+            "enum": ["timeline", "controls", "card", "modal", "overlay", "dashboard"]
+          },
+          "framework": {
+            "type": "string",
+            "enum": ["react", "vue", "svelte"]
+          },
+          "specifications": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": ["componentType", "framework"]
+      }
+    },
+    {
+      "name": "responsiveTester",
+      "description": "Test and optimize UI components for responsive behavior",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["test", "optimize", "report"]
+          },
+          "component": {
+            "type": "string"
+          },
+          "devices": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["action", "component"]
+      }
+    },
+    {
+      "name": "timelineIntegrator",
+      "description": "Integrate timeline controls with map and data sources",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["connect", "synchronize", "update", "listen"]
+          },
+          "timelineComponent": {
+            "type": "string"
+          },
+          "targetComponent": {
+            "type": "string"
+          },
+          "configuration": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": ["action", "timelineComponent"]
+      }
+    }
+  ],
+  "requiredCredentials": [],
+  "dependencies": [
+    {
+      "agent": "map-integration-agent",
+      "description": "Required for integrating UI controls with map"
+    }
+  ],
+  "outputFormats": [
+    {
+      "name": "uiComponent",
+      "description": "UI component definition ready for implementation",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "componentName": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "styles": {
+            "type": "string"
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["componentName", "code"]
+      }
+    }
+  ]
+}

@@ -14,7 +14,7 @@ NC='\033[0m'
 
 # Initial tokens
 TESSIE_TOKEN="bqfufwiCC5QeXIhlZ9I1eCYoF9XFd9xo"
-MAPBOX_TOKEN="sk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJnYnA2cmwwNTY4MmxwdjBuYTdjY3hvIn0.Pasgm5LZTp7HS8tZBqU8Ew"
+MAPBOX_TOKEN="sk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteGVzYTUxajlqMmtwenI5bHl1NDk4In0.3D0MbddcATKNja5NnvwYZQ"
 TESLA_CLIENT_ID="a78b7df7-5e4f-4ea4-91f4-d3963bcaf74e"
 TESLA_CLIENT_SECRET="ta-secret.t4@VFJevq!il8gTM"
 APP_DEPLOY_TOKEN="lrka-qvsm-xrwo-yqkc"
