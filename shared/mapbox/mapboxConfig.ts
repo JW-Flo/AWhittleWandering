@@ -5,6 +5,19 @@
  * Always uses environment variables to ensure tokens are not hardcoded.
  */
 
+// Add TypeScript support for Vite's import.meta.env
+declare global {
+  interface ImportMeta {
+    env: {
+      VITE_MAPBOX_TOKEN?: string;
+      [key: string]: string | undefined;
+    };
+  }
+}
+
+// Import the environment mapper for consistent variable access
+import { getEnv } from '../config/environmentMapper';
+
 /**
  * MapBox access token management
  */
@@ -14,13 +27,10 @@ export const getMapboxToken = (): string => {
     // Try to get from meta tag first (best practice for browser security)
     const metaToken = document.querySelector('meta[name="mapbox-token"]')?.getAttribute('content');
     if (metaToken) return metaToken;
-    
-    // Fall back to environment variables when available
-    return process.env.MAPBOX_PUBLIC_TOKEN || '';
   }
   
-  // For server-side applications
-  return process.env.MAPBOX_SECRET_TOKEN || process.env.MAPBOX_PUBLIC_TOKEN || '';
+  // Use the environment mapper to get the token from any possible source
+  return getEnv('MAPBOX_TOKEN', '');
 };
 
 /**
