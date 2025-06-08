@@ -12,7 +12,12 @@ const path = require("path");
 const { execSync } = require("child_process");
 
 // Configuration
-const ITINERARY_FILE = path.join(__dirname, "..", "itinerary-full.json");
+const ITINERARY_FILE = path.join(
+  __dirname,
+  "..",
+  "data",
+  "itinerary-full.json"
+);
 const KV_NAMESPACE = "ITINERARY_KV";
 const NAMESPACE_ID = "41e8cca6911d47338647d950d2344d91"; // From wrangler.toml
 

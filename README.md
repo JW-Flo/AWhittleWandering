@@ -11,6 +11,31 @@ The Wandering Whittle is a real-time, multi-system initiative that tracks a 60-d
 3. **Mobile Client** - React Native app for real-time updates while on the road
 4. **Functions** - Serverless functions that fetch real-time data from various sources
 
+## Project Structure
+
+The project has been organized into a clean directory structure:
+
+- **`config/`** - Configuration files and environment variables
+- **`mcp/`** - MCP (Model Context Protocol) server and related files
+- **`data/`** - Data files including itineraries and trip information
+- **`docs/`** - Documentation and project guides
+- **`scripts/`** - Build, deployment, and utility scripts
+- **`utilities/`** - Helper utilities and tools
+- **`components/`** - Reusable UI components
+- **`edge-worker/`** - Cloudflare edge worker code
+- **`ContinentalUSA-mobile/`** - Mobile app code
+- **`ios-client/`** - iOS Swift client
+- **`ai-agents/`** - AI agent configurations and prompts
+- **`tests/`** - Test files
+- **`shared/`** - Shared libraries and schemas
+- **`docs/`** - Documentation and guides
+- **`scripts/`** - Deployment and build scripts
+- **`utilities/`** - Utility scripts and helpers
+- **`components/`** - UI Components
+- **`tests/`** - Test files and test utilities
+- **`edge-worker/`** - Cloudflare edge worker code
+- **`ContinentalUSA-mobile/`** - Mobile application code
+
 ## Recent Updates & Planned Enhancements
 
 ### Completed Work

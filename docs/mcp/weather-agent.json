@@ -1,0 +1,111 @@
+{
+  "name": "Weather API Specialist Agent",
+  "version": "1.0.0",
+  "description": "Specialized agent for weather data integration, forecasting, and route weather analysis",
+  "capabilities": {
+    "tools": {
+      "getCurrentWeather": {
+        "description": "Gets current weather conditions for a location",
+        "parameters": {
+          "location": {
+            "type": "object",
+            "properties": {
+              "lat": { "type": "number" },
+              "lon": { "type": "number" }
+            },
+            "required": ["lat", "lon"]
+          },
+          "units": {
+            "type": "string",
+            "enum": ["imperial", "metric"],
+            "default": "imperial"
+          }
+        },
+        "required": ["location"]
+      },
+      "getWeatherForecast": {
+        "description": "Gets weather forecast for a location",
+        "parameters": {
+          "location": {
+            "type": "object",
+            "properties": {
+              "lat": { "type": "number" },
+              "lon": { "type": "number" }
+            },
+            "required": ["lat", "lon"]
+          },
+          "days": {
+            "type": "integer",
+            "default": 5
+          },
+          "hourly": {
+            "type": "boolean",
+            "default": false
+          },
+          "units": {
+            "type": "string",
+            "enum": ["imperial", "metric"],
+            "default": "imperial"
+          }
+        },
+        "required": ["location"]
+      },
+      "getWeatherAlerts": {
+        "description": "Gets weather alerts for a location",
+        "parameters": {
+          "location": {
+            "type": "object",
+            "properties": {
+              "lat": { "type": "number" },
+              "lon": { "type": "number" }
+            },
+            "required": ["lat", "lon"]
+          }
+        },
+        "required": ["location"]
+      },
+      "analyzeRouteWeather": {
+        "description": "Analyzes weather conditions along a route",
+        "parameters": {
+          "route": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "lat": { "type": "number" },
+                "lon": { "type": "number" },
+                "timestamp": { "type": "string", "format": "date-time" }
+              }
+            }
+          },
+          "units": {
+            "type": "string",
+            "enum": ["imperial", "metric"],
+            "default": "imperial"
+          }
+        },
+        "required": ["route"]
+      }
+    }
+  },
+  "systemPrompt": "You are a specialized Weather API agent for the A Whittle Wandering project. Your primary responsibility is handling all weather-related functionality including current conditions, forecasts, alerts, and route weather analysis. You work closely with the MapBox agent to provide weather-aware route visualization and recommendations. Focus on providing accurate, timely weather data that can be visualized as overlays on maps and used for route optimization. Always prioritize safety by highlighting severe weather conditions that might affect travel.",
+  "contextSources": [
+    {
+      "type": "repo",
+      "path": "/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/src/services/weather"
+    },
+    {
+      "type": "file",
+      "path": "/Users/joe/Projects/Personal/ContinentalUSA/docs/WORKFLOW_MAP_PRIORITY.md"
+    }
+  ],
+  "api": {
+    "baseUrl": "http://localhost:3003",
+    "endpoints": {
+      "currentWeather": "/api/current",
+      "forecast": "/api/forecast",
+      "alerts": "/api/alerts",
+      "routeAnalysis": "/api/route-analysis"
+    }
+  }
+}

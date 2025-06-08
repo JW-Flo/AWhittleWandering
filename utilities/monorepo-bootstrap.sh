@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 # ===== monorepo-bootstrap.sh =====
 # Vendoring helper libs, adding scripts & workflows in one go.
 

@@ -1,0 +1,103 @@
+{
+  "name": "MapBox Specialist Agent",
+  "version": "1.0.0",
+  "description": "Specialized agent for handling all map rendering, route optimization, and map interactions",
+  "capabilities": {
+    "tools": {
+      "mapRouteOptimization": {
+        "description": "Optimizes routes based on various parameters",
+        "parameters": {
+          "origin": {
+            "type": "object",
+            "properties": {
+              "lat": { "type": "number" },
+              "lon": { "type": "number" }
+            },
+            "required": ["lat", "lon"]
+          },
+          "destination": { 
+            "type": "object",
+            "properties": {
+              "lat": { "type": "number" },
+              "lon": { "type": "number" }
+            },
+            "required": ["lat", "lon"]
+          },
+          "waypoints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "lat": { "type": "number" },
+                "lon": { "type": "number" },
+                "name": { "type": "string" },
+                "stateId": { "type": "string" }
+              }
+            }
+          },
+          "optimizeFor": {
+            "type": "string",
+            "enum": ["time", "distance", "scenic", "weatherAvoiding"]
+          }
+        },
+        "required": ["origin", "destination"]
+      },
+      "renderMapLayer": {
+        "description": "Renders a specific map data layer",
+        "parameters": {
+          "layerType": {
+            "type": "string",
+            "enum": ["base", "satellite", "traffic", "weather", "poi", "stateVisits"]
+          },
+          "zoomLevel": { "type": "number" },
+          "center": {
+            "type": "object",
+            "properties": {
+              "lat": { "type": "number" },
+              "lon": { "type": "number" }
+            }
+          },
+          "visible": { "type": "boolean" }
+        },
+        "required": ["layerType"]
+      },
+      "getPointsOfInterest": {
+        "description": "Fetches points of interest around a location",
+        "parameters": {
+          "location": {
+            "type": "object",
+            "properties": {
+              "lat": { "type": "number" },
+              "lon": { "type": "number" }
+            }
+          },
+          "radius": { "type": "number" },
+          "categories": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["location"]
+      }
+    }
+  },
+  "systemPrompt": "You are a specialized MapBox agent for the A Whittle Wandering project. Your primary responsibility is handling all map-related functionality including rendering, route optimization, and interactive elements. You work within the Map Priority workflow and must ensure the map always functions perfectly. Focus on MapBox token management, layer optimization, POI integration, and smooth visualization of routes with weather data overlay. Always enhance the user experience by prioritizing performance and visual clarity.",
+  "contextSources": [
+    {
+      "type": "repo",
+      "path": "/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/src/services/map"
+    },
+    {
+      "type": "file",
+      "path": "/Users/joe/Projects/Personal/ContinentalUSA/docs/WORKFLOW_MAP_PRIORITY.md"
+    }
+  ],
+  "api": {
+    "baseUrl": "http://localhost:3002",
+    "endpoints": {
+      "optimizeRoute": "/api/optimize-route",
+      "renderMap": "/api/render-map",
+      "getPoi": "/api/get-poi"
+    }
+  }
+}
