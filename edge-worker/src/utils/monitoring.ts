@@ -192,9 +192,9 @@ export const health = new HealthChecker();
 export const requestLogger = new RequestLogger();
 
 // Register default health checks
-export function registerDefaultHealthChecks(env: WorkerEnvironment) {
+export function registerDefaultHealthChecks(env: WorkerEnvironment, healthChecker: HealthChecker = health) {
   // Check KV namespace accessibility
-  health.registerCheck('kv-namespace', async () => {
+  healthChecker.registerCheck('kv-namespace', async () => {
     try {
       await env.APP_KV.get('health-check-test');
       return { status: 'pass' };
@@ -207,7 +207,7 @@ export function registerDefaultHealthChecks(env: WorkerEnvironment) {
   });
 
   // Check external API connectivity (example with weather API)
-  health.registerCheck('weather-api', async () => {
+  healthChecker.registerCheck('weather-api', async () => {
     try {
       const response = await fetch('https://api.openweathermap.org/data/2.5/weather?lat=0&lon=0&appid=test', {
         signal: AbortSignal.timeout(5000)
