@@ -1,0 +1,60 @@
+﻿2025-06-07T15:06:59.3264948Z ##[group]Run cd 48Continental_Starter/public-site
+2025-06-07T15:06:59.3265349Z [36;1mcd 48Continental_Starter/public-site[0m
+2025-06-07T15:06:59.3265649Z [36;1mnpm ci[0m
+2025-06-07T15:06:59.3265865Z [36;1mcp .env.production .env[0m
+2025-06-07T15:06:59.3266118Z [36;1mnpm run build[0m
+2025-06-07T15:06:59.3266364Z [36;1mnpm install -D wrangler@latest[0m
+2025-06-07T15:06:59.3266759Z [36;1mnpx wrangler pages deploy dist --project-name=continentalusa-site[0m
+2025-06-07T15:06:59.3317569Z shell: /usr/bin/bash -e {0}
+2025-06-07T15:06:59.3317824Z env:
+2025-06-07T15:06:59.3318010Z   NODE_VERSION: 24.1.0
+2025-06-07T15:06:59.3318409Z   CLOUDFLARE_API_TOKEN: ***
+2025-06-07T15:06:59.3318751Z   CLOUDFLARE_ACCOUNT_ID: ***
+2025-06-07T15:06:59.3318982Z ##[endgroup]
+2025-06-07T15:07:05.6270694Z 
+2025-06-07T15:07:05.6290992Z > wandering-whittle@1.0.0 preinstall
+2025-06-07T15:07:05.6292150Z > echo 'Skipping Node.js version check for local development'
+2025-06-07T15:07:05.6293062Z 
+2025-06-07T15:07:05.6425077Z Skipping Node.js version check for local development
+2025-06-07T15:07:05.6439469Z 
+2025-06-07T15:07:05.6439838Z > wandering-whittle@1.0.0 postinstall
+2025-06-07T15:07:05.6440901Z > echo 'Setup complete. Run npm run dev to start development server.'
+2025-06-07T15:07:05.6441330Z 
+2025-06-07T15:07:05.6568517Z Setup complete. Run npm run dev to start development server.
+2025-06-07T15:07:05.6628303Z 
+2025-06-07T15:07:05.6630328Z added 381 packages, and audited 382 packages in 6s
+2025-06-07T15:07:05.6638421Z 
+2025-06-07T15:07:05.6638783Z 59 packages are looking for funding
+2025-06-07T15:07:05.6639328Z   run `npm fund` for details
+2025-06-07T15:07:05.6643545Z 
+2025-06-07T15:07:05.6645266Z found 0 vulnerabilities
+2025-06-07T15:07:05.9290520Z 
+2025-06-07T15:07:05.9292633Z > wandering-whittle@1.0.0 build
+2025-06-07T15:07:05.9293439Z > vite build
+2025-06-07T15:07:05.9295632Z 
+2025-06-07T15:07:06.1813501Z [36mvite v6.3.5 [32mbuilding for production...[36m[39m
+2025-06-07T15:07:06.2477305Z transforming...
+2025-06-07T15:07:08.6307013Z [32m✓[39m 92 modules transformed.
+2025-06-07T15:07:08.6332110Z [31m✗[39m Build failed in 2.42s
+2025-06-07T15:07:08.6342795Z [31merror during build:
+2025-06-07T15:07:08.6344457Z [31msrc/components/Dashboard.jsx (15:9): "useVehicleData" is not exported by "src/hooks/useVehicleData.js", imported by "src/components/Dashboard.jsx".[31m
+2025-06-07T15:07:08.6346713Z file: [36m/home/runner/work/WanderingWhittle/WanderingWhittle/48Continental_Starter/public-site/src/components/Dashboard.jsx:15:9[31m
+2025-06-07T15:07:08.6347850Z [33m
+2025-06-07T15:07:08.6348355Z 13: import StatesTracker from './StatesTracker';
+2025-06-07T15:07:08.6348990Z 14: import JourneyTab from './JourneyTab';
+2025-06-07T15:07:08.6349709Z 15: import { useVehicleData } from '../hooks/useVehicleData';
+2025-06-07T15:07:08.6350451Z              ^
+2025-06-07T15:07:08.6350997Z 16: import { useTripData } from '../hooks/useTripData';
+2025-06-07T15:07:08.6351603Z 17: import './Dashboard.css';
+2025-06-07T15:07:08.6352092Z [31m
+2025-06-07T15:07:08.6353441Z     at getRollupError (file:///home/runner/work/WanderingWhittle/WanderingWhittle/48Continental_Starter/public-site/node_modules/rollup/dist/es/shared/parseAst.js:400:41)
+2025-06-07T15:07:08.6355654Z     at error (file:///home/runner/work/WanderingWhittle/WanderingWhittle/48Continental_Starter/public-site/node_modules/rollup/dist/es/shared/parseAst.js:396:42)
+2025-06-07T15:07:08.6357926Z     at Module.error (file:///home/runner/work/WanderingWhittle/WanderingWhittle/48Continental_Starter/public-site/node_modules/rollup/dist/es/shared/node-entry.js:16788:16)
+2025-06-07T15:07:08.6362534Z     at Module.traceVariable (file:///home/runner/work/WanderingWhittle/WanderingWhittle/48Continental_Starter/public-site/node_modules/rollup/dist/es/shared/node-entry.js:17237:29)
+2025-06-07T15:07:08.6365055Z     at ModuleScope.findVariable (file:///home/runner/work/WanderingWhittle/WanderingWhittle/48Continental_Starter/public-site/node_modules/rollup/dist/es/shared/node-entry.js:14893:39)
+2025-06-07T15:07:08.6367879Z     at ReturnValueScope.findVariable (file:///home/runner/work/WanderingWhittle/WanderingWhittle/48Continental_Starter/public-site/node_modules/rollup/dist/es/shared/node-entry.js:5617:38)
+2025-06-07T15:07:08.6370600Z     at FunctionBodyScope.findVariable (file:///home/runner/work/WanderingWhittle/WanderingWhittle/48Continental_Starter/public-site/node_modules/rollup/dist/es/shared/node-entry.js:5617:38)
+2025-06-07T15:07:08.6373023Z     at Identifier.bind (file:///home/runner/work/WanderingWhittle/WanderingWhittle/48Continental_Starter/public-site/node_modules/rollup/dist/es/shared/node-entry.js:5391:40)
+2025-06-07T15:07:08.6375347Z     at CallExpression.bind (file:///home/runner/work/WanderingWhittle/WanderingWhittle/48Continental_Starter/public-site/node_modules/rollup/dist/es/shared/node-entry.js:2786:23)
+2025-06-07T15:07:08.6378019Z     at CallExpression.bind (file:///home/runner/work/WanderingWhittle/WanderingWhittle/48Continental_Starter/public-site/node_modules/rollup/dist/es/shared/node-entry.js:11978:15)[39m
+2025-06-07T15:07:08.6852907Z ##[error]Process completed with exit code 1.
