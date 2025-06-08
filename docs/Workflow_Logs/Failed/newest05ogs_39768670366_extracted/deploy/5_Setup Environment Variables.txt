@@ -1,0 +1,27 @@
+﻿2025-06-07T15:06:59.2823949Z ##[group]Run node scripts/setup-env.cjs
+2025-06-07T15:06:59.2824510Z [36;1mnode scripts/setup-env.cjs[0m
+2025-06-07T15:06:59.2877761Z shell: /usr/bin/bash -e {0}
+2025-06-07T15:06:59.2878016Z env:
+2025-06-07T15:06:59.2878203Z   NODE_VERSION: 24.1.0
+2025-06-07T15:06:59.2878573Z   EDGE_WORKER_URL: https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev
+2025-06-07T15:06:59.2879109Z   API_BASE_URL: https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev
+2025-06-07T15:06:59.2879499Z   MAPBOX_TOKEN: 
+2025-06-07T15:06:59.2879855Z   OPENWEATHER_API_KEY: ***
+2025-06-07T15:06:59.2880384Z   TESSIE_API_TOKEN: ***
+2025-06-07T15:06:59.2880652Z   TESSIE_VIN: ***
+2025-06-07T15:06:59.2880855Z ##[endgroup]
+2025-06-07T15:06:59.3180495Z [34m[INFO][0m Starting environment setup...
+2025-06-07T15:06:59.3185439Z [34m[INFO][0m Setting up environment files for local development...
+2025-06-07T15:06:59.3194879Z [34m[INFO][0m Loading existing public site environment from /home/runner/work/WanderingWhittle/WanderingWhittle/48Continental_Starter/public-site/.env.local
+2025-06-07T15:06:59.3197744Z [34m[INFO][0m Loading existing edge worker environment from /home/runner/work/WanderingWhittle/WanderingWhittle/edge-worker/.dev.vars
+2025-06-07T15:06:59.3199484Z [33m[WARNING][0m Missing environment variable: VITE_OPENWEATHER_API_KEY
+2025-06-07T15:06:59.3201015Z [33m[WARNING][0m Some API keys or tokens are missing. The application may not function correctly.
+2025-06-07T15:06:59.3202536Z [33m[WARNING][0m For full functionality, ensure all required environment variables are set.
+2025-06-07T15:06:59.3204571Z [32m[SUCCESS][0m Updated public site environment file: /home/runner/work/WanderingWhittle/WanderingWhittle/48Continental_Starter/public-site/.env.local
+2025-06-07T15:06:59.3207333Z [32m[SUCCESS][0m Updated edge worker environment file: /home/runner/work/WanderingWhittle/WanderingWhittle/edge-worker/.dev.vars
+2025-06-07T15:06:59.3209525Z [32m[SUCCESS][0m Created non-local environment file for build tools
+2025-06-07T15:06:59.3212017Z [34m[INFO][0m Environment setup complete.
+2025-06-07T15:06:59.3213647Z [34m[INFO][0m You can now run the development servers:
+2025-06-07T15:06:59.3215009Z [34m[INFO][0m   Edge Worker: cd /home/runner/work/WanderingWhittle/WanderingWhittle/edge-worker && npx wrangler dev
+2025-06-07T15:06:59.3216921Z [34m[INFO][0m   Public Site: cd /home/runner/work/WanderingWhittle/WanderingWhittle/48Continental_Starter/public-site && npm run dev
+2025-06-07T15:06:59.3218373Z [34m[INFO][0m Or use the start-local-dev.js script to run both simultaneously.

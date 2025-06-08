@@ -12,7 +12,7 @@ import MapErrorBoundary from './MapErrorBoundary';
 import EnhancedVehicleMap from './EnhancedVehicleMap';
 import StatesTracker from './StatesTracker';
 import JourneyTab from './JourneyTab';
-import { useVehicleData } from '../hooks/useVehicleData';
+import useVehicleData from '../hooks/useVehicleData';
 import { useTripData } from '../hooks/useTripData';
 import './Dashboard.css';
 
