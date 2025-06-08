@@ -121,21 +121,42 @@ describe('withRetry', () => {
   });
 
   it('should retry on failure and eventually succeed', async () => {
-    const fn = vi.fn()
-      .mockRejectedValueOnce(new Error('fail'))
-      .mockRejectedValueOnce(new Error('fail'))
-      .mockResolvedValue('success');
-    
-    const result = await withRetry(fn, 3, 100);
-    
-    expect(result).toBe('success');
-    expect(fn).toHaveBeenCalledTimes(3);
+    vi.useFakeTimers();
+    try {
+      const fn = vi.fn()
+        .mockRejectedValueOnce(new Error('fail'))
+        .mockRejectedValueOnce(new Error('fail'))
+        .mockResolvedValue('success');
+      
+      const retryPromise = withRetry(fn, 3, 100);
+      
+      // Allow the first call to complete
+      await vi.runOnlyPendingTimersAsync();
+      
+      // Allow the second call to complete
+      await vi.runOnlyPendingTimersAsync();
+      
+      const result = await retryPromise;
+      
+      expect(result).toBe('success');
+      expect(fn).toHaveBeenCalledTimes(3);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('should throw after max retries', async () => {
     const fn = vi.fn().mockRejectedValue(new Error('fail'));
     
-    await expect(withRetry(fn, 3, 100)).rejects.toThrow('fail');
+    let error: Error | null = null;
+    try {
+      await withRetry(fn, 3, 10); // Use short delay for fast test
+    } catch (e) {
+      error = e as Error;
+    }
+    
+    expect(error).toBeTruthy();
+    expect(error?.message).toBe('fail');
     expect(fn).toHaveBeenCalledTimes(3);
   });
 
