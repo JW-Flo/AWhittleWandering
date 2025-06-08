@@ -1,5 +1,5 @@
 import useVehicleData from "./useVehicleData";
-export default useVehicleData;
+export { useVehicleData };
 export { useTripData } from "./useTripData";
 
 // Temporary mock hooks until we implement them
