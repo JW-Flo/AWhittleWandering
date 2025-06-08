@@ -18,6 +18,9 @@ import React, { useState, useEffect } from 'react';
 import useVehicleData from './hooks';
 import { useWeatherData, useTripData, useChargingStations } from './hooks';
 
+// Import MapBox configuration
+import mapboxConfig from '../../shared/mapbox/mapboxConfig';
+
 // Import Dashboard component
 import Dashboard from './components/Dashboard';
 
@@ -83,8 +86,8 @@ const App = () => {
     if (!document.querySelector('meta[name="mapbox-token"]')) {
       const tokenMeta = document.createElement('meta');
       tokenMeta.name = 'mapbox-token';
-      // Use The Wandering Whittle's Mapbox token
-      tokenMeta.content = import.meta.env.VITE_MAPBOX_TOKEN || '';
+      // Use the token from the centralized config
+      tokenMeta.content = mapboxConfig.getMapboxToken();
       document.head.appendChild(tokenMeta);
     }
   }, []);
