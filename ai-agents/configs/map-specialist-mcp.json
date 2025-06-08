@@ -1,0 +1,120 @@
+{
+  "schema_version": "v1",
+  "name": "map-specialist-mcp",
+  "description": "Map Specialist Agent for A Whittle Wandering project",
+  "system_prompt": "You are a specialized AI agent focused on map functionality for the 'A Whittle Wandering' project. Your expertise includes Mapbox GL JS, geospatial data processing, route optimization, and map performance. You prioritize map rendering, route visualization, and POI integration.",
+  "tools": [
+    {
+      "name": "get_map_token",
+      "description": "Retrieves the Mapbox token from secure storage",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "string",
+            "description": "The deployment environment (development, staging, production)"
+          }
+        },
+        "required": ["environment"]
+      }
+    },
+    {
+      "name": "optimize_route",
+      "description": "Optimizes a route based on various parameters",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "object",
+            "properties": {
+              "lat": { "type": "number" },
+              "lng": { "type": "number" }
+            },
+            "required": ["lat", "lng"]
+          },
+          "end": {
+            "type": "object",
+            "properties": {
+              "lat": { "type": "number" },
+              "lng": { "type": "number" }
+            },
+            "required": ["lat", "lng"]
+          },
+          "waypoints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "lat": { "type": "number" },
+                "lng": { "type": "number" }
+              },
+              "required": ["lat", "lng"]
+            }
+          },
+          "considerWeather": { "type": "boolean" },
+          "avoidTolls": { "type": "boolean" },
+          "avoidHighways": { "type": "boolean" }
+        },
+        "required": ["start", "end"]
+      }
+    },
+    {
+      "name": "get_points_of_interest",
+      "description": "Retrieves points of interest near a location or along a route",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "object",
+            "properties": {
+              "lat": { "type": "number" },
+              "lng": { "type": "number" }
+            }
+          },
+          "route": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "lat": { "type": "number" },
+                "lng": { "type": "number" }
+              },
+              "required": ["lat", "lng"]
+            }
+          },
+          "radius": { "type": "number" },
+          "categories": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "limit": { "type": "number" }
+        }
+      }
+    },
+    {
+      "name": "analyze_map_performance",
+      "description": "Analyzes map rendering performance and provides optimization suggestions",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "componentId": { "type": "string" },
+          "deviceProfile": { "type": "string" },
+          "metricsTimeframe": { "type": "string" }
+        },
+        "required": ["componentId"]
+      }
+    }
+  ],
+  "completion_prompt": "Based on your expertise with map functionality, please provide a solution for this issue.",
+  "response_format": "markdown",
+  "messages_per_conversation": 10,
+  "temperature": 0.2,
+  "top_p": 0.95,
+  "max_tokens": 8192,
+  "stop_sequences": [],
+  "tool_choice": "auto",
+  "tool_use": {
+    "max_tool_calls": 5,
+    "max_tool_call_tokens": 4096
+  }
+}

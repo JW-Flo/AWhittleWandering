@@ -74,6 +74,17 @@
       }
     },
     {
+      "label": "Map Integration Diagnostics",
+      "type": "shell",
+      "command": "cd ${workspaceFolder} && npx ts-node ./codex-agent/tasks/mapIntegration.ts",
+      "group": "test",
+      "problemMatcher": ["$eslint-stylish"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
       "label": "CI Pipeline",
       "dependsOn": [
         "Build: Edge Worker",

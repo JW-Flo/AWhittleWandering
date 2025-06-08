@@ -1,0 +1,130 @@
+{
+  "name": "devops-agent",
+  "version": "1.0.0",
+  "description": "Specialized agent for environment setup, token management, and deployment processes",
+  "modelConfig": {
+    "model": "gpt-4",
+    "temperature": 0.2,
+    "maxTokens": 4096
+  },
+  "promptFiles": [
+    "../prompts/devops-agent.md"
+  ],
+  "tools": [
+    {
+      "name": "environmentManager",
+      "description": "Manage environment variables and configuration",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["set", "get", "list", "remove", "validate"]
+          },
+          "environment": {
+            "type": "string",
+            "enum": ["development", "staging", "production"]
+          },
+          "key": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": ["action", "environment"]
+      }
+    },
+    {
+      "name": "deploymentManager",
+      "description": "Manage deployment processes for various components",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["deploy", "rollback", "status", "logs"]
+          },
+          "component": {
+            "type": "string",
+            "enum": ["edge-worker", "public-site", "ios-client", "all"]
+          },
+          "environment": {
+            "type": "string",
+            "enum": ["development", "staging", "production"]
+          },
+          "options": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": ["action", "component", "environment"]
+      }
+    },
+    {
+      "name": "tokenRotator",
+      "description": "Securely manage and rotate API tokens",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["rotate", "validate", "audit", "secure"]
+          },
+          "tokenName": {
+            "type": "string"
+          },
+          "service": {
+            "type": "string"
+          }
+        },
+        "required": ["action", "tokenName"]
+      }
+    }
+  ],
+  "requiredCredentials": [
+    {
+      "name": "CLOUDFLARE_API_TOKEN",
+      "description": "API token for Cloudflare deployment",
+      "envVariable": "CLOUDFLARE_API_TOKEN"
+    },
+    {
+      "name": "GITHUB_TOKEN",
+      "description": "Token for GitHub operations",
+      "envVariable": "GITHUB_TOKEN"
+    }
+  ],
+  "dependencies": [],
+  "outputFormats": [
+    {
+      "name": "deploymentReport",
+      "description": "Report on deployment status and environment configuration",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "environment": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type": "string"},
+                "version": {"type": "string"}
+              }
+            }
+          }
+        },
+        "required": ["status", "environment", "timestamp", "components"]
+      }
+    }
+  ]
+}

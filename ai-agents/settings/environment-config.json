@@ -1,0 +1,81 @@
+{
+  "name": "agent-environment-setup",
+  "version": "1.0.0",
+  "description": "Environment setup for A Whittle Wandering project agents",
+  "environmentVariables": {
+    "MAPBOX_TOKEN": {
+      "description": "Mapbox API access token",
+      "required": true,
+      "sensitive": true
+    },
+    "WEATHER_API_KEY": {
+      "description": "Weather API service key",
+      "required": true,
+      "sensitive": true
+    },
+    "CLOUDFLARE_API_TOKEN": {
+      "description": "Cloudflare API token for deployments",
+      "required": true,
+      "sensitive": true
+    },
+    "CLOUDFLARE_ACCOUNT_ID": {
+      "description": "Cloudflare account ID",
+      "required": true,
+      "sensitive": false
+    },
+    "TESLA_API_TOKEN": {
+      "description": "Tesla API token for vehicle data",
+      "required": false,
+      "sensitive": true,
+      "note": "Only required if using direct Tesla API instead of Tessie"
+    },
+    "TESSIE_API_KEY": {
+      "description": "Tessie API key for Tesla vehicle data",
+      "required": true,
+      "sensitive": true
+    },
+    "KV_NAMESPACE_ID": {
+      "description": "Cloudflare KV namespace ID",
+      "required": true,
+      "sensitive": false
+    }
+  },
+  "tokenReplacement": {
+    "files": [
+      "edge-worker/wrangler.toml",
+      "edge-worker/.env",
+      "public-site/src/config.js",
+      "ContinentalUSA-mobile/app/config/environment.ts"
+    ],
+    "placeholders": {
+      "MAPBOX_TOKEN": "${MAPBOX_TOKEN}",
+      "WEATHER_API_KEY": "${WEATHER_API_KEY}",
+      "CLOUDFLARE_API_TOKEN": "${CLOUDFLARE_API_TOKEN}",
+      "CLOUDFLARE_ACCOUNT_ID": "${CLOUDFLARE_ACCOUNT_ID}",
+      "TESSIE_API_KEY": "${TESSIE_API_KEY}",
+      "KV_NAMESPACE_ID": "${KV_NAMESPACE_ID}"
+    }
+  },
+  "setupCommands": [
+    {
+      "name": "Install dependencies",
+      "command": "npm install",
+      "workingDirectory": "."
+    },
+    {
+      "name": "Setup edge worker",
+      "command": "cd edge-worker && npm install",
+      "workingDirectory": "."
+    },
+    {
+      "name": "Setup mobile app",
+      "command": "cd ContinentalUSA-mobile && npm install",
+      "workingDirectory": "."
+    },
+    {
+      "name": "Setup iOS client",
+      "command": "cd ios-client && swift package resolve",
+      "workingDirectory": "."
+    }
+  ]
+}
