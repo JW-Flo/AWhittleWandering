@@ -1,5 +1,8 @@
 {
-    "recommendations": [
-        "blackboxapp.blackbox"
-    ]
+  "recommendations": [
+    "blackboxapp.blackbox",
+    "GitHub.copilot",
+    "GitHub.copilot-chat",
+    "GitHub.copilot-labs"
+  ]
 }

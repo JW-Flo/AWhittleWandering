@@ -1,104 +1,120 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "Pre-deploy Checks",
-            "type": "shell",
-            "command": "npm run pre-deploy",
-            "group": "test",
-            "problemMatcher": ["$eslint-stylish", "$tsc"],
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            }
-        },
-        {
-            "label": "Deploy All",
-            "type": "shell",
-            "command": "${workspaceFolder}/scripts/deploy-all.sh",
-            "group": "none",
-            "presentation": {
-                "reveal": "always",
-                "panel": "shared"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Build Edge Worker",
-            "type": "shell",
-            "command": "cd ${workspaceFolder}/edge-worker && npm run build",
-            "group": "build",
-            "presentation": {
-                "reveal": "silent",
-                "panel": "shared"
-            },
-            "problemMatcher": ["$tsc"]
-        },
-        {
-            "label": "Deploy: Edge Worker",
-            "type": "shell",
-            "command": "npm run deploy:edge",
-            "group": "none",
-            "problemMatcher": []
-        },
-        {
-            "label": "Build: iOS Client",
-            "type": "shell",
-            "command": "swift build",
-            "options": {
-                "cwd": "${workspaceFolder}/ios-client"
-            },
-            "group": "build",
-            "problemMatcher": []
-        },
-        {
-            "label": "Start Agents",
-            "type": "shell",
-            "command": "${workspaceFolder}/scripts/start-agents.sh",
-            "isBackground": true,
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "shared"
-            }
-        },
-        {
-            "label": "Generate TS Client",
-            "type": "shell",
-            "command": "npm run codegen:ts",
-            "isBackground": true,
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "shared"
-            }
-        },
-        {
-            "label": "CI Pipeline",
-            "dependsOn": [
-                "Build: Edge Worker",
-                "Build: iOS Client",
-                "Deploy: Edge Worker"
-            ],
-            "dependsOrder": "sequence",
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            }
-        },
-        {
-            "label": "Dev: All",
-            "dependsOn": [
-                "Build: Edge Worker",
-                "Build: iOS Client",
-                "Generate TS Client",
-                "Start Agents"
-            ],
-            "dependsOrder": "parallel",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        }
-    ]
+  "version": "2.0.0", even 
+  "tasks": [
+    {
+      "label": "Pre-deploy Checks",
+      "type": "shell",
+      "command": "npm run pre-deploy",
+      "group": "test",
+      "problemMatcher": ["$eslint-stylish", "$tsc"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Deploy All",
+      "type": "shell",
+      "command": "${workspaceFolder}/scripts/deploy-all.sh",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build Edge Worker",
+      "type": "shell",
+      "command": "cd ${workspaceFolder}/edge-worker && npm run build",
+      "group": "build",
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Deploy: Edge Worker",
+      "type": "shell",
+      "command": "npm run deploy:edge",
+      "group": "none",
+      "problemMatcher": []
+    },
+    {
+      "label": "Build: iOS Client",
+      "type": "shell",
+      "command": "swift build",
+      "options": {
+        "cwd": "${workspaceFolder}/ios-client"
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Agents",
+      "type": "shell",
+      "command": "${workspaceFolder}/scripts/start-agents.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Generate TS Client",
+      "type": "shell",
+      "command": "npm run codegen:ts",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "CI Pipeline",
+      "dependsOn": [
+        "Build: Edge Worker",
+        "Build: iOS Client",
+        "Deploy: Edge Worker"
+      ],
+      "dependsOrder": "sequence",
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    },
+    {
+      "label": "Dev: All",
+      "dependsOn": [
+        "Build: Edge Worker",
+        "Build: iOS Client",
+        "Generate TS Client",
+        "Start Agents"
+      ],
+      "dependsOrder": "parallel",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Copilot: Chat",
+      "type": "shell",
+      "command": "code",
+      "args": ["--command", "github.copilot.chat.start"],
+      "group": "none",
+      "problemMatcher": []
+    },
+    {
+      "label": "Copilot: Generate Completion",
+      "type": "shell",
+      "command": "code",
+      "args": ["--command", "github.copilot.completion.generate"],
+      "group": "none",
+      "problemMatcher": []
+    }
+  ]
 }
