@@ -1,0 +1,67 @@
+﻿2025-06-06T11:38:59.7818835Z ##[group]Run actions/checkout@v4
+2025-06-06T11:38:59.7820471Z with:
+2025-06-06T11:38:59.7821384Z   repository: JW-Flo/ContinentalUSA
+2025-06-06T11:38:59.7822767Z   token: ***
+2025-06-06T11:38:59.7823668Z   ssh-strict: true
+2025-06-06T11:38:59.7824511Z   ssh-user: git
+2025-06-06T11:38:59.7825427Z   persist-credentials: true
+2025-06-06T11:38:59.7826425Z   clean: true
+2025-06-06T11:38:59.7827310Z   sparse-checkout-cone-mode: true
+2025-06-06T11:38:59.7828352Z   fetch-depth: 1
+2025-06-06T11:38:59.7829173Z   fetch-tags: false
+2025-06-06T11:38:59.7830303Z   show-progress: true
+2025-06-06T11:38:59.7831190Z   lfs: false
+2025-06-06T11:38:59.7831989Z   submodules: false
+2025-06-06T11:38:59.7832846Z   set-safe-directory: true
+2025-06-06T11:38:59.7834261Z ##[endgroup]
+2025-06-06T11:38:59.9222771Z Syncing repository: JW-Flo/ContinentalUSA
+2025-06-06T11:38:59.9225884Z ##[group]Getting Git version info
+2025-06-06T11:38:59.9227495Z Working directory is '/home/runner/work/ContinentalUSA/ContinentalUSA'
+2025-06-06T11:38:59.9230125Z [command]/usr/bin/git version
+2025-06-06T11:38:59.9231253Z git version 2.49.0
+2025-06-06T11:38:59.9252512Z ##[endgroup]
+2025-06-06T11:38:59.9266044Z Temporarily overriding HOME='/home/runner/work/_temp/a1790daf-8526-41e6-89e7-4144b5144ffb' before making global git config changes
+2025-06-06T11:38:59.9271314Z Adding repository directory to the temporary git global config as a safe directory
+2025-06-06T11:38:59.9274363Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/ContinentalUSA/ContinentalUSA
+2025-06-06T11:38:59.9332282Z Deleting the contents of '/home/runner/work/ContinentalUSA/ContinentalUSA'
+2025-06-06T11:38:59.9334709Z ##[group]Initializing the repository
+2025-06-06T11:38:59.9336767Z [command]/usr/bin/git init /home/runner/work/ContinentalUSA/ContinentalUSA
+2025-06-06T11:38:59.9522108Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-06-06T11:38:59.9525649Z hint: is subject to change. To configure the initial branch name to use in all
+2025-06-06T11:38:59.9527537Z hint: of your new repositories, which will suppress this warning, call:
+2025-06-06T11:38:59.9528913Z hint:
+2025-06-06T11:38:59.9530193Z hint: 	git config --global init.defaultBranch <name>
+2025-06-06T11:38:59.9531384Z hint:
+2025-06-06T11:38:59.9532457Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-06-06T11:38:59.9534343Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-06-06T11:38:59.9535944Z hint:
+2025-06-06T11:38:59.9536764Z hint: 	git branch -m <name>
+2025-06-06T11:38:59.9538360Z Initialized empty Git repository in /home/runner/work/ContinentalUSA/ContinentalUSA/.git/
+2025-06-06T11:38:59.9542172Z [command]/usr/bin/git remote add origin https://github.com/JW-Flo/ContinentalUSA
+2025-06-06T11:38:59.9545400Z ##[endgroup]
+2025-06-06T11:38:59.9546953Z ##[group]Disabling automatic garbage collection
+2025-06-06T11:38:59.9548452Z [command]/usr/bin/git config --local gc.auto 0
+2025-06-06T11:38:59.9595636Z ##[endgroup]
+2025-06-06T11:38:59.9597163Z ##[group]Setting up auth
+2025-06-06T11:38:59.9598610Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-06-06T11:38:59.9613415Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-06-06T11:38:59.9895593Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-06-06T11:38:59.9928079Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-06-06T11:39:00.0189511Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-06-06T11:39:00.0221432Z ##[endgroup]
+2025-06-06T11:39:00.0225840Z ##[group]Fetching the repository
+2025-06-06T11:39:00.0228472Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +1d9043c1fa4eabe5746d7b1a283bfab1380e4593:refs/remotes/origin/main
+2025-06-06T11:39:04.7144960Z From https://github.com/JW-Flo/ContinentalUSA
+2025-06-06T11:39:04.7160801Z  * [new ref]         1d9043c1fa4eabe5746d7b1a283bfab1380e4593 -> origin/main
+2025-06-06T11:39:04.7191527Z ##[endgroup]
+2025-06-06T11:39:04.7192696Z ##[group]Determining the checkout info
+2025-06-06T11:39:04.7194194Z ##[endgroup]
+2025-06-06T11:39:04.7195065Z [command]/usr/bin/git sparse-checkout disable
+2025-06-06T11:39:04.7260976Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-06-06T11:39:04.7298954Z ##[group]Checking out the ref
+2025-06-06T11:39:04.7301645Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2025-06-06T11:39:05.3195249Z Switched to a new branch 'main'
+2025-06-06T11:39:05.3206660Z branch 'main' set up to track 'origin/main'.
+2025-06-06T11:39:05.3291181Z ##[endgroup]
+2025-06-06T11:39:05.3355463Z [command]/usr/bin/git log -1 --format=%H
+2025-06-06T11:39:05.3383108Z 1d9043c1fa4eabe5746d7b1a283bfab1380e4593

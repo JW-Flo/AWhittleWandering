@@ -1,0 +1,67 @@
+﻿2025-06-08T12:13:00.9239101Z ##[group]Run actions/checkout@v4
+2025-06-08T12:13:00.9239983Z with:
+2025-06-08T12:13:00.9240420Z   repository: JW-Flo/AWhittleWandering
+2025-06-08T12:13:00.9241142Z   token: ***
+2025-06-08T12:13:00.9241576Z   ssh-strict: true
+2025-06-08T12:13:00.9241999Z   ssh-user: git
+2025-06-08T12:13:00.9242417Z   persist-credentials: true
+2025-06-08T12:13:00.9242887Z   clean: true
+2025-06-08T12:13:00.9243317Z   sparse-checkout-cone-mode: true
+2025-06-08T12:13:00.9243814Z   fetch-depth: 1
+2025-06-08T12:13:00.9244215Z   fetch-tags: false
+2025-06-08T12:13:00.9244806Z   show-progress: true
+2025-06-08T12:13:00.9245255Z   lfs: false
+2025-06-08T12:13:00.9245655Z   submodules: false
+2025-06-08T12:13:00.9246085Z   set-safe-directory: true
+2025-06-08T12:13:00.9246821Z ##[endgroup]
+2025-06-08T12:13:01.0598715Z Syncing repository: JW-Flo/AWhittleWandering
+2025-06-08T12:13:01.0601409Z ##[group]Getting Git version info
+2025-06-08T12:13:01.0602774Z Working directory is '/home/runner/work/AWhittleWandering/AWhittleWandering'
+2025-06-08T12:13:01.0605360Z [command]/usr/bin/git version
+2025-06-08T12:13:01.0685749Z git version 2.49.0
+2025-06-08T12:13:01.0718484Z ##[endgroup]
+2025-06-08T12:13:01.0748178Z Temporarily overriding HOME='/home/runner/work/_temp/8083ae78-22ec-4410-91af-390e4f9c1403' before making global git config changes
+2025-06-08T12:13:01.0754263Z Adding repository directory to the temporary git global config as a safe directory
+2025-06-08T12:13:01.0756822Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AWhittleWandering/AWhittleWandering
+2025-06-08T12:13:01.0798308Z Deleting the contents of '/home/runner/work/AWhittleWandering/AWhittleWandering'
+2025-06-08T12:13:01.0803457Z ##[group]Initializing the repository
+2025-06-08T12:13:01.0808815Z [command]/usr/bin/git init /home/runner/work/AWhittleWandering/AWhittleWandering
+2025-06-08T12:13:01.0896024Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-06-08T12:13:01.0898131Z hint: is subject to change. To configure the initial branch name to use in all
+2025-06-08T12:13:01.0899483Z hint: of your new repositories, which will suppress this warning, call:
+2025-06-08T12:13:01.0900677Z hint:
+2025-06-08T12:13:01.0901527Z hint: 	git config --global init.defaultBranch <name>
+2025-06-08T12:13:01.0902518Z hint:
+2025-06-08T12:13:01.0903432Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-06-08T12:13:01.0905354Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-06-08T12:13:01.0906655Z hint:
+2025-06-08T12:13:01.0907371Z hint: 	git branch -m <name>
+2025-06-08T12:13:01.0910433Z Initialized empty Git repository in /home/runner/work/AWhittleWandering/AWhittleWandering/.git/
+2025-06-08T12:13:01.0920354Z [command]/usr/bin/git remote add origin https://github.com/JW-Flo/AWhittleWandering
+2025-06-08T12:13:01.0962266Z ##[endgroup]
+2025-06-08T12:13:01.0964092Z ##[group]Disabling automatic garbage collection
+2025-06-08T12:13:01.0967090Z [command]/usr/bin/git config --local gc.auto 0
+2025-06-08T12:13:01.1000724Z ##[endgroup]
+2025-06-08T12:13:01.1001967Z ##[group]Setting up auth
+2025-06-08T12:13:01.1008441Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-06-08T12:13:01.1042989Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-06-08T12:13:01.1426752Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-06-08T12:13:01.1460660Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-06-08T12:13:01.1699299Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-06-08T12:13:01.1737837Z ##[endgroup]
+2025-06-08T12:13:01.1740238Z ##[group]Fetching the repository
+2025-06-08T12:13:01.1759333Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +74f802759bb6edd1d0c2c87da0deda842f87d23a:refs/remotes/origin/main
+2025-06-08T12:13:06.3622726Z From https://github.com/JW-Flo/AWhittleWandering
+2025-06-08T12:13:06.3625701Z  * [new ref]         74f802759bb6edd1d0c2c87da0deda842f87d23a -> origin/main
+2025-06-08T12:13:06.3659189Z ##[endgroup]
+2025-06-08T12:13:06.3661525Z ##[group]Determining the checkout info
+2025-06-08T12:13:06.3664977Z ##[endgroup]
+2025-06-08T12:13:06.3669618Z [command]/usr/bin/git sparse-checkout disable
+2025-06-08T12:13:06.3713769Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-06-08T12:13:06.3745989Z ##[group]Checking out the ref
+2025-06-08T12:13:06.3750475Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2025-06-08T12:13:06.9950145Z Switched to a new branch 'main'
+2025-06-08T12:13:06.9955974Z branch 'main' set up to track 'origin/main'.
+2025-06-08T12:13:07.0024114Z ##[endgroup]
+2025-06-08T12:13:07.0063812Z [command]/usr/bin/git log -1 --format=%H
+2025-06-08T12:13:07.0086777Z 74f802759bb6edd1d0c2c87da0deda842f87d23a
