@@ -13,7 +13,7 @@ import './MinimalMapTest.css';
 
 <<<<<<< HEAD
 // Use the same token as the main Map component for consistency
-const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN;
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
 =======
 // Import the centralized MapBox configuration
 import mapboxConfig from '@shared/mapbox/mapboxConfig.ts';

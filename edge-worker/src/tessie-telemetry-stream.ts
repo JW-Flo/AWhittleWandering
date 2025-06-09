@@ -6,7 +6,7 @@
  * already set up on the vehicle to receive real-time updates.
  */
 
-import { TessieClient, VehicleData } from '../../shared/tessie/tessieClient';
+import { TessieClient } from '../../shared/tessie/tessieClient';
 
 interface TelemetryData {
   BatteryLevel?: number;
@@ -93,7 +93,7 @@ export class TessieTelemetryStream {
       }
       
       // Get vehicle data which includes telemetry configuration
-      const vehicleData = await this.client.getVehicleData(vehicle.id);
+      // const vehicleData = await this.client.getVehicleData(vehicle.id); // Unused variable, removed to fix lint
       
       // Construct WebSocket URL for Tessie's telemetry endpoint
       const wsUrl = `wss://telemetry.tessie.com/stream/${vehicle.vin}`;

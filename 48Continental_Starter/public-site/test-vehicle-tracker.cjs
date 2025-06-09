@@ -59,7 +59,7 @@ function checkEnvFile() {
       "# Mapbox token (required for maps)\n" +
         "VITE_MAPBOX_TOKEN=\n\n" +
         "# Tessie API token (optional, for live data)\n" +
-        "VITE_TESSIE_TOKEN=\n" +
+        "VITE_TESSIE_API_TOKEN=\n" +
         "VITE_TESSIE_BASE=https://api.tessie.com\n"
     );
 
