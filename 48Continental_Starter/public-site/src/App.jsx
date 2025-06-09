@@ -1,18 +1,11 @@
 /**
  * A Whittle Wandering Main Application Component
- * 
- * This is the primary React component that renders the entire
- * A Whittle Wandering road trip tracking application.
- * 
- * @version 1.0.0
- * @author A Whittle Wandering Team
- * @license MIT
- * 
- * CRITICAL LAUNCH VERSION
  */
 
 /* eslint-env browser */
 import React, { useState, useEffect } from 'react';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { useErrorTracking } from './hooks/useErrorTracking';
 
 // Import data source hooks
 import { useVehicleData, useWeatherData, useTripData, useChargingStations } from './hooks';
@@ -24,82 +17,90 @@ import Dashboard from './components/Dashboard';
  * Main App component
  */
 const App = () => {
+  // Enable error tracking
+  useErrorTracking();
+
   // Component state
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isDataInitialized, setIsDataInitialized] = useState(false);
 
-  // Fetch data using custom hooks with WebSocket streaming for vehicle data from Tessie API
+  // Start with only vehicle data and basic trip data
   const { vehicleData, loading: vehicleLoading, error: vehicleError, connectionStatus } = useVehicleData({
-    enableStreaming: true,
-    pollInterval: 30000  // Fallback polling interval if WebSocket fails
+    enableStreaming: false,
+    pollInterval: 30000
   });
 
-  // Update other data sources based on vehicle location
-  const { weatherData, weatherLoading, weatherError } = useWeatherData({
+  const { tripData, error: tripError } = useTripData({
+    pollInterval: 30000,
+    enabled: isDataInitialized
+  });
+
+  // Load weather and charging data only after initial render
+  const { weatherData, error: weatherError } = useWeatherData({
     location: vehicleData ? {
       latitude: vehicleData.location?.latitude || vehicleData.latitude,
       longitude: vehicleData.location?.longitude || vehicleData.longitude
     } : null,
-    pollInterval: 15000  // More frequent updates for weather
+    pollInterval: 30000,
+    enabled: isDataInitialized
   });
 
-  const { tripData, tripLoading, tripError } = useTripData({ pollInterval: 20000 });
-
-  const { stationsData, stationsLoading, stationsError } = useChargingStations({
+  const { stationsData, error: stationsError } = useChargingStations({
     latitude: vehicleData?.location?.latitude || vehicleData?.latitude,
     longitude: vehicleData?.location?.longitude || vehicleData?.longitude,
     radius: 50,
-    pollInterval: 30000
+    pollInterval: 30000,
+    enabled: isDataInitialized
   });
 
-  // Set loading state based on data loading
+  // Enable additional data loading after initial render
   useEffect(() => {
-    if (!vehicleLoading && !weatherLoading && !tripLoading && !stationsLoading) {
-      // Slight delay to ensure smooth transition
-      const timer = setTimeout(() => {
-        setIsLoading(false);
-      }, 500);
-
-      return () => clearTimeout(timer);
+    if (vehicleData && !isDataInitialized) {
+      setIsDataInitialized(true);
     }
-  }, [vehicleLoading, weatherLoading, tripLoading, stationsLoading]);
+  }, [vehicleData]);
+
+  // Set loading state based primarily on vehicle data
+  useEffect(() => {
+    if (!vehicleLoading && vehicleData) {
+      setIsLoading(false);
+    }
+  }, [vehicleLoading, vehicleData]);
 
   // Set error state only if we have no data at all
   useEffect(() => {
-    // Only show error if we have no vehicle data AND an error
-    // Since vehicle data is the most critical, we can still show the app with just that
     if (!vehicleData && vehicleError) {
       setError(vehicleError);
     } else {
-      // Clear any previous errors if we have data
       setError(null);
     }
   }, [vehicleData, vehicleError, weatherError, tripError, stationsError]);
 
   // Add Mapbox token to document head if not already present
   useEffect(() => {
-    // Check if token meta tag already exists
     if (!document.querySelector('meta[name="mapbox-token"]')) {
       const tokenMeta = document.createElement('meta');
       tokenMeta.name = 'mapbox-token';
-      // Use A Whittle Wandering's Mapbox token
       tokenMeta.content = import.meta.env.VITE_MAPBOX_TOKEN || '';
       document.head.appendChild(tokenMeta);
     }
   }, []);
 
   return (
-    <div className="app-container">
-      <Dashboard
-        vehicleData={vehicleData}
-        weatherData={weatherData}
-        tripData={tripData}
-        stationsData={stationsData}
-        connectionStatus={connectionStatus}
-        isLoading={isLoading}
-        error={error}
-      />
-    </div>
+    <ErrorBoundary showError={import.meta.env.DEV}>
+      <div className="app-container">
+        <Dashboard
+          vehicleData={vehicleData}
+          weatherData={weatherData}
+          tripData={tripData}
+          stationsData={stationsData}
+          connectionStatus={connectionStatus}
+          isLoading={isLoading}
+          error={error}
+        />
+      </div>
+    </ErrorBoundary>
   );
 };
 

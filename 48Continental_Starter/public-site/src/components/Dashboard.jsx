@@ -5,14 +5,24 @@
  */
 
 /* eslint-env browser */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import PropTypes from 'prop-types';
-import EnhancedMap from './EnhancedMap';
 import StatesTracker from './StatesTracker';
 import JourneyTab from './JourneyTab';
 import { useVehicleData } from '../hooks/useVehicleData';
 import { useTripData } from '../hooks/useTripData';
 import './Dashboard.css';
+
+// Lazy load the map component
+const EnhancedMap = lazy(() => import('./EnhancedMap'));
+
+// Loading component for the map
+const MapLoadingFallback = () => (
+  <div className="map-loading-fallback">
+    <div className="loading-spinner"></div>
+    <p>Loading map...</p>
+  </div>
+);
 
 const Dashboard = ({
   vehicleData: propVehicleData,
@@ -194,15 +204,17 @@ const Dashboard = ({
 
       {/* Full Screen Map */}
       <div className="map-fullscreen">
-        <EnhancedMap
-          vehicleData={finalVehicleData}
-          tripData={finalTripData}
-          stationsData={stationsData}
-          weatherData={weatherData}
-          fullscreen={true}
-          mapLayers={mapLayers}
-          mapboxToken={import.meta.env.VITE_MAPBOX_TOKEN}
-        />
+        <Suspense fallback={<MapLoadingFallback />}>
+          <EnhancedMap
+            vehicleData={finalVehicleData}
+            tripData={finalTripData}
+            stationsData={stationsData}
+            weatherData={weatherData}
+            fullscreen={true}
+            mapLayers={mapLayers}
+            mapboxToken={import.meta.env.VITE_MAPBOX_TOKEN}
+          />
+        </Suspense>
       </div>
 
       {/* Floating Controls */}
