@@ -94,19 +94,20 @@ export default defineConfig({
       "/api": {
         target: process.env.VITE_API_BASE_URL || "http://localhost:8787",
         changeOrigin: true,
-        secure: true,
+        // Set secure to false for local development to allow self-signed certificates or HTTP targets
+        secure: process.env.NODE_ENV === "production",
         rewrite: (path) => path,
         configure: (proxy, _options) => {
-          proxy.on('error', (err, _req, _res) => {
-            console.log('proxy error', err);
+          proxy.on("error", (err, _req, _res) => {
+            console.log("proxy error", err);
           });
-          proxy.on('proxyReq', (proxyReq, req, _res) => {
-            console.log('Sending Request:', req.method, req.url);
+          proxy.on("proxyReq", (proxyReq, req, _res) => {
+            console.log("Sending Request:", req.method, req.url);
           });
-          proxy.on('proxyRes', (proxyRes, req, _res) => {
-            console.log('Received Response:', proxyRes.statusCode, req.url);
+          proxy.on("proxyRes", (proxyRes, req, _res) => {
+            console.log("Received Response:", proxyRes.statusCode, req.url);
           });
-        }
+        },
       },
     },
   },

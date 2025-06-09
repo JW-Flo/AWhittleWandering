@@ -20,6 +20,6 @@ export const CONFIG = {
   simulation: {
     enabled: import.meta.env.VITE_USE_SIMULATED_DATA === "true",
     updateInterval: 5000,
-    cacheTimeout: 3000,
+    cacheTimeout: 5000, // Centralized TTL for cache (ms)
   },
 };

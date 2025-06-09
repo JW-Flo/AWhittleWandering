@@ -4,32 +4,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 // Request throttling/batching configuration
 const BATCH_INTERVAL = 5000; // 5 seconds between batches
 const THROTTLE_LIMIT = 10; // Max number of requests per batch
-const batchQueue = [];
-let batchTimeout = null;
-let requestCount = 0;
 
-// Process batched requests
-const processBatch = () => {
-  if (batchQueue.length > 0) {
-    const currentBatch = batchQueue.splice(0, THROTTLE_LIMIT);
-    currentBatch.forEach((callback) => callback());
-  }
-  batchTimeout = null;
-  requestCount = 0;
-};
-
-// Throttle/batch requests
-const throttleRequest = (callback) => {
-  batchQueue.push(callback);
-
-  if (!batchTimeout) {
-    batchTimeout = setTimeout(processBatch, BATCH_INTERVAL);
-  }
-
-  if (++requestCount >= THROTTLE_LIMIT) {
-    processBatch();
-  }
-};
+// The batching logic is now inside the hook, using refs for per-instance state.
 
 // Cache for route points
 const ROUTE_POINTS = [
@@ -57,6 +33,11 @@ export const useVehicleData = ({
   const [connectionStatus, setConnectionStatus] = useState("connecting");
   const [lastUpdated, setLastUpdated] = useState(null);
 
+  // Per-hook-instance batching state
+  const batchQueueRef = useRef([]);
+  const batchTimeoutRef = useRef(null);
+  const requestCountRef = useRef(0);
+
   // Enhanced caching with TTL
   const cache = useRef({
     simulated: null,
@@ -64,6 +45,32 @@ export const useVehicleData = ({
     ttl: 5000, // 5 seconds TTL
     pending: false,
   });
+
+  // Process batched requests (per instance)
+  const processBatch = useCallback(() => {
+    if (batchQueueRef.current.length > 0) {
+      const currentBatch = batchQueueRef.current.splice(0, THROTTLE_LIMIT);
+      currentBatch.forEach((callback) => callback());
+    }
+    batchTimeoutRef.current = null;
+    requestCountRef.current = 0;
+  }, []);
+
+  // Throttle/batch requests (per instance)
+  const throttleRequest = useCallback(
+    (callback) => {
+      batchQueueRef.current.push(callback);
+
+      if (!batchTimeoutRef.current) {
+        batchTimeoutRef.current = setTimeout(processBatch, BATCH_INTERVAL);
+      }
+
+      if (++requestCountRef.current >= THROTTLE_LIMIT) {
+        processBatch();
+      }
+    },
+    [processBatch]
+  );
 
   // Enhanced vehicle data with more realistic simulation
   const generateEnhancedSimulatedData = useCallback(() => {
