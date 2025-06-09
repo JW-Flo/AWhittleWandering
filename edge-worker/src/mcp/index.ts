@@ -6,16 +6,16 @@ import type { WorkerEnvironment } from '../types/cloudflare';
 export interface McpServerRequest {
   serverId: string;
   method: string;
-  params: Record<string, any>;
+  params: Record<string, unknown>;
   id?: string;
 }
 
 export interface McpServerResponse {
-  result?: any;
+  result?: unknown;
   error?: {
     code: number;
     message: string;
-    data?: any;
+    data?: unknown;
   };
   id?: string;
 }

@@ -52,6 +52,7 @@ export interface WorkerEnvironment {
   SENDGRID_API_KEY?: string;
   FROM_EMAIL?: string;
   WEATHER_API_KEY?: string;
+  OPENWEATHER_API_KEY?: string;
   ABRP_API_KEY?: string;
   MAPBOX_TOKEN?: string;
 }

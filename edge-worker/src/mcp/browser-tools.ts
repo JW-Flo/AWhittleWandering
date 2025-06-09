@@ -1,4 +1,4 @@
-import type { McpServerRequest, McpServerResponse, Env } from './index';
+import type { McpServerRequest, McpServerResponse } from './index';
 
 // Simulated browser session state
 interface BrowserSession {
@@ -25,11 +25,11 @@ interface BrowserSession {
     xpath: string;
   };
   auditResults?: {
-    accessibility?: Record<string, any>;
-    performance?: Record<string, any>;
-    seo?: Record<string, any>;
-    bestPractices?: Record<string, any>;
-    nextjs?: Record<string, any>;
+    accessibility?: Record<string, unknown>;
+    performance?: Record<string, unknown>;
+    seo?: Record<string, unknown>;
+    bestPractices?: Record<string, unknown>;
+    nextjs?: Record<string, unknown>;
   };
 }
 
@@ -44,14 +44,13 @@ const DEFAULT_SESSION_ID = 'default-browser-session';
  * Handle browser tools MCP requests
  */
 export async function handleBrowserTools(
-  request: McpServerRequest,
-  env: Env
+  request: McpServerRequest
 ): Promise<McpServerResponse> {
   switch (request.method) {
     case 'listTools':
       return handleListTools(request);
     case 'callTool':
-      return handleCallTool(request, env);
+      return handleCallTool(request);
     default:
       return {
         error: {
@@ -165,8 +164,7 @@ function handleListTools(request: McpServerRequest): McpServerResponse {
  * Handle calling a browser tool
  */
 async function handleCallTool(
-  request: McpServerRequest,
-  env: Env
+  request: McpServerRequest
 ): Promise<McpServerResponse> {
   const { name } = request.params;
   
