@@ -1,0 +1,135 @@
+﻿2025-06-09T02:13:11.8591349Z ##[group]Run npm test
+2025-06-09T02:13:11.8591656Z [36;1mnpm test[0m
+2025-06-09T02:13:11.8643519Z shell: /usr/bin/bash -e {0}
+2025-06-09T02:13:11.8643795Z ##[endgroup]
+2025-06-09T02:13:12.0107078Z 
+2025-06-09T02:13:12.0110075Z > continentalusa-edge@0.1.0 test
+2025-06-09T02:13:12.0116764Z > npm run build && vitest run
+2025-06-09T02:13:12.0117098Z 
+2025-06-09T02:13:12.1816826Z 
+2025-06-09T02:13:12.1817693Z > continentalusa-edge@0.1.0 build
+2025-06-09T02:13:12.1819031Z > esbuild src/index.ts --bundle --format=esm --outfile=dist/worker.js
+2025-06-09T02:13:12.1819938Z 
+2025-06-09T02:13:12.2016744Z 
+2025-06-09T02:13:12.2020634Z   dist/worker.js  72.5kb
+2025-06-09T02:13:12.2024533Z 
+2025-06-09T02:13:12.2025581Z ⚡ Done in 11ms
+2025-06-09T02:13:12.9471416Z 
+2025-06-09T02:13:12.9473835Z [7m[1m[36m RUN [39m[22m[27m [36mv1.6.1[39m [90m/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker[39m
+2025-06-09T02:13:12.9474945Z 
+2025-06-09T02:13:13.6208823Z  [32m✓[39m src/utils/__tests__/monitoring.test.ts [2m ([22m[2m17 tests[22m[2m)[22m[90m 161[2mms[22m[39m
+2025-06-09T02:13:14.0908775Z  [32m✓[39m src/utils/__tests__/error-handler.test.ts [2m ([22m[2m13 tests[22m[2m)[22m[90m 50[2mms[22m[39m
+2025-06-09T02:13:15.3899754Z  [33m❯[39m src/__tests__/integration.test.ts [2m ([22m[2m7 tests[22m [2m|[22m [31m7 failed[39m[2m)[22m[90m 101[2mms[22m[39m
+2025-06-09T02:13:15.3917594Z [31m   [33m❯[31m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould serve index.html for root path[39m
+2025-06-09T02:13:15.3919733Z [31m     → ENOENT: no such file or directory, open '/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/dist/worker.js'[39m
+2025-06-09T02:13:15.3924337Z [31m     → Cannot read properties of undefined (reading 'mf')[39m
+2025-06-09T02:13:15.3926356Z [31m   [33m❯[31m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould return 404 for non-existent files[39m
+2025-06-09T02:13:15.3928376Z [31m     → ENOENT: no such file or directory, open '/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/dist/worker.js'[39m
+2025-06-09T02:13:15.3929636Z [31m     → Cannot read properties of undefined (reading 'mf')[39m
+2025-06-09T02:13:15.3931779Z [31m   [33m❯[31m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould handle CORS headers for static files[39m
+2025-06-09T02:13:15.3934439Z [31m     → ENOENT: no such file or directory, open '/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/dist/worker.js'[39m
+2025-06-09T02:13:15.3936157Z [31m     → Cannot read properties of undefined (reading 'mf')[39m
+2025-06-09T02:13:15.3938361Z [31m   [33m❯[31m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mWeather Risk Calculation[2m > [22mshould calculate weather risk for a given location[39m
+2025-06-09T02:13:15.3940593Z [31m     → ENOENT: no such file or directory, open '/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/dist/worker.js'[39m
+2025-06-09T02:13:15.3942059Z [31m     → Cannot read properties of undefined (reading 'mf')[39m
+2025-06-09T02:13:15.3944082Z [31m   [33m❯[31m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mWeather Risk Calculation[2m > [22mshould handle invalid location data[39m
+2025-06-09T02:13:15.3946393Z [31m     → ENOENT: no such file or directory, open '/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/dist/worker.js'[39m
+2025-06-09T02:13:15.3947888Z [31m     → Cannot read properties of undefined (reading 'mf')[39m
+2025-06-09T02:13:15.3949944Z [31m   [33m❯[31m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mRoute Optimization[2m > [22mshould optimize route with weather considerations[39m
+2025-06-09T02:13:15.3952137Z [31m     → ENOENT: no such file or directory, open '/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/dist/worker.js'[39m
+2025-06-09T02:13:15.3953985Z [31m     → Cannot read properties of undefined (reading 'mf')[39m
+2025-06-09T02:13:15.3956308Z [31m   [33m❯[31m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mRoute Optimization[2m > [22mshould provide different routes based on weather conditions[39m
+2025-06-09T02:13:15.3958617Z [31m     → ENOENT: no such file or directory, open '/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/dist/worker.js'[39m
+2025-06-09T02:13:15.3960105Z [31m     → Cannot read properties of undefined (reading 'mf')[39m
+2025-06-09T02:13:15.4259186Z 
+2025-06-09T02:13:15.4287641Z [31m⎯⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 7 [27m[22m⎯⎯⎯⎯⎯⎯⎯[39m
+2025-06-09T02:13:15.4288459Z 
+2025-06-09T02:13:15.4298555Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould serve index.html for root path
+2025-06-09T02:13:15.4305295Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould return 404 for non-existent files
+2025-06-09T02:13:15.4311474Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould handle CORS headers for static files
+2025-06-09T02:13:15.4317702Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mWeather Risk Calculation[2m > [22mshould calculate weather risk for a given location
+2025-06-09T02:13:15.4321356Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mWeather Risk Calculation[2m > [22mshould handle invalid location data
+2025-06-09T02:13:15.4324891Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mRoute Optimization[2m > [22mshould optimize route with weather considerations
+2025-06-09T02:13:15.4343468Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mRoute Optimization[2m > [22mshould provide different routes based on weather conditions
+2025-06-09T02:13:15.4367504Z [31m[1mError[22m: ENOENT: no such file or directory, open '/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/dist/worker.js'[39m
+2025-06-09T02:13:15.4369365Z [90m [2m❯[22m readFileSync node:fs:[2m449:20[22m[39m
+2025-06-09T02:13:15.4370697Z [90m [2m❯[22m getWorkerScript node_modules/miniflare/src/plugins/core/index.ts:[2m996:10[22m[39m
+2025-06-09T02:13:15.4372307Z [90m [2m❯[22m Object.getServices node_modules/miniflare/src/plugins/core/index.ts:[2m627:24[22m[39m
+2025-06-09T02:13:15.4379996Z [90m [2m❯[22m _Miniflare.#assembleConfig node_modules/miniflare/src/index.ts:[2m1731:51[22m[39m
+2025-06-09T02:13:15.4381511Z [90m [2m❯[22m _Miniflare.#assembleAndUpdateConfig node_modules/miniflare/src/index.ts:[2m1960:18[22m[39m
+2025-06-09T02:13:15.4382955Z [90m [2m❯[22m Mutex.runWith node_modules/miniflare/src/workers/shared/sync.ts:[2m66:45[22m[39m
+2025-06-09T02:13:15.4384272Z [90m [2m❯[22m _Miniflare.#waitForReady node_modules/miniflare/src/index.ts:[2m2119:3[22m[39m
+2025-06-09T02:13:15.4385593Z [90m [2m❯[22m _Miniflare._getProxyClient node_modules/miniflare/src/index.ts:[2m2445:3[22m[39m
+2025-06-09T02:13:15.4387025Z [90m [2m❯[22m _Miniflare.#getProxy node_modules/miniflare/src/index.ts:[2m2531:23[22m[39m
+2025-06-09T02:13:15.4387599Z 
+2025-06-09T02:13:15.4387999Z [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22m[39m
+2025-06-09T02:13:15.4397054Z [31m[1mSerialized Error:[22m[39m [90m{ errno: -2, code: 'ENOENT', syscall: 'open', path: '/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/dist/worker.js' }[39m
+2025-06-09T02:13:15.4398616Z [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯[22m[39m
+2025-06-09T02:13:15.4399330Z 
+2025-06-09T02:13:15.4400869Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould serve index.html for root path
+2025-06-09T02:13:15.4403465Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould return 404 for non-existent files
+2025-06-09T02:13:15.4406191Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould handle CORS headers for static files
+2025-06-09T02:13:15.4409015Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mWeather Risk Calculation[2m > [22mshould calculate weather risk for a given location
+2025-06-09T02:13:15.4411752Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mWeather Risk Calculation[2m > [22mshould handle invalid location data
+2025-06-09T02:13:15.4414500Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mRoute Optimization[2m > [22mshould optimize route with weather considerations
+2025-06-09T02:13:15.4447579Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mRoute Optimization[2m > [22mshould provide different routes based on weather conditions
+2025-06-09T02:13:15.4448821Z 
+2025-06-09T02:13:15.4513510Z ##[error]TypeError: Cannot read properties of undefined (reading 'mf')
+ ❯ Module.cleanupTestEnv src/__tests__/test-utils.ts:49:15
+ ❯ src/__tests__/integration.test.ts:14:15
+
+
+2025-06-09T02:13:15.4523975Z [31m[1mTypeError[22m: Cannot read properties of undefined (reading 'mf')[39m
+2025-06-09T02:13:15.4525301Z [36m [2m❯[22m Module.cleanupTestEnv src/__tests__/test-utils.ts:[2m49:15[22m[39m
+2025-06-09T02:13:15.5026249Z     [90m 47| [39m
+2025-06-09T02:13:15.5028004Z     [90m 48| [39m[35mexport[39m [35mconst[39m cleanupTestEnv [33m=[39m [35masync[39m (env[33m:[39m [33mTestEnv[39m) [33m=>[39m {
+2025-06-09T02:13:15.5031827Z     [90m 49| [39m    [35mawait[39m env[33m.[39mmf[33m.[39m[34mdispose[39m()[33m;[39m
+2025-06-09T02:13:15.5032674Z     [90m   | [39m              [31m^[39m
+2025-06-09T02:13:15.5033220Z     [90m 50| [39m}[33m;[39m
+2025-06-09T02:13:15.5034055Z     [90m 51| [39m
+2025-06-09T02:13:15.5034827Z [90m [2m❯[22m src/__tests__/integration.test.ts:[2m14:15[22m[39m
+2025-06-09T02:13:15.5035229Z 
+2025-06-09T02:13:15.5045746Z [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯[22m[39m
+2025-06-09T02:13:15.5046291Z 
+2025-06-09T02:13:15.5051017Z 
+2025-06-09T02:13:15.5058263Z ##[error]TypeError: Cannot read properties of undefined (reading 'mf')
+ ❯ Module.cleanupTestEnv src/__tests__/test-utils.ts:49:15
+ ❯ src/__tests__/integration.test.ts:14:15
+
+
+2025-06-09T02:13:15.5084704Z [2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (3)[39m
+2025-06-09T02:13:15.5090871Z [2m      Tests [22m [1m[31m7 failed[39m[22m[2m | [22m[1m[32m30 passed[39m[22m[90m (37)[39m
+2025-06-09T02:13:15.5146909Z [2m   Start at [22m 02:13:12
+2025-06-09T02:13:15.5148553Z [2m   Duration [22m 2.48s[2m (transform 916ms, setup 1ms, collect 1.19s, tests 312ms, environment 1ms, prepare 373ms)[22m
+2025-06-09T02:13:15.5149436Z 
+2025-06-09T02:13:15.5149769Z 
+2025-06-09T02:13:15.5152938Z ##[error]TypeError: Cannot read properties of undefined (reading 'mf')
+ ❯ Module.cleanupTestEnv src/__tests__/test-utils.ts:49:15
+ ❯ src/__tests__/integration.test.ts:14:15
+
+
+2025-06-09T02:13:15.5155031Z 
+2025-06-09T02:13:15.5158177Z ##[error]TypeError: Cannot read properties of undefined (reading 'mf')
+ ❯ Module.cleanupTestEnv src/__tests__/test-utils.ts:49:15
+ ❯ src/__tests__/integration.test.ts:14:15
+
+
+2025-06-09T02:13:15.5184527Z 
+2025-06-09T02:13:15.5209344Z ##[error]TypeError: Cannot read properties of undefined (reading 'mf')
+ ❯ Module.cleanupTestEnv src/__tests__/test-utils.ts:49:15
+ ❯ src/__tests__/integration.test.ts:14:15
+
+
+2025-06-09T02:13:15.5228306Z 
+2025-06-09T02:13:15.5231424Z ##[error]TypeError: Cannot read properties of undefined (reading 'mf')
+ ❯ Module.cleanupTestEnv src/__tests__/test-utils.ts:49:15
+ ❯ src/__tests__/integration.test.ts:14:15
+
+
+2025-06-09T02:13:15.5366811Z 
+2025-06-09T02:13:15.5370732Z ##[error]TypeError: Cannot read properties of undefined (reading 'mf')
+ ❯ Module.cleanupTestEnv src/__tests__/test-utils.ts:49:15
+ ❯ src/__tests__/integration.test.ts:14:15
+
+
+2025-06-09T02:13:15.6107026Z ##[error]Process completed with exit code 1.
