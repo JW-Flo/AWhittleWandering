@@ -11,11 +11,8 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './MinimalMapTest.css';
 
-// Import the centralized MapBox configuration
-import mapboxConfig from '../../../shared/mapbox/mapboxConfig';
-
-// Use the token from the centralized config
-const MAPBOX_TOKEN = mapboxConfig.getMapboxToken();
+// Use the same token as the main Map component for consistency
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2liaTA4enIwIn0.tU9_tLaaxXxhfcVX4WhOeA';
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
 const MinimalMapTest = () => {

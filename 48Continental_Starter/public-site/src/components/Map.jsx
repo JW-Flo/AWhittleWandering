@@ -20,19 +20,13 @@ import './MapEnhancements.css'; import { ensureMapboxFormat } from "../utils/map
 
 
 
-// Import the centralized MapBox configuration
-import mapboxConfig from '../../../shared/mapbox/mapboxConfig';
+// IMPORTANT: Directly set the MapBox token to fix the "Invalid Mapbox access token" error
+// This is a public token (pk.) for client-side application
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2liaTA4enIwIn0.tU9_tLaaxXxhfcVX4WhOeA';
 
-// Use the token from the centralized config
-const mapboxToken = mapboxConfig.getMapboxToken();
-mapboxgl.accessToken = mapboxToken;
-
-// Log token status (first few chars only for security)
-if (mapboxToken) {
-  console.log('Map.jsx: Using MapBox token from environment:', mapboxToken.substring(0, 8) + '...');
-} else {
-  console.error('Map.jsx: No MapBox token found! Please ensure VITE_MAPBOX_TOKEN is set in your environment.');
-}
+// Explicitly set the token without complex fallback logic
+mapboxgl.accessToken = MAPBOX_TOKEN;
+console.log('Map.jsx: Using MapBox token:', MAPBOX_TOKEN.substring(0, 10) + '...');
 
 // SVG icons for map markers
 const SVG_ICONS = {
