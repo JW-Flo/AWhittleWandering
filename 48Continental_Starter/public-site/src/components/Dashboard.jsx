@@ -1,18 +1,16 @@
 /**
- * Dashboard Component - Redesigned for WanderingWhittle
+ * Dashboard Component - Redesigned
  * 
- * Map-first design with minimal overlays for a clean, immersive journey tracking experience.
- * Now uses EnhancedVehicleMap for improved vehicle tracking and coordinate handling.
+ * Map-first design with minimal overlays for a clean, focused journey tracking experience
  */
 
 /* eslint-env browser */
 import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import MapErrorBoundary from './MapErrorBoundary';
-import EnhancedVehicleMap from './EnhancedVehicleMap';
+import EnhancedMap from './EnhancedMap';
 import StatesTracker from './StatesTracker';
 import JourneyTab from './JourneyTab';
-import useVehicleData from '../hooks/useVehicleData';
+import { useVehicleData } from '../hooks/useVehicleData';
 import { useTripData } from '../hooks/useTripData';
 import './Dashboard.css';
 
@@ -36,7 +34,7 @@ const Dashboard = ({
   });
 
   // Use hooks for enhanced data with combined loading and error states
-  const { vehicleData, loading: vehicleLoading, error: vehicleError, isConnected } = useVehicleData();
+  const { vehicleData, loading: vehicleLoading, error: vehicleError } = useVehicleData();
   const { tripData, loading: tripLoading, visitedStates, currentState } = useTripData({
     vehicleData: vehicleData || propVehicleData
   });
@@ -151,7 +149,7 @@ const Dashboard = ({
       {/* Minimal Header Bar */}
       <div className="header-overlay">
         <div className="header-left">
-          <h1 className="journey-title">WanderingWhittle</h1>
+          <h1 className="journey-title">48 Continental</h1>
           <div className="journey-progress">
             <span className="progress-text">{statesVisited} of 48 states</span>
             <div className="progress-bar-mini">
@@ -196,21 +194,15 @@ const Dashboard = ({
 
       {/* Full Screen Map */}
       <div className="map-fullscreen">
-        <MapErrorBoundary
-          onError={(error) => console.error('Map Error:', error)}
+        <EnhancedMap
+          vehicleData={finalVehicleData}
+          tripData={finalTripData}
+          stationsData={stationsData}
+          weatherData={weatherData}
+          fullscreen={true}
+          mapLayers={mapLayers}
           mapboxToken={import.meta.env.VITE_MAPBOX_TOKEN}
-          showStaticMap={true}
-        >
-          <EnhancedVehicleMap
-            tripData={finalTripData}
-            useMock={!finalVehicleData}
-            useWebSocket={isConnected === 'connected'}
-            pollingInterval={5000}
-            fullscreen={true}
-            mapLayers={mapLayers}
-            stationsData={stationsData}
-          />
-        </MapErrorBoundary>
+        />
       </div>
 
       {/* Floating Controls */}

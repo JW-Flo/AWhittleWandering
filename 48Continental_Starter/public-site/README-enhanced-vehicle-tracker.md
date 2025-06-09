@@ -107,7 +107,7 @@ node setup-mapbox-token.cjs
 For live vehicle data, a Tessie API token is required. Set this in your `.env` file:
 
 ```
-VITE_TESSIE_TOKEN=your_tessie_token_here
+VITE_TESSIE_API_TOKEN=your_tessie_token_here
 ```
 
 ## Improvements Over Original Implementation

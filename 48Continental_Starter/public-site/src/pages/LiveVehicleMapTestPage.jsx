@@ -121,7 +121,7 @@ const LiveVehicleMapTestPage = () => {
                                     type="checkbox"
                                     checked={useWebSocket}
                                     onChange={() => setUseWebSocket(!useWebSocket)}
-                                    disabled={!useMock && !import.meta.env.VITE_TESSIE_TOKEN}
+                                    disabled={!useMock && !import.meta.env.VITE_TESSIE_API_TOKEN}
                                 />
                                 <span className="toggle-slider"></span>
                             </label>
@@ -203,7 +203,7 @@ const LiveVehicleMapTestPage = () => {
                             When using mock data, the vehicle will follow the route defined in the
                             trip data or move randomly if no route is provided.
                         </p>
-                        {!useMock && !import.meta.env.VITE_TESSIE_TOKEN && (
+                        {!useMock && !import.meta.env.VITE_TESSIE_API_TOKEN && (
                             <div className="warning-message">
                                 <strong>Note:</strong> To use live data, you need to set a Tessie API
                                 token in the <code>.env</code> file.

@@ -1,11 +1,11 @@
 /**
- * The Wandering Whittle Main Application Component
+ * A Whittle Wandering Main Application Component
  * 
  * This is the primary React component that renders the entire
- * The Wandering Whittle road trip tracking application.
+ * A Whittle Wandering road trip tracking application.
  * 
  * @version 1.0.0
- * @author The Wandering Whittle Team
+ * @author A Whittle Wandering Team
  * @license MIT
  * 
  * CRITICAL LAUNCH VERSION
@@ -16,9 +16,6 @@ import React, { useState, useEffect } from 'react';
 
 // Import data source hooks
 import { useVehicleData, useWeatherData, useTripData, useChargingStations } from './hooks';
-
-// Import MapBox configuration
-import mapboxConfig from '@shared/mapbox/mapboxConfig.ts';
 
 // Import Dashboard component
 import Dashboard from './components/Dashboard';
@@ -85,8 +82,8 @@ const App = () => {
     if (!document.querySelector('meta[name="mapbox-token"]')) {
       const tokenMeta = document.createElement('meta');
       tokenMeta.name = 'mapbox-token';
-      // Use the token from the centralized config
-      tokenMeta.content = mapboxConfig.getMapboxToken();
+      // Use A Whittle Wandering's Mapbox token
+      tokenMeta.content = import.meta.env.VITE_MAPBOX_TOKEN || '';
       document.head.appendChild(tokenMeta);
     }
   }, []);

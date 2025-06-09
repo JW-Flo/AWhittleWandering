@@ -14,7 +14,9 @@ export const setupRealDataTest = () => {
 
   // Set up environment variables
   process.env.VITE_MAPBOX_TOKEN =
-    process.env.VITE_MAPBOX_TOKEN || "pk.test-token";
+    process.env.VITE_MAPBOX_TOKEN ||
+    process.env.MAPBOX_TOKEN ||
+    "pk.test-token";
   process.env.USE_REAL_DATA = "true";
 
   // Helper to wait for data loading
