@@ -15,4 +15,10 @@ module.exports = {
     command: "npx",
     args: ["-y", "@antv/mcp-server-chart"],
   },
+  "hf-mcp-server": {
+    url: "https://huggingface.co/mcp",
+    headers: {
+      Authorization: "Bearer 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",
+    },
+  },
 };
