@@ -14,11 +14,32 @@ interface FileSystemNode {
   };
 }
 
+// Argument interfaces for filesystem operations
+interface ReadFileArgs {
+  path: string;
+}
+
+interface ListDirectoryArgs {
+  path: string;
+}
+
+interface SearchFilesArgs {
+  path: string;
+  pattern: string;
+  excludePatterns?: string[];
+}
+
+interface DirectoryTreeResult {
+  name: string;
+  type: 'file' | 'directory';
+  children?: DirectoryTreeResult[];
+}
+
 // Root path for simulated filesystem
 const ROOT_PATH = '/Users/joe/Projects/Personal/ContinentalUSA';
 
-// KV namespace key for filesystem
-const FS_KV_KEY = 'FILESYSTEM_DATA';
+// KV namespace key for filesystem (reserved for future use)
+// const FS_KV_KEY = 'FILESYSTEM_DATA';
 
 /**
  * Handle filesystem MCP requests
@@ -145,12 +166,24 @@ async function handleCallTool(
   
   switch (name) {
     case 'read_file':
+      if (!isReadFileArgs(args)) {
+        return createError(request.id, -32602, 'Invalid arguments for read_file');
+      }
       return handleReadFile(args, fsData, request.id);
     case 'list_directory':
+      if (!isListDirectoryArgs(args)) {
+        return createError(request.id, -32602, 'Invalid arguments for list_directory');
+      }
       return handleListDirectory(args, fsData, request.id);
     case 'directory_tree':
+      if (!isListDirectoryArgs(args)) {
+        return createError(request.id, -32602, 'Invalid arguments for directory_tree');
+      }
       return handleDirectoryTree(args, fsData, request.id);
     case 'search_files':
+      if (!isSearchFilesArgs(args)) {
+        return createError(request.id, -32602, 'Invalid arguments for search_files');
+      }
       return handleSearchFiles(args, fsData, request.id);
     case 'list_allowed_directories':
       return handleListAllowedDirectories(request.id);
@@ -168,7 +201,10 @@ async function handleCallTool(
 /**
  * Get filesystem data from KV
  */
-async function getFileSystemData(env: Env): Promise<FileSystemNode> {
+async function getFileSystemData(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _env: Env
+): Promise<FileSystemNode> {
   try {
     // In a real implementation, this would fetch from KV
     // For demo purposes, we return a simulated filesystem
@@ -254,7 +290,7 @@ async function getFileSystemData(env: Env): Promise<FileSystemNode> {
  * Handle read_file tool
  */
 function handleReadFile(
-  args: any,
+  args: ReadFileArgs,
   fsData: FileSystemNode,
   requestId: string | undefined
 ): McpServerResponse {
@@ -311,7 +347,7 @@ function handleReadFile(
  * Handle list_directory tool
  */
 function handleListDirectory(
-  args: any,
+  args: ListDirectoryArgs,
   fsData: FileSystemNode,
   requestId: string | undefined
 ): McpServerResponse {
@@ -372,7 +408,7 @@ function handleListDirectory(
  * Handle directory_tree tool
  */
 function handleDirectoryTree(
-  args: any,
+  args: ListDirectoryArgs,
   fsData: FileSystemNode,
   requestId: string | undefined
 ): McpServerResponse {
@@ -431,7 +467,7 @@ function handleDirectoryTree(
  * Handle search_files tool
  */
 function handleSearchFiles(
-  args: any,
+  args: SearchFilesArgs,
   fsData: FileSystemNode,
   requestId: string | undefined
 ): McpServerResponse {
@@ -546,8 +582,8 @@ function findNodeByPath(root: FileSystemNode, path: string): FileSystemNode | nu
 /**
  * Build a directory tree from a node
  */
-function buildDirectoryTree(node: FileSystemNode): any {
-  const result: any = {
+function buildDirectoryTree(node: FileSystemNode): DirectoryTreeResult {
+  const result: DirectoryTreeResult = {
     name: node.name,
     type: node.type
   };
@@ -592,4 +628,31 @@ function searchFiles(
   }
   
   return results;
+}
+
+// Type guard functions
+function isReadFileArgs(args: unknown): args is ReadFileArgs {
+  return typeof args === 'object' && args !== null && 'path' in args && typeof (args as Record<string, unknown>).path === 'string';
+}
+
+function isListDirectoryArgs(args: unknown): args is ListDirectoryArgs {
+  return typeof args === 'object' && args !== null && 'path' in args && typeof (args as Record<string, unknown>).path === 'string';
+}
+
+function isSearchFilesArgs(args: unknown): args is SearchFilesArgs {
+  return typeof args === 'object' && args !== null && 
+         'path' in args && typeof (args as Record<string, unknown>).path === 'string' &&
+         'pattern' in args && typeof (args as Record<string, unknown>).pattern === 'string';
+}
+
+// Helper function to create error responses
+function createError(id: string | number, code: number, message: string): McpServerResponse {
+  return {
+    error: {
+      code,
+      message,
+      data: null
+    },
+    id: String(id)
+  };
 }

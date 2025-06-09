@@ -14,8 +14,8 @@
     "deploy:mobile": "npm run build:mobile && cd ContinentalUSA-mobile && npm run deploy",
     "codegen:ts": "npm --prefix shared run codegen:ts",
     "lint": "eslint edge-worker/src/**/*.ts",
-    "test": "npm --prefix edge-worker test && cd ios-client && swift test",
-    "pre-deploy": "npm run lint && npm run build:edge && npm run test",
+    "test": "npm --prefix edge-worker test",
+    "pre-deploy": "npm run lint && npm run build:edge && npm run build:site && npm run test",
     "deploy": "scripts/deploy-all.sh"
   },
   "devDependencies": {

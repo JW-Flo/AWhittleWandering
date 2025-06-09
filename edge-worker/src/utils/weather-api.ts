@@ -14,20 +14,27 @@ import type { Weather } from '../types';
  */
 export async function fetchWeatherData(latitude: number, longitude: number, apiKey: string): Promise<Weather> {
   try {
-    if (!apiKey) {
-      console.warn('Weather API key not provided, using fallback data');
+    // Check if API key is provided and not just whitespace
+    const trimmedKey = apiKey?.trim();
+    console.log(`Weather API Debug: Received key="${apiKey}", trimmed="${trimmedKey}", length=${trimmedKey?.length || 0}`);
+    
+    if (!trimmedKey) {
+      console.warn('Weather API key not provided or empty, using fallback data. Received key:', apiKey);
       return generateFallbackWeatherData(latitude, longitude);
     }
+
+    const apiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${trimmedKey}`;
+    console.log(`Weather API Debug: Making request to ${apiUrl.replace(trimmedKey, '***KEY***')}`);
 
     // Use OpenWeatherMap API as primary source
-    const response = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${apiKey}`
-    );
+    const response = await fetch(apiUrl);
 
     if (!response.ok) {
-      console.warn(`Weather API returned status ${response.status}, using fallback data`);
+      console.warn(`Weather API returned status ${response.status} (${response.statusText}), using fallback data`);
       return generateFallbackWeatherData(latitude, longitude);
     }
+
+    console.log('Weather API Debug: Successfully fetched weather data from OpenWeatherMap');
 
     const data = await response.json();
 
