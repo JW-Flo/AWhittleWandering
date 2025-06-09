@@ -11,8 +11,16 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './MinimalMapTest.css';
 
+<<<<<<< HEAD
 // Use the same token as the main Map component for consistency
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN;
+=======
+// Import the centralized MapBox configuration
+import mapboxConfig from '@shared/mapbox/mapboxConfig.ts';
+
+// Use the token from the centralized config
+const MAPBOX_TOKEN = mapboxConfig.getMapboxToken();
+>>>>>>> 98fd9db (Update dependencies and devDependencies for credential-manager and shared packages)
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
 const MinimalMapTest = () => {

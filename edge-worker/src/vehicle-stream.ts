@@ -8,6 +8,7 @@
 
 import { TeslaAPIClient } from './utils/tesla-client';
 import { getToken, setToken } from './utils/tesla-tokens';
+import type { Env } from './index';
 
 // WebSocket connections store
 const CONNECTIONS = new Map<string, WebSocket>();
@@ -15,19 +16,6 @@ const CONNECTIONS = new Map<string, WebSocket>();
 // Polling interval in milliseconds
 const POLL_INTERVAL = 5000;
 
-// Define Cloudflare Worker types
-interface KVNamespace {
-  get(key: string, options?: { type?: string }): Promise<string | null>;
-  put(key: string, value: string): Promise<void>;
-}
-
-// Define types for Cloudflare Workers environment
-interface Env {
-  TESLA_CLIENT_ID?: string;
-  TESLA_CLIENT_SECRET?: string;
-  TESLA_KV?: KVNamespace;
-  DB?: unknown; // D1 database if available
-}
 
 /**
  * Handle HTTP request for WebSocket connection to vehicle data stream
@@ -76,7 +64,6 @@ export async function onRequest(request: Request, env: Env): Promise<Response> {
 
   // Create WebSocket pair for Cloudflare Workers
   // This is a Cloudflare Worker-specific API, not in standard TypeScript types
-  // @ts-expect-error WebSocketPair is a Cloudflare Workers API
   const pair = new WebSocketPair();
   const server = pair[0];
   const client_ws = pair[1];

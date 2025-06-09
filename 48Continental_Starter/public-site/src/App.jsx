@@ -16,6 +16,12 @@ import React, { useState, useEffect } from 'react';
 
 // Import data source hooks
 import { useVehicleData, useWeatherData, useTripData, useChargingStations } from './hooks';
+<<<<<<< HEAD
+=======
+
+// Import MapBox configuration
+import mapboxConfig from '@shared/mapbox/mapboxConfig.ts';
+>>>>>>> 98fd9db (Update dependencies and devDependencies for credential-manager and shared packages)
 
 // Import Dashboard component
 import Dashboard from './components/Dashboard';
