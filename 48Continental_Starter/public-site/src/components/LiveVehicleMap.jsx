@@ -10,7 +10,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import * as mockVehicleData from '../services/mockVehicleData';
+// mockVehicleData removed: now using real data only
 import * as tessieClient from '../services/tessieClient';
 import './LiveVehicleMap.css';
 
@@ -366,7 +366,7 @@ const LiveVehicleMap = ({
                 let data;
 
                 if (useMock) {
-                    data = await mockVehicleData.getMockVehicleData();
+                    // data = await mockVehicleData.getMockVehicleData(); // removed mock, now always use real data
                 } else {
                     data = await tessieClient.getVehicleData();
                 }
@@ -391,7 +391,7 @@ const LiveVehicleMap = ({
                 }
 
                 if (useMock) {
-                    webSocketRef.current = mockVehicleData.createMockWebSocket((data) => {
+                    // webSocketRef.current = mockVehicleData.createMockWebSocket((data) => { // removed mock
                         if (isMounted && data.vehicle_data) {
                             setVehicleData(data.vehicle_data);
                             updateVehicleMarker(data.vehicle_data);
@@ -426,7 +426,7 @@ const LiveVehicleMap = ({
                 latitude: point[1]
             }));
 
-            mockVehicleData.startMockVehicleSimulation({
+            // mockVehicleData.startMockVehicleSimulation({ // removed mock
                 followPath: routeLatLng,
                 moving: true,
                 updateInterval: pollingInterval / 2
@@ -453,7 +453,7 @@ const LiveVehicleMap = ({
             }
 
             if (useMock) {
-                mockVehicleData.stopMockVehicleSimulation();
+                // mockVehicleData.stopMockVehicleSimulation(); // removed mock
             }
         };
     }, [useMock, useWebSocket, pollingInterval, isMapReady, routePoints]);
