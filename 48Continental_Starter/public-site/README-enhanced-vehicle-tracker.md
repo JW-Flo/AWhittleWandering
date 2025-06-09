@@ -1,6 +1,6 @@
 # Enhanced Vehicle Tracker Documentation
 
-This document provides information about the Enhanced Vehicle Tracker implementation for the 48 Continental USA Project. The enhanced vehicle tracker provides real-time visualization of the Tesla's location and status during the 60-day road trip across all 48 contiguous U.S. states.
+This document provides information about the Enhanced Vehicle Tracker implementation for the The Wandering Whittle Project. The enhanced vehicle tracker provides real-time visualization of the Tesla's location and status during the 60-day road trip across all 48 contiguous U.S. states.
 
 ## Overview
 

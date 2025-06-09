@@ -159,7 +159,7 @@ const Dashboard = ({
       {/* Minimal Header Bar */}
       <div className="header-overlay">
         <div className="header-left">
-          <h1 className="journey-title">48 Continental</h1>
+          <h1 className="journey-title">The Wandering Whittle</h1>
           <div className="journey-progress">
             <span className="progress-text">{statesVisited} of 48 states</span>
             <div className="progress-bar-mini">

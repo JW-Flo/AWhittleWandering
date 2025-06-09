@@ -2,7 +2,7 @@
  * Weather Data Hook
  * 
  * This hook provides access to current and forecasted weather data
- * for the 48 Continental USA journey.
+ * for the The Wandering Whittle journey.
  */
 
 /* eslint-env browser */

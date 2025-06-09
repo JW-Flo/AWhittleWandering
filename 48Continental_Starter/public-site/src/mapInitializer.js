@@ -1,5 +1,5 @@
 /**
- * Map Initializer for 48 Continental USA
+ * Map Initializer for The Wandering Whittle
  * 
  * This module provides the MapInitializer class responsible for
  * setting up and managing the interactive map display.

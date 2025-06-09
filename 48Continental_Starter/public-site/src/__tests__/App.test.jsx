@@ -87,7 +87,7 @@ describe('App Component', () => {
   test('renders Dashboard with data when loading is false and no errors', async () => {
     render(<App />);
     await waitFor(() => {
-      expect(screen.getByText(/48 Continental/i)).toBeInTheDocument();
+      expect(screen.getByText(/The Wandering Whittle/i)).toBeInTheDocument();
     });
   });
 });

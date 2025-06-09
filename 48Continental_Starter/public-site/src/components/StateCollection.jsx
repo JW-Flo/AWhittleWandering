@@ -1,7 +1,7 @@
 /**
  * State Collection Component
  * 
- * Displays a grid of states visited during the 48 Continental USA journey,
+ * Displays a grid of states visited during the The Wandering Whittle journey,
  * with visual indicators for visited and unvisited states.
  */
 

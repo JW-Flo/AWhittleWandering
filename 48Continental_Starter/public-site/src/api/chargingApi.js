@@ -2,7 +2,7 @@
  * Charging Stations API Utilities
  * 
  * This module provides functions to generate simulated charging station data
- * for testing and development of the 48 Continental USA application.
+ * for testing and development of the The Wandering Whittle application.
  */
 
 /* eslint-env browser */

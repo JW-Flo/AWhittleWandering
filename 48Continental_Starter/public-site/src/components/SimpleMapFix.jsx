@@ -12,7 +12,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { ensureMapboxFormat } from '../utils/mapUtils';
 import './SimpleMapFix.css';
 
-// Default center point (Continental USA)
+// Default center point (Wandering Whittle)
 const DEFAULT_CENTER = [-98.5795, 39.8283];
 const DEFAULT_ZOOM = 3.5;
 

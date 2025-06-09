@@ -2,7 +2,7 @@
  * Trip Simulation Utilities
  * 
  * This module provides functions to generate simulated trip data
- * for testing and development of the 48 Continental USA application.
+ * for testing and development of the The Wandering Whittle application.
  */
 
 /* eslint-env browser */
@@ -130,7 +130,7 @@ export function generateSimulatedTripData() {
   const remainingStates = US_STATES.filter(state => !state.visited).map(state => state.abbr);
   
   return {
-    name: '48 Continental USA Road Trip',
+    name: 'The Wandering Whittle Road Trip',
     description: 'A Tesla road trip across all 48 contiguous United States',
     startDate: '2025-06-01',
     endDate: '2025-08-01',

@@ -1,5 +1,5 @@
 /**
- * 48 Continental USA Trip Data Route Handler
+ * The Wandering Whittle Trip Data Route Handler
  * 
  * This serverless function provides real-time data integration for:
  * - Tesla vehicle status via Tesla API

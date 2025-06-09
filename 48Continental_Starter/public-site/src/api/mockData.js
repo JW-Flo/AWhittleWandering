@@ -72,7 +72,7 @@ export const mockStationsData = {
 
 export const mockTripData = {
   id: "48continental-2025",
-  name: "The Wandering Whittle's 48 Continental Journey",
+  name: "The Wandering Whittle's The Wandering Whittle Journey",
   description:
     "An epic road trip across all 48 continental United States in a Tesla, exploring the beauty and diversity of America.",
   startDate: new Date(Date.now() - 15 * 86400000).toISOString(),
