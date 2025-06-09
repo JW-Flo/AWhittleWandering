@@ -1,14 +1,17 @@
-import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
   test: {
-    environment: 'jsdom',
+    environment: "jsdom",
     globals: true,
-    setupFiles: ['./src/test/setup.js'],
+    setupFiles: ["./src/test/setup.js"],
+    alias: {
+      "^@shared/(.*)$": "../../shared/$1",
+    },
   },
   define: {
-    global: 'globalThis',
+    global: "globalThis",
   },
-})
+});

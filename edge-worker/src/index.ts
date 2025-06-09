@@ -1,7 +1,7 @@
 import type { Location, WeatherRiskResponse, Route, RouteResponse, Weather, RouteSegment } from './types';
 import { verify } from './hmac';
 import { TeslaAPIClient } from './utils/tesla-client';
-import { TessieAPIClient, type TessieVehicleData } from './tessie-client';
+import { TessieAPIClient } from './tessie-client';
 import { getToken, setToken } from './utils/tesla-tokens';
 import { handleEmailSubscribe, handleEmailNotify } from './email';
 import { handleItineraryRequest } from './itinerary';
@@ -110,21 +110,16 @@ function generateWeatherRecommendations(weather: Weather, riskLevel: 'low' | 'me
 }
 
 function addCorsHeaders(response: Response): Response {
-    const corsHeaders = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-signature',
-        'Access-Control-Max-Age': '86400'
-    };
-
-    const newHeaders = new Headers(response.headers);
-    Object.entries(corsHeaders).forEach(([key, value]) => {
-        newHeaders.set(key, value);
-    });
-
+    const headers = new Headers(response.headers);
+    headers.set('Access-Control-Allow-Origin', '*');
+    headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-signature');
+    headers.set('Access-Control-Max-Age', '86400');
+    
     return new Response(response.body, {
-        ...response,
-        headers: newHeaders
+        status: response.status,
+        statusText: response.statusText,
+        headers
     });
 }
 
@@ -139,34 +134,17 @@ async function handleStaticFile(request: Request, env: Env): Promise<Response> {
     try {
         const file = await env.APP_KV.get(path);
         if (file === null) {
-            return new Response('Not Found', { 
-                status: 404,
-                headers: {
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET, OPTIONS',
-                    'Access-Control-Allow-Headers': 'Content-Type'
-                }
-            });
+            return new Response('Not Found', { status: 404 });
         }
         
         return new Response(file, {
             headers: {
                 'Content-Type': contentType,
-                'Cache-Control': 'max-age=3600',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type'
+                'Cache-Control': 'max-age=3600'
             }
         });
     } catch (error) {
-        return new Response('Internal Server Error', { 
-            status: 500,
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type'
-            }
-        });
+        return new Response('Internal Server Error', { status: 500 });
     }
 }
 
@@ -422,8 +400,14 @@ async function handleRouteOptimization(request: Request, env: Env): Promise<Resp
 // --- TESSIE API HANDLERS ---
 
 // Global variable to store the last successful vehicle data
-let lastKnownVehicleData: Record<string, unknown> | null = null;
+let lastKnownVehicleData: VehicleData | null = null;
 
+interface VehicleData {
+    last_updated: string;
+    cached: boolean;
+    error_message?: string;
+    [key: string]: unknown; // Allow additional properties
+}
 async function handleTessieVehicle(request: Request, env: Env): Promise<Response> {
     const corsHeaders = {
         'Content-Type': 'application/json',
@@ -443,25 +427,30 @@ async function handleTessieVehicle(request: Request, env: Env): Promise<Response
                 const tessieClient = new TessieAPIClient(env);
                 
                 // Get vehicle state from Tessie with timeout to prevent hanging requests
-                const timeoutPromise = new Promise((_, reject) => {
+                const timeoutPromise = new Promise<never>((_, reject) => {
                     setTimeout(() => reject(new Error('Tessie API request timed out')), 5000);
                 });
-                
+
                 const vehicleDataPromise = tessieClient.getVehicleState();
-                
+
                 // Race the API call against a timeout
-                const vehicleData = await Promise.race([vehicleDataPromise, timeoutPromise]) as TessieVehicleData;
-                
-                if (!vehicleData || !vehicleData.drive_state) {
+                const vehicleData = await Promise.race([
+                    vehicleDataPromise,
+                    timeoutPromise
+
+                ]) as Record<string, unknown>;
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                if (!vehicleData || typeof vehicleData !== 'object' || !(vehicleData as { drive_state?: unknown }).drive_state) {
                     throw new Error('Invalid vehicle data received from Tessie API');
                 }
-                
+
                 // Transform to standard format
                 const transformedData = tessieClient.transformToStandardFormat(vehicleData);
-                
+
                 // Store successful data for future use
                 lastKnownVehicleData = transformedData;
-                
+
                 console.log('Successfully retrieved vehicle data from Tessie API');
                 
                 return new Response(JSON.stringify(transformedData), {
@@ -627,7 +616,8 @@ async function handleWeatherAPI(request: Request, env: Env): Promise<Response> {
     }
 }
 
-async function handleStationsAPI(request: Request, env: Env): Promise<Response> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function handleStationsAPI(_request: Request, _env: Env): Promise<Response> {
     const corsHeaders = {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
@@ -635,18 +625,10 @@ async function handleStationsAPI(request: Request, env: Env): Promise<Response> 
         'Access-Control-Allow-Headers': 'Content-Type'
     };
 
-    // Handle OPTIONS request for CORS
-    if (request.method === 'OPTIONS') {
-        return new Response(null, { headers: corsHeaders });
-    }
-
     try {
-        const url = new URL(request.url);
+        const url = new URL(_request.url);
         const lat = parseFloat(url.searchParams.get('lat') || '27.741777');
         const lon = parseFloat(url.searchParams.get('lon') || '-97.388844');
-        
-        // Use env for future API keys or configuration
-        console.log('Fetching stations for coordinates:', lat, lon, 'Environment configured:', !!env);
         
         // Mock charging stations data for now
         const stations = {
@@ -692,7 +674,8 @@ async function handleStationsAPI(request: Request, env: Env): Promise<Response> 
     }
 }
 
-async function handleTripAPI(request: Request, env: Env): Promise<Response> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function handleTripAPI(_request: Request, _env: Env): Promise<Response> {
     const corsHeaders = {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
@@ -700,15 +683,7 @@ async function handleTripAPI(request: Request, env: Env): Promise<Response> {
         'Access-Control-Allow-Headers': 'Content-Type'
     };
 
-    // Handle OPTIONS request for CORS
-    if (request.method === 'OPTIONS') {
-        return new Response(null, { headers: corsHeaders });
-    }
-
     try {
-        // Use env for future database or configuration access
-        console.log('Fetching trip data, environment configured:', !!env);
-        
         // For now, return mock trip data
         // In production, this would fetch from a database or calculate from itinerary
         const tripData = {
@@ -771,18 +746,6 @@ async function handleTripAPI(request: Request, env: Env): Promise<Response> {
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
         const url = new URL(request.url);
-
-        // Handle CORS preflight requests
-        if (request.method === 'OPTIONS') {
-            return new Response(null, {
-                headers: {
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-                    'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-signature',
-                    'Access-Control-Max-Age': '86400'
-                }
-            });
-        }
 
         // --- HOME PAGE / INDEX ROUTE ---
         if (url.pathname === "/" || url.pathname === "/index.html") {
@@ -961,13 +924,15 @@ if (request.method === 'OPTIONS') {
 }
         
         try {
+            // Apply CORS to all responses
             let response;
-
+            
             if (url.pathname === "/weather-risk") {
                 response = await handleWeatherRisk(request, env);
             } else if (url.pathname === "/optimize-route") {
                 response = await handleRouteOptimization(request, env);
             } else if (url.pathname === "/test" || url.pathname === "/api/v1/status") {
+                // Ensure test endpoints have CORS headers too
                 response = new Response(JSON.stringify({
                     status: "ok",
                     version: "1.0.0",
@@ -980,9 +945,11 @@ if (request.method === 'OPTIONS') {
                     }
                 });
             } else {
+                // Serve static files for all other routes
                 response = await handleStaticFile(request, env);
             }
-
+            
+            // Apply CORS headers to all responses
             return addCorsHeaders(response);
         } catch (error) {
             console.error('Error:', error);
