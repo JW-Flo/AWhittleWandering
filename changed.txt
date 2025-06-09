@@ -1,0 +1,169 @@
+.current_trip_day.json
+.env
+.temp/Untitled.rtf
+.vscode/extensions.json
+.vscode/tasks.json
+48Continental_Final_Itinerary.csv
+48Continental_Revised_Final_Itinerary.csv
+48Continental_Starter/public-site/.env
+48Continental_Starter/public-site/.env.local
+48Continental_Starter/public-site/.env.production
+48Continental_Starter/public-site/README-coordinate-format-fix.md
+48Continental_Starter/public-site/README-enhanced-vehicle-tracker.md
+48Continental_Starter/public-site/docs/CODE_AUDIT_FIXES.md
+48Continental_Starter/public-site/src/App.jsx
+48Continental_Starter/public-site/src/components/Dashboard.jsx
+48Continental_Starter/public-site/src/components/EnhancedVehicleMap.jsx
+48Continental_Starter/public-site/src/components/LiveVehicleMap.css
+48Continental_Starter/public-site/src/components/LiveVehicleMap.jsx
+48Continental_Starter/public-site/src/components/Map.jsx
+48Continental_Starter/public-site/src/components/MinimalMapTest.jsx
+48Continental_Starter/public-site/src/hooks/index.js
+48Continental_Starter/public-site/src/hooks/useVehicleData.js
+48Continental_Starter/public-site/src/pages/EnhancedVehicleMapTestPage.jsx
+48Continental_Starter/public-site/src/pages/LiveVehicleMapTestPage.css
+48Continental_Starter/public-site/src/pages/LiveVehicleMapTestPage.jsx
+48Continental_Starter/public-site/src/router.jsx
+48Continental_Starter/public-site/src/services/mockVehicleData.js
+48Continental_Starter/public-site/src/services/tessieClient.js
+48Continental_Starter/public-site/src/utils/environmentConfig.js
+48Continental_Starter/public-site/test-enhanced-vehicle-tracker.cjs
+48Continental_Starter/public-site/test-map-coordinate-fix.cjs
+48Continental_Starter/public-site/test-vehicle-tracker.cjs
+48continental-mcp-package.json
+48continental-mcp-server.js
+App Info.ini
+BlackBox_Complete_Configuration.md
+ChargingStationCard.jsx
+README.md
+ai-agents/README.md
+ai-agents/activate-agents.sh
+ai-agents/configs/agent-environment.json
+ai-agents/configs/coordinator-agent.json
+ai-agents/configs/development.Dockerfile
+ai-agents/configs/devops-agent-mcp.json
+ai-agents/configs/devops-agent.json
+ai-agents/configs/map-integration-agent.json
+ai-agents/configs/map-specialist-mcp.json
+ai-agents/configs/ui-enhancement-agent.json
+ai-agents/configs/ui-enhancement-mcp.json
+ai-agents/configs/vscode-extensions.json
+ai-agents/configs/weather-integration-agent.json
+ai-agents/configs/weather-integration-mcp.json
+ai-agents/docs/mcp-configuration.md
+ai-agents/docs/rebranding-guide.md
+ai-agents/docs/using-ai-agents.md
+ai-agents/documentation-summary.md
+ai-agents/prompts/coordinator-agent.md
+ai-agents/prompts/devops-agent.md
+ai-agents/prompts/map-integration-agent.md
+ai-agents/prompts/map-specialist-agent.md
+ai-agents/prompts/ui-enhancement-agent.md
+ai-agents/prompts/weather-integration-agent.md
+ai-agents/settings/environment-config.json
+ai-agents/settings/vscode-settings.json
+ai-agents/tools/devops-tools.json
+ai-agents/tools/map-tools.json
+ai-agents/tools/mapbox-tools.json
+ai-agents/tools/ui-tools.json
+ai-agents/tools/weather-tools.json
+ai-agents/workflows/map-priority-workflow.json
+blackbox.prompt.md
+blackbox_mcp_settings.js
+blackbox_prompt.js
+blackbox_responses.js
+blackbox_testing_response.js
+codex-agent-setup-simple.sh
+codex-agent-setup.sh
+codex-agent/tasks/mapIntegration.ts
+config/.commitlintrc.cjs
+config/.env
+config/.env.example
+config/.eslintrc.json
+docs/Access Tokens _ Help _ Mapbox.pdf
+docs/ENVIRONMENT_VARIABLES.md
+docs/Mapbox docs.pdf
+docs/Mapbox/Add your data _ Help _ Mapbox.pdf
+docs/Mapbox/Configure interactions _ Help _ Mapbox.pdf
+docs/Tokens _ API Docs _ Mapbox.pdf
+docs/WORKFLOW_MAP_PRIORITY.md
+docs/Workflow_Logs/Failed/Lastest-02logs_39721706398/0_test.txt
+docs/Workflow_Logs/Failed/Lastest-02logs_39721706398/test/10_Post Run actions_checkout@v4.txt
+docs/Workflow_Logs/Failed/Lastest-02logs_39721706398/test/11_Complete job.txt
+docs/Workflow_Logs/Failed/Lastest-02logs_39721706398/test/1_Set up job.txt
+docs/Workflow_Logs/Failed/Lastest-02logs_39721706398/test/2_Run actions_checkout@v4.txt
+docs/Workflow_Logs/Failed/Lastest-02logs_39721706398/test/3_Setup Node.js.txt
+docs/Workflow_Logs/Failed/Lastest-02logs_39721706398/test/4_Install dependencies.txt
+docs/Workflow_Logs/Failed/Lastest-02logs_39721706398/test/5_Run tests.txt
+docs/Workflow_Logs/Failed/lTheNewestlogs_39787576907.zip
+docs/Workflow_Logs/Failed/lTheNewestlogs_39787576907/0_test.txt
+docs/Workflow_Logs/Failed/lTheNewestlogs_39787576907/test/10_Post Run actions_checkout@v4.txt
+docs/Workflow_Logs/Failed/lTheNewestlogs_39787576907/test/11_Complete job.txt
+docs/Workflow_Logs/Failed/lTheNewestlogs_39787576907/test/1_Set up job.txt
+docs/Workflow_Logs/Failed/lTheNewestlogs_39787576907/test/2_Run actions_checkout@v4.txt
+docs/Workflow_Logs/Failed/lTheNewestlogs_39787576907/test/3_Setup Node.js.txt
+docs/Workflow_Logs/Failed/lTheNewestlogs_39787576907/test/4_Install dependencies.txt
+docs/Workflow_Logs/Failed/lTheNewestlogs_39787576907/test/5_Run tests.txt
+docs/Workflow_Logs/Failed/logs_39783767222.zip
+docs/Workflow_Logs/Failed/newest05ogs_39768670366.zip
+docs/Workflow_Logs/Failed/newest05ogs_39768670366_extracted/0_deploy.txt
+docs/Workflow_Logs/Failed/newest05ogs_39768670366_extracted/deploy/14_Post Run actions_checkout@v4.txt
+docs/Workflow_Logs/Failed/newest05ogs_39768670366_extracted/deploy/15_Complete job.txt
+docs/Workflow_Logs/Failed/newest05ogs_39768670366_extracted/deploy/1_Set up job.txt
+docs/Workflow_Logs/Failed/newest05ogs_39768670366_extracted/deploy/2_Run actions_checkout@v4.txt
+docs/Workflow_Logs/Failed/newest05ogs_39768670366_extracted/deploy/3_Setup Node.js.txt
+docs/Workflow_Logs/Failed/newest05ogs_39768670366_extracted/deploy/4_Deploy Edge Worker.txt
+docs/Workflow_Logs/Failed/newest05ogs_39768670366_extracted/deploy/5_Setup Environment Variables.txt
+docs/Workflow_Logs/Failed/newest05ogs_39768670366_extracted/deploy/6_Build & Deploy Public Site.txt
+"docs/context/A Whittle Wandering \342\200\223 Code Audit Report.jpg"
+"docs/context/A Whittle Wandering \342\200\223 Code Audit Report.pdf"
+docs/mcp/map-agent.json
+docs/mcp/weather-agent.json
+docs/using-agents-for-mapbox-fixes.md
+edge-worker/.dev.vars
+edge-worker/.mf/kv/APP_KV/blobs/8ebfed4c7e9e84b4039069a6e9cb3bd98aa91e053781a17607224302059a4c140000019733c1e1d4
+edge-worker/.mf/kv/miniflare-KVNamespaceObject/3e56d89acf4d825dbeefc11a7f0518e73ff45c66a7e4ae3c199fb0aabfb56387.sqlite-shm
+edge-worker/.mf/kv/miniflare-KVNamespaceObject/3e56d89acf4d825dbeefc11a7f0518e73ff45c66a7e4ae3c199fb0aabfb56387.sqlite-wal
+edge-worker/package.json
+edge-worker/src/index.ts
+edge-worker/src/utils/__tests__/error-handler.test.ts
+edge-worker/src/utils/__tests__/monitoring.test.ts
+edge-worker/src/utils/error-handler.ts
+edge-worker/src/utils/monitoring.ts
+fix-env-vars.js
+github-mcp/.env.example
+github-mcp/package.json
+github-mcp/src/automation/auto-task-generator.js
+github-mcp/src/automation/issue-creator.js
+github-mcp/src/automation/project-tasks.js
+github-mcp/src/index.js
+github-mcp/src/services/github-client.js
+github-mcp/src/tools/index.js
+github-mcp/src/utils/handlers.js
+github-mcp/wrangler.toml
+ios-client/Scripts/test_live_apis.sh
+ios-client/Scripts/validate_credentials.sh
+ios-client/Sources/Configuration/ProductionTokens.swift
+itinerary-fixed.json
+itinerary-full.json
+itinerary-geo.json
+itinerary.json
+mcp-server/.env
+mcp-server/server.js
+mcp/48continental-mcp-server.cjs
+mcp/temp-mcp-package.json
+monorepo-bootstrap.sh
+package-lock.json
+package.json
+project-helper.sh
+scripts/direct-mapbox-fix.js
+scripts/fix-mapbox-token.js
+scripts/run-map-agent.sh
+scripts/upload-fixed-itinerary.cjs
+shared/config/environmentMapper.js
+shared/mapbox/mapboxConfig.ts
+temp-extracted-text.txt
+tessie_api_integration_combined.md
+test.js
+tests/integration/mapbox-integration.test.js
+utilities/codex-agent-setup.sh
