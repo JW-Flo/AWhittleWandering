@@ -392,126 +392,90 @@ const LiveVehicleMap = ({
 
                 if (useMock) {
                     // webSocketRef.current = mockVehicleData.createMockWebSocket((data) => { // removed mock
-                        if (isMounted && data.vehicle_data) {
-                            setVehicleData(data.vehicle_data);
-                            updateVehicleMarker(data.vehicle_data);
-                        }
-                    });
-                } else {
-                    webSocketRef.current = tessieClient.createWebSocketConnection((data) => {
-                        if (isMounted && data.vehicle_data) {
-                            setVehicleData(data.vehicle_data);
-                            updateVehicleMarker(data.vehicle_data);
-                        }
-                    });
+                    if (isMounted && data.vehicle_data) {
+                        setVehicleData(data.vehicle_data);
+                        updateVehicleMarker(data.vehicle_data);
+                    }
+                });
+} else {
+    webSocketRef.current = tessieClient.createWebSocketConnection((data) => {
+        if (isMounted && data.vehicle_data) {
+            setVehicleData(data.vehicle_data);
+            updateVehicleMarker(data.vehicle_data);
+        }
+    });
                 }
             } else {
-                // Use polling instead
-                if (pollingTimerRef.current) {
-                    clearInterval(pollingTimerRef.current);
-                }
+    // Use polling instead
+    if (pollingTimerRef.current) {
+        clearInterval(pollingTimerRef.current);
+    }
 
-                // Initial fetch
-                fetchVehicleData();
+    // Initial fetch
+    fetchVehicleData();
 
-                // Setup interval
-                pollingTimerRef.current = setInterval(fetchVehicleData, pollingInterval);
-            }
+    // Setup interval
+    pollingTimerRef.current = setInterval(fetchVehicleData, pollingInterval);
+}
         };
 
-        // Initialize vehicle mock data with trip route if available
-        if (useMock && routePoints.length > 0) {
-            const routeLatLng = routePoints.map(point => ({
-                longitude: point[0],
-                latitude: point[1]
-            }));
+// Initialize vehicle mock data with trip route if available
+if (useMock && routePoints.length > 0) {
+    const routeLatLng = routePoints.map(point => ({
+        longitude: point[0],
+        latitude: point[1]
+    }));
 
-            // mockVehicleData.startMockVehicleSimulation({ // removed mock
-                followPath: routeLatLng,
-                moving: true,
-                updateInterval: pollingInterval / 2
-            });
+    // mockVehicleData.startMockVehicleSimulation({ // removed mock
+    followPath: routeLatLng,
+        moving: true,
+            updateInterval: pollingInterval / 2
+});
         }
 
-        // Start real-time updates after map is ready
-        if (isMapReady) {
-            setupRealTimeUpdates();
-        }
+// Start real-time updates after map is ready
+if (isMapReady) {
+    setupRealTimeUpdates();
+}
 
-        // Cleanup function
-        return () => {
-            isMounted = false;
+// Cleanup function
+return () => {
+    isMounted = false;
 
-            if (webSocketRef.current) {
-                webSocketRef.current.close();
-                webSocketRef.current = null;
-            }
+    if (webSocketRef.current) {
+        webSocketRef.current.close();
+        webSocketRef.current = null;
+    }
 
-            if (pollingTimerRef.current) {
-                clearInterval(pollingTimerRef.current);
-                pollingTimerRef.current = null;
-            }
+    if (pollingTimerRef.current) {
+        clearInterval(pollingTimerRef.current);
+        pollingTimerRef.current = null;
+    }
 
-            if (useMock) {
-                // mockVehicleData.stopMockVehicleSimulation(); // removed mock
-            }
-        };
+    if (useMock) {
+        // mockVehicleData.stopMockVehicleSimulation(); // removed mock
+    }
+};
     }, [useMock, useWebSocket, pollingInterval, isMapReady, routePoints]);
 
-    // Update vehicle marker on the map
-    const updateVehicleMarker = (data) => {
-        if (!map.current || !isMapReady || !data) return;
+// Update vehicle marker on the map
+const updateVehicleMarker = (data) => {
+    if (!map.current || !isMapReady || !data) return;
 
-        const { latitude, longitude, heading, charging_state } = data;
+    const { latitude, longitude, heading, charging_state } = data;
 
-        if (!latitude || !longitude) return;
+    if (!latitude || !longitude) return;
 
-        const isCharging = charging_state && charging_state !== 'Disconnected';
-        const iconId = isCharging ? 'charging-icon' : 'vehicle-icon';
+    const isCharging = charging_state && charging_state !== 'Disconnected';
+    const iconId = isCharging ? 'charging-icon' : 'vehicle-icon';
 
-        // Create marker if it doesn't exist
-        if (!vehicleMarker.current) {
-            // Add vehicle marker source
-            if (!map.current.getSource('vehicle')) {
-                map.current.addSource('vehicle', {
-                    type: 'geojson',
-                    data: {
-                        type: 'Feature',
-                        geometry: {
-                            type: 'Point',
-                            coordinates: [longitude, latitude]
-                        },
-                        properties: {
-                            heading: heading || 0,
-                            isCharging: isCharging
-                        }
-                    }
-                });
-
-                // Add vehicle layer
-                map.current.addLayer({
-                    id: 'vehicle',
-                    type: 'symbol',
-                    source: 'vehicle',
-                    layout: {
-                        'icon-image': iconId,
-                        'icon-size': 0.5,
-                        'icon-rotate': ['get', 'heading'],
-                        'icon-allow-overlap': true,
-                        'icon-ignore-placement': true
-                    }
-                });
-
-                // Create a popup but don't add to map yet
-                vehicleMarker.current = new mapboxgl.Popup({
-                    closeButton: false,
-                    closeOnClick: false
-                });
-            }
-        } else {
-            // Update existing marker position
-            if (map.current.getSource('vehicle')) {
-                map.current.getSource('vehicle').setData({
+    // Create marker if it doesn't exist
+    if (!vehicleMarker.current) {
+        // Add vehicle marker source
+        if (!map.current.getSource('vehicle')) {
+            map.current.addSource('vehicle', {
+                type: 'geojson',
+                data: {
                     type: 'Feature',
                     geometry: {
                         type: 'Point',
@@ -521,104 +485,140 @@ const LiveVehicleMap = ({
                         heading: heading || 0,
                         isCharging: isCharging
                     }
-                });
+                }
+            });
 
-                // Update icon based on charging state
-                map.current.setLayoutProperty('vehicle', 'icon-image', iconId);
-            }
-        }
+            // Add vehicle layer
+            map.current.addLayer({
+                id: 'vehicle',
+                type: 'symbol',
+                source: 'vehicle',
+                layout: {
+                    'icon-image': iconId,
+                    'icon-size': 0.5,
+                    'icon-rotate': ['get', 'heading'],
+                    'icon-allow-overlap': true,
+                    'icon-ignore-placement': true
+                }
+            });
 
-        // Fly to vehicle location if it's the first update or significantly changed
-        if (vehicleData === null) {
-            map.current.flyTo({
-                center: [longitude, latitude],
-                zoom: 14,
-                duration: 2000
+            // Create a popup but don't add to map yet
+            vehicleMarker.current = new mapboxgl.Popup({
+                closeButton: false,
+                closeOnClick: false
             });
         }
-    };
+    } else {
+        // Update existing marker position
+        if (map.current.getSource('vehicle')) {
+            map.current.getSource('vehicle').setData({
+                type: 'Feature',
+                geometry: {
+                    type: 'Point',
+                    coordinates: [longitude, latitude]
+                },
+                properties: {
+                    heading: heading || 0,
+                    isCharging: isCharging
+                }
+            });
 
-    // Calculate battery display
-    const getBatteryDisplay = () => {
-        if (!vehicleData) return null;
+            // Update icon based on charging state
+            map.current.setLayoutProperty('vehicle', 'icon-image', iconId);
+        }
+    }
 
-        const { battery_level, battery_range, charging_state } = vehicleData;
-        const isCharging = charging_state && charging_state !== 'Disconnected';
+    // Fly to vehicle location if it's the first update or significantly changed
+    if (vehicleData === null) {
+        map.current.flyTo({
+            center: [longitude, latitude],
+            zoom: 14,
+            duration: 2000
+        });
+    }
+};
 
-        return (
-            <div className={`battery-indicator ${isCharging ? 'charging' : ''}`}>
-                <div className="battery-icon">
-                    <div
-                        className="battery-level"
-                        style={{ width: `${battery_level}%` }}
-                    />
-                </div>
-                <div className="battery-text">
-                    <span className="battery-percentage">{battery_level}%</span>
-                    {battery_range && (
-                        <span className="battery-range">
-                            {Math.round(battery_range)} mi
-                        </span>
-                    )}
-                    {isCharging && <span className="charging-icon">⚡</span>}
-                </div>
-            </div>
-        );
-    };
+// Calculate battery display
+const getBatteryDisplay = () => {
+    if (!vehicleData) return null;
 
-    // Render speed display
-    const getSpeedDisplay = () => {
-        if (!vehicleData || vehicleData.speed === undefined) return null;
-
-        return (
-            <div className="speed-indicator">
-                <span className="speed-value">{Math.round(vehicleData.speed)}</span>
-                <span className="speed-unit">mph</span>
-            </div>
-        );
-    };
-
-    // Render vehicle name/model
-    const getVehicleInfo = () => {
-        if (!vehicleData) return null;
-
-        return (
-            <div className="vehicle-info">
-                <h3>{vehicleData.display_name || 'Tesla'}</h3>
-                <p className="vehicle-status">
-                    {vehicleData.state === 'online' ? 'Online' : 'Offline'}
-                </p>
-            </div>
-        );
-    };
+    const { battery_level, battery_range, charging_state } = vehicleData;
+    const isCharging = charging_state && charging_state !== 'Disconnected';
 
     return (
-        <div className={`live-vehicle-map ${fullscreen ? 'fullscreen' : ''}`}>
-            {error && (
-                <div className="map-error">
-                    <p>{error}</p>
-                </div>
-            )}
-
-            <div className="map-container" ref={mapContainer} />
-
-            <div className="vehicle-data-overlay">
-                {getVehicleInfo()}
-                {getBatteryDisplay()}
-                {getSpeedDisplay()}
-
-                {vehicleData && (
-                    <div className="data-timestamp">
-                        Last updated: {new Date(vehicleData.timestamp).toLocaleTimeString()}
-                    </div>
-                )}
+        <div className={`battery-indicator ${isCharging ? 'charging' : ''}`}>
+            <div className="battery-icon">
+                <div
+                    className="battery-level"
+                    style={{ width: `${battery_level}%` }}
+                />
             </div>
-
-            <div className="data-source-indicator">
-                {useMock ? 'SIMULATED DATA' : 'LIVE DATA'}
+            <div className="battery-text">
+                <span className="battery-percentage">{battery_level}%</span>
+                {battery_range && (
+                    <span className="battery-range">
+                        {Math.round(battery_range)} mi
+                    </span>
+                )}
+                {isCharging && <span className="charging-icon">⚡</span>}
             </div>
         </div>
     );
+};
+
+// Render speed display
+const getSpeedDisplay = () => {
+    if (!vehicleData || vehicleData.speed === undefined) return null;
+
+    return (
+        <div className="speed-indicator">
+            <span className="speed-value">{Math.round(vehicleData.speed)}</span>
+            <span className="speed-unit">mph</span>
+        </div>
+    );
+};
+
+// Render vehicle name/model
+const getVehicleInfo = () => {
+    if (!vehicleData) return null;
+
+    return (
+        <div className="vehicle-info">
+            <h3>{vehicleData.display_name || 'Tesla'}</h3>
+            <p className="vehicle-status">
+                {vehicleData.state === 'online' ? 'Online' : 'Offline'}
+            </p>
+        </div>
+    );
+};
+
+return (
+    <div className={`live-vehicle-map ${fullscreen ? 'fullscreen' : ''}`}>
+        {error && (
+            <div className="map-error">
+                <p>{error}</p>
+            </div>
+        )}
+
+        <div className="map-container" ref={mapContainer} />
+
+        <div className="vehicle-data-overlay">
+            {getVehicleInfo()}
+            {getBatteryDisplay()}
+            {getSpeedDisplay()}
+
+            {vehicleData && (
+                <div className="data-timestamp">
+                    Last updated: {new Date(vehicleData.timestamp).toLocaleTimeString()}
+                </div>
+            )}
+        </div>
+
+        <div className="data-source-indicator">
+            {useMock ? 'SIMULATED DATA' : 'LIVE DATA'}
+        </div>
+    </div>
+);
 };
 
 export default LiveVehicleMap;
