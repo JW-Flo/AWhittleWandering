@@ -399,8 +399,14 @@ async function handleRouteOptimization(request: Request, env: Env): Promise<Resp
 // --- TESSIE API HANDLERS ---
 
 // Global variable to store the last successful vehicle data
-let lastKnownVehicleData: Record<string, any> | null = null;
+let lastKnownVehicleData: VehicleData | null = null;
 
+interface VehicleData {
+    last_updated: string;
+    cached: boolean;
+    error_message?: string;
+    [key: string]: unknown; // Allow additional properties
+}
 async function handleTessieVehicle(request: Request, env: Env): Promise<Response> {
     const corsHeaders = {
         'Content-Type': 'application/json',
