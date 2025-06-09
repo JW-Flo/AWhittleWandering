@@ -1,4 +1,4 @@
-import useVehicleData from "./useVehicleData";
+import { useVehicleData } from "./useVehicleData";
 export { useVehicleData };
 export { useTripData } from "./useTripData";
 

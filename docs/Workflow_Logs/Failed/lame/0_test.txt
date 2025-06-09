@@ -1,0 +1,284 @@
+﻿2025-06-09T02:12:52.3899557Z Current runner version: '2.325.0'
+2025-06-09T02:12:52.3927329Z ##[group]Runner Image Provisioner
+2025-06-09T02:12:52.3928301Z Hosted Compute Agent
+2025-06-09T02:12:52.3928942Z Version: 20250508.323
+2025-06-09T02:12:52.3929680Z Commit: 81b259f29879f73b4213d199e42d8c3465dae986
+2025-06-09T02:12:52.3930437Z Build Date: 2025-05-08T19:40:08Z
+2025-06-09T02:12:52.3931152Z ##[endgroup]
+2025-06-09T02:12:52.3931798Z ##[group]Operating System
+2025-06-09T02:12:52.3932464Z Ubuntu
+2025-06-09T02:12:52.3932973Z 24.04.2
+2025-06-09T02:12:52.3933558Z LTS
+2025-06-09T02:12:52.3934094Z ##[endgroup]
+2025-06-09T02:12:52.3934686Z ##[group]Runner Image
+2025-06-09T02:12:52.3935387Z Image: ubuntu-24.04
+2025-06-09T02:12:52.3936134Z Version: 20250511.1.0
+2025-06-09T02:12:52.3937308Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250511.1/images/ubuntu/Ubuntu2404-Readme.md
+2025-06-09T02:12:52.3939171Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250511.1
+2025-06-09T02:12:52.3940430Z ##[endgroup]
+2025-06-09T02:12:52.3941682Z ##[group]GITHUB_TOKEN Permissions
+2025-06-09T02:12:52.3943885Z Contents: read
+2025-06-09T02:12:52.3944539Z Metadata: read
+2025-06-09T02:12:52.3945136Z Packages: read
+2025-06-09T02:12:52.3945725Z ##[endgroup]
+2025-06-09T02:12:52.3949121Z Secret source: Actions
+2025-06-09T02:12:52.3950161Z Prepare workflow directory
+2025-06-09T02:12:52.4275364Z Prepare all required actions
+2025-06-09T02:12:52.4314306Z Getting action download info
+2025-06-09T02:12:52.5855941Z ##[group]Download immutable action package 'actions/checkout@v4'
+2025-06-09T02:12:52.5857981Z Version: 4.2.2
+2025-06-09T02:12:52.5859375Z Digest: sha256:ccb2698953eaebd21c7bf6268a94f9c26518a7e38e27e0b83c1fe1ad049819b1
+2025-06-09T02:12:52.5860715Z Source commit SHA: 11bd71901bbe5b1630ceea73d27597364c9af683
+2025-06-09T02:12:52.5861630Z ##[endgroup]
+2025-06-09T02:12:52.6677099Z ##[group]Download immutable action package 'actions/setup-node@v4'
+2025-06-09T02:12:52.6678103Z Version: 4.4.0
+2025-06-09T02:12:52.6678906Z Digest: sha256:9427cefe82346e992fb5b949e3569b39d537ae41aa3086483b14eceebfc16bc1
+2025-06-09T02:12:52.6680133Z Source commit SHA: 49933ea5288caeca8642d1e84afbd3f7d6820020
+2025-06-09T02:12:52.6680937Z ##[endgroup]
+2025-06-09T02:12:52.8463407Z Complete job name: test
+2025-06-09T02:12:52.9353621Z ##[group]Run actions/checkout@v4
+2025-06-09T02:12:52.9354568Z with:
+2025-06-09T02:12:52.9355054Z   repository: JW-Flo/AWhittleWandering
+2025-06-09T02:12:52.9355948Z   token: ***
+2025-06-09T02:12:52.9356773Z   ssh-strict: true
+2025-06-09T02:12:52.9357240Z   ssh-user: git
+2025-06-09T02:12:52.9357710Z   persist-credentials: true
+2025-06-09T02:12:52.9358238Z   clean: true
+2025-06-09T02:12:52.9358718Z   sparse-checkout-cone-mode: true
+2025-06-09T02:12:52.9359277Z   fetch-depth: 1
+2025-06-09T02:12:52.9359734Z   fetch-tags: false
+2025-06-09T02:12:52.9360202Z   show-progress: true
+2025-06-09T02:12:52.9360681Z   lfs: false
+2025-06-09T02:12:52.9361124Z   submodules: false
+2025-06-09T02:12:52.9361610Z   set-safe-directory: true
+2025-06-09T02:12:52.9362607Z ##[endgroup]
+2025-06-09T02:12:53.0974140Z Syncing repository: JW-Flo/AWhittleWandering
+2025-06-09T02:12:53.0977424Z ##[group]Getting Git version info
+2025-06-09T02:12:53.0979122Z Working directory is '/home/runner/work/AWhittleWandering/AWhittleWandering'
+2025-06-09T02:12:53.0981662Z [command]/usr/bin/git version
+2025-06-09T02:12:53.0982753Z git version 2.49.0
+2025-06-09T02:12:53.0986263Z ##[endgroup]
+2025-06-09T02:12:53.0993382Z Temporarily overriding HOME='/home/runner/work/_temp/39ea957d-452f-4cb8-baec-67b6cff1976c' before making global git config changes
+2025-06-09T02:12:53.0996571Z Adding repository directory to the temporary git global config as a safe directory
+2025-06-09T02:12:53.0999236Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AWhittleWandering/AWhittleWandering
+2025-06-09T02:12:53.1003006Z Deleting the contents of '/home/runner/work/AWhittleWandering/AWhittleWandering'
+2025-06-09T02:12:53.1005313Z ##[group]Initializing the repository
+2025-06-09T02:12:53.1007379Z [command]/usr/bin/git init /home/runner/work/AWhittleWandering/AWhittleWandering
+2025-06-09T02:12:53.1009256Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-06-09T02:12:53.1014088Z hint: is subject to change. To configure the initial branch name to use in all
+2025-06-09T02:12:53.1062035Z hint: of your new repositories, which will suppress this warning, call:
+2025-06-09T02:12:53.1063902Z hint:
+2025-06-09T02:12:53.1065039Z hint: 	git config --global init.defaultBranch <name>
+2025-06-09T02:12:53.1066874Z hint:
+2025-06-09T02:12:53.1068310Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-06-09T02:12:53.1070548Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-06-09T02:12:53.1073325Z hint:
+2025-06-09T02:12:53.1074153Z hint: 	git branch -m <name>
+2025-06-09T02:12:53.1075151Z Initialized empty Git repository in /home/runner/work/AWhittleWandering/AWhittleWandering/.git/
+2025-06-09T02:12:53.1077966Z [command]/usr/bin/git remote add origin https://github.com/JW-Flo/AWhittleWandering
+2025-06-09T02:12:53.1080284Z ##[endgroup]
+2025-06-09T02:12:53.1081768Z ##[group]Disabling automatic garbage collection
+2025-06-09T02:12:53.1083091Z [command]/usr/bin/git config --local gc.auto 0
+2025-06-09T02:12:53.1085362Z ##[endgroup]
+2025-06-09T02:12:53.1087021Z ##[group]Setting up auth
+2025-06-09T02:12:53.1088420Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-06-09T02:12:53.1092711Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-06-09T02:12:53.1448947Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-06-09T02:12:53.1485314Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-06-09T02:12:53.1734358Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-06-09T02:12:53.1773671Z ##[endgroup]
+2025-06-09T02:12:53.1777076Z ##[group]Fetching the repository
+2025-06-09T02:12:53.1785667Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +a5488cb5647d98e44e708efa9a12f99b968b3941:refs/remotes/origin/recovery/map-integration-restored
+2025-06-09T02:12:57.8331250Z From https://github.com/JW-Flo/AWhittleWandering
+2025-06-09T02:12:57.8332467Z  * [new ref]         a5488cb5647d98e44e708efa9a12f99b968b3941 -> origin/recovery/map-integration-restored
+2025-06-09T02:12:57.8362297Z ##[endgroup]
+2025-06-09T02:12:57.8363527Z ##[group]Determining the checkout info
+2025-06-09T02:12:57.8364546Z ##[endgroup]
+2025-06-09T02:12:57.8369525Z [command]/usr/bin/git sparse-checkout disable
+2025-06-09T02:12:57.8415868Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-06-09T02:12:57.8446874Z ##[group]Checking out the ref
+2025-06-09T02:12:57.8449999Z [command]/usr/bin/git checkout --progress --force -B recovery/map-integration-restored refs/remotes/origin/recovery/map-integration-restored
+2025-06-09T02:12:58.4653001Z Switched to a new branch 'recovery/map-integration-restored'
+2025-06-09T02:12:58.4657043Z branch 'recovery/map-integration-restored' set up to track 'origin/recovery/map-integration-restored'.
+2025-06-09T02:12:58.4723451Z ##[endgroup]
+2025-06-09T02:12:58.4773282Z [command]/usr/bin/git log -1 --format=%H
+2025-06-09T02:12:58.4812328Z a5488cb5647d98e44e708efa9a12f99b968b3941
+2025-06-09T02:12:58.5051615Z ##[group]Run actions/setup-node@v4
+2025-06-09T02:12:58.5051929Z with:
+2025-06-09T02:12:58.5052115Z   node-version: 20
+2025-06-09T02:12:58.5052329Z   always-auth: false
+2025-06-09T02:12:58.5052541Z   check-latest: false
+2025-06-09T02:12:58.5052871Z   token: ***
+2025-06-09T02:12:58.5053078Z ##[endgroup]
+2025-06-09T02:12:58.6935516Z Found in cache @ /opt/hostedtoolcache/node/20.19.1/x64
+2025-06-09T02:12:58.6936641Z ##[group]Environment details
+2025-06-09T02:13:03.4242509Z node: v20.19.1
+2025-06-09T02:13:03.4244086Z npm: 10.8.2
+2025-06-09T02:13:03.4244786Z yarn: 1.22.22
+2025-06-09T02:13:03.4246655Z ##[endgroup]
+2025-06-09T02:13:03.4361782Z ##[group]Run npm ci
+2025-06-09T02:13:03.4362086Z [36;1mnpm ci[0m
+2025-06-09T02:13:03.4590226Z shell: /usr/bin/bash -e {0}
+2025-06-09T02:13:03.4590616Z ##[endgroup]
+2025-06-09T02:13:08.0990424Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2025-06-09T02:13:08.2269945Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-06-09T02:13:11.7877383Z 
+2025-06-09T02:13:11.7878582Z added 221 packages, and audited 222 packages in 8s
+2025-06-09T02:13:11.7883662Z 
+2025-06-09T02:13:11.7884216Z 45 packages are looking for funding
+2025-06-09T02:13:11.7884987Z   run `npm fund` for details
+2025-06-09T02:13:11.8272941Z 
+2025-06-09T02:13:11.8274867Z 5 moderate severity vulnerabilities
+2025-06-09T02:13:11.8276586Z 
+2025-06-09T02:13:11.8278243Z To address all issues (including breaking changes), run:
+2025-06-09T02:13:11.8284973Z   npm audit fix --force
+2025-06-09T02:13:11.8285558Z 
+2025-06-09T02:13:11.8290547Z Run `npm audit` for details.
+2025-06-09T02:13:11.8591364Z ##[group]Run npm test
+2025-06-09T02:13:11.8591660Z [36;1mnpm test[0m
+2025-06-09T02:13:11.8643528Z shell: /usr/bin/bash -e {0}
+2025-06-09T02:13:11.8643798Z ##[endgroup]
+2025-06-09T02:13:12.0107132Z 
+2025-06-09T02:13:12.0110089Z > continentalusa-edge@0.1.0 test
+2025-06-09T02:13:12.0116777Z > npm run build && vitest run
+2025-06-09T02:13:12.0117106Z 
+2025-06-09T02:13:12.1816853Z 
+2025-06-09T02:13:12.1817704Z > continentalusa-edge@0.1.0 build
+2025-06-09T02:13:12.1819042Z > esbuild src/index.ts --bundle --format=esm --outfile=dist/worker.js
+2025-06-09T02:13:12.1819946Z 
+2025-06-09T02:13:12.2016789Z 
+2025-06-09T02:13:12.2020642Z   dist/worker.js  72.5kb
+2025-06-09T02:13:12.2024539Z 
+2025-06-09T02:13:12.2025589Z ⚡ Done in 11ms
+2025-06-09T02:13:12.9471475Z 
+2025-06-09T02:13:12.9473851Z [7m[1m[36m RUN [39m[22m[27m [36mv1.6.1[39m [90m/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker[39m
+2025-06-09T02:13:12.9474957Z 
+2025-06-09T02:13:13.6208960Z  [32m✓[39m src/utils/__tests__/monitoring.test.ts [2m ([22m[2m17 tests[22m[2m)[22m[90m 161[2mms[22m[39m
+2025-06-09T02:13:14.0908820Z  [32m✓[39m src/utils/__tests__/error-handler.test.ts [2m ([22m[2m13 tests[22m[2m)[22m[90m 50[2mms[22m[39m
+2025-06-09T02:13:15.3899796Z  [33m❯[39m src/__tests__/integration.test.ts [2m ([22m[2m7 tests[22m [2m|[22m [31m7 failed[39m[2m)[22m[90m 101[2mms[22m[39m
+2025-06-09T02:13:15.3917616Z [31m   [33m❯[31m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould serve index.html for root path[39m
+2025-06-09T02:13:15.3919740Z [31m     → ENOENT: no such file or directory, open '/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/dist/worker.js'[39m
+2025-06-09T02:13:15.3924349Z [31m     → Cannot read properties of undefined (reading 'mf')[39m
+2025-06-09T02:13:15.3926386Z [31m   [33m❯[31m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould return 404 for non-existent files[39m
+2025-06-09T02:13:15.3928382Z [31m     → ENOENT: no such file or directory, open '/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/dist/worker.js'[39m
+2025-06-09T02:13:15.3929641Z [31m     → Cannot read properties of undefined (reading 'mf')[39m
+2025-06-09T02:13:15.3931787Z [31m   [33m❯[31m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould handle CORS headers for static files[39m
+2025-06-09T02:13:15.3934447Z [31m     → ENOENT: no such file or directory, open '/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/dist/worker.js'[39m
+2025-06-09T02:13:15.3936170Z [31m     → Cannot read properties of undefined (reading 'mf')[39m
+2025-06-09T02:13:15.3938369Z [31m   [33m❯[31m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mWeather Risk Calculation[2m > [22mshould calculate weather risk for a given location[39m
+2025-06-09T02:13:15.3940622Z [31m     → ENOENT: no such file or directory, open '/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/dist/worker.js'[39m
+2025-06-09T02:13:15.3942067Z [31m     → Cannot read properties of undefined (reading 'mf')[39m
+2025-06-09T02:13:15.3944090Z [31m   [33m❯[31m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mWeather Risk Calculation[2m > [22mshould handle invalid location data[39m
+2025-06-09T02:13:15.3946403Z [31m     → ENOENT: no such file or directory, open '/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/dist/worker.js'[39m
+2025-06-09T02:13:15.3947895Z [31m     → Cannot read properties of undefined (reading 'mf')[39m
+2025-06-09T02:13:15.3949951Z [31m   [33m❯[31m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mRoute Optimization[2m > [22mshould optimize route with weather considerations[39m
+2025-06-09T02:13:15.3952484Z [31m     → ENOENT: no such file or directory, open '/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/dist/worker.js'[39m
+2025-06-09T02:13:15.3953992Z [31m     → Cannot read properties of undefined (reading 'mf')[39m
+2025-06-09T02:13:15.3956320Z [31m   [33m❯[31m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mRoute Optimization[2m > [22mshould provide different routes based on weather conditions[39m
+2025-06-09T02:13:15.3958625Z [31m     → ENOENT: no such file or directory, open '/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/dist/worker.js'[39m
+2025-06-09T02:13:15.3960112Z [31m     → Cannot read properties of undefined (reading 'mf')[39m
+2025-06-09T02:13:15.4259234Z 
+2025-06-09T02:13:15.4287660Z [31m⎯⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 7 [27m[22m⎯⎯⎯⎯⎯⎯⎯[39m
+2025-06-09T02:13:15.4288466Z 
+2025-06-09T02:13:15.4298616Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould serve index.html for root path
+2025-06-09T02:13:15.4305310Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould return 404 for non-existent files
+2025-06-09T02:13:15.4311485Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould handle CORS headers for static files
+2025-06-09T02:13:15.4317711Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mWeather Risk Calculation[2m > [22mshould calculate weather risk for a given location
+2025-06-09T02:13:15.4321362Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mWeather Risk Calculation[2m > [22mshould handle invalid location data
+2025-06-09T02:13:15.4324907Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mRoute Optimization[2m > [22mshould optimize route with weather considerations
+2025-06-09T02:13:15.4343484Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mRoute Optimization[2m > [22mshould provide different routes based on weather conditions
+2025-06-09T02:13:15.4367521Z [31m[1mError[22m: ENOENT: no such file or directory, open '/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/dist/worker.js'[39m
+2025-06-09T02:13:15.4369375Z [90m [2m❯[22m readFileSync node:fs:[2m449:20[22m[39m
+2025-06-09T02:13:15.4370709Z [90m [2m❯[22m getWorkerScript node_modules/miniflare/src/plugins/core/index.ts:[2m996:10[22m[39m
+2025-06-09T02:13:15.4372318Z [90m [2m❯[22m Object.getServices node_modules/miniflare/src/plugins/core/index.ts:[2m627:24[22m[39m
+2025-06-09T02:13:15.4380009Z [90m [2m❯[22m _Miniflare.#assembleConfig node_modules/miniflare/src/index.ts:[2m1731:51[22m[39m
+2025-06-09T02:13:15.4381535Z [90m [2m❯[22m _Miniflare.#assembleAndUpdateConfig node_modules/miniflare/src/index.ts:[2m1960:18[22m[39m
+2025-06-09T02:13:15.4382959Z [90m [2m❯[22m Mutex.runWith node_modules/miniflare/src/workers/shared/sync.ts:[2m66:45[22m[39m
+2025-06-09T02:13:15.4384278Z [90m [2m❯[22m _Miniflare.#waitForReady node_modules/miniflare/src/index.ts:[2m2119:3[22m[39m
+2025-06-09T02:13:15.4385599Z [90m [2m❯[22m _Miniflare._getProxyClient node_modules/miniflare/src/index.ts:[2m2445:3[22m[39m
+2025-06-09T02:13:15.4387038Z [90m [2m❯[22m _Miniflare.#getProxy node_modules/miniflare/src/index.ts:[2m2531:23[22m[39m
+2025-06-09T02:13:15.4387603Z 
+2025-06-09T02:13:15.4388004Z [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22m[39m
+2025-06-09T02:13:15.4397070Z [31m[1mSerialized Error:[22m[39m [90m{ errno: -2, code: 'ENOENT', syscall: 'open', path: '/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/dist/worker.js' }[39m
+2025-06-09T02:13:15.4398934Z [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯[22m[39m
+2025-06-09T02:13:15.4399340Z 
+2025-06-09T02:13:15.4400878Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould serve index.html for root path
+2025-06-09T02:13:15.4403475Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould return 404 for non-existent files
+2025-06-09T02:13:15.4406201Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould handle CORS headers for static files
+2025-06-09T02:13:15.4409027Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mWeather Risk Calculation[2m > [22mshould calculate weather risk for a given location
+2025-06-09T02:13:15.4411795Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mWeather Risk Calculation[2m > [22mshould handle invalid location data
+2025-06-09T02:13:15.4414510Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mRoute Optimization[2m > [22mshould optimize route with weather considerations
+2025-06-09T02:13:15.4447595Z [31m[1m[7m FAIL [27m[22m[39m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mRoute Optimization[2m > [22mshould provide different routes based on weather conditions
+2025-06-09T02:13:15.4448830Z 
+2025-06-09T02:13:15.4513531Z ##[error]TypeError: Cannot read properties of undefined (reading 'mf')
+ ❯ Module.cleanupTestEnv src/__tests__/test-utils.ts:49:15
+ ❯ src/__tests__/integration.test.ts:14:15
+
+
+2025-06-09T02:13:15.4523988Z [31m[1mTypeError[22m: Cannot read properties of undefined (reading 'mf')[39m
+2025-06-09T02:13:15.4525325Z [36m [2m❯[22m Module.cleanupTestEnv src/__tests__/test-utils.ts:[2m49:15[22m[39m
+2025-06-09T02:13:15.5026292Z     [90m 47| [39m
+2025-06-09T02:13:15.5028016Z     [90m 48| [39m[35mexport[39m [35mconst[39m cleanupTestEnv [33m=[39m [35masync[39m (env[33m:[39m [33mTestEnv[39m) [33m=>[39m {
+2025-06-09T02:13:15.5031886Z     [90m 49| [39m    [35mawait[39m env[33m.[39mmf[33m.[39m[34mdispose[39m()[33m;[39m
+2025-06-09T02:13:15.5032679Z     [90m   | [39m              [31m^[39m
+2025-06-09T02:13:15.5033225Z     [90m 50| [39m}[33m;[39m
+2025-06-09T02:13:15.5034061Z     [90m 51| [39m
+2025-06-09T02:13:15.5034833Z [90m [2m❯[22m src/__tests__/integration.test.ts:[2m14:15[22m[39m
+2025-06-09T02:13:15.5035234Z 
+2025-06-09T02:13:15.5045763Z [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯[22m[39m
+2025-06-09T02:13:15.5046297Z 
+2025-06-09T02:13:15.5051031Z 
+2025-06-09T02:13:15.5058311Z ##[error]TypeError: Cannot read properties of undefined (reading 'mf')
+ ❯ Module.cleanupTestEnv src/__tests__/test-utils.ts:49:15
+ ❯ src/__tests__/integration.test.ts:14:15
+
+
+2025-06-09T02:13:15.5084718Z [2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (3)[39m
+2025-06-09T02:13:15.5090885Z [2m      Tests [22m [1m[31m7 failed[39m[22m[2m | [22m[1m[32m30 passed[39m[22m[90m (37)[39m
+2025-06-09T02:13:15.5146928Z [2m   Start at [22m 02:13:12
+2025-06-09T02:13:15.5148561Z [2m   Duration [22m 2.48s[2m (transform 916ms, setup 1ms, collect 1.19s, tests 312ms, environment 1ms, prepare 373ms)[22m
+2025-06-09T02:13:15.5149442Z 
+2025-06-09T02:13:15.5149774Z 
+2025-06-09T02:13:15.5152955Z ##[error]TypeError: Cannot read properties of undefined (reading 'mf')
+ ❯ Module.cleanupTestEnv src/__tests__/test-utils.ts:49:15
+ ❯ src/__tests__/integration.test.ts:14:15
+
+
+2025-06-09T02:13:15.5155044Z 
+2025-06-09T02:13:15.5158194Z ##[error]TypeError: Cannot read properties of undefined (reading 'mf')
+ ❯ Module.cleanupTestEnv src/__tests__/test-utils.ts:49:15
+ ❯ src/__tests__/integration.test.ts:14:15
+
+
+2025-06-09T02:13:15.5184917Z 
+2025-06-09T02:13:15.5209362Z ##[error]TypeError: Cannot read properties of undefined (reading 'mf')
+ ❯ Module.cleanupTestEnv src/__tests__/test-utils.ts:49:15
+ ❯ src/__tests__/integration.test.ts:14:15
+
+
+2025-06-09T02:13:15.5228320Z 
+2025-06-09T02:13:15.5231441Z ##[error]TypeError: Cannot read properties of undefined (reading 'mf')
+ ❯ Module.cleanupTestEnv src/__tests__/test-utils.ts:49:15
+ ❯ src/__tests__/integration.test.ts:14:15
+
+
+2025-06-09T02:13:15.5366852Z 
+2025-06-09T02:13:15.5370750Z ##[error]TypeError: Cannot read properties of undefined (reading 'mf')
+ ❯ Module.cleanupTestEnv src/__tests__/test-utils.ts:49:15
+ ❯ src/__tests__/integration.test.ts:14:15
+
+
+2025-06-09T02:13:15.6107050Z ##[error]Process completed with exit code 1.
+2025-06-09T02:13:15.6223329Z Post job cleanup.
+2025-06-09T02:13:15.7639746Z [command]/usr/bin/git version
+2025-06-09T02:13:15.7701888Z git version 2.49.0
+2025-06-09T02:13:15.7768900Z Temporarily overriding HOME='/home/runner/work/_temp/3cb7d66c-c7eb-41f4-847d-e1e993abdf29' before making global git config changes
+2025-06-09T02:13:15.7773917Z Adding repository directory to the temporary git global config as a safe directory
+2025-06-09T02:13:15.7783916Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AWhittleWandering/AWhittleWandering
+2025-06-09T02:13:15.7878006Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-06-09T02:13:15.7914815Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-06-09T02:13:15.8239891Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-06-09T02:13:15.8275331Z http.https://github.com/.extraheader
+2025-06-09T02:13:15.8291057Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-06-09T02:13:15.8396989Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-06-09T02:13:15.9353747Z Cleaning up orphan processes
