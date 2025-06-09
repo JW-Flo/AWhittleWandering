@@ -8,10 +8,17 @@
  */
 
 /* eslint-env browser */
-import React, { useState } from 'react';
-import EnhancedMap from '../components/EnhancedMap';
+import React, { useState, Suspense, lazy } from 'react';
 import { useTripData } from '../hooks/useTripData';
 import './MapErrorTestPage.css';
+
+// Lazy load the map component
+const EnhancedMap = lazy(() => import('../components/EnhancedMap'));
+
+// Loading component for the map
+const MapLoadingFallback = () => (
+    <div className="loading">Loading map component...</div>
+);
 
 const MapErrorTestPage = () => {
     const [errorType, setErrorType] = useState(null);
@@ -228,7 +235,9 @@ const MapErrorTestPage = () => {
                 ) : tripDataError ? (
                     <div className="error">Error loading trip data: {tripDataError.message}</div>
                 ) : (
-                    <EnhancedMap {...getMapProps()} />
+                    <Suspense fallback={<MapLoadingFallback />}>
+                        <EnhancedMap {...getMapProps()} />
+                    </Suspense>
                 )}
             </div>
 
