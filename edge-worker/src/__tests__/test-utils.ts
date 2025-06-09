@@ -1,5 +1,9 @@
 import { Miniflare } from 'miniflare';
 import type { Location } from '../types';
+import * as dotenv from 'dotenv';
+
+// Load environment variables from .dev.vars
+dotenv.config({ path: '/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/.dev.vars' });
 
 export interface TestEnv {
     mf: Miniflare;
@@ -17,10 +21,12 @@ export const createTestEnv = async (): Promise<TestEnv> => {
         kvPersist: true,
         kvNamespaces: ['MAP_TILES_KV', 'APP_KV'],
         bindings: {
-            EDGE_HMAC_KEY: "test-key"
+            EDGE_HMAC_KEY: "test-key",
         },
         port: 8787
     });
+
+    console.log('Miniflare Debug: Loaded environment variables:', process.env);
 
     // Initialize KV with test static files
     const testHtml = `<!DOCTYPE html>

@@ -23,6 +23,19 @@ interface ThoughtState {
 // In production, this would be stored in KV or Durable Objects
 const stateMap = new Map<string, ThoughtState>();
 
+interface SequentialThinkingArgs {
+  thought: string;
+  context?: string;
+  step?: number;
+  thoughtNumber?: number;
+  totalThoughts?: number;
+  nextThoughtNeeded?: boolean;
+  isRevision?: boolean;
+  revisesThought?: number;
+  branchId?: string;
+  branchFromThought?: number;
+}
+
 /**
  * Handle sequential thinking MCP requests
  */
@@ -119,7 +132,8 @@ function handleListTools(request: McpServerRequest): McpServerResponse {
  */
 async function handleCallTool(
   request: McpServerRequest,
-  env: Env
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _env: Env
 ): Promise<McpServerResponse> {
   if (request.params.name !== 'sequentialthinking') {
     return {
@@ -213,42 +227,44 @@ async function handleCallTool(
 /**
  * Validate sequential thinking arguments
  */
-function validateSequentialThinkingArgs(args: any): boolean {
-  if (!args) return false;
+function validateSequentialThinkingArgs(args: unknown): args is SequentialThinkingArgs {
+  if (!args || typeof args !== 'object') return false;
+  
+  const obj = args as Record<string, unknown>;
   
   // Check required fields
-  if (typeof args.thought !== 'string' ||
-      typeof args.nextThoughtNeeded !== 'boolean' ||
-      typeof args.thoughtNumber !== 'number' ||
-      typeof args.totalThoughts !== 'number') {
+  if (typeof obj.thought !== 'string' ||
+      typeof obj.nextThoughtNeeded !== 'boolean' ||
+      typeof obj.thoughtNumber !== 'number' ||
+      typeof obj.totalThoughts !== 'number') {
     return false;
   }
   
   // Validate numeric fields
-  if (args.thoughtNumber < 1 || args.totalThoughts < 1) {
+  if (obj.thoughtNumber < 1 || obj.totalThoughts < 1) {
     return false;
   }
   
   // Validate optional fields
-  if (args.isRevision !== undefined && typeof args.isRevision !== 'boolean') {
+  if (obj.isRevision !== undefined && typeof obj.isRevision !== 'boolean') {
     return false;
   }
   
-  if (args.revisesThought !== undefined && 
-      (typeof args.revisesThought !== 'number' || args.revisesThought < 1)) {
+  if (obj.revisesThought !== undefined && 
+      (typeof obj.revisesThought !== 'number' || obj.revisesThought < 1)) {
     return false;
   }
   
-  if (args.branchFromThought !== undefined && 
-      (typeof args.branchFromThought !== 'number' || args.branchFromThought < 1)) {
+  if (obj.branchFromThought !== undefined && 
+      (typeof obj.branchFromThought !== 'number' || obj.branchFromThought < 1)) {
     return false;
   }
   
-  if (args.branchId !== undefined && typeof args.branchId !== 'string') {
+  if (obj.branchId !== undefined && typeof obj.branchId !== 'string') {
     return false;
   }
   
-  if (args.needsMoreThoughts !== undefined && typeof args.needsMoreThoughts !== 'boolean') {
+  if (obj.nextThoughtNeeded !== undefined && typeof obj.nextThoughtNeeded !== 'boolean') {
     return false;
   }
   

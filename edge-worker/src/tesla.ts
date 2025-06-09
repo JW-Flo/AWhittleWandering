@@ -14,6 +14,7 @@ import { Hono } from 'hono';
 import { env } from 'hono/adapter';
 import { TeslaAPIClient } from './utils/tesla-client'; // You will implement this
 import { getToken, setToken } from './utils/tesla-tokens'; // KV/D1 helpers
+import type { Env } from './index';
 
 const app = new Hono();
 
@@ -23,8 +24,15 @@ const app = new Hono();
  * Requires Authorization: Bearer <JWT>
  */
 app.get('/tesla/vehicle', async (c) => {
-  const { TESLA_CLIENT_ID, TESLA_CLIENT_SECRET } = env(c);
-  const token = await getToken(c.env);
+  const envVars = env(c);
+  const TESLA_CLIENT_ID = envVars.TESLA_CLIENT_ID;
+  const TESLA_CLIENT_SECRET = envVars.TESLA_CLIENT_SECRET;
+  
+  if (typeof TESLA_CLIENT_ID !== 'string' || typeof TESLA_CLIENT_SECRET !== 'string') {
+    return c.json({ error: 'Tesla credentials not configured' }, 500);
+  }
+  
+  const token = await getToken(c.env as Env);
   if (!token) return c.json({ error: 'Tesla token not set' }, 401);
 
   const client = new TeslaAPIClient({

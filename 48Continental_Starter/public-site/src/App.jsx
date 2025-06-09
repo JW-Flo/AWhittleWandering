@@ -15,11 +15,10 @@
 import React, { useState, useEffect } from 'react';
 
 // Import data source hooks
-import useVehicleData from './hooks';
-import { useWeatherData, useTripData, useChargingStations } from './hooks';
+import { useVehicleData, useWeatherData, useTripData, useChargingStations } from './hooks';
 
 // Import MapBox configuration
-import mapboxConfig from '../../shared/mapbox/mapboxConfig';
+import mapboxConfig from '@shared/mapbox/mapboxConfig.ts';
 
 // Import Dashboard component
 import Dashboard from './components/Dashboard';
