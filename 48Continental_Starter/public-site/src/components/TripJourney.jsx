@@ -1,7 +1,7 @@
 /**
  * Trip Journey Component
  * 
- * Displays detailed information about the 48 Continental USA journey,
+ * Displays detailed information about the The Wandering Whittle journey,
  * including the trip timeline, stops, and statistics.
  */
 

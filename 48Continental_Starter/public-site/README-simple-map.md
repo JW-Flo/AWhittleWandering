@@ -2,7 +2,7 @@
 
 ## Overview
 
-This solution provides a streamlined map component that directly addresses the core issues causing map rendering problems in the 48 Continental USA project. Rather than focusing on extensive error handling and debugging tools, this approach emphasizes a minimalist implementation that correctly handles coordinates and properly initializes the MapBox GL map.
+This solution provides a streamlined map component that directly addresses the core issues causing map rendering problems in the The Wandering Whittle project. Rather than focusing on extensive error handling and debugging tools, this approach emphasizes a minimalist implementation that correctly handles coordinates and properly initializes the MapBox GL map.
 
 ## Key Issues Addressed
 
@@ -50,7 +50,7 @@ To test the simplified map solution:
 
 1. Run the executable script:
    ```bash
-   cd 48Continental_Starter/public-site
+   cd WanderingWhittle_Starter/public-site
    ./test-simple-map.cjs
    ```
 

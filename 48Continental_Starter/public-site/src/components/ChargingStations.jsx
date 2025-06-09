@@ -2,7 +2,7 @@
  * Charging Stations Component
  * 
  * This component displays charging station information and controls
- * for the 48 Continental USA road trip tracking website.
+ * for the The Wandering Whittle road trip tracking website.
  */
 
 /* eslint-env browser */

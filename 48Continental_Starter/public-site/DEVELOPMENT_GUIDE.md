@@ -1,10 +1,10 @@
-# 48 Continental USA Development Guide
+# The Wandering Whittle Development Guide
 
-This guide provides instructions for setting up, developing, and deploying the 48 Continental USA website.
+This guide provides instructions for setting up, developing, and deploying the The Wandering Whittle website.
 
 ## Project Overview
 
-The 48 Continental project tracks a 60-day Tesla road trip through all 48 contiguous U.S. states, with real-time vehicle telemetry, weather data, and interactive mapping. The project consists of:
+The The Wandering Whittle project tracks a 60-day Tesla road trip through all 48 contiguous U.S. states, with real-time vehicle telemetry, weather data, and interactive mapping. The project consists of:
 
 - **Edge Worker**: A Cloudflare Worker that provides APIs for vehicle data, trip statistics, and other backend services
 - **Public Site**: A React-based frontend that displays the trip information with interactive maps and dashboards
@@ -45,7 +45,7 @@ Required environment variables for full functionality:
 
 These can be set in your system environment, or in the following files:
 - Edge worker: `edge-worker/.dev.vars`
-- Public site: `48Continental_Starter/public-site/.env.local`
+- Public site: `WanderingWhittle_Starter/public-site/.env.local`
 
 ## Local Development
 
@@ -87,7 +87,7 @@ npx wrangler dev
 ### Public Site
 
 ```bash
-cd 48Continental_Starter/public-site
+cd WanderingWhittle_Starter/public-site
 npm install
 npm run dev
 ```
@@ -98,11 +98,11 @@ The project includes both unit tests and integration tests with real data simula
 
 ```bash
 # Run unit tests
-cd 48Continental_Starter/public-site
+cd WanderingWhittle_Starter/public-site
 npm test
 
 # Run tests with real data simulation
-cd 48Continental_Starter/public-site
+cd WanderingWhittle_Starter/public-site
 npm run test:realdata
 ```
 
@@ -128,7 +128,7 @@ npx wrangler deploy
 #### Public Site
 
 ```bash
-cd 48Continental_Starter/public-site
+cd WanderingWhittle_Starter/public-site
 npm ci
 npm run build
 npx wrangler pages deploy dist --project-name=continentalusa-site
@@ -146,7 +146,7 @@ npx wrangler pages deploy dist --project-name=continentalusa-site
 │   ├── .dev.vars               # Local environment variables
 │   └── wrangler.toml           # Wrangler configuration
 │
-├── 48Continental_Starter/
+├── WanderingWhittle_Starter/
 │   └── public-site/            # React frontend
 │       ├── src/                # Source code
 │       │   ├── components/     # UI components

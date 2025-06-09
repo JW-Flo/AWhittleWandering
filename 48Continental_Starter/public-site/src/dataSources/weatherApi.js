@@ -1,5 +1,5 @@
 /**
- * Weather API Module for 48 Continental USA
+ * Weather API Module for The Wandering Whittle
  * 
  * Handles fetching weather data from weather APIs via edge worker
  */

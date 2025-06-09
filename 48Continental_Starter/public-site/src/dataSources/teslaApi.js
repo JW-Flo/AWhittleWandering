@@ -1,5 +1,5 @@
 /**
- * Tesla API Module for 48 Continental USA
+ * Tesla API Module for The Wandering Whittle
  * 
  * Handles fetching vehicle data from the Tesla API via edge worker
  */

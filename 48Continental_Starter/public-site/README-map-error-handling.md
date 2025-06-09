@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the robust error handling improvements implemented for the map component in the 48 Continental USA road trip application. The enhancements focus on providing graceful fallbacks when maps fail to load or render correctly, ensuring a consistent user experience even when errors occur.
+This document outlines the robust error handling improvements implemented for the map component in the The Wandering Whittle road trip application. The enhancements focus on providing graceful fallbacks when maps fail to load or render correctly, ensuring a consistent user experience even when errors occur.
 
 ## Components
 

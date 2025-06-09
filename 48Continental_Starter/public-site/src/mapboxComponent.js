@@ -1,5 +1,5 @@
 /**
- * MapBox Component for 48 Continental USA Trip
+ * MapBox Component for The Wandering Whittle Trip
  * 
  * This module provides enhanced map functionality using our MapBox service,
  * including advanced routing, weather overlays, and state boundary highlighting.
@@ -113,7 +113,7 @@ class MapboxComponent {
     // Add minimal attribution
     this.map.addControl(new mapboxgl.AttributionControl({
       compact: true,
-      customAttribution: '© 48Continental 2025'
+      customAttribution: '© WanderingWhittle 2025'
     }), 'bottom-right');
     
     // Add navigation controls

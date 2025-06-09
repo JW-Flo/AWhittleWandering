@@ -1,5 +1,5 @@
 /**
- * Itinerary Loader Module for 48 Continental USA
+ * Itinerary Loader Module for The Wandering Whittle
  * 
  * Handles loading and processing trip itinerary data
  */
@@ -12,7 +12,7 @@ const DEFAULT_START_DATE = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISO
 // Sample itinerary data for development/fallback - kept for reference
 // eslint-disable-next-line no-unused-vars
 const SAMPLE_ITINERARY = {
-  name: "48 Continental USA Road Trip",
+  name: "The Wandering Whittle Road Trip",
   description: "Epic journey through all 48 continental states",
   startDate: DEFAULT_START_DATE,
   duration: 60, // days
@@ -281,7 +281,7 @@ function generateCompleteItinerary() {
   const daysRemaining = totalDays;
   
   return {
-    name: "48 Continental USA Road Trip",
+    name: "The Wandering Whittle Road Trip",
     description: "Epic journey through all 48 continental states",
     startDate: startDate.toISOString(),
     duration: totalDays,

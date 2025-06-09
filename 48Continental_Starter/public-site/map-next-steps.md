@@ -1,4 +1,4 @@
-# 48 Continental Map Implementation: Next Steps
+# The Wandering Whittle Map Implementation: Next Steps
 
 ## Progress Made
 

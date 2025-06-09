@@ -2,7 +2,7 @@
 
 ## Problem Solved
 
-The 48 Continental map component was failing to display locations correctly due to coordinate format inconsistencies. Different data sources were providing coordinates in different formats:
+The The Wandering Whittle map component was failing to display locations correctly due to coordinate format inconsistencies. Different data sources were providing coordinates in different formats:
 
 - Some as `[longitude, latitude]` arrays (MapBox format)
 - Some as `[latitude, longitude]` arrays (common in some libraries)
