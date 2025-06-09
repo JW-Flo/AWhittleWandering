@@ -7,6 +7,8 @@
  *   - setToken(env, { access_token, refresh_token }): Promise<void>
  */
 
+import type { Env } from '../index';
+
 type TeslaToken = {
   access_token: string;
   refresh_token: string;
@@ -14,7 +16,7 @@ type TeslaToken = {
 
 const TOKEN_KEY = 'tesla_token';
 
-export async function getToken(env: any): Promise<TeslaToken | null> {
+export async function getToken(env: Env): Promise<TeslaToken | null> {
   // Prefer D1 if available, fallback to KV
   if (env.DB) {
     // D1 (Cloudflare SQLite)
@@ -30,7 +32,7 @@ export async function getToken(env: any): Promise<TeslaToken | null> {
   throw new Error('No token storage configured');
 }
 
-export async function setToken(env: any, token: TeslaToken): Promise<void> {
+export async function setToken(env: Env, token: TeslaToken): Promise<void> {
   if (env.DB) {
     // D1
     await env.DB.prepare(

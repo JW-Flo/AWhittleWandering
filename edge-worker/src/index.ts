@@ -217,7 +217,8 @@ async function handleWeatherRisk(request: Request, env: Env): Promise<Response> 
         }
 
         // Fetch real weather data from the API
-        const weather = await fetchWeatherData(latitude, longitude, env.WEATHER_API_KEY || '');
+        const weatherApiKey = (env.OPENWEATHER_API_KEY?.trim()) || (env.WEATHER_API_KEY?.trim()) || '';
+        const weather = await fetchWeatherData(latitude, longitude, weatherApiKey);
         
         // Calculate weather risk level
         const riskLevel = calculateRiskLevel(weather);
@@ -607,7 +608,8 @@ async function handleWeatherAPI(request: Request, env: Env): Promise<Response> {
         const lat = url.searchParams.get('lat') || '27.741777';
         const lon = url.searchParams.get('lon') || '-97.388844';
         
-        const weather = await fetchWeatherData(parseFloat(lat), parseFloat(lon), env.WEATHER_API_KEY || '');
+        const weatherApiKey = (env.OPENWEATHER_API_KEY?.trim()) || (env.WEATHER_API_KEY?.trim()) || '';
+        const weather = await fetchWeatherData(parseFloat(lat), parseFloat(lon), weatherApiKey);
         
         return new Response(JSON.stringify(weather), {
             status: 200,

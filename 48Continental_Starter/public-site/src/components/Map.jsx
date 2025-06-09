@@ -21,7 +21,7 @@ import './MapEnhancements.css'; import { ensureMapboxFormat } from "../utils/map
 
 
 // Import the centralized MapBox configuration
-import mapboxConfig from '../../../shared/mapbox/mapboxConfig';
+import mapboxConfig from '@shared/mapbox/mapboxConfig.ts';
 
 // Use the token from the centralized config
 const mapboxToken = mapboxConfig.getMapboxToken();

@@ -12,7 +12,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import './MinimalMapTest.css';
 
 // Import the centralized MapBox configuration
-import mapboxConfig from '../../../shared/mapbox/mapboxConfig';
+import mapboxConfig from '@shared/mapbox/mapboxConfig.ts';
 
 // Use the token from the centralized config
 const MAPBOX_TOKEN = mapboxConfig.getMapboxToken();
