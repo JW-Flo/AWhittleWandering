@@ -98,7 +98,8 @@ export default defineConfig({
         secure: process.env.NODE_ENV === "production",
         rewrite: (path) => path,
         configure: (proxy, _options) => {
-          proxy.on("error", (err, _req, _res) => {
+          proxy.on("error", (err) => {
+            // In production, use a logging framework like 'winston' or 'pino' instead of console.log
             console.log("proxy error", err);
           });
           proxy.on("proxyReq", (proxyReq, req, _res) => {

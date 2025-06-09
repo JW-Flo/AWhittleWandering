@@ -19,9 +19,9 @@ chmod +x scripts/setup-map-data.sh
 ```
 
 This will:
-1. Generate `48Continental_Final_Itinerary_with_Coords.csv` with proper coordinates
-2. Create `48Continental_Starter/public-site/src/data/trip-data.json` for the application
-3. Create `48Continental_Starter/public-site/src/data/trip-data.geojson` for MapBox
+1. Generate `WanderingWhittle_Final_Itinerary_with_Coords.csv` with proper coordinates
+2. Create `WanderingWhittle_Starter/public-site/src/data/trip-data.json` for the application
+3. Create `WanderingWhittle_Starter/public-site/src/data/trip-data.geojson` for MapBox
 
 ## Key Fixes to Map Functionality
 
@@ -38,7 +38,7 @@ After running the scripts:
 
 1. Start your development server:
    ```bash
-   cd 48Continental_Starter/public-site
+   cd WanderingWhittle_Starter/public-site
    npm run dev
    ```
 

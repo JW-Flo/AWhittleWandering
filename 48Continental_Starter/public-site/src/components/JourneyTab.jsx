@@ -149,7 +149,7 @@ const JourneyTab = ({ vehicleData }) => {
         <ErrorBoundary>
             <div className="journey-tab">
                 <div className="journey-header">
-                    <h2>48 Continental Journey</h2>
+                    <h2>The Wandering Whittle Journey</h2>
                     <div className="progress-container">
                         <div className="progress-text">
                             {journeyStats.statesVisited} of 48 states visited

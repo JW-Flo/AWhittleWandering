@@ -12,7 +12,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './MapCoordinateTester.css';
 
-// Default map center (Continental USA)
+// Default map center (Wandering Whittle)
 const DEFAULT_CENTER = [-98.5795, 39.8283];
 const DEFAULT_ZOOM = 3.5;
 

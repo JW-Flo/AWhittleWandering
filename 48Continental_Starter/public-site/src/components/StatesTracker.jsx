@@ -155,7 +155,7 @@ const StatesTracker = ({
     return (
         <div className="states-tracker">
             <div className="tracker-header">
-                <h3>48 Continental States Journey</h3>
+                <h3>The Wandering Whittle States Journey</h3>
                 <div className="progress-stats">
                     <div className="stat-item">
                         <span className="stat-number">{visitedCount}</span>

@@ -2,7 +2,7 @@
  * Charging Stations Hook
  * 
  * This hook provides access to nearby Tesla Supercharger stations
- * for the 48 Continental USA journey.
+ * for the The Wandering Whittle journey.
  */
 
 /* eslint-env browser */

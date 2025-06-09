@@ -1,5 +1,5 @@
 /**
- * Main Application Entry Point for 48 Continental USA
+ * Main Application Entry Point for The Wandering Whittle
  * 
  * This is the primary entry point for the application.
  * It imports and initializes all the necessary modules.
