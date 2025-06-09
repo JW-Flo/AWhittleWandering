@@ -427,25 +427,30 @@ async function handleTessieVehicle(request: Request, env: Env): Promise<Response
                 const tessieClient = new TessieAPIClient(env);
                 
                 // Get vehicle state from Tessie with timeout to prevent hanging requests
-                const timeoutPromise = new Promise((_, reject) => {
+                const timeoutPromise = new Promise<never>((_, reject) => {
                     setTimeout(() => reject(new Error('Tessie API request timed out')), 5000);
                 });
-                
+
                 const vehicleDataPromise = tessieClient.getVehicleState();
-                
+
                 // Race the API call against a timeout
-                const vehicleData = await Promise.race([vehicleDataPromise, timeoutPromise]) as Record<string, any>;
-                
-                if (!vehicleData || !vehicleData.drive_state) {
+                const vehicleData = await Promise.race([
+                    vehicleDataPromise,
+                    timeoutPromise
+
+                ]) as Record<string, unknown>;
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                if (!vehicleData || typeof vehicleData !== 'object' || !(vehicleData as { drive_state?: unknown }).drive_state) {
                     throw new Error('Invalid vehicle data received from Tessie API');
                 }
-                
+
                 // Transform to standard format
                 const transformedData = tessieClient.transformToStandardFormat(vehicleData);
-                
+
                 // Store successful data for future use
                 lastKnownVehicleData = transformedData;
-                
+
                 console.log('Successfully retrieved vehicle data from Tessie API');
                 
                 return new Response(JSON.stringify(transformedData), {
@@ -611,7 +616,8 @@ async function handleWeatherAPI(request: Request, env: Env): Promise<Response> {
     }
 }
 
-async function handleStationsAPI(request: Request, env: Env): Promise<Response> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function handleStationsAPI(_request: Request, _env: Env): Promise<Response> {
     const corsHeaders = {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
@@ -620,7 +626,7 @@ async function handleStationsAPI(request: Request, env: Env): Promise<Response> 
     };
 
     try {
-        const url = new URL(request.url);
+        const url = new URL(_request.url);
         const lat = parseFloat(url.searchParams.get('lat') || '27.741777');
         const lon = parseFloat(url.searchParams.get('lon') || '-97.388844');
         
@@ -668,7 +674,8 @@ async function handleStationsAPI(request: Request, env: Env): Promise<Response> 
     }
 }
 
-async function handleTripAPI(request: Request, env: Env): Promise<Response> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function handleTripAPI(_request: Request, _env: Env): Promise<Response> {
     const corsHeaders = {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
