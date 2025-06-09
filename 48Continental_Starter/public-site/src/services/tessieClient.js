@@ -14,7 +14,7 @@ const TESSIE_API_BASE_URL = "https://api.tessie.com/";
 
 // Get Tessie API token from environment variables
 const getApiToken = () => {
-  return import.meta.env.VITE_TESSIE_TOKEN || null;
+  return import.meta.env.VITE_TESSIE_API_TOKEN || null;
 };
 
 /**
@@ -26,7 +26,7 @@ export const getVehicleData = async () => {
 
   if (!token) {
     throw new Error(
-      "Tessie API token is not configured. Please set VITE_TESSIE_TOKEN in .env file."
+      "Tessie API token is not configured. Please set VITE_TESSIE_API_TOKEN in .env file."
     );
   }
 
@@ -81,7 +81,7 @@ export const createWebSocketConnection = (callback) => {
 
   if (!token) {
     throw new Error(
-      "Tessie API token is not configured. Please set VITE_TESSIE_TOKEN in .env file."
+      "Tessie API token is not configured. Please set VITE_TESSIE_API_TOKEN in .env file."
     );
   }
 
@@ -140,7 +140,7 @@ export const wakeVehicle = async () => {
 
   if (!token) {
     throw new Error(
-      "Tessie API token is not configured. Please set VITE_TESSIE_TOKEN in .env file."
+      "Tessie API token is not configured. Please set VITE_TESSIE_API_TOKEN in .env file."
     );
   }
 

@@ -16,9 +16,10 @@
 const ENV_VARIABLE_MAP = {
   // MapBox configuration
   MAPBOX_TOKEN: {
-    // Sources in order of preference
     sources: [
       "import.meta.env.VITE_MAPBOX_TOKEN", // Frontend (Vite)
+      "import.meta.env.MAPBOX_TOKEN", // fallback for legacy
+      "process.env.MAPBOX_TOKEN", // Node env
       "process.env.MAPBOX_PUBLIC_TOKEN", // Backend/build scripts
       "process.env.MAP_API_TOKEN", // GitHub Actions secrets
     ],
@@ -30,8 +31,10 @@ const ENV_VARIABLE_MAP = {
   WEATHER_API_KEY: {
     sources: [
       "import.meta.env.VITE_OPENWEATHER_API_KEY", // Frontend (Vite)
+      "import.meta.env.OPENWEATHER_API_KEY", // fallback for legacy
+      "process.env.VITE_OPENWEATHER_API_KEY", // Node env
       "process.env.OPENWEATHER_API_KEY", // Backend standard format
-      "process.env.OPEN_WEATHER_API_KEY", // Alternative format used in some services
+      "process.env.OPEN_WEATHER_API_KEY", // Alt legacy
     ],
     required: true,
     description: "OpenWeatherMap API key",
