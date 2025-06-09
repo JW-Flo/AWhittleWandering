@@ -12,7 +12,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import './MinimalMapTest.css';
 
 // Use the same token as the main Map component for consistency
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2liaTA4enIwIn0.tU9_tLaaxXxhfcVX4WhOeA';
+const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN;
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
 const MinimalMapTest = () => {
