@@ -1,8 +1,7 @@
 /**
- * The Wandering Whittle Web Application Entry Point
+ * A Whittle Wandering Web Application Entry Point
  * 
- * This is the main entry point for the React application that powers
- * the The Wandering Whittle road trip tracking website.
+ * This file initializes the A Whittle Wandering road trip tracking website.
  */
 
 /* eslint-env browser */
@@ -24,7 +23,7 @@ root.render(
   </React.StrictMode>
 );
 
-console.log('The Wandering Whittle React application initialized');
+console.log('A Whittle Wandering React application initialized');
 
 // Handle errors globally
 window.addEventListener('error', (event) => {
