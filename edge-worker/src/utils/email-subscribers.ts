@@ -38,9 +38,9 @@ export async function getSubscribers(env: WorkerEnvironment): Promise<EmailSubsc
         verified,
         last_email_sent AS lastEmailSent
       FROM subscribers
-    `).all<any>();
+    `).all<SubscriberRow>();
     
-    return result.results.map((row: any) => ({
+    return result.results.map((row: SubscriberRow) => ({
       email: row.email,
       dateAdded: row.dateAdded,
       preferences: typeof row.preferences === 'string' 
@@ -94,7 +94,7 @@ export async function getSubscriberByEmail(env: WorkerEnvironment, email: string
         last_email_sent AS lastEmailSent
       FROM subscribers
       WHERE email = ?
-    `).bind(email).get<any>();
+    `).bind(email).get<SubscriberRow>();
     
     if (!result) return null;
     
@@ -258,3 +258,14 @@ export async function removeSubscriber(env: WorkerEnvironment, email: string): P
   }
   throw new Error('No subscriber storage configured');
 }
+
+interface SubscriberRow {
+  email: string;
+  dateAdded: string;
+  preferences?: string;
+  verificationToken?: string;
+  verified: number;
+  lastEmailSent?: string;
+}
+
+
