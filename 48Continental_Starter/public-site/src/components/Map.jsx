@@ -26,7 +26,7 @@ const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2l
 
 // Explicitly set the token without complex fallback logic
 mapboxgl.accessToken = MAPBOX_TOKEN;
-console.log('Map.jsx: Using MapBox token:', MAPBOX_TOKEN.substring(0, 10) + '...');
+console.log('Map.jsx: MapBox token has been set successfully.');
 
 // SVG icons for map markers
 const SVG_ICONS = {
