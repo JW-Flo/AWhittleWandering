@@ -38,11 +38,11 @@ export const useVehicleData = ({
   const batchTimeoutRef = useRef(null);
   const requestCountRef = useRef(0);
 
-  // Enhanced caching with TTL
+  // Enhanced caching with TTL - extended to 30 seconds for stability
   const cache = useRef({
     simulated: null,
     lastUpdate: 0,
-    ttl: 5000, // 5 seconds TTL
+    ttl: 30000, // 30 seconds TTL to prevent excessive API calls
     pending: false,
   });
 
