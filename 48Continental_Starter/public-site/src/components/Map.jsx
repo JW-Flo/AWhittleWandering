@@ -9,7 +9,7 @@
  */
 
 /* eslint-env browser */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import mapboxgl from 'mapbox-gl';
 import Hammer from 'hammerjs';
@@ -22,10 +22,10 @@ import './MapEnhancements.css'; import { ensureMapboxFormat } from "../utils/map
 
 // IMPORTANT: Directly set the MapBox token to fix the "Invalid Mapbox access token" error
 // This is a public token (pk.) for client-side application
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2liaTA4enIwIn0.tU9_tLaaxXxhfcVX4WhOeA';
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
-// Using direct token instead of centralized config for more reliable loading
-console.debug('Using hardcoded MapBox token for maximum reliability');
+// Import the centralized MapBox configuration
+import mapboxConfig from '@shared/mapbox/mapboxConfig.ts';
 
 // Explicitly set the token without complex fallback logic
 mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -836,17 +836,49 @@ const Map = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Map container click handler to reset errors
-  const handleMapContainerClick = () => {
-    if (mapError) {
-      setMapError(null);
-      setMapInitAttempted(false);
-    }
-  };
+  // Map health monitor to auto-reset if needed
+  useEffect(() => {
+    if (!mapReady || !map.current) return;
+    
+    // Variables to track map health
+    let consecutiveFailures = 0;
+    const MAX_FAILURES = 3;
+    
+    const healthCheck = () => {
+      try {
+        // Try to perform an operation that would fail if the map is broken
+        const center = map.current.getCenter();
+        const zoom = map.current.getZoom();
+        
+        // If we get here, the map is still responsive
+        consecutiveFailures = 0;
+        console.log("Map health check: OK", { center, zoom });
+      } catch (error) {
+        consecutiveFailures++;
+        console.warn(`Map health check failed (${consecutiveFailures}/${MAX_FAILURES})`, error);
+        
+        // If multiple consecutive failures, attempt auto-recovery
+        if (consecutiveFailures >= MAX_FAILURES) {
+          console.error("Map appears to be unresponsive. Triggering auto-recovery...");
+          handleResetMap();
+          consecutiveFailures = 0;
+        }
+      }
+    };
+    
+    // Run health check every 45 seconds
+    const healthCheckInterval = setInterval(healthCheck, 45000);
+    
+    return () => {
+      clearInterval(healthCheckInterval);
+    };
+  }, [mapReady]);
 
-  // Reset map handler for debug panel
-  const handleResetMap = () => {
+  // Handle reset map for auto-recovery or debug panel
+  const handleResetMap = useCallback(() => {
     try {
+      console.log("Resetting map instance...");
+      
       if (map.current) {
         map.current.remove();
         map.current = null;
@@ -860,9 +892,36 @@ const Map = ({
       setMapInitAttempted(false);
       setMapError(null);
       setLoading(true);
+      
+      // Force a repaint of the map container
+      if (mapContainer.current) {
+        const oldContainer = mapContainer.current;
+        const parent = oldContainer.parentNode;
+        if (parent) {
+          const newContainer = document.createElement('div');
+          newContainer.className = 'map';
+          mapContainer.current = newContainer;
+          parent.replaceChild(newContainer, oldContainer);
+        }
+      }
+      
+      console.log("Map reset complete. Will re-initialize.");
     } catch (error) {
       console.error('Error resetting map:', error);
     }
+  }, []);
+
+  // Handle map container click to reset errors
+  const handleMapContainerClick = () => {
+    if (mapError) {
+      setMapError(null);
+      setMapInitAttempted(false);
+    }
+  };
+
+  // Reset map handler for debug panel
+  const handleDebugResetMap = () => {
+    handleResetMap();
   };
 
   // Refresh data handler for debug panel
@@ -908,7 +967,7 @@ const Map = ({
           tripData={tripData}
           vehicleData={vehicleData}
           mapReady={mapReady}
-          onResetMap={handleResetMap}
+          onResetMap={handleDebugResetMap}
           onRefreshData={handleRefreshData}
         />
       )}

@@ -98,119 +98,122 @@ const LiveVehicleMapTestPage = () => {
             </header>
 
             <div className="test-container">
-                <div className="map-controls">
-                    <div className="control-section">
-                        <h3>Data Source</h3>
-                        <div className="toggle-control">
-                            <label className="toggle-switch">
-                                <input
-                                    type="checkbox"
-                                    checked={!useMock}
-                                    onChange={() => setUseMock(!useMock)}
-                                />
-                                <span className="toggle-slider"></span>
-                            </label>
-                            <span className="toggle-label">
-                                {useMock ? 'Using Mock Data' : 'Using Live Data'}
-                            </span>
-                        </div>
-
-                        <div className="toggle-control">
-                            <label className="toggle-switch">
-                                <input
-                                    type="checkbox"
-                                    checked={useWebSocket}
-                                    onChange={() => setUseWebSocket(!useWebSocket)}
-                                    disabled={!useMock && !import.meta.env.VITE_TESSIE_API_TOKEN}
-                                />
-                                <span className="toggle-slider"></span>
-                            </label>
-                            <span className="toggle-label">
-                                {useWebSocket ? 'WebSocket Updates' : 'Polling Updates'}
-                            </span>
-                        </div>
-
-                        {!useWebSocket && (
-                            <div className="range-control">
-                                <label>
-                                    Polling Interval: {pollingInterval / 1000}s
+                {/* Hide the map-controls panel when in fullscreen mode */}
+                {!fullscreen && (
+                    <div className="map-controls">
+                        <div className="control-section">
+                            <h3>Data Source</h3>
+                            <div className="toggle-control">
+                                <label className="toggle-switch">
                                     <input
-                                        type="range"
-                                        min="1000"
-                                        max="20000"
-                                        step="1000"
-                                        value={pollingInterval}
-                                        onChange={handlePollingChange}
+                                        type="checkbox"
+                                        checked={!useMock}
+                                        onChange={() => setUseMock(!useMock)}
                                     />
+                                    <span className="toggle-slider"></span>
+                                </label>
+                                <span className="toggle-label">
+                                    {useMock ? 'Using Mock Data' : 'Using Live Data'}
+                                </span>
+                            </div>
+
+                            <div className="toggle-control">
+                                <label className="toggle-switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={useWebSocket}
+                                        onChange={() => setUseWebSocket(!useWebSocket)}
+                                        disabled={!useMock && !import.meta.env.VITE_TESSIE_API_TOKEN}
+                                    />
+                                    <span className="toggle-slider"></span>
+                                </label>
+                                <span className="toggle-label">
+                                    {useWebSocket ? 'WebSocket Updates' : 'Polling Updates'}
+                                </span>
+                            </div>
+
+                            {!useWebSocket && (
+                                <div className="range-control">
+                                    <label>
+                                        Polling Interval: {pollingInterval / 1000}s
+                                        <input
+                                            type="range"
+                                            min="1000"
+                                            max="20000"
+                                            step="1000"
+                                            value={pollingInterval}
+                                            onChange={handlePollingChange}
+                                        />
+                                    </label>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="control-section">
+                            <h3>Map Layers</h3>
+                            <div className="checkbox-control">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={mapLayers.satellite}
+                                        onChange={() => handleLayerToggle('satellite')}
+                                    />
+                                    Satellite View
                                 </label>
                             </div>
-                        )}
-                    </div>
 
-                    <div className="control-section">
-                        <h3>Map Layers</h3>
-                        <div className="checkbox-control">
-                            <label>
-                                <input
-                                    type="checkbox"
-                                    checked={mapLayers.satellite}
-                                    onChange={() => handleLayerToggle('satellite')}
-                                />
-                                Satellite View
-                            </label>
-                        </div>
-
-                        <div className="checkbox-control">
-                            <label>
-                                <input
-                                    type="checkbox"
-                                    checked={mapLayers.traffic}
-                                    onChange={() => handleLayerToggle('traffic')}
-                                />
-                                Traffic Layer
-                            </label>
-                        </div>
-
-                        <div className="checkbox-control">
-                            <label>
-                                <input
-                                    type="checkbox"
-                                    checked={mapLayers.chargingStations}
-                                    onChange={() => handleLayerToggle('chargingStations')}
-                                />
-                                Charging Stations
-                            </label>
-                        </div>
-                    </div>
-
-                    <div className="control-section">
-                        <h3>Display</h3>
-                        <button
-                            className="fullscreen-button"
-                            onClick={toggleFullscreen}
-                        >
-                            {fullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-                        </button>
-                    </div>
-
-                    <div className="info-section">
-                        <h3>Information</h3>
-                        <p>
-                            This page demonstrates the live vehicle tracking functionality
-                            using the <code>LiveVehicleMap</code> component.
-                        </p>
-                        <p>
-                            When using mock data, the vehicle will follow the route defined in the
-                            trip data or move randomly if no route is provided.
-                        </p>
-                        {!useMock && !import.meta.env.VITE_TESSIE_API_TOKEN && (
-                            <div className="warning-message">
-                                <strong>Note:</strong> To use live data, you need to set a Tessie API
-                                token in the <code>.env</code> file.
+                            <div className="checkbox-control">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={mapLayers.traffic}
+                                        onChange={() => handleLayerToggle('traffic')}
+                                    />
+                                    Traffic Layer
+                                </label>
                             </div>
-                        )}
+
+                            <div className="checkbox-control">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={mapLayers.chargingStations}
+                                        onChange={() => handleLayerToggle('chargingStations')}
+                                    />
+                                    Charging Stations
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className="control-section">
+                            <h3>Display</h3>
+                            <button
+                                className="fullscreen-button"
+                                onClick={toggleFullscreen}
+                            >
+                                {fullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+                            </button>
+                        </div>
+
+                        <div className="info-section">
+                            <h3>Information</h3>
+                            <p>
+                                This page demonstrates the live vehicle tracking functionality
+                                using the <code>LiveVehicleMap</code> component.
+                            </p>
+                            <p>
+                                When using mock data, the vehicle will follow the route defined in the
+                                trip data or move randomly if no route is provided.
+                            </p>
+                            {!useMock && !import.meta.env.VITE_TESSIE_API_TOKEN && (
+                                <div className="warning-message">
+                                    <strong>Note:</strong> To use live data, you need to set a Tessie API
+                                    token in the <code>.env</code> file.
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 <div className="map-container">
                     {loading ? (
@@ -236,7 +239,7 @@ const LiveVehicleMapTestPage = () => {
 
             <footer>
                 <p>
-                    This vehicle tracker is part of the The Wandering Whittle Project, which tracks a 60-day
+                    This vehicle tracker is part of the 48 Continental USA Project, which tracks a 60-day
                     Tesla road trip through all 48 contiguous U.S. states.
                 </p>
             </footer>

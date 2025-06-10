@@ -38,11 +38,11 @@ export const useVehicleData = ({
   const batchTimeoutRef = useRef(null);
   const requestCountRef = useRef(0);
 
-  // Enhanced caching with TTL - extended to 30 seconds for stability
+  // Enhanced caching with TTL
   const cache = useRef({
     simulated: null,
     lastUpdate: 0,
-    ttl: 30000, // 30 seconds TTL to prevent excessive API calls
+    ttl: 5000, // 5 seconds TTL
     pending: false,
   });
 
@@ -223,12 +223,16 @@ export const useVehicleData = ({
           import.meta.env.VITE_API_BASE_URL ||
           "http://localhost:8787";
 
+        // Use a shorter timeout to prevent UI from hanging
         const response = await fetch(`${apiUrl}/api/vehicle`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
           },
-          signal: AbortSignal.timeout(10000),
+          signal: AbortSignal.timeout(8000), // Shorter timeout for better UX
         });
 
         if (!response.ok) {
@@ -285,9 +289,22 @@ export const useVehicleData = ({
   );
 
   useEffect(() => {
+    // Normal polling interval for regular updates
     fetchVehicleData();
-    const interval = setInterval(fetchVehicleData, pollInterval);
-    return () => clearInterval(interval);
+    const pollingInterval = setInterval(() => {
+      fetchVehicleData();
+    }, pollInterval);
+
+    // Force a complete refresh every 2 minutes to prevent stale data
+    const forceRefreshInterval = setInterval(() => {
+      console.log("Forcing data refresh to prevent timeout issues");
+      fetchVehicleData(true); // true = force refresh ignoring cache
+    }, 120000); // 2 minutes
+
+    return () => {
+      clearInterval(pollingInterval);
+      clearInterval(forceRefreshInterval);
+    };
   }, [fetchVehicleData, pollInterval]);
 
   useEffect(() => {
@@ -301,8 +318,10 @@ export const useVehicleData = ({
 
     let ws;
     let reconnectTimer;
+    let heartbeatTimer;
     let reconnectAttempts = 0;
     const maxReconnectAttempts = 5;
+    const HEARTBEAT_INTERVAL = 30000; // 30 seconds heartbeat to keep connection alive
 
     const connect = () => {
       try {
@@ -312,12 +331,21 @@ export const useVehicleData = ({
           console.log("🔗 WebSocket connected");
           setConnectionStatus("streaming");
           reconnectAttempts = 0;
+          
+          // Start heartbeat to keep connection alive
+          if (heartbeatTimer) clearInterval(heartbeatTimer);
+          heartbeatTimer = setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ type: "heartbeat" }));
+              console.log("❤️ Heartbeat sent");
+            }
+          }, HEARTBEAT_INTERVAL);
         };
 
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            if (data.type !== "ping") {
+            if (data.type !== "ping" && data.type !== "heartbeat") {
               setVehicleData((prevData) => ({
                 ...prevData,
                 ...data,
@@ -330,14 +358,22 @@ export const useVehicleData = ({
           }
         };
 
-        ws.onclose = () => {
+        ws.onclose = (event) => {
+          console.log(`WebSocket closed: ${event.code} ${event.reason}`);
           setConnectionStatus("connected");
+          if (heartbeatTimer) clearInterval(heartbeatTimer);
+          
           if (reconnectAttempts < maxReconnectAttempts) {
             const delay = Math.pow(2, reconnectAttempts) * 1000;
+            console.log(`Attempting to reconnect in ${delay/1000}s...`);
             reconnectTimer = setTimeout(() => {
               reconnectAttempts++;
               connect();
             }, delay);
+          } else {
+            console.warn("Max reconnection attempts reached, falling back to polling");
+            // Force a data refresh using polling when WebSocket fails
+            fetchVehicleData(true);
           }
         };
 
@@ -353,9 +389,13 @@ export const useVehicleData = ({
 
     return () => {
       if (reconnectTimer) clearTimeout(reconnectTimer);
-      if (ws) ws.close();
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+      if (ws) {
+        console.log("Closing WebSocket connection");
+        ws.close();
+      }
     };
-  }, [enableStreaming, vehicleData?.id]);
+  }, [enableStreaming, vehicleData?.id, fetchVehicleData]);
 
   const refreshVehicleData = useCallback(() => {
     setLoading(true);
