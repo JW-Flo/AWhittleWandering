@@ -22,10 +22,10 @@ import './MapEnhancements.css'; import { ensureMapboxFormat } from "../utils/map
 
 // IMPORTANT: Directly set the MapBox token to fix the "Invalid Mapbox access token" error
 // This is a public token (pk.) for client-side application
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2liaTA4enIwIn0.tU9_tLaaxXxhfcVX4WhOeA';
 
-// Import the centralized MapBox configuration
-import mapboxConfig from '@shared/mapbox/mapboxConfig.ts';
+// Using direct token instead of centralized config for more reliable loading
+console.debug('Using hardcoded MapBox token for maximum reliability');
 
 // Explicitly set the token without complex fallback logic
 mapboxgl.accessToken = MAPBOX_TOKEN;
