@@ -4,7 +4,7 @@
   "description": "The Wandering Whittle Trip Planner Public Site",
   "type": "module",
   "engines": {
-    "node": ">=24.1.0",
+    "node": ">=20.0.0",
     "npm": ">=10.0.0"
   },
   "scripts": {

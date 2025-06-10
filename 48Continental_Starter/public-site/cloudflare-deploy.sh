@@ -29,12 +29,37 @@ fi
 # Go to the public site directory
 cd "$(dirname "$0")"
 
-# Create or update .env file with required variables
-echo "Creating .env file with required variables..."
-cat > .env << EOL
+# Do NOT overwrite the existing .env file, just ensure required vars are set
+if [ ! -f .env ]; then
+  echo "Creating .env file with required variables..."
+  cat > .env << EOL
 VITE_MAPBOX_TOKEN=${MAPBOX_TOKEN}
 VITE_APP_NAME="The Wandering Whittle"
+VITE_EDGE_WORKER_URL=https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev
+VITE_WEBSOCKET_ENDPOINT=wss://thewanderingwhittle-edge.workers.dev/ws
+VITE_API_BASE_URL=https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev
+VITE_ENABLE_STREAMING=true
+VITE_USE_SIMULATED_DATA=true
 EOL
+else
+  echo "Using existing .env file and ensuring required vars are set"
+  # Ensure MAPBOX_TOKEN is set correctly, but preserve other values
+  if grep -q "VITE_MAPBOX_TOKEN=" .env; then
+    sed -i '' "s|VITE_MAPBOX_TOKEN=.*|VITE_MAPBOX_TOKEN=${MAPBOX_TOKEN}|" .env
+  else
+    echo "VITE_MAPBOX_TOKEN=${MAPBOX_TOKEN}" >> .env
+  fi
+  
+  # Ensure app name is set
+  if ! grep -q "VITE_APP_NAME=" .env; then
+    echo 'VITE_APP_NAME="The Wandering Whittle"' >> .env
+  fi
+  
+  # Make sure fallback to simulated data is available
+  if ! grep -q "VITE_USE_SIMULATED_DATA=" .env; then
+    echo 'VITE_USE_SIMULATED_DATA=true' >> .env
+  fi
+fi
 
 # Install dependencies
 echo "Installing dependencies..."
