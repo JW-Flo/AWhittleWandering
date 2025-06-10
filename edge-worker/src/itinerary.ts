@@ -42,9 +42,35 @@ export async function updateItinerary(env: WorkerEnvironment, itinerary: Itinera
 }
 
 /**
+ * Add CORS headers to a Response
+ */
+function addCorsHeaders(response: Response): Response {
+  const headers = new Headers(response.headers);
+  headers.set('Access-Control-Allow-Origin', '*');
+  headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
+}
+
+/**
  * Handle itinerary API requests
  */
 export async function handleItineraryRequest(request: Request, env: WorkerEnvironment): Promise<Response> {
+  // Handle CORS preflight requests
+  if (request.method === 'OPTIONS') {
+    const response = new Response(null, {
+      headers: {
+        'Access-Control-Max-Age': '86400'
+      }
+    });
+    return addCorsHeaders(response);
+  }
+
   const url = new URL(request.url);
   const path = url.pathname.replace(/^\/api\/itinerary\/?/, '').toLowerCase();
   
@@ -52,32 +78,32 @@ export async function handleItineraryRequest(request: Request, env: WorkerEnviro
   const itinerary = await getItinerary(env);
   
   if (!itinerary) {
-    return new Response(JSON.stringify({ error: 'Itinerary not found' }), {
+    return addCorsHeaders(new Response(JSON.stringify({ error: 'Itinerary not found' }), {
       status: 404,
       headers: { 'Content-Type': 'application/json' }
-    });
+    }));
   }
   
   // Handle different endpoints
   switch (path) {
     case '':
       // GET /api/itinerary - Return the full itinerary
-      return new Response(JSON.stringify(itinerary), {
+      return addCorsHeaders(new Response(JSON.stringify(itinerary), {
         headers: { 'Content-Type': 'application/json' }
-      });
+      }));
       
     case 'current': {
       // GET /api/itinerary/current - Return the current stop
       const currentStop = getCurrentStop(itinerary);
       if (!currentStop) {
-        return new Response(JSON.stringify({ error: 'No current or upcoming stops found' }), {
+        return addCorsHeaders(new Response(JSON.stringify({ error: 'No current or upcoming stops found' }), {
           status: 404,
           headers: { 'Content-Type': 'application/json' }
-        });
+        }));
       }
-      return new Response(JSON.stringify(currentStop), {
+      return addCorsHeaders(new Response(JSON.stringify(currentStop), {
         headers: { 'Content-Type': 'application/json' }
-      });
+      }));
     }
       
     default:
@@ -87,21 +113,21 @@ export async function handleItineraryRequest(request: Request, env: WorkerEnviro
         const stateStops = getStopsByState(itinerary, state);
         
         if (stateStops.length === 0) {
-          return new Response(JSON.stringify({ error: `No stops found in state: ${state}` }), {
+          return addCorsHeaders(new Response(JSON.stringify({ error: `No stops found in state: ${state}` }), {
             status: 404,
             headers: { 'Content-Type': 'application/json' }
-          });
+          }));
         }
         
-        return new Response(JSON.stringify(stateStops), {
+        return addCorsHeaders(new Response(JSON.stringify(stateStops), {
           headers: { 'Content-Type': 'application/json' }
-        });
+        }));
       }
       
       // Unknown endpoint
-      return new Response(JSON.stringify({ error: 'Invalid endpoint' }), {
+      return addCorsHeaders(new Response(JSON.stringify({ error: 'Invalid endpoint' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
-      });
+      }));
   }
 }
