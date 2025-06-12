@@ -1,0 +1,371 @@
+{
+  "name": "MCP Server Deployment",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "mcp-server/update",
+        "options": {
+          "allowUnauthorizedCerts": true
+        },
+        "responseMode": "responseNode",
+        "responseData": "firstEntryJson"
+      },
+      "name": "MCP Update Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Process MCP server update request\nconst update = items[0].json;\n\n// Define update types and required validations\nconst updateTypes = {\n  documentation: ['cline', 'copilot'],\n  core: ['cline', 'cloudflare'],\n  plugins: ['cline', 'cloudflare'],\n  authentication: ['cline', 'security'],\n  deployment: ['cloudflare', 'copilot']\n};\n\nconst requiredValidations = updateTypes[update.type] || ['copilot', 'cloudflare'];\n\nreturn [{\n  json: {\n    ...update,\n    update_id: `mcp_${Date.now()}`,\n    required_validations: requiredValidations,\n    status: 'pending',\n    validations: {},\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "name": "Process MCP Update",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "issue",
+        "owner": "={{$env.GITHUB_OWNER}}",
+        "repository": "={{$env.GITHUB_REPO}}",
+        "title": "MCP Server Update: {{$json[\"title\"]}}",
+        "body": "Update Type: {{$json[\"type\"]}}\nDescription: {{$json[\"description\"]}}\n\nRequired Validations:\n{{$json[\"required_validations\"].join(\", \")}}\n\nUpdate ID: {{$json[\"update_id\"]}}"
+      },
+      "name": "Create GitHub Issue",
+      "type": "n8n-nodes-base.github",
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"type\"]}}",
+              "value2": "documentation"
+            }
+          ]
+        }
+      },
+      "name": "Check Update Type",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "command": "cd {{$env.MCP_SERVER_DOCS_PATH}} && git pull && npm run build-docs"
+      },
+      "name": "Build Documentation",
+      "type": "n8n-nodes-base.executeCommand",
+      "position": [
+        1050,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "command": "cd {{$env.MCP_SERVER_PATH}} && git pull && npm install && npm run build"
+      },
+      "name": "Build MCP Server",
+      "type": "n8n-nodes-base.executeCommand",
+      "position": [
+        1050,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.MCP_SERVER_URL}}/server/update",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.MCP_API_TOKEN}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "update_data",
+              "value": "={{$json}}"
+            }
+          ]
+        }
+      },
+      "name": "Update MCP State",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "command": "cd {{$env.MCP_SERVER_PATH}} && npx wrangler deploy --env production"
+      },
+      "name": "Deploy to Cloudflare",
+      "type": "n8n-nodes-base.executeCommand",
+      "position": [
+        1450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Create tasks for each required validation\nconst data = items[0].json;\nconst tasks = data.required_validations.map(agent => ({\n  title: `Validate MCP server update: ${data.title}`,\n  description: `Please validate the MCP server update:\\n\\nType: ${data.type}\\nDescription: ${data.description}\\n\\nUpdate ID: ${data.update_id}`,\n  assigned_agent: agent,\n  priority: 'high',\n  type: 'validation',\n  update_id: data.update_id\n}));\n\nreturn tasks.map(task => ({ json: task }));"
+      },
+      "name": "Create Validation Tasks",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        1650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env[\"AGENT_\" + $json[\"assigned_agent\"].toUpperCase() + \"_URL\"]}}/task/validate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env[\"AGENT_\" + $json[\"assigned_agent\"].toUpperCase() + \"_TOKEN\"]}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "task",
+              "value": "={{$json}}"
+            }
+          ]
+        }
+      },
+      "name": "Assign Validation Tasks",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "channel": "mcp_server_updates",
+        "text": "🔄 MCP Server update in progress:\n- Title: {{$json[\"title\"]}}\n- Type: {{$json[\"type\"]}}\n- Validations Required: {{$json[\"required_validations\"].join(\", \")}}\n- Update ID: {{$json[\"update_id\"]}}"
+      },
+      "name": "Send Notification",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        2050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.MCP_SERVER_URL}}/server/updateDeployment",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.MCP_API_TOKEN}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "update_id",
+              "value": "={{$json[\"update_id\"]}}"
+            },
+            {
+              "name": "status",
+              "value": "deployed"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{$now}}"
+            }
+          ]
+        }
+      },
+      "name": "Update Deployment Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2250,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "MCP Update Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process MCP Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process MCP Update": {
+      "main": [
+        [
+          {
+            "node": "Create GitHub Issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create GitHub Issue": {
+      "main": [
+        [
+          {
+            "node": "Check Update Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Update Type": {
+      "main": [
+        [
+          {
+            "node": "Build Documentation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build MCP Server",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Documentation": {
+      "main": [
+        [
+          {
+            "node": "Update MCP State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build MCP Server": {
+      "main": [
+        [
+          {
+            "node": "Update MCP State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update MCP State": {
+      "main": [
+        [
+          {
+            "node": "Deploy to Cloudflare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deploy to Cloudflare": {
+      "main": [
+        [
+          {
+            "node": "Create Validation Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Validation Tasks": {
+      "main": [
+        [
+          {
+            "node": "Assign Validation Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assign Validation Tasks": {
+      "main": [
+        [
+          {
+            "node": "Send Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Notification": {
+      "main": [
+        [
+          {
+            "node": "Update Deployment Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveManualRuns": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "pinData": {},
+  "versionId": 1,
+  "triggerCount": 1,
+  "tags": ["mcp-server", "deployment"]
+}

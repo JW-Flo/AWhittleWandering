@@ -1,6 +1,5 @@
 /* eslint-env browser */
 import { useState, useEffect, useCallback } from "react";
-import { ensureMapboxFormat } from "../utils/mapUtils";
 
 /**
  * US State boundaries for accurate state detection
@@ -97,22 +96,44 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
  * Enhanced with real-time state tracking and dynamic route calculation
  */
 export const useTripData = ({ vehicleData, pollInterval = 60000 } = {}) => {
-  const [tripData, setTripData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Initialize with empty default state instead of null
+  const [tripData, setTripData] = useState({
+    visitedStates: ["TX"],
+    currentState: "TX",
+    currentCity: "Corpus Christi",
+    nextStop: { city: "Houston", state: "TX", eta: new Date().toISOString() },
+    distanceToNext: 200,
+    totalMiles: 150,
+    daysOnRoad: 1,
+    route: [],
+    stops: [],
+    statesRemaining: 47,
+    routeProgress: 2,
+    averageMilesPerDay: 150,
+    currentLocation: {
+      latitude: 27.8006,
+      longitude: -97.3964,
+      state: "TX",
+      city: "Corpus Christi",
+    },
+    lastUpdated: new Date().toISOString(),
+  });
+  const [loading, setLoading] = useState(false); // Start as not loading since we have default data
   const [error, setError] = useState(null);
-  const [visitedStates, setVisitedStates] = useState(new Set());
+  const [visitedStates, setVisitedStates] = useState(new Set(["TX"]));
   const [stateHistory, setStateHistory] = useState([]);
 
   // Enhanced trip data generation based on vehicle location
   const generateEnhancedTripData = useCallback(
     (currentVehicleData) => {
+      // Always generate default data even if currentVehicleData is null
       const now = new Date();
       const tripStartDate = new Date("2024-01-01"); // Adjust based on actual trip start
       const daysOnRoad = Math.floor(
         (now - tripStartDate) / (1000 * 60 * 60 * 24)
       );
 
-      // Get current location
+      // Get current location - provide fallback values if vehicle data is missing
       const currentLat =
         currentVehicleData?.latitude ||
         currentVehicleData?.location?.latitude ||
@@ -123,7 +144,8 @@ export const useTripData = ({ vehicleData, pollInterval = 60000 } = {}) => {
         -97.3964;
 
       // Determine current state
-      const currentState = getStateFromCoordinates(currentLat, currentLng);
+      const currentState =
+        getStateFromCoordinates(currentLat, currentLng) || "TX";
 
       // Planned route stops (from the actual itinerary)
       const plannedStops = [
@@ -406,283 +428,40 @@ export const useTripData = ({ vehicleData, pollInterval = 60000 } = {}) => {
     }
   }, [vehicleData?.latitude, vehicleData?.longitude, visitedStates]);
 
-  // We're now using the centralized ensureMapboxFormat utility for coordinate handling
-  // instead of the internal validateAndNormalizeCoordinates function
-  console.log(
-    "useTripData: Using centralized coordinate format utility from mapUtils.js"
-  );
+  /**
+   * First Principles Approach:
+   * We have GPS + State Boundaries + Itinerary = Complete Trip Data
+   * No need for complex API calls when we have all the data locally
+   */
+  const generateTripData = useCallback(() => {
+    console.log("🗺️ Generating trip data using first principles approach");
 
-  const fetchTripData = useCallback(async () => {
-    try {
-      // Try to fetch from API first
-      const apiUrl =
-        import.meta.env.VITE_EDGE_WORKER_URL ||
-        import.meta.env.VITE_API_BASE_URL ||
-        "http://localhost:8787";
+    // Generate trip data directly from local sources
+    const localTripData = generateEnhancedTripData(vehicleData);
 
-      console.log(`Fetching trip data from API: ${apiUrl}/api/itinerary`);
-
-      const response = await fetch(`${apiUrl}/api/itinerary`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        signal: AbortSignal.timeout(5000), // 5 second timeout
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log("API response received:", data);
-
-        // Properly handle different response formats
-        let extractedRoute = [];
-        let extractedStops = [];
-
-        // GeoJSON format handling
-        if (data.type === "FeatureCollection" && Array.isArray(data.features)) {
-          console.log("Processing GeoJSON FeatureCollection");
-
-          // Extract route from LineString features
-          const routeFeature = data.features.find(
-            (f) => f.geometry && f.geometry.type === "LineString"
-          );
-
-          if (
-            routeFeature &&
-            Array.isArray(routeFeature.geometry.coordinates)
-          ) {
-            extractedRoute = routeFeature.geometry.coordinates
-              .map((coord) => {
-                const normalized = ensureMapboxFormat(coord);
-                if (normalized) {
-                  const [longitude, latitude] = normalized;
-                  return {
-                    longitude,
-                    latitude,
-                    coordinates: [longitude, latitude], // Add GeoJSON-compatible coordinates array
-                  };
-                }
-                return null;
-              })
-              .filter(Boolean);
-          }
-
-          // Extract stops from Point features or properties
-          const stopFeatures = data.features.filter(
-            (f) => f.geometry && f.geometry.type === "Point"
-          );
-
-          if (stopFeatures.length > 0) {
-            extractedStops = stopFeatures
-              .map((feature, idx) => {
-                const normalized = ensureMapboxFormat(
-                  feature.geometry.coordinates
-                );
-
-                if (!normalized) {
-                  console.warn(
-                    "Invalid stop coordinates:",
-                    feature.geometry.coordinates
-                  );
-                  return null;
-                }
-
-                const [longitude, latitude] = normalized;
-                const props = feature.properties || {};
-
-                return {
-                  id: props.id || `stop-${idx}`,
-                  name: props.name || props.location || `Stop ${idx}`,
-                  longitude,
-                  latitude,
-                  coordinates: [longitude, latitude],
-                  type: props.type || "waypoint",
-                  description: props.description || props.name || "",
-                  charging: props.charging || props.type === "charging",
-                  overnight: props.overnight || props.type === "overnight",
-                  state:
-                    props.state ||
-                    getStateFromCoordinates(latitude, longitude) ||
-                    "",
-                };
-              })
-              .filter(Boolean);
-          }
-          // Check for stops in properties of the first feature
-          else if (
-            data.features[0] &&
-            data.features[0].properties &&
-            Array.isArray(data.features[0].properties.stops)
-          ) {
-            extractedStops = data.features[0].properties.stops
-              .map((stop, idx) => {
-                // Try different coordinate sources
-                let normalized = null;
-
-                // Try coordinates array first
-                if (stop.coordinates && Array.isArray(stop.coordinates)) {
-                  normalized = ensureMapboxFormat(stop.coordinates);
-                }
-
-                // Then try lat/lng or latitude/longitude
-                if (
-                  !normalized &&
-                  (stop.latitude !== undefined || stop.lat !== undefined)
-                ) {
-                  normalized = ensureMapboxFormat(stop);
-                }
-
-                if (!normalized) {
-                  console.warn(
-                    "Could not extract valid coordinates for stop:",
-                    stop
-                  );
-                  return null;
-                }
-
-                const [longitude, latitude] = normalized;
-
-                return {
-                  id: stop.id || `${stop.name || "stop"}-${idx}`,
-                  name:
-                    stop.name ||
-                    (stop.location
-                      ? stop.location.split(",")[0].trim()
-                      : `Stop ${idx}`),
-                  longitude,
-                  latitude,
-                  coordinates: [longitude, latitude],
-                  type: stop.type || "waypoint",
-                  description: stop.description || stop.name || "",
-                  charging: stop.charging || stop.type === "charging",
-                  overnight: stop.overnight || stop.type === "overnight",
-                  state:
-                    stop.state ||
-                    getStateFromCoordinates(latitude, longitude) ||
-                    "",
-                };
-              })
-              .filter(Boolean);
-          }
-        }
-        // Standard JSON format handling
-        else if (data.route || data.stops) {
-          console.log("Processing standard JSON format");
-
-          // Extract route data
-          if (Array.isArray(data.route)) {
-            extractedRoute = data.route
-              .map((point) => {
-                const normalized = ensureMapboxFormat(point);
-                if (normalized) {
-                  const [longitude, latitude] = normalized;
-                  return {
-                    longitude,
-                    latitude,
-                    coordinates: [longitude, latitude],
-                  };
-                }
-                return null;
-              })
-              .filter(Boolean);
-          }
-
-          // Extract stops data
-          if (Array.isArray(data.stops)) {
-            extractedStops = data.stops
-              .map((stop, idx) => {
-                const normalized = ensureMapboxFormat(stop);
-                if (!normalized) {
-                  console.warn("Invalid stop data:", stop);
-                  return null;
-                }
-
-                const [longitude, latitude] = normalized;
-
-                return {
-                  id: stop.id || `stop-${idx}`,
-                  name: stop.name || `Stop ${idx}`,
-                  longitude,
-                  latitude,
-                  coordinates: [longitude, latitude],
-                  type: stop.type || "waypoint",
-                  description: stop.description || stop.name || "",
-                  charging: stop.charging || stop.type === "charging",
-                  overnight: stop.overnight || stop.type === "overnight",
-                  state:
-                    stop.state ||
-                    getStateFromCoordinates(latitude, longitude) ||
-                    "",
-                };
-              })
-              .filter(Boolean);
-          }
-        }
-
-        console.log(
-          `Processed API data: ${extractedRoute.length} route points, ${extractedStops.length} stops`
-        );
-
-        // Check if we extracted valid data
-        if (extractedRoute.length > 0 || extractedStops.length > 0) {
-          // Merge API data with our enhanced local data
-          const enhancedData = generateEnhancedTripData(vehicleData);
-
-          const mergedData = {
-            ...enhancedData,
-            // Only override route and stops if we extracted valid data
-            ...(extractedRoute.length > 0 ? { route: extractedRoute } : {}),
-            ...(extractedStops.length > 0 ? { stops: extractedStops } : {}),
-            visitedStates: Array.from(visitedStates),
-          };
-
-          // Add any other fields from the API data
-          if (data.currentStopIndex !== undefined) {
-            mergedData.currentStopIndex = data.currentStopIndex;
-          }
-
-          setTripData(mergedData);
-          setError(null);
-          console.log(
-            "✅ Successfully fetched and processed trip data from API"
-          );
-          return;
-        } else {
-          console.warn("API data didn't contain valid route or stops");
-          throw new Error("Invalid or incomplete API data");
-        }
-      } else {
-        console.warn(`API request failed with status: ${response.status}`);
-        throw new Error(`API request failed with status: ${response.status}`);
-      }
-    } catch (err) {
-      console.warn("⚠️ Failed to fetch trip data from API:", err.message);
-    }
-
-    // Fallback to enhanced local data
-    const enhancedData = generateEnhancedTripData(vehicleData);
-    setTripData(enhancedData);
+    setTripData(localTripData);
     setError(null);
-    console.log("📍 Using enhanced local trip data as fallback");
+    setLoading(false);
+
+    console.log("✅ Trip data generated successfully from local sources");
   }, [vehicleData, generateEnhancedTripData]);
 
-  // Fetch trip data on mount and when vehicle data changes
+  // Generate trip data on mount and when vehicle data changes
   useEffect(() => {
-    fetchTripData();
-    setLoading(false);
-  }, [fetchTripData]);
+    generateTripData();
+  }, [generateTripData]);
 
-  // Set up polling for trip data updates
+  // Set up polling for trip data updates (optional - mainly for real-time vehicle data)
   useEffect(() => {
-    const interval = setInterval(fetchTripData, pollInterval);
+    const interval = setInterval(generateTripData, pollInterval);
     return () => clearInterval(interval);
-  }, [fetchTripData, pollInterval]);
+  }, [generateTripData, pollInterval]);
 
   // Manual refresh function
   const refreshTripData = useCallback(() => {
     setLoading(true);
-    fetchTripData().finally(() => setLoading(false));
-  }, [fetchTripData]);
+    generateTripData();
+  }, [generateTripData]);
 
   // Helper functions
   const getStateProgress = useCallback(() => {

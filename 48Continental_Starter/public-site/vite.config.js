@@ -83,9 +83,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      // Use local shared directory instead of external project
       "@shared": path.resolve(
         path.dirname(fileURLToPath(import.meta.url)),
-        "../../shared"
+        "./src/shared"
       ),
     },
   },

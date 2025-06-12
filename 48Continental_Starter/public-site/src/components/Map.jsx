@@ -25,7 +25,7 @@ import './MapEnhancements.css'; import { ensureMapboxFormat } from "../utils/map
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
 // Import the centralized MapBox configuration
-import mapboxConfig from '@shared/mapbox/mapboxConfig.ts';
+import mapboxConfig from '../shared/mapbox/mapboxConfig.ts';
 
 // Explicitly set the token without complex fallback logic
 mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -839,24 +839,24 @@ const Map = ({
   // Map health monitor to auto-reset if needed
   useEffect(() => {
     if (!mapReady || !map.current) return;
-    
+
     // Variables to track map health
     let consecutiveFailures = 0;
     const MAX_FAILURES = 3;
-    
+
     const healthCheck = () => {
       try {
         // Try to perform an operation that would fail if the map is broken
         const center = map.current.getCenter();
         const zoom = map.current.getZoom();
-        
+
         // If we get here, the map is still responsive
         consecutiveFailures = 0;
         console.log("Map health check: OK", { center, zoom });
       } catch (error) {
         consecutiveFailures++;
         console.warn(`Map health check failed (${consecutiveFailures}/${MAX_FAILURES})`, error);
-        
+
         // If multiple consecutive failures, attempt auto-recovery
         if (consecutiveFailures >= MAX_FAILURES) {
           console.error("Map appears to be unresponsive. Triggering auto-recovery...");
@@ -865,10 +865,10 @@ const Map = ({
         }
       }
     };
-    
+
     // Run health check every 45 seconds
     const healthCheckInterval = setInterval(healthCheck, 45000);
-    
+
     return () => {
       clearInterval(healthCheckInterval);
     };
@@ -878,7 +878,7 @@ const Map = ({
   const handleResetMap = useCallback(() => {
     try {
       console.log("Resetting map instance...");
-      
+
       if (map.current) {
         map.current.remove();
         map.current = null;
@@ -892,7 +892,7 @@ const Map = ({
       setMapInitAttempted(false);
       setMapError(null);
       setLoading(true);
-      
+
       // Force a repaint of the map container
       if (mapContainer.current) {
         const oldContainer = mapContainer.current;
@@ -904,7 +904,7 @@ const Map = ({
           parent.replaceChild(newContainer, oldContainer);
         }
       }
-      
+
       console.log("Map reset complete. Will re-initialize.");
     } catch (error) {
       console.error('Error resetting map:', error);
