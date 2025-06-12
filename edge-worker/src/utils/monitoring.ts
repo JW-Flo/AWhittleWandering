@@ -1,8 +1,18 @@
 /**
  * Monitoring and telemetry utilities for the edge worker
+ * Enhanced with structured logging, error tracking, and monitoring integration
  */
 
 import { WorkerEnvironment } from '../types/cloudflare';
+
+type LogLevel = 'info' | 'warning' | 'error' | 'debug';
+
+interface LogEntry {
+  timestamp: string;
+  level: LogLevel;
+  message: string;
+  [key: string]: any; // Additional context fields
+}
 
 export interface MetricData {
   name: string;
@@ -21,6 +31,110 @@ export interface HealthCheckResult {
       latency?: number;
     };
   };
+}
+
+/**
+ * Log an informational message
+ * @param data - Log data with message and optional context
+ */
+export function logInfo(data: { message: string; [key: string]: unknown }): void {
+  logMessage('info', data);
+}
+
+/**
+ * Log a warning message
+ * @param data - Log data with message and optional context
+ */
+export function logWarning(data: { message: string; [key: string]: unknown }): void {
+  logMessage('warning', data);
+}
+
+/**
+ * Log an error message with stack trace and context
+ * @param data - Error data with message, error object, and optional context
+ */
+export function logError(data: { 
+  message: string; 
+  operation?: string;
+  error?: string;
+  stack?: string;
+  [key: string]: unknown;
+}): void {
+  logMessage('error', data);
+}
+
+/**
+ * Log a debug message (only in development or when debug is enabled)
+ * @param data - Log data with message and optional context
+ */
+export function logDebug(data: { message: string; [key: string]: unknown }): void {
+  // Only log debug messages in development or when debug is enabled
+  const isDebugMode = 
+    typeof process !== 'undefined' && 
+    process.env && 
+    (process.env.NODE_ENV === 'development' || process.env.DEBUG === 'true');
+    
+  if (isDebugMode) {
+    logMessage('debug', data);
+  }
+}
+
+/**
+ * Format and output a log message
+ * @param level - Log level (info, warning, error, debug)
+ * @param data - Log data with message and context
+ */
+function logMessage(level: LogLevel, data: { message: string; [key: string]: unknown }): void {
+  const { message, ...context } = data;
+  
+  const entry: LogEntry = {
+    timestamp: new Date().toISOString(),
+    level,
+    message,
+    ...context
+  };
+  
+  // Format log output for console
+  const formattedMessage = formatLogMessage(entry);
+  
+  // Output to console with appropriate method
+  switch (level) {
+    case 'error':
+      console.error(formattedMessage);
+      break;
+    case 'warning':
+      console.warn(formattedMessage);
+      break;
+    case 'debug':
+      console.debug(formattedMessage);
+      break;
+    case 'info':
+    default:
+      console.log(formattedMessage);
+  }
+  
+  // In a production environment, we could send logs to a monitoring service
+  // This would be implemented in sendToMonitoringService
+}
+
+/**
+ * Format a log entry for console output
+ * @param entry - Log entry to format
+ * @returns Formatted log message
+ */
+function formatLogMessage(entry: LogEntry): string {
+  // Extract key fields
+  const { timestamp, level, message, ...context } = entry;
+  
+  // Format the basic message
+  let formattedMessage = `[${timestamp}] ${level.toUpperCase()}: ${message}`;
+  
+  // Add context if available
+  if (Object.keys(context).length > 0) {
+    formattedMessage += '\n' + JSON.stringify(context, null, 2);
+  }
+  
+  return formattedMessage;
 }
 
 export class MetricsCollector {

@@ -33,12 +33,19 @@ describe('Edge Worker Integration Tests', () => {
         });
 
         it('should handle CORS headers for static files', async () => {
-            const res = await testEnv.mf.dispatchFetch('http://localhost:8787/', {
+            // First request OPTIONS for preflight
+            const optionsRes = await testEnv.mf.dispatchFetch('http://localhost:8787/', {
                 method: 'OPTIONS'
             });
-            expect(res.headers.get('Access-Control-Allow-Origin')).toBe('*');
-            expect(res.headers.get('Access-Control-Allow-Methods')).toContain('GET');
-            expect(res.headers.get('Access-Control-Allow-Headers')).toBeDefined();
+            expect(optionsRes.headers.get('Access-Control-Allow-Origin')).toBe('*');
+            expect(optionsRes.headers.get('Access-Control-Allow-Methods')).toContain('GET');
+            expect(optionsRes.headers.get('Access-Control-Allow-Headers')).toBeDefined();
+            
+            // Then check that GET requests also have CORS headers
+            const getRes = await testEnv.mf.dispatchFetch('http://localhost:8787/', {
+                method: 'GET'
+            });
+            expect(getRes.headers.get('Access-Control-Allow-Origin')).toBe('*');
         });
     });
 
