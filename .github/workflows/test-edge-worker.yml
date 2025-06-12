@@ -16,9 +16,10 @@ on:
   workflow_call:  # Allow being called by other workflows
   workflow_dispatch:
 
+# Only use concurrency for direct invocations, not when called by other workflows
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name != 'workflow_call' }}
 
 jobs:
   test:
@@ -39,7 +40,7 @@ jobs:
         working-directory: edge-worker
         run: |
           echo "TESSIE_API_TOKEN=test_token" > .dev.vars
-          echo "EDGE_HMAC_KEY=48continental_secure_key" >> .dev.vars
+          echo "EDGE_HMAC_KEY=${{ secrets.EDGE_HMAC_KEY || '48continental_secure_key' }}" >> .dev.vars
           echo "MAPBOX_TOKEN=test_mapbox_token" >> .dev.vars
           echo "OPENWEATHER_API_KEY=test_weather_key" >> .dev.vars
 
