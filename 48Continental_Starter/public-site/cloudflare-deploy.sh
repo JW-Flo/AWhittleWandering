@@ -80,8 +80,7 @@ echo "Deploying to Cloudflare Pages..."
 npx wrangler pages deploy dist \
   --project-name="$PROJECT_NAME" \
   --branch="$PRODUCTION_BRANCH" \
-  --commit-message="Deploy The Wandering Whittle site $(date)" \
-  --compatibility-date="2025-06-03"
+  --commit-message="Deploy The Wandering Whittle site $(date)"
 
 # Run post-deployment verification
 echo "Running post-deployment verification..."

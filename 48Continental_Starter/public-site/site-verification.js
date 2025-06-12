@@ -1,7 +1,7 @@
 # Testing and Verification Script for Site Functionality
 
 /**
- * This script provides a structured approach to testing the 48 Continental USA site
+ * This script provides a structured approach to testing the The Wandering Whittle site
  * It verifies core functionality, logs issues, and generates reports
  */
 
@@ -11,7 +11,7 @@ const path = require('path');
 
 // Configuration
 const CONFIG = {
-  url: 'https://main.continentalusa-site.pages.dev',
+  url: 'https://main.wandering-whittle.pages.dev',
   screenshotDir: './test-screenshots',
   waitTime: 5000, // Time to wait for resources to load
   viewports: [

@@ -1,8 +1,8 @@
-# 48 Continental USA Site Documentation
+# The Wandering Whittle Site Documentation
 
 ## Site Functionality Baseline
 
-This document establishes the baseline functionality for the 48 Continental USA site. It serves as the objective standard for verifying that the site is functioning correctly.
+This document establishes the baseline functionality for the The Wandering Whittle site. It serves as the objective standard for verifying that the site is functioning correctly.
 
 ## Core Components
 

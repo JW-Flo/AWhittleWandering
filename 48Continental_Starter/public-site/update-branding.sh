@@ -33,7 +33,7 @@ find . -type f \( -name "*.js" -o -name "*.jsx" -o -name "*.html" -o -name "*.cs
 
 # Update names in routes and domain references
 echo "Updating domain and route references..."
-find . -type f \( -name "*.js" -o -name "*.jsx" -o -name "*.html" -o -name "*.toml" -o -name "*.sh" \) -exec sed -i '' 's/continentalusa-site/wandering-whittle/g' {} \;
+find . -type f \( -name "*.js" -o -name "*.jsx" -o -name "*.html" -o -name "*.toml" -o -name "*.sh" \) -exec sed -i '' 's/wandering-whittle/wandering-whittle/g' {} \;
 find . -type f \( -name "*.js" -o -name "*.jsx" -o -name "*.html" -o -name "*.toml" -o -name "*.sh" \) -exec sed -i '' 's/continentalusa\.com/thewanderingwhittle\.com/g' {} \;
 
 # Check for any remaining references

@@ -6,7 +6,7 @@ echo "====================================================="
 echo "🔍 48 Continental USA Site Verification Script"
 echo "====================================================="
 
-SITE_URL="https://main.continentalusa-site.pages.dev"
+SITE_URL="https://main.wandering-whittle.pages.dev"
 TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
 SCREENSHOT_DIR="./verification_reports"
 
