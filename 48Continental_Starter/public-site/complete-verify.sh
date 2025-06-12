@@ -12,7 +12,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 cd "$SCRIPT_DIR"
 
 # Environment configuration
-PUBLIC_SITE_URL="https://main.continentalusa-site.pages.dev"
+PUBLIC_SITE_URL="https://main.wandering-whittle.pages.dev"
 EDGE_WORKER_URL="https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev"
 TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
 REPORT_FILE="./verification_reports/complete_verification_${TIMESTAMP}.md"

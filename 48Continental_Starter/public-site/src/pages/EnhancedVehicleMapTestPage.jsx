@@ -291,7 +291,7 @@ const EnhancedVehicleMapTestPage = () => {
 
             <footer>
                 <p>
-                    This vehicle tracker is part of the 48 Continental USA Project, which tracks a 60-day
+                    This vehicle tracker is part of the The Wandering Whittle Project, which tracks a 60-day
                     Tesla road trip through all 48 contiguous U.S. states.
                 </p>
             </footer>

@@ -1,4 +1,4 @@
-# 48 Continental USA Site Verification Checklist
+# The Wandering Whittle Site Verification Checklist
 
 ## Core Map Functionality
 - [ ] Map loads completely (no spinning indicators)
