@@ -7,8 +7,8 @@ import { handleEmailSubscribe, handleEmailNotify } from './email';
 import { handleItineraryRequest } from './itinerary';
 import { WorkerEnvironment, KVNamespace } from './types/cloudflare';
 import { fetchWeatherData, isFavorableForEV } from './utils/weather-api';
-// Import required types and modules
-import { onRequest as handleVehicleStream } from './vehicle-stream';
+// Import enhanced vehicle stream handler with robust error handling and data validation
+import { handleVehicleStream, cleanupInactiveTrackers } from './enhanced-vehicle-stream';
 
 // Interface for Cloudflare Workers execution context
 // This is used by the Workers runtime but not directly in our code
@@ -124,6 +124,21 @@ function addCorsHeaders(response: Response): Response {
 }
 
 async function handleStaticFile(request: Request, env: Env): Promise<Response> {
+    const corsHeaders = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-signature',
+        'Access-Control-Max-Age': '86400'
+    };
+    
+    // Handle OPTIONS request for CORS preflight
+    if (request.method === 'OPTIONS') {
+        return new Response(null, { 
+            status: 200, 
+            headers: corsHeaders 
+        });
+    }
+    
     const url = new URL(request.url);
     const path = url.pathname === '/' ? '/index.html' : url.pathname;
     const contentType = path.endsWith('.html') ? 'text/html' :
@@ -134,17 +149,25 @@ async function handleStaticFile(request: Request, env: Env): Promise<Response> {
     try {
         const file = await env.APP_KV.get(path);
         if (file === null) {
-            return new Response('Not Found', { status: 404 });
+            return new Response('Not Found', { 
+                status: 404,
+                headers: corsHeaders 
+            });
         }
         
-        return new Response(file, {
-            headers: {
-                'Content-Type': contentType,
-                'Cache-Control': 'max-age=3600'
-            }
-        });
+        // Combine content type and CORS headers
+        const responseHeaders = {
+            'Content-Type': contentType,
+            'Cache-Control': 'max-age=3600',
+            ...corsHeaders
+        };
+        
+        return new Response(file, { headers: responseHeaders });
     } catch (error) {
-        return new Response('Internal Server Error', { status: 500 });
+        return new Response('Internal Server Error', { 
+            status: 500,
+            headers: corsHeaders 
+        });
     }
 }
 
@@ -744,6 +767,16 @@ async function handleTripAPI(_request: Request, _env: Env): Promise<Response> {
 }
 
 export default {
+    // Handle scheduled cleanup tasks
+    async scheduled(event: { scheduledTime: number }, env: Env): Promise<void> {
+        console.log("Running scheduled cleanup task at:", new Date(event.scheduledTime).toISOString());
+        
+        // Clean up inactive vehicle trackers
+        cleanupInactiveTrackers();
+        
+        console.log("Scheduled cleanup completed successfully");
+    },
+    
     async fetch(request: Request, env: Env): Promise<Response> {
         const url = new URL(request.url);
 
@@ -911,17 +944,17 @@ export default {
             return await handleItineraryRequest(request, env);
         }
 
-// Handle CORS preflight requests
-if (request.method === 'OPTIONS') {
-    return new Response(null, {
-        headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-signature',
-            'Access-Control-Max-Age': '86400'
+        // Handle CORS preflight requests
+        if (request.method === 'OPTIONS') {
+            return new Response(null, {
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-signature',
+                    'Access-Control-Max-Age': '86400'
+                }
+            });
         }
-    });
-}
         
         try {
             // Apply CORS to all responses
