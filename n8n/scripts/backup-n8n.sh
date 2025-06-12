@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# Set backup directory
-BACKUP_DIR="./backups"
+# Set backup directory relative to the script's own directory for consistency
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BACKUP_DIR="${SCRIPT_DIR}/backups"
 DATE=$(date +%Y%m%d_%H%M%S)
 BACKUP_PATH="${BACKUP_DIR}/${DATE}"
 
