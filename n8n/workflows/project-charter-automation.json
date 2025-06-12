@@ -1,0 +1,652 @@
+{
+  "name": "Project Charter Task Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "project-charter/update",
+        "options": {
+          "allowUnauthorizedCerts": true
+        },
+        "responseMode": "responseNode",
+        "responseData": "firstEntryJson"
+      },
+      "name": "Charter Update Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "path": "project-charter/poll",
+        "options": {
+          "allowUnauthorizedCerts": true
+        },
+        "responseMode": "responseNode",
+        "responseData": "firstEntryJson"
+      },
+      "name": "Charter Poll Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "hour": 9,
+              "minute": 0
+            },
+            {
+              "hour": 15,
+              "minute": 0
+            }
+          ]
+        }
+      },
+      "name": "Scheduled Charter Check",
+      "type": "n8n-nodes-base.cron",
+      "position": [
+        250,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Process charter update or polling\nlet charterSource;\nlet operation;\n\nif (Object.keys(items[0].json).length > 0) {\n  // This is a webhook update\n  charterSource = 'webhook';\n  operation = 'update';\n} else {\n  // This is a scheduled poll\n  charterSource = 'scheduled';\n  operation = 'poll';\n}\n\nreturn [{\n  json: {\n    charterSource,\n    operation,\n    timestamp: new Date().toISOString(),\n    charterData: items[0].json\n  }\n}];"
+      },
+      "name": "Process Charter Request",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"operation\"]}}",
+              "value2": "poll"
+            }
+          ]
+        }
+      },
+      "name": "Check Operation",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "command": "cd {{$env.PROJECT_ROOT}} && grep -r \"@PROJECT_CHARTER\" --include=\"*.md\" docs/ || echo \"No charter files found\""
+      },
+      "name": "Find Charter Files",
+      "type": "n8n-nodes-base.executeCommand",
+      "position": [
+        850,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "file",
+        "operation": "get",
+        "owner": "={{$env.GITHUB_OWNER}}",
+        "repository": "={{$env.GITHUB_REPO}}",
+        "filePath": "docs/PROJECT_CHARTER.md",
+        "asBinaryProperty": false,
+        "additionalParameters": {}
+      },
+      "name": "Get Charter From GitHub",
+      "type": "n8n-nodes-base.github",
+      "position": [
+        850,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract charter content\nlet charterContent = '';\n\nif (items[0].json && items[0].json.content) {\n  // From GitHub API\n  charterContent = Buffer.from(items[0].json.content, 'base64').toString('utf-8');\n} else if (items[0].json && items[0].json.stdout) {\n  // From local file search\n  const charterFiles = items[0].json.stdout.split('\\n');\n  \n  // Use the first found charter file\n  if (charterFiles.length > 0 && charterFiles[0] !== 'No charter files found') {\n    const filePath = charterFiles[0].split(':')[0];\n    // We'll need to read this file in next step\n    return [{\n      json: {\n        charterFilePath: filePath,\n        needToReadFile: true\n      }\n    }];\n  }\n}\n\nreturn [{\n  json: {\n    charterContent,\n    needToReadFile: false\n  }\n}];"
+      },
+      "name": "Extract Charter Content",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        1050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json[\"needToReadFile\"]}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Need To Read File?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "command": "cat {{$json[\"charterFilePath\"]}}"
+      },
+      "name": "Read Charter File",
+      "type": "n8n-nodes-base.executeCommand",
+      "position": [
+        1450,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Prepare charter content from local file\nreturn [{\n  json: {\n    charterContent: items[0].json.stdout,\n    needToReadFile: false\n  }\n}];"
+      },
+      "name": "Prepare Local Charter",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        1650,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse charter into tasks\nconst charterContent = items[0].json.charterContent;\n\n// Split the charter content into sections\nconst sections = charterContent.split(/\\n#{2,3}\\s+/);\n\n// Initialize the tasks array\nconst tasks = [];\n\n// Process each section to extract tasks\nfor (const section of sections) {\n  if (!section.trim()) continue;\n  \n  // Check if this section has tasks (indicated by checkbox markdown)\n  const taskLines = section.match(/- \\[ \\].*?\\n/g) || [];\n  \n  // Extract the section title from the first line\n  const titleMatch = section.match(/^(.+?)\\n/);\n  const sectionTitle = titleMatch ? titleMatch[1].trim() : 'Unnamed Section';\n  \n  // Process each task line\n  for (const taskLine of taskLines) {\n    const taskDescription = taskLine.replace(/- \\[ \\]\\s*/, '').trim();\n    \n    // Extract tags if present\n    const tagMatch = taskDescription.match(/#(\\w+)/g);\n    const tags = tagMatch ? tagMatch.map(tag => tag.substring(1)) : [];\n    \n    // Extract priority if present\n    const priorityMatch = taskDescription.match(/priority:(high|medium|low)/);\n    const priority = priorityMatch ? priorityMatch[1] : 'medium';\n    \n    // Extract assignee if present\n    const assigneeMatch = taskDescription.match(/@(\\w+)/);\n    const assignee = assigneeMatch ? assigneeMatch[1] : 'copilot';\n    \n    // Create task object\n    tasks.push({\n      section: sectionTitle,\n      description: taskDescription.replace(/#\\w+/g, '').replace(/priority:\\w+/g, '').replace(/@\\w+/g, '').trim(),\n      tags,\n      priority,\n      assignee,\n      status: 'pending'\n    });\n  }\n}\n\nreturn [{\n  json: {\n    tasks,\n    charterTitle: sections[0].split('\\n')[0].trim(),\n    taskCount: tasks.length\n  }\n}];"
+      },
+      "name": "Parse Charter Into Tasks",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        1850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.MCP_SERVER_URL}}/tasks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.MCP_API_TOKEN}}"
+            }
+          ]
+        }
+      },
+      "name": "Get Existing Tasks",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Compare charter tasks with existing tasks\nconst charterTasks = items[0].json.tasks;\nlet existingTasks = [];\n\nif (items[1].json && Array.isArray(items[1].json)) {\n  existingTasks = items[1].json;\n}\n\n// Find new tasks (in charter but not in existing tasks)\nconst newTasks = charterTasks.filter(charterTask => {\n  return !existingTasks.some(existingTask => \n    existingTask.description === charterTask.description\n  );\n});\n\n// Find completed tasks (in existing tasks but marked as completed)\nconst completedTasks = existingTasks.filter(task => task.status === 'completed');\n\n// Find in-progress tasks (in existing tasks, not completed, still in charter)\nconst inProgressTasks = existingTasks.filter(existingTask => {\n  return existingTask.status !== 'completed' && \n         charterTasks.some(charterTask => charterTask.description === existingTask.description);\n});\n\n// Tasks to remove (completed and no longer in charter)\nconst tasksToRemove = completedTasks.filter(completedTask => {\n  return !charterTasks.some(charterTask => charterTask.description === completedTask.description);\n});\n\nreturn [{\n  json: {\n    newTasks,\n    inProgressTasks,\n    completedTasks,\n    tasksToRemove,\n    summary: {\n      total: charterTasks.length,\n      new: newTasks.length,\n      inProgress: inProgressTasks.length,\n      completed: completedTasks.length,\n      toRemove: tasksToRemove.length\n    }\n  }\n}];"
+      },
+      "name": "Compare With Existing Tasks",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        2250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json[\"summary\"][\"new\"]}}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "name": "Has New Tasks?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        2450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "name": "New Tasks Batch",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [
+        2650,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.MCP_SERVER_URL}}/tasks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.MCP_API_TOKEN}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "task",
+              "value": "={{$json}}"
+            }
+          ]
+        }
+      },
+      "name": "Create New Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2850,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.AI_GATEWAY_URL}}/task/generate-code",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.AI_GATEWAY_TOKEN}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "task",
+              "value": "={{$json}}"
+            },
+            {
+              "name": "project_root",
+              "value": "={{$env.PROJECT_ROOT}}"
+            }
+          ]
+        }
+      },
+      "name": "Generate Code For Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        3050,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "command": "cd {{$env.PROJECT_ROOT}} && git add . && git commit -m \"Auto-generated code for task: {{$json.description}}\" || echo \"No changes to commit\""
+      },
+      "name": "Commit Generated Code",
+      "type": "n8n-nodes-base.executeCommand",
+      "position": [
+        3250,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Process summary and create report\nconst taskSummary = items[0].json.summary;\n\nconst report = `# Project Charter Task Processing Report\n\n## Summary\n- Total tasks in charter: ${taskSummary.total}\n- New tasks created: ${taskSummary.new}\n- In-progress tasks: ${taskSummary.inProgress}\n- Completed tasks: ${taskSummary.completed}\n- Removed tasks: ${taskSummary.toRemove}\n\n## New Tasks\n${items[0].json.newTasks.map(task => `- **${task.description}** (Priority: ${task.priority}, Assignee: ${task.assignee})`).join('\\n')}\n\n## In-Progress Tasks\n${items[0].json.inProgressTasks.map(task => `- **${task.description}** (Status: ${task.status})`).join('\\n')}\n\n## Recently Completed Tasks\n${items[0].json.completedTasks.map(task => `- ~~**${task.description}**~~`).join('\\n')}\n\n## Next Actions\n${taskSummary.new > 0 ? '- Code has been automatically generated for new tasks\\n- Pull the latest changes and review the auto-generated code\\n- Run tests to ensure functionality' : '- No new tasks requiring action'}\n\nLast updated: ${new Date().toISOString()}`;\n\nreturn [{\n  json: {\n    report,\n    timestamp: new Date().toISOString(),\n    totalTasksProcessed: taskSummary.new + taskSummary.inProgress + taskSummary.completed\n  }\n}];"
+      },
+      "name": "Generate Task Report",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        3450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.MCP_SERVER_URL}}/charter/update",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.MCP_API_TOKEN}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "report",
+              "value": "={{$json.report}}"
+            },
+            {
+              "name": "summary",
+              "value": "={{items[1].json.summary}}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{$json.timestamp}}"
+            }
+          ]
+        }
+      },
+      "name": "Update MCP State",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        3650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "channel": "project_updates",
+        "text": "🚀 Project Charter Update Report\n\nTotal tasks: {{$node[\"Generate Task Report\"].json[\"totalTasksProcessed\"]}}\nNew tasks: {{$node[\"Compare With Existing Tasks\"].json[\"summary\"][\"new\"]}}\nIn-progress: {{$node[\"Compare With Existing Tasks\"].json[\"summary\"][\"inProgress\"]}}\nCompleted: {{$node[\"Compare With Existing Tasks\"].json[\"summary\"][\"completed\"]}}\n\nSee full report for details."
+      },
+      "name": "Send Notification",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        3850,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Charter Update Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Charter Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Charter Poll Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Charter Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scheduled Charter Check": {
+      "main": [
+        [
+          {
+            "node": "Process Charter Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Charter Request": {
+      "main": [
+        [
+          {
+            "node": "Check Operation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Operation": {
+      "main": [
+        [
+          {
+            "node": "Find Charter Files",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Charter From GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Charter Files": {
+      "main": [
+        [
+          {
+            "node": "Extract Charter Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Charter From GitHub": {
+      "main": [
+        [
+          {
+            "node": "Extract Charter Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Charter Content": {
+      "main": [
+        [
+          {
+            "node": "Need To Read File?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Need To Read File?": {
+      "main": [
+        [
+          {
+            "node": "Read Charter File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse Charter Into Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Charter File": {
+      "main": [
+        [
+          {
+            "node": "Prepare Local Charter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Local Charter": {
+      "main": [
+        [
+          {
+            "node": "Parse Charter Into Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Charter Into Tasks": {
+      "main": [
+        [
+          {
+            "node": "Get Existing Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Existing Tasks": {
+      "main": [
+        [
+          {
+            "node": "Compare With Existing Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compare With Existing Tasks": {
+      "main": [
+        [
+          {
+            "node": "Has New Tasks?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has New Tasks?": {
+      "main": [
+        [
+          {
+            "node": "New Tasks Batch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Task Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Tasks Batch": {
+      "main": [
+        [
+          {
+            "node": "Create New Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create New Task": {
+      "main": [
+        [
+          {
+            "node": "Generate Code For Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Code For Task": {
+      "main": [
+        [
+          {
+            "node": "Commit Generated Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Commit Generated Code": {
+      "main": [
+        [
+          {
+            "node": "New Tasks Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Task Report": {
+      "main": [
+        [
+          {
+            "node": "Update MCP State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update MCP State": {
+      "main": [
+        [
+          {
+            "node": "Send Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveManualRuns": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "pinData": {},
+  "versionId": 1,
+  "triggerCount": 3,
+  "tags": ["project-charter", "automation"]
+}

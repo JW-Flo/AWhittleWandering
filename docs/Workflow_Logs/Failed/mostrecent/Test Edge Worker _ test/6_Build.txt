@@ -1,0 +1,12 @@
+﻿2025-06-12T14:47:45.6601836Z ##[group]Run npm run build
+2025-06-12T14:47:45.6602081Z [36;1mnpm run build[0m
+2025-06-12T14:47:45.6648873Z shell: /usr/bin/bash -e {0}
+2025-06-12T14:47:45.6649113Z ##[endgroup]
+2025-06-12T14:47:45.8044930Z 
+2025-06-12T14:47:45.8047963Z > continentalusa-edge@0.1.0 build
+2025-06-12T14:47:45.8048832Z > esbuild src/index.ts --bundle --format=esm --outfile=dist/worker.js
+2025-06-12T14:47:45.8049672Z 
+2025-06-12T14:47:45.8220467Z 
+2025-06-12T14:47:45.8221000Z   dist/worker.js  97.6kb
+2025-06-12T14:47:45.8309768Z 
+2025-06-12T14:47:45.8310285Z ⚡ Done in 10ms

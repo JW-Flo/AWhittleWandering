@@ -1,0 +1,1310 @@
+﻿2025-06-12T14:47:32.5186939Z Current runner version: '2.325.0'
+2025-06-12T14:47:32.5241670Z ##[group]Runner Image Provisioner
+2025-06-12T14:47:32.5243379Z Hosted Compute Agent
+2025-06-12T14:47:32.5244352Z Version: 20250529.345
+2025-06-12T14:47:32.5245419Z Commit: 22237e57af968c281070ffa8ed912c1b754f9a23
+2025-06-12T14:47:32.5246553Z Build Date: 2025-05-29T20:18:30Z
+2025-06-12T14:47:32.5247823Z ##[endgroup]
+2025-06-12T14:47:32.5248745Z ##[group]Operating System
+2025-06-12T14:47:32.5249760Z Ubuntu
+2025-06-12T14:47:32.5250665Z 24.04.2
+2025-06-12T14:47:32.5251497Z LTS
+2025-06-12T14:47:32.5252210Z ##[endgroup]
+2025-06-12T14:47:32.5273537Z ##[group]Runner Image
+2025-06-12T14:47:32.5274568Z Image: ubuntu-24.04
+2025-06-12T14:47:32.5275536Z Version: 20250602.3.0
+2025-06-12T14:47:32.5277393Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250602.3/images/ubuntu/Ubuntu2404-Readme.md
+2025-06-12T14:47:32.5280128Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250602.3
+2025-06-12T14:47:32.5282112Z ##[endgroup]
+2025-06-12T14:47:32.5284188Z ##[group]GITHUB_TOKEN Permissions
+2025-06-12T14:47:32.5286845Z Contents: read
+2025-06-12T14:47:32.5287692Z Metadata: read
+2025-06-12T14:47:32.5288480Z Packages: read
+2025-06-12T14:47:32.5289410Z ##[endgroup]
+2025-06-12T14:47:32.5313110Z Secret source: Actions
+2025-06-12T14:47:32.5314502Z Prepare workflow directory
+2025-06-12T14:47:32.6137346Z Prepare all required actions
+2025-06-12T14:47:32.6194234Z Getting action download info
+2025-06-12T14:47:32.9324175Z ##[group]Download immutable action package 'actions/checkout@v4'
+2025-06-12T14:47:32.9325185Z Version: 4.2.2
+2025-06-12T14:47:32.9326253Z Digest: sha256:ccb2698953eaebd21c7bf6268a94f9c26518a7e38e27e0b83c1fe1ad049819b1
+2025-06-12T14:47:32.9327434Z Source commit SHA: 11bd71901bbe5b1630ceea73d27597364c9af683
+2025-06-12T14:47:32.9328156Z ##[endgroup]
+2025-06-12T14:47:33.0524070Z ##[group]Download immutable action package 'actions/setup-node@v4'
+2025-06-12T14:47:33.0525435Z Version: 4.4.0
+2025-06-12T14:47:33.0526656Z Digest: sha256:9427cefe82346e992fb5b949e3569b39d537ae41aa3086483b14eceebfc16bc1
+2025-06-12T14:47:33.0528339Z Source commit SHA: 49933ea5288caeca8642d1e84afbd3f7d6820020
+2025-06-12T14:47:33.0529506Z ##[endgroup]
+2025-06-12T14:47:33.3879532Z Complete job name: Test Edge Worker / test
+2025-06-12T14:47:33.4657842Z ##[group]Run actions/checkout@v4
+2025-06-12T14:47:33.4658749Z with:
+2025-06-12T14:47:33.4659196Z   repository: JW-Flo/AWhittleWandering
+2025-06-12T14:47:33.4660017Z   token: ***
+2025-06-12T14:47:33.4660416Z   ssh-strict: true
+2025-06-12T14:47:33.4660841Z   ssh-user: git
+2025-06-12T14:47:33.4661258Z   persist-credentials: true
+2025-06-12T14:47:33.4661743Z   clean: true
+2025-06-12T14:47:33.4662159Z   sparse-checkout-cone-mode: true
+2025-06-12T14:47:33.4662843Z   fetch-depth: 1
+2025-06-12T14:47:33.4663249Z   fetch-tags: false
+2025-06-12T14:47:33.4663666Z   show-progress: true
+2025-06-12T14:47:33.4664093Z   lfs: false
+2025-06-12T14:47:33.4664497Z   submodules: false
+2025-06-12T14:47:33.4664932Z   set-safe-directory: true
+2025-06-12T14:47:33.4665672Z ##[endgroup]
+2025-06-12T14:47:33.6814346Z Syncing repository: JW-Flo/AWhittleWandering
+2025-06-12T14:47:33.6817129Z ##[group]Getting Git version info
+2025-06-12T14:47:33.6818746Z Working directory is '/home/runner/work/AWhittleWandering/AWhittleWandering'
+2025-06-12T14:47:33.6820780Z [command]/usr/bin/git version
+2025-06-12T14:47:33.6821647Z git version 2.49.0
+2025-06-12T14:47:33.6824681Z ##[endgroup]
+2025-06-12T14:47:33.6831345Z Temporarily overriding HOME='/home/runner/work/_temp/a76a677d-b093-4a03-8ef4-06d4ee760ff9' before making global git config changes
+2025-06-12T14:47:33.6834373Z Adding repository directory to the temporary git global config as a safe directory
+2025-06-12T14:47:33.6836946Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AWhittleWandering/AWhittleWandering
+2025-06-12T14:47:33.6840476Z Deleting the contents of '/home/runner/work/AWhittleWandering/AWhittleWandering'
+2025-06-12T14:47:33.6842916Z ##[group]Initializing the repository
+2025-06-12T14:47:33.6844874Z [command]/usr/bin/git init /home/runner/work/AWhittleWandering/AWhittleWandering
+2025-06-12T14:47:33.6846831Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-06-12T14:47:33.6848734Z hint: is subject to change. To configure the initial branch name to use in all
+2025-06-12T14:47:33.6850644Z hint: of your new repositories, which will suppress this warning, call:
+2025-06-12T14:47:33.6852012Z hint:
+2025-06-12T14:47:33.6860376Z hint: 	git config --global init.defaultBranch <name>
+2025-06-12T14:47:33.6861542Z hint:
+2025-06-12T14:47:33.6863303Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-06-12T14:47:33.6865172Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-06-12T14:47:33.6866568Z hint:
+2025-06-12T14:47:33.6867228Z hint: 	git branch -m <name>
+2025-06-12T14:47:33.6868844Z Initialized empty Git repository in /home/runner/work/AWhittleWandering/AWhittleWandering/.git/
+2025-06-12T14:47:33.6872224Z [command]/usr/bin/git remote add origin https://github.com/JW-Flo/AWhittleWandering
+2025-06-12T14:47:33.6875404Z ##[endgroup]
+2025-06-12T14:47:33.6876822Z ##[group]Disabling automatic garbage collection
+2025-06-12T14:47:33.6878159Z [command]/usr/bin/git config --local gc.auto 0
+2025-06-12T14:47:33.6880614Z ##[endgroup]
+2025-06-12T14:47:33.6881772Z ##[group]Setting up auth
+2025-06-12T14:47:33.6883810Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-06-12T14:47:33.6888128Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-06-12T14:47:33.6915685Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-06-12T14:47:33.6920788Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-06-12T14:47:33.7150000Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-06-12T14:47:33.7153569Z ##[endgroup]
+2025-06-12T14:47:33.7155010Z ##[group]Fetching the repository
+2025-06-12T14:47:33.7157592Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +21c3179681fd4c2dbae931dcef74baadc52ebef2:refs/remotes/origin/main
+2025-06-12T14:47:38.7000842Z From https://github.com/JW-Flo/AWhittleWandering
+2025-06-12T14:47:38.7006320Z  * [new ref]         21c3179681fd4c2dbae931dcef74baadc52ebef2 -> origin/main
+2025-06-12T14:47:38.7037116Z ##[endgroup]
+2025-06-12T14:47:38.7038704Z ##[group]Determining the checkout info
+2025-06-12T14:47:38.7040534Z ##[endgroup]
+2025-06-12T14:47:38.7042060Z [command]/usr/bin/git sparse-checkout disable
+2025-06-12T14:47:38.7085407Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-06-12T14:47:38.7118978Z ##[group]Checking out the ref
+2025-06-12T14:47:38.7125051Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2025-06-12T14:47:39.3838019Z Switched to a new branch 'main'
+2025-06-12T14:47:39.3838788Z branch 'main' set up to track 'origin/main'.
+2025-06-12T14:47:39.3930160Z ##[endgroup]
+2025-06-12T14:47:39.3984501Z [command]/usr/bin/git log -1 --format=%H
+2025-06-12T14:47:39.4019135Z 21c3179681fd4c2dbae931dcef74baadc52ebef2
+2025-06-12T14:47:39.4271455Z ##[group]Run actions/setup-node@v4
+2025-06-12T14:47:39.4271770Z with:
+2025-06-12T14:47:39.4271946Z   node-version: 20
+2025-06-12T14:47:39.4272152Z   always-auth: false
+2025-06-12T14:47:39.4272355Z   check-latest: false
+2025-06-12T14:47:39.4272866Z   token: ***
+2025-06-12T14:47:39.4273053Z ##[endgroup]
+2025-06-12T14:47:39.6101933Z Found in cache @ /opt/hostedtoolcache/node/20.19.2/x64
+2025-06-12T14:47:39.6104701Z ##[group]Environment details
+2025-06-12T14:47:40.0541205Z node: v20.19.2
+2025-06-12T14:47:40.0544088Z npm: 10.8.2
+2025-06-12T14:47:40.0545618Z yarn: 1.22.22
+2025-06-12T14:47:40.0551289Z ##[endgroup]
+2025-06-12T14:47:40.0661313Z ##[group]Run npm ci
+2025-06-12T14:47:40.0661579Z [36;1mnpm ci[0m
+2025-06-12T14:47:40.0732379Z shell: /usr/bin/bash -e {0}
+2025-06-12T14:47:40.0733163Z ##[endgroup]
+2025-06-12T14:47:45.6183921Z 
+2025-06-12T14:47:45.6194737Z added 235 packages, and audited 236 packages in 5s
+2025-06-12T14:47:45.6195845Z 
+2025-06-12T14:47:45.6196402Z 48 packages are looking for funding
+2025-06-12T14:47:45.6197173Z   run `npm fund` for details
+2025-06-12T14:47:45.6198560Z 
+2025-06-12T14:47:45.6199438Z found 0 vulnerabilities
+2025-06-12T14:47:45.6451202Z ##[group]Run echo "TESSIE_API_TOKEN=test_token" > .dev.vars
+2025-06-12T14:47:45.6451680Z [36;1mecho "TESSIE_API_TOKEN=test_token" > .dev.vars[0m
+2025-06-12T14:47:45.6452228Z [36;1mecho "EDGE_HMAC_KEY=48continental_secure_key" >> .dev.vars[0m
+2025-06-12T14:47:45.6452876Z [36;1mecho "MAPBOX_TOKEN=test_mapbox_token" >> .dev.vars[0m
+2025-06-12T14:47:45.6453416Z [36;1mecho "OPENWEATHER_API_KEY=test_weather_key" >> .dev.vars[0m
+2025-06-12T14:47:45.6506864Z shell: /usr/bin/bash -e {0}
+2025-06-12T14:47:45.6507104Z ##[endgroup]
+2025-06-12T14:47:45.6601845Z ##[group]Run npm run build
+2025-06-12T14:47:45.6602083Z [36;1mnpm run build[0m
+2025-06-12T14:47:45.6648880Z shell: /usr/bin/bash -e {0}
+2025-06-12T14:47:45.6649115Z ##[endgroup]
+2025-06-12T14:47:45.8044984Z 
+2025-06-12T14:47:45.8047977Z > continentalusa-edge@0.1.0 build
+2025-06-12T14:47:45.8048842Z > esbuild src/index.ts --bundle --format=esm --outfile=dist/worker.js
+2025-06-12T14:47:45.8049681Z 
+2025-06-12T14:47:45.8220510Z 
+2025-06-12T14:47:45.8221008Z   dist/worker.js  97.6kb
+2025-06-12T14:47:45.8309785Z 
+2025-06-12T14:47:45.8310292Z ⚡ Done in 10ms
+2025-06-12T14:47:45.8345456Z ##[group]Run npm test
+2025-06-12T14:47:45.8345856Z [36;1mnpm test[0m
+2025-06-12T14:47:45.8423154Z shell: /usr/bin/bash -e {0}
+2025-06-12T14:47:45.8423570Z ##[endgroup]
+2025-06-12T14:47:45.9713514Z 
+2025-06-12T14:47:45.9714204Z > continentalusa-edge@0.1.0 test
+2025-06-12T14:47:45.9714769Z > npm run build && vitest run
+2025-06-12T14:47:45.9715032Z 
+2025-06-12T14:47:46.1062443Z 
+2025-06-12T14:47:46.1065749Z > continentalusa-edge@0.1.0 build
+2025-06-12T14:47:46.1067021Z > esbuild src/index.ts --bundle --format=esm --outfile=dist/worker.js
+2025-06-12T14:47:46.1073210Z 
+2025-06-12T14:47:46.1337701Z 
+2025-06-12T14:47:46.1338637Z   dist/worker.js  97.6kb
+2025-06-12T14:47:46.1339145Z 
+2025-06-12T14:47:46.1339866Z ⚡ Done in 17ms
+2025-06-12T14:47:46.5737637Z 
+2025-06-12T14:47:46.5742398Z [1m[46m RUN [49m[22m [36mv3.2.3 [39m[90m/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker[39m
+2025-06-12T14:47:46.5746445Z 
+2025-06-12T14:47:46.8653840Z [90mstdout[2m | src/utils/__tests__/monitoring.test.ts
+2025-06-12T14:47:46.8656303Z [22m[39mVitest Setup: Loaded environment variables: test_weather_key [90mundefined[39m
+2025-06-12T14:47:46.8658341Z 
+2025-06-12T14:47:47.1758525Z  [32m✓[39m src/utils/__tests__/monitoring.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 146[2mms[22m[39m
+2025-06-12T14:47:47.3623852Z [90mstdout[2m | src/__tests__/integration.test.ts
+2025-06-12T14:47:47.3626361Z [22m[39mVitest Setup: Loaded environment variables: test_weather_key [90mundefined[39m
+2025-06-12T14:47:47.3628209Z 
+2025-06-12T14:47:47.6929998Z [90mstdout[2m | src/__tests__/integration.test.ts[2m > [22m[2mEdge Worker Integration Tests[2m > [22m[2mStatic File Serving[2m > [22m[2mshould serve index.html for root path
+2025-06-12T14:47:47.6931480Z [22m[39mMiniflare Debug: Loaded environment variables: {
+2025-06-12T14:47:47.6932223Z   TEST: [32m'true'[39m,
+2025-06-12T14:47:47.6932966Z   VITEST: [32m'true'[39m,
+2025-06-12T14:47:47.6933441Z   NODE_ENV: [32m'test'[39m,
+2025-06-12T14:47:47.6933934Z   VITEST_MODE: [32m'RUN'[39m,
+2025-06-12T14:47:47.6934486Z   FORCE_TTY: [32m''[39m,
+2025-06-12T14:47:47.6935644Z   GITHUB_STATE: [32m'/home/runner/work/_temp/_runner_file_commands/save_state_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:47.6937116Z   DOTNET_NOLOGO: [32m'1'[39m,
+2025-06-12T14:47:47.6937647Z   USER: [32m'runner'[39m,
+2025-06-12T14:47:47.6938668Z   npm_config_user_agent: [32m'npm/10.8.2 node/v20.19.2 linux x64 workspaces/false ci/github-actions'[39m,
+2025-06-12T14:47:47.6939497Z   CI: [32m'true'[39m,
+2025-06-12T14:47:47.6940080Z   RUNNER_ENVIRONMENT: [32m'github-hosted'[39m,
+2025-06-12T14:47:47.6941296Z   GITHUB_ENV: [32m'/home/runner/work/_temp/_runner_file_commands/set_env_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:47.6942302Z   PIPX_HOME: [32m'/opt/pipx'[39m,
+2025-06-12T14:47:47.6943496Z   npm_node_execpath: [32m'/opt/hostedtoolcache/node/20.19.2/x64/bin/node'[39m,
+2025-06-12T14:47:47.6944484Z   JAVA_HOME_8_X64: [32m'/usr/lib/jvm/temurin-8-jdk-amd64'[39m,
+2025-06-12T14:47:47.6945143Z   SHLVL: [32m'1'[39m,
+2025-06-12T14:47:47.6945672Z   npm_config_noproxy: [32m''[39m,
+2025-06-12T14:47:47.6946279Z   HOME: [32m'/home/runner'[39m,
+2025-06-12T14:47:47.6946966Z   RUNNER_TEMP: [32m'/home/runner/work/_temp'[39m,
+2025-06-12T14:47:47.6947940Z   GITHUB_EVENT_PATH: [32m'/home/runner/work/_temp/_github_workflow/event.json'[39m,
+2025-06-12T14:47:47.6949333Z   npm_package_json: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker/package.json'[39m,
+2025-06-12T14:47:47.6950551Z   JAVA_HOME_11_X64: [32m'/usr/lib/jvm/temurin-11-jdk-amd64'[39m,
+2025-06-12T14:47:47.6951321Z   PIPX_BIN_DIR: [32m'/opt/pipx_bin'[39m,
+2025-06-12T14:47:47.6951952Z   GITHUB_REPOSITORY_OWNER: [32m'JW-Flo'[39m,
+2025-06-12T14:47:47.6952830Z   GRADLE_HOME: [32m'/usr/share/gradle-8.14.1'[39m,
+2025-06-12T14:47:47.6953781Z   ANDROID_NDK_LATEST_HOME: [32m'/usr/local/lib/android/sdk/ndk/28.1.13356709'[39m,
+2025-06-12T14:47:47.6955031Z   JAVA_HOME_21_X64: [32m'/usr/lib/jvm/temurin-21-jdk-amd64'[39m,
+2025-06-12T14:47:47.6955820Z   GITHUB_RETENTION_DAYS: [32m'90'[39m,
+2025-06-12T14:47:47.6956542Z   GITHUB_REPOSITORY_OWNER_ID: [32m'129976766'[39m,
+2025-06-12T14:47:47.6957386Z   POWERSHELL_DISTRIBUTION_CHANNEL: [32m'GitHub-Actions-ubuntu24'[39m,
+2025-06-12T14:47:47.6958277Z   AZURE_EXTENSION_DIR: [32m'/opt/az/azcliextensions'[39m,
+2025-06-12T14:47:47.6958962Z   GITHUB_HEAD_REF: [32m''[39m,
+2025-06-12T14:47:47.6959655Z   npm_config_userconfig: [32m'/home/runner/.npmrc'[39m,
+2025-06-12T14:47:47.6960822Z   npm_config_local_prefix: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker'[39m,
+2025-06-12T14:47:47.6961827Z   SYSTEMD_EXEC_PID: [32m'1741'[39m,
+2025-06-12T14:47:47.6962946Z   GITHUB_GRAPHQL_URL: [32m'https://api.github.com/graphql'[39m,
+2025-06-12T14:47:47.6963649Z   COLOR: [32m'0'[39m,
+2025-06-12T14:47:47.6964144Z   NVM_DIR: [32m'/home/runner/.nvm'[39m,
+2025-06-12T14:47:47.6964837Z   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: [32m'1'[39m,
+2025-06-12T14:47:47.6965640Z   GOROOT_1_21_X64: [32m'/opt/hostedtoolcache/go/1.21.13/x64'[39m,
+2025-06-12T14:47:47.6966479Z   JAVA_HOME_17_X64: [32m'/usr/lib/jvm/temurin-17-jdk-amd64'[39m,
+2025-06-12T14:47:47.6967200Z   ImageVersion: [32m'20250602.3.0'[39m,
+2025-06-12T14:47:47.6967799Z   LOGNAME: [32m'runner'[39m,
+2025-06-12T14:47:47.6968310Z   RUNNER_OS: [32m'Linux'[39m,
+2025-06-12T14:47:47.6968938Z   GITHUB_API_URL: [32m'https://api.github.com'[39m,
+2025-06-12T14:47:47.6969816Z   GOROOT_1_22_X64: [32m'/opt/hostedtoolcache/go/1.22.12/x64'[39m,
+2025-06-12T14:47:47.6970575Z   SWIFT_PATH: [32m'/usr/share/swift/usr/bin'[39m,
+2025-06-12T14:47:47.6971409Z   CHROMEWEBDRIVER: [32m'/usr/local/share/chromedriver-linux64'[39m,
+2025-06-12T14:47:47.6972325Z   GOROOT_1_23_X64: [32m'/opt/hostedtoolcache/go/1.23.9/x64'[39m,
+2025-06-12T14:47:47.6973196Z   JOURNAL_STREAM: [32m'9:10665'[39m,
+2025-06-12T14:47:47.6973894Z   GITHUB_WORKFLOW: [32m'Deploy All Components (Final)'[39m,
+2025-06-12T14:47:47.6974739Z   _: [32m'/opt/hostedtoolcache/node/20.19.2/x64/bin/npm'[39m,
+2025-06-12T14:47:47.6975645Z   npm_config_prefix: [32m'/opt/hostedtoolcache/node/20.19.2/x64'[39m,
+2025-06-12T14:47:47.6976716Z   npm_config_npm_version: [32m'10.8.2'[39m,
+2025-06-12T14:47:47.6977861Z   MEMORY_PRESSURE_WATCH: [32m'/sys/fs/cgroup/system.slice/hosted-compute-agent.service/memory.pressure'[39m,
+2025-06-12T14:47:47.6979124Z   ACTIONS_RUNNER_ACTION_ARCHIVE_CACHE: [32m'/opt/actionarchivecache'[39m,
+2025-06-12T14:47:47.6979920Z   GITHUB_RUN_ID: [32m'15613790078'[39m,
+2025-06-12T14:47:47.6980562Z   npm_config_cache: [32m'/home/runner/.npm'[39m,
+2025-06-12T14:47:47.6981147Z   GITHUB_REF_TYPE: [32m'branch'[39m,
+2025-06-12T14:47:47.6981761Z   BOOTSTRAP_HASKELL_NONINTERACTIVE: [32m'1'[39m,
+2025-06-12T14:47:47.6982979Z   GITHUB_WORKFLOW_SHA: [32m'21c3179681fd4c2dbae931dcef74baadc52ebef2'[39m,
+2025-06-12T14:47:47.6983786Z   GITHUB_BASE_REF: [32m''[39m,
+2025-06-12T14:47:47.6984296Z   ImageOS: [32m'ubuntu24'[39m,
+2025-06-12T14:47:47.6985478Z   GITHUB_WORKFLOW_REF: [32m'JW-Flo/AWhittleWandering/.github/workflows/deploy-all-final.yml@refs/heads/main'[39m,
+2025-06-12T14:47:47.6986577Z   GITHUB_ACTION_REPOSITORY: [32m''[39m,
+2025-06-12T14:47:47.6987249Z   ENABLE_RUNNER_TRACING: [32m'true'[39m,
+2025-06-12T14:47:47.6988509Z   npm_config_node_gyp: [32m'/opt/hostedtoolcache/node/20.19.2/x64/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js'[39m,
+2025-06-12T14:47:47.6995462Z   PATH: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker/node_modules/.bin:/home/runner/work/AWhittleWandering/AWhittleWandering/node_modules/.bin:/home/runner/work/AWhittleWandering/node_modules/.bin:/home/runner/work/node_modules/.bin:/home/runner/node_modules/.bin:/home/node_modules/.bin:/node_modules/.bin:/opt/hostedtoolcache/node/20.19.2/x64/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/opt/hostedtoolcache/node/20.19.2/x64/bin:/snap/bin:/home/runner/.local/bin:/opt/pipx_bin:/home/runner/.cargo/bin:/home/runner/.config/composer/vendor/bin:/usr/local/.ghcup/bin:/home/runner/.dotnet/tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin'[39m,
+2025-06-12T14:47:47.7000135Z   ANT_HOME: [32m'/usr/share/ant'[39m,
+2025-06-12T14:47:47.7000784Z   DOTNET_MULTILEVEL_LOOKUP: [32m'0'[39m,
+2025-06-12T14:47:47.7001675Z   RUNNER_TRACKING_ID: [32m'github_b8110347-ca54-4de1-80e1-4da2deeacf41'[39m,
+2025-06-12T14:47:47.7002908Z   INVOCATION_ID: [32m'4949a7d2e957436988fe6cfad2508c25'[39m,
+2025-06-12T14:47:47.7003751Z   RUNNER_TOOL_CACHE: [32m'/opt/hostedtoolcache'[39m,
+2025-06-12T14:47:47.7004599Z   NODE: [32m'/opt/hostedtoolcache/node/20.19.2/x64/bin/node'[39m,
+2025-06-12T14:47:47.7005415Z   npm_package_name: [32m'continentalusa-edge'[39m,
+2025-06-12T14:47:47.7006090Z   GITHUB_ACTION: [32m'__run_4'[39m,
+2025-06-12T14:47:47.7006687Z   GITHUB_RUN_NUMBER: [32m'58'[39m,
+2025-06-12T14:47:47.7007318Z   GITHUB_TRIGGERING_ACTOR: [32m'JW-Flo'[39m,
+2025-06-12T14:47:47.7007965Z   RUNNER_ARCH: [32m'X64'[39m,
+2025-06-12T14:47:47.7008587Z   XDG_RUNTIME_DIR: [32m'/run/user/1001'[39m,
+2025-06-12T14:47:47.7009345Z   AGENT_TOOLSDIRECTORY: [32m'/opt/hostedtoolcache'[39m,
+2025-06-12T14:47:47.7010034Z   LANG: [32m'C.UTF-8'[39m,
+2025-06-12T14:47:47.7010777Z   VCPKG_INSTALLATION_ROOT: [32m'/usr/local/share/vcpkg'[39m,
+2025-06-12T14:47:47.7011538Z   CONDA: [32m'/usr/share/miniconda'[39m,
+2025-06-12T14:47:47.7012198Z   RUNNER_NAME: [32m'GitHub Actions 1000000692'[39m,
+2025-06-12T14:47:47.7013143Z   XDG_CONFIG_HOME: [32m'/home/runner/.config'[39m,
+2025-06-12T14:47:47.7013799Z   GITHUB_REF_NAME: [32m'main'[39m,
+2025-06-12T14:47:47.7014507Z   GITHUB_REPOSITORY: [32m'JW-Flo/AWhittleWandering'[39m,
+2025-06-12T14:47:47.7015353Z   npm_lifecycle_script: [32m'npm run build && vitest run'[39m,
+2025-06-12T14:47:47.7016285Z   ANDROID_NDK_ROOT: [32m'/usr/local/lib/android/sdk/ndk/27.2.12479018'[39m,
+2025-06-12T14:47:47.7017011Z   GITHUB_ACTION_REF: [32m''[39m,
+2025-06-12T14:47:47.7017612Z   DEBIAN_FRONTEND: [32m'noninteractive'[39m,
+2025-06-12T14:47:47.7018223Z   SHELL: [32m'/bin/bash'[39m,
+2025-06-12T14:47:47.7018834Z   GITHUB_REPOSITORY_ID: [32m'992918881'[39m,
+2025-06-12T14:47:47.7019788Z   GITHUB_ACTIONS: [32m'true'[39m,
+2025-06-12T14:47:47.7020370Z   npm_package_version: [32m'0.1.0'[39m,
+2025-06-12T14:47:47.7020991Z   npm_lifecycle_event: [32m'test'[39m,
+2025-06-12T14:47:47.7021614Z   GITHUB_REF_PROTECTED: [32m'false'[39m,
+2025-06-12T14:47:47.7022748Z   GITHUB_WORKSPACE: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering'[39m,
+2025-06-12T14:47:47.7023581Z   ACCEPT_EULA: [32m'Y'[39m,
+2025-06-12T14:47:47.7024116Z   GITHUB_JOB: [32m'test'[39m,
+2025-06-12T14:47:47.7024841Z   GITHUB_SHA: [32m'21c3179681fd4c2dbae931dcef74baadc52ebef2'[39m,
+2025-06-12T14:47:47.7025574Z   GITHUB_RUN_ATTEMPT: [32m'1'[39m,
+2025-06-12T14:47:47.7026177Z   GITHUB_REF: [32m'refs/heads/main'[39m,
+2025-06-12T14:47:47.7026767Z   GITHUB_ACTOR: [32m'JW-Flo'[39m,
+2025-06-12T14:47:47.7027450Z   ANDROID_SDK_ROOT: [32m'/usr/local/lib/android/sdk'[39m,
+2025-06-12T14:47:47.7028465Z   npm_config_globalconfig: [32m'/opt/hostedtoolcache/node/20.19.2/x64/etc/npmrc'[39m,
+2025-06-12T14:47:47.7029509Z   npm_config_init_module: [32m'/home/runner/.npm-init.js'[39m,
+2025-06-12T14:47:47.7030798Z   GITHUB_PATH: [32m'/home/runner/work/_temp/_runner_file_commands/add_path_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:47.7031953Z   JAVA_HOME: [32m'/usr/lib/jvm/temurin-17-jdk-amd64'[39m,
+2025-06-12T14:47:47.7033246Z   PWD: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker'[39m,
+2025-06-12T14:47:47.7034237Z   GITHUB_ACTOR_ID: [32m'129976766'[39m,
+2025-06-12T14:47:47.7035012Z   RUNNER_WORKSPACE: [32m'/home/runner/work/AWhittleWandering'[39m,
+2025-06-12T14:47:47.7036205Z   npm_execpath: [32m'/opt/hostedtoolcache/node/20.19.2/x64/lib/node_modules/npm/bin/npm-cli.js'[39m,
+2025-06-12T14:47:47.7037494Z   HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS: [32m'3650'[39m,
+2025-06-12T14:47:47.7038240Z   GITHUB_EVENT_NAME: [32m'push'[39m,
+2025-06-12T14:47:47.7038837Z   HOMEBREW_NO_AUTO_UPDATE: [32m'1'[39m,
+2025-06-12T14:47:47.7039530Z   ANDROID_HOME: [32m'/usr/local/lib/android/sdk'[39m,
+2025-06-12T14:47:47.7040284Z   GITHUB_SERVER_URL: [32m'https://github.com'[39m,
+2025-06-12T14:47:47.7041078Z   GECKOWEBDRIVER: [32m'/usr/local/share/gecko_driver'[39m,
+2025-06-12T14:47:47.7041829Z   GHCUP_INSTALL_BASE_PREFIX: [32m'/usr/local'[39m,
+2025-06-12T14:47:47.7043258Z   GITHUB_OUTPUT: [32m'/home/runner/work/_temp/_runner_file_commands/set_output_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:47.7044542Z   npm_config_global_prefix: [32m'/opt/hostedtoolcache/node/20.19.2/x64'[39m,
+2025-06-12T14:47:47.7045487Z   EDGEWEBDRIVER: [32m'/usr/local/share/edge_driver'[39m,
+2025-06-12T14:47:47.7046152Z   npm_command: [32m'test'[39m,
+2025-06-12T14:47:47.7046902Z   ANDROID_NDK: [32m'/usr/local/lib/android/sdk/ndk/27.2.12479018'[39m,
+2025-06-12T14:47:47.7047594Z   SGX_AESM_ADDR: [32m'1'[39m,
+2025-06-12T14:47:47.7048181Z   CHROME_BIN: [32m'/usr/bin/google-chrome'[39m,
+2025-06-12T14:47:47.7048994Z   SELENIUM_JAR_PATH: [32m'/usr/share/java/selenium-server.jar'[39m,
+2025-06-12T14:47:47.7049920Z   MEMORY_PRESSURE_WRITE: [32m'c29tZSAyMDAwMDAgMjAwMDAwMAA='[39m,
+2025-06-12T14:47:47.7050882Z   ANDROID_NDK_HOME: [32m'/usr/local/lib/android/sdk/ndk/27.2.12479018'[39m,
+2025-06-12T14:47:47.7052289Z   GITHUB_STEP_SUMMARY: [32m'/home/runner/work/_temp/_runner_file_commands/step_summary_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:47.7053943Z   INIT_CWD: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker'[39m,
+2025-06-12T14:47:47.7054747Z   EDITOR: [32m'vi'[39m,
+2025-06-12T14:47:47.7055174Z   PROD: [32m''[39m,
+2025-06-12T14:47:47.7055609Z   DEV: [32m'1'[39m,
+2025-06-12T14:47:47.7056053Z   BASE_URL: [32m'/'[39m,
+2025-06-12T14:47:47.7056487Z   MODE: [32m'test'[39m,
+2025-06-12T14:47:47.7057012Z   TINYPOOL_WORKER_ID: [32m'1'[39m,
+2025-06-12T14:47:47.7057564Z   VITEST_WORKER_ID: [32m'2'[39m,
+2025-06-12T14:47:47.7058093Z   VITEST_POOL_ID: [32m'1'[39m,
+2025-06-12T14:47:47.7058568Z   SSR: [32m'1'[39m,
+2025-06-12T14:47:47.7059353Z   TESSIE_API_TOKEN: [32m'test_token'[39m,
+2025-06-12T14:47:47.7060052Z   EDGE_HMAC_KEY: [32m'48continental_secure_key'[39m,
+2025-06-12T14:47:47.7060776Z   MAPBOX_TOKEN: [32m'test_mapbox_token'[39m,
+2025-06-12T14:47:47.7061478Z   OPENWEATHER_API_KEY: [32m'test_weather_key'[39m
+2025-06-12T14:47:47.7061971Z }
+2025-06-12T14:47:47.7062128Z 
+2025-06-12T14:47:48.1035564Z [90mstdout[2m | src/__tests__/integration.test.ts[2m > [22m[2mEdge Worker Integration Tests[2m > [22m[2mStatic File Serving[2m > [22m[2mshould return 404 for non-existent files
+2025-06-12T14:47:48.1038377Z [22m[39mMiniflare Debug: Loaded environment variables: {
+2025-06-12T14:47:48.1044887Z   TEST: [32m'true'[39m,
+2025-06-12T14:47:48.1046441Z   VITEST: [32m'true'[39m,
+2025-06-12T14:47:48.1050348Z   NODE_ENV: [32m'test'[39m,
+2025-06-12T14:47:48.1051122Z   VITEST_MODE: [32m'RUN'[39m,
+2025-06-12T14:47:48.1051707Z   FORCE_TTY: [32m''[39m,
+2025-06-12T14:47:48.1053243Z   GITHUB_STATE: [32m'/home/runner/work/_temp/_runner_file_commands/save_state_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:48.1063297Z   DOTNET_NOLOGO: [32m'1'[39m,
+2025-06-12T14:47:48.1063908Z   USER: [32m'runner'[39m,
+2025-06-12T14:47:48.1064942Z   npm_config_user_agent: [32m'npm/10.8.2 node/v20.19.2 linux x64 workspaces/false ci/github-actions'[39m,
+2025-06-12T14:47:48.1065932Z   CI: [32m'true'[39m,
+2025-06-12T14:47:48.1066587Z   RUNNER_ENVIRONMENT: [32m'github-hosted'[39m,
+2025-06-12T14:47:48.1067818Z   GITHUB_ENV: [32m'/home/runner/work/_temp/_runner_file_commands/set_env_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:48.1074177Z   PIPX_HOME: [32m'/opt/pipx'[39m,
+2025-06-12T14:47:48.1075609Z   npm_node_execpath: [32m'/opt/hostedtoolcache/node/20.19.2/x64/bin/node'[39m,
+2025-06-12T14:47:48.1076690Z   JAVA_HOME_8_X64: [32m'/usr/lib/jvm/temurin-8-jdk-amd64'[39m,
+2025-06-12T14:47:48.1077382Z   SHLVL: [32m'1'[39m,
+2025-06-12T14:47:48.1077944Z   npm_config_noproxy: [32m''[39m,
+2025-06-12T14:47:48.1078587Z   HOME: [32m'/home/runner'[39m,
+2025-06-12T14:47:48.1079263Z   RUNNER_TEMP: [32m'/home/runner/work/_temp'[39m,
+2025-06-12T14:47:48.1080270Z   GITHUB_EVENT_PATH: [32m'/home/runner/work/_temp/_github_workflow/event.json'[39m,
+2025-06-12T14:47:48.1081704Z   npm_package_json: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker/package.json'[39m,
+2025-06-12T14:47:48.1098905Z   JAVA_HOME_11_X64: [32m'/usr/lib/jvm/temurin-11-jdk-amd64'[39m,
+2025-06-12T14:47:48.1100624Z   PIPX_BIN_DIR: [32m'/opt/pipx_bin'[39m,
+2025-06-12T14:47:48.1101251Z   GITHUB_REPOSITORY_OWNER: [32m'JW-Flo'[39m,
+2025-06-12T14:47:48.1101942Z   GRADLE_HOME: [32m'/usr/share/gradle-8.14.1'[39m,
+2025-06-12T14:47:48.1103156Z   ANDROID_NDK_LATEST_HOME: [32m'/usr/local/lib/android/sdk/ndk/28.1.13356709'[39m,
+2025-06-12T14:47:48.1104100Z   JAVA_HOME_21_X64: [32m'/usr/lib/jvm/temurin-21-jdk-amd64'[39m,
+2025-06-12T14:47:48.1104886Z   GITHUB_RETENTION_DAYS: [32m'90'[39m,
+2025-06-12T14:47:48.1105532Z   GITHUB_REPOSITORY_OWNER_ID: [32m'129976766'[39m,
+2025-06-12T14:47:48.1106306Z   POWERSHELL_DISTRIBUTION_CHANNEL: [32m'GitHub-Actions-ubuntu24'[39m,
+2025-06-12T14:47:48.1107069Z   AZURE_EXTENSION_DIR: [32m'/opt/az/azcliextensions'[39m,
+2025-06-12T14:47:48.1107597Z   GITHUB_HEAD_REF: [32m''[39m,
+2025-06-12T14:47:48.1108205Z   npm_config_userconfig: [32m'/home/runner/.npmrc'[39m,
+2025-06-12T14:47:48.1109259Z   npm_config_local_prefix: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker'[39m,
+2025-06-12T14:47:48.1110056Z   SYSTEMD_EXEC_PID: [32m'1741'[39m,
+2025-06-12T14:47:48.1110711Z   GITHUB_GRAPHQL_URL: [32m'https://api.github.com/graphql'[39m,
+2025-06-12T14:47:48.1111251Z   COLOR: [32m'0'[39m,
+2025-06-12T14:47:48.1111676Z   NVM_DIR: [32m'/home/runner/.nvm'[39m,
+2025-06-12T14:47:48.1112294Z   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: [32m'1'[39m,
+2025-06-12T14:47:48.1113207Z   GOROOT_1_21_X64: [32m'/opt/hostedtoolcache/go/1.21.13/x64'[39m,
+2025-06-12T14:47:48.1114280Z   JAVA_HOME_17_X64: [32m'/usr/lib/jvm/temurin-17-jdk-amd64'[39m,
+2025-06-12T14:47:48.1114844Z   ImageVersion: [32m'20250602.3.0'[39m,
+2025-06-12T14:47:48.1115316Z   LOGNAME: [32m'runner'[39m,
+2025-06-12T14:47:48.1115719Z   RUNNER_OS: [32m'Linux'[39m,
+2025-06-12T14:47:48.1116228Z   GITHUB_API_URL: [32m'https://api.github.com'[39m,
+2025-06-12T14:47:48.1116889Z   GOROOT_1_22_X64: [32m'/opt/hostedtoolcache/go/1.22.12/x64'[39m,
+2025-06-12T14:47:48.1117509Z   SWIFT_PATH: [32m'/usr/share/swift/usr/bin'[39m,
+2025-06-12T14:47:48.1118275Z   CHROMEWEBDRIVER: [32m'/usr/local/share/chromedriver-linux64'[39m,
+2025-06-12T14:47:48.1119186Z   GOROOT_1_23_X64: [32m'/opt/hostedtoolcache/go/1.23.9/x64'[39m,
+2025-06-12T14:47:48.1119889Z   JOURNAL_STREAM: [32m'9:10665'[39m,
+2025-06-12T14:47:48.1120612Z   GITHUB_WORKFLOW: [32m'Deploy All Components (Final)'[39m,
+2025-06-12T14:47:48.1121423Z   _: [32m'/opt/hostedtoolcache/node/20.19.2/x64/bin/npm'[39m,
+2025-06-12T14:47:48.1122108Z   npm_config_prefix: [32m'/opt/hostedtoolcache/node/20.19.2/x64'[39m,
+2025-06-12T14:47:48.1143242Z   npm_config_npm_version: [32m'10.8.2'[39m,
+2025-06-12T14:47:48.1144360Z   MEMORY_PRESSURE_WATCH: [32m'/sys/fs/cgroup/system.slice/hosted-compute-agent.service/memory.pressure'[39m,
+2025-06-12T14:47:48.1145563Z   ACTIONS_RUNNER_ACTION_ARCHIVE_CACHE: [32m'/opt/actionarchivecache'[39m,
+2025-06-12T14:47:48.1146308Z   GITHUB_RUN_ID: [32m'15613790078'[39m,
+2025-06-12T14:47:48.1146907Z   npm_config_cache: [32m'/home/runner/.npm'[39m,
+2025-06-12T14:47:48.1147508Z   GITHUB_REF_TYPE: [32m'branch'[39m,
+2025-06-12T14:47:48.1148106Z   BOOTSTRAP_HASKELL_NONINTERACTIVE: [32m'1'[39m,
+2025-06-12T14:47:48.1148915Z   GITHUB_WORKFLOW_SHA: [32m'21c3179681fd4c2dbae931dcef74baadc52ebef2'[39m,
+2025-06-12T14:47:48.1149898Z   GITHUB_BASE_REF: [32m''[39m,
+2025-06-12T14:47:48.1150361Z   ImageOS: [32m'ubuntu24'[39m,
+2025-06-12T14:47:48.1151260Z   GITHUB_WORKFLOW_REF: [32m'JW-Flo/AWhittleWandering/.github/workflows/deploy-all-final.yml@refs/heads/main'[39m,
+2025-06-12T14:47:48.1152119Z   GITHUB_ACTION_REPOSITORY: [32m''[39m,
+2025-06-12T14:47:48.1152822Z   ENABLE_RUNNER_TRACING: [32m'true'[39m,
+2025-06-12T14:47:48.1153895Z   npm_config_node_gyp: [32m'/opt/hostedtoolcache/node/20.19.2/x64/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js'[39m,
+2025-06-12T14:47:48.1159493Z   PATH: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker/node_modules/.bin:/home/runner/work/AWhittleWandering/AWhittleWandering/node_modules/.bin:/home/runner/work/AWhittleWandering/node_modules/.bin:/home/runner/work/node_modules/.bin:/home/runner/node_modules/.bin:/home/node_modules/.bin:/node_modules/.bin:/opt/hostedtoolcache/node/20.19.2/x64/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/opt/hostedtoolcache/node/20.19.2/x64/bin:/snap/bin:/home/runner/.local/bin:/opt/pipx_bin:/home/runner/.cargo/bin:/home/runner/.config/composer/vendor/bin:/usr/local/.ghcup/bin:/home/runner/.dotnet/tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin'[39m,
+2025-06-12T14:47:48.1184001Z   ANT_HOME: [32m'/usr/share/ant'[39m,
+2025-06-12T14:47:48.1184592Z   DOTNET_MULTILEVEL_LOOKUP: [32m'0'[39m,
+2025-06-12T14:47:48.1185395Z   RUNNER_TRACKING_ID: [32m'github_b8110347-ca54-4de1-80e1-4da2deeacf41'[39m,
+2025-06-12T14:47:48.1186283Z   INVOCATION_ID: [32m'4949a7d2e957436988fe6cfad2508c25'[39m,
+2025-06-12T14:47:48.1187024Z   RUNNER_TOOL_CACHE: [32m'/opt/hostedtoolcache'[39m,
+2025-06-12T14:47:48.1187842Z   NODE: [32m'/opt/hostedtoolcache/node/20.19.2/x64/bin/node'[39m,
+2025-06-12T14:47:48.1188610Z   npm_package_name: [32m'continentalusa-edge'[39m,
+2025-06-12T14:47:48.1189235Z   GITHUB_ACTION: [32m'__run_4'[39m,
+2025-06-12T14:47:48.1189775Z   GITHUB_RUN_NUMBER: [32m'58'[39m,
+2025-06-12T14:47:48.1190378Z   GITHUB_TRIGGERING_ACTOR: [32m'JW-Flo'[39m,
+2025-06-12T14:47:48.1190917Z   RUNNER_ARCH: [32m'X64'[39m,
+2025-06-12T14:47:48.1191389Z   XDG_RUNTIME_DIR: [32m'/run/user/1001'[39m,
+2025-06-12T14:47:48.1192273Z   AGENT_TOOLSDIRECTORY: [32m'/opt/hostedtoolcache'[39m,
+2025-06-12T14:47:48.1192964Z   LANG: [32m'C.UTF-8'[39m,
+2025-06-12T14:47:48.1193540Z   VCPKG_INSTALLATION_ROOT: [32m'/usr/local/share/vcpkg'[39m,
+2025-06-12T14:47:48.1194153Z   CONDA: [32m'/usr/share/miniconda'[39m,
+2025-06-12T14:47:48.1194693Z   RUNNER_NAME: [32m'GitHub Actions 1000000692'[39m,
+2025-06-12T14:47:48.1195242Z   XDG_CONFIG_HOME: [32m'/home/runner/.config'[39m,
+2025-06-12T14:47:48.1195873Z   GITHUB_REF_NAME: [32m'main'[39m,
+2025-06-12T14:47:48.1196559Z   GITHUB_REPOSITORY: [32m'JW-Flo/AWhittleWandering'[39m,
+2025-06-12T14:47:48.1197383Z   npm_lifecycle_script: [32m'npm run build && vitest run'[39m,
+2025-06-12T14:47:48.1198325Z   ANDROID_NDK_ROOT: [32m'/usr/local/lib/android/sdk/ndk/27.2.12479018'[39m,
+2025-06-12T14:47:48.1199029Z   GITHUB_ACTION_REF: [32m''[39m,
+2025-06-12T14:47:48.1199632Z   DEBIAN_FRONTEND: [32m'noninteractive'[39m,
+2025-06-12T14:47:48.1200201Z   SHELL: [32m'/bin/bash'[39m,
+2025-06-12T14:47:48.1200766Z   GITHUB_REPOSITORY_ID: [32m'992918881'[39m,
+2025-06-12T14:47:48.1201310Z   GITHUB_ACTIONS: [32m'true'[39m,
+2025-06-12T14:47:48.1201841Z   npm_package_version: [32m'0.1.0'[39m,
+2025-06-12T14:47:48.1202418Z   npm_lifecycle_event: [32m'test'[39m,
+2025-06-12T14:47:48.1243542Z   GITHUB_REF_PROTECTED: [32m'false'[39m,
+2025-06-12T14:47:48.1244438Z   GITHUB_WORKSPACE: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering'[39m,
+2025-06-12T14:47:48.1245181Z   ACCEPT_EULA: [32m'Y'[39m,
+2025-06-12T14:47:48.1245663Z   GITHUB_JOB: [32m'test'[39m,
+2025-06-12T14:47:48.1246326Z   GITHUB_SHA: [32m'21c3179681fd4c2dbae931dcef74baadc52ebef2'[39m,
+2025-06-12T14:47:48.1246990Z   GITHUB_RUN_ATTEMPT: [32m'1'[39m,
+2025-06-12T14:47:48.1247905Z   GITHUB_REF: [32m'refs/heads/main'[39m,
+2025-06-12T14:47:48.1248494Z   GITHUB_ACTOR: [32m'JW-Flo'[39m,
+2025-06-12T14:47:48.1249117Z   ANDROID_SDK_ROOT: [32m'/usr/local/lib/android/sdk'[39m,
+2025-06-12T14:47:48.1250024Z   npm_config_globalconfig: [32m'/opt/hostedtoolcache/node/20.19.2/x64/etc/npmrc'[39m,
+2025-06-12T14:47:48.1250892Z   npm_config_init_module: [32m'/home/runner/.npm-init.js'[39m,
+2025-06-12T14:47:48.1251988Z   GITHUB_PATH: [32m'/home/runner/work/_temp/_runner_file_commands/add_path_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:48.1253119Z   JAVA_HOME: [32m'/usr/lib/jvm/temurin-17-jdk-amd64'[39m,
+2025-06-12T14:47:48.1254074Z   PWD: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker'[39m,
+2025-06-12T14:47:48.1254902Z   GITHUB_ACTOR_ID: [32m'129976766'[39m,
+2025-06-12T14:47:48.1255646Z   RUNNER_WORKSPACE: [32m'/home/runner/work/AWhittleWandering'[39m,
+2025-06-12T14:47:48.1256772Z   npm_execpath: [32m'/opt/hostedtoolcache/node/20.19.2/x64/lib/node_modules/npm/bin/npm-cli.js'[39m,
+2025-06-12T14:47:48.1257724Z   HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS: [32m'3650'[39m,
+2025-06-12T14:47:48.1258336Z   GITHUB_EVENT_NAME: [32m'push'[39m,
+2025-06-12T14:47:48.1258883Z   HOMEBREW_NO_AUTO_UPDATE: [32m'1'[39m,
+2025-06-12T14:47:48.1259517Z   ANDROID_HOME: [32m'/usr/local/lib/android/sdk'[39m,
+2025-06-12T14:47:48.1260180Z   GITHUB_SERVER_URL: [32m'https://github.com'[39m,
+2025-06-12T14:47:48.1260912Z   GECKOWEBDRIVER: [32m'/usr/local/share/gecko_driver'[39m,
+2025-06-12T14:47:48.1261621Z   GHCUP_INSTALL_BASE_PREFIX: [32m'/usr/local'[39m,
+2025-06-12T14:47:48.1303160Z   GITHUB_OUTPUT: [32m'/home/runner/work/_temp/_runner_file_commands/set_output_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:48.1304631Z   npm_config_global_prefix: [32m'/opt/hostedtoolcache/node/20.19.2/x64'[39m,
+2025-06-12T14:47:48.1305537Z   EDGEWEBDRIVER: [32m'/usr/local/share/edge_driver'[39m,
+2025-06-12T14:47:48.1306179Z   npm_command: [32m'test'[39m,
+2025-06-12T14:47:48.1306954Z   ANDROID_NDK: [32m'/usr/local/lib/android/sdk/ndk/27.2.12479018'[39m,
+2025-06-12T14:47:48.1307656Z   SGX_AESM_ADDR: [32m'1'[39m,
+2025-06-12T14:47:48.1308333Z   CHROME_BIN: [32m'/usr/bin/google-chrome'[39m,
+2025-06-12T14:47:48.1309588Z   SELENIUM_JAR_PATH: [32m'/usr/share/java/selenium-server.jar'[39m,
+2025-06-12T14:47:48.1310497Z   MEMORY_PRESSURE_WRITE: [32m'c29tZSAyMDAwMDAgMjAwMDAwMAA='[39m,
+2025-06-12T14:47:48.1311439Z   ANDROID_NDK_HOME: [32m'/usr/local/lib/android/sdk/ndk/27.2.12479018'[39m,
+2025-06-12T14:47:48.1312995Z   GITHUB_STEP_SUMMARY: [32m'/home/runner/work/_temp/_runner_file_commands/step_summary_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:48.1314424Z   INIT_CWD: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker'[39m,
+2025-06-12T14:47:48.1315204Z   EDITOR: [32m'vi'[39m,
+2025-06-12T14:47:48.1315616Z   PROD: [32m''[39m,
+2025-06-12T14:47:48.1316021Z   DEV: [32m'1'[39m,
+2025-06-12T14:47:48.1316443Z   BASE_URL: [32m'/'[39m,
+2025-06-12T14:47:48.1316869Z   MODE: [32m'test'[39m,
+2025-06-12T14:47:48.1317368Z   TINYPOOL_WORKER_ID: [32m'1'[39m,
+2025-06-12T14:47:48.1317899Z   VITEST_WORKER_ID: [32m'2'[39m,
+2025-06-12T14:47:48.1318425Z   VITEST_POOL_ID: [32m'1'[39m,
+2025-06-12T14:47:48.1318892Z   SSR: [32m'1'[39m,
+2025-06-12T14:47:48.1319400Z   TESSIE_API_TOKEN: [32m'test_token'[39m,
+2025-06-12T14:47:48.1320073Z   EDGE_HMAC_KEY: [32m'48continental_secure_key'[39m,
+2025-06-12T14:47:48.1320749Z   MAPBOX_TOKEN: [32m'test_mapbox_token'[39m,
+2025-06-12T14:47:48.1321409Z   OPENWEATHER_API_KEY: [32m'test_weather_key'[39m
+2025-06-12T14:47:48.1321870Z }
+2025-06-12T14:47:48.1322023Z 
+2025-06-12T14:47:48.3524538Z [90mstdout[2m | src/__tests__/integration.test.ts[2m > [22m[2mEdge Worker Integration Tests[2m > [22m[2mStatic File Serving[2m > [22m[2mshould handle CORS headers for static files
+2025-06-12T14:47:48.3527358Z [22m[39mMiniflare Debug: Loaded environment variables: {
+2025-06-12T14:47:48.3528306Z   TEST: [32m'true'[39m,
+2025-06-12T14:47:48.3528734Z   VITEST: [32m'true'[39m,
+2025-06-12T14:47:48.3529139Z   NODE_ENV: [32m'test'[39m,
+2025-06-12T14:47:48.3529592Z   VITEST_MODE: [32m'RUN'[39m,
+2025-06-12T14:47:48.3530004Z   FORCE_TTY: [32m''[39m,
+2025-06-12T14:47:48.3531063Z   GITHUB_STATE: [32m'/home/runner/work/_temp/_runner_file_commands/save_state_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:48.3532138Z   DOTNET_NOLOGO: [32m'1'[39m,
+2025-06-12T14:47:48.3532860Z   USER: [32m'runner'[39m,
+2025-06-12T14:47:48.3533785Z   npm_config_user_agent: [32m'npm/10.8.2 node/v20.19.2 linux x64 workspaces/false ci/github-actions'[39m,
+2025-06-12T14:47:48.3534551Z   CI: [32m'true'[39m,
+2025-06-12T14:47:48.3535038Z   RUNNER_ENVIRONMENT: [32m'github-hosted'[39m,
+2025-06-12T14:47:48.3536060Z   GITHUB_ENV: [32m'/home/runner/work/_temp/_runner_file_commands/set_env_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:48.3536975Z   PIPX_HOME: [32m'/opt/pipx'[39m,
+2025-06-12T14:47:48.3537796Z   npm_node_execpath: [32m'/opt/hostedtoolcache/node/20.19.2/x64/bin/node'[39m,
+2025-06-12T14:47:48.3538712Z   JAVA_HOME_8_X64: [32m'/usr/lib/jvm/temurin-8-jdk-amd64'[39m,
+2025-06-12T14:47:48.3539369Z   SHLVL: [32m'1'[39m,
+2025-06-12T14:47:48.3539922Z   npm_config_noproxy: [32m''[39m,
+2025-06-12T14:47:48.3540603Z   HOME: [32m'/home/runner'[39m,
+2025-06-12T14:47:48.3541369Z   RUNNER_TEMP: [32m'/home/runner/work/_temp'[39m,
+2025-06-12T14:47:48.3542313Z   GITHUB_EVENT_PATH: [32m'/home/runner/work/_temp/_github_workflow/event.json'[39m,
+2025-06-12T14:47:48.3543928Z   npm_package_json: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker/package.json'[39m,
+2025-06-12T14:47:48.3545096Z   JAVA_HOME_11_X64: [32m'/usr/lib/jvm/temurin-11-jdk-amd64'[39m,
+2025-06-12T14:47:48.3545798Z   PIPX_BIN_DIR: [32m'/opt/pipx_bin'[39m,
+2025-06-12T14:47:48.3546455Z   GITHUB_REPOSITORY_OWNER: [32m'JW-Flo'[39m,
+2025-06-12T14:47:48.3547140Z   GRADLE_HOME: [32m'/usr/share/gradle-8.14.1'[39m,
+2025-06-12T14:47:48.3548053Z   ANDROID_NDK_LATEST_HOME: [32m'/usr/local/lib/android/sdk/ndk/28.1.13356709'[39m,
+2025-06-12T14:47:48.3548996Z   JAVA_HOME_21_X64: [32m'/usr/lib/jvm/temurin-21-jdk-amd64'[39m,
+2025-06-12T14:47:48.3550230Z   GITHUB_RETENTION_DAYS: [32m'90'[39m,
+2025-06-12T14:47:48.3550884Z   GITHUB_REPOSITORY_OWNER_ID: [32m'129976766'[39m,
+2025-06-12T14:47:48.3551739Z   POWERSHELL_DISTRIBUTION_CHANNEL: [32m'GitHub-Actions-ubuntu24'[39m,
+2025-06-12T14:47:48.3552875Z   AZURE_EXTENSION_DIR: [32m'/opt/az/azcliextensions'[39m,
+2025-06-12T14:47:48.3553567Z   GITHUB_HEAD_REF: [32m''[39m,
+2025-06-12T14:47:48.3554235Z   npm_config_userconfig: [32m'/home/runner/.npmrc'[39m,
+2025-06-12T14:47:48.3555320Z   npm_config_local_prefix: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker'[39m,
+2025-06-12T14:47:48.3556217Z   SYSTEMD_EXEC_PID: [32m'1741'[39m,
+2025-06-12T14:47:48.3556985Z   GITHUB_GRAPHQL_URL: [32m'https://api.github.com/graphql'[39m,
+2025-06-12T14:47:48.3557630Z   COLOR: [32m'0'[39m,
+2025-06-12T14:47:48.3558140Z   NVM_DIR: [32m'/home/runner/.nvm'[39m,
+2025-06-12T14:47:48.3558815Z   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: [32m'1'[39m,
+2025-06-12T14:47:48.3559606Z   GOROOT_1_21_X64: [32m'/opt/hostedtoolcache/go/1.21.13/x64'[39m,
+2025-06-12T14:47:48.3560441Z   JAVA_HOME_17_X64: [32m'/usr/lib/jvm/temurin-17-jdk-amd64'[39m,
+2025-06-12T14:47:48.3561117Z   ImageVersion: [32m'20250602.3.0'[39m,
+2025-06-12T14:47:48.3561664Z   LOGNAME: [32m'runner'[39m,
+2025-06-12T14:47:48.3562176Z   RUNNER_OS: [32m'Linux'[39m,
+2025-06-12T14:47:48.3566486Z   GITHUB_API_URL: [32m'https://api.github.com'[39m,
+2025-06-12T14:47:48.3567350Z   GOROOT_1_22_X64: [32m'/opt/hostedtoolcache/go/1.22.12/x64'[39m,
+2025-06-12T14:47:48.3568110Z   SWIFT_PATH: [32m'/usr/share/swift/usr/bin'[39m,
+2025-06-12T14:47:48.3568940Z   CHROMEWEBDRIVER: [32m'/usr/local/share/chromedriver-linux64'[39m,
+2025-06-12T14:47:48.3570478Z   GOROOT_1_23_X64: [32m'/opt/hostedtoolcache/go/1.23.9/x64'[39m,
+2025-06-12T14:47:48.3571257Z   JOURNAL_STREAM: [32m'9:10665'[39m,
+2025-06-12T14:47:48.3571967Z   GITHUB_WORKFLOW: [32m'Deploy All Components (Final)'[39m,
+2025-06-12T14:47:48.3573058Z   _: [32m'/opt/hostedtoolcache/node/20.19.2/x64/bin/npm'[39m,
+2025-06-12T14:47:48.3573950Z   npm_config_prefix: [32m'/opt/hostedtoolcache/node/20.19.2/x64'[39m,
+2025-06-12T14:47:48.3574710Z   npm_config_npm_version: [32m'10.8.2'[39m,
+2025-06-12T14:47:48.3575805Z   MEMORY_PRESSURE_WATCH: [32m'/sys/fs/cgroup/system.slice/hosted-compute-agent.service/memory.pressure'[39m,
+2025-06-12T14:47:48.3577022Z   ACTIONS_RUNNER_ACTION_ARCHIVE_CACHE: [32m'/opt/actionarchivecache'[39m,
+2025-06-12T14:47:48.3577783Z   GITHUB_RUN_ID: [32m'15613790078'[39m,
+2025-06-12T14:47:48.3578417Z   npm_config_cache: [32m'/home/runner/.npm'[39m,
+2025-06-12T14:47:48.3579035Z   GITHUB_REF_TYPE: [32m'branch'[39m,
+2025-06-12T14:47:48.3579678Z   BOOTSTRAP_HASKELL_NONINTERACTIVE: [32m'1'[39m,
+2025-06-12T14:47:48.3580552Z   GITHUB_WORKFLOW_SHA: [32m'21c3179681fd4c2dbae931dcef74baadc52ebef2'[39m,
+2025-06-12T14:47:48.3581224Z   GITHUB_BASE_REF: [32m''[39m,
+2025-06-12T14:47:48.3581664Z   ImageOS: [32m'ubuntu24'[39m,
+2025-06-12T14:47:48.3582847Z   GITHUB_WORKFLOW_REF: [32m'JW-Flo/AWhittleWandering/.github/workflows/deploy-all-final.yml@refs/heads/main'[39m,
+2025-06-12T14:47:48.3583844Z   GITHUB_ACTION_REPOSITORY: [32m''[39m,
+2025-06-12T14:47:48.3584429Z   ENABLE_RUNNER_TRACING: [32m'true'[39m,
+2025-06-12T14:47:48.3585569Z   npm_config_node_gyp: [32m'/opt/hostedtoolcache/node/20.19.2/x64/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js'[39m,
+2025-06-12T14:47:48.3591692Z   PATH: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker/node_modules/.bin:/home/runner/work/AWhittleWandering/AWhittleWandering/node_modules/.bin:/home/runner/work/AWhittleWandering/node_modules/.bin:/home/runner/work/node_modules/.bin:/home/runner/node_modules/.bin:/home/node_modules/.bin:/node_modules/.bin:/opt/hostedtoolcache/node/20.19.2/x64/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/opt/hostedtoolcache/node/20.19.2/x64/bin:/snap/bin:/home/runner/.local/bin:/opt/pipx_bin:/home/runner/.cargo/bin:/home/runner/.config/composer/vendor/bin:/usr/local/.ghcup/bin:/home/runner/.dotnet/tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin'[39m,
+2025-06-12T14:47:48.3596572Z   ANT_HOME: [32m'/usr/share/ant'[39m,
+2025-06-12T14:47:48.3597160Z   DOTNET_MULTILEVEL_LOOKUP: [32m'0'[39m,
+2025-06-12T14:47:48.3597983Z   RUNNER_TRACKING_ID: [32m'github_b8110347-ca54-4de1-80e1-4da2deeacf41'[39m,
+2025-06-12T14:47:48.3598857Z   INVOCATION_ID: [32m'4949a7d2e957436988fe6cfad2508c25'[39m,
+2025-06-12T14:47:48.3599585Z   RUNNER_TOOL_CACHE: [32m'/opt/hostedtoolcache'[39m,
+2025-06-12T14:47:48.3600443Z   NODE: [32m'/opt/hostedtoolcache/node/20.19.2/x64/bin/node'[39m,
+2025-06-12T14:47:48.3601200Z   npm_package_name: [32m'continentalusa-edge'[39m,
+2025-06-12T14:47:48.3601819Z   GITHUB_ACTION: [32m'__run_4'[39m,
+2025-06-12T14:47:48.3602361Z   GITHUB_RUN_NUMBER: [32m'58'[39m,
+2025-06-12T14:47:48.3603169Z   GITHUB_TRIGGERING_ACTOR: [32m'JW-Flo'[39m,
+2025-06-12T14:47:48.3603742Z   RUNNER_ARCH: [32m'X64'[39m,
+2025-06-12T14:47:48.3604317Z   XDG_RUNTIME_DIR: [32m'/run/user/1001'[39m,
+2025-06-12T14:47:48.3605023Z   AGENT_TOOLSDIRECTORY: [32m'/opt/hostedtoolcache'[39m,
+2025-06-12T14:47:48.3605625Z   LANG: [32m'C.UTF-8'[39m,
+2025-06-12T14:47:48.3606305Z   VCPKG_INSTALLATION_ROOT: [32m'/usr/local/share/vcpkg'[39m,
+2025-06-12T14:47:48.3606997Z   CONDA: [32m'/usr/share/miniconda'[39m,
+2025-06-12T14:47:48.3607653Z   RUNNER_NAME: [32m'GitHub Actions 1000000692'[39m,
+2025-06-12T14:47:48.3608332Z   XDG_CONFIG_HOME: [32m'/home/runner/.config'[39m,
+2025-06-12T14:47:48.3608925Z   GITHUB_REF_NAME: [32m'main'[39m,
+2025-06-12T14:47:48.3609605Z   GITHUB_REPOSITORY: [32m'JW-Flo/AWhittleWandering'[39m,
+2025-06-12T14:47:48.3610693Z   npm_lifecycle_script: [32m'npm run build && vitest run'[39m,
+2025-06-12T14:47:48.3611630Z   ANDROID_NDK_ROOT: [32m'/usr/local/lib/android/sdk/ndk/27.2.12479018'[39m,
+2025-06-12T14:47:48.3612343Z   GITHUB_ACTION_REF: [32m''[39m,
+2025-06-12T14:47:48.3613147Z   DEBIAN_FRONTEND: [32m'noninteractive'[39m,
+2025-06-12T14:47:48.3613747Z   SHELL: [32m'/bin/bash'[39m,
+2025-06-12T14:47:48.3614307Z   GITHUB_REPOSITORY_ID: [32m'992918881'[39m,
+2025-06-12T14:47:48.3614874Z   GITHUB_ACTIONS: [32m'true'[39m,
+2025-06-12T14:47:48.3615443Z   npm_package_version: [32m'0.1.0'[39m,
+2025-06-12T14:47:48.3616029Z   npm_lifecycle_event: [32m'test'[39m,
+2025-06-12T14:47:48.3616626Z   GITHUB_REF_PROTECTED: [32m'false'[39m,
+2025-06-12T14:47:48.3617541Z   GITHUB_WORKSPACE: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering'[39m,
+2025-06-12T14:47:48.3618315Z   ACCEPT_EULA: [32m'Y'[39m,
+2025-06-12T14:47:48.3618815Z   GITHUB_JOB: [32m'test'[39m,
+2025-06-12T14:47:48.3619546Z   GITHUB_SHA: [32m'21c3179681fd4c2dbae931dcef74baadc52ebef2'[39m,
+2025-06-12T14:47:48.3620230Z   GITHUB_RUN_ATTEMPT: [32m'1'[39m,
+2025-06-12T14:47:48.3620787Z   GITHUB_REF: [32m'refs/heads/main'[39m,
+2025-06-12T14:47:48.3621346Z   GITHUB_ACTOR: [32m'JW-Flo'[39m,
+2025-06-12T14:47:48.3622009Z   ANDROID_SDK_ROOT: [32m'/usr/local/lib/android/sdk'[39m,
+2025-06-12T14:47:48.3623198Z   npm_config_globalconfig: [32m'/opt/hostedtoolcache/node/20.19.2/x64/etc/npmrc'[39m,
+2025-06-12T14:47:48.3624170Z   npm_config_init_module: [32m'/home/runner/.npm-init.js'[39m,
+2025-06-12T14:47:48.3625384Z   GITHUB_PATH: [32m'/home/runner/work/_temp/_runner_file_commands/add_path_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:48.3626458Z   JAVA_HOME: [32m'/usr/lib/jvm/temurin-17-jdk-amd64'[39m,
+2025-06-12T14:47:48.3627418Z   PWD: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker'[39m,
+2025-06-12T14:47:48.3628228Z   GITHUB_ACTOR_ID: [32m'129976766'[39m,
+2025-06-12T14:47:48.3628980Z   RUNNER_WORKSPACE: [32m'/home/runner/work/AWhittleWandering'[39m,
+2025-06-12T14:47:48.3630129Z   npm_execpath: [32m'/opt/hostedtoolcache/node/20.19.2/x64/lib/node_modules/npm/bin/npm-cli.js'[39m,
+2025-06-12T14:47:48.3631091Z   HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS: [32m'3650'[39m,
+2025-06-12T14:47:48.3632004Z   GITHUB_EVENT_NAME: [32m'push'[39m,
+2025-06-12T14:47:48.3632771Z   HOMEBREW_NO_AUTO_UPDATE: [32m'1'[39m,
+2025-06-12T14:47:48.3633438Z   ANDROID_HOME: [32m'/usr/local/lib/android/sdk'[39m,
+2025-06-12T14:47:48.3634145Z   GITHUB_SERVER_URL: [32m'https://github.com'[39m,
+2025-06-12T14:47:48.3634852Z   GECKOWEBDRIVER: [32m'/usr/local/share/gecko_driver'[39m,
+2025-06-12T14:47:48.3635536Z   GHCUP_INSTALL_BASE_PREFIX: [32m'/usr/local'[39m,
+2025-06-12T14:47:48.3636650Z   GITHUB_OUTPUT: [32m'/home/runner/work/_temp/_runner_file_commands/set_output_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:48.3637818Z   npm_config_global_prefix: [32m'/opt/hostedtoolcache/node/20.19.2/x64'[39m,
+2025-06-12T14:47:48.3638648Z   EDGEWEBDRIVER: [32m'/usr/local/share/edge_driver'[39m,
+2025-06-12T14:47:48.3639252Z   npm_command: [32m'test'[39m,
+2025-06-12T14:47:48.3639946Z   ANDROID_NDK: [32m'/usr/local/lib/android/sdk/ndk/27.2.12479018'[39m,
+2025-06-12T14:47:48.3640584Z   SGX_AESM_ADDR: [32m'1'[39m,
+2025-06-12T14:47:48.3641152Z   CHROME_BIN: [32m'/usr/bin/google-chrome'[39m,
+2025-06-12T14:47:48.3641886Z   SELENIUM_JAR_PATH: [32m'/usr/share/java/selenium-server.jar'[39m,
+2025-06-12T14:47:48.3642914Z   MEMORY_PRESSURE_WRITE: [32m'c29tZSAyMDAwMDAgMjAwMDAwMAA='[39m,
+2025-06-12T14:47:48.3643861Z   ANDROID_NDK_HOME: [32m'/usr/local/lib/android/sdk/ndk/27.2.12479018'[39m,
+2025-06-12T14:47:48.3645228Z   GITHUB_STEP_SUMMARY: [32m'/home/runner/work/_temp/_runner_file_commands/step_summary_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:48.3646645Z   INIT_CWD: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker'[39m,
+2025-06-12T14:47:48.3647439Z   EDITOR: [32m'vi'[39m,
+2025-06-12T14:47:48.3647876Z   PROD: [32m''[39m,
+2025-06-12T14:47:48.3648510Z   DEV: [32m'1'[39m,
+2025-06-12T14:47:48.3648972Z   BASE_URL: [32m'/'[39m,
+2025-06-12T14:47:48.3649413Z   MODE: [32m'test'[39m,
+2025-06-12T14:47:48.3649920Z   TINYPOOL_WORKER_ID: [32m'1'[39m,
+2025-06-12T14:47:48.3650493Z   VITEST_WORKER_ID: [32m'2'[39m,
+2025-06-12T14:47:48.3651008Z   VITEST_POOL_ID: [32m'1'[39m,
+2025-06-12T14:47:48.3651464Z   SSR: [32m'1'[39m,
+2025-06-12T14:47:48.3651985Z   TESSIE_API_TOKEN: [32m'test_token'[39m,
+2025-06-12T14:47:48.3652863Z   EDGE_HMAC_KEY: [32m'48continental_secure_key'[39m,
+2025-06-12T14:47:48.3653575Z   MAPBOX_TOKEN: [32m'test_mapbox_token'[39m,
+2025-06-12T14:47:48.3654275Z   OPENWEATHER_API_KEY: [32m'test_weather_key'[39m
+2025-06-12T14:47:48.3654746Z }
+2025-06-12T14:47:48.3654900Z 
+2025-06-12T14:47:48.6091056Z [90mstdout[2m | src/__tests__/integration.test.ts[2m > [22m[2mEdge Worker Integration Tests[2m > [22m[2mWeather Risk Calculation[2m > [22m[2mshould calculate weather risk for a given location
+2025-06-12T14:47:48.6094413Z [22m[39mMiniflare Debug: Loaded environment variables: {
+2025-06-12T14:47:48.6095021Z   TEST: [32m'true'[39m,
+2025-06-12T14:47:48.6095457Z   VITEST: [32m'true'[39m,
+2025-06-12T14:47:48.6095880Z   NODE_ENV: [32m'test'[39m,
+2025-06-12T14:47:48.6096376Z   VITEST_MODE: [32m'RUN'[39m,
+2025-06-12T14:47:48.6096802Z   FORCE_TTY: [32m''[39m,
+2025-06-12T14:47:48.6097837Z   GITHUB_STATE: [32m'/home/runner/work/_temp/_runner_file_commands/save_state_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:48.6098755Z   DOTNET_NOLOGO: [32m'1'[39m,
+2025-06-12T14:47:48.6099176Z   USER: [32m'runner'[39m,
+2025-06-12T14:47:48.6100141Z   npm_config_user_agent: [32m'npm/10.8.2 node/v20.19.2 linux x64 workspaces/false ci/github-actions'[39m,
+2025-06-12T14:47:48.6100938Z   CI: [32m'true'[39m,
+2025-06-12T14:47:48.6101490Z   RUNNER_ENVIRONMENT: [32m'github-hosted'[39m,
+2025-06-12T14:47:48.6102940Z   GITHUB_ENV: [32m'/home/runner/work/_temp/_runner_file_commands/set_env_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:48.6103958Z   PIPX_HOME: [32m'/opt/pipx'[39m,
+2025-06-12T14:47:48.6104781Z   npm_node_execpath: [32m'/opt/hostedtoolcache/node/20.19.2/x64/bin/node'[39m,
+2025-06-12T14:47:48.6105698Z   JAVA_HOME_8_X64: [32m'/usr/lib/jvm/temurin-8-jdk-amd64'[39m,
+2025-06-12T14:47:48.6106780Z   SHLVL: [32m'1'[39m,
+2025-06-12T14:47:48.6107246Z   npm_config_noproxy: [32m''[39m,
+2025-06-12T14:47:48.6107744Z   HOME: [32m'/home/runner'[39m,
+2025-06-12T14:47:48.6108317Z   RUNNER_TEMP: [32m'/home/runner/work/_temp'[39m,
+2025-06-12T14:47:48.6109213Z   GITHUB_EVENT_PATH: [32m'/home/runner/work/_temp/_github_workflow/event.json'[39m,
+2025-06-12T14:47:48.6110447Z   npm_package_json: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker/package.json'[39m,
+2025-06-12T14:47:48.6111470Z   JAVA_HOME_11_X64: [32m'/usr/lib/jvm/temurin-11-jdk-amd64'[39m,
+2025-06-12T14:47:48.6112126Z   PIPX_BIN_DIR: [32m'/opt/pipx_bin'[39m,
+2025-06-12T14:47:48.6113325Z   GITHUB_REPOSITORY_OWNER: [32m'JW-Flo'[39m,
+2025-06-12T14:47:48.6114027Z   GRADLE_HOME: [32m'/usr/share/gradle-8.14.1'[39m,
+2025-06-12T14:47:48.6114894Z   ANDROID_NDK_LATEST_HOME: [32m'/usr/local/lib/android/sdk/ndk/28.1.13356709'[39m,
+2025-06-12T14:47:48.6115823Z   JAVA_HOME_21_X64: [32m'/usr/lib/jvm/temurin-21-jdk-amd64'[39m,
+2025-06-12T14:47:48.6116512Z   GITHUB_RETENTION_DAYS: [32m'90'[39m,
+2025-06-12T14:47:48.6117172Z   GITHUB_REPOSITORY_OWNER_ID: [32m'129976766'[39m,
+2025-06-12T14:47:48.6118034Z   POWERSHELL_DISTRIBUTION_CHANNEL: [32m'GitHub-Actions-ubuntu24'[39m,
+2025-06-12T14:47:48.6118903Z   AZURE_EXTENSION_DIR: [32m'/opt/az/azcliextensions'[39m,
+2025-06-12T14:47:48.6119564Z   GITHUB_HEAD_REF: [32m''[39m,
+2025-06-12T14:47:48.6120214Z   npm_config_userconfig: [32m'/home/runner/.npmrc'[39m,
+2025-06-12T14:47:48.6121342Z   npm_config_local_prefix: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker'[39m,
+2025-06-12T14:47:48.6122323Z   SYSTEMD_EXEC_PID: [32m'1741'[39m,
+2025-06-12T14:47:48.6123673Z   GITHUB_GRAPHQL_URL: [32m'https://api.github.com/graphql'[39m,
+2025-06-12T14:47:48.6124351Z   COLOR: [32m'0'[39m,
+2025-06-12T14:47:48.6124872Z   NVM_DIR: [32m'/home/runner/.nvm'[39m,
+2025-06-12T14:47:48.6125523Z   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: [32m'1'[39m,
+2025-06-12T14:47:48.6126302Z   GOROOT_1_21_X64: [32m'/opt/hostedtoolcache/go/1.21.13/x64'[39m,
+2025-06-12T14:47:48.6127118Z   JAVA_HOME_17_X64: [32m'/usr/lib/jvm/temurin-17-jdk-amd64'[39m,
+2025-06-12T14:47:48.6127785Z   ImageVersion: [32m'20250602.3.0'[39m,
+2025-06-12T14:47:48.6128361Z   LOGNAME: [32m'runner'[39m,
+2025-06-12T14:47:48.6128867Z   RUNNER_OS: [32m'Linux'[39m,
+2025-06-12T14:47:48.6129478Z   GITHUB_API_URL: [32m'https://api.github.com'[39m,
+2025-06-12T14:47:48.6130209Z   GOROOT_1_22_X64: [32m'/opt/hostedtoolcache/go/1.22.12/x64'[39m,
+2025-06-12T14:47:48.6130906Z   SWIFT_PATH: [32m'/usr/share/swift/usr/bin'[39m,
+2025-06-12T14:47:48.6131731Z   CHROMEWEBDRIVER: [32m'/usr/local/share/chromedriver-linux64'[39m,
+2025-06-12T14:47:48.6132788Z   GOROOT_1_23_X64: [32m'/opt/hostedtoolcache/go/1.23.9/x64'[39m,
+2025-06-12T14:47:48.6133542Z   JOURNAL_STREAM: [32m'9:10665'[39m,
+2025-06-12T14:47:48.6134243Z   GITHUB_WORKFLOW: [32m'Deploy All Components (Final)'[39m,
+2025-06-12T14:47:48.6135068Z   _: [32m'/opt/hostedtoolcache/node/20.19.2/x64/bin/npm'[39m,
+2025-06-12T14:47:48.6135929Z   npm_config_prefix: [32m'/opt/hostedtoolcache/node/20.19.2/x64'[39m,
+2025-06-12T14:47:48.6136669Z   npm_config_npm_version: [32m'10.8.2'[39m,
+2025-06-12T14:47:48.6137773Z   MEMORY_PRESSURE_WATCH: [32m'/sys/fs/cgroup/system.slice/hosted-compute-agent.service/memory.pressure'[39m,
+2025-06-12T14:47:48.6138980Z   ACTIONS_RUNNER_ACTION_ARCHIVE_CACHE: [32m'/opt/actionarchivecache'[39m,
+2025-06-12T14:47:48.6139744Z   GITHUB_RUN_ID: [32m'15613790078'[39m,
+2025-06-12T14:47:48.6140392Z   npm_config_cache: [32m'/home/runner/.npm'[39m,
+2025-06-12T14:47:48.6140983Z   GITHUB_REF_TYPE: [32m'branch'[39m,
+2025-06-12T14:47:48.6143465Z   BOOTSTRAP_HASKELL_NONINTERACTIVE: [32m'1'[39m,
+2025-06-12T14:47:48.6144368Z   GITHUB_WORKFLOW_SHA: [32m'21c3179681fd4c2dbae931dcef74baadc52ebef2'[39m,
+2025-06-12T14:47:48.6145106Z   GITHUB_BASE_REF: [32m''[39m,
+2025-06-12T14:47:48.6145621Z   ImageOS: [32m'ubuntu24'[39m,
+2025-06-12T14:47:48.6147034Z   GITHUB_WORKFLOW_REF: [32m'JW-Flo/AWhittleWandering/.github/workflows/deploy-all-final.yml@refs/heads/main'[39m,
+2025-06-12T14:47:48.6148045Z   GITHUB_ACTION_REPOSITORY: [32m''[39m,
+2025-06-12T14:47:48.6148640Z   ENABLE_RUNNER_TRACING: [32m'true'[39m,
+2025-06-12T14:47:48.6149854Z   npm_config_node_gyp: [32m'/opt/hostedtoolcache/node/20.19.2/x64/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js'[39m,
+2025-06-12T14:47:48.6156516Z   PATH: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker/node_modules/.bin:/home/runner/work/AWhittleWandering/AWhittleWandering/node_modules/.bin:/home/runner/work/AWhittleWandering/node_modules/.bin:/home/runner/work/node_modules/.bin:/home/runner/node_modules/.bin:/home/node_modules/.bin:/node_modules/.bin:/opt/hostedtoolcache/node/20.19.2/x64/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/opt/hostedtoolcache/node/20.19.2/x64/bin:/snap/bin:/home/runner/.local/bin:/opt/pipx_bin:/home/runner/.cargo/bin:/home/runner/.config/composer/vendor/bin:/usr/local/.ghcup/bin:/home/runner/.dotnet/tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin'[39m,
+2025-06-12T14:47:48.6161100Z   ANT_HOME: [32m'/usr/share/ant'[39m,
+2025-06-12T14:47:48.6161727Z   DOTNET_MULTILEVEL_LOOKUP: [32m'0'[39m,
+2025-06-12T14:47:48.6202877Z   RUNNER_TRACKING_ID: [32m'github_b8110347-ca54-4de1-80e1-4da2deeacf41'[39m,
+2025-06-12T14:47:48.6203988Z   INVOCATION_ID: [32m'4949a7d2e957436988fe6cfad2508c25'[39m,
+2025-06-12T14:47:48.6204738Z   RUNNER_TOOL_CACHE: [32m'/opt/hostedtoolcache'[39m,
+2025-06-12T14:47:48.6205510Z   NODE: [32m'/opt/hostedtoolcache/node/20.19.2/x64/bin/node'[39m,
+2025-06-12T14:47:48.6206647Z   npm_package_name: [32m'continentalusa-edge'[39m,
+2025-06-12T14:47:48.6207297Z   GITHUB_ACTION: [32m'__run_4'[39m,
+2025-06-12T14:47:48.6207806Z   GITHUB_RUN_NUMBER: [32m'58'[39m,
+2025-06-12T14:47:48.6208370Z   GITHUB_TRIGGERING_ACTOR: [32m'JW-Flo'[39m,
+2025-06-12T14:47:48.6208934Z   RUNNER_ARCH: [32m'X64'[39m,
+2025-06-12T14:47:48.6209475Z   XDG_RUNTIME_DIR: [32m'/run/user/1001'[39m,
+2025-06-12T14:47:48.6210165Z   AGENT_TOOLSDIRECTORY: [32m'/opt/hostedtoolcache'[39m,
+2025-06-12T14:47:48.6210740Z   LANG: [32m'C.UTF-8'[39m,
+2025-06-12T14:47:48.6211378Z   VCPKG_INSTALLATION_ROOT: [32m'/usr/local/share/vcpkg'[39m,
+2025-06-12T14:47:48.6212056Z   CONDA: [32m'/usr/share/miniconda'[39m,
+2025-06-12T14:47:48.6212882Z   RUNNER_NAME: [32m'GitHub Actions 1000000692'[39m,
+2025-06-12T14:47:48.6213594Z   XDG_CONFIG_HOME: [32m'/home/runner/.config'[39m,
+2025-06-12T14:47:48.6214226Z   GITHUB_REF_NAME: [32m'main'[39m,
+2025-06-12T14:47:48.6214920Z   GITHUB_REPOSITORY: [32m'JW-Flo/AWhittleWandering'[39m,
+2025-06-12T14:47:48.6215773Z   npm_lifecycle_script: [32m'npm run build && vitest run'[39m,
+2025-06-12T14:47:48.6216700Z   ANDROID_NDK_ROOT: [32m'/usr/local/lib/android/sdk/ndk/27.2.12479018'[39m,
+2025-06-12T14:47:48.6217414Z   GITHUB_ACTION_REF: [32m''[39m,
+2025-06-12T14:47:48.6218043Z   DEBIAN_FRONTEND: [32m'noninteractive'[39m,
+2025-06-12T14:47:48.6218633Z   SHELL: [32m'/bin/bash'[39m,
+2025-06-12T14:47:48.6219197Z   GITHUB_REPOSITORY_ID: [32m'992918881'[39m,
+2025-06-12T14:47:48.6219779Z   GITHUB_ACTIONS: [32m'true'[39m,
+2025-06-12T14:47:48.6220349Z   npm_package_version: [32m'0.1.0'[39m,
+2025-06-12T14:47:48.6220931Z   npm_lifecycle_event: [32m'test'[39m,
+2025-06-12T14:47:48.6221521Z   GITHUB_REF_PROTECTED: [32m'false'[39m,
+2025-06-12T14:47:48.6222417Z   GITHUB_WORKSPACE: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering'[39m,
+2025-06-12T14:47:48.6259249Z   ACCEPT_EULA: [32m'Y'[39m,
+2025-06-12T14:47:48.6259795Z   GITHUB_JOB: [32m'test'[39m,
+2025-06-12T14:47:48.6260549Z   GITHUB_SHA: [32m'21c3179681fd4c2dbae931dcef74baadc52ebef2'[39m,
+2025-06-12T14:47:48.6261263Z   GITHUB_RUN_ATTEMPT: [32m'1'[39m,
+2025-06-12T14:47:48.6261862Z   GITHUB_REF: [32m'refs/heads/main'[39m,
+2025-06-12T14:47:48.6262962Z   GITHUB_ACTOR: [32m'JW-Flo'[39m,
+2025-06-12T14:47:48.6263666Z   ANDROID_SDK_ROOT: [32m'/usr/local/lib/android/sdk'[39m,
+2025-06-12T14:47:48.6264650Z   npm_config_globalconfig: [32m'/opt/hostedtoolcache/node/20.19.2/x64/etc/npmrc'[39m,
+2025-06-12T14:47:48.6265629Z   npm_config_init_module: [32m'/home/runner/.npm-init.js'[39m,
+2025-06-12T14:47:48.6266863Z   GITHUB_PATH: [32m'/home/runner/work/_temp/_runner_file_commands/add_path_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:48.6267937Z   JAVA_HOME: [32m'/usr/lib/jvm/temurin-17-jdk-amd64'[39m,
+2025-06-12T14:47:48.6268923Z   PWD: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker'[39m,
+2025-06-12T14:47:48.6269760Z   GITHUB_ACTOR_ID: [32m'129976766'[39m,
+2025-06-12T14:47:48.6270535Z   RUNNER_WORKSPACE: [32m'/home/runner/work/AWhittleWandering'[39m,
+2025-06-12T14:47:48.6271684Z   npm_execpath: [32m'/opt/hostedtoolcache/node/20.19.2/x64/lib/node_modules/npm/bin/npm-cli.js'[39m,
+2025-06-12T14:47:48.6272842Z   HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS: [32m'3650'[39m,
+2025-06-12T14:47:48.6273472Z   GITHUB_EVENT_NAME: [32m'push'[39m,
+2025-06-12T14:47:48.6273999Z   HOMEBREW_NO_AUTO_UPDATE: [32m'1'[39m,
+2025-06-12T14:47:48.6274610Z   ANDROID_HOME: [32m'/usr/local/lib/android/sdk'[39m,
+2025-06-12T14:47:48.6275277Z   GITHUB_SERVER_URL: [32m'https://github.com'[39m,
+2025-06-12T14:47:48.6275994Z   GECKOWEBDRIVER: [32m'/usr/local/share/gecko_driver'[39m,
+2025-06-12T14:47:48.6276714Z   GHCUP_INSTALL_BASE_PREFIX: [32m'/usr/local'[39m,
+2025-06-12T14:47:48.6277877Z   GITHUB_OUTPUT: [32m'/home/runner/work/_temp/_runner_file_commands/set_output_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:48.6279081Z   npm_config_global_prefix: [32m'/opt/hostedtoolcache/node/20.19.2/x64'[39m,
+2025-06-12T14:47:48.6280143Z   EDGEWEBDRIVER: [32m'/usr/local/share/edge_driver'[39m,
+2025-06-12T14:47:48.6280766Z   npm_command: [32m'test'[39m,
+2025-06-12T14:47:48.6281461Z   ANDROID_NDK: [32m'/usr/local/lib/android/sdk/ndk/27.2.12479018'[39m,
+2025-06-12T14:47:48.6282133Z   SGX_AESM_ADDR: [32m'1'[39m,
+2025-06-12T14:47:48.6286681Z   CHROME_BIN: [32m'/usr/bin/google-chrome'[39m,
+2025-06-12T14:47:48.6287565Z   SELENIUM_JAR_PATH: [32m'/usr/share/java/selenium-server.jar'[39m,
+2025-06-12T14:47:48.6288427Z   MEMORY_PRESSURE_WRITE: [32m'c29tZSAyMDAwMDAgMjAwMDAwMAA='[39m,
+2025-06-12T14:47:48.6289304Z   ANDROID_NDK_HOME: [32m'/usr/local/lib/android/sdk/ndk/27.2.12479018'[39m,
+2025-06-12T14:47:48.6290603Z   GITHUB_STEP_SUMMARY: [32m'/home/runner/work/_temp/_runner_file_commands/step_summary_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:48.6291964Z   INIT_CWD: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker'[39m,
+2025-06-12T14:47:48.6292922Z   EDITOR: [32m'vi'[39m,
+2025-06-12T14:47:48.6293339Z   PROD: [32m''[39m,
+2025-06-12T14:47:48.6293754Z   DEV: [32m'1'[39m,
+2025-06-12T14:47:48.6294167Z   BASE_URL: [32m'/'[39m,
+2025-06-12T14:47:48.6294604Z   MODE: [32m'test'[39m,
+2025-06-12T14:47:48.6295129Z   TINYPOOL_WORKER_ID: [32m'1'[39m,
+2025-06-12T14:47:48.6295691Z   VITEST_WORKER_ID: [32m'2'[39m,
+2025-06-12T14:47:48.6296227Z   VITEST_POOL_ID: [32m'1'[39m,
+2025-06-12T14:47:48.6296674Z   SSR: [32m'1'[39m,
+2025-06-12T14:47:48.6297192Z   TESSIE_API_TOKEN: [32m'test_token'[39m,
+2025-06-12T14:47:48.6297875Z   EDGE_HMAC_KEY: [32m'48continental_secure_key'[39m,
+2025-06-12T14:47:48.6298552Z   MAPBOX_TOKEN: [32m'test_mapbox_token'[39m,
+2025-06-12T14:47:48.6299231Z   OPENWEATHER_API_KEY: [32m'test_weather_key'[39m
+2025-06-12T14:47:48.6299699Z }
+2025-06-12T14:47:48.6299861Z 
+2025-06-12T14:47:48.8447403Z [90mstdout[2m | src/__tests__/integration.test.ts[2m > [22m[2mEdge Worker Integration Tests[2m > [22m[2mWeather Risk Calculation[2m > [22m[2mshould calculate weather risk for a given location
+2025-06-12T14:47:48.8450522Z [22m[39mVerifying signature with header: sha256=b12ef96718fc7af1fd5f655e2c5fc7a69df95e1c5c7c9e0dba56ef450738119e
+2025-06-12T14:47:48.8451227Z 
+2025-06-12T14:47:48.8456118Z [90mstdout[2m | src/__tests__/integration.test.ts[2m > [22m[2mEdge Worker Integration Tests[2m > [22m[2mWeather Risk Calculation[2m > [22m[2mshould calculate weather risk for a given location
+2025-06-12T14:47:48.8459302Z [90mstderr[2m | src/__tests__/integration.test.ts[2m > [22m[2mEdge Worker Integration Tests[2m > [22m[2mWeather Risk Calculation[2m > [22m[2mshould calculate weather risk for a given location
+2025-06-12T14:47:48.8460976Z [22m[39mWeather API key not provided or empty, using fallback data. Received key: 
+2025-06-12T14:47:48.8461500Z 
+2025-06-12T14:47:48.8462038Z [22m[39mWeather API Debug: Received key="", trimmed="", length=0
+2025-06-12T14:47:48.8462443Z 
+2025-06-12T14:47:48.8580401Z [90mstdout[2m | src/__tests__/integration.test.ts[2m > [22m[2mEdge Worker Integration Tests[2m > [22m[2mWeather Risk Calculation[2m > [22m[2mshould handle invalid location data
+2025-06-12T14:47:48.8583528Z [22m[39mMiniflare Debug: Loaded environment variables: {
+2025-06-12T14:47:48.8584188Z   TEST: [32m'true'[39m,
+2025-06-12T14:47:48.8584639Z   VITEST: [32m'true'[39m,
+2025-06-12T14:47:48.8585104Z   NODE_ENV: [32m'test'[39m,
+2025-06-12T14:47:48.8585614Z   VITEST_MODE: [32m'RUN'[39m,
+2025-06-12T14:47:48.8586075Z   FORCE_TTY: [32m''[39m,
+2025-06-12T14:47:48.8587180Z   GITHUB_STATE: [32m'/home/runner/work/_temp/_runner_file_commands/save_state_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:48.8588156Z   DOTNET_NOLOGO: [32m'1'[39m,
+2025-06-12T14:47:48.8588616Z   USER: [32m'runner'[39m,
+2025-06-12T14:47:48.8589569Z   npm_config_user_agent: [32m'npm/10.8.2 node/v20.19.2 linux x64 workspaces/false ci/github-actions'[39m,
+2025-06-12T14:47:48.8590337Z   CI: [32m'true'[39m,
+2025-06-12T14:47:48.8591272Z   RUNNER_ENVIRONMENT: [32m'github-hosted'[39m,
+2025-06-12T14:47:48.8592686Z   GITHUB_ENV: [32m'/home/runner/work/_temp/_runner_file_commands/set_env_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:48.8593617Z   PIPX_HOME: [32m'/opt/pipx'[39m,
+2025-06-12T14:47:48.8594437Z   npm_node_execpath: [32m'/opt/hostedtoolcache/node/20.19.2/x64/bin/node'[39m,
+2025-06-12T14:47:48.8595374Z   JAVA_HOME_8_X64: [32m'/usr/lib/jvm/temurin-8-jdk-amd64'[39m,
+2025-06-12T14:47:48.8595968Z   SHLVL: [32m'1'[39m,
+2025-06-12T14:47:48.8596463Z   npm_config_noproxy: [32m''[39m,
+2025-06-12T14:47:48.8597012Z   HOME: [32m'/home/runner'[39m,
+2025-06-12T14:47:48.8597632Z   RUNNER_TEMP: [32m'/home/runner/work/_temp'[39m,
+2025-06-12T14:47:48.8598562Z   GITHUB_EVENT_PATH: [32m'/home/runner/work/_temp/_github_workflow/event.json'[39m,
+2025-06-12T14:47:48.8599914Z   npm_package_json: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker/package.json'[39m,
+2025-06-12T14:47:48.8601071Z   JAVA_HOME_11_X64: [32m'/usr/lib/jvm/temurin-11-jdk-amd64'[39m,
+2025-06-12T14:47:48.8601784Z   PIPX_BIN_DIR: [32m'/opt/pipx_bin'[39m,
+2025-06-12T14:47:48.8602441Z   GITHUB_REPOSITORY_OWNER: [32m'JW-Flo'[39m,
+2025-06-12T14:47:48.8603342Z   GRADLE_HOME: [32m'/usr/share/gradle-8.14.1'[39m,
+2025-06-12T14:47:48.8604253Z   ANDROID_NDK_LATEST_HOME: [32m'/usr/local/lib/android/sdk/ndk/28.1.13356709'[39m,
+2025-06-12T14:47:48.8605208Z   JAVA_HOME_21_X64: [32m'/usr/lib/jvm/temurin-21-jdk-amd64'[39m,
+2025-06-12T14:47:48.8605890Z   GITHUB_RETENTION_DAYS: [32m'90'[39m,
+2025-06-12T14:47:48.8606546Z   GITHUB_REPOSITORY_OWNER_ID: [32m'129976766'[39m,
+2025-06-12T14:47:48.8607405Z   POWERSHELL_DISTRIBUTION_CHANNEL: [32m'GitHub-Actions-ubuntu24'[39m,
+2025-06-12T14:47:48.8608278Z   AZURE_EXTENSION_DIR: [32m'/opt/az/azcliextensions'[39m,
+2025-06-12T14:47:48.8608929Z   GITHUB_HEAD_REF: [32m''[39m,
+2025-06-12T14:47:48.8609548Z   npm_config_userconfig: [32m'/home/runner/.npmrc'[39m,
+2025-06-12T14:47:48.8630632Z   npm_config_local_prefix: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker'[39m,
+2025-06-12T14:47:48.8631592Z   SYSTEMD_EXEC_PID: [32m'1741'[39m,
+2025-06-12T14:47:48.8632304Z   GITHUB_GRAPHQL_URL: [32m'https://api.github.com/graphql'[39m,
+2025-06-12T14:47:48.8633478Z   COLOR: [32m'0'[39m,
+2025-06-12T14:47:48.8633964Z   NVM_DIR: [32m'/home/runner/.nvm'[39m,
+2025-06-12T14:47:48.8634568Z   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: [32m'1'[39m,
+2025-06-12T14:47:48.8635312Z   GOROOT_1_21_X64: [32m'/opt/hostedtoolcache/go/1.21.13/x64'[39m,
+2025-06-12T14:47:48.8636117Z   JAVA_HOME_17_X64: [32m'/usr/lib/jvm/temurin-17-jdk-amd64'[39m,
+2025-06-12T14:47:48.8636765Z   ImageVersion: [32m'20250602.3.0'[39m,
+2025-06-12T14:47:48.8637294Z   LOGNAME: [32m'runner'[39m,
+2025-06-12T14:47:48.8637776Z   RUNNER_OS: [32m'Linux'[39m,
+2025-06-12T14:47:48.8638392Z   GITHUB_API_URL: [32m'https://api.github.com'[39m,
+2025-06-12T14:47:48.8639178Z   GOROOT_1_22_X64: [32m'/opt/hostedtoolcache/go/1.22.12/x64'[39m,
+2025-06-12T14:47:48.8639894Z   SWIFT_PATH: [32m'/usr/share/swift/usr/bin'[39m,
+2025-06-12T14:47:48.8640685Z   CHROMEWEBDRIVER: [32m'/usr/local/share/chromedriver-linux64'[39m,
+2025-06-12T14:47:48.8641512Z   GOROOT_1_23_X64: [32m'/opt/hostedtoolcache/go/1.23.9/x64'[39m,
+2025-06-12T14:47:48.8642164Z   JOURNAL_STREAM: [32m'9:10665'[39m,
+2025-06-12T14:47:48.8643075Z   GITHUB_WORKFLOW: [32m'Deploy All Components (Final)'[39m,
+2025-06-12T14:47:48.8643785Z   _: [32m'/opt/hostedtoolcache/node/20.19.2/x64/bin/npm'[39m,
+2025-06-12T14:47:48.8644526Z   npm_config_prefix: [32m'/opt/hostedtoolcache/node/20.19.2/x64'[39m,
+2025-06-12T14:47:48.8645169Z   npm_config_npm_version: [32m'10.8.2'[39m,
+2025-06-12T14:47:48.8646136Z   MEMORY_PRESSURE_WATCH: [32m'/sys/fs/cgroup/system.slice/hosted-compute-agent.service/memory.pressure'[39m,
+2025-06-12T14:47:48.8647243Z   ACTIONS_RUNNER_ACTION_ARCHIVE_CACHE: [32m'/opt/actionarchivecache'[39m,
+2025-06-12T14:47:48.8647949Z   GITHUB_RUN_ID: [32m'15613790078'[39m,
+2025-06-12T14:47:48.8648971Z   npm_config_cache: [32m'/home/runner/.npm'[39m,
+2025-06-12T14:47:48.8649574Z   GITHUB_REF_TYPE: [32m'branch'[39m,
+2025-06-12T14:47:48.8650163Z   BOOTSTRAP_HASKELL_NONINTERACTIVE: [32m'1'[39m,
+2025-06-12T14:47:48.8650970Z   GITHUB_WORKFLOW_SHA: [32m'21c3179681fd4c2dbae931dcef74baadc52ebef2'[39m,
+2025-06-12T14:47:48.8651627Z   GITHUB_BASE_REF: [32m''[39m,
+2025-06-12T14:47:48.8652095Z   ImageOS: [32m'ubuntu24'[39m,
+2025-06-12T14:47:48.8653267Z   GITHUB_WORKFLOW_REF: [32m'JW-Flo/AWhittleWandering/.github/workflows/deploy-all-final.yml@refs/heads/main'[39m,
+2025-06-12T14:47:48.8654199Z   GITHUB_ACTION_REPOSITORY: [32m''[39m,
+2025-06-12T14:47:48.8654745Z   ENABLE_RUNNER_TRACING: [32m'true'[39m,
+2025-06-12T14:47:48.8655903Z   npm_config_node_gyp: [32m'/opt/hostedtoolcache/node/20.19.2/x64/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js'[39m,
+2025-06-12T14:47:48.8662023Z   PATH: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker/node_modules/.bin:/home/runner/work/AWhittleWandering/AWhittleWandering/node_modules/.bin:/home/runner/work/AWhittleWandering/node_modules/.bin:/home/runner/work/node_modules/.bin:/home/runner/node_modules/.bin:/home/node_modules/.bin:/node_modules/.bin:/opt/hostedtoolcache/node/20.19.2/x64/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/opt/hostedtoolcache/node/20.19.2/x64/bin:/snap/bin:/home/runner/.local/bin:/opt/pipx_bin:/home/runner/.cargo/bin:/home/runner/.config/composer/vendor/bin:/usr/local/.ghcup/bin:/home/runner/.dotnet/tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin'[39m,
+2025-06-12T14:47:48.8666679Z   ANT_HOME: [32m'/usr/share/ant'[39m,
+2025-06-12T14:47:48.8667247Z   DOTNET_MULTILEVEL_LOOKUP: [32m'0'[39m,
+2025-06-12T14:47:48.8668031Z   RUNNER_TRACKING_ID: [32m'github_b8110347-ca54-4de1-80e1-4da2deeacf41'[39m,
+2025-06-12T14:47:48.8668887Z   INVOCATION_ID: [32m'4949a7d2e957436988fe6cfad2508c25'[39m,
+2025-06-12T14:47:48.8707609Z   RUNNER_TOOL_CACHE: [32m'/opt/hostedtoolcache'[39m,
+2025-06-12T14:47:48.8708533Z   NODE: [32m'/opt/hostedtoolcache/node/20.19.2/x64/bin/node'[39m,
+2025-06-12T14:47:48.8709225Z   npm_package_name: [32m'continentalusa-edge'[39m,
+2025-06-12T14:47:48.8710016Z   GITHUB_ACTION: [32m'__run_4'[39m,
+2025-06-12T14:47:48.8710485Z   GITHUB_RUN_NUMBER: [32m'58'[39m,
+2025-06-12T14:47:48.8711248Z   GITHUB_TRIGGERING_ACTOR: [32m'JW-Flo'[39m,
+2025-06-12T14:47:48.8711785Z   RUNNER_ARCH: [32m'X64'[39m,
+2025-06-12T14:47:48.8712296Z   XDG_RUNTIME_DIR: [32m'/run/user/1001'[39m,
+2025-06-12T14:47:48.8713221Z   AGENT_TOOLSDIRECTORY: [32m'/opt/hostedtoolcache'[39m,
+2025-06-12T14:47:48.8713767Z   LANG: [32m'C.UTF-8'[39m,
+2025-06-12T14:47:48.8714386Z   VCPKG_INSTALLATION_ROOT: [32m'/usr/local/share/vcpkg'[39m,
+2025-06-12T14:47:48.8715016Z   CONDA: [32m'/usr/share/miniconda'[39m,
+2025-06-12T14:47:48.8715610Z   RUNNER_NAME: [32m'GitHub Actions 1000000692'[39m,
+2025-06-12T14:47:48.8716236Z   XDG_CONFIG_HOME: [32m'/home/runner/.config'[39m,
+2025-06-12T14:47:48.8716781Z   GITHUB_REF_NAME: [32m'main'[39m,
+2025-06-12T14:47:48.8717408Z   GITHUB_REPOSITORY: [32m'JW-Flo/AWhittleWandering'[39m,
+2025-06-12T14:47:48.8718150Z   npm_lifecycle_script: [32m'npm run build && vitest run'[39m,
+2025-06-12T14:47:48.8719126Z   ANDROID_NDK_ROOT: [32m'/usr/local/lib/android/sdk/ndk/27.2.12479018'[39m,
+2025-06-12T14:47:48.8719786Z   GITHUB_ACTION_REF: [32m''[39m,
+2025-06-12T14:47:48.8720326Z   DEBIAN_FRONTEND: [32m'noninteractive'[39m,
+2025-06-12T14:47:48.8720840Z   SHELL: [32m'/bin/bash'[39m,
+2025-06-12T14:47:48.8721351Z   GITHUB_REPOSITORY_ID: [32m'992918881'[39m,
+2025-06-12T14:47:48.8721862Z   GITHUB_ACTIONS: [32m'true'[39m,
+2025-06-12T14:47:48.8722366Z   npm_package_version: [32m'0.1.0'[39m,
+2025-06-12T14:47:48.8723182Z   npm_lifecycle_event: [32m'test'[39m,
+2025-06-12T14:47:48.8723720Z   GITHUB_REF_PROTECTED: [32m'false'[39m,
+2025-06-12T14:47:48.8724743Z   GITHUB_WORKSPACE: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering'[39m,
+2025-06-12T14:47:48.8725456Z   ACCEPT_EULA: [32m'Y'[39m,
+2025-06-12T14:47:48.8725905Z   GITHUB_JOB: [32m'test'[39m,
+2025-06-12T14:47:48.8726630Z   GITHUB_SHA: [32m'21c3179681fd4c2dbae931dcef74baadc52ebef2'[39m,
+2025-06-12T14:47:48.8727255Z   GITHUB_RUN_ATTEMPT: [32m'1'[39m,
+2025-06-12T14:47:48.8727762Z   GITHUB_REF: [32m'refs/heads/main'[39m,
+2025-06-12T14:47:48.8728347Z   GITHUB_ACTOR: [32m'JW-Flo'[39m,
+2025-06-12T14:47:48.8728946Z   ANDROID_SDK_ROOT: [32m'/usr/local/lib/android/sdk'[39m,
+2025-06-12T14:47:48.8729823Z   npm_config_globalconfig: [32m'/opt/hostedtoolcache/node/20.19.2/x64/etc/npmrc'[39m,
+2025-06-12T14:47:48.8730699Z   npm_config_init_module: [32m'/home/runner/.npm-init.js'[39m,
+2025-06-12T14:47:48.8731828Z   GITHUB_PATH: [32m'/home/runner/work/_temp/_runner_file_commands/add_path_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:48.8732937Z   JAVA_HOME: [32m'/usr/lib/jvm/temurin-17-jdk-amd64'[39m,
+2025-06-12T14:47:48.8733779Z   PWD: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker'[39m,
+2025-06-12T14:47:48.8734520Z   GITHUB_ACTOR_ID: [32m'129976766'[39m,
+2025-06-12T14:47:48.8746242Z   RUNNER_WORKSPACE: [32m'/home/runner/work/AWhittleWandering'[39m,
+2025-06-12T14:47:48.8747521Z   npm_execpath: [32m'/opt/hostedtoolcache/node/20.19.2/x64/lib/node_modules/npm/bin/npm-cli.js'[39m,
+2025-06-12T14:47:48.8748492Z   HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS: [32m'3650'[39m,
+2025-06-12T14:47:48.8749113Z   GITHUB_EVENT_NAME: [32m'push'[39m,
+2025-06-12T14:47:48.8749667Z   HOMEBREW_NO_AUTO_UPDATE: [32m'1'[39m,
+2025-06-12T14:47:48.8750289Z   ANDROID_HOME: [32m'/usr/local/lib/android/sdk'[39m,
+2025-06-12T14:47:48.8750971Z   GITHUB_SERVER_URL: [32m'https://github.com'[39m,
+2025-06-12T14:47:48.8751696Z   GECKOWEBDRIVER: [32m'/usr/local/share/gecko_driver'[39m,
+2025-06-12T14:47:48.8752393Z   GHCUP_INSTALL_BASE_PREFIX: [32m'/usr/local'[39m,
+2025-06-12T14:47:48.8753844Z   GITHUB_OUTPUT: [32m'/home/runner/work/_temp/_runner_file_commands/set_output_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:48.8754994Z   npm_config_global_prefix: [32m'/opt/hostedtoolcache/node/20.19.2/x64'[39m,
+2025-06-12T14:47:48.8755805Z   EDGEWEBDRIVER: [32m'/usr/local/share/edge_driver'[39m,
+2025-06-12T14:47:48.8756603Z   npm_command: [32m'test'[39m,
+2025-06-12T14:47:48.8757280Z   ANDROID_NDK: [32m'/usr/local/lib/android/sdk/ndk/27.2.12479018'[39m,
+2025-06-12T14:47:48.8757901Z   SGX_AESM_ADDR: [32m'1'[39m,
+2025-06-12T14:47:48.8758436Z   CHROME_BIN: [32m'/usr/bin/google-chrome'[39m,
+2025-06-12T14:47:48.8759170Z   SELENIUM_JAR_PATH: [32m'/usr/share/java/selenium-server.jar'[39m,
+2025-06-12T14:47:48.8759993Z   MEMORY_PRESSURE_WRITE: [32m'c29tZSAyMDAwMDAgMjAwMDAwMAA='[39m,
+2025-06-12T14:47:48.8760848Z   ANDROID_NDK_HOME: [32m'/usr/local/lib/android/sdk/ndk/27.2.12479018'[39m,
+2025-06-12T14:47:48.8762132Z   GITHUB_STEP_SUMMARY: [32m'/home/runner/work/_temp/_runner_file_commands/step_summary_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:48.8763732Z   INIT_CWD: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker'[39m,
+2025-06-12T14:47:48.8764449Z   EDITOR: [32m'vi'[39m,
+2025-06-12T14:47:48.8764825Z   PROD: [32m''[39m,
+2025-06-12T14:47:48.8765194Z   DEV: [32m'1'[39m,
+2025-06-12T14:47:48.8765562Z   BASE_URL: [32m'/'[39m,
+2025-06-12T14:47:48.8765939Z   MODE: [32m'test'[39m,
+2025-06-12T14:47:48.8766388Z   TINYPOOL_WORKER_ID: [32m'1'[39m,
+2025-06-12T14:47:48.8766874Z   VITEST_WORKER_ID: [32m'2'[39m,
+2025-06-12T14:47:48.8767341Z   VITEST_POOL_ID: [32m'1'[39m,
+2025-06-12T14:47:48.8767751Z   SSR: [32m'1'[39m,
+2025-06-12T14:47:48.8768203Z   TESSIE_API_TOKEN: [32m'test_token'[39m,
+2025-06-12T14:47:48.8768774Z   EDGE_HMAC_KEY: [32m'48continental_secure_key'[39m,
+2025-06-12T14:47:48.8769336Z   MAPBOX_TOKEN: [32m'test_mapbox_token'[39m,
+2025-06-12T14:47:48.8769894Z   OPENWEATHER_API_KEY: [32m'test_weather_key'[39m
+2025-06-12T14:47:48.8770300Z }
+2025-06-12T14:47:48.8770430Z 
+2025-06-12T14:47:49.0936976Z [90mstdout[2m | src/__tests__/integration.test.ts[2m > [22m[2mEdge Worker Integration Tests[2m > [22m[2mWeather Risk Calculation[2m > [22m[2mshould handle invalid location data
+2025-06-12T14:47:49.0943258Z [22m[39mVerifying signature with header: sha256=ae3cf563f19fa7b6fa5570ef479b460232663936005e6aba053a3669499b8372
+2025-06-12T14:47:49.0943948Z 
+2025-06-12T14:47:49.1060984Z [90mstdout[2m | src/__tests__/integration.test.ts[2m > [22m[2mEdge Worker Integration Tests[2m > [22m[2mRoute Optimization[2m > [22m[2mshould optimize route with weather considerations
+2025-06-12T14:47:49.1062367Z [22m[39mMiniflare Debug: Loaded environment variables: {
+2025-06-12T14:47:49.1063188Z   TEST: [32m'true'[39m,
+2025-06-12T14:47:49.1063616Z   VITEST: [32m'true'[39m,
+2025-06-12T14:47:49.1064071Z   NODE_ENV: [32m'test'[39m,
+2025-06-12T14:47:49.1064546Z   VITEST_MODE: [32m'RUN'[39m,
+2025-06-12T14:47:49.1064988Z   FORCE_TTY: [32m''[39m,
+2025-06-12T14:47:49.1066094Z   GITHUB_STATE: [32m'/home/runner/work/_temp/_runner_file_commands/save_state_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:49.1067071Z   DOTNET_NOLOGO: [32m'1'[39m,
+2025-06-12T14:47:49.1067553Z   USER: [32m'runner'[39m,
+2025-06-12T14:47:49.1068542Z   npm_config_user_agent: [32m'npm/10.8.2 node/v20.19.2 linux x64 workspaces/false ci/github-actions'[39m,
+2025-06-12T14:47:49.1069334Z   CI: [32m'true'[39m,
+2025-06-12T14:47:49.1069903Z   RUNNER_ENVIRONMENT: [32m'github-hosted'[39m,
+2025-06-12T14:47:49.1071070Z   GITHUB_ENV: [32m'/home/runner/work/_temp/_runner_file_commands/set_env_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:49.1072026Z   PIPX_HOME: [32m'/opt/pipx'[39m,
+2025-06-12T14:47:49.1073071Z   npm_node_execpath: [32m'/opt/hostedtoolcache/node/20.19.2/x64/bin/node'[39m,
+2025-06-12T14:47:49.1074001Z   JAVA_HOME_8_X64: [32m'/usr/lib/jvm/temurin-8-jdk-amd64'[39m,
+2025-06-12T14:47:49.1074593Z   SHLVL: [32m'1'[39m,
+2025-06-12T14:47:49.1075084Z   npm_config_noproxy: [32m''[39m,
+2025-06-12T14:47:49.1075608Z   HOME: [32m'/home/runner'[39m,
+2025-06-12T14:47:49.1076232Z   RUNNER_TEMP: [32m'/home/runner/work/_temp'[39m,
+2025-06-12T14:47:49.1077162Z   GITHUB_EVENT_PATH: [32m'/home/runner/work/_temp/_github_workflow/event.json'[39m,
+2025-06-12T14:47:49.1078880Z   npm_package_json: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker/package.json'[39m,
+2025-06-12T14:47:49.1080026Z   JAVA_HOME_11_X64: [32m'/usr/lib/jvm/temurin-11-jdk-amd64'[39m,
+2025-06-12T14:47:49.1080763Z   PIPX_BIN_DIR: [32m'/opt/pipx_bin'[39m,
+2025-06-12T14:47:49.1081412Z   GITHUB_REPOSITORY_OWNER: [32m'JW-Flo'[39m,
+2025-06-12T14:47:49.1082116Z   GRADLE_HOME: [32m'/usr/share/gradle-8.14.1'[39m,
+2025-06-12T14:47:49.1098143Z   ANDROID_NDK_LATEST_HOME: [32m'/usr/local/lib/android/sdk/ndk/28.1.13356709'[39m,
+2025-06-12T14:47:49.1099188Z   JAVA_HOME_21_X64: [32m'/usr/lib/jvm/temurin-21-jdk-amd64'[39m,
+2025-06-12T14:47:49.1099897Z   GITHUB_RETENTION_DAYS: [32m'90'[39m,
+2025-06-12T14:47:49.1100569Z   GITHUB_REPOSITORY_OWNER_ID: [32m'129976766'[39m,
+2025-06-12T14:47:49.1101433Z   POWERSHELL_DISTRIBUTION_CHANNEL: [32m'GitHub-Actions-ubuntu24'[39m,
+2025-06-12T14:47:49.1102326Z   AZURE_EXTENSION_DIR: [32m'/opt/az/azcliextensions'[39m,
+2025-06-12T14:47:49.1103203Z   GITHUB_HEAD_REF: [32m''[39m,
+2025-06-12T14:47:49.1103857Z   npm_config_userconfig: [32m'/home/runner/.npmrc'[39m,
+2025-06-12T14:47:49.1104995Z   npm_config_local_prefix: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker'[39m,
+2025-06-12T14:47:49.1105931Z   SYSTEMD_EXEC_PID: [32m'1741'[39m,
+2025-06-12T14:47:49.1106672Z   GITHUB_GRAPHQL_URL: [32m'https://api.github.com/graphql'[39m,
+2025-06-12T14:47:49.1107309Z   COLOR: [32m'0'[39m,
+2025-06-12T14:47:49.1107815Z   NVM_DIR: [32m'/home/runner/.nvm'[39m,
+2025-06-12T14:47:49.1108472Z   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: [32m'1'[39m,
+2025-06-12T14:47:49.1109266Z   GOROOT_1_21_X64: [32m'/opt/hostedtoolcache/go/1.21.13/x64'[39m,
+2025-06-12T14:47:49.1110358Z   JAVA_HOME_17_X64: [32m'/usr/lib/jvm/temurin-17-jdk-amd64'[39m,
+2025-06-12T14:47:49.1111106Z   ImageVersion: [32m'20250602.3.0'[39m,
+2025-06-12T14:47:49.1111660Z   LOGNAME: [32m'runner'[39m,
+2025-06-12T14:47:49.1112190Z   RUNNER_OS: [32m'Linux'[39m,
+2025-06-12T14:47:49.1121772Z   GITHUB_API_URL: [32m'https://api.github.com'[39m,
+2025-06-12T14:47:49.1122832Z   GOROOT_1_22_X64: [32m'/opt/hostedtoolcache/go/1.22.12/x64'[39m,
+2025-06-12T14:47:49.1123594Z   SWIFT_PATH: [32m'/usr/share/swift/usr/bin'[39m,
+2025-06-12T14:47:49.1124426Z   CHROMEWEBDRIVER: [32m'/usr/local/share/chromedriver-linux64'[39m,
+2025-06-12T14:47:49.1125325Z   GOROOT_1_23_X64: [32m'/opt/hostedtoolcache/go/1.23.9/x64'[39m,
+2025-06-12T14:47:49.1126024Z   JOURNAL_STREAM: [32m'9:10665'[39m,
+2025-06-12T14:47:49.1126762Z   GITHUB_WORKFLOW: [32m'Deploy All Components (Final)'[39m,
+2025-06-12T14:47:49.1127573Z   _: [32m'/opt/hostedtoolcache/node/20.19.2/x64/bin/npm'[39m,
+2025-06-12T14:47:49.1128487Z   npm_config_prefix: [32m'/opt/hostedtoolcache/node/20.19.2/x64'[39m,
+2025-06-12T14:47:49.1129263Z   npm_config_npm_version: [32m'10.8.2'[39m,
+2025-06-12T14:47:49.1130387Z   MEMORY_PRESSURE_WATCH: [32m'/sys/fs/cgroup/system.slice/hosted-compute-agent.service/memory.pressure'[39m,
+2025-06-12T14:47:49.1131594Z   ACTIONS_RUNNER_ACTION_ARCHIVE_CACHE: [32m'/opt/actionarchivecache'[39m,
+2025-06-12T14:47:49.1132377Z   GITHUB_RUN_ID: [32m'15613790078'[39m,
+2025-06-12T14:47:49.1133244Z   npm_config_cache: [32m'/home/runner/.npm'[39m,
+2025-06-12T14:47:49.1133878Z   GITHUB_REF_TYPE: [32m'branch'[39m,
+2025-06-12T14:47:49.1134513Z   BOOTSTRAP_HASKELL_NONINTERACTIVE: [32m'1'[39m,
+2025-06-12T14:47:49.1135382Z   GITHUB_WORKFLOW_SHA: [32m'21c3179681fd4c2dbae931dcef74baadc52ebef2'[39m,
+2025-06-12T14:47:49.1136142Z   GITHUB_BASE_REF: [32m''[39m,
+2025-06-12T14:47:49.1136693Z   ImageOS: [32m'ubuntu24'[39m,
+2025-06-12T14:47:49.1137813Z   GITHUB_WORKFLOW_REF: [32m'JW-Flo/AWhittleWandering/.github/workflows/deploy-all-final.yml@refs/heads/main'[39m,
+2025-06-12T14:47:49.1138838Z   GITHUB_ACTION_REPOSITORY: [32m''[39m,
+2025-06-12T14:47:49.1139921Z   ENABLE_RUNNER_TRACING: [32m'true'[39m,
+2025-06-12T14:47:49.1141181Z   npm_config_node_gyp: [32m'/opt/hostedtoolcache/node/20.19.2/x64/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js'[39m,
+2025-06-12T14:47:49.1148098Z   PATH: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker/node_modules/.bin:/home/runner/work/AWhittleWandering/AWhittleWandering/node_modules/.bin:/home/runner/work/AWhittleWandering/node_modules/.bin:/home/runner/work/node_modules/.bin:/home/runner/node_modules/.bin:/home/node_modules/.bin:/node_modules/.bin:/opt/hostedtoolcache/node/20.19.2/x64/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/opt/hostedtoolcache/node/20.19.2/x64/bin:/snap/bin:/home/runner/.local/bin:/opt/pipx_bin:/home/runner/.cargo/bin:/home/runner/.config/composer/vendor/bin:/usr/local/.ghcup/bin:/home/runner/.dotnet/tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin'[39m,
+2025-06-12T14:47:49.1153569Z   ANT_HOME: [32m'/usr/share/ant'[39m,
+2025-06-12T14:47:49.1154223Z   DOTNET_MULTILEVEL_LOOKUP: [32m'0'[39m,
+2025-06-12T14:47:49.1155086Z   RUNNER_TRACKING_ID: [32m'github_b8110347-ca54-4de1-80e1-4da2deeacf41'[39m,
+2025-06-12T14:47:49.1155971Z   INVOCATION_ID: [32m'4949a7d2e957436988fe6cfad2508c25'[39m,
+2025-06-12T14:47:49.1156731Z   RUNNER_TOOL_CACHE: [32m'/opt/hostedtoolcache'[39m,
+2025-06-12T14:47:49.1157541Z   NODE: [32m'/opt/hostedtoolcache/node/20.19.2/x64/bin/node'[39m,
+2025-06-12T14:47:49.1158304Z   npm_package_name: [32m'continentalusa-edge'[39m,
+2025-06-12T14:47:49.1158943Z   GITHUB_ACTION: [32m'__run_4'[39m,
+2025-06-12T14:47:49.1159501Z   GITHUB_RUN_NUMBER: [32m'58'[39m,
+2025-06-12T14:47:49.1160111Z   GITHUB_TRIGGERING_ACTOR: [32m'JW-Flo'[39m,
+2025-06-12T14:47:49.1160704Z   RUNNER_ARCH: [32m'X64'[39m,
+2025-06-12T14:47:49.1161583Z   XDG_RUNTIME_DIR: [32m'/run/user/1001'[39m,
+2025-06-12T14:47:49.1162398Z   AGENT_TOOLSDIRECTORY: [32m'/opt/hostedtoolcache'[39m,
+2025-06-12T14:47:49.1163663Z   LANG: [32m'C.UTF-8'[39m,
+2025-06-12T14:47:49.1164373Z   VCPKG_INSTALLATION_ROOT: [32m'/usr/local/share/vcpkg'[39m,
+2025-06-12T14:47:49.1165114Z   CONDA: [32m'/usr/share/miniconda'[39m,
+2025-06-12T14:47:49.1165777Z   RUNNER_NAME: [32m'GitHub Actions 1000000692'[39m,
+2025-06-12T14:47:49.1166458Z   XDG_CONFIG_HOME: [32m'/home/runner/.config'[39m,
+2025-06-12T14:47:49.1167066Z   GITHUB_REF_NAME: [32m'main'[39m,
+2025-06-12T14:47:49.1167748Z   GITHUB_REPOSITORY: [32m'JW-Flo/AWhittleWandering'[39m,
+2025-06-12T14:47:49.1168569Z   npm_lifecycle_script: [32m'npm run build && vitest run'[39m,
+2025-06-12T14:47:49.1169491Z   ANDROID_NDK_ROOT: [32m'/usr/local/lib/android/sdk/ndk/27.2.12479018'[39m,
+2025-06-12T14:47:49.1170224Z   GITHUB_ACTION_REF: [32m''[39m,
+2025-06-12T14:47:49.1170816Z   DEBIAN_FRONTEND: [32m'noninteractive'[39m,
+2025-06-12T14:47:49.1171390Z   SHELL: [32m'/bin/bash'[39m,
+2025-06-12T14:47:49.1171955Z   GITHUB_REPOSITORY_ID: [32m'992918881'[39m,
+2025-06-12T14:47:49.1172749Z   GITHUB_ACTIONS: [32m'true'[39m,
+2025-06-12T14:47:49.1173352Z   npm_package_version: [32m'0.1.0'[39m,
+2025-06-12T14:47:49.1173964Z   npm_lifecycle_event: [32m'test'[39m,
+2025-06-12T14:47:49.1174563Z   GITHUB_REF_PROTECTED: [32m'false'[39m,
+2025-06-12T14:47:49.1175470Z   GITHUB_WORKSPACE: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering'[39m,
+2025-06-12T14:47:49.1176244Z   ACCEPT_EULA: [32m'Y'[39m,
+2025-06-12T14:47:49.1176744Z   GITHUB_JOB: [32m'test'[39m,
+2025-06-12T14:47:49.1177449Z   GITHUB_SHA: [32m'21c3179681fd4c2dbae931dcef74baadc52ebef2'[39m,
+2025-06-12T14:47:49.1178134Z   GITHUB_RUN_ATTEMPT: [32m'1'[39m,
+2025-06-12T14:47:49.1178692Z   GITHUB_REF: [32m'refs/heads/main'[39m,
+2025-06-12T14:47:49.1179253Z   GITHUB_ACTOR: [32m'JW-Flo'[39m,
+2025-06-12T14:47:49.1179910Z   ANDROID_SDK_ROOT: [32m'/usr/local/lib/android/sdk'[39m,
+2025-06-12T14:47:49.1180895Z   npm_config_globalconfig: [32m'/opt/hostedtoolcache/node/20.19.2/x64/etc/npmrc'[39m,
+2025-06-12T14:47:49.1181876Z   npm_config_init_module: [32m'/home/runner/.npm-init.js'[39m,
+2025-06-12T14:47:49.1183433Z   GITHUB_PATH: [32m'/home/runner/work/_temp/_runner_file_commands/add_path_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:49.1184806Z   JAVA_HOME: [32m'/usr/lib/jvm/temurin-17-jdk-amd64'[39m,
+2025-06-12T14:47:49.1185821Z   PWD: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker'[39m,
+2025-06-12T14:47:49.1186674Z   GITHUB_ACTOR_ID: [32m'129976766'[39m,
+2025-06-12T14:47:49.1187447Z   RUNNER_WORKSPACE: [32m'/home/runner/work/AWhittleWandering'[39m,
+2025-06-12T14:47:49.1188605Z   npm_execpath: [32m'/opt/hostedtoolcache/node/20.19.2/x64/lib/node_modules/npm/bin/npm-cli.js'[39m,
+2025-06-12T14:47:49.1189605Z   HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS: [32m'3650'[39m,
+2025-06-12T14:47:49.1190254Z   GITHUB_EVENT_NAME: [32m'push'[39m,
+2025-06-12T14:47:49.1190845Z   HOMEBREW_NO_AUTO_UPDATE: [32m'1'[39m,
+2025-06-12T14:47:49.1191505Z   ANDROID_HOME: [32m'/usr/local/lib/android/sdk'[39m,
+2025-06-12T14:47:49.1192248Z   GITHUB_SERVER_URL: [32m'https://github.com'[39m,
+2025-06-12T14:47:49.1193274Z   GECKOWEBDRIVER: [32m'/usr/local/share/gecko_driver'[39m,
+2025-06-12T14:47:49.1194013Z   GHCUP_INSTALL_BASE_PREFIX: [32m'/usr/local'[39m,
+2025-06-12T14:47:49.1195077Z   GITHUB_OUTPUT: [32m'/home/runner/work/_temp/_runner_file_commands/set_output_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:49.1196117Z   npm_config_global_prefix: [32m'/opt/hostedtoolcache/node/20.19.2/x64'[39m,
+2025-06-12T14:47:49.1196874Z   EDGEWEBDRIVER: [32m'/usr/local/share/edge_driver'[39m,
+2025-06-12T14:47:49.1197456Z   npm_command: [32m'test'[39m,
+2025-06-12T14:47:49.1198306Z   ANDROID_NDK: [32m'/usr/local/lib/android/sdk/ndk/27.2.12479018'[39m,
+2025-06-12T14:47:49.1198970Z   SGX_AESM_ADDR: [32m'1'[39m,
+2025-06-12T14:47:49.1199711Z   CHROME_BIN: [32m'/usr/bin/google-chrome'[39m,
+2025-06-12T14:47:49.1200402Z   SELENIUM_JAR_PATH: [32m'/usr/share/java/selenium-server.jar'[39m,
+2025-06-12T14:47:49.1201183Z   MEMORY_PRESSURE_WRITE: [32m'c29tZSAyMDAwMDAgMjAwMDAwMAA='[39m,
+2025-06-12T14:47:49.1202023Z   ANDROID_NDK_HOME: [32m'/usr/local/lib/android/sdk/ndk/27.2.12479018'[39m,
+2025-06-12T14:47:49.1203398Z   GITHUB_STEP_SUMMARY: [32m'/home/runner/work/_temp/_runner_file_commands/step_summary_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:49.1204602Z   INIT_CWD: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker'[39m,
+2025-06-12T14:47:49.1205312Z   EDITOR: [32m'vi'[39m,
+2025-06-12T14:47:49.1205689Z   PROD: [32m''[39m,
+2025-06-12T14:47:49.1206038Z   DEV: [32m'1'[39m,
+2025-06-12T14:47:49.1206418Z   BASE_URL: [32m'/'[39m,
+2025-06-12T14:47:49.1206796Z   MODE: [32m'test'[39m,
+2025-06-12T14:47:49.1207243Z   TINYPOOL_WORKER_ID: [32m'1'[39m,
+2025-06-12T14:47:49.1207741Z   VITEST_WORKER_ID: [32m'2'[39m,
+2025-06-12T14:47:49.1208218Z   VITEST_POOL_ID: [32m'1'[39m,
+2025-06-12T14:47:49.1208626Z   SSR: [32m'1'[39m,
+2025-06-12T14:47:49.1209081Z   TESSIE_API_TOKEN: [32m'test_token'[39m,
+2025-06-12T14:47:49.1209696Z   EDGE_HMAC_KEY: [32m'48continental_secure_key'[39m,
+2025-06-12T14:47:49.1210330Z   MAPBOX_TOKEN: [32m'test_mapbox_token'[39m,
+2025-06-12T14:47:49.1210953Z   OPENWEATHER_API_KEY: [32m'test_weather_key'[39m
+2025-06-12T14:47:49.1211395Z }
+2025-06-12T14:47:49.1211538Z 
+2025-06-12T14:47:49.3110901Z [90mstdout[2m | src/__tests__/integration.test.ts[2m > [22m[2mEdge Worker Integration Tests[2m > [22m[2mRoute Optimization[2m > [22m[2mshould optimize route with weather considerations
+2025-06-12T14:47:49.3116697Z [22m[39mVerifying signature with header: sha256=ad6e175d5af95aad6b89988fb441e1ee81caed9ed7c839c5cc5037f9b7748ab4
+2025-06-12T14:47:49.3117446Z 
+2025-06-12T14:47:49.3240397Z [90mstdout[2m | src/__tests__/integration.test.ts[2m > [22m[2mEdge Worker Integration Tests[2m > [22m[2mRoute Optimization[2m > [22m[2mshould provide different routes based on weather conditions
+2025-06-12T14:47:49.3241898Z [22m[39mMiniflare Debug: Loaded environment variables: {
+2025-06-12T14:47:49.3243073Z   TEST: [32m'true'[39m,
+2025-06-12T14:47:49.3243892Z   VITEST: [32m'true'[39m,
+2025-06-12T14:47:49.3244334Z   NODE_ENV: [32m'test'[39m,
+2025-06-12T14:47:49.3244808Z   VITEST_MODE: [32m'RUN'[39m,
+2025-06-12T14:47:49.3245219Z   FORCE_TTY: [32m''[39m,
+2025-06-12T14:47:49.3246226Z   GITHUB_STATE: [32m'/home/runner/work/_temp/_runner_file_commands/save_state_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:49.3247127Z   DOTNET_NOLOGO: [32m'1'[39m,
+2025-06-12T14:47:49.3247554Z   USER: [32m'runner'[39m,
+2025-06-12T14:47:49.3248476Z   npm_config_user_agent: [32m'npm/10.8.2 node/v20.19.2 linux x64 workspaces/false ci/github-actions'[39m,
+2025-06-12T14:47:49.3249227Z   CI: [32m'true'[39m,
+2025-06-12T14:47:49.3249752Z   RUNNER_ENVIRONMENT: [32m'github-hosted'[39m,
+2025-06-12T14:47:49.3250849Z   GITHUB_ENV: [32m'/home/runner/work/_temp/_runner_file_commands/set_env_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:49.3251710Z   PIPX_HOME: [32m'/opt/pipx'[39m,
+2025-06-12T14:47:49.3252766Z   npm_node_execpath: [32m'/opt/hostedtoolcache/node/20.19.2/x64/bin/node'[39m,
+2025-06-12T14:47:49.3253695Z   JAVA_HOME_8_X64: [32m'/usr/lib/jvm/temurin-8-jdk-amd64'[39m,
+2025-06-12T14:47:49.3254303Z   SHLVL: [32m'1'[39m,
+2025-06-12T14:47:49.3254800Z   npm_config_noproxy: [32m''[39m,
+2025-06-12T14:47:49.3255375Z   HOME: [32m'/home/runner'[39m,
+2025-06-12T14:47:49.3256005Z   RUNNER_TEMP: [32m'/home/runner/work/_temp'[39m,
+2025-06-12T14:47:49.3256910Z   GITHUB_EVENT_PATH: [32m'/home/runner/work/_temp/_github_workflow/event.json'[39m,
+2025-06-12T14:47:49.3258262Z   npm_package_json: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker/package.json'[39m,
+2025-06-12T14:47:49.3259400Z   JAVA_HOME_11_X64: [32m'/usr/lib/jvm/temurin-11-jdk-amd64'[39m,
+2025-06-12T14:47:49.3260370Z   PIPX_BIN_DIR: [32m'/opt/pipx_bin'[39m,
+2025-06-12T14:47:49.3261046Z   GITHUB_REPOSITORY_OWNER: [32m'JW-Flo'[39m,
+2025-06-12T14:47:49.3261698Z   GRADLE_HOME: [32m'/usr/share/gradle-8.14.1'[39m,
+2025-06-12T14:47:49.3263008Z   ANDROID_NDK_LATEST_HOME: [32m'/usr/local/lib/android/sdk/ndk/28.1.13356709'[39m,
+2025-06-12T14:47:49.3263941Z   JAVA_HOME_21_X64: [32m'/usr/lib/jvm/temurin-21-jdk-amd64'[39m,
+2025-06-12T14:47:49.3264591Z   GITHUB_RETENTION_DAYS: [32m'90'[39m,
+2025-06-12T14:47:49.3265225Z   GITHUB_REPOSITORY_OWNER_ID: [32m'129976766'[39m,
+2025-06-12T14:47:49.3266035Z   POWERSHELL_DISTRIBUTION_CHANNEL: [32m'GitHub-Actions-ubuntu24'[39m,
+2025-06-12T14:47:49.3266865Z   AZURE_EXTENSION_DIR: [32m'/opt/az/azcliextensions'[39m,
+2025-06-12T14:47:49.3267462Z   GITHUB_HEAD_REF: [32m''[39m,
+2025-06-12T14:47:49.3268037Z   npm_config_userconfig: [32m'/home/runner/.npmrc'[39m,
+2025-06-12T14:47:49.3269146Z   npm_config_local_prefix: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker'[39m,
+2025-06-12T14:47:49.3270096Z   SYSTEMD_EXEC_PID: [32m'1741'[39m,
+2025-06-12T14:47:49.3270851Z   GITHUB_GRAPHQL_URL: [32m'https://api.github.com/graphql'[39m,
+2025-06-12T14:47:49.3271477Z   COLOR: [32m'0'[39m,
+2025-06-12T14:47:49.3271988Z   NVM_DIR: [32m'/home/runner/.nvm'[39m,
+2025-06-12T14:47:49.3272904Z   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: [32m'1'[39m,
+2025-06-12T14:47:49.3273677Z   GOROOT_1_21_X64: [32m'/opt/hostedtoolcache/go/1.21.13/x64'[39m,
+2025-06-12T14:47:49.3274467Z   JAVA_HOME_17_X64: [32m'/usr/lib/jvm/temurin-17-jdk-amd64'[39m,
+2025-06-12T14:47:49.3275112Z   ImageVersion: [32m'20250602.3.0'[39m,
+2025-06-12T14:47:49.3275633Z   LOGNAME: [32m'runner'[39m,
+2025-06-12T14:47:49.3276114Z   RUNNER_OS: [32m'Linux'[39m,
+2025-06-12T14:47:49.3276729Z   GITHUB_API_URL: [32m'https://api.github.com'[39m,
+2025-06-12T14:47:49.3277536Z   GOROOT_1_22_X64: [32m'/opt/hostedtoolcache/go/1.22.12/x64'[39m,
+2025-06-12T14:47:49.3278279Z   SWIFT_PATH: [32m'/usr/share/swift/usr/bin'[39m,
+2025-06-12T14:47:49.3279108Z   CHROMEWEBDRIVER: [32m'/usr/local/share/chromedriver-linux64'[39m,
+2025-06-12T14:47:49.3280003Z   GOROOT_1_23_X64: [32m'/opt/hostedtoolcache/go/1.23.9/x64'[39m,
+2025-06-12T14:47:49.3280695Z   JOURNAL_STREAM: [32m'9:10665'[39m,
+2025-06-12T14:47:49.3281687Z   GITHUB_WORKFLOW: [32m'Deploy All Components (Final)'[39m,
+2025-06-12T14:47:49.3282737Z   _: [32m'/opt/hostedtoolcache/node/20.19.2/x64/bin/npm'[39m,
+2025-06-12T14:47:49.3283655Z   npm_config_prefix: [32m'/opt/hostedtoolcache/node/20.19.2/x64'[39m,
+2025-06-12T14:47:49.3284412Z   npm_config_npm_version: [32m'10.8.2'[39m,
+2025-06-12T14:47:49.3285539Z   MEMORY_PRESSURE_WATCH: [32m'/sys/fs/cgroup/system.slice/hosted-compute-agent.service/memory.pressure'[39m,
+2025-06-12T14:47:49.3286760Z   ACTIONS_RUNNER_ACTION_ARCHIVE_CACHE: [32m'/opt/actionarchivecache'[39m,
+2025-06-12T14:47:49.3287502Z   GITHUB_RUN_ID: [32m'15613790078'[39m,
+2025-06-12T14:47:49.3288142Z   npm_config_cache: [32m'/home/runner/.npm'[39m,
+2025-06-12T14:47:49.3288787Z   GITHUB_REF_TYPE: [32m'branch'[39m,
+2025-06-12T14:47:49.3289447Z   BOOTSTRAP_HASKELL_NONINTERACTIVE: [32m'1'[39m,
+2025-06-12T14:47:49.3290313Z   GITHUB_WORKFLOW_SHA: [32m'21c3179681fd4c2dbae931dcef74baadc52ebef2'[39m,
+2025-06-12T14:47:49.3291015Z   GITHUB_BASE_REF: [32m''[39m,
+2025-06-12T14:47:49.3291505Z   ImageOS: [32m'ubuntu24'[39m,
+2025-06-12T14:47:49.3292746Z   GITHUB_WORKFLOW_REF: [32m'JW-Flo/AWhittleWandering/.github/workflows/deploy-all-final.yml@refs/heads/main'[39m,
+2025-06-12T14:47:49.3293732Z   GITHUB_ACTION_REPOSITORY: [32m''[39m,
+2025-06-12T14:47:49.3294316Z   ENABLE_RUNNER_TRACING: [32m'true'[39m,
+2025-06-12T14:47:49.3295507Z   npm_config_node_gyp: [32m'/opt/hostedtoolcache/node/20.19.2/x64/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js'[39m,
+2025-06-12T14:47:49.3302114Z   PATH: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker/node_modules/.bin:/home/runner/work/AWhittleWandering/AWhittleWandering/node_modules/.bin:/home/runner/work/AWhittleWandering/node_modules/.bin:/home/runner/work/node_modules/.bin:/home/runner/node_modules/.bin:/home/node_modules/.bin:/node_modules/.bin:/opt/hostedtoolcache/node/20.19.2/x64/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/opt/hostedtoolcache/node/20.19.2/x64/bin:/snap/bin:/home/runner/.local/bin:/opt/pipx_bin:/home/runner/.cargo/bin:/home/runner/.config/composer/vendor/bin:/usr/local/.ghcup/bin:/home/runner/.dotnet/tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin'[39m,
+2025-06-12T14:47:49.3306889Z   ANT_HOME: [32m'/usr/share/ant'[39m,
+2025-06-12T14:47:49.3307496Z   DOTNET_MULTILEVEL_LOOKUP: [32m'0'[39m,
+2025-06-12T14:47:49.3308328Z   RUNNER_TRACKING_ID: [32m'github_b8110347-ca54-4de1-80e1-4da2deeacf41'[39m,
+2025-06-12T14:47:49.3309238Z   INVOCATION_ID: [32m'4949a7d2e957436988fe6cfad2508c25'[39m,
+2025-06-12T14:47:49.3309997Z   RUNNER_TOOL_CACHE: [32m'/opt/hostedtoolcache'[39m,
+2025-06-12T14:47:49.3310823Z   NODE: [32m'/opt/hostedtoolcache/node/20.19.2/x64/bin/node'[39m,
+2025-06-12T14:47:49.3311616Z   npm_package_name: [32m'continentalusa-edge'[39m,
+2025-06-12T14:47:49.3312233Z   GITHUB_ACTION: [32m'__run_4'[39m,
+2025-06-12T14:47:49.3313002Z   GITHUB_RUN_NUMBER: [32m'58'[39m,
+2025-06-12T14:47:49.3313607Z   GITHUB_TRIGGERING_ACTOR: [32m'JW-Flo'[39m,
+2025-06-12T14:47:49.3314180Z   RUNNER_ARCH: [32m'X64'[39m,
+2025-06-12T14:47:49.3314748Z   XDG_RUNTIME_DIR: [32m'/run/user/1001'[39m,
+2025-06-12T14:47:49.3315453Z   AGENT_TOOLSDIRECTORY: [32m'/opt/hostedtoolcache'[39m,
+2025-06-12T14:47:49.3316053Z   LANG: [32m'C.UTF-8'[39m,
+2025-06-12T14:47:49.3316738Z   VCPKG_INSTALLATION_ROOT: [32m'/usr/local/share/vcpkg'[39m,
+2025-06-12T14:47:49.3317439Z   CONDA: [32m'/usr/share/miniconda'[39m,
+2025-06-12T14:47:49.3318094Z   RUNNER_NAME: [32m'GitHub Actions 1000000692'[39m,
+2025-06-12T14:47:49.3318787Z   XDG_CONFIG_HOME: [32m'/home/runner/.config'[39m,
+2025-06-12T14:47:49.3319429Z   GITHUB_REF_NAME: [32m'main'[39m,
+2025-06-12T14:47:49.3320135Z   GITHUB_REPOSITORY: [32m'JW-Flo/AWhittleWandering'[39m,
+2025-06-12T14:47:49.3320976Z   npm_lifecycle_script: [32m'npm run build && vitest run'[39m,
+2025-06-12T14:47:49.3321891Z   ANDROID_NDK_ROOT: [32m'/usr/local/lib/android/sdk/ndk/27.2.12479018'[39m,
+2025-06-12T14:47:49.3323144Z   GITHUB_ACTION_REF: [32m''[39m,
+2025-06-12T14:47:49.3323753Z   DEBIAN_FRONTEND: [32m'noninteractive'[39m,
+2025-06-12T14:47:49.3324322Z   SHELL: [32m'/bin/bash'[39m,
+2025-06-12T14:47:49.3324881Z   GITHUB_REPOSITORY_ID: [32m'992918881'[39m,
+2025-06-12T14:47:49.3325430Z   GITHUB_ACTIONS: [32m'true'[39m,
+2025-06-12T14:47:49.3325975Z   npm_package_version: [32m'0.1.0'[39m,
+2025-06-12T14:47:49.3326546Z   npm_lifecycle_event: [32m'test'[39m,
+2025-06-12T14:47:49.3327102Z   GITHUB_REF_PROTECTED: [32m'false'[39m,
+2025-06-12T14:47:49.3327961Z   GITHUB_WORKSPACE: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering'[39m,
+2025-06-12T14:47:49.3328703Z   ACCEPT_EULA: [32m'Y'[39m,
+2025-06-12T14:47:49.3329186Z   GITHUB_JOB: [32m'test'[39m,
+2025-06-12T14:47:49.3329944Z   GITHUB_SHA: [32m'21c3179681fd4c2dbae931dcef74baadc52ebef2'[39m,
+2025-06-12T14:47:49.3330595Z   GITHUB_RUN_ATTEMPT: [32m'1'[39m,
+2025-06-12T14:47:49.3331117Z   GITHUB_REF: [32m'refs/heads/main'[39m,
+2025-06-12T14:47:49.3331648Z   GITHUB_ACTOR: [32m'JW-Flo'[39m,
+2025-06-12T14:47:49.3332279Z   ANDROID_SDK_ROOT: [32m'/usr/local/lib/android/sdk'[39m,
+2025-06-12T14:47:49.3333431Z   npm_config_globalconfig: [32m'/opt/hostedtoolcache/node/20.19.2/x64/etc/npmrc'[39m,
+2025-06-12T14:47:49.3334372Z   npm_config_init_module: [32m'/home/runner/.npm-init.js'[39m,
+2025-06-12T14:47:49.3335556Z   GITHUB_PATH: [32m'/home/runner/work/_temp/_runner_file_commands/add_path_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:49.3336648Z   JAVA_HOME: [32m'/usr/lib/jvm/temurin-17-jdk-amd64'[39m,
+2025-06-12T14:47:49.3337636Z   PWD: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker'[39m,
+2025-06-12T14:47:49.3338676Z   GITHUB_ACTOR_ID: [32m'129976766'[39m,
+2025-06-12T14:47:49.3339464Z   RUNNER_WORKSPACE: [32m'/home/runner/work/AWhittleWandering'[39m,
+2025-06-12T14:47:49.3340599Z   npm_execpath: [32m'/opt/hostedtoolcache/node/20.19.2/x64/lib/node_modules/npm/bin/npm-cli.js'[39m,
+2025-06-12T14:47:49.3341571Z   HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS: [32m'3650'[39m,
+2025-06-12T14:47:49.3342206Z   GITHUB_EVENT_NAME: [32m'push'[39m,
+2025-06-12T14:47:49.3342973Z   HOMEBREW_NO_AUTO_UPDATE: [32m'1'[39m,
+2025-06-12T14:47:49.3343657Z   ANDROID_HOME: [32m'/usr/local/lib/android/sdk'[39m,
+2025-06-12T14:47:49.3344401Z   GITHUB_SERVER_URL: [32m'https://github.com'[39m,
+2025-06-12T14:47:49.3345185Z   GECKOWEBDRIVER: [32m'/usr/local/share/gecko_driver'[39m,
+2025-06-12T14:47:49.3345931Z   GHCUP_INSTALL_BASE_PREFIX: [32m'/usr/local'[39m,
+2025-06-12T14:47:49.3347136Z   GITHUB_OUTPUT: [32m'/home/runner/work/_temp/_runner_file_commands/set_output_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:49.3348388Z   npm_config_global_prefix: [32m'/opt/hostedtoolcache/node/20.19.2/x64'[39m,
+2025-06-12T14:47:49.3349256Z   EDGEWEBDRIVER: [32m'/usr/local/share/edge_driver'[39m,
+2025-06-12T14:47:49.3349895Z   npm_command: [32m'test'[39m,
+2025-06-12T14:47:49.3350639Z   ANDROID_NDK: [32m'/usr/local/lib/android/sdk/ndk/27.2.12479018'[39m,
+2025-06-12T14:47:49.3351322Z   SGX_AESM_ADDR: [32m'1'[39m,
+2025-06-12T14:47:49.3351901Z   CHROME_BIN: [32m'/usr/bin/google-chrome'[39m,
+2025-06-12T14:47:49.3352931Z   SELENIUM_JAR_PATH: [32m'/usr/share/java/selenium-server.jar'[39m,
+2025-06-12T14:47:49.3353860Z   MEMORY_PRESSURE_WRITE: [32m'c29tZSAyMDAwMDAgMjAwMDAwMAA='[39m,
+2025-06-12T14:47:49.3354790Z   ANDROID_NDK_HOME: [32m'/usr/local/lib/android/sdk/ndk/27.2.12479018'[39m,
+2025-06-12T14:47:49.3356152Z   GITHUB_STEP_SUMMARY: [32m'/home/runner/work/_temp/_runner_file_commands/step_summary_a2153cc6-05cf-4ab7-abd5-92f9787fc3a9'[39m,
+2025-06-12T14:47:49.3357561Z   INIT_CWD: [32m'/home/runner/work/AWhittleWandering/AWhittleWandering/edge-worker'[39m,
+2025-06-12T14:47:49.3358363Z   EDITOR: [32m'vi'[39m,
+2025-06-12T14:47:49.3358780Z   PROD: [32m''[39m,
+2025-06-12T14:47:49.3359184Z   DEV: [32m'1'[39m,
+2025-06-12T14:47:49.3359872Z   BASE_URL: [32m'/'[39m,
+2025-06-12T14:47:49.3360302Z   MODE: [32m'test'[39m,
+2025-06-12T14:47:49.3360790Z   TINYPOOL_WORKER_ID: [32m'1'[39m,
+2025-06-12T14:47:49.3361329Z   VITEST_WORKER_ID: [32m'2'[39m,
+2025-06-12T14:47:49.3361860Z   VITEST_POOL_ID: [32m'1'[39m,
+2025-06-12T14:47:49.3362328Z   SSR: [32m'1'[39m,
+2025-06-12T14:47:49.3363017Z   TESSIE_API_TOKEN: [32m'test_token'[39m,
+2025-06-12T14:47:49.3363671Z   EDGE_HMAC_KEY: [32m'48continental_secure_key'[39m,
+2025-06-12T14:47:49.3364459Z   MAPBOX_TOKEN: [32m'test_mapbox_token'[39m,
+2025-06-12T14:47:49.3365122Z   OPENWEATHER_API_KEY: [32m'test_weather_key'[39m
+2025-06-12T14:47:49.3365578Z }
+2025-06-12T14:47:49.3365726Z 
+2025-06-12T14:47:49.5548426Z [90mstdout[2m | src/__tests__/integration.test.ts[2m > [22m[2mEdge Worker Integration Tests[2m > [22m[2mRoute Optimization[2m > [22m[2mshould provide different routes based on weather conditions
+2025-06-12T14:47:49.5550420Z [22m[39mVerifying signature with header: sha256=82d9b9ce1a49ae7dbae58fb86a4b4c81c01bb6c2e328fe0057fae32a60f37ebf
+2025-06-12T14:47:49.5551139Z 
+2025-06-12T14:47:49.5582811Z [90mstdout[2m | src/__tests__/integration.test.ts[2m > [22m[2mEdge Worker Integration Tests[2m > [22m[2mRoute Optimization[2m > [22m[2mshould provide different routes based on weather conditions
+2025-06-12T14:47:49.5584815Z [22m[39mVerifying signature with header: sha256=ad6e175d5af95aad6b89988fb441e1ee81caed9ed7c839c5cc5037f9b7748ab4
+2025-06-12T14:47:49.5585511Z 
+2025-06-12T14:47:49.5746563Z  [31m❯[39m src/__tests__/integration.test.ts [2m([22m[2m7 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 1892[2mms[22m[39m
+2025-06-12T14:47:49.5748600Z    [33m[2m✓[22m[39m Edge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould serve index.html for root path [33m 398[2mms[22m[39m
+2025-06-12T14:47:49.5750324Z    [32m✓[39m Edge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould return 404 for non-existent files[32m 270[2mms[22m[39m
+2025-06-12T14:47:49.5752245Z [31m   [31m×[31m Edge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould handle CORS headers for static files[39m[32m 257[2mms[22m[39m
+2025-06-12T14:47:49.5753804Z [31m     → expected null to be '*' // Object.is equality[39m
+2025-06-12T14:47:49.5755338Z    [32m✓[39m Edge Worker Integration Tests[2m > [22mWeather Risk Calculation[2m > [22mshould calculate weather risk for a given location[32m 249[2mms[22m[39m
+2025-06-12T14:47:49.5757085Z    [32m✓[39m Edge Worker Integration Tests[2m > [22mWeather Risk Calculation[2m > [22mshould handle invalid location data[32m 248[2mms[22m[39m
+2025-06-12T14:47:49.5758842Z    [32m✓[39m Edge Worker Integration Tests[2m > [22mRoute Optimization[2m > [22mshould optimize route with weather considerations[32m 217[2mms[22m[39m
+2025-06-12T14:47:49.5760888Z    [32m✓[39m Edge Worker Integration Tests[2m > [22mRoute Optimization[2m > [22mshould provide different routes based on weather conditions[32m 252[2mms[22m[39m
+2025-06-12T14:47:49.8430893Z [90mstdout[2m | src/utils/__tests__/error-handler.test.ts
+2025-06-12T14:47:49.8433357Z [22m[39mVitest Setup: Loaded environment variables: test_weather_key [90mundefined[39m
+2025-06-12T14:47:49.8452887Z 
+2025-06-12T14:47:50.0011662Z  [32m✓[39m src/utils/__tests__/error-handler.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 52[2mms[22m[39m
+2025-06-12T14:47:50.0193646Z 
+2025-06-12T14:47:50.0194775Z [31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+2025-06-12T14:47:50.0195217Z 
+2025-06-12T14:47:50.0196609Z [41m[1m FAIL [22m[49m src/__tests__/integration.test.ts[2m > [22mEdge Worker Integration Tests[2m > [22mStatic File Serving[2m > [22mshould handle CORS headers for static files
+2025-06-12T14:47:50.0221610Z [31m[1mAssertionError[22m: expected null to be '*' // Object.is equality[39m
+2025-06-12T14:47:50.0225576Z 
+2025-06-12T14:47:50.0225908Z [32m- Expected:[39m 
+2025-06-12T14:47:50.0226607Z "*"
+2025-06-12T14:47:50.0226759Z 
+2025-06-12T14:47:50.0226966Z [31m+ Received:[39m 
+2025-06-12T14:47:50.0227264Z null
+2025-06-12T14:47:50.0227421Z 
+2025-06-12T14:47:50.0253829Z [36m [2m❯[22m src/__tests__/integration.test.ts:[2m40:75[22m[39m
+2025-06-12T14:47:50.0354205Z     [90m 38| [39m                method[33m:[39m [32m'OPTIONS'[39m
+2025-06-12T14:47:50.0355440Z     [90m 39| [39m            })[33m;[39m
+2025-06-12T14:47:50.0356441Z     [90m 40| [39m            expect(optionsRes.headers.get('Access-Control-Allow-Origin…
+2025-06-12T14:47:50.0357356Z     [90m   | [39m                                                                          [31m^[39m
+2025-06-12T14:47:50.0358257Z     [90m 41| [39m            expect(optionsRes.headers.get('Access-Control-Allow-Method…
+2025-06-12T14:47:50.0359228Z     [90m 42| [39m            expect(optionsRes.headers.get('Access-Control-Allow-Header…
+2025-06-12T14:47:50.0359688Z 
+2025-06-12T14:47:50.0361607Z [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+2025-06-12T14:47:50.0362303Z 
+2025-06-12T14:47:50.0424560Z 
+2025-06-12T14:47:50.0425906Z [2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (3)[39m
+2025-06-12T14:47:50.0427696Z [2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m36 passed[39m[22m[90m (37)[39m
+2025-06-12T14:47:50.0428700Z [2m   Start at [22m 14:47:46
+2025-06-12T14:47:50.0430048Z [2m   Duration [22m 3.44s[2m (transform 217ms, setup 63ms, collect 572ms, tests 2.09s, environment 1ms, prepare 255ms)[22m
+2025-06-12T14:47:50.0430933Z 
+2025-06-12T14:47:50.0431106Z 
+2025-06-12T14:47:50.0487876Z ##[error]AssertionError: expected null to be '*' // Object.is equality
+
+- Expected: 
+"*"
+
++ Received: 
+null
+
+ ❯ src/__tests__/integration.test.ts:40:75
+
+
+2025-06-12T14:47:50.1924609Z ##[error]Process completed with exit code 1.
+2025-06-12T14:47:50.2049912Z Post job cleanup.
+2025-06-12T14:47:50.3385360Z [command]/usr/bin/git version
+2025-06-12T14:47:50.3441953Z git version 2.49.0
+2025-06-12T14:47:50.3574155Z Temporarily overriding HOME='/home/runner/work/_temp/9f762a2e-4790-48b5-9f23-8ab821dbd5cc' before making global git config changes
+2025-06-12T14:47:50.3575935Z Adding repository directory to the temporary git global config as a safe directory
+2025-06-12T14:47:50.3593823Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AWhittleWandering/AWhittleWandering
+2025-06-12T14:47:50.3684349Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-06-12T14:47:50.3775190Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-06-12T14:47:50.4426376Z fatal: No url found for submodule path 'mcp-sequential-thinking' in .gitmodules
+2025-06-12T14:47:50.4476753Z ##[warning]The process '/usr/bin/git' failed with exit code 128
+2025-06-12T14:47:50.4575964Z Cleaning up orphan processes

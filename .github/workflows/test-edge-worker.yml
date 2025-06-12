@@ -3,17 +3,17 @@ name: Test Edge Worker
 on:
   push:
     branches:
-      - '**'
-      - '!main'  # Don't run on main branch pushes directly
+      - "**"
+      - "!main" # Don't run on main branch pushes directly
     paths:
       - "edge-worker/**"
       - "!.github/workflows/**"
   pull_request:
     branches:
-      - main      # Run on PRs targeting main
+      - main # Run on PRs targeting main
     paths:
       - "edge-worker/**"
-  workflow_call:  # Allow being called by other workflows
+  workflow_call: # Allow being called by other workflows
   workflow_dispatch:
 
 # Only use concurrency for direct invocations, not when called by other workflows

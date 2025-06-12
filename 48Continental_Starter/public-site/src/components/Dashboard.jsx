@@ -45,12 +45,14 @@ const Dashboard = ({
 
   // Use hooks for enhanced data with combined loading and error states
   const { vehicleData, loading: vehicleLoading, error: vehicleError } = useVehicleData();
-  const { tripData, loading: tripLoading, visitedStates, currentState } = useTripData({
-    vehicleData: vehicleData || propVehicleData
-  });
+
+  // Use the tripData from props rather than calling the hook again
+  const currentTripData = propTripData;
+  const visitedStates = currentTripData?.visitedStates || [];
+  const currentState = currentTripData?.currentState || null;
 
   // Combine loading and error states
-  const isCurrentlyLoading = isLoading || vehicleLoading || tripLoading;
+  const isCurrentlyLoading = isLoading || vehicleLoading;
   const currentError = error || vehicleError;
 
   // Handle keyboard shortcuts and touch gestures for panel toggle
@@ -105,7 +107,7 @@ const Dashboard = ({
 
   // Use enhanced data if available, fallback to props
   const finalVehicleData = vehicleData || propVehicleData;
-  const finalTripData = tripData || propTripData;
+  const finalTripData = currentTripData;
 
   if (isCurrentlyLoading) {
     return (

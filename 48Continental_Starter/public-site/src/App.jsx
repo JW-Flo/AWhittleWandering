@@ -16,7 +16,7 @@ import React, { useState, useEffect } from 'react';
 
 // Import data source hooks
 import { useVehicleData, useWeatherData, useTripData, useChargingStations } from './hooks';
-import mapboxConfig from '@shared/mapbox/mapboxConfig.ts';
+import mapboxConfig from './shared/mapbox/mapboxConfig.ts';
 
 // Import Dashboard component
 import Dashboard from './components/Dashboard';
@@ -44,7 +44,10 @@ const App = () => {
     pollInterval: 15000  // More frequent updates for weather
   });
 
-  const { tripData, tripLoading, tripError } = useTripData({ pollInterval: 20000 });
+  const { tripData, loading: tripLoading, error: tripError } = useTripData({
+    vehicleData,
+    pollInterval: 20000
+  });
 
   const { stationsData, stationsLoading, stationsError } = useChargingStations({
     latitude: vehicleData?.location?.latitude || vehicleData?.latitude,
