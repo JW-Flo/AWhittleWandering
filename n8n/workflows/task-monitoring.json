@@ -1,0 +1,178 @@
+{
+  "name": "Task Monitoring",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": "*/1 * * * *"
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.COPILOT_AGENT_URL}}/tasks",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "name": "Get Copilot Tasks",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json[\"status\"]}}",
+              "value2": "stuck"
+            }
+          ]
+        }
+      },
+      "name": "Check Stuck Tasks",
+      "type": "n8n-nodes-base.if",
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "channel": "task-alerts",
+        "text": "🚨 Task Alert: {{$json[\"title\"]}} (ID: {{$json[\"task_id\"]}}) appears to be stuck.\nStatus: {{$json[\"status\"]}}\nLast Updated: {{$json[\"updated_at\"]}}"
+      },
+      "name": "Alert Slack",
+      "type": "n8n-nodes-base.slack",
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.MCP_SERVER_URL}}/task/retry",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "task_id": "={{$json[\"task_id\"]}}",
+          "retry_count": "={{$json[\"retry_count\"] || 0}}"
+        },
+        "options": {}
+      },
+      "name": "Retry Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json[\"completion_percentage\"] || 0}}",
+              "operation": "larger",
+              "value2": 90
+            }
+          ]
+        }
+      },
+      "name": "Check Progress",
+      "type": "n8n-nodes-base.if",
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "channel": "task-updates",
+        "text": "✅ Task Update: {{$json[\"title\"]}} is nearing completion!\nProgress: {{$json[\"completion_percentage\"]}}%\nStatus: {{$json[\"status\"]}}"
+      },
+      "name": "Progress Update",
+      "type": "n8n-nodes-base.slack",
+      "position": [1250, 200]
+    },
+    {
+      "parameters": {
+        "content": "=### Task Status Report\n**Time:** {{$now}}\n\n**Active Tasks:** {{$json[\"active_count\"]}}\n**Completed:** {{$json[\"completed_count\"]}}\n**Pending:** {{$json[\"pending_count\"]}}\n**Issues:** {{$json[\"issues_count\"]}}\n\n---\n\n{{$json[\"status_summary\"]}}"
+      },
+      "name": "Generate Report",
+      "type": "n8n-nodes-base.markdown",
+      "position": [1250, 400]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Copilot Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Copilot Tasks": {
+      "main": [
+        [
+          {
+            "node": "Check Stuck Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Stuck Tasks": {
+      "main": [
+        [
+          {
+            "node": "Alert Slack",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert Slack": {
+      "main": [
+        [
+          {
+            "node": "Retry Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Progress": {
+      "main": [
+        [
+          {
+            "node": "Progress Update",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": ["monitoring", "tasks"],
+  "triggerCount": 1
+}

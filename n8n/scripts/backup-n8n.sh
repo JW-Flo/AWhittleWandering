@@ -1,15 +1,10 @@
 #!/bin/bash
 
-# Set backup directory relative to the script's own directory for consistency
+# Get the script's directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BACKUP_DIR="${SCRIPT_DIR}/backups"
+BACKUP_DIR="${SCRIPT_DIR}/../backups"
 DATE=$(date +%Y%m%d_%H%M%S)
 BACKUP_PATH="${BACKUP_DIR}/${DATE}"
-
-# Create backup directories
-mkdir -p "${BACKUP_PATH}"
-mkdir -p "${BACKUP_PATH}/workflows"
-mkdir -p "${BACKUP_PATH}/data"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -28,6 +23,11 @@ check_status() {
     fi
 }
 
+# Create backup directories
+mkdir -p "${BACKUP_PATH}"
+mkdir -p "${BACKUP_PATH}/workflows"
+mkdir -p "${BACKUP_PATH}/data"
+
 # Export all workflows using n8n CLI
 echo "Exporting workflows..."
 docker-compose exec -T n8n n8n export:workflow --all --output="${BACKUP_PATH}/workflows/workflows.json" --pretty
@@ -37,7 +37,7 @@ check_status "Workflow export"
 echo "Backing up n8n data..."
 docker run --rm \
     -v n8n_data:/source \
-    -v "${PWD}/${BACKUP_PATH}/data":/backup \
+    -v "${BACKUP_PATH}/data":/backup \
     alpine tar czf /backup/n8n_data.tar.gz -C /source .
 check_status "n8n data backup"
 
@@ -48,8 +48,8 @@ check_status "Database backup"
 
 # Create environment backup
 echo "Backing up environment configuration..."
-if [ -f .env ]; then
-    cp .env "${BACKUP_PATH}/data/.env.backup"
+if [ -f "${SCRIPT_DIR}/../.env" ]; then
+    cp "${SCRIPT_DIR}/../.env" "${BACKUP_PATH}/data/.env.backup"
     check_status "Environment backup"
 fi
 

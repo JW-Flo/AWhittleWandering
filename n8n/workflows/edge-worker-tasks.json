@@ -1,0 +1,193 @@
+{
+  "name": "Edge Worker Tasks",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "edge-worker/tasks",
+        "options": {},
+        "responseMode": "responseNode"
+      },
+      "name": "Task Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Process edge worker task\nconst task = items[0].json;\n\nreturn [{\n  json: {\n    ...task,\n    task_id: `edge_${Date.now()}`,\n    status: 'processing',\n    created_at: new Date().toISOString(),\n    updated_at: new Date().toISOString(),\n    type: 'edge-worker'\n  }\n}];"
+      },
+      "name": "Process Task",
+      "type": "n8n-nodes-base.function",
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"task_type\"]}}",
+              "value2": "cors"
+            }
+          ]
+        }
+      },
+      "name": "Check Task Type",
+      "type": "n8n-nodes-base.if",
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "edit",
+        "owner": "={{$env.GITHUB_OWNER}}",
+        "repository": "={{$env.GITHUB_REPO}}",
+        "filePath": "edge-worker/src/index.ts",
+        "fileContent": "={{$json[\"cors_config\"]}}",
+        "commitMessage": "Update CORS configuration"
+      },
+      "name": "Update CORS Config",
+      "type": "n8n-nodes-base.github",
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "edit",
+        "owner": "={{$env.GITHUB_OWNER}}",
+        "repository": "={{$env.GITHUB_REPO}}",
+        "filePath": "edge-worker/src/telemetry.ts",
+        "fileContent": "={{$json[\"telemetry_config\"]}}",
+        "commitMessage": "Update telemetry validation"
+      },
+      "name": "Update Telemetry",
+      "type": "n8n-nodes-base.github",
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "workflowId": "{{$env.DEPLOY_WORKFLOW_ID}}"
+      },
+      "name": "Trigger Deployment",
+      "type": "n8n-nodes-base.github",
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "channel": "edge-worker",
+        "text": "🔄 Edge Worker update in progress:\n- Task: {{$json[\"title\"]}}\n- Type: {{$json[\"task_type\"]}}\n- Status: {{$json[\"status\"]}}"
+      },
+      "name": "Notify Update",
+      "type": "n8n-nodes-base.slack",
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.MCP_SERVER_URL}}/task/update",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "task_id": "={{$json[\"task_id\"]}}",
+          "status": "completed",
+          "updated_at": "={{$now}}"
+        },
+        "options": {}
+      },
+      "name": "Update MCP",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1450, 300]
+    }
+  ],
+  "connections": {
+    "Task Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Task": {
+      "main": [
+        [
+          {
+            "node": "Check Task Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Task Type": {
+      "main": [
+        [
+          {
+            "node": "Update CORS Config",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Telemetry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update CORS Config": {
+      "main": [
+        [
+          {
+            "node": "Trigger Deployment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Telemetry": {
+      "main": [
+        [
+          {
+            "node": "Trigger Deployment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Deployment": {
+      "main": [
+        [
+          {
+            "node": "Notify Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Update": {
+      "main": [
+        [
+          {
+            "node": "Update MCP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": ["edge-worker", "tasks"],
+  "triggerCount": 1
+}

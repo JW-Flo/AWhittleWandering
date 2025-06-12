@@ -1,0 +1,31 @@
+{
+  // GitHub Integration MCP Server configuration
+  // Add this to your settings.json under the "mcp.servers" section
+
+  "github-mcp": {
+    "command": "npx",
+    "args": [
+      "@github/copilot-github-mcp",
+      "--cache-enabled=true",
+      "--log-level=info"
+    ],
+    "env": {
+      "GITHUB_TOKEN": "${input:githubToken}",
+      "GITHUB_API_URL": "https://api.github.com",
+      "GITHUB_CACHE_TTL": "300",
+      "GITHUB_GRAPHQL_URL": "https://api.github.com/graphql",
+      "GITHUB_MAX_RESULTS": "100",
+      "GITHUB_TIMEOUT": "30000"
+    }
+  }
+
+  // Also add this to your "mcp.inputs" section:
+  /*
+  {
+    "type": "promptString",
+    "id": "githubToken",
+    "description": "GitHub Personal Access Token with repo, read:user, and read:org scopes",
+    "password": true
+  }
+  */
+}

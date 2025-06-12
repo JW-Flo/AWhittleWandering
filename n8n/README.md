@@ -1,135 +1,201 @@
-# n8n CI/CD Orchestration Setup
+# n8n-Copilot Integration
 
-This setup provides a containerized n8n instance with PostgreSQL for persistent storage, designed to serve as a CI/CD orchestration platform.
+This repository contains the complete setup for integrating n8n with the Copilot agent, enabling intelligent task management, real-time communication, and automated workflows.
 
-## Prerequisites
+## Features
 
-- Docker
-- Docker Compose
-- Git
+- Real-time communication between n8n and Copilot agent
+- Intelligent task management and prioritization
+- Automated GitHub issue and PR creation
+- WebSocket-based status updates
+- Built-in monitoring and maintenance tools
+- Comprehensive backup system
 
-## Setup Instructions
+## Quick Start
 
-1. **Clone and Configure**
+1. **Initial Setup**
    ```bash
-   # Create a directory for n8n
-   mkdir -p n8n && cd n8n
-   
-   # Copy configuration files
-   cp .env.example .env
+   # Clone the repository
+   git clone <repository-url>
+   cd n8n
+
+   # Run initial setup
+   make setup
    ```
 
-2. **Configure Environment Variables**
-   
-   Edit the `.env` file and update the following variables:
-   - `N8N_ENCRYPTION_KEY`: Generate a secure random key
-   - `N8N_BASIC_AUTH_USER`: Choose an admin username
-   - `N8N_BASIC_AUTH_PASSWORD`: Set a strong password
-   - `POSTGRES_PASSWORD`: Set a secure database password
-
-3. **Start the Services**
+2. **Configure Environment**
    ```bash
-   docker-compose up -d
-   ```
-
-4. **Access n8n**
+   # Copy and edit environment files
+   cp env/workflows.env.example env/workflows.env
+   nano env/workflows.env
    
-   Open your browser and navigate to:
+   # Generate secure credentials
+   make generate-credentials
    ```
-   http://localhost:5678
+
+3. **Start Services**
+   ```bash
+   # Start n8n and required services
+   make start
+   
+   # Setup workflows
+   make setup-workflows
    ```
 
-## Security Considerations
+## Workflow Structure
 
-1. **Encryption Key**
-   - Keep your `N8N_ENCRYPTION_KEY` secure and consistent
-   - Backup this key as it's required to decrypt credentials
+### 1. Copilot Communication
+- WebSocket-based real-time updates
+- Task status monitoring
+- Event-driven communication
 
-2. **Authentication**
-   - Change default admin credentials immediately
-   - Use strong passwords
-   - Consider setting up SSH tunneling for remote access
+### 2. Task Management
+- Automatic task analysis and prioritization
+- GitHub integration for issues and PRs
+- Intelligent task routing
 
-3. **Database**
-   - Regularly backup the PostgreSQL database
-   - Monitor disk usage of the database volume
+### 3. Monitoring
+- Real-time system status
+- Task execution analytics
+- Performance monitoring
+
+## Available Commands
+
+```bash
+# Service Management
+make start          # Start n8n services
+make stop           # Stop n8n services
+make restart        # Restart n8n services
+make status         # Check service status
+
+# Workflow Management
+make setup-workflows    # Configure workflows
+make import-workflows   # Import workflow definitions
+make update-workflows  # Update existing workflows
+
+# Maintenance
+make backup        # Backup n8n data
+make maintain      # Run maintenance tasks
+make clean         # Clean up data and containers
+make monitor       # Display monitoring information
+
+# Testing
+make test         # Run integration tests
+make check        # Quick system check
+```
+
+## Directory Structure
+
+```
+n8n/
+├── scripts/              # Maintenance and setup scripts
+│   ├── backup-n8n.sh
+│   ├── setup-workflows.sh
+│   ├── test-integration.sh
+│   └── maintenance.sh
+├── workflows/           # n8n workflow definitions
+│   ├── copilot-communication.json
+│   ├── copilot-task-handler.json
+│   └── task-monitoring.json
+├── env/                # Environment configuration
+│   └── workflows.env.example
+├── monitoring/         # Monitoring configuration
+└── data/              # Workflow data storage
+```
+
+## Workflow Documentation
+
+### Copilot Communication Workflow
+- Handles real-time communication with Copilot agent
+- Manages WebSocket connections and updates
+- Processes task status changes
+
+### Task Handler Workflow
+- Analyzes and prioritizes incoming tasks
+- Creates GitHub issues and PRs
+- Manages task lifecycle
+
+### Monitoring Workflow
+- Tracks system health
+- Monitors task execution
+- Generates performance metrics
 
 ## Maintenance
 
-1. **Backup Data**
-   ```bash
-   # Backup n8n data
-   docker run --rm -v n8n_data:/source -v $(pwd)/backups:/backup alpine tar czf /backup/n8n_data_$(date +%Y%m%d).tar.gz /source
+### Backup System
+- Automated daily backups
+- Configurable retention period
+- Backup verification
 
-   # Backup PostgreSQL data
-   docker exec -t n8n-postgres pg_dumpall -c -U n8n > backups/db_backup_$(date +%Y%m%d).sql
+### Monitoring Tools
+```bash
+# View system status
+make status
+
+# Check logs
+make logs
+
+# Monitor tasks
+make monitor-tasks
+```
+
+### Troubleshooting
+```bash
+# Run diagnostics
+make check
+
+# Access maintenance menu
+make maintain
+```
+
+## Security
+
+- All communication is encrypted
+- Authentication required for API access
+- Secure credential management
+- Regular security audits
+
+## Integration Points
+
+### GitHub Integration
+- Automatic issue creation
+- PR management
+- Commit handling
+
+### WebSocket Communication
+- Real-time updates
+- Bi-directional communication
+- Auto-reconnection handling
+
+## Best Practices
+
+1. **Regular Backups**
+   ```bash
+   # Run daily backups
+   make backup
    ```
 
-2. **Update n8n**
+2. **Monitoring**
    ```bash
-   # Pull latest images
-   docker-compose pull
-   
-   # Restart services
-   docker-compose down
-   docker-compose up -d
+   # Check system health
+   make status
+   make monitor
    ```
 
-3. **View Logs**
+3. **Updates**
    ```bash
-   # View n8n logs
-   docker-compose logs -f n8n
-   
-   # View PostgreSQL logs
-   docker-compose logs -f postgres
+   # Keep workflows updated
+   make update-workflows
    ```
 
-## CI/CD Integration
+## Contributing
 
-1. **Workflow Management**
-   - Create separate workflows for different CI/CD stages
-   - Use webhook nodes to trigger builds
-   - Implement error handling and notifications
-
-2. **Version Control**
-   - Export important workflows regularly
-   - Store workflow exports in version control
-   - Maintain documentation for custom integrations
-
-3. **Monitoring**
-   - Enable n8n metrics for monitoring
-   - Set up alerting for workflow failures
-   - Monitor system resource usage
-
-## Troubleshooting
-
-1. **Container Issues**
-   ```bash
-   # Check container status
-   docker-compose ps
-   
-   # View detailed logs
-   docker-compose logs -f
-   ```
-
-2. **Database Issues**
-   ```bash
-   # Check database connection
-   docker-compose exec postgres pg_isready -U n8n
-   ```
-
-3. **Common Solutions**
-   - Clear browser cache if UI issues occur
-   - Restart containers if workflows become unresponsive
-   - Check disk space if database operations fail
-
-## Support
-
-For additional help:
-- [n8n Documentation](https://docs.n8n.io/)
-- [n8n Community Forum](https://community.n8n.io/)
-- [n8n GitHub Repository](https://github.com/n8n-io/n8n)
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
 ## License
 
-This setup is provided as-is under the MIT license. n8n is licensed under its own terms.
+This project is licensed under the MIT License - see the LICENSE file for details.

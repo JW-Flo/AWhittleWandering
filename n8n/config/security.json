@@ -1,0 +1,60 @@
+{
+  "basicAuth": {
+    "enabled": true,
+    "user": "admin",
+    "hash": "$2a$10$randomhash"
+  },
+  "jwtAuth": {
+    "enabled": true,
+    "jwtSecret": "${JWT_SECRET}",
+    "jwtRefreshSecret": "${JWT_REFRESH_SECRET}",
+    "jwtExpiration": "8h",
+    "jwtRefreshExpiration": "7d"
+  },
+  "cors": {
+    "enabled": true,
+    "allowedOrigins": [
+      "http://localhost:3000",
+      "http://localhost:4000",
+      "http://localhost:5678"
+    ],
+    "allowedMethods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    "allowedHeaders": ["Content-Type", "Authorization"],
+    "credentials": true
+  },
+  "rateLimiting": {
+    "enabled": true,
+    "windowMs": 60000,
+    "max": 100,
+    "skipSuccessfulRequests": false,
+    "message": "Too many requests, please try again later"
+  },
+  "webhooks": {
+    "enabled": true,
+    "requireAuthentication": true,
+    "allowedHosts": [
+      "localhost",
+      "127.0.0.1"
+    ]
+  },
+  "mcp": {
+    "enabled": true,
+    "authToken": "${MCP_AUTH_TOKEN}",
+    "allowedEndpoints": [
+      "/api/v1/tasks",
+      "/api/v1/status",
+      "/webhooks/mcp"
+    ]
+  },
+  "monitoring": {
+    "enabled": true,
+    "metricsPath": "/metrics",
+    "collectDefaultMetrics": true,
+    "prometheusEnabled": true
+  },
+  "encryption": {
+    "enabled": true,
+    "algorithm": "aes-256-gcm",
+    "key": "${ENCRYPTION_KEY}"
+  }
+}
