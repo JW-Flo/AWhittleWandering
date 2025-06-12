@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  mcp-sequential-thinking:
+    build:
+      context: ./mcp-sequential-thinking
+    environment:
+      - LLM_PROVIDER=deepseek
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - EXA_API_KEY=${EXA_API_KEY}
+      - PORT=8080
+      - LOG_LEVEL=debug
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    volumes:
+      - ./mcp-sequential-thinking:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

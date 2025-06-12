@@ -1,0 +1,208 @@
+{
+  "name": "Website Deployment Coordination",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "website/update",
+        "options": {
+          "allowUnauthorizedCerts": true
+        },
+        "responseMode": "responseNode",
+        "responseData": "firstEntryJson"
+      },
+      "name": "Update Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Process website update request\nconst update = items[0].json;\n\n// Define update types and required validations\nconst updateTypes = {\n  content: ['blackbox', 'cline'],\n  design: ['copilot', 'cline'],\n  functionality: ['copilot', 'cline', 'cloudflare'],\n  deployment: ['cloudflare', 'copilot']\n};\n\nconst requiredValidations = updateTypes[update.type] || ['copilot'];\n\nreturn [{\n  json: {\n    ...update,\n    update_id: `web_${Date.now()}`,\n    required_validations: requiredValidations,\n    status: 'pending',\n    validations: {},\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "name": "Process Update",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "issue",
+        "owner": "={{$env.GITHUB_OWNER}}",
+        "repository": "={{$env.GITHUB_REPO}}",
+        "title": "Website Update: {{$json[\"title\"]}}",
+        "body": "Update Type: {{$json[\"type\"]}}\nDescription: {{$json[\"description\"]}}\n\nRequired Validations:\n{{$json[\"required_validations\"].join(\", \")}}\n\nUpdate ID: {{$json[\"update_id\"]}}"
+      },
+      "name": "Create GitHub Issue",
+      "type": "n8n-nodes-base.github",
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.MCP_SERVER_URL}}/website/update",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "update_data",
+              "value": "={{$json}}"
+            }
+          ]
+        }
+      },
+      "name": "Update MCP State",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Create tasks for each required validation\nconst data = items[0].json;\nconst tasks = data.required_validations.map(agent => ({\n  title: `Validate website update: ${data.title}`,\n  description: `Please validate the website update:\\n\\nType: ${data.type}\\nDescription: ${data.description}\\n\\nUpdate ID: ${data.update_id}`,\n  assigned_agent: agent,\n  priority: 'high',\n  type: 'validation',\n  update_id: data.update_id\n}));\n\nreturn tasks.map(task => ({ json: task }));"
+      },
+      "name": "Create Validation Tasks",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        1050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env[\"AGENT_\" + $json[\"assigned_agent\"].toUpperCase() + \"_URL\"]}}/task/validate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "task",
+              "value": "={{$json}}"
+            }
+          ]
+        }
+      },
+      "name": "Assign Validation Tasks",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "channel": "website_updates",
+        "text": "New website update initiated:\nTitle: {{$json[\"title\"]}}\nType: {{$json[\"type\"]}}\nValidations Required: {{$json[\"required_validations\"].join(\", \")}}\nUpdate ID: {{$json[\"update_id\"]}}"
+      },
+      "name": "Send Notification",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        1450,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Update Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Update": {
+      "main": [
+        [
+          {
+            "node": "Create GitHub Issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create GitHub Issue": {
+      "main": [
+        [
+          {
+            "node": "Update MCP State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update MCP State": {
+      "main": [
+        [
+          {
+            "node": "Create Validation Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Validation Tasks": {
+      "main": [
+        [
+          {
+            "node": "Assign Validation Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assign Validation Tasks": {
+      "main": [
+        [
+          {
+            "node": "Send Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveManualRuns": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "pinData": {},
+  "versionId": 1,
+  "triggerCount": 1,
+  "tags": ["website", "deployment"]
+}

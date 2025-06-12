@@ -1,0 +1,237 @@
+{
+  "name": "Agent Coordination",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "agent/task",
+        "options": {
+          "allowUnauthorizedCerts": true
+        },
+        "responseMode": "responseNode",
+        "responseData": "firstEntryJson"
+      },
+      "name": "Task Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Analyze task and determine best agent\nconst task = items[0].json;\n\n// Define agent capabilities\nconst agentCapabilities = {\n  copilot: ['code_review', 'task_management', 'git_operations'],\n  cline: ['code_generation', 'bug_fixes', 'testing'],\n  blackbox: ['security_analysis', 'performance_optimization'],\n  cloudflare: ['deployment', 'edge_computing', 'cdn_optimization']\n};\n\n// Calculate agent scores for task\nconst scores = Object.entries(agentCapabilities).map(([agent, capabilities]) => {\n  const score = capabilities.reduce((acc, cap) => {\n    if (task.description.toLowerCase().includes(cap)) acc += 1;\n    if (task.type === cap) acc += 2;\n    return acc;\n  }, 0);\n  \n  return { agent, score };\n});\n\n// Sort by score and get best agent\nconst bestAgent = scores.sort((a, b) => b.score - a.score)[0].agent;\n\nreturn [{\n  json: {\n    ...task,\n    assigned_agent: bestAgent,\n    agent_scores: scores,\n    timestamp: new Date().toISOString(),\n    task_id: `${bestAgent}_${Date.now()}`\n  }\n}];"
+      },
+      "name": "Assign Agent",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.MCP_SERVER_URL}}/task/state",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "task_data",
+              "value": "={{$json}}"
+            }
+          ]
+        }
+      },
+      "name": "Update MCP State",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"assigned_agent\"]}}",
+              "operation": "equal",
+              "value2": "copilot"
+            }
+          ]
+        }
+      },
+      "name": "Route to Agent",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.COPILOT_AGENT_URL}}/task/assign",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "task",
+              "value": "={{$json}}"
+            }
+          ]
+        }
+      },
+      "name": "Send to Copilot",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1050,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env[\"AGENT_\" + $json[\"assigned_agent\"].toUpperCase() + \"_URL\"]}}/task",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "task",
+              "value": "={{$json}}"
+            }
+          ]
+        }
+      },
+      "name": "Send to Other Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1050,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "channel": "task_coordination",
+        "text": "Task assigned to {{$json[\"assigned_agent\"]}}:\nType: {{$json[\"type\"]}}\nPriority: {{$json[\"priority\"]}}\nTask ID: {{$json[\"task_id\"]}}"
+      },
+      "name": "Send Notification",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        1250,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Task Webhook": {
+      "main": [
+        [
+          {
+            "node": "Assign Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assign Agent": {
+      "main": [
+        [
+          {
+            "node": "Update MCP State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update MCP State": {
+      "main": [
+        [
+          {
+            "node": "Route to Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route to Agent": {
+      "main": [
+        [
+          {
+            "node": "Send to Copilot",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send to Other Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to Copilot": {
+      "main": [
+        [
+          {
+            "node": "Send Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to Other Agent": {
+      "main": [
+        [
+          {
+            "node": "Send Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveManualRuns": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "pinData": {},
+  "versionId": 1,
+  "triggerCount": 1,
+  "tags": ["agent-coordination", "task-management"]
+}

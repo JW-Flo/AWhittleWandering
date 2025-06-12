@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "mas-sequential-thinking": {
+      "command": "/Users/joe/Projects/Personal/ContinentalUSA/mcp-sequential-thinking/.venv/bin/python",
+      "args": [
+        "/Users/joe/Projects/Personal/ContinentalUSA/mcp-sequential-thinking/main.py"
+      ],
+      "env": {
+        "LLM_PROVIDER": "deepseek",
+        "DEEPSEEK_API_KEY": "${env:DEEPSEEK_API_KEY}",
+        "EXA_API_KEY": "${env:EXA_API_KEY}"
+      }
+    },
+    "mcp-48continental": {
+      "connection": {
+        "protocol": "http",
+        "host": "localhost",
+        "port": 3100
+      }
+    }
+  }
+}

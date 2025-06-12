@@ -1,0 +1,92 @@
+groups:
+- name: n8n_alerts
+  rules:
+  - alert: HighWorkflowErrorRate
+    expr: rate(n8n_workflow_executions_error_total[5m]) / rate(n8n_workflow_executions_total[5m]) > 0.1
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: High workflow error rate (> 10%)
+      description: "Workflow error rate is {{ $value | humanizePercentage }} over the last 5m"
+
+  - alert: LongRunningWorkflow
+    expr: n8n_workflow_execution_duration_seconds > 300
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: Long running workflow detected
+      description: "Workflow {{ $labels.workflow_id }} has been running for {{ $value | humanizeDuration }}"
+
+  - alert: HighQueueSize
+    expr: n8n_queue_size > 100
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: Queue size exceeds threshold
+      description: "Queue size is {{ $value }} tasks"
+
+  - alert: HighCPUUsage
+    expr: avg(rate(process_cpu_seconds_total[5m])) * 100 > 80
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: High CPU usage
+      description: "CPU usage is {{ $value | humanizePercentage }}"
+
+  - alert: HighMemoryUsage
+    expr: process_resident_memory_bytes / node_memory_MemTotal_bytes * 100 > 85
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: High memory usage
+      description: "Memory usage is {{ $value | humanizePercentage }}"
+
+  - alert: LowDiskSpace
+    expr: node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} * 100 < 10
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: Low disk space
+      description: "Disk space is {{ $value | humanizePercentage }} free"
+
+  - alert: HighNumberOfFailedTasks
+    expr: increase(n8n_task_failures_total[1h]) > 10
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: High number of failed tasks
+      description: "{{ $value }} tasks have failed in the last hour"
+
+  - alert: ServiceDown
+    expr: up == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: Service is down
+      description: "Service {{ $labels.job }} has been down for more than 1 minute"
+
+  - alert: SlowResponses
+    expr: http_request_duration_seconds{quantile="0.9"} > 2
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: Slow HTTP responses
+      description: "90th percentile of HTTP responses is above 2 seconds"
+
+  - alert: TooManyRequests
+    expr: rate(http_requests_total{status="429"}[5m]) > 10
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: Too many requests (rate limiting)
+      description: "Rate limiting is being triggered frequently"

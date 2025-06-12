@@ -1,0 +1,193 @@
+{
+  "name": "Repository Cleanup and Preparation",
+  "nodes": [
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "owner": "={{$env.GITHUB_OWNER}}",
+        "repository": "={{$env.GITHUB_REPO}}",
+        "returnAll": true
+      },
+      "name": "List Branches",
+      "type": "n8n-nodes-base.github",
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Analyze branches\nconst branches = items.map(item => item.json);\nconst mainBranch = branches.find(b => b.name === 'main' || b.name === 'master');\n\n// Sort branches by last commit date\nconst sortedBranches = branches.sort((a, b) => {\n  return new Date(b.commit.commit.author.date) - new Date(a.commit.commit.author.date)\n});\n\n// Identify stale branches (no commits in last 30 days)\nconst staleBranches = sortedBranches.filter(branch => {\n  const lastCommitDate = new Date(branch.commit.commit.author.date);\n  const daysSinceLastCommit = (new Date() - lastCommitDate) / (1000 * 60 * 60 * 24);\n  return daysSinceLastCommit > 30;\n});\n\nreturn [{\n  json: {\n    mainBranch,\n    activeBranches: sortedBranches.filter(b => !staleBranches.includes(b)),\n    staleBranches,\n    analysis: {\n      totalBranches: branches.length,\n      staleBranchCount: staleBranches.length,\n      activeBranchCount: sortedBranches.length - staleBranches.length\n    }\n  }\n}];"
+      },
+      "name": "Analyze Branches",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.COPILOT_AGENT_URL}}/task/branch-analysis",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "analysis",
+              "value": "={{$json}}"
+            }
+          ]
+        }
+      },
+      "name": "Send Analysis to Copilot",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json[\"analysis\"][\"staleBranchCount\"] > 0}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Has Stale Branches?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Create cleanup tasks\nconst tasks = items[0].json.staleBranches.map(branch => ({\n  title: `Cleanup: Review and merge/delete ${branch.name}`,\n  description: `Branch ${branch.name} hasn't been updated in over 30 days.\\n\\nLast commit: ${branch.commit.commit.author.date}\\nAuthor: ${branch.commit.commit.author.name}\\n\\nPlease review this branch and either:\\n1. Merge valuable changes to main\\n2. Delete if no longer needed`,\n  type: 'cleanup',\n  priority: 'medium',\n  branch: branch.name\n}));\n\nreturn tasks.map(task => ({ json: task }));"
+      },
+      "name": "Create Cleanup Tasks",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        1050,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "owner": "={{$env.GITHUB_OWNER}}",
+        "repository": "={{$env.GITHUB_REPO}}",
+        "title": "={{$json[\"title\"]}}",
+        "body": "={{$json[\"description\"]}}\n\nPriority: {{$json[\"priority\"]}}\nTask Type: {{$json[\"type\"]}}\nBranch: {{$json[\"branch\"]}}"
+      },
+      "name": "Create GitHub Issues",
+      "type": "n8n-nodes-base.github",
+      "position": [
+        1250,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "owner": "={{$env.GITHUB_OWNER}}",
+        "repository": "={{$env.GITHUB_REPO}}",
+        "filePath": "reports/cleanup_{{$json[\"timestamp\"]}}.json",
+        "commitMessage": "Add repository cleanup report",
+        "fileContent": "={{JSON.stringify($json, null, 2)}}"
+      },
+      "name": "Save Report",
+      "type": "n8n-nodes-base.github",
+      "position": [
+        1250,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "List Branches": {
+      "main": [
+        [
+          {
+            "node": "Analyze Branches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Branches": {
+      "main": [
+        [
+          {
+            "node": "Send Analysis to Copilot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Analysis to Copilot": {
+      "main": [
+        [
+          {
+            "node": "Has Stale Branches?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Stale Branches?": {
+      "main": [
+        [
+          {
+            "node": "Create Cleanup Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Cleanup Tasks": {
+      "main": [
+        [
+          {
+            "node": "Create GitHub Issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveManualRuns": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "pinData": {},
+  "versionId": 1,
+  "triggerCount": 1,
+  "tags": ["cleanup", "repository"]
+}

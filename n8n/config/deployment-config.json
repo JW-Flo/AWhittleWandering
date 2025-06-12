@@ -1,0 +1,79 @@
+{
+  "deployment": {
+    "mode": "production",
+    "features": {
+      "sharing": true,
+      "ldap": false,
+      "saml": false,
+      "logging": true,
+      "metrics": true,
+      "versioning": true,
+      "workflowHistory": true
+    },
+    "scaling": {
+      "horizontal": {
+        "enabled": true,
+        "maxWorkers": 4,
+        "minWorkers": 1
+      },
+      "queues": {
+        "bull": {
+          "enabled": true,
+          "prefix": "n8n",
+          "queueMode": "auto"
+        }
+      }
+    }
+  },
+  "execution": {
+    "timeout": 3600,
+    "saveDataOnError": true,
+    "saveDataOnSuccess": false,
+    "saveExecutionProgress": true,
+    "maxExecutionTimeout": 7200
+  },
+  "workflowDefaults": {
+    "errorWorkflow": "error-handler",
+    "saveDataOnError": true,
+    "saveManualExecutions": true,
+    "timezone": "UTC",
+    "saveExecutionProgress": true
+  },
+  "security": {
+    "excludeEndpoints": [
+      "/healthz",
+      "/metrics"
+    ],
+    "csrf": true
+  },
+  "telemetry": {
+    "enabled": true,
+    "config": {
+      "metrics": true,
+      "diagnostics": true,
+      "usage": true
+    }
+  },
+  "logs": {
+    "level": "info",
+    "output": ["console", "file"],
+    "file": {
+      "filename": "logs/n8n-%DATE%.log",
+      "datePattern": "YYYY-MM-DD",
+      "maxSize": "20m",
+      "maxFiles": "14d"
+    }
+  },
+  "database": {
+    "type": "postgresdb",
+    "postgresdb": {
+      "max": 50
+    }
+  },
+  "endpoints": {
+    "rest": "/",
+    "webhook": "/webhook/",
+    "metrics": "/metrics",
+    "healthz": "/healthz"
+  }
+}
