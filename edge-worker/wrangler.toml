@@ -23,6 +23,10 @@ bindings = [
 tag = "v1"
 new_classes = ["SyncServiceDurableObject"]
 
+# Scheduled cleanup job - runs every hour to clean up inactive trackers
+[triggers]
+crons = ["0 * * * *"]
+
 # Custom domain settings (commented out until domain is registered)
 # To use a custom domain, uncomment these lines and register the domain in Cloudflare
 # [[routes]]
