@@ -1,0 +1,6 @@
+# Example environment variables for testing
+# Copy this file to .dev.vars and fill in with actual values
+TESSIE_API_TOKEN=test_token
+EDGE_HMAC_KEY=test_key
+MAPBOX_TOKEN=pk.test_mapbox_token
+OPENWEATHER_API_KEY=test_openweather_key
