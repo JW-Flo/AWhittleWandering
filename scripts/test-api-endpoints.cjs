@@ -6,8 +6,7 @@
  */
 
 const https = require('https');
-// Use Node.js built-in fetch (Node 18+)
-const fetch = globalThis.fetch;
+const fetch = require('node-fetch').default || require('node-fetch');
 
 // Color output for terminal
 const colors = {
@@ -258,7 +257,7 @@ async function testItineraryData() {
 
   try {
     // Check for itinerary files
-    const dataDir = path.join(__dirname, '../data');
+    const dataDir = path.join(__dirname, '../../data');
     const files = fs.readdirSync(dataDir).filter(f => 
       f.includes('itinerary') && (f.endsWith('.json') || f.endsWith('.csv'))
     );
