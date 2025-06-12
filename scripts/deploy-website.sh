@@ -48,7 +48,15 @@ WF_ID=$(echo "$WF_JSON" | jq -r '.data[] | select(.name=="'"$DEPLOY_WF_NAME"'") 
 log "Triggering workflow id=$WF_ID"
 
 # 3. Execute workflow ----------------------------------------------------------
-EXEC_JSON=$(eval curl -fsX POST $(auth) \
+AUTH_ARGS=()
+if [[ -n "${API_KEY:-}" ]]; then
+  AUTH_ARGS=(-H "X-N8N-API-KEY: ${API_KEY}")
+else
+  AUTH_ARGS=(-u "${N8N_USER:?Missing N8N_USER}:${N8N_PASS:?Missing N8N_PASS}")
+fi
+
+EXEC_JSON=$(curl -fsX POST \
+  "${AUTH_ARGS[@]}" \
   -H 'Content-Type: application/json' \
   -d '{"workflowId":'"$WF_ID"', "query": {"env":"production","full_build":"true"}}' \
   "${N8N_HOST}/rest/executions")
