@@ -1,7 +1,7 @@
 import type { Location, WeatherRiskResponse, Route, RouteResponse, Weather, RouteSegment } from './types';
 import { verify } from './hmac';
 import { TeslaAPIClient } from './utils/tesla-client';
-import { TessieAPIClient } from './tessie-client';
+import { TessieAPIClient, TessieVehicleData } from './tessie-client';
 import { getToken, setToken } from './utils/tesla-tokens';
 import { handleEmailSubscribe, handleEmailNotify } from './email';
 import { handleItineraryRequest } from './itinerary';
@@ -124,18 +124,19 @@ function addCorsHeaders(response: Response): Response {
 }
 
 async function handleStaticFile(request: Request, env: Env): Promise<Response> {
-    const corsHeaders = {
+    const corsHeaders = new Headers({
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-signature',
         'Access-Control-Max-Age': '86400'
-    };
+    });
     
     // Handle OPTIONS request for CORS preflight
     if (request.method === 'OPTIONS') {
+        // Return a response with explicit CORS headers
         return new Response(null, { 
-            status: 200, 
-            headers: corsHeaders 
+            status: 200,
+            headers: corsHeaders
         });
     }
     
@@ -149,24 +150,24 @@ async function handleStaticFile(request: Request, env: Env): Promise<Response> {
     try {
         const file = await env.APP_KV.get(path);
         if (file === null) {
+            const notFoundHeaders = new Headers(corsHeaders);
             return new Response('Not Found', { 
                 status: 404,
-                headers: corsHeaders 
+                headers: notFoundHeaders
             });
         }
         
         // Combine content type and CORS headers
-        const responseHeaders = {
-            'Content-Type': contentType,
-            'Cache-Control': 'max-age=3600',
-            ...corsHeaders
-        };
+        const responseHeaders = new Headers(corsHeaders);
+        responseHeaders.set('Content-Type', contentType);
+        responseHeaders.set('Cache-Control', 'max-age=3600');
         
         return new Response(file, { headers: responseHeaders });
     } catch (error) {
+        const errorHeaders = new Headers(corsHeaders);
         return new Response('Internal Server Error', { 
             status: 500,
-            headers: corsHeaders 
+            headers: errorHeaders 
         });
     }
 }
@@ -460,11 +461,10 @@ async function handleTessieVehicle(request: Request, env: Env): Promise<Response
                 const vehicleData = await Promise.race([
                     vehicleDataPromise,
                     timeoutPromise
-
-                ]) as Record<string, unknown>;
+                ]) as TessieVehicleData;
 
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                if (!vehicleData || typeof vehicleData !== 'object' || !(vehicleData as { drive_state?: unknown }).drive_state) {
+                if (!vehicleData || typeof vehicleData !== 'object' || !vehicleData.drive_state) {
                     throw new Error('Invalid vehicle data received from Tessie API');
                 }
 
@@ -472,11 +472,16 @@ async function handleTessieVehicle(request: Request, env: Env): Promise<Response
                 const transformedData = tessieClient.transformToStandardFormat(vehicleData);
 
                 // Store successful data for future use
-                lastKnownVehicleData = transformedData;
+                // Ensure the transformed data has the required properties for VehicleData
+                lastKnownVehicleData = {
+                    ...transformedData,
+                    last_updated: String(transformedData.last_updated || new Date().toISOString()),
+                    cached: false
+                };
 
                 console.log('Successfully retrieved vehicle data from Tessie API');
                 
-                return new Response(JSON.stringify(transformedData), {
+                return new Response(JSON.stringify(lastKnownVehicleData), {
                     status: 200,
                     headers: corsHeaders
                 });
@@ -768,7 +773,7 @@ async function handleTripAPI(_request: Request, _env: Env): Promise<Response> {
 
 export default {
     // Handle scheduled cleanup tasks
-    async scheduled(event: { scheduledTime: number }, env: Env): Promise<void> {
+    async scheduled(event: { scheduledTime: number }, _env: Env): Promise<void> {
         console.log("Running scheduled cleanup task at:", new Date(event.scheduledTime).toISOString());
         
         // Clean up inactive vehicle trackers
