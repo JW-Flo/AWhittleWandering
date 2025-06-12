@@ -1,0 +1,200 @@
+{
+  "name": "Copilot Agent Communication",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "copilot/webhook",
+        "options": {
+          "allowUnauthorizedCerts": true
+        },
+        "responseMode": "responseNode",
+        "responseData": "firstEntryJson"
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"type\"]}}",
+              "value2": "task_update"
+            }
+          ]
+        }
+      },
+      "name": "Task Update?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "websiteUrl": "={{$env.COPILOT_AGENT_URL}}/ws",
+        "options": {
+          "reconnectAttempts": 10,
+          "reconnectDelay": 5000
+        }
+      },
+      "name": "WebSocket",
+      "type": "n8n-nodes-base.websocket",
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "message",
+              "value": "={{$json[\"data\"]}}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{DateTime.now()}}"
+            },
+            {
+              "name": "task_id",
+              "value": "={{$json[\"task_id\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "Format Message",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendFile",
+        "fileName": "={{$json[\"task_id\"]}}_logs.txt",
+        "options": {
+          "encoding": "utf8"
+        }
+      },
+      "name": "Log to File",
+      "type": "n8n-nodes-base.writeFile",
+      "position": [
+        1050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.COPILOT_AGENT_URL}}/task/update",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "task_id",
+              "value": "={{$json[\"task_id\"]}}"
+            },
+            {
+              "name": "status",
+              "value": "={{$json[\"status\"]}}"
+            },
+            {
+              "name": "message",
+              "value": "={{$json[\"message\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "Send Update",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1250,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Task Update?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Task Update?": {
+      "main": [
+        [
+          {
+            "node": "WebSocket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WebSocket": {
+      "main": [
+        [
+          {
+            "node": "Format Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Message": {
+      "main": [
+        [
+          {
+            "node": "Log to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to File": {
+      "main": [
+        [
+          {
+            "node": "Send Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveManualRuns": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "pinData": {},
+  "versionId": 1,
+  "triggerCount": 1,
+  "tags": ["copilot", "communication"]
+}

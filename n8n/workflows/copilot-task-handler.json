@@ -1,0 +1,146 @@
+{
+    "name": "copilot-task-handler",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "copilot/tasks",
+                "options": {}
+            },
+            "id": "webhook",
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [250, 300]
+        },
+        {
+            "parameters": {
+                "mode": "runOnceForEachItem",
+                "jsCode": "const task = $input.first();\n\nif (task.type === 'ci_optimization') {\n  return {\n    json: {\n      action: 'analyze_pipeline',\n      repository: task.repository,\n      workflow: task.workflow,\n      metrics: ['duration', 'success_rate', 'resource_usage']\n    }\n  };\n}"
+            },
+            "id": "function",
+            "name": "Process Task",
+            "type": "n8n-nodes-base.function",
+            "typeVersion": 1,
+            "position": [450, 300]
+        },
+        {
+            "parameters": {
+                "url": "=http://localhost:4000/api/analyze",
+                "options": {
+                    "body": "={{$json}}",
+                    "headers": {
+                        "Authorization": "Bearer {{$env.COPILOT_API_KEY}}"
+                    }
+                }
+            },
+            "id": "request",
+            "name": "Send to Copilot",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 1,
+            "position": [650, 300]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "number": [
+                        {
+                            "value1": "={{$response.statusCode}}",
+                            "operation": "equal",
+                            "value2": 200
+                        }
+                    ]
+                }
+            },
+            "id": "if",
+            "name": "Check Response",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [850, 300]
+        },
+        {
+            "parameters": {
+                "message": "Task sent to Copilot successfully",
+                "level": "info"
+            },
+            "id": "log_success",
+            "name": "Log Success",
+            "type": "n8n-nodes-base.log",
+            "typeVersion": 1,
+            "position": [1050, 250]
+        },
+        {
+            "parameters": {
+                "message": "Failed to send task to Copilot",
+                "level": "error"
+            },
+            "id": "log_error",
+            "name": "Log Error",
+            "type": "n8n-nodes-base.log",
+            "typeVersion": 1,
+            "position": [1050, 350]
+        }
+    ],
+    "connections": {
+        "webhook": {
+            "main": [
+                [
+                    {
+                        "node": "function",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "function": {
+            "main": [
+                [
+                    {
+                        "node": "request",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "request": {
+            "main": [
+                [
+                    {
+                        "node": "if",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "if": {
+            "main": [
+                [
+                    {
+                        "node": "log_success",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "log_error",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": false,
+    "settings": {
+        "errorWorkflow": "error-handler",
+        "saveDataErrorExecution": true,
+        "saveDataSuccessExecution": false,
+        "saveManualExecutions": true,
+        "timezone": "UTC"
+    },
+    "tags": ["copilot", "ci-cd", "automation"]
+}

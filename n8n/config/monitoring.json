@@ -1,0 +1,115 @@
+{
+  "prometheus": {
+    "enabled": true,
+    "port": 9100,
+    "host": "0.0.0.0",
+    "defaultMetrics": true,
+    "collectEvery": 10,
+    "prefix": "n8n_",
+    "metrics": {
+      "workflow_executions_total": true,
+      "workflow_executions_duration": true,
+      "workflow_error_rate": true,
+      "queue_size": true,
+      "active_workers": true,
+      "system_metrics": true
+    }
+  },
+  "alerts": {
+    "workflow": {
+      "error_rate": {
+        "threshold": 0.1,
+        "window": "5m",
+        "alert": "High workflow error rate"
+      },
+      "duration": {
+        "threshold": 300,
+        "window": "5m",
+        "alert": "Long running workflow detected"
+      },
+      "queue": {
+        "threshold": 100,
+        "window": "5m",
+        "alert": "Queue size exceeds threshold"
+      }
+    },
+    "system": {
+      "cpu": {
+        "threshold": 80,
+        "window": "5m",
+        "alert": "High CPU usage"
+      },
+      "memory": {
+        "threshold": 85,
+        "window": "5m",
+        "alert": "High memory usage"
+      },
+      "disk": {
+        "threshold": 90,
+        "window": "5m",
+        "alert": "Low disk space"
+      }
+    }
+  },
+  "grafana": {
+    "enabled": true,
+    "port": 3000,
+    "dashboards": [
+      {
+        "name": "N8N Overview",
+        "file": "dashboards/overview.json"
+      },
+      {
+        "name": "Workflow Performance",
+        "file": "dashboards/workflows.json"
+      },
+      {
+        "name": "System Metrics",
+        "file": "dashboards/system.json"
+      }
+    ]
+  },
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "outputs": [
+      {
+        "type": "file",
+        "filename": "logs/monitoring-%DATE%.log",
+        "maxFiles": "7d"
+      },
+      {
+        "type": "console"
+      }
+    ]
+  },
+  "alerting": {
+    "slack": {
+      "enabled": true,
+      "webhook": "https://hooks.slack.com/services/YOUR/WEBHOOK/HERE",
+      "channel": "monitoring-alerts"
+    },
+    "email": {
+      "enabled": false,
+      "recipients": ["admin@example.com"]
+    }
+  },
+  "healthChecks": {
+    "interval": 30,
+    "timeout": 5,
+    "services": [
+      {
+        "name": "n8n",
+        "url": "http://localhost:5678/healthz"
+      },
+      {
+        "name": "postgres",
+        "url": "postgres://n8n:n8n_password@postgres:5432/n8n"
+      },
+      {
+        "name": "redis",
+        "url": "redis://redis:6379"
+      }
+    ]
+  }
+}
