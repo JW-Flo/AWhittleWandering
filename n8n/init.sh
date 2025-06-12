@@ -25,7 +25,7 @@ fi
 # Set permissions
 echo "Setting file permissions..."
 chmod +x scripts/*
-chmod 600 .env.example
+chmod 644 .env.example
 
 # Create data directories
 echo "Creating data directories..."
