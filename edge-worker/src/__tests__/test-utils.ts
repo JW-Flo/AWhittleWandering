@@ -1,9 +1,14 @@
 import { Miniflare } from 'miniflare';
 import type { Location } from '../types';
 import * as dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
 
-// Load environment variables from .dev.vars
-dotenv.config({ path: '/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/.dev.vars' });
+// Load environment variables from .dev.vars if it exists
+const devVarsPath = path.join(process.cwd(), '.dev.vars');
+if (fs.existsSync(devVarsPath)) {
+    dotenv.config({ path: devVarsPath });
+}
 
 export interface TestEnv {
     mf: Miniflare;
@@ -16,7 +21,7 @@ export interface TestEnv {
 
 export const createTestEnv = async (): Promise<TestEnv> => {
     const mf = new Miniflare({
-        scriptPath: "/Users/joe/Projects/Personal/ContinentalUSA/edge-worker/dist/worker.js",
+        scriptPath: path.join(process.cwd(), "dist/worker.js"),
         modules: true,
         kvPersist: true,
         kvNamespaces: ['MAP_TILES_KV', 'APP_KV'],
@@ -52,7 +57,9 @@ export const createTestEnv = async (): Promise<TestEnv> => {
 };
 
 export const cleanupTestEnv = async (env: TestEnv) => {
-    await env.mf.dispose();
+    if (env?.mf) {
+        await env.mf.dispose();
+    }
 };
 
 export async function calculateHmacSignature(body: unknown): Promise<string> {

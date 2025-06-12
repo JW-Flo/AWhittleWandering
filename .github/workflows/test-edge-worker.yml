@@ -20,6 +20,14 @@ jobs:
         working-directory: edge-worker
         run: npm ci
 
+      - name: Setup test environment
+        working-directory: edge-worker
+        run: |
+          echo "TESSIE_API_TOKEN=test_token" > .dev.vars
+          echo "EDGE_HMAC_KEY=48continental_secure_key" >> .dev.vars
+          echo "MAPBOX_TOKEN=test_mapbox_token" >> .dev.vars
+          echo "OPENWEATHER_API_KEY=test_weather_key" >> .dev.vars
+
       - name: Run tests
         working-directory: edge-worker
         run: npm test
