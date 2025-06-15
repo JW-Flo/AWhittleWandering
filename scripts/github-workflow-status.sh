@@ -78,7 +78,7 @@ generate_mock_report() {
   for i in {0..4}; do
     if [ $i -lt ${#workflows[@]} ]; then
       local workflow="${workflows[$i]}"
-      local status="${statuses[$((RANDOM % ${#statuses[@]}))]}}"
+      local status="${statuses[$((RANDOM % ${#statuses[@]}))]}"
       local conclusion="${conclusions[$((RANDOM % ${#conclusions[@]}))]}"
       
       report+="Workflow: $workflow\n"
