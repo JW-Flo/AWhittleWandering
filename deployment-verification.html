@@ -38,80 +38,22 @@
     
     <script>
         // Verification script content
-        const verificationScript = `// Deployment Verification Script - Run in browser console on deployed site
-console.log("🚀 AWhittleWandering Deployment Verification");
-console.log("===========================================");
-
-// Check deployed environment
-function checkDeployment() {
-  console.log("\\n📋 Checking deployment environment...");
-  
-  console.log("URL:", window.location.href);
-  console.log("Time:", new Date().toISOString());
-  
-  // Look for indicators of production deployment
-  const isProd = window.location.href.includes("awhittlewandering-site.pages.dev");
-  console.log("Production deployment:", isProd ? "✅ Yes" : "❌ No");
-}
-
-// Check Mapbox token
-function checkMapboxToken() {
-  console.log("\\n🔑 Checking Mapbox Token...");
-
-  // Check if mapboxgl is loaded
-  if (typeof mapboxgl === "undefined") {
-    console.error("❌ mapboxgl is not loaded");
-    return false;
-  }
-
-  console.log("✅ mapboxgl is loaded:", mapboxgl.version);
-
-  // Check token
-  const token = mapboxgl.accessToken;
-  if (!token) {
-    console.error("❌ No Mapbox access token set");
-    return false;
-  }
-
-  if (!token.startsWith("pk.")) {
-    console.error("❌ Invalid Mapbox token format (should start with pk.)");
-    return false;
-  }
-
-  console.log("✅ Mapbox token is set and formatted correctly");
-  console.log("Token preview:", token.substring(0, 20) + "...");
-  
-  // Check window token
-  if (window.__MAPBOX_TOKEN__) {
-    console.log("✅ Window.__MAPBOX_TOKEN__ is set");
-    console.log("Window token preview:", window.__MAPBOX_TOKEN__.substring(0, 20) + "...");
-  } else {
-    console.warn("⚠️ Window.__MAPBOX_TOKEN__ is not set");
-  }
-
-  return true;
-}
-
-// Run verification
-function verifyDeployment() {
-  console.log("🔍 Starting deployment verification...");
-  
-  checkDeployment();
-  const tokenOK = checkMapboxToken();
-  
-  console.log("\\n📝 Verification Summary:");
-  console.log("-----------------------");
-  console.log("Mapbox Token:", tokenOK ? "✅ PASS" : "❌ FAIL");
-  
-  const overallStatus = tokenOK ? "✅ DEPLOYMENT LOOKS GOOD" : "❌ ISSUES DETECTED";
-  console.log("\\n" + overallStatus);
-}
-
-// Run verification
-verifyDeployment();`;
+// Load the verification script from a single source of truth
+// (Assumes deployment-verification.js is accessible and contains all logic)
+let verificationScript = "";
+fetch("deployment-verification.js")
+    .then(response => response.text())
+    .then(text => { verificationScript = text; })
+    .catch(err => {
+        console.error("Could not load verification script: ", err);
+    });
 
         // Function to copy script to clipboard
         function copyScript() {
+            if (!verificationScript) {
+                alert("Verification script not loaded yet. Please try again in a moment.");
+                return;
+            }
             navigator.clipboard.writeText(verificationScript).then(() => {
                 alert("Verification script copied to clipboard. Open the console in the deployed site and paste it.");
             }).catch(err => {
