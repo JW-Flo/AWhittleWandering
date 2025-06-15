@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWhittleWandering Map Test</title>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        .control-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            max-width: 300px;
+            z-index: 1;
+        }
+        h3 { margin-top: 0; }
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover { background: #0055aa; }
+        .status { margin: 10px 0; }
+        .success { color: #2ecc71; }
+        .error { color: #e74c3c; }
+        .message { margin-top: 10px; max-height: 200px; overflow: auto; background: #f5f5f5; padding: 5px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="control-panel">
+        <h3>Mapbox Token Test</h3>
+        <div>
+            <button onclick="initializeMap()">Initialize Map</button>
+            <button onclick="testToken()">Test Token</button>
+            <button onclick="checkCSS()">Check CSS</button>
+        </div>
+        <div class="status" id="status">Status: Ready to test</div>
+        <div class="message" id="message"></div>
+    </div>
+
+    <script>
+        // The token from our deployment
+        const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA';
+        let map;
+        
+        function log(message) {
+            const messageEl = document.getElementById('message');
+            messageEl.innerHTML += message + '<br>';
+            messageEl.scrollTop = messageEl.scrollHeight;
+        }
+        
+        function setStatus(message, isSuccess = true) {
+            const statusEl = document.getElementById('status');
+            statusEl.innerHTML = `Status: ${message}`;
+            statusEl.className = isSuccess ? 'status success' : 'status error';
+        }
+        
+        function testToken() {
+            try {
+                // Set the token
+                mapboxgl.accessToken = MAPBOX_TOKEN;
+                
+                // Test if valid by making a small API request
+                fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/San%20Francisco.json?access_token=${MAPBOX_TOKEN}`)
+                    .then(response => {
+                        if (response.ok) {
+                            setStatus('Token Valid - API Call Successful', true);
+                            log(`✅ API call successful - HTTP ${response.status}`);
+                            return response.json();
+                        } else {
+                            setStatus('Token Invalid - API Call Failed', false);
+                            log(`❌ API call failed - HTTP ${response.status}`);
+                            throw new Error(`API call failed - HTTP ${response.status}`);
+                        }
+                    })
+                    .then(data => {
+                        log(`✅ Data received: ${data.features.length} features`);
+                    })
+                    .catch(error => {
+                        log(`❌ Error: ${error.message}`);
+                    });
+            } catch (error) {
+                setStatus('Token Test Failed', false);
+                log(`❌ Error: ${error.message}`);
+            }
+        }
+        
+        function initializeMap() {
+            try {
+                setStatus('Initializing Map...', true);
+                log('Setting Mapbox token...');
+                
+                // Set the token
+                mapboxgl.accessToken = MAPBOX_TOKEN;
+                
+                // Initialize the map
+                map = new mapboxgl.Map({
+                    container: 'map',
+                    style: 'mapbox://styles/mapbox/streets-v11',
+                    center: [-98.5795, 39.8283], // Center of USA
+                    zoom: 3
+                });
+                
+                // Add navigation control
+                map.addControl(new mapboxgl.NavigationControl());
+                
+                // Set up event listeners
+                map.on('load', () => {
+                    setStatus('Map Loaded Successfully', true);
+                    log('✅ Map loaded successfully');
+                });
+                
+                map.on('error', (e) => {
+                    setStatus('Map Error', false);
+                    log(`❌ Map error: ${e.error ? e.error.message : 'Unknown error'}`);
+                });
+                
+                // Add a timeout to check if map loaded
+                setTimeout(() => {
+                    if (map && map.loaded()) {
+                        log('✅ Map is fully loaded and rendered');
+                    } else {
+                        log('⚠️ Map may not be fully loaded yet');
+                    }
+                }, 3000);
+                
+            } catch (error) {
+                setStatus('Map Initialization Failed', false);
+                log(`❌ Error: ${error.message}`);
+            }
+        }
+        
+        function checkCSS() {
+            setStatus('Checking CSS...', true);
+            
+            // Check if Mapbox CSS is loaded
+            const stylesheets = Array.from(document.styleSheets);
+            let mapboxCSSFound = false;
+            
+            stylesheets.forEach((sheet, i) => {
+                try {
+                    const href = sheet.href || 'inline';
+                    if (href.includes('mapbox')) {
+                        log(`✅ Found Mapbox CSS ${i+1}: ${href}`);
+                        mapboxCSSFound = true;
+                    }
+                } catch (e) {
+                    // Can't access cross-origin stylesheets
+                }
+            });
+            
+            if (!mapboxCSSFound) {
+                log('⚠️ No Mapbox CSS found in document');
+                
+                // Check if mapboxgl classes exist in CSS
+                const mapboxStyleElements = document.querySelectorAll('.mapboxgl-map, .mapboxgl-canvas');
+                if (mapboxStyleElements.length > 0) {
+                    log('✅ Mapbox CSS classes found in document');
+                } else {
+                    log('❌ No Mapbox CSS classes found in document');
+                }
+            }
+            
+            setStatus('CSS Check Complete', true);
+        }
+        
+        // Auto-test on load
+        document.addEventListener('DOMContentLoaded', () => {
+            log('🚀 Map test page loaded');
+            log(`📍 Using token: ${MAPBOX_TOKEN.substring(0, 10)}...`);
+            
+            // Auto-initialize after a short delay
+            setTimeout(() => {
+                initializeMap();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
