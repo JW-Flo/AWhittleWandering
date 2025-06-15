@@ -1,257 +1,202 @@
-# The Wandering Whittle – Deployment Strategy
-
-This document outlines the comprehensive deployment strategy for The Wandering Whittle project. It provides detailed instructions, verification steps, and troubleshooting guidance for each component to ensure consistent and reliable deployments.
-
----
-
-## Deployment Principles
-
-1. **Sequence Matters**: Components must be deployed in the correct order due to dependencies
-2. **Verify Each Step**: Each deployment must be verified before proceeding to the next
-3. **Consistent Environments**: Environment variables must be consistent across all components
-4. **No Mock Data**: All deployments must use real API integrations, not test or mock data
-5. **Fallback Mechanisms**: Every component must have proper error handling and fallbacks
-
----
-
-## Deployment Sequence
-
-### 1. Edge Worker Deployment
-
-**Prerequisites**:
-- Valid Cloudflare API token with Worker permissions
-- Tessie API token
-- MapBox API token
-- Weather API key
-
-**Deployment Steps**:
-```bash
-# From project root
-cd edge-worker
-
-# Install dependencies
-npm install
-
-# Verify configuration
-npm run validate-config
-
-# Deploy to Cloudflare
-# Note: All wrangler commands should use npx wrangler instead of global wrangler
-npx wrangler deploy
-```
-
-**Verification**:
-1. Verify endpoints are accessible:
-   ```bash
-   curl https://continentalusa.workers.dev/health
-   ```
-2. Verify Tessie API integration:
-   ```bash
-   curl -H "Authorization: Bearer ${EDGE_HMAC_KEY}" https://wanderingwhittle.workers.dev/tessie/status
-   ```
-3. Verify all KV bindings are properly configured in Cloudflare dashboard
-
-**Troubleshooting**:
-- If deployment fails with KV errors, verify KV namespaces exist and are properly bound
-- If authentication fails, check EDGE_HMAC_KEY consistency
-- If Tessie API fails, verify the API token is valid
-
-### 2. MCP Server Startup
-
-**Prerequisites**:
-- Node.js v16+ installed
-- Edge Worker successfully deployed and accessible
-- Port 3000 available on the host machine
-
-**Startup Steps**:
-```bash
-# From project root
-cd mcp-server
-
-# Install dependencies
-npm install
-
-# Configure environment
-cp .env.example .env
-# Edit .env with appropriate values
-
-# Start the server
-npm start
-```
-
-**Verification**:
-1. Check server is running:
-   ```bash
-   curl http://localhost:3000/health
-   ```
-2. Verify Edge Worker connectivity:
-   ```bash
-   curl http://localhost:3000/api/edge-worker/status
-   ```
-3. Check agent registration:
-   ```bash
-   curl http://localhost:3000/api/agents
-   ```
-
-**Troubleshooting**:
-- If server fails to start, check port conflicts
-- If Edge Worker connection fails, verify EDGE_WORKER_URL and EDGE_HMAC_KEY in .env
-- If database errors occur, check data directory permissions
-
-### 3. Public Website Deployment
-
-**Prerequisites**:
-- Cloudflare Pages account configured
-- Edge Worker successfully deployed and accessible
-- Node.js v16+ installed
-
-**Deployment Steps**:
-```bash
-# From project root
-cd 48Continental_Starter/public-site
-
-# Install dependencies
-npm install
-
-# Build the site
-npm run build
-
-# Deploy to Cloudflare Pages
-npx wrangler pages deploy ./dist --project-name wandering-whittle
-```
-
-**Verification**:
-1. Visit the deployed site (https://continentalusa.pages.dev)
-2. Verify map loads with current vehicle location
-3. Check that trip statistics are displayed
-4. Test offline functionality by disabling network in browser devtools
+# AWhittleWandering - Deployment Strategy
+Version 1.0.0 - June 12, 2025
 
-**Troubleshooting**:
-- If "Nothing is here yet" appears, check that Pages project is properly configured
-- If map fails to load, verify MAPBOX_TOKEN is set
-- If data doesn't appear, check Edge Worker URL configuration
+## Overview
 
-### 4. Mobile Apps Deployment
+This strategy document outlines our approach to implementing the [DEPLOY_PLAYBOOK.md](./DEPLOY_PLAYBOOK.md) requirements for The Wandering Whittle project. We've designed this strategy to ensure reliable, consistent deployments with robust validation at each step.
 
-**Prerequisites**:
-- Edge Worker successfully deployed and accessible
-- MCP Server running
-- Required development SDKs installed (Xcode, Android Studio)
+## Current Project Status
 
-**Deployment Steps**:
-```bash
-# React Native App
-cd ContinentalUSA-mobile
-npm install
-npm run build:ios
-npm run build:android
+Based on project analysis:
 
-# iOS Native App
-cd ios-client
-swift build
-```
+- **Frontend**: Production-ready but with initial map loading performance issues
+- **Edge Worker**: Production-ready with all core APIs functional 
+- **Deployment Pipeline**: Operational but needs standardization per the playbook
+- **Branding Transition**: From "48Continental" to "The Wandering Whittle"/"AWhittleWandering"
+- **Previous Issues**: TripData undefined errors and WebSocket performance issues
+- **Success Metric Gap**: Need objective validation criteria to confirm deployments
 
-**Verification**:
-1. Install the built app on a test device
-2. Verify connection to Edge Worker
-3. Check that vehicle data is displayed
-4. Test offline functionality
+## Strategic Approach
 
-**Troubleshooting**:
-- If app fails to connect, check API endpoint configuration
-- If builds fail, verify all dependencies are installed
-- If authentication fails, check HMAC key configuration
+We'll use a multi-phase strategy with clear success criteria for each phase:
 
----
+1. **Pre-Deployment Preparation**
+2. **Infrastructure Configuration**
+3. **Deployment Execution**
+4. **Post-Deployment Validation**
+5. **Security Hardening**
+6. **Observability Setup**
 
-## Verification Script
+## 1. Pre-Deployment Preparation
 
-A comprehensive verification script is provided to check all components after deployment:
+### Key Actions
 
-```bash
-# From project root
-./scripts/verify-deployment.sh
-```
+- [x] Create deployment validation script (`scripts/deployment-success-validator.js`)
+- [ ] Rename all 48Continental → AWhittleWandering in code & docs
+- [ ] Update wrangler.toml with the correct name configuration
+- [ ] Validate all required secrets are available
+- [ ] Review current environment variables
 
-This script checks:
-1. Edge Worker accessibility and endpoints
-2. MCP Server health and agent registration
-3. Public Website accessibility and data display
-4. Mobile Apps build artifacts
+### Success Criteria
 
----
+- All branding references updated from 48Continental to AWhittleWandering
+- Zero hardcoded secrets found in codebase
+- Tessie API token and VIN validated
+- All playbook pre-deployment checklist items completed
 
-## Rollback Procedures
+## 2. Infrastructure Configuration
 
-### Edge Worker Rollback
-```bash
-cd edge-worker
-npx wrangler rollback
-```
+### Key Actions
 
-### Public Website Rollback
-```bash
-cd 48Continental_Starter/public-site
-npx wrangler pages deployment rollback --project-name continentalusa-site
-```
+- [ ] Create/verify Cloudflare Pages project "awhittlewandering-site"
+- [ ] Provision KV namespaces (APP_KV, ITINERARY_KV)
+- [ ] Configure Durable Object SyncService migration
+- [ ] Update GitHub Actions workflow with environment variables from playbook
 
-### MCP Server Rollback
-```bash
-cd mcp-server
-git checkout [previous-version] src/
-npm install
-npm start
-```
+### Success Criteria
 
-### Mobile Apps Rollback
-Reinstall previous version from distribution channel or local archive.
+- Cloudflare Pages project exists and is properly configured
+- KV namespaces provisioned with correct bindings in wrangler.toml
+- Durable Object migration configured correctly
+- GitHub Actions workflow matches playbook specifications
 
----
+## 3. Deployment Execution
 
-## Environment Configuration Reference
+### Key Actions
 
-For detailed environment configuration, refer to the `.env.example` files in each component directory. Critical environment variables include:
+- [ ] Execute local build & smoke test first
+- [ ] Deploy edge worker with correct configuration
+- [ ] Deploy frontend to Cloudflare Pages
+- [ ] Tag successful deployment in Git
 
-- `EDGE_HMAC_KEY`: Must be consistent across all components
-- `EDGE_WORKER_URL`: URL of the deployed Edge Worker
-- `MAPBOX_TOKEN`: Required for map functionality
-- `TESSIE_API_TOKEN`: Required for Tessie API access
+### Success Criteria
 
----
+- Local build completes without errors
+- Edge worker deployment succeeds
+- Frontend deployment succeeds
+- All deployment commands in playbook executed successfully
+- Deployment tag created
 
-## Monitoring & Alerts
+## 4. Post-Deployment Validation
 
-After deployment, monitor system health through:
+### Key Actions
 
-1. Cloudflare Workers analytics dashboard
-2. MCP Server logs (`mcp-server/logs/`)
-3. Cloudflare Pages analytics
-4. Email alerts configured for critical errors
+- [ ] Run deployment validation script against production URLs
+- [ ] Perform WebSocket load testing (200 concurrent users)
+- [ ] Verify REST API meets latency requirements (p95 < 600ms)
+- [ ] Validate branding on live site
+- [ ] Test vehicle data integration
 
----
+### Success Criteria
 
-## Common Deployment Issues
+- Deployment validation script passes all checks
+- WebSocket handles 200 concurrent users with <2% error rate
+- REST API responses maintain p95 latency <600ms
+- All pages show correct branding
+- Vehicle data (real or simulated) displays correctly
 
-1. **"Nothing is here yet" on Cloudflare Pages**
-   - Solution: Verify build command and output directory in Pages project settings
-   - Check: Pages project should use `npm run build` and output directory `dist`
+## 5. Security Hardening
 
-2. **Edge Worker 401/403 Errors**
-   - Solution: Verify HMAC keys are consistent across all components
-   - Check: Environment variables in all `.env` files
+### Key Actions
 
-3. **Map Not Loading**
-   - Solution: Verify MapBox token is valid and properly configured
-   - Check: MAPBOX_TOKEN in public-site environment
+- [ ] Register all endpoints with Cloudflare Web Assets
+- [ ] Generate and upload OpenAPI specification
+- [ ] Enable Page Shield
+- [ ] Validate CORS configuration
+- [ ] Ensure proper HMAC verification
 
-4. **Tessie API Connection Failures**
-   - Solution: Verify Tessie API token is valid
-   - Check: Edge Worker logs for authentication errors
+### Success Criteria
 
-5. **MCP Server Connection Issues**
-   - Solution: Verify network connectivity between components
-   - Check: Firewall settings and network configuration
+- All endpoints registered with Web Assets
+- Schema validation active
+- Page Shield enabled
+- CORS headers correctly configured
+- HMAC verification working properly
 
----
+## 6. Observability Setup
 
-_Last updated: 2025-06-03_
+### Key Actions
+
+- [ ] Configure API status endpoint monitoring via n8n
+- [ ] Set up Cloudflare Analytics review schedule
+- [ ] Implement Web Assets alerts
+- [ ] Configure worker logs (wrangler tail)
+
+### Success Criteria
+
+- Regular status checks occurring every 10 minutes
+- Analytics dashboard accessible
+- Alert notifications properly configured
+- Log access and retention confirmed
+
+## Risk Mitigation
+
+| Risk | Mitigation |
+|------|------------|
+| TripData undefined errors | Implement proper error handling in useTripData.js with fallbacks |
+| WebSocket performance issues | Implement connection retry logic and REST fallback |
+| Deployment failures | Use validation script to catch issues early |
+| Missing environment variables | Validate all required variables before deployment |
+| API token expiration | Document token rotation process |
+
+## Rollback Plan
+
+In case of deployment failure:
+
+1. Execute `gh workflow run deploy-all-final.yml -f ref=refs/tags/v1.0.0-stable`
+2. Promote previous successful deployment in Cloudflare Pages
+3. Verify rollback with validation script
+4. Document issue in deployment log
+
+## Implementation Timeline
+
+| Phase | Estimated Time | Dependencies |
+|-------|----------------|--------------|
+| Pre-Deployment | 2 hours | None |
+| Infrastructure | 1 hour | Pre-Deployment complete |
+| Deployment | 1 hour | Infrastructure configured |
+| Validation | 1 hour | Deployment complete |
+| Security | 2 hours | Validation successful |
+| Observability | 1 hour | Security complete |
+
+**Total Estimated Time:** 8 hours
+
+## Measuring Success
+
+The deployment will be considered successful when:
+
+1. All validation script checks pass
+2. Load testing meets performance requirements
+3. All security measures are implemented
+4. Observability is configured and operational
+5. Documentation is updated with final deployment URLs
+
+## Tooling
+
+We'll utilize the following tools:
+
+- **Deployment Validation:** `scripts/deployment-success-validator.js`
+- **Load Testing:** Artillery and k6
+- **Infrastructure:** Wrangler CLI
+- **CI/CD:** GitHub Actions
+- **Monitoring:** Cloudflare Analytics, n8n workflows
+
+## MCP Integration
+
+If needed, we can leverage the connected MCP servers for additional deployment capabilities:
+
+- **github.com/NightTrek/Software-planning-mcp**: For planning and task tracking
+- **github.com/mendableai/firecrawl-mcp-server**: For web crawling and content analysis
+- **github.com/AgentDeskAI/browser-tools-mcp**: For browser testing and validation
+
+## Next Steps
+
+1. Execute Pre-Deployment Preparation phase
+2. Update GitHub workflow with environment variables from playbook
+3. Schedule deployment window
+4. Prepare rollback resources
+5. Execute deployment according to playbook
+
+## Conclusion
+
+This deployment strategy provides a comprehensive approach to implementing the requirements in the DEPLOY_PLAYBOOK.md. By following this strategy, we will ensure a successful deployment with robust validation, proper security measures, and effective monitoring.
