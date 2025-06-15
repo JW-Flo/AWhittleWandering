@@ -25,31 +25,26 @@ import { ensureMapboxFormat } from "../utils/mapUtils";
 import { getMapboxToken } from '../shared/mapbox/mapboxConfig.ts';
 
 /**
- * Initialize Mapbox Token early to guarantee it's set before map initialization
- * Using a self-executing function to ensure this runs at module load time
+ * Consolidated Mapbox Token Initialization and Validation
+ * Ensures the token is set and valid before map initialization.
  */
-(function initializeMapboxToken() {
-  // Get token from our centralized token management system
+(function initializeAndValidateMapboxToken() {
   const token = getMapboxToken();
-
-  // Set token on mapboxgl
   mapboxgl.accessToken = token;
 
-  // Also set it on window for debugging and as an additional fallback
-  if (typeof window !== 'undefined') {
-    window.__MAPBOX_TOKEN__ = token;
+  if (import.meta.env.DEV) {
+    console.log('[MapboxGL] Token initialization complete', {
+      tokenSet: !!token,
+      tokenPreview: token ? `${token.substring(0, 10)}...` : 'Missing',
+      mapboxVersion: mapboxgl.version
+    });
   }
 
-  // Diagnostic logging
-  console.log('[MapboxGL] Token initialization complete', {
-    tokenSet: !!token,
-    tokenPreview: token ? `${token.substring(0, 10)}...` : 'Missing',
-    mapboxVersion: mapboxgl.version
-  });
-
-  // Verify token was set correctly
   if (!token || !token.startsWith('pk.')) {
-    console.error('[MapboxGL] Token validation failed - token is missing or invalid format');
+    console.error('[MapboxGL] Token missing or invalid format!', {
+      tokenExists: !!token,
+      tokenLength: token ? token.length : 0
+    });
   }
 })();
 
@@ -306,39 +301,12 @@ const Map = ({
 
   /**
    * Verify and validate the Mapbox token
-   * This is a critical check that runs before map initialization
+   * This is a critical check that runs before map initialization.
+   * This function is now a no-op since validation is handled at module load.
    */
   const verifyMapboxToken = useCallback(() => {
-    // Get the current token
-    const token = mapboxgl.accessToken;
-
-    // Re-initialize token if missing or invalid (final safeguard)
-    if (!token || !token.startsWith('pk.') || token === 'pk.placeholder') {
-      console.warn('[MapboxGL] Token verification failed, attempting re-initialization');
-
-      // Use our hardcoded token since we can't dynamically import 
-      const newToken = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA';
-
-      // Set the token again
-      mapboxgl.accessToken = newToken;
-
-      // Also set it on window for debugging and as an additional fallback
-      if (window) window.__MAPBOX_TOKEN__ = newToken;
-
-      // Check if this fixed the issue
-      if (!mapboxgl.accessToken || !mapboxgl.accessToken.startsWith('pk.')) {
-        // Last resort fallback - hardcode the token directly
-        const hardcodedToken = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA';
-        mapboxgl.accessToken = hardcodedToken;
-        if (window) window.__MAPBOX_TOKEN__ = hardcodedToken;
-
-        console.error('[MapboxGL] Emergency token fallback applied');
-        return false;
-      }
-
-      return true;
-    }
-
+    // Token validation is now handled at module load time.
+    // This function is retained for compatibility but does nothing.
     return true;
   }, []);
 

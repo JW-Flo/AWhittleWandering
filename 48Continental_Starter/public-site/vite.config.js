@@ -46,14 +46,18 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     define: {
-      // Ensure environment variables are available in production builds
-      // MAPBOX TOKEN HANDLING - define only the VITE_MAPBOX_TOKEN for clarity
+      // KEY FIX: Ensure the Mapbox token is properly injected at build time
+      // This ensures import.meta.env.VITE_MAPBOX_TOKEN is replaced with the actual token string
       "import.meta.env.VITE_MAPBOX_TOKEN": JSON.stringify(
         env.VITE_MAPBOX_TOKEN ||
+          // Fallback chain for legacy env variable names (help transition)
           env.MAPBOX_TOKEN ||
+          env.MAP_API_TOKEN ||
+          // Default token as last resort - this should be a valid production token
           "pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA"
       ),
-      // OTHER ENVIRONMENT VARIABLES
+
+      // OTHER ENVIRONMENT VARIABLES - using consistent pattern
       "import.meta.env.VITE_EDGE_WORKER_URL": JSON.stringify(
         env.VITE_EDGE_WORKER_URL ||
           "https://awhittlewandering-edge.kd8jc7v8cd.workers.dev"
@@ -61,6 +65,9 @@ export default defineConfig(({ mode }) => {
       "import.meta.env.VITE_USE_SIMULATED_DATA": JSON.stringify(
         env.VITE_USE_SIMULATED_DATA || "false"
       ),
+
+      // Ensure DEV flag for conditional development-only code
+      "import.meta.env.DEV": JSON.stringify(mode === "development"),
     },
     build: {
       target: "esnext",
