@@ -368,89 +368,99 @@ const Map = ({ vehicleData, tripData, weatherData, displayMode }) => {
         // Ensure token is set on mapboxgl
         if (window.mapboxgl) {
           window.mapboxgl.accessToken = token;
-        } else {
-          throw new Error('Mapbox GL JS not loaded');
-        }
-
-        // Create map instance with error handling
-        map.current = new window.mapboxgl.Map({
-          container: mapContainer.current,
-          style: 'mapbox://styles/mapbox/dark-v11',
-          center: [-98.5795, 39.8283], // USA center
-          zoom: 3.5,
-          attributionControl: true
-        });
-
-        // Setup map event handlers
-        const mapLoadStart = performance.now();
-        map.current.on('load', () => {
-          const mapLoadTime = performance.now() - mapLoadStart;
-          console.log(`[Map] Mapbox map loaded successfully in ${mapLoadTime.toFixed(2)}ms`);
-          setMapInitialized(true);
-          setLoading(false); // Set loading to false when map is loaded successfully
-
-          // After map is loaded, add layers
-          if (tripData) {
-            const layerLoadStart = performance.now();
-            initializeMapLayers(map.current, tripData);
-            console.log(`[Map] Layers initialized in ${(performance.now() - layerLoadStart).toFixed(2)}ms`);
+          let mapLoadStart;
+          if (import.meta.env.DEV || window.__MAP_DEBUG__) {
+            mapLoadStart = performance.now();
           }
-        });
+          map.current.on('load', () => {
+            if (import.meta.env.DEV || window.__MAP_DEBUG__) {
+              const mapLoadTime = performance.now() - mapLoadStart;
+              console.log(`[Map] Mapbox map loaded successfully in ${mapLoadTime.toFixed(2)}ms`);
+            }
+            setMapInitialized(true);
+            setLoading(false); // Set loading to false when map is loaded successfully
 
-        // Error handling for map initialization
-        map.current.on('error', (e) => {
-          console.error('[Map] Mapbox error:', e);
-          setMapError(`Map error: ${e.error?.message || 'Unknown error'}`);
-          setLoading(false); // Set loading to false on error
-        });
+            // After map is loaded, add layers
+            if (tripData) {
+              let layerLoadStart;
+              if (import.meta.env.DEV || window.__MAP_DEBUG__) {
+                layerLoadStart = performance.now();
+              }
+              initializeMapLayers(map.current, tripData);
+              if (import.meta.env.DEV || window.__MAP_DEBUG__) {
+                console.log(`[Map] Layers initialized in ${(performance.now() - layerLoadStart).toFixed(2)}ms`);
+              }
+            }
+          });
+          const mapLoadStart = performance.now();
+          map.current.on('load', () => {
+            const mapLoadTime = performance.now() - mapLoadStart;
+            console.log(`[Map] Mapbox map loaded successfully in ${mapLoadTime.toFixed(2)}ms`);
+            setMapInitialized(true);
+            setLoading(false); // Set loading to false when map is loaded successfully
 
-        // Setup mobile touch handlers
-        if (mapContainer.current && typeof Hammer !== "undefined") {
-          const hammer = new Hammer(mapContainer.current);
-          hammer.get('pinch').set({ enable: true });
-
-          hammer.on('pinchout', () => {
-            map.current.zoomIn();
+            // After map is loaded, add layers
+            if (tripData) {
+              const layerLoadStart = performance.now();
+              initializeMapLayers(map.current, tripData);
+              console.log(`[Map] Layers initialized in ${(performance.now() - layerLoadStart).toFixed(2)}ms`);
+            }
           });
 
-          hammer.on('pinchin', () => {
-            map.current.zoomOut();
+          // Error handling for map initialization
+          map.current.on('error', (e) => {
+            console.error('[Map] Mapbox error:', e);
+            setMapError(`Map error: ${e.error?.message || 'Unknown error'}`);
+            setLoading(false); // Set loading to false on error
           });
-        } else if (mapContainer.current) {
-          console.warn('[Map] Hammer.js is not available. Touch gestures will be disabled.');
+
+          // Setup mobile touch handlers
+          if (mapContainer.current && typeof Hammer !== "undefined") {
+            const hammer = new Hammer(mapContainer.current);
+            hammer.get('pinch').set({ enable: true });
+
+            hammer.on('pinchout', () => {
+              map.current.zoomIn();
+            });
+
+            hammer.on('pinchin', () => {
+              map.current.zoomOut();
+            });
+          } else if (mapContainer.current) {
+            console.warn('[Map] Hammer.js is not available. Touch gestures will be disabled.');
+          }
+
+        } catch (error) {
+          console.error('[Map] Critical initialization error:', error);
+          setMapError(`Failed to initialize map: ${error.message}`);
+          setLoading(false); // Set loading to false on initialization error
+
+          const script = document.createElement('script');
+          script.src = 'https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js';
+          script.onload = () => {
+            console.log('[Map] Attempted to reload Mapbox GL JS');
+            // Force page reload after 2 seconds if user permits
+            if (window.confirm('Map failed to load. Reload page to try again?')) {
+              window.location.reload();
+            }
+          };
+          script.onerror = (e) => {
+            console.error('[Map] Failed to load Mapbox GL JS script:', e);
+            setMapError('Failed to load Mapbox GL JS. Please check your network connection or try again later.');
+            // Optionally, notify monitoring systems here
+          };
+          document.head.appendChild(script);
         }
 
-      } catch (error) {
-        console.error('[Map] Critical initialization error:', error);
-        setMapError(`Failed to initialize map: ${error.message}`);
-        setLoading(false); // Set loading to false on initialization error
-
-        const script = document.createElement('script');
-        script.src = 'https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js';
-        script.onload = () => {
-          console.log('[Map] Attempted to reload Mapbox GL JS');
-          // Force page reload after 2 seconds if user permits
-          if (window.confirm('Map failed to load. Reload page to try again?')) {
-            window.location.reload();
+        // Cleanup function
+        return () => {
+          clearTimeout(loadingSafetyTimeout); // Clear the safety timeout
+          if (map.current) {
+            map.current.remove();
+            map.current = null;
           }
         };
-        script.onerror = (e) => {
-          console.error('[Map] Failed to load Mapbox GL JS script:', e);
-          setMapError('Failed to load Mapbox GL JS. Please check your network connection or try again later.');
-          // Optionally, notify monitoring systems here
-        };
-        document.head.appendChild(script);
-      }
-
-      // Cleanup function
-      return () => {
-        clearTimeout(loadingSafetyTimeout); // Clear the safety timeout
-        if (map.current) {
-          map.current.remove();
-          map.current = null;
-        }
-      };
-    }, [tripData, loading]);
+      }, [tripData, loading]);
 
     // Update map style based on layer toggles
     useEffect(() => {
