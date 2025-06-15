@@ -105,6 +105,8 @@ jobs:
           VITE_ENABLE_STREAMING: "true"
           VITE_USE_SIMULATED_DATA: "false"
           VITE_OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+          VITE_TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
+          VITE_TESSIE_VIN: ${{ secrets.TESSIE_VIN }}
           EDGE_HMAC_KEY: ${{ secrets.EDGE_HMAC_KEY }}
           VITE_APP_NAME: "AWhittleWandering"
 
