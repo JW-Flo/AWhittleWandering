@@ -1,0 +1,1285 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "route": "AWhittleWandering - 48 Continental States",
+        "description": "60-day Tesla road trip through all 48 contiguous US states",
+        "tripStart": "2025-06-06",
+        "tripEnd": "2025-08-09",
+        "totalStops": 48,
+        "totalMiles": 13129,
+        "totalDriveHours": 227,
+        "stops": [
+          {
+            "id": "stop_1",
+            "stopNumber": 1,
+            "date": "2025-June-6",
+            "city": "Fort Stockton",
+            "state": "TX",
+            "location": "Fort Stockton, TX",
+            "coordinates": [
+              -102.8779,
+              30.8896
+            ],
+            "latitude": 30.8896,
+            "longitude": -102.8779,
+            "type": "start",
+            "milesFromPrev": 0,
+            "driveHours": 0,
+            "notes": "Start: Alignment issue",
+            "isStart": true,
+            "isEnd": false,
+            "isCurrent": true,
+            "visited": false
+          },
+          {
+            "id": "stop_2",
+            "stopNumber": 2,
+            "date": "2025-June-7",
+            "endDate": "2025-9",
+            "city": "El Paso",
+            "state": "TX",
+            "location": "El Paso, TX",
+            "coordinates": [
+              -106.485,
+              31.7619
+            ],
+            "latitude": 31.7619,
+            "longitude": -106.485,
+            "type": "charging",
+            "milesFromPrev": 240,
+            "driveHours": 4,
+            "notes": "Tesla repair",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_3",
+            "stopNumber": 3,
+            "date": "2025-June-9",
+            "city": "Sedona",
+            "state": "AZ",
+            "location": "Sedona, AZ",
+            "coordinates": [
+              -111.761,
+              34.8697
+            ],
+            "latitude": 34.8697,
+            "longitude": -111.761,
+            "type": "attraction",
+            "milesFromPrev": 320,
+            "driveHours": 5.5,
+            "notes": "Scenic overnight",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_4",
+            "stopNumber": 4,
+            "date": "2025-June-10",
+            "city": "Grand Canyon",
+            "state": "AZ",
+            "location": "Grand Canyon, AZ",
+            "coordinates": [
+              -112.1401,
+              36.0544
+            ],
+            "latitude": 36.0544,
+            "longitude": -112.1401,
+            "type": "attraction",
+            "milesFromPrev": 115,
+            "driveHours": 2.5,
+            "notes": "Desert View hike",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_5",
+            "stopNumber": 5,
+            "date": "2025-June-11",
+            "city": "Zion NP",
+            "state": "UT",
+            "location": "Zion NP, UT",
+            "coordinates": [
+              -113.0263,
+              37.2982
+            ],
+            "latitude": 37.2982,
+            "longitude": -113.0263,
+            "type": "attraction",
+            "milesFromPrev": 120,
+            "driveHours": 2.5,
+            "notes": "Day hike",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_6",
+            "stopNumber": 6,
+            "date": "2025-June-12",
+            "city": "Los Angeles",
+            "state": "CA",
+            "location": "Los Angeles, CA",
+            "coordinates": [
+              -118.2437,
+              34.0522
+            ],
+            "latitude": 34.0522,
+            "longitude": -118.2437,
+            "type": "overnight",
+            "milesFromPrev": 270,
+            "driveHours": 4.5,
+            "notes": "Visit Laurent (full day)",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_7",
+            "stopNumber": 7,
+            "date": "2025-June-13",
+            "city": "Santa Maria",
+            "state": "CA",
+            "location": "Santa Maria, CA",
+            "coordinates": [
+              -120.4357,
+              34.953
+            ],
+            "latitude": 34.953,
+            "longitude": -120.4357,
+            "type": "waypoint",
+            "milesFromPrev": 160,
+            "driveHours": 3,
+            "notes": "Coastal stop",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_8",
+            "stopNumber": 8,
+            "date": "2025-June-14",
+            "city": "San Francisco",
+            "state": "CA",
+            "location": "San Francisco, CA",
+            "coordinates": [
+              -122.4194,
+              37.7749
+            ],
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "type": "overnight",
+            "milesFromPrev": 260,
+            "driveHours": 4.5,
+            "notes": "Urban visit",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_9",
+            "stopNumber": 9,
+            "date": "2025-June-15",
+            "endDate": "2025-16",
+            "city": "Colfax",
+            "state": "CA",
+            "location": "Colfax, CA",
+            "coordinates": [
+              -120.9538,
+              39.1007
+            ],
+            "latitude": 39.1007,
+            "longitude": -120.9538,
+            "type": "overnight",
+            "milesFromPrev": 140,
+            "driveHours": 2.5,
+            "notes": "Visit Stefan",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_10",
+            "stopNumber": 10,
+            "date": "2025-June-17",
+            "endDate": "2025-18",
+            "city": "Redwood NP",
+            "state": "CA",
+            "location": "Redwood NP, CA",
+            "coordinates": [
+              -124.0046,
+              41.2132
+            ],
+            "latitude": 41.2132,
+            "longitude": -124.0046,
+            "type": "overnight",
+            "milesFromPrev": 300,
+            "driveHours": 5.5,
+            "notes": "Camping",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_11",
+            "stopNumber": 11,
+            "date": "2025-June-19",
+            "city": "Cannon Beach",
+            "state": "OR",
+            "location": "Cannon Beach, OR",
+            "coordinates": [
+              -123.9615,
+              45.8918
+            ],
+            "latitude": 45.8918,
+            "longitude": -123.9615,
+            "type": "attraction",
+            "milesFromPrev": 290,
+            "driveHours": 5.5,
+            "notes": "Scenic overnight",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_12",
+            "stopNumber": 12,
+            "date": "2025-June-20",
+            "city": "Olympia",
+            "state": "WA",
+            "location": "Olympia, WA",
+            "coordinates": [
+              -122.9015,
+              47.0379
+            ],
+            "latitude": 47.0379,
+            "longitude": -122.9015,
+            "type": "overnight",
+            "milesFromPrev": 120,
+            "driveHours": 2.5,
+            "notes": "Visit Brian",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_13",
+            "stopNumber": 13,
+            "date": "2025-June-23",
+            "city": "Seattle",
+            "state": "WA",
+            "location": "Seattle, WA",
+            "coordinates": [
+              -122.3321,
+              47.6062
+            ],
+            "latitude": 47.6062,
+            "longitude": -122.3321,
+            "type": "overnight",
+            "milesFromPrev": 60,
+            "driveHours": 1.5,
+            "notes": "Visit Troy",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_14",
+            "stopNumber": 14,
+            "date": "2025-June-24",
+            "city": "Bozeman",
+            "state": "MT",
+            "location": "Bozeman, MT",
+            "coordinates": [
+              -111.0429,
+              45.677
+            ],
+            "latitude": 45.677,
+            "longitude": -111.0429,
+            "type": "overnight",
+            "milesFromPrev": 590,
+            "driveHours": 10,
+            "notes": "1-night stay",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_15",
+            "stopNumber": 15,
+            "date": "2025-June-25",
+            "city": "Yellowstone NP",
+            "state": "WY",
+            "location": "Yellowstone NP, WY",
+            "coordinates": [
+              -110.5885,
+              44.428
+            ],
+            "latitude": 44.428,
+            "longitude": -110.5885,
+            "type": "overnight",
+            "milesFromPrev": 90,
+            "driveHours": 2,
+            "notes": "1-day park visit",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_16",
+            "stopNumber": 16,
+            "date": "2025-June-26",
+            "city": "Salt Lake City",
+            "state": "UT",
+            "location": "Salt Lake City, UT",
+            "coordinates": [
+              -111.891,
+              40.7608
+            ],
+            "latitude": 40.7608,
+            "longitude": -111.891,
+            "type": "overnight",
+            "milesFromPrev": 320,
+            "driveHours": 5.5,
+            "notes": "Visit Brady",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_17",
+            "stopNumber": 17,
+            "date": "2025-June-27",
+            "endDate": "2025-28",
+            "city": "Provo",
+            "state": "UT",
+            "location": "Provo, UT",
+            "coordinates": [
+              -111.6585,
+              40.2338
+            ],
+            "latitude": 40.2338,
+            "longitude": -111.6585,
+            "type": "overnight",
+            "milesFromPrev": 45,
+            "driveHours": 1,
+            "notes": "Visit Erin",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_18",
+            "stopNumber": 18,
+            "date": "2025-June-29",
+            "city": "Fort Collins",
+            "state": "CO",
+            "location": "Fort Collins, CO",
+            "coordinates": [
+              -105.0844,
+              40.5853
+            ],
+            "latitude": 40.5853,
+            "longitude": -105.0844,
+            "type": "overnight",
+            "milesFromPrev": 440,
+            "driveHours": 7,
+            "notes": "Visit Caleb",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_19",
+            "stopNumber": 19,
+            "date": "2025-June-30",
+            "city": "Denver",
+            "state": "CO",
+            "location": "Denver, CO",
+            "coordinates": [
+              -104.9903,
+              39.7392
+            ],
+            "latitude": 39.7392,
+            "longitude": -104.9903,
+            "type": "overnight",
+            "milesFromPrev": 60,
+            "driveHours": 1.5,
+            "notes": "Visit Josh",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_20",
+            "stopNumber": 20,
+            "date": "2025-July-1",
+            "city": "Bismarck",
+            "state": "ND",
+            "location": "Bismarck, ND",
+            "coordinates": [
+              -100.7837,
+              46.8083
+            ],
+            "latitude": 46.8083,
+            "longitude": -100.7837,
+            "type": "waypoint",
+            "milesFromPrev": 550,
+            "driveHours": 9,
+            "notes": "ND stop",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_21",
+            "stopNumber": 21,
+            "date": "2025-July-2",
+            "city": "Badlands",
+            "state": "SD",
+            "location": "Badlands, SD",
+            "coordinates": [
+              -101.9777,
+              43.8554
+            ],
+            "latitude": 43.8554,
+            "longitude": -101.9777,
+            "type": "attraction",
+            "milesFromPrev": 280,
+            "driveHours": 4.5,
+            "notes": "Park drive",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_22",
+            "stopNumber": 22,
+            "date": "2025-July-3",
+            "endDate": "2025-6",
+            "city": "Lincoln",
+            "state": "NE",
+            "location": "Lincoln, NE",
+            "coordinates": [
+              -96.7026,
+              40.8136
+            ],
+            "latitude": 40.8136,
+            "longitude": -96.7026,
+            "type": "overnight",
+            "milesFromPrev": 370,
+            "driveHours": 6.5,
+            "notes": "Family visit",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_23",
+            "stopNumber": 23,
+            "date": "2025-July-7",
+            "city": "Des Moines",
+            "state": "IA",
+            "location": "Des Moines, IA",
+            "coordinates": [
+              -93.625,
+              41.5868
+            ],
+            "latitude": 41.5868,
+            "longitude": -93.625,
+            "type": "waypoint",
+            "milesFromPrev": 190,
+            "driveHours": 3.5,
+            "notes": "Transit",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_24",
+            "stopNumber": 24,
+            "date": "2025-July-8",
+            "city": "Chicago",
+            "state": "IL",
+            "location": "Chicago, IL",
+            "coordinates": [
+              -87.6298,
+              41.8781
+            ],
+            "latitude": 41.8781,
+            "longitude": -87.6298,
+            "type": "overnight",
+            "milesFromPrev": 330,
+            "driveHours": 5.5,
+            "notes": "Visit Connor",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_25",
+            "stopNumber": 25,
+            "date": "2025-July-9",
+            "city": "Terre Haute",
+            "state": "IN",
+            "location": "Terre Haute, IN",
+            "coordinates": [
+              -87.4139,
+              39.4667
+            ],
+            "latitude": 39.4667,
+            "longitude": -87.4139,
+            "type": "overnight",
+            "milesFromPrev": 190,
+            "driveHours": 3.5,
+            "notes": "Visit Jack",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_26",
+            "stopNumber": 26,
+            "date": "2025-July-10",
+            "city": "Columbus",
+            "state": "OH",
+            "location": "Columbus, OH",
+            "coordinates": [
+              -82.9988,
+              39.9612
+            ],
+            "latitude": 39.9612,
+            "longitude": -82.9988,
+            "type": "overnight",
+            "milesFromPrev": 220,
+            "driveHours": 4,
+            "notes": "Visit Cameron",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_27",
+            "stopNumber": 27,
+            "date": "2025-July-11",
+            "city": "Detroit",
+            "state": "MI",
+            "location": "Detroit, MI",
+            "coordinates": [
+              -83.0458,
+              42.3314
+            ],
+            "latitude": 42.3314,
+            "longitude": -83.0458,
+            "type": "overnight",
+            "milesFromPrev": 200,
+            "driveHours": 3.5,
+            "notes": "Michigan visit",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_28",
+            "stopNumber": 28,
+            "date": "2025-July-12",
+            "city": "Milwaukee",
+            "state": "WI",
+            "location": "Milwaukee, WI",
+            "coordinates": [
+              -87.9065,
+              43.0389
+            ],
+            "latitude": 43.0389,
+            "longitude": -87.9065,
+            "type": "overnight",
+            "milesFromPrev": 330,
+            "driveHours": 6,
+            "notes": "Wisconsin visit",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_29",
+            "stopNumber": 29,
+            "date": "2025-July-13",
+            "city": "Minneapolis",
+            "state": "MN",
+            "location": "Minneapolis, MN",
+            "coordinates": [
+              -93.265,
+              44.9778
+            ],
+            "latitude": 44.9778,
+            "longitude": -93.265,
+            "type": "overnight",
+            "milesFromPrev": 340,
+            "driveHours": 6,
+            "notes": "Minnesota visit",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_30",
+            "stopNumber": 30,
+            "date": "2025-July-14",
+            "city": "Bar Harbor",
+            "state": "ME",
+            "location": "Bar Harbor, ME",
+            "coordinates": [
+              -68.2039,
+              44.3876
+            ],
+            "latitude": 44.3876,
+            "longitude": -68.2039,
+            "type": "attraction",
+            "milesFromPrev": 1200,
+            "driveHours": 20,
+            "notes": "Scenic Northeast stop",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_31",
+            "stopNumber": 31,
+            "date": "2025-July-15",
+            "endDate": "2025-18",
+            "city": "Hartford",
+            "state": "CT",
+            "location": "Hartford, CT",
+            "coordinates": [
+              -72.6734,
+              41.7658
+            ],
+            "latitude": 41.7658,
+            "longitude": -72.6734,
+            "type": "overnight",
+            "milesFromPrev": 300,
+            "driveHours": 6,
+            "notes": "Visit Deanna",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_32",
+            "stopNumber": 32,
+            "date": "2025-July-19",
+            "city": "Albany",
+            "state": "NY",
+            "location": "Albany, NY",
+            "coordinates": [
+              -73.7562,
+              42.6526
+            ],
+            "latitude": 42.6526,
+            "longitude": -73.7562,
+            "type": "overnight",
+            "milesFromPrev": 90,
+            "driveHours": 2,
+            "notes": "Visit Phil Dalton",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_33",
+            "stopNumber": 33,
+            "date": "2025-July-20",
+            "endDate": "2025-23",
+            "city": "Monroe",
+            "state": "NC",
+            "location": "Monroe, NC",
+            "coordinates": [
+              -80.5495,
+              35.0004
+            ],
+            "latitude": 35.0004,
+            "longitude": -80.5495,
+            "type": "overnight",
+            "milesFromPrev": 700,
+            "driveHours": 12,
+            "notes": "Nana & Pawpaw visit",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_34",
+            "stopNumber": 34,
+            "date": "2025-July-24",
+            "city": "Raleigh",
+            "state": "NC",
+            "location": "Raleigh, NC",
+            "coordinates": [
+              -78.6382,
+              35.7796
+            ],
+            "latitude": 35.7796,
+            "longitude": -78.6382,
+            "type": "overnight",
+            "milesFromPrev": 160,
+            "driveHours": 3,
+            "notes": "Visit Brad Gross",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_35",
+            "stopNumber": 35,
+            "date": "2025-July-25",
+            "city": "Asheville",
+            "state": "NC",
+            "location": "Asheville, NC",
+            "coordinates": [
+              -82.5515,
+              35.5951
+            ],
+            "latitude": 35.5951,
+            "longitude": -82.5515,
+            "type": "attraction",
+            "milesFromPrev": 160,
+            "driveHours": 3,
+            "notes": "AT trail hike",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_36",
+            "stopNumber": 36,
+            "date": "2025-July-26",
+            "city": "Spartanburg",
+            "state": "SC",
+            "location": "Spartanburg, SC",
+            "coordinates": [
+              -81.932,
+              34.9496
+            ],
+            "latitude": 34.9496,
+            "longitude": -81.932,
+            "type": "overnight",
+            "milesFromPrev": 70,
+            "driveHours": 1.5,
+            "notes": "Visit Max Mosley",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_37",
+            "stopNumber": 37,
+            "date": "2025-July-27",
+            "city": "Augusta",
+            "state": "GA",
+            "location": "Augusta, GA",
+            "coordinates": [
+              -82.0105,
+              33.4735
+            ],
+            "latitude": 33.4735,
+            "longitude": -82.0105,
+            "type": "waypoint",
+            "milesFromPrev": 160,
+            "driveHours": 3,
+            "notes": "Georgia pass-through",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_38",
+            "stopNumber": 38,
+            "date": "2025-July-28",
+            "endDate": "2025-31",
+            "city": "Sarasota",
+            "state": "FL",
+            "location": "Sarasota, FL",
+            "coordinates": [
+              -82.5307,
+              27.3364
+            ],
+            "latitude": 27.3364,
+            "longitude": -82.5307,
+            "type": "overnight",
+            "milesFromPrev": 600,
+            "driveHours": 9.5,
+            "notes": "Visit John & Sarah",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_39",
+            "stopNumber": 39,
+            "date": "2025-August-1",
+            "city": "Knoxville",
+            "state": "TN",
+            "location": "Knoxville, TN",
+            "coordinates": [
+              -83.9207,
+              35.9606
+            ],
+            "latitude": 35.9606,
+            "longitude": -83.9207,
+            "type": "overnight",
+            "milesFromPrev": 722,
+            "driveHours": 10,
+            "notes": "Visit Barton",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_40",
+            "stopNumber": 40,
+            "date": "2025-August-2",
+            "city": "Corbin",
+            "state": "KY",
+            "location": "Corbin, KY",
+            "coordinates": [
+              -84.0966,
+              36.9487
+            ],
+            "latitude": 36.9487,
+            "longitude": -84.0966,
+            "type": "waypoint",
+            "milesFromPrev": 86,
+            "driveHours": 1.5,
+            "notes": "Touch Kentucky",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_41",
+            "stopNumber": 41,
+            "date": "2025-August-2",
+            "city": "Knoxville",
+            "state": "TN",
+            "location": "Knoxville, TN",
+            "coordinates": [
+              -83.9207,
+              35.9606
+            ],
+            "latitude": 35.9606,
+            "longitude": -83.9207,
+            "type": "waypoint",
+            "milesFromPrev": 86,
+            "driveHours": 1.5,
+            "notes": "Return to route",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_42",
+            "stopNumber": 42,
+            "date": "2025-August-3",
+            "city": "Jackson",
+            "state": "MS",
+            "location": "Jackson, MS",
+            "coordinates": [
+              -90.1848,
+              32.2988
+            ],
+            "latitude": 32.2988,
+            "longitude": -90.1848,
+            "type": "overnight",
+            "milesFromPrev": 600,
+            "driveHours": 9,
+            "notes": "Mississippi visit",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_43",
+            "stopNumber": 43,
+            "date": "2025-August-4",
+            "city": "Monroe",
+            "state": "LA",
+            "location": "Monroe, LA",
+            "coordinates": [
+              -92.1193,
+              32.5093
+            ],
+            "latitude": 32.5093,
+            "longitude": -92.1193,
+            "type": "overnight",
+            "milesFromPrev": 160,
+            "driveHours": 3,
+            "notes": "Louisiana visit",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_44",
+            "stopNumber": 44,
+            "date": "2025-August-5",
+            "city": "Little Rock",
+            "state": "AR",
+            "location": "Little Rock, AR",
+            "coordinates": [
+              -92.2896,
+              34.7465
+            ],
+            "latitude": 34.7465,
+            "longitude": -92.2896,
+            "type": "overnight",
+            "milesFromPrev": 200,
+            "driveHours": 3.5,
+            "notes": "Arkansas visit",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_45",
+            "stopNumber": 45,
+            "date": "2025-August-6",
+            "city": "Joplin",
+            "state": "MO",
+            "location": "Joplin, MO",
+            "coordinates": [
+              -94.5133,
+              37.0842
+            ],
+            "latitude": 37.0842,
+            "longitude": -94.5133,
+            "type": "overnight",
+            "milesFromPrev": 215,
+            "driveHours": 4,
+            "notes": "Missouri visit",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_46",
+            "stopNumber": 46,
+            "date": "2025-August-7",
+            "city": "Independence",
+            "state": "KS",
+            "location": "Independence, KS",
+            "coordinates": [
+              -95.7081,
+              37.2264
+            ],
+            "latitude": 37.2264,
+            "longitude": -95.7081,
+            "type": "overnight",
+            "milesFromPrev": 120,
+            "driveHours": 2.5,
+            "notes": "Kansas visit",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_47",
+            "stopNumber": 47,
+            "date": "2025-August-8",
+            "city": "Oklahoma City",
+            "state": "OK",
+            "location": "Oklahoma City, OK",
+            "coordinates": [
+              -97.5164,
+              35.4676
+            ],
+            "latitude": 35.4676,
+            "longitude": -97.5164,
+            "type": "overnight",
+            "milesFromPrev": 170,
+            "driveHours": 3,
+            "notes": "Oklahoma visit",
+            "isStart": false,
+            "isEnd": false,
+            "isCurrent": false,
+            "visited": false
+          },
+          {
+            "id": "stop_48",
+            "stopNumber": 48,
+            "date": "2025-August-9",
+            "city": "Austin",
+            "state": "TX",
+            "location": "Austin, TX",
+            "coordinates": [
+              -97.7431,
+              30.2672
+            ],
+            "latitude": 30.2672,
+            "longitude": -97.7431,
+            "type": "end",
+            "milesFromPrev": 390,
+            "driveHours": 6,
+            "notes": "Trip ends",
+            "isStart": false,
+            "isEnd": true,
+            "isCurrent": false,
+            "visited": false
+          }
+        ]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -102.8779,
+            30.8896
+          ],
+          [
+            -106.485,
+            31.7619
+          ],
+          [
+            -111.761,
+            34.8697
+          ],
+          [
+            -112.1401,
+            36.0544
+          ],
+          [
+            -113.0263,
+            37.2982
+          ],
+          [
+            -118.2437,
+            34.0522
+          ],
+          [
+            -120.4357,
+            34.953
+          ],
+          [
+            -122.4194,
+            37.7749
+          ],
+          [
+            -120.9538,
+            39.1007
+          ],
+          [
+            -124.0046,
+            41.2132
+          ],
+          [
+            -123.9615,
+            45.8918
+          ],
+          [
+            -122.9015,
+            47.0379
+          ],
+          [
+            -122.3321,
+            47.6062
+          ],
+          [
+            -111.0429,
+            45.677
+          ],
+          [
+            -110.5885,
+            44.428
+          ],
+          [
+            -111.891,
+            40.7608
+          ],
+          [
+            -111.6585,
+            40.2338
+          ],
+          [
+            -105.0844,
+            40.5853
+          ],
+          [
+            -104.9903,
+            39.7392
+          ],
+          [
+            -100.7837,
+            46.8083
+          ],
+          [
+            -101.9777,
+            43.8554
+          ],
+          [
+            -96.7026,
+            40.8136
+          ],
+          [
+            -93.625,
+            41.5868
+          ],
+          [
+            -87.6298,
+            41.8781
+          ],
+          [
+            -87.4139,
+            39.4667
+          ],
+          [
+            -82.9988,
+            39.9612
+          ],
+          [
+            -83.0458,
+            42.3314
+          ],
+          [
+            -87.9065,
+            43.0389
+          ],
+          [
+            -93.265,
+            44.9778
+          ],
+          [
+            -68.2039,
+            44.3876
+          ],
+          [
+            -72.6734,
+            41.7658
+          ],
+          [
+            -73.7562,
+            42.6526
+          ],
+          [
+            -80.5495,
+            35.0004
+          ],
+          [
+            -78.6382,
+            35.7796
+          ],
+          [
+            -82.5515,
+            35.5951
+          ],
+          [
+            -81.932,
+            34.9496
+          ],
+          [
+            -82.0105,
+            33.4735
+          ],
+          [
+            -82.5307,
+            27.3364
+          ],
+          [
+            -83.9207,
+            35.9606
+          ],
+          [
+            -84.0966,
+            36.9487
+          ],
+          [
+            -83.9207,
+            35.9606
+          ],
+          [
+            -90.1848,
+            32.2988
+          ],
+          [
+            -92.1193,
+            32.5093
+          ],
+          [
+            -92.2896,
+            34.7465
+          ],
+          [
+            -94.5133,
+            37.0842
+          ],
+          [
+            -95.7081,
+            37.2264
+          ],
+          [
+            -97.5164,
+            35.4676
+          ],
+          [
+            -97.7431,
+            30.2672
+          ]
+        ]
+      }
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-06-15T01:06:57.653Z",
+    "generatedFrom": "AWhittleWandering_Final_With_Deanna_And_BarHarbor.csv"
+  }
+}
