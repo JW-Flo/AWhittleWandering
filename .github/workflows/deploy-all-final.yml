@@ -120,10 +120,11 @@ jobs:
           if [[ -n "$(git status --porcelain)" ]]; then
             git add .
             git commit -m "chore: deploy AWhittleWandering site and edge worker ($TIMESTAMP)"
-            # In GitHub Actions we don't push directly to avoid conflicts
-            # The changes will be available in the workflow run artifacts
+            echo "Deployment artifacts committed locally"
+          else
+            echo "No changes to commit"
           fi
 
-          # Create and push deployment tag
+          # Create deployment tag (locally only for workflow record)
           git tag -a deploy-$TIMESTAMP -m "Deployment $TIMESTAMP"
-          git push origin deploy-$TIMESTAMP
+          echo "Created deployment tag: deploy-$TIMESTAMP"
