@@ -25,19 +25,36 @@ import { ensureMapboxFormat } from "../utils/mapUtils";
 import { getMapboxToken } from '../shared/mapbox/mapboxConfig.ts';
 
 /**
- * Consolidated Mapbox Token Initialization and Validation
- * Ensures the token is set and valid before map initialization.
+ * Import the mapbox diagnostics utilities to ensure token availability
+ */
+import { reportTokenStatus, synchronizeTokens } from '../utils/mapboxDiagnostics';
+
+/**
+ * Enhanced Mapbox Token Initialization and Validation
+ * Uses the diagnostic utility to ensure token is properly initialized
+ * and available in all contexts.
  */
 (function initializeAndValidateMapboxToken() {
-  const token = getMapboxToken();
-  mapboxgl.accessToken = token;
+  // Synchronize the token across all contexts (window, mapboxgl, etc)
+  const success = synchronizeTokens();
 
-  if (import.meta.env.DEV) {
-    console.log('[MapboxGL] Token initialization complete', {
+  // Set token on mapboxgl directly as well
+  const token = getMapboxToken();
+  if (token && window.mapboxgl) {
+    window.mapboxgl.accessToken = token;
+  }
+
+  // Run diagnostics to identify any issues
+  if (import.meta.env.DEV || window.__MAP_DEBUG__) {
+    console.log('[MapboxGL] Token initialization attempt completed', {
+      success,
       tokenSet: !!token,
       tokenPreview: token ? `${token.substring(0, 10)}...` : 'Missing',
-      mapboxVersion: mapboxgl.version
+      mapboxVersion: window.mapboxgl ? window.mapboxgl.version : 'Not loaded'
     });
+
+    // Run full diagnostics report
+    reportTokenStatus();
   }
 
   if (!token || !token.startsWith('pk.')) {
@@ -277,303 +294,120 @@ const initializeMapLayers = async (map, tripData) => {
 /**
  * Interactive map component using Mapbox GL
  */
-const Map = ({
-  vehicleData,
-  tripData,
-  weatherData,
-  stationsData,
-  fullscreen = false,
-  mapLayers = {
-    weather: false,
-    traffic: false,
-    satellite: false,
-    chargingStations: false
-  }
-}) => {
+const Map = ({ vehicleData, tripData, weatherData, displayMode }) => {
   const mapContainer = useRef(null);
   const map = useRef(null);
   const vehicleMarker = useRef(null);
-  const [mapReady, setMapReady] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [mapInitialized, setMapInitialized] = useState(false);
   const [mapError, setMapError] = useState(null);
-  const [mapInitAttempted, setMapInitAttempted] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [debugVisible, setDebugVisible] = useState(false);
+  const [mapInitAttempted, setMapInitAttempted] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  
+  // Map layer visibility control
+  const [mapLayers, setMapLayers] = useState({
+    route: true,
+    stops: true,
+    vehicle: true,
+    weather: true,
+    chargingStations: false,
+  });
 
   /**
-   * Verify and validate the Mapbox token
-   * This is a critical check that runs before map initialization.
-   * This function is now a no-op since validation is handled at module load.
+   * Map initialization with enhanced error handling and token verification
+   * Ensures map loads reliably in production environments
    */
-  const verifyMapboxToken = useCallback(() => {
-    // Token validation is now handled at module load time.
-    // This function is retained for compatibility but does nothing.
-    return true;
-  }, []);
-
-  // Initialize map on component mount with robust retry mechanism
   useEffect(() => {
-    // Only initialize once
-    if (map.current || mapInitAttempted) return;
+    // Check if map is already initialized
+    if (map.current) return;
 
-    console.log('[MapboxGL] Starting map initialization');
-    setMapInitAttempted(true);
-
-    // 1. Verify token with multi-level verification
-    const tokenValid = verifyMapboxToken();
-    if (!tokenValid) {
-      console.error('[MapboxGL] Token validation failed after all attempts');
-      setMapError('Mapbox access token could not be validated. Using fallback configuration.');
-      // We don't return here - we'll try to initialize with our fallback token
-    } else {
-      console.log('[MapboxGL] Token validated:', mapboxgl.accessToken.substring(0, 10) + '...');
-    }
-
-    // 2. Verify container
-    if (!mapContainer.current) {
-      console.error('[MapboxGL] Map container ref is missing');
-      setMapError('Map container not found. Please refresh the page.');
-      setLoading(false);
-      return;
-    }
-
+    // Verify token one more time before map initialization
     try {
-      // Enable debug mode for mapbox if querystring has debug=true
-      const urlParams = new URLSearchParams(window.location.search);
-      const debug = urlParams.get('debug') === 'true';
-
-      if (debug) {
-        console.log('🛠️ Mapbox debug mode enabled');
-        mapboxgl.setRTLTextPlugin(
-          'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-rtl-text/v0.2.3/mapbox-gl-rtl-text.js',
-          null,
-          true // Force load even if not needed
-        );
+      // Get token and verify it's valid
+      const token = getMapboxToken();
+      if (!token || !token.startsWith('pk.')) {
+        throw new Error('Invalid Mapbox token format');
       }
 
-      /**
-       * Initialize map with robust configuration and error handling
-       * Includes direct token injection for maximum reliability
-       */
-      const initMapWithRetry = (retryCount = 0) => {
-        try {
-          // Verify access token once more right before initialization
-          if (!mapboxgl.accessToken || !mapboxgl.accessToken.startsWith('pk.')) {
-            console.warn(`[MapboxGL] Token missing at initialization time (attempt ${retryCount + 1})`, {
-              hasToken: !!mapboxgl.accessToken,
-              startsWithPk: mapboxgl.accessToken?.startsWith('pk.')
-            });
+      // Ensure token is set on mapboxgl
+      if (window.mapboxgl) {
+        window.mapboxgl.accessToken = token;
+      } else {
+        throw new Error('Mapbox GL JS not loaded');
+      }
 
-            // Last chance emergency token setting
-            mapboxgl.accessToken = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA';
-          }
-
-          // Advanced initialization with direct token parameter
-          map.current = new mapboxgl.Map({
-            container: mapContainer.current,
-            style: 'mapbox://styles/mapbox/streets-v11',
-            center: [-98.5795, 39.8283], // Center of continental US
-            zoom: 3.5,
-            minZoom: 2,
-            maxZoom: 18,
-            failIfMajorPerformanceCaveat: false, // Try to load even on low-performance devices
-            attributionControl: false, // We'll add it manually in a better position
-            preserveDrawingBuffer: true, // Required for screenshot functionality
-            accessToken: mapboxgl.accessToken, // Directly specify token for maximum reliability
-            transformRequest: (url, resourceType) => {
-              // Log requests for debugging
-              if (debug && resourceType === 'Source') {
-                console.log(`[MapboxGL] Requesting: ${resourceType}`, url);
-              }
-              return { url };
-            }
-          });
-
-          console.log(`[MapboxGL] Map initialization successful on attempt ${retryCount + 1}`);
-          return true;
-        } catch (error) {
-          console.error(`[MapboxGL] Map initialization failed (attempt ${retryCount + 1}):`, error);
-
-          if (retryCount < 2) {
-            // Wait and retry with exponential backoff
-            const waitTime = Math.pow(2, retryCount) * 1000;
-            console.log(`[MapboxGL] Retrying in ${waitTime / 1000}s...`);
-
-            setTimeout(() => {
-              initMapWithRetry(retryCount + 1);
-            }, waitTime);
-            return false;
-          } else {
-            // Failed after 3 attempts
-            setMapError(`Map initialization failed: ${error.message}. Please refresh the page.`);
-            setLoading(false);
-            return false;
-          }
-        }
-      };
-
-      // Start the initialization with retry mechanism
-      initMapWithRetry();
-
-      // Add detailed map error handler
-      map.current.on('error', (e) => {
-        console.error('Mapbox map error:', e);
-
-        // Check for specific token-related errors
-        if (e.error && (
-          e.error.message?.includes('access token') ||
-          e.error.message?.includes('401')
-        )) {
-          setMapError('Invalid Mapbox access token. Please check your configuration.');
-        }
-
-        // Check for network-related errors
-        if (e.error && (
-          e.error.message?.includes('network') ||
-          e.error.message?.includes('Failed to fetch')
-        )) {
-          setMapError('Network error loading map resources. Please check your connection.');
-        }
+      // Create map instance with error handling
+      map.current = new window.mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/dark-v11',
+        center: [-98.5795, 39.8283], // USA center
+        zoom: 3.5,
+        attributionControl: true
       });
 
-      // Add more verbose load event handling
-      map.current.on('styledata', () => {
-        console.log('Map style loaded successfully');
-      });
-
-      map.current.on('sourcedata', (e) => {
-        if (e.isSourceLoaded && debug) {
-          console.log('Map source loaded:', e.sourceId);
-        }
-      });
-
-      // Safely add controls one by one with error handling
-      try {
-        map.current.addControl(new mapboxgl.AttributionControl({
-          compact: true
-        }), 'bottom-left');
-      } catch (e) {
-        console.warn('Failed to add attribution control:', e);
-      }
-
-      try {
-        map.current.addControl(new mapboxgl.NavigationControl({
-          visualizePitch: true,
-          showCompass: true
-        }), 'top-right');
-      } catch (e) {
-        console.warn('Failed to add navigation control:', e);
-      }
-
-      try {
-        map.current.addControl(new mapboxgl.FullscreenControl(), 'top-right');
-      } catch (e) {
-        console.warn('Failed to add fullscreen control:', e);
-      }
-
-      try {
-        map.current.addControl(new mapboxgl.GeolocateControl({
-          positionOptions: {
-            enableHighAccuracy: true
-          },
-          trackUserLocation: false,
-          showUserHeading: true
-        }), 'top-right');
-      } catch (e) {
-        console.warn('Failed to add geolocate control:', e);
-      }
-
-      try {
-        map.current.addControl(new mapboxgl.ScaleControl({
-          maxWidth: 100,
-          unit: 'imperial'
-        }), 'bottom-left');
-      } catch (e) {
-        console.warn('Failed to add scale control:', e);
-      }
-
-      // Setup touch gesture listeners for mobile
-      try {
-        if (typeof Hammer !== 'undefined') {
-          const hammer = new Hammer(mapContainer.current);
-          hammer.get('swipe').set({ direction: Hammer.DIRECTION_ALL });
-
-          hammer.on('swipeleft', () => {
-            document.dispatchEvent(new CustomEvent('map:swipe:left'));
-          });
-
-          hammer.on('swiperight', () => {
-            document.dispatchEvent(new CustomEvent('map:swipe:right'));
-          });
-        }
-      } catch (e) {
-        console.warn('Failed to initialize touch gestures, continuing without them:', e);
-      }
-
-      // Mark map as ready when loaded and initialize layers
+      // Setup map event handlers
       map.current.on('load', () => {
-        console.log('Map load event fired - map fully loaded');
-        setMapReady(true);
-        setLoading(false);
+        console.log('[Map] Mapbox map loaded successfully');
+        setMapInitialized(true);
 
-        // Initialize layers if we have trip data
+        // After map is loaded, add layers
         if (tripData) {
-          console.log('Initializing map layers with tripData on load');
-          initializeMapLayers(map.current, tripData)
-            .catch(error => console.error('Error initializing map layers on load:', error));
-        } else {
-          console.log('No tripData available yet, will initialize layers when data arrives');
-        }
-
-        // Pre-load marker images for better performance
-        try {
-          // Check if the image is already loaded
-          if (!map.current.hasImage('charging-station')) {
-            map.current.loadImage(
-              'https://img.icons8.com/material/96/4CAF50/charging-station--v1.png',
-              (error, image) => {
-                if (error) throw error;
-                if (!map.current.hasImage('charging-station')) {
-                  map.current.addImage('charging-station', image);
-                }
-              }
-            );
-          }
-        } catch (e) {
-          console.warn('Failed to preload marker images:', e);
+          initializeMapLayers(map.current, tripData);
         }
       });
 
-      // Add a timeout to set map as ready even if load event doesn't fire
-      setTimeout(() => {
-        if (!mapReady && map.current) {
-          console.warn('Map load event did not fire within timeout, forcing mapReady=true');
-          setMapReady(true);
-          setLoading(false);
-        }
-      }, 5000);
+      // Error handling for map initialization
+      map.current.on('error', (e) => {
+        console.error('[Map] Mapbox error:', e);
+        setMapError(`Map error: ${e.error?.message || 'Unknown error'}`);
+      });
+
+      // Setup mobile touch handlers
+      if (mapContainer.current) {
+        const hammer = new Hammer(mapContainer.current);
+        hammer.get('pinch').set({ enable: true });
+
+        hammer.on('pinchout', () => {
+          map.current.zoomIn();
+        });
+
+        hammer.on('pinchin', () => {
+          map.current.zoomOut();
+        });
+      }
 
     } catch (error) {
-      console.error('Fatal error initializing map:', error);
-      setMapError(`Could not initialize map: ${error.message}`);
-      setLoading(false);
+      console.error('[Map] Critical initialization error:', error);
+      setMapError(`Failed to initialize map: ${error.message}`);
+
+      // Attempt recovery by reloading Mapbox resources
+      if (typeof document !== 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js';
+        script.onload = () => {
+          console.log('[Map] Attempted to reload Mapbox GL JS');
+          // Force page reload after 2 seconds if user permits
+          if (window.confirm('Map failed to load. Reload page to try again?')) {
+            window.location.reload();
+          }
+        };
+        document.head.appendChild(script);
+      }
     }
 
-    // Cleanup on unmount
+    // Cleanup function
     return () => {
-      try {
-        if (map.current) {
-          map.current.remove();
-          map.current = null;
-        }
-      } catch (e) {
-        console.error('Error cleaning up map:', e);
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
       }
     };
   }, [tripData]);
 
   // Update map style based on layer toggles
   useEffect(() => {
-    if (!mapReady || !map.current) return;
+    if (!mapInitialized || !map.current) return;
 
     try {
       // Store current view state
@@ -581,7 +415,7 @@ const Map = ({
       const currentZoom = map.current.getZoom();
 
       // Handle style changes
-      const newStyle = mapLayers.satellite
+      const newStyle = displayMode === 'satellite'
         ? 'mapbox://styles/mapbox/satellite-streets-v11'
         : 'mapbox://styles/mapbox/streets-v11';
 
@@ -611,11 +445,11 @@ const Map = ({
     } catch (error) {
       console.error('Error updating map style:', error);
     }
-  }, [mapLayers, mapReady, weatherData, tripData]);
+  }, [displayMode, mapInitialized, weatherData, tripData]);
 
   // Add and update charging stations on the map
   useEffect(() => {
-    if (!mapReady || !map.current) return;
+    if (!mapInitialized || !map.current) return;
 
     try {
       // Handle charging stations layer
@@ -731,7 +565,7 @@ const Map = ({
     } catch (error) {
       console.error('Error updating charging stations:', error);
     }
-  }, [mapLayers.chargingStations, stationsData, mapReady]);
+  }, [mapLayers.chargingStations, stationsData, mapInitialized]);
 
   // Update map data when tripData changes - with improved load handling
   useEffect(() => {
@@ -740,12 +574,12 @@ const Map = ({
     console.log('Trip data changed, updating map layers', {
       hasRoute: !!tripData.route,
       hasStops: !!tripData.stops,
-      mapReady: mapReady
+      mapReady: mapInitialized
     });
 
     try {
       // Only add layers if map is already loaded
-      if (mapReady) {
+      if (mapInitialized) {
         console.log('Map is ready, initializing layers immediately');
         // Re-initialize layers with new data
         initializeMapLayers(map.current, tripData)
@@ -781,11 +615,11 @@ const Map = ({
     } catch (error) {
       console.error('Error in tripData effect:', error);
     }
-  }, [tripData, mapReady]);
+  }, [tripData, mapInitialized]);
 
   // Add and update vehicle marker
   useEffect(() => {
-    if (!mapReady || !map.current || !vehicleData) return;
+    if (!mapInitialized || !map.current || !vehicleData) return;
 
     try {
       // Use our ensureMapboxFormat utility to handle any coordinate format
@@ -896,7 +730,7 @@ const Map = ({
     } catch (error) {
       console.error('Error in vehicle data effect:', error);
     }
-  }, [vehicleData, mapReady]);
+  }, [vehicleData, mapInitialized]);
 
   // Debug keyboard shortcut
   useEffect(() => {
@@ -913,7 +747,7 @@ const Map = ({
 
   // Map health monitor to auto-reset if needed
   useEffect(() => {
-    if (!mapReady || !map.current) return;
+    if (!mapInitialized || !map.current) return;
 
     // Variables to track map health
     let consecutiveFailures = 0;
@@ -947,7 +781,7 @@ const Map = ({
     return () => {
       clearInterval(healthCheckInterval);
     };
-  }, [mapReady]);
+  }, [mapInitialized]);
 
   // Handle reset map for auto-recovery or debug panel
   const handleResetMap = useCallback(() => {
@@ -963,8 +797,7 @@ const Map = ({
         vehicleMarker.current = null;
       }
 
-      setMapReady(false);
-      setMapInitAttempted(false);
+      setMapInitialized(false);
       setMapError(null);
       setLoading(true);
 
@@ -1004,7 +837,7 @@ const Map = ({
     console.log('Data refresh requested from debug panel');
     // This would normally call a function passed via props to refresh the data
     // For now, we'll just log it and re-initialize with current data
-    if (map.current && mapReady && tripData) {
+    if (map.current && mapInitialized && tripData) {
       initializeMapLayers(map.current, tripData)
         .catch(error => console.error('Error refreshing map data:', error));
     }
@@ -1041,7 +874,7 @@ const Map = ({
         <MapDebugPanel
           tripData={tripData}
           vehicleData={vehicleData}
-          mapReady={mapReady}
+          mapReady={mapInitialized}
           onResetMap={handleDebugResetMap}
           onRefreshData={handleRefreshData}
         />
