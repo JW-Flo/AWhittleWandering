@@ -59,7 +59,16 @@ check_for_references() {
   fi
   
   # Add the grep part
-  grep_result=$(eval "$find_cmd -exec grep -l \"$pattern\" {} +" 2>/dev/null || echo "")
+  # Build the find command as an array for safety
+  find_args=(. -type f)
+  find_args+=(-not -path "*/node_modules/*")
+  find_args+=(-not -path "*/build/*")
+  find_args+=(-not -path "*/dist/*")
+  find_args+=(-not -path "*/.git/*")
+  if [ -n "$exclude_pattern" ]; then
+    find_args+=(-not -path "$exclude_pattern")
+  fi
+  grep_result=$(find "${find_args[@]}" -exec grep -l "$pattern" {} + 2>/dev/null || echo "")
   
   if [ -z "$grep_result" ]; then
     echo "✅ No instances found" >> "$REPORT_FILE"
