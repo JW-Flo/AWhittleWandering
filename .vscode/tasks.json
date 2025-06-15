@@ -1,5 +1,5 @@
 {
-  "version": "2.0.0", even 
+  "version": "2.0.0",
   "tasks": [
     {
       "label": "Pre-deploy Checks",
@@ -125,6 +125,18 @@
       "command": "code",
       "args": ["--command", "github.copilot.completion.generate"],
       "group": "none",
+      "problemMatcher": []
+    },
+    {
+      "label": "GitHub Workflow Status Check",
+      "type": "shell",
+      "command": "${workspaceFolder}/scripts/github-workflow-status.sh",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "clear": true
+      },
       "problemMatcher": []
     }
   ]

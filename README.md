@@ -44,3 +44,14 @@ This repository contains the full source code and deployment configuration for T
 ---
 
 For detailed setup and deployment instructions, see the `docs/` directory and `48Continental_Starter/public-site/README.md`.
+
+## CI/CD Monitoring
+
+The project includes a GitHub Workflow Status Checker that recursively monitors CI/CD pipeline status after commits:
+
+- Automatically checks workflow status for multiple commits
+- Generates detailed reports with workflow outcomes
+- Provides real-time feedback on build, test, and deployment processes
+- Integrates with the MCP server for comprehensive monitoring
+
+For detailed instructions, see [CI/CD Monitoring Instructions](./docs/ci-cd-monitoring-instructions.md)
