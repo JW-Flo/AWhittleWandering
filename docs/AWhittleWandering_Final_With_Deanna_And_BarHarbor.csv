@@ -1,0 +1,49 @@
+Date,City,MilesFromPrev,DriveHours,Notes
+June 6,"Fort Stockton, TX",,,Start: Alignment issue
+June 7–9,"El Paso, TX",240.0,4.0,Tesla repair
+June 9,"Sedona, AZ",320.0,5.5,Scenic overnight
+June 10,"Grand Canyon, AZ",115.0,2.5,Desert View hike
+June 11,"Zion NP, UT",120.0,2.5,Day hike
+June 12,"Los Angeles, CA",270.0,4.5,Visit Laurent (full day)
+June 13,"Santa Maria, CA",160.0,3.0,Coastal stop
+June 14,"San Francisco, CA",260.0,4.5,Urban visit
+June 15–16,"Colfax, CA",140.0,2.5,Visit Stefan
+June 17–18,"Redwood NP, CA",300.0,5.5,Camping
+June 19,"Cannon Beach, OR",290.0,5.5,Scenic overnight
+June 20,"Olympia, WA",120.0,2.5,Visit Brian
+June 23,"Seattle, WA",60.0,1.5,Visit Troy
+June 24,"Bozeman, MT",590.0,10.0,1-night stay
+June 25,"Yellowstone NP, WY",90.0,2.0,1-day park visit
+June 26,"Salt Lake City, UT",320.0,5.5,Visit Brady
+June 27–28,"Provo, UT",45.0,1.0,Visit Erin
+June 29,"Fort Collins, CO",440.0,7.0,Visit Caleb
+June 30,"Denver, CO",60.0,1.5,Visit Josh
+July 1,"Bismarck, ND",550.0,9.0,ND stop
+July 2,"Badlands, SD",280.0,4.5,Park drive
+July 3–6,"Lincoln, NE",370.0,6.5,Family visit
+July 7,"Des Moines, IA",190.0,3.5,Transit
+July 8,"Chicago, IL",330.0,5.5,Visit Connor
+July 9,"Terre Haute, IN",190.0,3.5,Visit Jack
+July 10,"Columbus, OH",220.0,4.0,Visit Cameron
+July 11,"Detroit, MI",200.0,3.5,Michigan visit
+July 12,"Milwaukee, WI",330.0,6.0,Wisconsin visit
+July 13,"Minneapolis, MN",340.0,6.0,Minnesota visit
+July 14,"Bar Harbor, ME",1200.0,20.0,Scenic Northeast stop
+July 15–18,"Hartford, CT",300.0,6.0,Visit Deanna
+July 19,"Albany, NY",90.0,2.0,Visit Phil Dalton
+July 20–23,"Monroe, NC",700.0,12.0,Nana & Pawpaw visit
+July 24,"Raleigh, NC",160.0,3.0,Visit Brad Gross
+July 25,"Asheville, NC",160.0,3.0,AT trail hike
+July 26,"Spartanburg, SC",70.0,1.5,Visit Max Mosley
+July 27,"Augusta, GA",160.0,3.0,Georgia pass-through
+July 28–31,"Sarasota, FL",600.0,9.5,Visit John & Sarah
+August 1,"Knoxville, TN",722.0,10.0,Visit Barton
+August 2,"Corbin, KY",86.0,1.5,Touch Kentucky
+August 2,"Knoxville, TN",86.0,1.5,Return to route
+August 3,"Jackson, MS",600.0,9.0,Mississippi visit
+August 4,"Monroe, LA",160.0,3.0,Louisiana visit
+August 5,"Little Rock, AR",200.0,3.5,Arkansas visit
+August 6,"Joplin, MO",215.0,4.0,Missouri visit
+August 7,"Independence, KS",120.0,2.5,Kansas visit
+August 8,"Oklahoma City, OK",170.0,3.0,Oklahoma visit
+August 9,"Austin, TX",390.0,6.0,Trip ends
