@@ -1,6 +1,6 @@
 #!/bin/bash
 # AWhittleWandering - End-to-End Deployment Script
-# Implements the steps in docs/DEPLOY_PLAYBOOK.md
+# Implements the steps in docs/deployment/DEPLOY_PLAYBOOK.md
 # Version 1.0.0 - June 12, 2025
 
 # Exit on error
@@ -405,7 +405,7 @@ setup_observability() {
   section "SETTING UP OBSERVABILITY"
   
   log "INFO" "Observability setup is documented in the Deployment Playbook."
-  log "INFO" "Please follow the instructions in docs/DEPLOY_PLAYBOOK.md, section 15."
+  log "INFO" "Please follow the instructions in docs/deployment/DEPLOY_PLAYBOOK.md, section 15."
   
   # For automated setup, we would need to:
   # 1. Set up n8n workflows for monitoring
