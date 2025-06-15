@@ -4,6 +4,9 @@
  * Centralizes all MapBox tokens, style URLs, and configuration settings.
  */
 
+// Import the central environment configuration
+import { getMapboxToken as getEnvironmentMapboxToken } from "../../utils/environmentConfig";
+
 // Declare window global type extension
 declare global {
   interface Window {
@@ -12,25 +15,19 @@ declare global {
   }
 }
 
-// IMPORTANT: Hardcoded production token that will always be available
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA';
-
 /**
- * MapBox access token management with robust fallback mechanism
+ * MapBox access token management with unified source of truth
+ * 
+ * IMPORTANT: Delegates to the centralized environmentConfig module
+ * which handles all environment variable access consistently.
  * 
  * This ensures a token is always available in all environments
  * including production builds where environment variables
  * might not be properly injected.
  */
 export const getMapboxToken = (): string => {
-  // Check for window global injection (highest priority)
-  if (typeof window !== 'undefined' && window.__MAPBOX_TOKEN__) {
-    console.log('Using Mapbox token from window.__MAPBOX_TOKEN__');
-    return window.__MAPBOX_TOKEN__;
-  }
-  
-  // Always use hardcoded token as fallback to guarantee availability
-  return MAPBOX_TOKEN;
+  // Use the centralized token management
+  return getEnvironmentMapboxToken();
 };
 
 /**
