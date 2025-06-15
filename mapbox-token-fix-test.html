@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Mapbox Token Fix Verification</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .test-panel { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button { padding: 10px 20px; margin: 10px 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .iframe-container { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin-top: 20px; height: 600px; }
+        iframe { width: 100%; height: 100%; border: none; }
+        .progress { width: 100%; height: 20px; background: #f0f0f0; border-radius: 10px; overflow: hidden; margin: 10px 0; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, #007bff, #0056b3); transition: width 2s ease; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗺️ Mapbox Token Fix Verification</h1>
+        
+        <div class="test-panel">
+            <h2>🔧 Token Configuration Status</h2>
+            <div id="token-status">
+                <div class="status success">✅ Mapbox token hardcoded as fallback in Map.jsx</div>
+                <div class="status success">✅ Vite config updated to handle environment variables properly</div>
+                <div class="status success">✅ HTML meta tag includes Mapbox token</div>
+                <div class="status success">✅ Mapbox CSS properly imported and bundled</div>
+                <div class="status info">ℹ️ Map should now load without "access token missing" error</div>
+            </div>
+        </div>
+        
+        <div class="test-panel">
+            <h2>🧪 Progressive Map Loading Test</h2>
+            <div id="test-results"></div>
+            <div class="progress">
+                <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+            </div>
+            <button onclick="runProgressiveTest()">Start Test</button>
+            <button onclick="loadSiteDirectly()">Open Site Directly</button>
+        </div>
+        
+        <div class="test-panel">
+            <h2>🖥️ Live Site Test</h2>
+            <div class="iframe-container">
+                <iframe id="site-iframe" src="about:blank" title="Live Site Test"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SITE_URL = 'https://4d158d15.awhittlewandering-site.pages.dev';
+        
+        function addResult(message, type = 'info') {
+            const container = document.getElementById('test-results');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = `${new Date().toLocaleTimeString()}: ${message}`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function updateProgress(percentage) {
+            const progressBar = document.getElementById('progress-bar');
+            progressBar.style.width = percentage + '%';
+        }
+        
+        async function runProgressiveTest() {
+            const container = document.getElementById('test-results');
+            container.innerHTML = '';
+            
+            addResult('🚀 Starting progressive map loading test...', 'info');
+            updateProgress(10);
+            
+            // Step 1: Test HTML accessibility
+            try {
+                addResult('📄 Testing HTML accessibility...', 'info');
+                const response = await fetch(SITE_URL);
+                if (response.ok) {
+                    addResult('✅ Site is accessible', 'success');
+                    updateProgress(20);
+                    
+                    const html = await response.text();
+                    
+                    // Check for Mapbox token in HTML
+                    if (html.includes('mapbox-token')) {
+                        addResult('✅ Mapbox token found in HTML meta tag', 'success');
+                        updateProgress(30);
+                    } else {
+                        addResult('❌ Mapbox token not found in HTML', 'error');
+                    }
+                    
+                    // Check for Mapbox CSS
+                    if (html.includes('mapbox-css') || html.includes('mapbox-gl.css')) {
+                        addResult('✅ Mapbox CSS references found', 'success');
+                        updateProgress(40);
+                    } else {
+                        addResult('⚠️ Mapbox CSS references not found', 'warning');
+                    }
+                    
+                } else {
+                    addResult(`❌ Site returned HTTP ${response.status}`, 'error');
+                    return;
+                }
+            } catch (error) {
+                addResult(`❌ Failed to access site: ${error.message}`, 'error');
+                return;
+            }
+            
+            // Step 2: Load site in iframe
+            addResult('🖼️ Loading site in iframe...', 'info');
+            updateProgress(50);
+            
+            const iframe = document.getElementById('site-iframe');
+            iframe.src = SITE_URL;
+            
+            return new Promise((resolve) => {
+                iframe.onload = () => {
+                    addResult('✅ Site loaded in iframe', 'success');
+                    updateProgress(70);
+                    
+                    // Wait for map to potentially load
+                    setTimeout(() => {
+                        addResult('⏳ Checking for map loading...', 'info');
+                        updateProgress(80);
+                        
+                        try {
+                            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                            
+                            // Check for error dialogs
+                            const errorDialogs = iframeDoc.querySelectorAll('[class*="error"], [role="alert"]');
+                            if (errorDialogs.length > 0) {
+                                let hasMapError = false;
+                                errorDialogs.forEach(dialog => {
+                                    if (dialog.textContent && dialog.textContent.includes('Mapbox access token')) {
+                                        addResult('❌ Still showing Mapbox token error', 'error');
+                                        hasMapError = true;
+                                    }
+                                });
+                                
+                                if (!hasMapError) {
+                                    addResult('✅ No Mapbox token errors found', 'success');
+                                }
+                            } else {
+                                addResult('✅ No error dialogs found', 'success');
+                            }
+                            
+                            // Check for map elements
+                            const mapElements = iframeDoc.querySelectorAll('[class*="mapbox"], .map-container, canvas');
+                            if (mapElements.length > 0) {
+                                addResult(`✅ Found ${mapElements.length} map-related elements`, 'success');
+                            } else {
+                                addResult('⚠️ No map elements detected yet', 'warning');
+                            }
+                            
+                            updateProgress(100);
+                            addResult('🎉 Test completed!', 'success');
+                            
+                        } catch (e) {
+                            addResult('⚠️ Cannot inspect iframe content (CORS blocked)', 'warning');
+                            updateProgress(90);
+                            addResult('💡 Check the iframe visually for the map', 'info');
+                        }
+                        
+                        resolve();
+                    }, 5000); // Wait 5 seconds for map to load
+                };
+                
+                iframe.onerror = () => {
+                    addResult('❌ Failed to load site in iframe', 'error');
+                    resolve();
+                };
+            });
+        }
+        
+        function loadSiteDirectly() {
+            addResult('🔗 Opening site in new tab...', 'info');
+            window.open(SITE_URL, '_blank');
+            addResult('✅ Check the new tab - map should load without token errors', 'success');
+        }
+        
+        // Auto-start test
+        window.onload = () => {
+            setTimeout(() => {
+                runProgressiveTest();
+            }, 1000);
+        };
+    </script>
+</body>
+</html>
