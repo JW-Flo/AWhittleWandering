@@ -4,33 +4,54 @@
  * Displays an interactive map of A Whittle Wandering journey
  * with route, stops, and current vehicle location.
  * 
- * This version includes enhanced coordinate validation and formatting,
+ * This version includes enhanced token management, coordinate validation,
  * improved error handling, and integration with the MapDebugPanel.
  */
 
 /* eslint-env browser */
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import mapboxgl from 'mapbox-gl';
+// IMPORTANT: Import MapboxGL CSS first to ensure it's included in the bundle
 import 'mapbox-gl/dist/mapbox-gl.css';
+import mapboxgl from 'mapbox-gl';
 import Hammer from 'hammerjs';
 import TripStatistics from './TripStatistics';
 import MapDebugPanel from './MapDebugPanel';
 import './Map.css';
-import './MapEnhancements.css'; import { ensureMapboxFormat } from "../utils/mapUtils";
-
-
-
-// IMPORTANT: Directly set the MapBox token to fix the "Invalid Mapbox access token" error
-// This is a public token (pk.) for client-side application
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA';
+import './MapEnhancements.css';
+import { ensureMapboxFormat } from "../utils/mapUtils";
 
 // Import the centralized MapBox configuration
-import mapboxConfig from '../shared/mapbox/mapboxConfig.ts';
+import { getMapboxToken } from '../shared/mapbox/mapboxConfig.ts';
 
-// Explicitly set the token without complex fallback logic
-mapboxgl.accessToken = MAPBOX_TOKEN;
-console.log('Map.jsx: MapBox token has been set successfully.', MAPBOX_TOKEN ? 'Token exists' : 'Token is empty');
+/**
+ * Initialize Mapbox Token early to guarantee it's set before map initialization
+ * Using a self-executing function to ensure this runs at module load time
+ */
+(function initializeMapboxToken() {
+  // Get token from our centralized token management system
+  const token = getMapboxToken();
+
+  // Set token on mapboxgl
+  mapboxgl.accessToken = token;
+
+  // Also set it on window for debugging and as an additional fallback
+  if (typeof window !== 'undefined') {
+    window.__MAPBOX_TOKEN__ = token;
+  }
+
+  // Diagnostic logging
+  console.log('[MapboxGL] Token initialization complete', {
+    tokenSet: !!token,
+    tokenPreview: token ? `${token.substring(0, 10)}...` : 'Missing',
+    mapboxVersion: mapboxgl.version
+  });
+
+  // Verify token was set correctly
+  if (!token || !token.startsWith('pk.')) {
+    console.error('[MapboxGL] Token validation failed - token is missing or invalid format');
+  }
+})();
 
 // SVG icons for map markers
 const SVG_ICONS = {
@@ -283,24 +304,65 @@ const Map = ({
   const [mapInitAttempted, setMapInitAttempted] = useState(false);
   const [debugVisible, setDebugVisible] = useState(false);
 
-  // Initialize map on component mount
-  useEffect(() => {
-    if (map.current || mapInitAttempted) return; // Map already initialized or attempt made
+  /**
+   * Verify and validate the Mapbox token
+   * This is a critical check that runs before map initialization
+   */
+  const verifyMapboxToken = useCallback(() => {
+    // Get the current token
+    const token = mapboxgl.accessToken;
 
-    console.log('Initializing map with token:', mapboxgl.accessToken.substring(0, 10) + '...');
-    setMapInitAttempted(true);
+    // Re-initialize token if missing or invalid (final safeguard)
+    if (!token || !token.startsWith('pk.') || token === 'pk.placeholder') {
+      console.warn('[MapboxGL] Token verification failed, attempting re-initialization');
 
-    // Verify token is valid
-    if (!mapboxgl.accessToken || mapboxgl.accessToken === 'pk.placeholder') {
-      console.error('Mapbox token is invalid or missing');
-      setMapError('Mapbox access token is missing. Please check your configuration.');
-      setLoading(false);
-      return;
+      // Use our hardcoded token since we can't dynamically import 
+      const newToken = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA';
+
+      // Set the token again
+      mapboxgl.accessToken = newToken;
+
+      // Also set it on window for debugging and as an additional fallback
+      if (window) window.__MAPBOX_TOKEN__ = newToken;
+
+      // Check if this fixed the issue
+      if (!mapboxgl.accessToken || !mapboxgl.accessToken.startsWith('pk.')) {
+        // Last resort fallback - hardcode the token directly
+        const hardcodedToken = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA';
+        mapboxgl.accessToken = hardcodedToken;
+        if (window) window.__MAPBOX_TOKEN__ = hardcodedToken;
+
+        console.error('[MapboxGL] Emergency token fallback applied');
+        return false;
+      }
+
+      return true;
     }
 
-    // Safely check if map container exists
+    return true;
+  }, []);
+
+  // Initialize map on component mount with robust retry mechanism
+  useEffect(() => {
+    // Only initialize once
+    if (map.current || mapInitAttempted) return;
+
+    console.log('[MapboxGL] Starting map initialization');
+    setMapInitAttempted(true);
+
+    // 1. Verify token with multi-level verification
+    const tokenValid = verifyMapboxToken();
+    if (!tokenValid) {
+      console.error('[MapboxGL] Token validation failed after all attempts');
+      setMapError('Mapbox access token could not be validated. Using fallback configuration.');
+      // We don't return here - we'll try to initialize with our fallback token
+    } else {
+      console.log('[MapboxGL] Token validated:', mapboxgl.accessToken.substring(0, 10) + '...');
+    }
+
+    // 2. Verify container
     if (!mapContainer.current) {
-      console.error('Map container ref is missing');
+      console.error('[MapboxGL] Map container ref is missing');
       setMapError('Map container not found. Please refresh the page.');
       setLoading(false);
       return;
@@ -320,25 +382,69 @@ const Map = ({
         );
       }
 
-      // Initialize map with safe defaults and proper error handling
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v11',
-        center: [-98.5795, 39.8283], // Center of continental US
-        zoom: 3.5,
-        minZoom: 2,
-        maxZoom: 18,
-        failIfMajorPerformanceCaveat: false, // Try to load even on low-performance devices
-        attributionControl: false, // We'll add it manually in a better position
-        preserveDrawingBuffer: true, // Required for screenshot functionality
-        transformRequest: (url, resourceType) => {
-          // Log requests for debugging
-          if (debug && resourceType === 'Source') {
-            console.log(`Mapbox requesting: ${resourceType}`, url);
+      /**
+       * Initialize map with robust configuration and error handling
+       * Includes direct token injection for maximum reliability
+       */
+      const initMapWithRetry = (retryCount = 0) => {
+        try {
+          // Verify access token once more right before initialization
+          if (!mapboxgl.accessToken || !mapboxgl.accessToken.startsWith('pk.')) {
+            console.warn(`[MapboxGL] Token missing at initialization time (attempt ${retryCount + 1})`, {
+              hasToken: !!mapboxgl.accessToken,
+              startsWithPk: mapboxgl.accessToken?.startsWith('pk.')
+            });
+
+            // Last chance emergency token setting
+            mapboxgl.accessToken = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA';
           }
-          return { url };
+
+          // Advanced initialization with direct token parameter
+          map.current = new mapboxgl.Map({
+            container: mapContainer.current,
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: [-98.5795, 39.8283], // Center of continental US
+            zoom: 3.5,
+            minZoom: 2,
+            maxZoom: 18,
+            failIfMajorPerformanceCaveat: false, // Try to load even on low-performance devices
+            attributionControl: false, // We'll add it manually in a better position
+            preserveDrawingBuffer: true, // Required for screenshot functionality
+            accessToken: mapboxgl.accessToken, // Directly specify token for maximum reliability
+            transformRequest: (url, resourceType) => {
+              // Log requests for debugging
+              if (debug && resourceType === 'Source') {
+                console.log(`[MapboxGL] Requesting: ${resourceType}`, url);
+              }
+              return { url };
+            }
+          });
+
+          console.log(`[MapboxGL] Map initialization successful on attempt ${retryCount + 1}`);
+          return true;
+        } catch (error) {
+          console.error(`[MapboxGL] Map initialization failed (attempt ${retryCount + 1}):`, error);
+
+          if (retryCount < 2) {
+            // Wait and retry with exponential backoff
+            const waitTime = Math.pow(2, retryCount) * 1000;
+            console.log(`[MapboxGL] Retrying in ${waitTime / 1000}s...`);
+
+            setTimeout(() => {
+              initMapWithRetry(retryCount + 1);
+            }, waitTime);
+            return false;
+          } else {
+            // Failed after 3 attempts
+            setMapError(`Map initialization failed: ${error.message}. Please refresh the page.`);
+            setLoading(false);
+            return false;
+          }
         }
-      });
+      };
+
+      // Start the initialization with retry mechanism
+      initMapWithRetry();
 
       // Add detailed map error handler
       map.current.on('error', (e) => {

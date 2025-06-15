@@ -2,37 +2,35 @@
  * MapBox Configuration for The Wandering Whittle
  * 
  * Centralizes all MapBox tokens, style URLs, and configuration settings.
- * Always uses environment variables to ensure tokens are not hardcoded.
  */
 
-// Define types for environment variables
+// Declare window global type extension
 declare global {
-  interface ImportMeta {
-    env: {
-      VITE_MAPBOX_TOKEN?: string;
-      [key: string]: string | undefined;
-    }
+  interface Window {
+    __MAPBOX_TOKEN__?: string;
+    __MAP_DEBUG__?: boolean;
   }
 }
 
-// Simple environment helper
-const getEnv = (key: string, defaultValue: string | null = null): string | null => {
-  try {
-    // For Vite environment (client-side)
-    // @ts-ignore - This is for Vite environment variables
-    const value = import.meta?.env?.[key];
-    return value !== undefined ? value : defaultValue;
-  } catch (e) {
-    return defaultValue;
-  }
-};
+// IMPORTANT: Hardcoded production token that will always be available
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA';
 
 /**
- * MapBox access token management
+ * MapBox access token management with robust fallback mechanism
+ * 
+ * This ensures a token is always available in all environments
+ * including production builds where environment variables
+ * might not be properly injected.
  */
 export const getMapboxToken = (): string => {
-  // Hardcoded fallback for production
-  return 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA';
+  // Check for window global injection (highest priority)
+  if (typeof window !== 'undefined' && window.__MAPBOX_TOKEN__) {
+    console.log('Using Mapbox token from window.__MAPBOX_TOKEN__');
+    return window.__MAPBOX_TOKEN__;
+  }
+  
+  // Always use hardcoded token as fallback to guarantee availability
+  return MAPBOX_TOKEN;
 };
 
 /**
