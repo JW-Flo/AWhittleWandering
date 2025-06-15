@@ -124,22 +124,6 @@ function addCorsHeaders(response: Response): Response {
 }
 
 async function handleStaticFile(request: Request, env: Env): Promise<Response> {
-    const corsHeaders = new Headers({
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-signature',
-        'Access-Control-Max-Age': '86400'
-    });
-    
-    // Handle OPTIONS request for CORS preflight
-    if (request.method === 'OPTIONS') {
-        // Return a response with explicit CORS headers
-        return new Response(null, { 
-            status: 200,
-            headers: corsHeaders
-        });
-    }
-    
     const url = new URL(request.url);
     const path = url.pathname === '/' ? '/index.html' : url.pathname;
     const contentType = path.endsWith('.html') ? 'text/html' :
@@ -150,24 +134,21 @@ async function handleStaticFile(request: Request, env: Env): Promise<Response> {
     try {
         const file = await env.APP_KV.get(path);
         if (file === null) {
-            const notFoundHeaders = new Headers(corsHeaders);
             return new Response('Not Found', { 
                 status: 404,
-                headers: notFoundHeaders
+                headers: { 'Content-Type': 'text/plain' }
             });
         }
         
-        // Combine content type and CORS headers
-        const responseHeaders = new Headers(corsHeaders);
+        const responseHeaders = new Headers();
         responseHeaders.set('Content-Type', contentType);
         responseHeaders.set('Cache-Control', 'max-age=3600');
         
         return new Response(file, { headers: responseHeaders });
     } catch (error) {
-        const errorHeaders = new Headers(corsHeaders);
         return new Response('Internal Server Error', { 
             status: 500,
-            headers: errorHeaders 
+            headers: { 'Content-Type': 'text/plain' } 
         });
     }
 }
@@ -787,6 +768,18 @@ export default {
 
         // --- HOME PAGE / INDEX ROUTE ---
         if (url.pathname === "/" || url.pathname === "/index.html") {
+            // Handle OPTIONS preflight for the root route
+            if (request.method === 'OPTIONS') {
+                return new Response(null, {
+                    headers: {
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-signature',
+                        'Access-Control-Max-Age': '86400'
+                    }
+                });
+            }
+            
             return new Response(`
 <!DOCTYPE html>
 <html lang="en">
@@ -878,7 +871,10 @@ export default {
             `, {
                 headers: {
                     "Content-Type": "text/html",
-                    "Cache-Control": "max-age=3600"
+                    "Cache-Control": "max-age=3600",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                    "Access-Control-Allow-Headers": "Content-Type, Authorization, x-signature"
                 }
             });
         }
@@ -949,7 +945,7 @@ export default {
             return await handleItineraryRequest(request, env);
         }
 
-        // Handle CORS preflight requests
+        // Handle CORS preflight requests globally
         if (request.method === 'OPTIONS') {
             return new Response(null, {
                 headers: {
