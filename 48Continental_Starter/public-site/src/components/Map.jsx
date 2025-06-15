@@ -21,6 +21,9 @@ import './Map.css';
 import './MapEnhancements.css';
 import { ensureMapboxFormat } from "../utils/mapUtils";
 
+// Import performance monitoring utilities
+import { recordMetric, recordError } from '../utils/mapPerformanceMonitoring';
+
 // Import the centralized MapBox configuration
 import { getMapboxToken } from '../shared/mapbox/mapboxConfig.ts';
 
@@ -357,7 +360,6 @@ const Map = ({ vehicleData, tripData, weatherData, displayMode }) => {
 
     // Defer map initialization until container has non-zero dimensions
     waitForContainerDimensions(() => {
-      // Verify token one more time before map initialization
       try {
         // Get token and verify it's valid
         const token = getMapboxToken();
@@ -366,234 +368,245 @@ const Map = ({ vehicleData, tripData, weatherData, displayMode }) => {
         }
 
         // Ensure token is set on mapboxgl
-        if (window.mapboxgl) {
-          window.mapboxgl.accessToken = token;
-          let mapLoadStart;
-          if (import.meta.env.DEV || window.__MAP_DEBUG__) {
-            mapLoadStart = performance.now();
-          }
-          map.current.on('load', () => {
-            if (import.meta.env.DEV || window.__MAP_DEBUG__) {
-              const mapLoadTime = performance.now() - mapLoadStart;
-              console.log(`[Map] Mapbox map loaded successfully in ${mapLoadTime.toFixed(2)}ms`);
-            }
-            setMapInitialized(true);
-            setLoading(false); // Set loading to false when map is loaded successfully
-
-            // After map is loaded, add layers
-            if (tripData) {
-              let layerLoadStart;
-              if (import.meta.env.DEV || window.__MAP_DEBUG__) {
-                layerLoadStart = performance.now();
-              }
-              initializeMapLayers(map.current, tripData);
-              if (import.meta.env.DEV || window.__MAP_DEBUG__) {
-                console.log(`[Map] Layers initialized in ${(performance.now() - layerLoadStart).toFixed(2)}ms`);
-              }
-            }
-          });
-          const mapLoadStart = performance.now();
-          map.current.on('load', () => {
-            const mapLoadTime = performance.now() - mapLoadStart;
-            console.log(`[Map] Mapbox map loaded successfully in ${mapLoadTime.toFixed(2)}ms`);
-            setMapInitialized(true);
-            setLoading(false); // Set loading to false when map is loaded successfully
-
-            // After map is loaded, add layers
-            if (tripData) {
-              const layerLoadStart = performance.now();
-              initializeMapLayers(map.current, tripData);
-              console.log(`[Map] Layers initialized in ${(performance.now() - layerLoadStart).toFixed(2)}ms`);
-            }
-          });
-
-          // Error handling for map initialization
-          map.current.on('error', (e) => {
-            console.error('[Map] Mapbox error:', e);
-            setMapError(`Map error: ${e.error?.message || 'Unknown error'}`);
-            setLoading(false); // Set loading to false on error
-          });
-
-          // Setup mobile touch handlers
-          if (mapContainer.current && typeof Hammer !== "undefined") {
-            const hammer = new Hammer(mapContainer.current);
-            hammer.get('pinch').set({ enable: true });
-
-            hammer.on('pinchout', () => {
-              map.current.zoomIn();
-            });
-
-            hammer.on('pinchin', () => {
-              map.current.zoomOut();
-            });
-          } else if (mapContainer.current) {
-            console.warn('[Map] Hammer.js is not available. Touch gestures will be disabled.');
-          }
-
-        } catch (error) {
-          console.error('[Map] Critical initialization error:', error);
-          setMapError(`Failed to initialize map: ${error.message}`);
-          setLoading(false); // Set loading to false on initialization error
-
-          const script = document.createElement('script');
-          script.src = 'https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js';
-          script.onload = () => {
-            console.log('[Map] Attempted to reload Mapbox GL JS');
-            // Force page reload after 2 seconds if user permits
-            if (window.confirm('Map failed to load. Reload page to try again?')) {
-              window.location.reload();
-            }
-          };
-          script.onerror = (e) => {
-            console.error('[Map] Failed to load Mapbox GL JS script:', e);
-            setMapError('Failed to load Mapbox GL JS. Please check your network connection or try again later.');
-            // Optionally, notify monitoring systems here
-          };
-          document.head.appendChild(script);
+        if (!window.mapboxgl) {
+          throw new Error('Mapbox GL JS not loaded');
         }
 
-        // Cleanup function
-        return () => {
-          clearTimeout(loadingSafetyTimeout); // Clear the safety timeout
-          if (map.current) {
-            map.current.remove();
-            map.current = null;
-          }
-        };
-      }, [tripData, loading]);
+        window.mapboxgl.accessToken = token;
 
-    // Update map style based on layer toggles
-    useEffect(() => {
-      if (!mapInitialized || !map.current) return;
+        // Initialize performance tracking
+        const mapLoadStart = performance.now();
 
-      try {
-        // Store current view state
-        const currentCenter = map.current.getCenter();
-        const currentZoom = map.current.getZoom();
+        // Create map instance with error handling
+        map.current = new window.mapboxgl.Map({
+          container: mapContainer.current,
+          style: 'mapbox://styles/mapbox/dark-v11',
+          center: [-98.5795, 39.8283], // USA center
+          zoom: 3.5,
+          attributionControl: true
+        });
 
-        // Handle style changes
-        const newStyle = displayMode === 'satellite'
-          ? 'mapbox://styles/mapbox/satellite-streets-v11'
-          : 'mapbox://styles/mapbox/streets-v11';
+        map.current.on('load', () => {
+          const mapLoadTime = performance.now() - mapLoadStart;
+          console.log(`[Map] Mapbox map loaded successfully in ${mapLoadTime.toFixed(2)}ms`);
 
-        // Only change style if it's different
-        if (map.current.getStyle().name !== newStyle) {
-          map.current.once('style.load', () => {
-            try {
-              // Re-initialize all layers after style change
-              initializeMapLayers(map.current, tripData)
-                .catch(error => console.error('Error reinitializing layers after style change:', error));
-
-              // Restore the previous view
-              map.current.setCenter(currentCenter);
-              map.current.setZoom(currentZoom);
-            } catch (e) {
-              console.error('Error in style.load handler:', e);
-            }
+          // Record performance metrics
+          recordMetric('mapInit', mapLoadTime, {
+            mapWidth: mapContainer.current?.offsetWidth,
+            mapHeight: mapContainer.current?.offsetHeight
           });
 
-          map.current.setStyle(newStyle);
-        }
+          setMapInitialized(true);
+          setLoading(false); // Set loading to false when map is loaded successfully
 
-        // Handle weather overlay (placeholder for now)
-        if (mapLayers.weather && weatherData) {
-          console.log('Weather overlay would show data:', weatherData);
+          // After map is loaded, add layers
+          if (tripData) {
+            const layerLoadStart = performance.now();
+            initializeMapLayers(map.current, tripData);
+            const layerLoadTime = performance.now() - layerLoadStart;
+            console.log(`[Map] Layers initialized in ${layerLoadTime.toFixed(2)}ms`);
+
+            // Record layer initialization metrics
+            recordMetric('layerInit', layerLoadTime, {
+              tripDataSize: JSON.stringify(tripData).length,
+              numWaypoints: tripData?.waypoints?.length || 0
+            });
+          }
+        });
+
+        // Error handling for map initialization
+        map.current.on('error', (e) => {
+          console.error('[Map] Mapbox error:', e);
+          setMapError(`Map error: ${e.error?.message || 'Unknown error'}`);
+          setLoading(false); // Set loading to false on error
+
+          // Record the error for monitoring
+          recordError(e.error || e, 'mapbox-event-error');
+        });
+
+        // Setup mobile touch handlers
+        if (mapContainer.current && typeof Hammer !== "undefined") {
+          const hammer = new Hammer(mapContainer.current);
+          hammer.get('pinch').set({ enable: true });
+
+          hammer.on('pinchout', () => {
+            map.current.zoomIn();
+          });
+
+          hammer.on('pinchin', () => {
+            map.current.zoomOut();
+          });
+        } else if (mapContainer.current) {
+          console.warn('[Map] Hammer.js is not available. Touch gestures will be disabled.');
         }
       } catch (error) {
-        console.error('Error updating map style:', error);
+        console.error('[Map] Critical initialization error:', error);
+        setMapError(`Failed to initialize map: ${error.message}`);
+        setLoading(false); // Set loading to false on initialization error
+
+        // Record the initialization error for monitoring
+        recordError(error, 'map-initialization');
+
+        const script = document.createElement('script');
+        script.src = 'https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js';
+        script.onload = () => {
+          console.log('[Map] Attempted to reload Mapbox GL JS');
+          // Force page reload after 2 seconds if user permits
+          if (window.confirm('Map failed to load. Reload page to try again?')) {
+            window.location.reload();
+          }
+        };
+        script.onerror = (e) => {
+          console.error('[Map] Failed to load Mapbox GL JS script:', e);
+          setMapError('Failed to load Mapbox GL JS. Please check your network connection or try again later.');
+          // Optionally, notify monitoring systems here
+        };
+        document.head.appendChild(script);
       }
-    }, [displayMode, mapInitialized, weatherData, tripData]);
+    });
 
-    // Add and update charging stations on the map
-    useEffect(() => {
-      if (!mapInitialized || !map.current) return;
+    // Cleanup function
+    return () => {
+      clearTimeout(loadingSafetyTimeout); // Clear the safety timeout
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, [tripData, loading]);
 
-      try {
-        // Handle charging stations layer
-        const sourceId = 'charging-stations';
-        const layerId = 'charging-stations-layer';
+  // Update map style based on layer toggles
+  useEffect(() => {
+    if (!mapInitialized || !map.current) return;
 
-        // Remove existing layer and source if they exist
-        if (map.current.getLayer(layerId)) {
-          map.current.removeLayer(layerId);
-        }
+    try {
+      // Store current view state
+      const currentCenter = map.current.getCenter();
+      const currentZoom = map.current.getZoom();
 
-        if (map.current.getSource(sourceId)) {
-          map.current.removeSource(sourceId);
-        }
+      // Handle style changes
+      const newStyle = displayMode === 'satellite'
+        ? 'mapbox://styles/mapbox/satellite-streets-v11'
+        : 'mapbox://styles/mapbox/streets-v11';
 
-        // Only add the layer if it's enabled and we have data
-        if (mapLayers.chargingStations && stationsData?.stations?.length > 0) {
-          console.log(`Adding ${stationsData.stations.length} charging stations to map`);
-          // Convert stations to GeoJSON
-          const stationsGeoJSON = {
-            type: 'FeatureCollection',
-            features: stationsData.stations
-              .filter(station => station && station.latitude && station.longitude)
-              .map(station => ({
-                type: 'Feature',
-                properties: {
-                  id: station.id || `station-${Math.random().toString(36).substring(2, 9)}`,
-                  name: station.name || 'Unknown Station',
-                  available: !!station.available,
-                  power: station.power || 0,
-                  connectorType: station.connectorType || 'Unknown',
-                  description: station.description || ''
-                },
-                geometry: {
-                  type: 'Point',
-                  coordinates: [station.longitude, station.latitude]
-                }
-              }))
-          };
+      // Only change style if it's different
+      if (map.current.getStyle().name !== newStyle) {
+        map.current.once('style.load', () => {
+          try {
+            // Re-initialize all layers after style change
+            initializeMapLayers(map.current, tripData)
+              .catch(error => console.error('Error reinitializing layers after style change:', error));
 
-          // Add stations source
-          map.current.addSource(sourceId, {
-            type: 'geojson',
-            data: stationsGeoJSON
-          });
+            // Restore the previous view
+            map.current.setCenter(currentCenter);
+            map.current.setZoom(currentZoom);
+          } catch (e) {
+            console.error('Error in style.load handler:', e);
+          }
+        });
 
-          // Add a symbol layer for stations
-          map.current.addLayer({
-            id: layerId,
-            type: 'symbol',
-            source: sourceId,
-            layout: {
-              'icon-image': 'charging-station',
-              'icon-size': 1.2,
-              'icon-allow-overlap': true,
-              'text-field': ['get', 'name'],
-              'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-              'text-offset': [0, 1.2],
-              'text-anchor': 'top',
-              'text-size': 12,
-              'text-optional': true
-            },
-            paint: {
-              'text-color': '#333',
-              'text-halo-color': '#fff',
-              'text-halo-width': 1,
-              'icon-color': [
-                'case',
-                ['get', 'available'],
-                '#4CAF50', // Available (green)
-                '#F44336'  // Unavailable (red)
-              ]
-            }
-          });
+        map.current.setStyle(newStyle);
+      }
 
-          // Add click handler for stations
-          map.current.on('click', layerId, (e) => {
-            if (!e.features || !e.features[0]) return;
+      // Handle weather overlay (placeholder for now)
+      if (mapLayers.weather && weatherData) {
+        console.log('Weather overlay would show data:', weatherData);
+      }
+    } catch (error) {
+      console.error('Error updating map style:', error);
+    }
+  }, [displayMode, mapInitialized, weatherData, tripData]);
 
-            const coordinates = e.features[0].geometry.coordinates.slice();
-            const { name, available, power, connectorType, description } = e.features[0].properties;
+  // Add and update charging stations on the map
+  useEffect(() => {
+    if (!mapInitialized || !map.current) return;
 
-            // Create popup content
-            const statusText = available ? 'Available' : 'In Use';
-            const statusClass = available ? 'status-available' : 'status-unavailable';
+    try {
+      // Handle charging stations layer
+      const sourceId = 'charging-stations';
+      const layerId = 'charging-stations-layer';
 
-            const popupContent = `
+      // Remove existing layer and source if they exist
+      if (map.current.getLayer(layerId)) {
+        map.current.removeLayer(layerId);
+      }
+
+      if (map.current.getSource(sourceId)) {
+        map.current.removeSource(sourceId);
+      }
+
+      // Only add the layer if it's enabled and we have data
+      if (mapLayers.chargingStations && stationsData?.stations?.length > 0) {
+        console.log(`Adding ${stationsData.stations.length} charging stations to map`);
+        // Convert stations to GeoJSON
+        const stationsGeoJSON = {
+          type: 'FeatureCollection',
+          features: stationsData.stations
+            .filter(station => station && station.latitude && station.longitude)
+            .map(station => ({
+              type: 'Feature',
+              properties: {
+                id: station.id || `station-${Math.random().toString(36).substring(2, 9)}`,
+                name: station.name || 'Unknown Station',
+                available: !!station.available,
+                power: station.power || 0,
+                connectorType: station.connectorType || 'Unknown',
+                description: station.description || ''
+              },
+              geometry: {
+                type: 'Point',
+                coordinates: [station.longitude, station.latitude]
+              }
+            }))
+        };
+
+        // Add stations source
+        map.current.addSource(sourceId, {
+          type: 'geojson',
+          data: stationsGeoJSON
+        });
+
+        // Add a symbol layer for stations
+        map.current.addLayer({
+          id: layerId,
+          type: 'symbol',
+          source: sourceId,
+          layout: {
+            'icon-image': 'charging-station',
+            'icon-size': 1.2,
+            'icon-allow-overlap': true,
+            'text-field': ['get', 'name'],
+            'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+            'text-offset': [0, 1.2],
+            'text-anchor': 'top',
+            'text-size': 12,
+            'text-optional': true
+          },
+          paint: {
+            'text-color': '#333',
+            'text-halo-color': '#fff',
+            'text-halo-width': 1,
+            'icon-color': [
+              'case',
+              ['get', 'available'],
+              '#4CAF50', // Available (green)
+              '#F44336'  // Unavailable (red)
+            ]
+          }
+        });
+
+        // Add click handler for stations
+        map.current.on('click', layerId, (e) => {
+          if (!e.features || !e.features[0]) return;
+
+          const coordinates = e.features[0].geometry.coordinates.slice();
+          const { name, available, power, connectorType, description } = e.features[0].properties;
+
+          // Create popup content
+          const statusText = available ? 'Available' : 'In Use';
+          const statusClass = available ? 'status-available' : 'status-unavailable';
+
+          const popupContent = `
             <div class="map-popup charging-popup">
               <h4>${name || 'Charging Station'}</h4>
               <p>${description || 'Tesla Supercharger'}</p>
@@ -603,135 +616,135 @@ const Map = ({ vehicleData, tripData, weatherData, displayMode }) => {
             </div>
           `;
 
-            // Create popup
-            new mapboxgl.Popup()
-              .setLngLat(coordinates)
-              .setHTML(popupContent)
-              .addTo(map.current);
-          });
+          // Create popup
+          new mapboxgl.Popup()
+            .setLngLat(coordinates)
+            .setHTML(popupContent)
+            .addTo(map.current);
+        });
 
-          // Change cursor on hover
-          map.current.on('mouseenter', layerId, () => {
-            map.current.getCanvas().style.cursor = 'pointer';
-          });
+        // Change cursor on hover
+        map.current.on('mouseenter', layerId, () => {
+          map.current.getCanvas().style.cursor = 'pointer';
+        });
 
-          map.current.on('mouseleave', layerId, () => {
-            map.current.getCanvas().style.cursor = '';
-          });
-        }
-      } catch (error) {
-        console.error('Error updating charging stations:', error);
+        map.current.on('mouseleave', layerId, () => {
+          map.current.getCanvas().style.cursor = '';
+        });
       }
-    }, [mapLayers.chargingStations, stationsData, mapInitialized]);
+    } catch (error) {
+      console.error('Error updating charging stations:', error);
+    }
+  }, [mapLayers.chargingStations, stationsData, mapInitialized]);
 
-    // Update map data when tripData changes - with improved load handling
-    useEffect(() => {
-      if (!map.current || !tripData) return;
+  // Update map data when tripData changes - with improved load handling
+  useEffect(() => {
+    if (!map.current || !tripData) return;
 
-      console.log('Trip data changed, updating map layers', {
-        hasRoute: !!tripData.route,
-        hasStops: !!tripData.stops,
-        mapReady: mapInitialized
-      });
+    console.log('Trip data changed, updating map layers', {
+      hasRoute: !!tripData.route,
+      hasStops: !!tripData.stops,
+      mapReady: mapInitialized
+    });
 
-      try {
-        // Only add layers if map is already loaded
-        if (mapInitialized) {
-          console.log('Map is ready, initializing layers immediately');
-          // Re-initialize layers with new data
+    try {
+      // Only add layers if map is already loaded
+      if (mapInitialized) {
+        console.log('Map is ready, initializing layers immediately');
+        // Re-initialize layers with new data
+        initializeMapLayers(map.current, tripData)
+          .catch(error => {
+            console.error('Error updating map data:', error);
+            setMapError('Failed to update map data, but map is still functional');
+          });
+      } else {
+        // If map is not ready yet, set up an event listener for the load event
+        console.log('Map not ready, waiting for load event to initialize layers');
+        const handleMapLoad = () => {
+          console.log('Map load event fired, initializing layers');
           initializeMapLayers(map.current, tripData)
             .catch(error => {
-              console.error('Error updating map data:', error);
-              setMapError('Failed to update map data, but map is still functional');
+              console.error('Error initializing map layers on delayed load:', error);
+              setMapError('Failed to initialize map data, but map is still functional');
             });
-        } else {
-          // If map is not ready yet, set up an event listener for the load event
-          console.log('Map not ready, waiting for load event to initialize layers');
-          const handleMapLoad = () => {
-            console.log('Map load event fired, initializing layers');
-            initializeMapLayers(map.current, tripData)
-              .catch(error => {
-                console.error('Error initializing map layers on delayed load:', error);
-                setMapError('Failed to initialize map data, but map is still functional');
-              });
 
-            // Remove this event listener after it fires
+          // Remove this event listener after it fires
+          map.current.off('load', handleMapLoad);
+        };
+
+        // Add the load event listener
+        map.current.on('load', handleMapLoad);
+
+        return () => {
+          // Clean up the event listener if the component unmounts before the map loads
+          if (map.current) {
             map.current.off('load', handleMapLoad);
-          };
-
-          // Add the load event listener
-          map.current.on('load', handleMapLoad);
-
-          return () => {
-            // Clean up the event listener if the component unmounts before the map loads
-            if (map.current) {
-              map.current.off('load', handleMapLoad);
-            }
-          };
-        }
-      } catch (error) {
-        console.error('Error in tripData effect:', error);
+          }
+        };
       }
-    }, [tripData, mapInitialized]);
+    } catch (error) {
+      console.error('Error in tripData effect:', error);
+    }
+  }, [tripData, mapInitialized]);
 
-    // Add and update vehicle marker
-    useEffect(() => {
-      if (!mapInitialized || !map.current || !vehicleData) return;
+  // Add and update vehicle marker
+  useEffect(() => {
+    if (!mapInitialized || !map.current || !vehicleData) return;
 
-      try {
-        // Use our ensureMapboxFormat utility to handle any coordinate format
-        // This will work whether vehicleData.location is an array, object, etc.
-        const coordinates = ensureMapboxFormat(vehicleData.location || vehicleData);
+    try {
+      // Use our ensureMapboxFormat utility to handle any coordinate format
+      // This will work whether vehicleData.location is an array, object, etc.
+      const coordinates = ensureMapboxFormat(vehicleData.location || vehicleData);
 
-        if (!coordinates) {
-          console.warn('Invalid vehicle coordinates:', vehicleData.location || vehicleData);
-          return;
-        }
+      if (!coordinates) {
+        console.warn('Invalid vehicle coordinates:', vehicleData.location || vehicleData);
+        return;
+      }
 
-        // Function to create/update the vehicle marker
-        const updateVehicleMarker = () => {
-          try {
-            if (!vehicleMarker.current) {
-              // Create a vehicle marker element
-              const el = document.createElement('div');
-              el.className = 'vehicle-marker';
+      // Function to create/update the vehicle marker
+      const updateVehicleMarker = () => {
+        try {
+          if (!vehicleMarker.current) {
+            // Create a vehicle marker element
+            const el = document.createElement('div');
+            el.className = 'vehicle-marker';
 
-              // Use a better SVG car icon for better visibility
-              const batteryLevel = vehicleData.batteryLevel || 100;
-              el.innerHTML = `
+            // Use a better SVG car icon for better visibility
+            const batteryLevel = vehicleData.batteryLevel || 100;
+            el.innerHTML = `
               <svg viewBox="0 0 24 24" width="36" height="36" fill="${batteryLevel < 20 ? '#f44336' : '#4CAF50'}">
                 <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
               </svg>
             `;
 
-              // Add pulse effect if car is moving
-              if (vehicleData.speed > 0) {
-                el.classList.add('vehicle-moving');
-              }
+            // Add pulse effect if car is moving
+            if (vehicleData.speed > 0) {
+              el.classList.add('vehicle-moving');
+            }
 
-              // Add vehicle marker to map
-              vehicleMarker.current = new mapboxgl.Marker({
-                element: el,
-                anchor: 'center',
-                rotation: vehicleData.heading || 0,
-                rotationAlignment: 'map'
-              })
-                .setLngLat(coordinates)
-                .addTo(map.current);
+            // Add vehicle marker to map
+            vehicleMarker.current = new mapboxgl.Marker({
+              element: el,
+              anchor: 'center',
+              rotation: vehicleData.heading || 0,
+              rotationAlignment: 'map'
+            })
+              .setLngLat(coordinates)
+              .addTo(map.current);
 
-              // Add popup for vehicle with better formatting
-              const batteryClass = vehicleData.batteryLevel < 20 ? 'battery-low' :
-                vehicleData.batteryLevel > 80 ? 'battery-high' : '';
+            // Add popup for vehicle with better formatting
+            const batteryClass = vehicleData.batteryLevel < 20 ? 'battery-low' :
+              vehicleData.batteryLevel > 80 ? 'battery-high' : '';
 
-              // Create and attach popup to the marker
-              new mapboxgl.Popup({
-                offset: 25,
-                closeButton: false,
-                closeOnClick: false,
-                maxWidth: '300px',
-                className: 'vehicle-marker-popup'
-              })
-                .setHTML(`
+            // Create and attach popup to the marker
+            new mapboxgl.Popup({
+              offset: 25,
+              closeButton: false,
+              closeOnClick: false,
+              maxWidth: '300px',
+              className: 'vehicle-marker-popup'
+            })
+              .setHTML(`
                 <div class="vehicle-popup">
                   <h4>Whittle Wagon</h4>
                   <div class="vehicle-popup-stats">
@@ -750,208 +763,208 @@ const Map = ({ vehicleData, tripData, weatherData, displayMode }) => {
             </div>
           </div>
         `)
-                .addTo(map.current);
+              .addTo(map.current);
 
-            } else {
-              // Update existing marker
-              vehicleMarker.current
-                .setLngLat(coordinates)
-                .setRotation(vehicleData.heading || 0);
+          } else {
+            // Update existing marker
+            vehicleMarker.current
+              .setLngLat(coordinates)
+              .setRotation(vehicleData.heading || 0);
 
-              // Update marker appearance based on battery level
-              const markerElement = vehicleMarker.current.getElement();
-              if (markerElement) {
-                const batteryLevel = vehicleData.batteryLevel || 100;
-                const batteryColor = batteryLevel < 20 ? '#f44336' : '#4CAF50';
+            // Update marker appearance based on battery level
+            const markerElement = vehicleMarker.current.getElement();
+            if (markerElement) {
+              const batteryLevel = vehicleData.batteryLevel || 100;
+              const batteryColor = batteryLevel < 20 ? '#f44336' : '#4CAF50';
 
-                const svgElement = markerElement.querySelector('svg');
-                if (svgElement) {
-                  svgElement.setAttribute('fill', batteryColor);
-                }
+              const svgElement = markerElement.querySelector('svg');
+              if (svgElement) {
+                svgElement.setAttribute('fill', batteryColor);
+              }
 
-                // Update pulse effect based on movement
-                if (vehicleData.speed > 0) {
-                  markerElement.classList.add('vehicle-moving');
-                } else {
-                  markerElement.classList.remove('vehicle-moving');
-                }
+              // Update pulse effect based on movement
+              if (vehicleData.speed > 0) {
+                markerElement.classList.add('vehicle-moving');
+              } else {
+                markerElement.classList.remove('vehicle-moving');
               }
             }
-          } catch (error) {
-            console.error('Error updating vehicle marker:', error);
           }
-        };
-
-        // Update the marker
-        updateVehicleMarker();
-      } catch (error) {
-        console.error('Error in vehicle data effect:', error);
-      }
-    }, [vehicleData, mapInitialized]);
-
-    // Debug keyboard shortcut
-    useEffect(() => {
-      const handleKeyDown = (e) => {
-        // Toggle debug panel with Ctrl+Shift+D
-        if (e.ctrlKey && e.shiftKey && e.key === 'D') {
-          setDebugVisible(prev => !prev);
-        }
-      };
-
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
-
-    // Map health monitor to auto-reset if needed
-    useEffect(() => {
-      if (!mapInitialized || !map.current) return;
-
-      // Variables to track map health
-      let consecutiveFailures = 0;
-      const MAX_FAILURES = 3;
-
-      const healthCheck = () => {
-        try {
-          // Try to perform an operation that would fail if the map is broken
-          const center = map.current.getCenter();
-          const zoom = map.current.getZoom();
-
-          // If we get here, the map is still responsive
-          consecutiveFailures = 0;
-          console.log("Map health check: OK", { center, zoom });
         } catch (error) {
-          consecutiveFailures++;
-          console.warn(`Map health check failed (${consecutiveFailures}/${MAX_FAILURES})`, error);
-
-          // If multiple consecutive failures, attempt auto-recovery
-          if (consecutiveFailures >= MAX_FAILURES) {
-            console.error("Map appears to be unresponsive. Triggering auto-recovery...");
-            handleResetMap();
-            consecutiveFailures = 0;
-          }
+          console.error('Error updating vehicle marker:', error);
         }
       };
 
-      // Run health check every 45 seconds
-      const healthCheckInterval = setInterval(healthCheck, 45000);
+      // Update the marker
+      updateVehicleMarker();
+    } catch (error) {
+      console.error('Error in vehicle data effect:', error);
+    }
+  }, [vehicleData, mapInitialized]);
 
-      return () => {
-        clearInterval(healthCheckInterval);
-      };
-    }, [mapInitialized]);
+  // Debug keyboard shortcut
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Toggle debug panel with Ctrl+Shift+D
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        setDebugVisible(prev => !prev);
+      }
+    };
 
-    // Handle reset map for auto-recovery or debug panel
-    const handleResetMap = useCallback(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Map health monitor to auto-reset if needed
+  useEffect(() => {
+    if (!mapInitialized || !map.current) return;
+
+    // Variables to track map health
+    let consecutiveFailures = 0;
+    const MAX_FAILURES = 3;
+
+    const healthCheck = () => {
       try {
-        console.log("Resetting map instance...");
+        // Try to perform an operation that would fail if the map is broken
+        const center = map.current.getCenter();
+        const zoom = map.current.getZoom();
 
-        if (map.current) {
-          map.current.remove();
-          map.current = null;
-        }
-
-        if (vehicleMarker.current) {
-          vehicleMarker.current = null;
-        }
-
-        setMapInitialized(false);
-        setMapError(null);
-        setLoading(true);
-
-        // Force a repaint of the map container
-        if (mapContainer.current) {
-          const oldContainer = mapContainer.current;
-          const parent = oldContainer.parentNode;
-          if (parent) {
-            const newContainer = document.createElement('div');
-            newContainer.className = 'map';
-            mapContainer.current = newContainer;
-            parent.replaceChild(newContainer, oldContainer);
-          }
-        }
-
-        console.log("Map reset complete. Will re-initialize.");
+        // If we get here, the map is still responsive
+        consecutiveFailures = 0;
+        console.log("Map health check: OK", { center, zoom });
       } catch (error) {
-        console.error('Error resetting map:', error);
-      }
-    }, []);
+        consecutiveFailures++;
+        console.warn(`Map health check failed (${consecutiveFailures}/${MAX_FAILURES})`, error);
 
-    // Handle map container click to reset errors
-    const handleMapContainerClick = () => {
-      if (mapError) {
-        setMapError(null);
-        setMapInitAttempted(false);
-      }
-    };
-
-    // Reset map handler for debug panel
-    const handleDebugResetMap = () => {
-      handleResetMap();
-    };
-
-    // Refresh data handler for debug panel
-    const handleRefreshData = () => {
-      console.log('Data refresh requested from debug panel');
-      // This would normally call a function passed via props to refresh the data
-      // For now, we'll just log it and re-initialize with current data
-      if (map.current && mapInitialized && tripData) {
-        initializeMapLayers(map.current, tripData)
-          .catch(error => console.error('Error refreshing map data:', error));
+        // If multiple consecutive failures, attempt auto-recovery
+        if (consecutiveFailures >= MAX_FAILURES) {
+          console.error("Map appears to be unresponsive. Triggering auto-recovery...");
+          handleResetMap();
+          consecutiveFailures = 0;
+        }
       }
     };
 
-    return (
-      <div
-        className={`map-container ${fullscreen ? 'fullscreen' : ''}`}
-        onClick={handleMapContainerClick}
-      >
-        {loading && (
-          <div className="map-loading">
-            <div className="spinner"></div>
-            <p>Loading map...</p>
-          </div>
-        )}
+    // Run health check every 45 seconds
+    const healthCheckInterval = setInterval(healthCheck, 45000);
 
-        {mapError && (
-          <div className="map-error">
-            <h3>Map Error</h3>
-            <p>{mapError}</p>
-            <button onClick={() => {
-              setMapError(null);
-              setMapInitAttempted(false);
-            }}>Try Again</button>
-          </div>
-        )}
+    return () => {
+      clearInterval(healthCheckInterval);
+    };
+  }, [mapInitialized]);
 
-        <div ref={mapContainer} className="map" />
+  // Handle reset map for auto-recovery or debug panel
+  const handleResetMap = useCallback(() => {
+    try {
+      console.log("Resetting map instance...");
 
-        {tripData && <TripStatistics tripData={tripData} />}
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
 
-        {debugVisible && (
-          <MapDebugPanel
-            tripData={tripData}
-            vehicleData={vehicleData}
-            mapReady={mapInitialized}
-            onResetMap={handleDebugResetMap}
-            onRefreshData={handleRefreshData}
-          />
-        )}
-      </div>
-    );
+      if (vehicleMarker.current) {
+        vehicleMarker.current = null;
+      }
+
+      setMapInitialized(false);
+      setMapError(null);
+      setLoading(true);
+
+      // Force a repaint of the map container
+      if (mapContainer.current) {
+        const oldContainer = mapContainer.current;
+        const parent = oldContainer.parentNode;
+        if (parent) {
+          const newContainer = document.createElement('div');
+          newContainer.className = 'map';
+          mapContainer.current = newContainer;
+          parent.replaceChild(newContainer, oldContainer);
+        }
+      }
+
+      console.log("Map reset complete. Will re-initialize.");
+    } catch (error) {
+      console.error('Error resetting map:', error);
+    }
+  }, []);
+
+  // Handle map container click to reset errors
+  const handleMapContainerClick = () => {
+    if (mapError) {
+      setMapError(null);
+      setMapInitAttempted(false);
+    }
   };
 
-  Map.propTypes = {
-    vehicleData: PropTypes.object,
-    tripData: PropTypes.object,
-    weatherData: PropTypes.object,
-    stationsData: PropTypes.object,
-    fullscreen: PropTypes.bool,
-    mapLayers: PropTypes.shape({
-      weather: PropTypes.bool,
-      traffic: PropTypes.bool,
-      satellite: PropTypes.bool,
-      chargingStations: PropTypes.bool
-    })
+  // Reset map handler for debug panel
+  const handleDebugResetMap = () => {
+    handleResetMap();
   };
 
-  export default Map;
+  // Refresh data handler for debug panel
+  const handleRefreshData = () => {
+    console.log('Data refresh requested from debug panel');
+    // This would normally call a function passed via props to refresh the data
+    // For now, we'll just log it and re-initialize with current data
+    if (map.current && mapInitialized && tripData) {
+      initializeMapLayers(map.current, tripData)
+        .catch(error => console.error('Error refreshing map data:', error));
+    }
+  };
+
+  return (
+    <div
+      className={`map-container ${fullscreen ? 'fullscreen' : ''}`}
+      onClick={handleMapContainerClick}
+    >
+      {loading && (
+        <div className="map-loading">
+          <div className="spinner"></div>
+          <p>Loading map...</p>
+        </div>
+      )}
+
+      {mapError && (
+        <div className="map-error">
+          <h3>Map Error</h3>
+          <p>{mapError}</p>
+          <button onClick={() => {
+            setMapError(null);
+            setMapInitAttempted(false);
+          }}>Try Again</button>
+        </div>
+      )}
+
+      <div ref={mapContainer} className="map" />
+
+      {tripData && <TripStatistics tripData={tripData} />}
+
+      {debugVisible && (
+        <MapDebugPanel
+          tripData={tripData}
+          vehicleData={vehicleData}
+          mapReady={mapInitialized}
+          onResetMap={handleDebugResetMap}
+          onRefreshData={handleRefreshData}
+        />
+      )}
+    </div>
+  );
+};
+
+Map.propTypes = {
+  vehicleData: PropTypes.object,
+  tripData: PropTypes.object,
+  weatherData: PropTypes.object,
+  stationsData: PropTypes.object,
+  fullscreen: PropTypes.bool,
+  mapLayers: PropTypes.shape({
+    weather: PropTypes.bool,
+    traffic: PropTypes.bool,
+    satellite: PropTypes.bool,
+    chargingStations: PropTypes.bool
+  })
+};
+
+export default Map;
