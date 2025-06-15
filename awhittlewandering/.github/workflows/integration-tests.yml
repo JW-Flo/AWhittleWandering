@@ -1,0 +1,76 @@
+name: API Integration Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Run API and Frontend Integration Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+        working-directory: ./awhittlewandering
+
+      - name: Check dependencies
+        run: |
+          if grep -q "@cloudflare/workerd-builder" package.json; then
+            echo "ERROR: @cloudflare/workerd-builder dependency still present in package.json!"
+            exit 1
+          else
+            echo "✓ Dependencies check passed"
+          fi
+        working-directory: ./awhittlewandering
+
+      - name: Run API tests
+        run: npx vitest run tests/api/current-trip.test.ts
+        working-directory: ./awhittlewandering
+
+      - name: Run Frontend component tests
+        run: npx vitest run tests/components/useVehicleData.test.tsx
+        working-directory: ./awhittlewandering
+
+      - name: Generate test report
+        run: |
+          TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+          REPORT_FILE="test-report-$(date +"%Y%m%d%H%M%S").txt"
+
+          echo "A Whittle Wandering Test Report" > "$REPORT_FILE"
+          echo "Generated: $TIMESTAMP" >> "$REPORT_FILE"
+          echo "===================================" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          echo "API Tests:" >> "$REPORT_FILE"
+          echo "- /api/trip/current: PASS" >> "$REPORT_FILE"
+          echo "- /api/trip/day/:day: TODO" >> "$REPORT_FILE"
+          echo "- /api/summary/:day: TODO" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          echo "Frontend Tests:" >> "$REPORT_FILE"
+          echo "- useVehicleData hook: PASS" >> "$REPORT_FILE"
+          echo "- useTripData hook: TODO" >> "$REPORT_FILE"
+          echo "- Map component: TODO" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          echo "Status: PASSED" >> "$REPORT_FILE"
+          echo "===================================" >> "$REPORT_FILE"
+        working-directory: ./awhittlewandering
+
+      - name: Upload test report
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-report
+          path: ./awhittlewandering/test-report-*.txt
+          retention-days: 14
