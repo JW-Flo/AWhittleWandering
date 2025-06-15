@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "strict": true,
+    "lib": ["ES2022", "DOM"],
+    "types": ["@cloudflare/workers-types"],
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "typeRoots": ["node_modules/@types", "packages/shared"],
+    "baseUrl": ".",
+    "paths": {
+      "@awhittlewandering/*": ["packages/*"]
+    }
+  },
+  "include": [
+    "packages/**/*.ts",
+    "packages/**/*.tsx",
+    "workers/**/*.ts",
+    "packages/shared/itty-router.d.ts"
+  ],
+  "exclude": ["node_modules"]
+}
