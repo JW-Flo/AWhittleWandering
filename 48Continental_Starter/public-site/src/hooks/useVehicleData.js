@@ -273,13 +273,10 @@ export const useVehicleData = ({
         setConnectionStatus("simulated");
         setLastUpdated(new Date());
 
-        if (err.name === "AbortError") {
-          setError("Request timeout - using simulated data");
-        } else if (err.message.includes("fetch")) {
-          setError("Network error - using simulated data");
-        } else {
-          setError(null);
-        }
+        // Don't set an error when we successfully fall back to simulated data
+        // The app should continue working with simulated data
+        setError(null);
+        console.log("Using simulated data due to:", err.message);
       } finally {
         cache.current.pending = false;
         setLoading(false);

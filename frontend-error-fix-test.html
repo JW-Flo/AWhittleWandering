@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend Error Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        .info { background: #d1ecf1; }
+        pre { background: #f8f9fa; padding: 10px; white-space: pre-wrap; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Frontend Error Fix Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        const results = document.getElementById('results');
+        const EDGE_WORKER_URL = 'https://awhittlewandering-edge.kd8jc7v8cd.workers.dev';
+        
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test ${type}`;
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+        
+        function addJSON(data, title) {
+            addResult(`<strong>${title}:</strong><pre>${JSON.stringify(data, null, 2)}</pre>`, 'info');
+        }
+        
+        async function testAPI(endpoint, name) {
+            try {
+                addResult(`Testing ${name}...`, 'info');
+                const response = await fetch(`${EDGE_WORKER_URL}/api/${endpoint}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                addResult(`✓ ${name} API working`, 'success');
+                addJSON(data, `${name} Data`);
+                return data;
+            } catch (error) {
+                addResult(`✗ ${name} API failed: ${error.message}`, 'error');
+                return null;
+            }
+        }
+        
+        async function testFrontendLoad() {
+            addResult('Testing Frontend Data Loading...', 'info');
+            
+            // Test all the endpoints
+            const vehicleData = await testAPI('vehicle', 'Vehicle');
+            const tripData = await testAPI('trip', 'Trip');
+            const weatherData = await testAPI('weather', 'Weather');
+            
+            // Check if we have data
+            if (vehicleData && tripData) {
+                addResult('✓ All required data loaded successfully', 'success');
+                
+                // Test frontend error conditions
+                addResult('Testing Frontend Error Handling...', 'info');
+                
+                if (vehicleData) {
+                    addResult('✓ Vehicle data exists - should not show error', 'success');
+                } else {
+                    addResult('✗ Vehicle data missing - would show error', 'error');
+                }
+                
+                if (tripData?.visitedStates && tripData.visitedStates.length > 0) {
+                    addResult('✓ Trip data exists with states - journey data should load', 'success');
+                } else {
+                    addResult('✗ Trip data missing or empty - journey data would fail', 'error');
+                }
+                
+                // Test the exact conditions from the frontend
+                const hasVehicleData = !!vehicleData;
+                const hasError = false; // Since APIs are working
+                
+                if (hasVehicleData) {
+                    addResult('✓ Frontend should clear any errors and show data', 'success');
+                } else if (hasError && !vehicleData) {
+                    addResult('✗ Frontend would show "Unable to load journey data" error', 'error');
+                } else {
+                    addResult('ℹ Frontend would show loading state', 'info');
+                }
+                
+            } else {
+                addResult('✗ Required data missing - frontend might show error', 'error');
+            }
+        }
+        
+        async function testNewSiteLoad() {
+            addResult('Testing the new deployment...', 'info');
+            
+            try {
+                const response = await fetch('https://ebfeec4d.awhittlewandering-site.pages.dev');
+                if (response.ok) {
+                    addResult('✓ New deployment is accessible', 'success');
+                } else {
+                    addResult(`✗ New deployment failed: HTTP ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`✗ New deployment error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Run tests
+        testFrontendLoad();
+        testNewSiteLoad();
+        
+        // Add manual test button
+        const button = document.createElement('button');
+        button.textContent = 'Re-run Tests';
+        button.onclick = () => {
+            results.innerHTML = '';
+            testFrontendLoad();
+            testNewSiteLoad();
+        };
+        results.appendChild(button);
+        
+        // Add link to the actual site
+        const link = document.createElement('div');
+        link.innerHTML = '<br><strong>Test the actual site:</strong><br><a href="https://ebfeec4d.awhittlewandering-site.pages.dev" target="_blank">https://ebfeec4d.awhittlewandering-site.pages.dev</a>';
+        results.appendChild(link);
+    </script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Frontend API Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        pre { background: #f8f9fa; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Frontend API Debug Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        const EDGE_WORKER_URL = 'https://awhittlewandering-edge.kd8jc7v8cd.workers.dev';
+        
+        async function runTests() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Running frontend API tests...</p>';
+            
+            const tests = [
+                {
+                    name: 'Vehicle Data',
+                    url: `${EDGE_WORKER_URL}/api/vehicle`,
+                    test: (data) => data && data.model && data.batteryLevel !== undefined
+                },
+                {
+                    name: 'Trip Data', 
+                    url: `${EDGE_WORKER_URL}/api/trip`,
+                    test: (data) => data && (data.currentState || data.visitedStates)
+                },
+                {
+                    name: 'Weather Data',
+                    url: `${EDGE_WORKER_URL}/api/weather?lat=34.081&lon=-118.372`,
+                    test: (data) => data && data.temperature !== undefined
+                },
+                {
+                    name: 'Itinerary Data',
+                    url: `${EDGE_WORKER_URL}/api/itinerary`, 
+                    test: (data) => data && data.type === 'FeatureCollection'
+                }
+            ];
+            
+            let allResults = [];
+            
+            for (const test of tests) {
+                try {
+                    console.log(`Testing ${test.name}...`);
+                    
+                    const startTime = Date.now();
+                    const response = await fetch(test.url, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    const duration = Date.now() - startTime;
+                    
+                    console.log(`${test.name} - Status:`, response.status);
+                    console.log(`${test.name} - Headers:`, [...response.headers.entries()]);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    console.log(`${test.name} - Data:`, data);
+                    
+                    const isValid = test.test(data);
+                    
+                    allResults.push({
+                        name: test.name,
+                        success: true,
+                        valid: isValid,
+                        status: response.status,
+                        duration,
+                        data,
+                        url: test.url
+                    });
+                    
+                } catch (error) {
+                    console.error(`${test.name} failed:`, error);
+                    allResults.push({
+                        name: test.name,
+                        success: false,
+                        valid: false,
+                        error: error.message,
+                        url: test.url
+                    });
+                }
+            }
+            
+            // Display results
+            let html = '';
+            for (const result of allResults) {
+                const cssClass = result.success && result.valid ? 'success' : 'error';
+                html += `
+                    <div class="test ${cssClass}">
+                        <h3>${result.name} ${result.success && result.valid ? '✅' : '❌'}</h3>
+                        <p><strong>URL:</strong> ${result.url}</p>
+                        ${result.success ? `
+                            <p><strong>Status:</strong> ${result.status} (${result.duration}ms)</p>
+                            <p><strong>Valid:</strong> ${result.valid ? 'Yes' : 'No'}</p>
+                            <details>
+                                <summary>Response Data</summary>
+                                <pre>${JSON.stringify(result.data, null, 2)}</pre>
+                            </details>
+                        ` : `
+                            <p><strong>Error:</strong> ${result.error}</p>
+                        `}
+                    </div>
+                `;
+            }
+            
+            // Test environment variables
+            html += `
+                <div class="test">
+                    <h3>Environment Check</h3>
+                    <p><strong>User Agent:</strong> ${navigator.userAgent}</p>
+                    <p><strong>Location:</strong> ${window.location.href}</p>
+                    <p><strong>Referrer:</strong> ${document.referrer || 'none'}</p>
+                </div>
+            `;
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        // Run tests immediately
+        runTests();
+    </script>
+</body>
+</html>
