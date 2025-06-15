@@ -47,10 +47,13 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     define: {
       // Ensure environment variables are available in production builds
+      // MAPBOX TOKEN HANDLING - define only the VITE_MAPBOX_TOKEN for clarity
       "import.meta.env.VITE_MAPBOX_TOKEN": JSON.stringify(
         env.VITE_MAPBOX_TOKEN ||
+          env.MAPBOX_TOKEN ||
           "pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA"
       ),
+      // OTHER ENVIRONMENT VARIABLES
       "import.meta.env.VITE_EDGE_WORKER_URL": JSON.stringify(
         env.VITE_EDGE_WORKER_URL ||
           "https://awhittlewandering-edge.kd8jc7v8cd.workers.dev"

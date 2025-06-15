@@ -6,8 +6,22 @@
   <title>The Wandering Whittle | The Great American Road Trip</title>
   <link rel="stylesheet" href="styles.css" />
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet" />
-  <!-- Mapbox token -->
-  <meta name="mapbox-token" content="pk.eyJ1IjoidGhld2FuZGVyaW5nd2hpdHRsZSIsImEiOiJjbHQxaXhzejYwYmU2MmpxdHl0MHowN3UzIn0.Q7xKTRlXvtimBHd39JqN1A">
+  <!-- Mapbox token - multiple safeguards to ensure availability -->
+  <meta name="mapbox-token" content="pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA">
+  <!-- Inject token to window object as early as possible -->
+  <script>
+    // Guaranteed token availability before any map initialization
+    window.__MAPBOX_TOKEN__ = "pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA";
+    
+    // Additional safeguards for Mapbox 
+    if (typeof mapboxgl !== 'undefined') {
+      mapboxgl.accessToken = window.__MAPBOX_TOKEN__;
+    }
+    
+    // Debug flag for development
+    window.__MAP_DEBUG__ = true;
+    console.log("[Mapbox Token Injection] Token set on window.__MAPBOX_TOKEN__");
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&display=swap" rel="stylesheet">
@@ -27,6 +41,13 @@
 
   <!-- Scripts -->
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
+  <!-- Set token again after Mapbox JS is loaded -->
+  <script>
+    if (typeof mapboxgl !== 'undefined') {
+      mapboxgl.accessToken = window.__MAPBOX_TOKEN__ || "pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA";
+      console.log("[Mapbox Post-Load] Token set on mapboxgl.accessToken");
+    }
+  </script>
   <script type="module" src="/src/index.jsx"></script>
   <script>
     // Register service worker for offline functionality
