@@ -229,8 +229,8 @@ export const useVehicleData = ({
           headers: {
             "Content-Type": "application/json",
             "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Pragma": "no-cache",
-            "Expires": "0"
+            Pragma: "no-cache",
+            Expires: "0",
           },
           signal: AbortSignal.timeout(8000), // Shorter timeout for better UX
         });
@@ -328,7 +328,7 @@ export const useVehicleData = ({
           console.log("🔗 WebSocket connected");
           setConnectionStatus("streaming");
           reconnectAttempts = 0;
-          
+
           // Start heartbeat to keep connection alive
           if (heartbeatTimer) clearInterval(heartbeatTimer);
           heartbeatTimer = setInterval(() => {
@@ -359,16 +359,18 @@ export const useVehicleData = ({
           console.log(`WebSocket closed: ${event.code} ${event.reason}`);
           setConnectionStatus("connected");
           if (heartbeatTimer) clearInterval(heartbeatTimer);
-          
+
           if (reconnectAttempts < maxReconnectAttempts) {
             const delay = Math.pow(2, reconnectAttempts) * 1000;
-            console.log(`Attempting to reconnect in ${delay/1000}s...`);
+            console.log(`Attempting to reconnect in ${delay / 1000}s...`);
             reconnectTimer = setTimeout(() => {
               reconnectAttempts++;
               connect();
             }, delay);
           } else {
-            console.warn("Max reconnection attempts reached, falling back to polling");
+            console.warn(
+              "Max reconnection attempts reached, falling back to polling"
+            );
             // Force a data refresh using polling when WebSocket fails
             fetchVehicleData(true);
           }
