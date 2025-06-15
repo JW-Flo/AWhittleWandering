@@ -10,8 +10,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:validate": "npm run build && node scripts/validate-build.js",
+    "verify:mapbox": "bash scripts/verify-mapbox-token.sh",
     "preview": "vite preview",
-    "deploy": "wrangler pages deploy dist --project-name=awhittlewandering-site",
+    "deploy": "npm run build:validate && wrangler pages deploy dist --project-name=awhittlewandering-site",
     "serve": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
@@ -19,6 +21,7 @@
     "test:real-data": "./scripts/run-tests-with-real-data.sh",
     "test:analyze": "node scripts/test-analyzer.js",
     "test:capture-failures": "npm run test:real-data || npm run test:analyze",
+    "test:mapbox": "npm run build && npx serve -s dist -p 4000",
     "setup": "./scripts/setup-environment.sh",
     "preinstall": "echo 'Skipping Node.js version check for local development'",
     "postinstall": "echo 'Setup complete. Run npm run dev to start development server.'"

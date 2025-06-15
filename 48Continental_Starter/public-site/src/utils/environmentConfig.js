@@ -95,30 +95,68 @@ export const getEnvironmentVariable = (key, defaultValue = "") => {
 
 /**
  * Gets the Mapbox token from available environment sources
- * Uses a simplified, reliable approach with guaranteed fallback
+ * Uses a robust, fault-tolerant approach with multiple redundant sources
+ * and guaranteed fallback mechanism
+ * 
  * @returns {string} Mapbox token or hardcoded fallback
  */
 export const getMapboxToken = () => {
-  // First priority: directly access the environment variable that was statically replaced by Vite
-  if (import.meta.env.VITE_MAPBOX_TOKEN) {
-    return import.meta.env.VITE_MAPBOX_TOKEN;
-  }
+  let token = null;
+  const sources = [];
 
-  // Second priority: meta tag in HTML (if in browser)
-  if (typeof document !== "undefined") {
-    const metaToken = document
-      .querySelector('meta[name="mapbox-token"]')
-      ?.getAttribute("content");
-    if (metaToken) return metaToken;
-  }
+  try {
+    // First priority: directly access the environment variable that was statically replaced by Vite
+    // This should always be available if Vite build is configured correctly
+    if (import.meta.env.VITE_MAPBOX_TOKEN) {
+      token = import.meta.env.VITE_MAPBOX_TOKEN;
+      sources.push('VITE_MAPBOX_TOKEN');
+    }
 
-  // Third priority: window global set in the HTML
-  if (typeof window !== "undefined" && window.__MAPBOX_TOKEN__) {
-    return window.__MAPBOX_TOKEN__;
-  }
+    // Second priority: meta tag in HTML (if in browser)
+    // This is always available in production if HTML is properly configured
+    if (!token && typeof document !== "undefined") {
+      const metaToken = document
+        .querySelector('meta[name="mapbox-token"]')
+        ?.getAttribute("content");
+      if (metaToken) {
+        token = metaToken;
+        sources.push('meta[name="mapbox-token"]');
+      }
+    }
 
-  // Final fallback: hardcoded token that's guaranteed to work
-  return "pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA";
+    // Third priority: window global set in the HTML
+    // This provides a JS-based alternative to meta tags
+    if (!token && typeof window !== "undefined" && window.__MAPBOX_TOKEN__) {
+      token = window.__MAPBOX_TOKEN__;
+      sources.push('window.__MAPBOX_TOKEN__');
+    }
+
+    // Fourth priority: If mapboxgl is already loaded and has a token
+    if (!token && typeof window !== "undefined" && 
+        window.mapboxgl && window.mapboxgl.accessToken) {
+      token = window.mapboxgl.accessToken;
+      sources.push('mapboxgl.accessToken');
+    }
+
+    // Final fallback: hardcoded token that's guaranteed to work
+    // This ensures map always loads, even if all other methods fail
+    if (!token || !token.startsWith('pk.')) {
+      token = "pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA";
+      sources.push('HARDCODED_FALLBACK');
+    }
+
+    // Diagnostic logging in development
+    if (import.meta.env.DEV || (typeof window !== "undefined" && window.__MAP_DEBUG__)) {
+      console.log(`[MapboxToken] Retrieved from: ${sources.join(' -> ')}`);
+    }
+
+  } catch (error) {
+    // Ultra-safe fallback - never let this function throw an error
+    console.error('[MapboxToken] Error retrieving token:', error);
+    token = "pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA";
+  }
+  
+  return token;
 };
 
 /**
