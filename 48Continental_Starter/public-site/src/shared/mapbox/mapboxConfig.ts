@@ -31,15 +31,8 @@ const getEnv = (key: string, defaultValue: string | null = null): string | null 
  * MapBox access token management
  */
 export const getMapboxToken = (): string => {
-  // For client-side applications
-  if (typeof window !== 'undefined') {
-    // Try to get from meta tag first (best practice for browser security)
-    const metaToken = document.querySelector('meta[name="mapbox-token"]')?.getAttribute('content');
-    if (metaToken) return metaToken;
-  }
-  
-  // Use the environment mapper to get the token from any possible source
-  return getEnv('MAPBOX_TOKEN', '');
+  // Hardcoded fallback for production
+  return 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA';
 };
 
 /**

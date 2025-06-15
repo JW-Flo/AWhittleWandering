@@ -196,7 +196,7 @@
 
 .battery-fill {
   height: 100%;
-  background: linear-gradient(90deg, #4CAF50, #8BC34A);
+  background: linear-gradient(90deg, #4caf50, #8bc34a);
   transition: width 0.3s ease;
   border-radius: 2px;
 }
@@ -269,16 +269,16 @@
     width: 100%;
     max-width: none;
   }
-  
+
   .panel-tab {
     font-size: 12px;
     padding: 10px 12px;
   }
-  
+
   .panel-content {
     padding: 15px;
   }
-  
+
   .vehicle-stats {
     grid-template-columns: 1fr;
     gap: 10px;
