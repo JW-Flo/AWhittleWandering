@@ -325,6 +325,15 @@ const Map = ({ vehicleData, tripData, weatherData, displayMode }) => {
   useEffect(() => {
     // Check if map is already initialized
     if (map.current) return;
+    
+    // Set a safety timeout to hide the loading indicator after a reasonable time
+    // even if the map load event doesn't fire
+    const loadingSafetyTimeout = setTimeout(() => {
+      if (loading) {
+        console.log('[Map] Safety timeout triggered - hiding loading indicator');
+        setLoading(false);
+      }
+    }, 10000); // 10 seconds timeout
 
     // Verify token one more time before map initialization
     try {
@@ -354,6 +363,7 @@ const Map = ({ vehicleData, tripData, weatherData, displayMode }) => {
       map.current.on('load', () => {
         console.log('[Map] Mapbox map loaded successfully');
         setMapInitialized(true);
+        setLoading(false); // Set loading to false when map is loaded successfully
 
         // After map is loaded, add layers
         if (tripData) {
@@ -365,6 +375,7 @@ const Map = ({ vehicleData, tripData, weatherData, displayMode }) => {
       map.current.on('error', (e) => {
         console.error('[Map] Mapbox error:', e);
         setMapError(`Map error: ${e.error?.message || 'Unknown error'}`);
+        setLoading(false); // Set loading to false on error
       });
 
       // Setup mobile touch handlers
@@ -386,6 +397,7 @@ const Map = ({ vehicleData, tripData, weatherData, displayMode }) => {
     } catch (error) {
       console.error('[Map] Critical initialization error:', error);
       setMapError(`Failed to initialize map: ${error.message}`);
+      setLoading(false); // Set loading to false on initialization error
 
       const script = document.createElement('script');
       script.src = 'https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js';
@@ -406,12 +418,13 @@ const Map = ({ vehicleData, tripData, weatherData, displayMode }) => {
 
     // Cleanup function
     return () => {
+      clearTimeout(loadingSafetyTimeout); // Clear the safety timeout
       if (map.current) {
         map.current.remove();
         map.current = null;
       }
     };
-  }, [tripData]);
+  }, [tripData, loading]);
 
   // Update map style based on layer toggles
   useEffect(() => {

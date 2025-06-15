@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Map Loading Test</title>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    #testinfo {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1;
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: rgba(255, 255, 255, 0.8);
+      z-index: 10;
+    }
+    .spinner {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #3498db;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="testinfo">
+    <h3>Map Loading Test</h3>
+    <p id="status">Initializing...</p>
+    <p id="token-info">Token: Checking...</p>
+    <button id="reload">Reload Map</button>
+    <p id="events"></p>
+  </div>
+  <div id="loading" class="loading">
+    <div>
+      <div class="spinner"></div>
+      <p>Loading map...</p>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const eventLog = document.getElementById('events');
+      const statusEl = document.getElementById('status');
+      const tokenInfoEl = document.getElementById('token-info');
+      const loadingEl = document.getElementById('loading');
+      const reloadBtn = document.getElementById('reload');
+      
+      function logEvent(event) {
+        const time = new Date().toLocaleTimeString();
+        const div = document.createElement('div');
+        div.textContent = `${time}: ${event}`;
+        eventLog.prepend(div);
+        console.log(`[Map Test] ${event}`);
+      }
+      
+      function getMapboxToken() {
+        // Try to get token from multiple sources
+        const token = 
+          window.MAPBOX_TOKEN || 
+          "pk.eyJ1IjoidGhld2FuZGVyaW5nd2hpdHRsZSIsImEiOiJjbHQxaXhzejYwYmU2MmpxdHl0MHowN3UzIn0.Q7xKTRlXvtimBHd39JqN1A";
+        
+        if (!token || !token.startsWith('pk.')) {
+          throw new Error('Invalid Mapbox token format');
+        }
+        
+        return token;
+      }
+
+      function initializeMap() {
+        try {
+          statusEl.textContent = 'Getting token...';
+          const token = getMapboxToken();
+          tokenInfoEl.textContent = `Token: ${token.substring(0, 10)}...`;
+          mapboxgl.accessToken = token;
+          
+          statusEl.textContent = 'Creating map...';
+          logEvent('Creating map instance');
+          
+          const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/dark-v11',
+            center: [-98.5795, 39.8283], // USA center
+            zoom: 3.5,
+            attributionControl: true
+          });
+          
+          // Set up event listeners for the map
+          map.on('load', function() {
+            logEvent('Map loaded successfully');
+            statusEl.textContent = 'Map loaded successfully';
+            loadingEl.style.display = 'none';
+          });
+          
+          map.on('error', function(e) {
+            logEvent(`Error: ${e.error?.message || 'Unknown error'}`);
+            statusEl.textContent = `Error: ${e.error?.message || 'Unknown error'}`;
+            loadingEl.style.display = 'none';
+          });
+          
+          // Add a timeout to hide loading indicator after 10 seconds
+          setTimeout(() => {
+            if (loadingEl.style.display !== 'none') {
+              logEvent('Safety timeout reached - hiding loading indicator');
+              loadingEl.style.display = 'none';
+              statusEl.textContent = 'Warning: Map load event never fired';
+            }
+          }, 10000);
+          
+        } catch (error) {
+          logEvent(`Initialization error: ${error.message}`);
+          statusEl.textContent = `Initialization error: ${error.message}`;
+          loadingEl.style.display = 'none';
+        }
+      }
+      
+      // Initialize map
+      initializeMap();
+      
+      // Reload button functionality
+      reloadBtn.addEventListener('click', function() {
+        window.location.reload();
+      });
+    });
+  </script>
+</body>
+</html>
