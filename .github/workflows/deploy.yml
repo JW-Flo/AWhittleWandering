@@ -1,0 +1,131 @@
+name: Build, Test and Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Also allow manual triggering
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - production
+          - staging
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: 48Continental_Starter/public-site/package-lock.json
+
+      - name: Install dependencies
+        working-directory: 48Continental_Starter/public-site
+        run: npm ci
+
+      - name: Run tests
+        working-directory: 48Continental_Starter/public-site
+        run: npm run test:run
+        env:
+          VITE_MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+          VITE_USE_SIMULATED_DATA: "true"
+
+  build:
+    name: Build and Validate
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: 48Continental_Starter/public-site/package-lock.json
+
+      - name: Install dependencies
+        working-directory: 48Continental_Starter/public-site
+        run: npm ci
+
+      - name: Build with validation
+        working-directory: 48Continental_Starter/public-site
+        run: npm run build:validate
+        env:
+          VITE_MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+          VITE_APP_NAME: "The Wandering Whittle"
+          VITE_API_BASE_URL: ${{ secrets.API_BASE_URL || 'https://api.awhittlewandering.com' }}
+          VITE_USE_SIMULATED_DATA: "true"
+          VITE_ENABLE_STREAMING: "true"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: 48Continental_Starter/public-site/dist
+          retention-days: 7
+
+  deploy-github-pages:
+    name: Deploy to GitHub Pages
+    needs: build
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: ./dist
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "./dist"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  verify-deployment:
+    name: Verify Deployment
+    needs: deploy-github-pages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Verify deployment
+        run: |
+          echo "Verifying deployment at ${{ needs.deploy-github-pages.outputs.url || 'https://${{ github.repository_owner }}.github.io/AWhittleWandering' }}"
+          # Add additional verification steps here
+          npx playwright test scripts/deployment-success-validator.js
+
+      - name: Notify on success
+        run: |
+          echo "✅ Deployment verified successfully!"

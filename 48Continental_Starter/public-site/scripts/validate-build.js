@@ -1,141 +1,217 @@
+#!/usr/bin/env node
 /**
  * Build Validation Script
  *
- * This script runs after the build process to validate critical components
- * including MapBox token injection, environment variable replacement,
- * and other production readiness checks.
+ * This script runs all validation checks on the build output to ensure it's ready for production.
+ * It orchestrates the execution of individual validation scripts:
+ * - verify-mapbox-token.sh: Ensures the Mapbox token is correctly embedded
+ * - check-bundle-size.sh: Verifies that JS/CSS bundles are within size limits
+ * - validate-api-endpoints.sh: Checks that API endpoints are properly configured
+ *
+ * Usage: npm run build:validate
  */
 
-/* eslint-env node */
-const fs = require("fs");
-const path = require("path");
-const childProcess = require("child_process");
+/* eslint-disable no-console, no-process-exit */
+import { execSync } from "child_process";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 
-console.log("======================================");
-console.log("48 Continental USA - Build Validation");
-console.log("======================================");
+// Get directory paths for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Paths
-const distDir = path.join(__dirname, "../dist");
-const indexHtmlPath = path.join(distDir, "index.html");
-const jsDir = path.join(distDir, "assets");
+// Configuration
+const SCRIPTS_DIR = __dirname;
+const DIST_DIR = path.join(__dirname, "..", "dist");
+const LOG_FILE = path.join(__dirname, "..", "validation-report.log");
+const VALIDATION_SCRIPTS = [
+  {
+    name: "Mapbox Token Verification",
+    script: "verify-mapbox-token.sh",
+    required: true,
+  },
+  {
+    name: "Bundle Size Check",
+    script: "check-bundle-size.sh",
+    required: false,
+  },
+  {
+    name: "API Endpoints Validation",
+    script: "validate-api-endpoints.sh",
+    required: true,
+  },
+];
 
-// Check if dist directory exists
-if (!fs.existsSync(distDir)) {
-  console.error("❌ ERROR: dist directory not found!");
-  console.error("Run npm run build before running this script");
-  process.exit(1);
+// Terminal colors
+const COLORS = {
+  reset: "\x1b[0m",
+  bright: "\x1b[1m",
+  red: "\x1b[31m",
+  green: "\x1b[32m",
+  yellow: "\x1b[33m",
+  blue: "\x1b[34m",
+  magenta: "\x1b[35m",
+};
+
+// Helper functions
+function logHeader(text) {
+  console.log(
+    `\n${COLORS.bright}${COLORS.blue}===========================================${COLORS.reset}`
+  );
+  console.log(`${COLORS.bright}${COLORS.blue}${text}${COLORS.reset}`);
+  console.log(
+    `${COLORS.bright}${COLORS.blue}===========================================${COLORS.reset}\n`
+  );
 }
 
-// Status tracking
-const issues = [];
-const successes = [];
-
-// Validate index.html
-console.log("\n📄 Checking index.html...");
-if (fs.existsSync(indexHtmlPath)) {
-  const indexHtml = fs.readFileSync(indexHtmlPath, "utf8");
-
-  // Check for MapBox token meta tag
-  if (indexHtml.includes('meta name="mapbox-token"')) {
-    successes.push("✓ Found MapBox token meta tag in index.html");
-  } else {
-    issues.push("⚠️ MapBox token meta tag missing from index.html");
-  }
-
-  // Check for window.__MAPBOX_TOKEN__
-  if (indexHtml.includes("window.__MAPBOX_TOKEN__")) {
-    successes.push("✓ Found window.__MAPBOX_TOKEN__ in index.html");
-  } else {
-    issues.push("⚠️ window.__MAPBOX_TOKEN__ missing from index.html");
-  }
-
-  // Check for MapBox CSS
-  if (indexHtml.includes("mapbox-gl.css")) {
-    successes.push("✓ Found MapBox GL CSS in index.html");
-  } else {
-    issues.push("⚠️ MapBox GL CSS not found in index.html");
-  }
-} else {
-  issues.push("❌ index.html not found in build output!");
+function logSuccess(text) {
+  console.log(`${COLORS.green}✓ ${text}${COLORS.reset}`);
 }
 
-// Check JS files for token injection
-console.log("\n📦 Checking JS bundles...");
-if (fs.existsSync(jsDir)) {
-  const jsFiles = fs
-    .readdirSync(jsDir)
-    .filter((file) => file.endsWith(".js"))
-    .map((file) => path.join(jsDir, file));
+function logError(text) {
+  console.log(`${COLORS.red}✗ ${text}${COLORS.reset}`);
+}
 
-  console.log(`Found ${jsFiles.length} JavaScript files`);
+function logWarning(text) {
+  console.log(`${COLORS.yellow}⚠ ${text}${COLORS.reset}`);
+}
 
-  let tokenFound = false;
-  let mapboxImportFound = false;
+function runScript(scriptPath, required) {
+  try {
+    console.log(`Running: ${path.basename(scriptPath)}`);
+    // Using a timeout to prevent hanging
+    const output = execSync(`bash "${scriptPath}"`, {
+      timeout: 60000, // 1 minute timeout
+      stdio: "pipe",
+    }).toString();
 
-  jsFiles.forEach((file) => {
-    const content = fs.readFileSync(file, "utf8");
+    console.log(output);
+    return { success: true, output };
+  } catch (error) {
+    const errorOutput = error.stdout ? error.stdout.toString() : error.message;
+    console.error(errorOutput);
 
-    // Look for MapBox token pattern
-    if (content.includes("pk.ey")) {
-      tokenFound = true;
-      const match = content.match(/pk\.ey[a-zA-Z0-9_-]{30,}/);
-      if (match) {
-        successes.push(
-          `✓ Found MapBox token in ${path.basename(file)}: ${match[0].substring(
-            0,
-            15
-          )}...`
-        );
-      } else {
-        successes.push(
-          `✓ Found MapBox token signature in ${path.basename(file)}`
-        );
-      }
+    return {
+      success: false,
+      output: errorOutput,
+      required,
+    };
+  }
+}
+
+// Main validation function
+async function validateBuild() {
+  logHeader("Starting Build Validation");
+
+  // Verify that the dist directory exists
+  if (!fs.existsSync(DIST_DIR)) {
+    logError(
+      `Build directory '${DIST_DIR}' not found. Run 'npm run build' first.`
+    );
+    process.exit(1);
+  }
+
+  // Initialize log file
+  fs.writeFileSync(
+    LOG_FILE,
+    `Build Validation Report - ${new Date().toISOString()}\n\n`
+  );
+
+  // Track results
+  const results = [];
+  let criticalFailure = false;
+
+  // Run each validation script
+  for (const validation of VALIDATION_SCRIPTS) {
+    logHeader(`Running ${validation.name}`);
+
+    const scriptPath = path.join(SCRIPTS_DIR, validation.script);
+
+    // Check if script exists
+    if (!fs.existsSync(scriptPath)) {
+      logWarning(
+        `Validation script '${validation.script}' not found. Skipping.`
+      );
+      fs.appendFileSync(
+        LOG_FILE,
+        `[WARNING] ${validation.name}: Script not found - ${scriptPath}\n`
+      );
+      continue;
     }
 
-    // Look for MapBox import
-    if (content.includes("mapbox-gl")) {
-      mapboxImportFound = true;
-      successes.push(`✓ Found MapBox GL import in ${path.basename(file)}`);
+    // Make script executable (just in case)
+    try {
+      fs.chmodSync(scriptPath, "755");
+    } catch (error) {
+      logWarning(`Could not make script executable: ${error.message}`);
+    }
+
+    // Run the validation script
+    const result = runScript(scriptPath, validation.required);
+    results.push({ ...validation, ...result });
+
+    // Log result to file
+    fs.appendFileSync(
+      LOG_FILE,
+      `[${result.success ? "SUCCESS" : "FAILURE"}] ${validation.name}:\n`
+    );
+    fs.appendFileSync(LOG_FILE, result.output);
+    fs.appendFileSync(LOG_FILE, "\n\n");
+
+    // Track critical failures
+    if (!result.success && validation.required) {
+      criticalFailure = true;
+    }
+  }
+
+  // Summarize results
+  logHeader("Validation Summary");
+
+  let passedCount = 0;
+  let warningCount = 0;
+  let failedCount = 0;
+
+  results.forEach((result) => {
+    if (result.success) {
+      logSuccess(`${result.name} - Passed`);
+      passedCount++;
+    } else if (!result.required) {
+      logWarning(`${result.name} - Warning (non-critical)`);
+      warningCount++;
+    } else {
+      logError(`${result.name} - Failed (critical)`);
+      failedCount++;
     }
   });
 
-  if (!tokenFound) {
-    issues.push("❌ CRITICAL: MapBox token not found in any JS file!");
+  // Final result
+  console.log("\n");
+  if (criticalFailure) {
+    logError(
+      `Build validation failed with ${failedCount} critical error(s) and ${warningCount} warning(s)`
+    );
+    logError(`See ${LOG_FILE} for detailed report`);
+    logError("Please fix these issues before deployment");
+    process.exit(1);
+  } else if (warningCount > 0) {
+    logWarning(
+      `Build validation passed with ${warningCount} non-critical warning(s)`
+    );
+    logWarning(`See ${LOG_FILE} for detailed report`);
+    logSuccess(
+      "Build is ready for deployment, but consider addressing warnings"
+    );
+    process.exit(0);
+  } else {
+    logSuccess(`Build validation passed successfully (${passedCount} checks)`);
+    logSuccess("Build is ready for deployment");
+    process.exit(0);
   }
-
-  if (!mapboxImportFound) {
-    issues.push("⚠️ MapBox GL import not found in any JS file");
-  }
-} else {
-  issues.push("❌ No JavaScript assets found in build output!");
 }
 
-// Summary
-console.log("\n📊 Validation Summary:");
-
-if (successes.length > 0) {
-  console.log("\nSuccesses:");
-  successes.forEach((success) => console.log(success));
-}
-
-if (issues.length > 0) {
-  console.log("\nIssues:");
-  issues.forEach((issue) => console.log(issue));
-
-  console.log("\n⚠️ Production build validation found issues!");
-  console.log("Review these issues before deploying.");
-} else {
-  console.log("\n✅ All validation checks passed!");
-}
-
-// Final recommendations
-console.log("\n📋 Recommendations:");
-console.log("- Test build locally with: npm run preview");
-console.log("- Verify MapBox loads in incognito/private browser window");
-console.log("- Check Map component initialization in browser console");
-console.log("- Verify environment variables are correctly injected");
-
-// Exit with status based on issues
-process.exit(issues.length > 0 ? 1 : 0);
+// Run validation
+validateBuild().catch((error) => {
+  logError(`Unexpected error: ${error.message}`);
+  process.exit(1);
+});

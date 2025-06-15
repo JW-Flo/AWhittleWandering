@@ -1,0 +1,67 @@
+{
+  "name": "awhittlewandering",
+  "version": "1.0.0",
+  "description": "A Whittle Wandering - 60 days, 48 states, One Tesla, One epic journey",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "lint": "eslint --ext .ts,.tsx .",
+    "format": "prettier --write '**/*.{ts,tsx,js,jsx,json,md}'",
+    "build": "npm run build:all",
+    "build:all": "npm run build:frontend && npm run build:workers",
+    "build:frontend": "cd packages/frontend && npm run build",
+    "build:workers": "npm run build:site && npm run build:api && npm run build:browser && npm run build:dispatch",
+    "build:site": "wrangler deploy --dry-run --config wrangler-site.toml",
+    "build:api": "wrangler deploy --dry-run --config wrangler-api.toml",
+    "build:browser": "wrangler deploy --dry-run --config wrangler-browser.toml",
+    "build:dispatch": "wrangler deploy --dry-run --config wrangler-dispatch.toml",
+    "build:validate": "npm run build && scripts/validate-build.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "check-types": "tsc --noEmit",
+    "verify-mapbox-token": "bash scripts/verify-mapbox-token.sh",
+    "check-bundle-size": "bash scripts/check-bundle-size.sh",
+    "validate-api-endpoints": "bash scripts/validate-api-endpoints.sh"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@cloudflare/ai": "^1.0.0",
+    "@cloudflare/workers-types": "^4.20240613.0",
+    "itty-router": "^4.0.27",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.20.0",
+    "mapbox-gl": "^3.1.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@cloudflare/kv-asset-handler": "^0.3.0",
+    "@cloudflare/vitest-pool-workers": "^0.1.0",
+    "@cloudflare/workers-types": "^4.20240613.0",
+    "@playwright/test": "^1.40.1",
+    "@types/node": "^20.10.3",
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
+    "@types/react-router-dom": "^5.3.3",
+    "@types/mapbox-gl": "^2.7.19",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/parser": "^6.13.1",
+    "esbuild": "^0.19.8",
+    "eslint": "^8.55.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-prettier": "^5.0.1",
+    "prettier": "^3.1.0",
+    "typescript": "^5.3.2",
+    "vitest": "^1.0.1",
+    "wrangler": "^3.19.0"
+  },
+  "workspaces": [
+    "packages/*"
+  ]
+}

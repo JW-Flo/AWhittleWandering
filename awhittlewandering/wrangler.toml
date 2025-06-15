@@ -1,0 +1,63 @@
+name = "aww"
+main = "workers/site.ts"
+compatibility_date = "2025-06-15"
+
+# Non-secret configuration
+[vars]
+MAP_STYLE = "mapbox://styles/mapbox/outdoors-v12"
+APP_NAME = "A Whittle Wandering"
+ENABLE_STREAMING = "true"
+ENABLE_MAP_PERFORMANCE_MONITORING = "true"
+MAP_RETRY_ATTEMPTS = "3"
+MAP_RETRY_DELAY = "2000"
+
+# Route configuration for each worker
+[[routes]]
+pattern = "awhittlewandering.com/*"
+script = "aww-site"
+
+[[routes]]
+pattern = "awhittlewandering.com/api/*"
+script = "aww-api"
+
+[[routes]]
+pattern = "awhittlewandering.com/render/*"
+script = "aww-browser"
+
+[[routes]]
+pattern = "awhittlewandering.com/dispatch/*"
+script = "aww-dispatch"
+
+# Browser Rendering API configuration
+[browser]
+binding = "BROWSER"
+
+# AI Gateway configuration
+[ai]
+binding = "AI_GATEWAY"
+
+# Workers for Platforms configuration
+[dispatch_namespaces]
+binding = "DISPATCH"
+namespace = "aww-dispatch"
+
+# KV namespace for data storage
+[[kv_namespaces]]
+binding = "TRIP_DATA"
+id = "TRIP_DATA_ID"
+
+# R2 bucket for static assets
+[[r2_buckets]]
+binding = "STATIC_ASSETS"
+bucket_name = "aww-static-assets"
+
+# Durable Objects for stateful operations
+[[durable_objects.bindings]]
+name = "BROWSER_SESSIONS"
+class_name = "BrowserSession"
+
+# Dev configuration
+[dev]
+port = 8787
+local_protocol = "http"
+upstream_protocol = "https"
