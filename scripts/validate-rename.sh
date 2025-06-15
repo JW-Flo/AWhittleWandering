@@ -59,7 +59,7 @@ check_for_references() {
   fi
   
   # Add the grep part
-  grep_result=$($find_cmd | xargs grep -l "$pattern" 2>/dev/null || echo "")
+  grep_result=$(eval "$find_cmd -exec grep -l \"$pattern\" {} +" 2>/dev/null || echo "")
   
   if [ -z "$grep_result" ]; then
     echo "✅ No instances found" >> "$REPORT_FILE"
