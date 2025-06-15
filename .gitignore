@@ -6,8 +6,37 @@ ios-client/.build/
 .build/
 .swiftpm/
 ios-client/DerivedData/
+
 # macOS
 .DS_Store
+**/.DS_Store
+
 # Swift Package Manager
 .build/
 /.build/**
+
+# Temporary files
+.temp/
+*.log
+*.cache
+.cache/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Debug and test files
+debug-*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build artifacts
+*.tsbuildinfo

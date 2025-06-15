@@ -8,12 +8,25 @@ This repository contains the complete code for the A Whittle Wandering project, 
 
 ## Repository Structure
 
-- **public-site/**: Main frontend web application (React) (located in 48Continental_Starter folder)
-- **edge-worker/**: Edge infrastructure for data handling via Cloudflare Workers
-- **mcp-server/**: Mission Control Platform (MCP) server for vehicle telemetry
-- **shared/**: Shared utilities and services used across components
-- **scripts/**: Build, deployment, and maintenance scripts
-- **docs/**: Project documentation
+```plaintext
+ContinentalUSA/
+├── 48Continental_Starter/    # Main frontend web application (React)
+├── edge-worker/              # Edge infrastructure for data handling via Cloudflare Workers
+├── mcp-server/               # Mission Control Platform (MCP) server for vehicle telemetry
+├── shared/                   # Shared utilities and services used across components
+├── scripts/                  # Build, deployment, and maintenance scripts
+│   └── legacy/               # Archived scripts no longer in active use
+├── docs/                     # Project documentation
+│   ├── deployment/           # Deployment-related documentation
+│   ├── testing/              # Testing-related documentation
+│   └── user-guide/           # User guide and manual
+├── configs/                  # Configuration files
+│   └── legacy-workflows/     # Archived workflow configurations
+├── data/                     # Data files including itineraries
+├── tests/                    # Test files and integration tests
+├── utilities/                # Utility functions and helper scripts
+└── legacy/                   # Archive of files no longer in active use
+```
 
 ## Setup Instructions
 
@@ -26,36 +39,41 @@ This repository contains the complete code for the A Whittle Wandering project, 
 ### Installation
 
 1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/AWhittleWandering.git
-   cd A-Whittle-Wandering
-   ```
+
+```bash
+git clone https://github.com/yourusername/AWhittleWandering.git
+cd A-Whittle-Wandering
+```
 
 2. Set up the frontend application:
-   ```bash
-   cd 48Continental_Starter/public-site
-   npm install
-   ```
+
+```bash
+cd 48Continental_Starter/public-site
+npm install
+```
 
 3. Create a `.env` file based on the `.env.example` template:
-   ```bash
-   cp .env.example .env
-   ```
+
+```bash
+cp .env.example .env
+```
 
 4. Configure your Mapbox token in the `.env` file:
-   ```
-   VITE_MAPBOX_TOKEN=your_mapbox_token_here
-   ```
+
+```plaintext
+VITE_MAPBOX_TOKEN=your_mapbox_token_here
+```
 
 ### Development
 
 Run the development server:
+
 ```bash
 cd 48Continental_Starter/public-site
 npm run dev
 ```
 
-The site should now be available at http://localhost:5173/
+The site should now be available at `http://localhost:5173/`
 
 ## Building and Deployment
 
@@ -69,6 +87,7 @@ npm run build:validate
 ```
 
 This command will:
+
 1. Build the application with production settings
 2. Verify the Mapbox token is correctly embedded
 3. Check bundle sizes for performance concerns
@@ -101,7 +120,7 @@ The application uses environment files for configuration:
 
 Key variables include:
 
-```
+```plaintext
 # Mapbox configuration
 VITE_MAPBOX_TOKEN=pk.your_token_here
 VITE_MAPBOX_STYLE=mapbox://styles/mapbox/dark-v11
@@ -128,6 +147,7 @@ The repository contains several validation scripts to ensure reliable deployment
 - **validate-build.js**: Orchestrates all validation scripts
 
 Run validation scripts with:
+
 ```bash
 cd 48Continental_Starter/public-site
 bash scripts/verify-mapbox-token.sh
