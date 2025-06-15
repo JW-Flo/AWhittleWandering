@@ -12,6 +12,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import Hammer from 'hammerjs';
 import TripStatistics from './TripStatistics';
 import MapDebugPanel from './MapDebugPanel';
