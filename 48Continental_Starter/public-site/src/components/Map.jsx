@@ -23,14 +23,14 @@ import './MapEnhancements.css'; import { ensureMapboxFormat } from "../utils/map
 
 // IMPORTANT: Directly set the MapBox token to fix the "Invalid Mapbox access token" error
 // This is a public token (pk.) for client-side application
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA';
 
 // Import the centralized MapBox configuration
 import mapboxConfig from '../shared/mapbox/mapboxConfig.ts';
 
 // Explicitly set the token without complex fallback logic
 mapboxgl.accessToken = MAPBOX_TOKEN;
-console.log('Map.jsx: MapBox token has been set successfully.');
+console.log('Map.jsx: MapBox token has been set successfully.', MAPBOX_TOKEN ? 'Token exists' : 'Token is empty');
 
 // SVG icons for map markers
 const SVG_ICONS = {
