@@ -87,6 +87,33 @@ check_for_references "48Continental" "References to '48Continental'" "*rename-re
 check_for_references "48continental" "References to '48continental' (lowercase)" "*rename-reports/*"
 check_for_references "48continental\.com" "References to '48continental.com' domain" "*rename-reports/*"
 
+# Check GitHub workflow status for recent commits
+echo "### GitHub Workflow Status Check" >> "$REPORT_FILE"
+echo "" >> "$REPORT_FILE"
+
+if [ -f "$ROOT_DIR/scripts/github-workflow-status.sh" ]; then
+  echo "Running GitHub workflow status check..." >> "$REPORT_FILE"
+  echo "For detailed results, see the workflow status report." >> "$REPORT_FILE"
+  
+  # Set executable permission if needed
+  chmod +x "$ROOT_DIR/scripts/github-workflow-status.sh"
+  
+  # Run the workflow status check script with limited scope for the validation report
+  workflow_report=$("$ROOT_DIR/scripts/github-workflow-status.sh" --commits 3 --attempts 5 --interval 30)
+  
+  # Extract the report file path from the output
+  report_path=$(echo "$workflow_report" | grep "Workflow status report:" | awk '{print $NF}')
+  
+  if [ -n "$report_path" ] && [ -f "$report_path" ]; then
+    echo "✅ Workflow status report generated: $(basename "$report_path")" >> "$REPORT_FILE"
+    echo "See the complete report for workflow status details." >> "$REPORT_FILE"
+  else
+    echo "⚠️ Unable to generate workflow status report" >> "$REPORT_FILE"
+  fi
+else
+  echo "⚠️ GitHub workflow status check script not found" >> "$REPORT_FILE"
+fi
+
 # Check for renamed directories
 echo "### Directory Structure Check" >> "$REPORT_FILE"
 echo "" >> "$REPORT_FILE"
