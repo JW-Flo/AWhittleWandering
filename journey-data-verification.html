@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Journey Data Loading Verification</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .test-panel { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 4px; overflow: auto; font-size: 12px; }
+        button { padding: 10px 20px; margin: 10px 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .button-danger { background: #dc3545; }
+        .button-danger:hover { background: #c82333; }
+        .iframe-container { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin-top: 20px; }
+        iframe { width: 100%; height: 600px; border: none; }
+        .side-by-side { display: flex; gap: 20px; }
+        .panel { flex: 1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚗 A Whittle Wandering - Journey Data Loading Verification</h1>
+        
+        <div class="test-panel">
+            <h2>🔍 API Connectivity Test</h2>
+            <div id="api-results"></div>
+            <button onclick="testAllAPIs()">Test APIs</button>
+        </div>
+        
+        <div class="test-panel">
+            <h2>⚙️ Frontend Error Logic Test</h2>
+            <div id="error-logic-results"></div>
+            <button onclick="testErrorLogic()">Test Error Logic</button>
+        </div>
+        
+        <div class="side-by-side">
+            <div class="panel">
+                <div class="test-panel">
+                    <h2>🌐 Live Site Test</h2>
+                    <div id="site-test-results"></div>
+                    <button onclick="testLiveSite()">Test Live Site</button>
+                    <button onclick="openSiteInFrame()" class="button-warning">Load Site in Frame</button>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="test-panel">
+                    <h2>📊 Real-time Monitoring</h2>
+                    <div id="monitoring-results"></div>
+                    <button onclick="startMonitoring()">Start Monitoring</button>
+                    <button onclick="stopMonitoring()" class="button-danger">Stop Monitoring</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-panel">
+            <h2>🖥️ Live Site Preview</h2>
+            <div class="iframe-container" id="iframe-container" style="display: none;">
+                <iframe id="site-iframe" src="about:blank"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://awhittlewandering-edge.kd8jc7v8cd.workers.dev';
+        const SITE_URL = 'https://ebfeec4d.awhittlewandering-site.pages.dev';
+        let monitoringInterval = null;
+        
+        function addResult(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = `${new Date().toLocaleTimeString()}: ${message}`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function addJSON(containerId, data, title) {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = 'status info';
+            div.innerHTML = `<strong>${title}:</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            container.appendChild(div);
+        }
+        
+        async function testAPI(endpoint) {
+            const response = await fetch(`${API_BASE}/api/${endpoint}`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return await response.json();
+        }
+        
+        async function testAllAPIs() {
+            const container = document.getElementById('api-results');
+            container.innerHTML = '';
+            
+            addResult('api-results', 'Starting API tests...', 'info');
+            
+            const endpoints = ['vehicle', 'trip', 'weather'];
+            const results = {};
+            
+            for (const endpoint of endpoints) {
+                try {
+                    addResult('api-results', `Testing ${endpoint}...`, 'info');
+                    const data = await testAPI(endpoint);
+                    results[endpoint] = { success: true, data };
+                    addResult('api-results', `✓ ${endpoint} API working`, 'success');
+                    
+                    // Show key data points
+                    if (endpoint === 'vehicle' && data) {
+                        addResult('api-results', `Vehicle: ${data.name} (${data.model}) at ${data.batteryLevel}% battery`, 'info');
+                    }
+                    if (endpoint === 'trip' && data) {
+                        addResult('api-results', `Trip: ${data.visitedStates?.length || 0} states visited, currently in ${data.currentState}`, 'info');
+                    }
+                    
+                } catch (error) {
+                    results[endpoint] = { success: false, error: error.message };
+                    addResult('api-results', `✗ ${endpoint} API failed: ${error.message}`, 'error');
+                }
+            }
+            
+            // Overall assessment
+            const successCount = Object.values(results).filter(r => r.success).length;
+            if (successCount === endpoints.length) {
+                addResult('api-results', '🎉 All APIs working! Journey data should load successfully.', 'success');
+            } else {
+                addResult('api-results', `⚠️ ${successCount}/${endpoints.length} APIs working. May cause frontend issues.`, 'warning');
+            }
+            
+            return results;
+        }
+        
+        async function testErrorLogic() {
+            const container = document.getElementById('error-logic-results');
+            container.innerHTML = '';
+            
+            addResult('error-logic-results', 'Testing frontend error logic...', 'info');
+            
+            // Test the actual conditions from our fixed code
+            const apiResults = await testAllAPIs();
+            
+            const hasVehicleData = apiResults.vehicle?.success && apiResults.vehicle?.data;
+            const hasTripData = apiResults.trip?.success && apiResults.trip?.data;
+            const hasError = !hasVehicleData; // This is the logic from App.jsx
+            
+            addResult('error-logic-results', `Vehicle data available: ${hasVehicleData ? '✓' : '✗'}`, hasVehicleData ? 'success' : 'error');
+            addResult('error-logic-results', `Trip data available: ${hasTripData ? '✓' : '✗'}`, hasTripData ? 'success' : 'error');
+            addResult('error-logic-results', `Frontend would set error state: ${hasError ? '✓' : '✗'}`, hasError ? 'error' : 'success');
+            
+            // Simulate the exact logic from our fixed Dashboard component
+            if (hasVehicleData) {
+                addResult('error-logic-results', '✓ Frontend should clear errors and show data (App.jsx line 73)', 'success');
+                addResult('error-logic-results', '✓ Dashboard should not show "Unable to load journey data"', 'success');
+            } else {
+                addResult('error-logic-results', '✗ Frontend would show "Unable to load journey data" error', 'error');
+            }
+            
+            // Test the specific fix we made
+            addResult('error-logic-results', '🔧 Our fix: Removed duplicate useVehicleData() call in Dashboard', 'info');
+            addResult('error-logic-results', '🔧 Our fix: Dashboard now only uses props from App.jsx', 'info');
+            addResult('error-logic-results', '🔧 Our fix: No conflicting error states between App and Dashboard', 'info');
+        }
+        
+        async function testLiveSite() {
+            const container = document.getElementById('site-test-results');
+            container.innerHTML = '';
+            
+            addResult('site-test-results', 'Testing live site...', 'info');
+            
+            try {
+                const response = await fetch(SITE_URL);
+                if (response.ok) {
+                    addResult('site-test-results', '✓ Site is accessible', 'success');
+                    
+                    const html = await response.text();
+                    
+                    // Check for error text in HTML
+                    if (html.includes('Unable to load journey data')) {
+                        addResult('site-test-results', '✗ Found error text in static HTML', 'error');
+                    } else {
+                        addResult('site-test-results', '✓ No error text in static HTML', 'success');
+                    }
+                    
+                    // Check for React app elements
+                    if (html.includes('id="root"') || html.includes('class="app-container"')) {
+                        addResult('site-test-results', '✓ React app structure found', 'success');
+                    } else {
+                        addResult('site-test-results', '⚠️ React app structure not detected', 'warning');
+                    }
+                    
+                } else {
+                    addResult('site-test-results', `✗ Site returned HTTP ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult('site-test-results', `✗ Site test failed: ${error.message}`, 'error');
+            }
+        }
+        
+        function openSiteInFrame() {
+            const iframe = document.getElementById('site-iframe');
+            const container = document.getElementById('iframe-container');
+            
+            iframe.src = SITE_URL;
+            container.style.display = 'block';
+            
+            addResult('site-test-results', `🖼️ Loading site in frame: ${SITE_URL}`, 'info');
+            
+            iframe.onload = () => {
+                addResult('site-test-results', '✓ Site loaded in frame', 'success');
+                
+                // Try to access the iframe content (may be blocked by CORS)
+                try {
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                    const errorElements = iframeDoc.querySelectorAll('*');
+                    let hasError = false;
+                    
+                    errorElements.forEach(el => {
+                        if (el.textContent && el.textContent.includes('Unable to load journey data')) {
+                            hasError = true;
+                        }
+                    });
+                    
+                    if (hasError) {
+                        addResult('site-test-results', '✗ "Unable to load journey data" error found in loaded site', 'error');
+                    } else {
+                        addResult('site-test-results', '✓ No journey data error found in loaded site', 'success');
+                    }
+                } catch (e) {
+                    addResult('site-test-results', '⚠️ Cannot access iframe content (CORS blocked) - this is normal', 'warning');
+                }
+            };
+            
+            iframe.onerror = () => {
+                addResult('site-test-results', '✗ Failed to load site in frame', 'error');
+            };
+        }
+        
+        function startMonitoring() {
+            if (monitoringInterval) return;
+            
+            const container = document.getElementById('monitoring-results');
+            container.innerHTML = '';
+            
+            addResult('monitoring-results', 'Starting real-time monitoring...', 'info');
+            
+            monitoringInterval = setInterval(async () => {
+                try {
+                    const vehicleData = await testAPI('vehicle');
+                    const status = `Vehicle: ${vehicleData.batteryLevel}% battery, ${vehicleData.speed || 0} mph`;
+                    addResult('monitoring-results', status, 'success');
+                } catch (error) {
+                    addResult('monitoring-results', `Monitoring error: ${error.message}`, 'error');
+                }
+            }, 10000); // Every 10 seconds
+        }
+        
+        function stopMonitoring() {
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+                monitoringInterval = null;
+                addResult('monitoring-results', 'Monitoring stopped', 'info');
+            }
+        }
+        
+        // Auto-run initial tests
+        window.onload = () => {
+            setTimeout(() => {
+                testAllAPIs();
+                setTimeout(() => {
+                    testErrorLogic();
+                    setTimeout(() => {
+                        testLiveSite();
+                    }, 1000);
+                }, 1000);
+            }, 500);
+        };
+    </script>
+</body>
+</html>

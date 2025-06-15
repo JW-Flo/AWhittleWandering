@@ -9,8 +9,6 @@ import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import PropTypes from 'prop-types';
 import StatesTracker from './StatesTracker';
 import JourneyTab from './JourneyTab';
-import { useVehicleData } from '../hooks/useVehicleData';
-import { useTripData } from '../hooks/useTripData';
 import './Dashboard.css';
 
 // Lazy load the map component
@@ -43,17 +41,14 @@ const Dashboard = ({
     chargingStations: true
   });
 
-  // Use hooks for enhanced data with combined loading and error states
-  const { vehicleData, loading: vehicleLoading, error: vehicleError } = useVehicleData();
-
-  // Use the tripData from props rather than calling the hook again
+  // Use the data from props rather than calling hooks again to avoid conflicts
   const currentTripData = propTripData;
   const visitedStates = currentTripData?.visitedStates || [];
   const currentState = currentTripData?.currentState || null;
 
-  // Combine loading and error states
-  const isCurrentlyLoading = isLoading || vehicleLoading;
-  const currentError = error || vehicleError;
+  // Use loading and error states from props only
+  const isCurrentlyLoading = isLoading;
+  const currentError = error;
 
   // Handle keyboard shortcuts and touch gestures for panel toggle
   useEffect(() => {
@@ -106,7 +101,7 @@ const Dashboard = ({
   }, []);
 
   // Use enhanced data if available, fallback to props
-  const finalVehicleData = vehicleData || propVehicleData;
+  const finalVehicleData = propVehicleData;
   const finalTripData = currentTripData;
 
   if (isCurrentlyLoading) {
