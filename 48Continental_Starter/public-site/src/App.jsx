@@ -70,15 +70,16 @@ const App = () => {
 
   // Set error state only if we have no data at all
   useEffect(() => {
-    // Only show error if we have no vehicle data AND an error
-    // Since vehicle data is the most critical, we can still show the app with just that
-    if (!vehicleData && vehicleError) {
-      setError(vehicleError);
-    } else {
-      // Clear any previous errors if we have data
+    // Only show error if we have no vehicle data AND an error exists
+    // Always prioritize showing data over showing errors
+    if (vehicleData) {
+      // If we have vehicle data, clear any errors
       setError(null);
+    } else if (vehicleError && !vehicleLoading) {
+      // Only show error if we're not loading and there's actually an error
+      setError(vehicleError);
     }
-  }, [vehicleData, vehicleError, weatherError, tripError, stationsError]);
+  }, [vehicleData, vehicleError, vehicleLoading]);
 
   // Add Mapbox token to document head if not already present
   useEffect(() => {
