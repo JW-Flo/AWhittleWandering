@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWhittleWandering Deployment Verification</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .panel { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        h1, h2 { color: #333; }
+        button { background: #0066cc; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0055aa; }
+        #results { white-space: pre-wrap; background: #f5f5f5; padding: 15px; font-family: monospace; max-height: 500px; overflow: auto; }
+        iframe { width: 100%; height: 800px; border: 1px solid #ddd; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>AWhittleWandering Deployment Verification</h1>
+    
+    <div class="panel">
+        <h2>1. Open the deployed site</h2>
+        <p>Latest deployment: <a href="https://2fb44092.awhittlewandering-site.pages.dev" target="_blank">https://2fb44092.awhittlewandering-site.pages.dev</a></p>
+        <button onclick="openSite()">Open Site in Frame</button>
+    </div>
+    
+    <div class="panel">
+        <h2>2. Run verification script</h2>
+        <p>Open browser console (F12) and paste the verification script to check if the map is loading properly</p>
+        <button onclick="copyScript()">Copy Verification Script</button>
+    </div>
+    
+    <div class="panel">
+        <h2>3. Results</h2>
+        <div id="results">Run the verification script in the browser console of the deployed site to see results.</div>
+    </div>
+    
+    <div id="iframe-container"></div>
+    
+    <script>
+        // Verification script content
+        const verificationScript = `// Deployment Verification Script - Run in browser console on deployed site
+console.log("🚀 AWhittleWandering Deployment Verification");
+console.log("===========================================");
+
+// Check deployed environment
+function checkDeployment() {
+  console.log("\\n📋 Checking deployment environment...");
+  
+  console.log("URL:", window.location.href);
+  console.log("Time:", new Date().toISOString());
+  
+  // Look for indicators of production deployment
+  const isProd = window.location.href.includes("awhittlewandering-site.pages.dev");
+  console.log("Production deployment:", isProd ? "✅ Yes" : "❌ No");
+}
+
+// Check Mapbox token
+function checkMapboxToken() {
+  console.log("\\n🔑 Checking Mapbox Token...");
+
+  // Check if mapboxgl is loaded
+  if (typeof mapboxgl === "undefined") {
+    console.error("❌ mapboxgl is not loaded");
+    return false;
+  }
+
+  console.log("✅ mapboxgl is loaded:", mapboxgl.version);
+
+  // Check token
+  const token = mapboxgl.accessToken;
+  if (!token) {
+    console.error("❌ No Mapbox access token set");
+    return false;
+  }
+
+  if (!token.startsWith("pk.")) {
+    console.error("❌ Invalid Mapbox token format (should start with pk.)");
+    return false;
+  }
+
+  console.log("✅ Mapbox token is set and formatted correctly");
+  console.log("Token preview:", token.substring(0, 20) + "...");
+  
+  // Check window token
+  if (window.__MAPBOX_TOKEN__) {
+    console.log("✅ Window.__MAPBOX_TOKEN__ is set");
+    console.log("Window token preview:", window.__MAPBOX_TOKEN__.substring(0, 20) + "...");
+  } else {
+    console.warn("⚠️ Window.__MAPBOX_TOKEN__ is not set");
+  }
+
+  return true;
+}
+
+// Run verification
+function verifyDeployment() {
+  console.log("🔍 Starting deployment verification...");
+  
+  checkDeployment();
+  const tokenOK = checkMapboxToken();
+  
+  console.log("\\n📝 Verification Summary:");
+  console.log("-----------------------");
+  console.log("Mapbox Token:", tokenOK ? "✅ PASS" : "❌ FAIL");
+  
+  const overallStatus = tokenOK ? "✅ DEPLOYMENT LOOKS GOOD" : "❌ ISSUES DETECTED";
+  console.log("\\n" + overallStatus);
+}
+
+// Run verification
+verifyDeployment();`;
+
+        // Function to copy script to clipboard
+        function copyScript() {
+            navigator.clipboard.writeText(verificationScript).then(() => {
+                alert("Verification script copied to clipboard. Open the console in the deployed site and paste it.");
+            }).catch(err => {
+                console.error('Could not copy text: ', err);
+            });
+        }
+        
+        // Function to open site in iframe
+        function openSite() {
+            const container = document.getElementById('iframe-container');
+            container.innerHTML = '<iframe src="https://2fb44092.awhittlewandering-site.pages.dev" title="Deployed Site"></iframe>';
+        }
+    </script>
+</body>
+</html>
