@@ -175,7 +175,7 @@ export class TessieAPIClient {
     return {
       id: tessieData.vin,
       name: tessieData.display_name || 'Tesla',
-      model: 'Model 3', // This should come from vehicle config
+      model: 'Model Y', // This should come from vehicle config
       batteryLevel: tessieData.charge_state?.battery_level || 0,
       range: tessieData.charge_state?.battery_range || 0,
       estimatedRange: tessieData.charge_state?.est_battery_range || 0,

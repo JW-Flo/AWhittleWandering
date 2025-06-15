@@ -11,7 +11,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "wrangler deploy",
+    "deploy": "wrangler pages deploy dist --project-name=awhittlewandering-site",
     "serve": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
