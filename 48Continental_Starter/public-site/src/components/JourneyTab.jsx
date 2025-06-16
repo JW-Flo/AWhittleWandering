@@ -115,10 +115,10 @@ const JourneyTab = ({ vehicleData }) => {
             setJourneyStats({
                 totalDistance: Math.round(tripData.totalMiles || 12000),
                 daysOnRoad: tripData.daysOnRoad || 28,
-                statesVisited: visitedStates.length,
+                statesVisited: visitedStates?.length || 0,
                 milesPerDay: Math.round((tripData.totalMiles || 12000) / (tripData.daysOnRoad || 28)),
-                remainingStates: 48 - visitedStates.length,
-                percentComplete: Math.round((visitedStates.length / 48) * 100)
+                remainingStates: 48 - (visitedStates?.length || 0),
+                percentComplete: Math.round(((visitedStates?.length || 0) / 48) * 100)
             });
         }
     }, [tripData, visitedStates]);
@@ -197,7 +197,7 @@ const JourneyTab = ({ vehicleData }) => {
                                     <StateItem
                                         key={state}
                                         state={state}
-                                        visited={visitedStates.includes(state)}
+                                        visited={visitedStates?.includes(state) || false}
                                         current={state === currentState}
                                     />
                                 ))}

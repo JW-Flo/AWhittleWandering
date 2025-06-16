@@ -1,166 +1,142 @@
-# A Whittle Wandering
+# A Whittle Wandering (48 Continental)
 
-A Whittle Wandering - A 60-day road trip through all 48 continental United States.
+A real-time tracking system for a 60-day Tesla road trip through all 48 contiguous U.S. states.
 
-## Project Overview
+## Project Description
 
-This repository contains the complete code for the A Whittle Wandering project, tracking a 60-day Tesla road trip through all 48 contiguous U.S. states. The application displays real-time vehicle telemetry, trip progress, charging station information, and interactive maps.
+This project tracks a Tesla vehicle on a 60-day journey across all 48 contiguous United States, providing real-time updates on location, weather, state visits, and trip progress. The system consists of multiple interconnected components that work together to create a seamless experience for users following the journey.
+
+## System Architecture
+
+The system is built with the following core components:
+
+- **Public Website**: React-based frontend for user interaction
+- **Edge Worker**: Cloudflare Workers API backend
+- **MCP Server**: Mission Control Platform running on a persistent iMac
+- **Vehicle Telemetry**: Integration with Tessie API for Tesla data
+- **Weather Integration**: Real-time weather data along the route
+- **Deployment Pipeline**: Automated testing and deployment
 
 ## Repository Structure
 
-```plaintext
-ContinentalUSA/
-├── 48Continental_Starter/    # Main frontend web application (React)
-├── edge-worker/              # Edge infrastructure for data handling via Cloudflare Workers
-├── mcp-server/               # Mission Control Platform (MCP) server for vehicle telemetry
-├── shared/                   # Shared utilities and services used across components
-├── scripts/                  # Build, deployment, and maintenance scripts
-│   └── legacy/               # Archived scripts no longer in active use
-├── docs/                     # Project documentation
-│   ├── deployment/           # Deployment-related documentation
-│   ├── testing/              # Testing-related documentation
-│   └── user-guide/           # User guide and manual
-├── configs/                  # Configuration files
-│   └── legacy-workflows/     # Archived workflow configurations
-├── data/                     # Data files including itineraries
-├── tests/                    # Test files and integration tests
-├── utilities/                # Utility functions and helper scripts
-└── legacy/                   # Archive of files no longer in active use
+```
+├── 48Continental_Starter/     # Original project structure
+│   └── public-site/           # React frontend application
+├── awhittlewandering/         # New consolidated codebase
+│   ├── packages/
+│   │   └── frontend/          # React application
+│   └── workers/               # Cloudflare Workers
+├── edge-worker/               # Edge Worker API implementation
+├── mcp-server/                # MCP server implementation
+├── mcp-48continental/         # MCP plugins for 48 Continental project
+├── n8n/                       # n8n workflows for automation
+├── shared/                    # Shared utilities and services
+├── scripts/                   # Deployment and utility scripts
+├── docs/                      # Project documentation
+└── .github/                   # GitHub Actions workflows
 ```
 
-## Setup Instructions
+## Key Features
 
-### Prerequisites
+- Real-time vehicle tracking on an interactive map
+- Current weather conditions along the route
+- State visit tracking and visualization
+- Trip progress and statistics
+- Automated deployment and monitoring
+- Resilient infrastructure with fallback mechanisms
 
-- Node.js 20.x or higher
-- npm 10.x or higher
-- Git
+## Deployment Process
 
-### Installation
+The project uses a comprehensive deployment process:
 
-1. Clone the repository:
+1. **Environment Validation**: Checks for required environment variables
+2. **Component Deployment**: Deploys each component in the correct order
+3. **Testing**: Runs automated tests to verify functionality
+4. **Verification**: Performs post-deployment checks
+5. **Reporting**: Generates deployment reports
+
+To deploy the project:
 
 ```bash
-git clone https://github.com/yourusername/AWhittleWandering.git
-cd A-Whittle-Wandering
+# Deploy everything
+./scripts/deploy-project.sh
+
+# Deploy specific components
+./scripts/deploy-project.sh --component edge-worker
+./scripts/deploy-project.sh --component public-site
 ```
 
-2. Set up the frontend application:
+## Environment Setup
+
+The following environment variables are required:
+
+```
+CF_API_TOKEN=your_cloudflare_api_token
+CF_ACCOUNT_ID=your_cloudflare_account_id
+TESSIE_API_TOKEN=your_tessie_api_token
+TESSIE_VIN=your_tesla_vehicle_id
+OPENWEATHER_API_KEY=your_openweather_api_key
+MAPBOX_TOKEN=your_mapbox_token
+EDGE_HMAC_KEY=your_edge_hmac_key
+```
+
+Create a `.env` file in the project root with these variables or set them in your environment.
+
+## Development
+
+To set up a local development environment:
 
 ```bash
-cd 48Continental_Starter/public-site
+# Install dependencies
 npm install
-```
 
-3. Create a `.env` file based on the `.env.example` template:
-
-```bash
-cp .env.example .env
-```
-
-4. Configure your Mapbox token in the `.env` file:
-
-```plaintext
-VITE_MAPBOX_TOKEN=your_mapbox_token_here
-```
-
-### Development
-
-Run the development server:
-
-```bash
+# Start frontend development server
 cd 48Continental_Starter/public-site
+npm run dev
+
+# Start edge worker locally
+cd edge-worker
 npm run dev
 ```
 
-The site should now be available at `http://localhost:5173/`
+## Testing
 
-## Building and Deployment
-
-### Production Build
-
-To create a production build:
+The project includes various testing scripts:
 
 ```bash
+# Test API endpoints
+node scripts/test-api-endpoints.js
+
+# Verify Mapbox token
 cd 48Continental_Starter/public-site
-npm run build:validate
+./scripts/verify-mapbox-token.sh
+
+# Validate deployment
+node scripts/deployment-success-validator.js
 ```
 
-This command will:
+## CI/CD
 
-1. Build the application with production settings
-2. Verify the Mapbox token is correctly embedded
-3. Check bundle sizes for performance concerns
-4. Validate API endpoints configuration
+The project uses GitHub Actions for continuous integration and deployment. The workflows are defined in:
 
-### GitHub Pages Deployment
-
-The repository includes a GitHub Actions workflow for automated deployment to GitHub Pages:
-
-1. Push changes to the `main` branch
-2. The GitHub Action will automatically build and deploy the site
-3. The site will be available at your GitHub Pages URL
-
-## Mapbox Integration
-
-The application uses Mapbox for map rendering with multiple fallback mechanisms to ensure reliability:
-
-1. **Token Preloading**: Mapbox token is injected early via global variable
-2. **Container Visibility**: Map initializes only when its container is visible
-3. **Script Loading**: Controlled loading of Mapbox GL JS
-4. **Single Initialization**: Unified map startup sequence
-5. **Tiered Fallbacks**: Multiple fallback options if primary rendering fails
-
-## Environment Configuration
-
-The application uses environment files for configuration:
-
-- `.env.development`: Development environment variables
-- `.env.production`: Production environment variables
-
-Key variables include:
-
-```plaintext
-# Mapbox configuration
-VITE_MAPBOX_TOKEN=pk.your_token_here
-VITE_MAPBOX_STYLE=mapbox://styles/mapbox/dark-v11
-VITE_MAPBOX_FALLBACK_TOKEN=pk.your_fallback_token_here
-VITE_MAPBOX_FALLBACK_STYLE=mapbox://styles/mapbox/light-v11
-
-# API configuration
-VITE_API_BASE_URL=https://api.awhittlewandering.com
-VITE_EDGE_WORKER_URL=https://api.awhittlewandering.com
-VITE_WEBSOCKET_ENDPOINT=wss://api.awhittlewandering.com/ws
-
-# Feature flags
-VITE_USE_SIMULATED_DATA=false
-VITE_ENABLE_ANALYTICS=true
+```
+.github/workflows/deploy-all-final.yml
+.github/workflows/test-edge-worker.yml
+.github/workflows/auto-monitoring.yml
 ```
 
-## Validation Scripts
+## Documentation
 
-The repository contains several validation scripts to ensure reliable deployment:
+For more detailed information, refer to the following documentation:
 
-- **verify-mapbox-token.sh**: Ensures Mapbox token is correctly embedded in the build
-- **check-bundle-size.sh**: Verifies bundle sizes are within acceptable limits
-- **validate-api-endpoints.sh**: Checks API endpoint configurations
-- **validate-build.js**: Orchestrates all validation scripts
-
-Run validation scripts with:
-
-```bash
-cd 48Continental_Starter/public-site
-bash scripts/verify-mapbox-token.sh
-bash scripts/check-bundle-size.sh
-bash scripts/validate-api-endpoints.sh
-```
+- [Project Summary](docs/PROJECT_SUMMARY.md) - Complete project overview
+- [Deployment Strategy](docs/DEPLOYMENT_STRATEGY.md) - Deployment approach and considerations
+- [MCP Server Architecture](docs/mcp-server-architecture/index.md) - MCP server design and implementation
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the terms of the LICENSE file included in the repository.
 
-## Acknowledgments
+## Contact
 
-- Mapbox for map rendering
-- OpenWeatherMap for weather data
-- Tesla API for vehicle telemetry
+For questions or support, please open an issue in the repository or contact the project maintainers.
