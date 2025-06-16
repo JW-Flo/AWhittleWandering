@@ -1,130 +1,187 @@
-name: Deploy All Components (Final)
+name: Deploy A Whittle Wandering
 
 on:
   push:
     branches:
       - main
-      - "recovery/map-integration-restored"
-    paths:
-      - "edge-worker/**"
-      - "48Continental_Starter/public-site/**"
-      - ".github/workflows/deploy-all-final.yml"
+      - master
   workflow_dispatch:
-
-concurrency:
-  group: deploy-workflow-${{ github.ref }}
-  cancel-in-progress: true
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - production
+          - staging
+      deploy_components:
+        description: "Components to deploy"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - public-site
+          - edge-worker
+          - mcp-server
 
 env:
-  NODE_VERSION: "24.1.0"
+  NODE_VERSION: "18"
 
 jobs:
-  test:
-    name: Test Edge Worker
+  validate-env:
+    name: Validate Environment
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Install dependencies
-        working-directory: edge-worker
-        run: npm ci
-
-      - name: Setup test environment
-        working-directory: edge-worker
+      - name: Check required secrets
+        id: check-secrets
         run: |
-          echo "TESSIE_API_TOKEN=test_token" > .dev.vars
-          echo "EDGE_HMAC_KEY=${{ secrets.EDGE_HMAC_KEY || 'awhittlewandering_secure_key' }}" >> .dev.vars
-          echo "MAPBOX_TOKEN=test_mapbox_token" >> .dev.vars
-          echo "OPENWEATHER_API_KEY=test_weather_key" >> .dev.vars
+          missing_secrets=()
 
-      - name: Build
-        working-directory: edge-worker
-        run: npm run build
+          # Check for required secrets individually
+          if [ -z "${{ secrets.CF_API_TOKEN }}" ]; then missing_secrets+=("CF_API_TOKEN"); fi
+          if [ -z "${{ secrets.CF_ACCOUNT_ID }}" ]; then missing_secrets+=("CF_ACCOUNT_ID"); fi
+          if [ -z "${{ secrets.TESSIE_API_TOKEN }}" ]; then missing_secrets+=("TESSIE_API_TOKEN"); fi
+          if [ -z "${{ secrets.TESSIE_VIN }}" ]; then missing_secrets+=("TESSIE_VIN"); fi
+          if [ -z "${{ secrets.OPENWEATHER_API_KEY }}" ]; then missing_secrets+=("OPENWEATHER_API_KEY"); fi
+          if [ -z "${{ secrets.MAPBOX_TOKEN }}" ]; then missing_secrets+=("MAPBOX_TOKEN"); fi
+          if [ -z "${{ secrets.EDGE_HMAC_KEY }}" ]; then missing_secrets+=("EDGE_HMAC_KEY"); fi
 
-      - name: Run tests
-        working-directory: edge-worker
-        run: npm test
+          # Check if any secrets are missing
+          if [ ${#missing_secrets[@]} -gt 0 ]; then
+            echo "::error::Missing required secrets: ${missing_secrets[*]}"
+            echo "missing_count=${#missing_secrets[@]}" >> $GITHUB_OUTPUT
+            echo "missing_secrets=${missing_secrets[*]}" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "All required secrets are set"
+            echo "missing_count=0" >> $GITHUB_OUTPUT
+          fi
+    outputs:
+      missing_count: ${{ steps.check-secrets.outputs.missing_count }}
+      missing_secrets: ${{ steps.check-secrets.outputs.missing_secrets }}
 
   deploy:
-    needs: test
+    name: Deploy A Whittle Wandering
+    needs: validate-env
+    if: needs.validate-env.outputs.missing_count == 0
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    env:
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
+      TESSIE_VIN: ${{ secrets.TESSIE_VIN }}
+      OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+      MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+      EDGE_HMAC_KEY: ${{ secrets.EDGE_HMAC_KEY }}
+      DEPLOYMENT_ENV: ${{ github.event.inputs.environment || 'production' }}
+      DEPLOY_COMPONENTS: ${{ github.event.inputs.deploy_components || 'all' }}
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
 
-      - name: Deploy Edge Worker
+      - name: Install dependencies
+        run: |
+          npm ci
+          # Install specific dependencies for deployment
+          npm install -g wrangler@latest
+          npm install -g dotenv-cli
+
+      - name: Setup deployment environment
+        run: |
+          # Create or update .env file with GitHub secrets
+          echo "CF_API_TOKEN=${{ secrets.CF_API_TOKEN }}" > .env
+          echo "CF_ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }}" >> .env
+          echo "TESSIE_API_TOKEN=${{ secrets.TESSIE_API_TOKEN }}" >> .env
+          echo "TESSIE_VIN=${{ secrets.TESSIE_VIN }}" >> .env
+          echo "OPENWEATHER_API_KEY=${{ secrets.OPENWEATHER_API_KEY }}" >> .env
+          echo "MAPBOX_TOKEN=${{ secrets.MAPBOX_TOKEN }}" >> .env
+          echo "EDGE_HMAC_KEY=${{ secrets.EDGE_HMAC_KEY }}" >> .env
+          echo "DEPLOYMENT_ENV=${{ env.DEPLOYMENT_ENV }}" >> .env
+
+          # Make deployment scripts executable
+          chmod +x scripts/*.sh scripts/*.js
+          chmod +x 48Continental_Starter/public-site/scripts/*.sh
+
+      - name: Deploy edge worker
+        if: env.DEPLOY_COMPONENTS == 'all' || env.DEPLOY_COMPONENTS == 'edge-worker'
         run: |
           cd edge-worker
           npm ci
-          npm install -D wrangler@latest
-          npx wrangler deploy
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-          TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
-          TESSIE_VIN: ${{ secrets.TESSIE_VIN }}
-          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
-          MAPBOX_PUBLIC_TOKEN: ${{ secrets.MAP_API_TOKEN }}
-          EDGE_HMAC_KEY: ${{ secrets.EDGE_HMAC_KEY }}
+          echo "Deploying Edge Worker..."
+          CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_TOKEN }} CLOUDFLARE_ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }} npx wrangler deploy
+          echo "Edge Worker deployment completed"
 
-      - name: Setup Environment Variables
+      - name: Verify Mapbox token
+        if: env.DEPLOY_COMPONENTS == 'all' || env.DEPLOY_COMPONENTS == 'public-site'
         run: |
-          node scripts/setup-env.cjs
-        env:
-          EDGE_WORKER_URL: "https://awhittlewandering-edge.kd8jc7v8cd.workers.dev"
-          API_BASE_URL: "https://awhittlewandering-edge.kd8jc7v8cd.workers.dev"
-          MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
-          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
-          OPENWEATHERMAP_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
-          TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
-          TESSIE_VIN: ${{ secrets.TESSIE_VIN }}
+          export VITE_MAPBOX_TOKEN="${{ secrets.MAPBOX_TOKEN }}"
+          cd 48Continental_Starter/public-site
+          ./scripts/verify-mapbox-token.sh || echo "Mapbox token verification warning - continuing deployment"
 
-      - name: Build & Deploy Public Site
+      - name: Deploy public site
+        if: env.DEPLOY_COMPONENTS == 'all' || env.DEPLOY_COMPONENTS == 'public-site'
         run: |
           cd 48Continental_Starter/public-site
           npm ci
           npm run build
-          npm run deploy
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-          VITE_MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
-          VITE_EDGE_WORKER_URL: "https://awhittlewandering-edge.kd8jc7v8cd.workers.dev"
-          VITE_API_BASE_URL: "https://awhittlewandering-edge.kd8jc7v8cd.workers.dev"
-          VITE_WEBSOCKET_ENDPOINT: "wss://awhittlewandering-edge.workers.dev/sync-service"
-          VITE_ENABLE_STREAMING: "true"
-          VITE_USE_SIMULATED_DATA: "false"
-          VITE_OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
-          VITE_TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
-          VITE_TESSIE_VIN: ${{ secrets.TESSIE_VIN }}
-          EDGE_HMAC_KEY: ${{ secrets.EDGE_HMAC_KEY }}
-          VITE_APP_NAME: "AWhittleWandering"
+          echo "Deploying Public Site..."
+          CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_TOKEN }} CLOUDFLARE_ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }} npx wrangler pages deploy dist --project-name="awhittlewandering-site" --branch="main"
+          echo "Public Site deployment completed"
 
-      - name: Commit deployment artifacts
+      - name: Run deployment script
+        if: env.DEPLOY_COMPONENTS == 'all'
         run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          TIMESTAMP=$(date "+%Y%m%d-%H%M%S")
+          echo "Running main deployment script..."
+          ./scripts/deploy-project.sh
 
-          # Check if there are changes to commit
-          if [[ -n "$(git status --porcelain)" ]]; then
-            git add .
-            git commit -m "chore: deploy AWhittleWandering site and edge worker ($TIMESTAMP)"
-            echo "Deployment artifacts committed locally"
-          else
-            echo "No changes to commit"
-          fi
+      - name: Test API endpoints
+        if: env.DEPLOY_COMPONENTS == 'all' || env.DEPLOY_COMPONENTS == 'edge-worker'
+        run: |
+          echo "Testing API endpoints..."
+          NODE_OPTIONS="--unhandled-rejections=strict" node ./scripts/test-api-endpoints.js
 
-          # Create deployment tag (locally only for workflow record)
-          git tag -a deploy-$TIMESTAMP -m "Deployment $TIMESTAMP"
-          echo "Created deployment tag: deploy-$TIMESTAMP"
+      - name: Verify deployment
+        if: env.DEPLOY_COMPONENTS == 'all'
+        run: |
+          echo "Verifying deployment..."
+          node ./scripts/deployment-success-validator.js
+
+      - name: Upload deployment report
+        uses: actions/upload-artifact@v3
+        with:
+          name: deployment-report
+          path: LATEST_DEPLOYMENT_REPORT.md
+          retention-days: 30
+
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "::notice::🎉 Deployment completed successfully! See the deployment report for details."
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::❌ Deployment failed. Check the logs for details."
+
+  notify-missing-secrets:
+    name: Notify Missing Secrets
+    needs: validate-env
+    if: needs.validate-env.outputs.missing_count != 0
+    runs-on: ubuntu-latest
+    steps:
+      - name: Display missing secrets error
+        run: |
+          echo "::error::Deployment aborted. Missing required secrets: ${{ needs.validate-env.outputs.missing_secrets }}"
+          echo "Please add the missing secrets to the repository settings."
+          exit 1

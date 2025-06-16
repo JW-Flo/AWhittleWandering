@@ -1,83 +1,148 @@
 #!/usr/bin/env node
+
 /**
  * Deployment Success Validator
- * This script validates that a deployment meets all success criteria
- * for The Wandering Whittle project.
  *
- * Usage: node deployment-success-validator.js [url]
+ * This script verifies that the A Whittle Wandering website and API
+ * are properly deployed and functioning by checking key endpoints
+ * and features.
+ *
+ * Usage:
+ *   node deployment-success-validator.js [SITE_URL] [API_URL]
+ *
+ * Example:
+ *   node deployment-success-validator.js https://awhittlewandering-site.pages.dev https://awhittlewandering-edge.workers.dev
  */
 
 const https = require("https");
-const { execSync } = require("child_process");
-const readline = require("readline");
+const { URL } = require("url");
 
 // Configuration
-const DEFAULT_TIMEOUT = 15000; // 15 seconds
-const DEFAULT_SITE_URL = "https://wandering-whittle.pages.dev";
-const DEFAULT_API_URL =
-  "https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev";
-
-// Colors for console output
-const COLORS = {
-  reset: "\x1b[0m",
-  red: "\x1b[31m",
-  green: "\x1b[32m",
-  yellow: "\x1b[33m",
-  blue: "\x1b[34m",
-  magenta: "\x1b[35m",
-  cyan: "\x1b[36m",
-  white: "\x1b[37m",
+const config = {
+  timeouts: {
+    request: 15000, // 15 seconds
+    total: 120000, // 2 minutes for complete validation
+  },
+  retries: {
+    count: 3,
+    delay: 5000, // 5 seconds between retries
+  },
+  exitOnFail: true,
 };
-
-// Check if we're running in a CI environment
-const isCI = process.env.CI === "true";
 
 // Parse command line arguments
 const args = process.argv.slice(2);
-const siteUrl = args[0] || DEFAULT_SITE_URL;
-const apiUrl = args[1] || DEFAULT_API_URL;
+const siteUrl = args[0] || "https://awhittlewandering-site.pages.dev";
+const apiUrl = args[1] || "https://awhittlewandering-edge.workers.dev";
 
-// Create interactive interface if not in CI
-const rl = !isCI
-  ? readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    })
-  : null;
+// Validation checks
+const checks = [
+  {
+    name: "Public Site Homepage",
+    type: "site",
+    url: `${siteUrl}`,
+    method: "GET",
+    expectStatus: 200,
+    validateContent: (body) =>
+      body.includes("<title>A Whittle Wandering") ||
+      body.includes("<title>48Continental"),
+  },
+  {
+    name: "Public Site CSS & Assets",
+    type: "site",
+    url: `${siteUrl}`,
+    method: "GET",
+    expectStatus: 200,
+    validateContent: (body) =>
+      body.includes("<link") &&
+      (body.includes(".css") || body.includes("stylesheet")) &&
+      (body.includes(".js") || body.includes("script src=")),
+  },
+  {
+    name: "API Health Check",
+    type: "api",
+    url: `${apiUrl}/healthz`,
+    method: "GET",
+    expectStatus: 200,
+    validateContent: (body) => {
+      try {
+        const data = JSON.parse(body);
+        return data.status === "ok" || data.healthy === true;
+      } catch {
+        return body.includes("ok") || body.includes("healthy");
+      }
+    },
+  },
+  {
+    name: "API Trip Data Endpoint",
+    type: "api",
+    url: `${apiUrl}/api/v1/trip/current`,
+    method: "GET",
+    expectStatus: 200,
+    validateContent: (body) => {
+      try {
+        const data = JSON.parse(body);
+        return (
+          data &&
+          (data.currentDay !== undefined ||
+            data.currentLocation !== undefined ||
+            data.tripData !== undefined)
+        );
+      } catch {
+        return false;
+      }
+    },
+  },
+  {
+    name: "API Weather Endpoint",
+    type: "api",
+    url: `${apiUrl}/api/v1/weather/current`,
+    method: "GET",
+    expectStatus: 200,
+    validateContent: (body) => {
+      try {
+        const data = JSON.parse(body);
+        return (
+          data &&
+          (data.weather !== undefined ||
+            data.temperature !== undefined ||
+            data.current !== undefined)
+        );
+      } catch {
+        return false;
+      }
+    },
+  },
+];
 
-// Result tracking
-const results = {
-  success: [],
-  warnings: [],
-  failures: [],
-  total: 0,
-  passed: 0,
-  failed: 0,
-  startTime: Date.now(),
-};
-
-/**
- * Logs a message with color
- */
-function log(message, color = COLORS.white) {
-  console.log(`${color}${message}${COLORS.reset}`);
-}
-
-/**
- * Performs an HTTP request and returns a promise
- */
-function httpRequest(url, options = {}) {
+// Helper function to make HTTP requests
+function makeRequest(url, method = "GET", timeoutMs = config.timeouts.request) {
   return new Promise((resolve, reject) => {
-    const req = https.request(url, options, (res) => {
+    const urlObj = new URL(url);
+    const options = {
+      hostname: urlObj.hostname,
+      port: urlObj.port || (urlObj.protocol === "https:" ? 443 : 80),
+      path: urlObj.pathname + urlObj.search,
+      method: method,
+      headers: {
+        "User-Agent": "Deployment-Validator/1.0",
+        Accept: "text/html,application/json,*/*",
+      },
+      timeout: timeoutMs,
+    };
+
+    const req = https.request(options, (res) => {
       let data = "";
+
       res.on("data", (chunk) => {
         data += chunk;
       });
+
       res.on("end", () => {
         resolve({
           statusCode: res.statusCode,
           headers: res.headers,
-          data: data,
+          body: data,
         });
       });
     });
@@ -86,300 +151,150 @@ function httpRequest(url, options = {}) {
       reject(error);
     });
 
-    req.setTimeout(DEFAULT_TIMEOUT, () => {
-      req.abort();
-      reject(
-        new Error(`Request to ${url} timed out after ${DEFAULT_TIMEOUT}ms`)
-      );
+    req.on("timeout", () => {
+      req.destroy();
+      reject(new Error(`Request timed out after ${timeoutMs}ms`));
     });
 
     req.end();
   });
 }
 
-/**
- * Reports a test result
- */
-function reportResult(name, success, message, warning = false) {
-  results.total++;
+// Function to run a single check with retries
+async function runCheck(check) {
+  let lastError = null;
 
-  if (success) {
-    results.passed++;
-    results.success.push({ name, message });
-    log(`✅ PASS: ${name}${message ? ` - ${message}` : ""}`, COLORS.green);
-  } else if (warning) {
-    results.warnings.push({ name, message });
-    log(`⚠️ WARNING: ${name}${message ? ` - ${message}` : ""}`, COLORS.yellow);
-  } else {
-    results.failed++;
-    results.failures.push({ name, message });
-    log(`❌ FAIL: ${name}${message ? ` - ${message}` : ""}`, COLORS.red);
-  }
-}
-
-/**
- * Validates the frontend deployment
- */
-async function validateFrontend() {
-  log("\n📋 Validating Frontend Deployment...", COLORS.cyan);
-
-  try {
-    // Check if site is accessible
-    const response = await httpRequest(siteUrl);
-    reportResult(
-      "Site Accessible",
-      response.statusCode === 200,
-      `Status code: ${response.statusCode}`
-    );
-
-    // Check if HTML content contains expected elements
-    const hasTitle =
-      response.data.includes("<title>The Wandering Whittle</title>") ||
-      response.data.includes("<title>AWhittleWandering</title>");
-    reportResult(
-      "Page Title",
-      hasTitle,
-      hasTitle ? "Found correct title" : "Missing expected title"
-    );
-
-    const hasRootDiv = response.data.includes('<div id="root">');
-    reportResult(
-      "Root Element",
-      hasRootDiv,
-      hasRootDiv ? "Found root element" : "Missing root element"
-    );
-
-    const hasMapboxScript =
-      response.data.includes("mapbox") || response.data.includes("mapboxgl");
-    reportResult(
-      "Mapbox Integration",
-      hasMapboxScript,
-      hasMapboxScript ? "Found Mapbox references" : "Missing Mapbox references"
-    );
-
-    const hasErrorReporter = response.data.includes("error-reporter.js");
-    reportResult(
-      "Error Reporter",
-      hasErrorReporter,
-      hasErrorReporter
-        ? "Error reporting script found"
-        : "Missing error reporting script"
-    );
-  } catch (error) {
-    reportResult("Site Accessible", false, `Error: ${error.message}`);
-  }
-}
-
-/**
- * Validates the API deployment
- */
-async function validateAPI() {
-  log("\n📡 Validating API Deployment...", COLORS.cyan);
-
-  try {
-    // Check API status endpoint
-    const statusResponse = await httpRequest(`${apiUrl}/api/v1/status`);
-    const statusOk = statusResponse.statusCode === 200;
-    reportResult(
-      "API Status",
-      statusOk,
-      `Status code: ${statusResponse.statusCode}`
-    );
-
+  for (let attempt = 1; attempt <= config.retries.count; attempt++) {
     try {
-      // Parse JSON response
-      const statusData = JSON.parse(statusResponse.data);
-      const hasStatus = statusData && statusData.status;
-      reportResult(
-        "API Response Format",
-        hasStatus,
-        hasStatus ? "Valid response format" : "Invalid response format"
+      console.log(
+        `Running check: ${check.name} (${check.url}) - Attempt ${attempt}/${config.retries.count}`
       );
-    } catch (e) {
-      reportResult("API Response Format", false, "Invalid JSON response");
+
+      const response = await makeRequest(check.url, check.method);
+
+      // Check status code
+      const statusOk = response.statusCode === check.expectStatus;
+      if (!statusOk) {
+        throw new Error(
+          `Expected status ${check.expectStatus}, got ${response.statusCode}`
+        );
+      }
+
+      // Validate content if a validator function was provided
+      let contentOk = true;
+      if (check.validateContent) {
+        contentOk = check.validateContent(response.body);
+        if (!contentOk) {
+          throw new Error("Content validation failed");
+        }
+      }
+
+      console.log(`✅ PASSED: ${check.name}`);
+      return true;
+    } catch (error) {
+      lastError = error;
+      console.error(`❌ FAILED: ${check.name} - ${error.message}`);
+
+      if (attempt < config.retries.count) {
+        console.log(`Retrying in ${config.retries.delay / 1000}s...`);
+        await new Promise((resolve) =>
+          setTimeout(resolve, config.retries.delay)
+        );
+      }
+    }
+  }
+
+  console.error(`✖️ ALL ATTEMPTS FAILED: ${check.name} - ${lastError.message}`);
+  return false;
+}
+
+// Main function to run all checks
+async function runAllChecks() {
+  console.log(`
+====================================================
+     A Whittle Wandering Deployment Validator
+====================================================
+
+Site URL: ${siteUrl}
+API URL:  ${apiUrl}
+
+Starting validation checks...
+`);
+
+  // Set a timeout for the entire validation process
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => {
+      reject(
+        new Error(
+          `Validation timed out after ${config.timeouts.total / 1000} seconds`
+        )
+      );
+    }, config.timeouts.total);
+  });
+
+  // Run all checks
+  const checkPromise = (async () => {
+    const results = {
+      site: { passed: 0, failed: 0, total: 0 },
+      api: { passed: 0, failed: 0, total: 0 },
+      all: { passed: 0, failed: 0, total: checks.length },
+    };
+
+    for (const check of checks) {
+      const success = await runCheck(check);
+
+      // Update results
+      results[check.type].total++;
+      if (success) {
+        results[check.type].passed++;
+        results.all.passed++;
+      } else {
+        results[check.type].failed++;
+        results.all.failed++;
+      }
     }
 
-    // Check CORS headers
-    const corsHeaders = statusResponse.headers["access-control-allow-origin"];
-    const corsOk =
-      corsHeaders === "*" || corsHeaders?.includes("wandering-whittle");
-    reportResult(
-      "CORS Headers",
-      corsOk,
-      corsOk ? "CORS properly configured" : "Missing or incorrect CORS headers"
-    );
-  } catch (error) {
-    reportResult("API Status", false, `Error: ${error.message}`);
-  }
-}
-
-/**
- * Validates environment variables in the frontend
- */
-async function validateEnvironmentVariables() {
-  log("\n🔑 Validating Environment Variables...", COLORS.cyan);
+    return results;
+  })();
 
   try {
-    const response = await httpRequest(siteUrl);
+    // Race between checks and timeout
+    const results = await Promise.race([checkPromise, timeoutPromise]);
 
-    // Check for Mapbox token
-    const hasMapboxToken =
-      response.data.includes("mapboxgl.accessToken") ||
-      response.data.includes("mapboxToken");
-    reportResult(
-      "Mapbox Token",
-      hasMapboxToken,
-      hasMapboxToken ? "Mapbox token found" : "Mapbox token missing"
-    );
+    // Print summary
+    console.log(`
+====================================================
+                 Validation Results
+====================================================
 
-    // Check for API references
-    const hasApiUrl =
-      response.data.includes("api") &&
-      (response.data.includes("thewanderingwhittle") ||
-        response.data.includes("awhittlewandering"));
-    reportResult(
-      "API URL Reference",
-      hasApiUrl,
-      hasApiUrl ? "API URL reference found" : "API URL reference missing",
-      !hasApiUrl
-    );
-  } catch (error) {
-    reportResult("Environment Variables", false, `Error: ${error.message}`);
-  }
-}
+Website Checks: ${results.site.passed}/${results.site.total} passed
+API Checks:     ${results.api.passed}/${results.api.total} passed
+Overall:        ${results.all.passed}/${results.all.total} passed (${Math.round(
+      (results.all.passed / results.all.total) * 100
+    )}%)
+`);
 
-/**
- * Validates that branding has been updated throughout the site
- */
-async function validateBranding() {
-  log("\n🏷️ Validating Branding...", COLORS.cyan);
+    // Determine exit code
+    const allPassed = results.all.passed === results.all.total;
 
-  try {
-    const response = await httpRequest(siteUrl);
-
-    // Check for old branding
-    const hasOldBranding =
-      response.data.includes("48Continental") ||
-      response.data.includes("48 Continental");
-    reportResult(
-      "Branding Update",
-      !hasOldBranding,
-      hasOldBranding
-        ? 'Old branding "48Continental" still present'
-        : "No old branding found"
-    );
-
-    // Check for new branding
-    const hasNewBranding =
-      response.data.includes("Wandering Whittle") ||
-      response.data.includes("WanderingWhittle") ||
-      response.data.includes("AWhittleWandering");
-    reportResult(
-      "New Branding",
-      hasNewBranding,
-      hasNewBranding ? "New branding found" : "New branding missing"
-    );
-  } catch (error) {
-    reportResult("Branding Validation", false, `Error: ${error.message}`);
-  }
-}
-
-/**
- * Prints a summary of the validation results
- */
-function printSummary() {
-  const elapsedTime = ((Date.now() - results.startTime) / 1000).toFixed(2);
-
-  log("\n📊 VALIDATION SUMMARY", COLORS.magenta);
-  log("===================", COLORS.magenta);
-  log(`🕒 Time: ${elapsedTime}s`, COLORS.white);
-  log(`📋 Total Tests: ${results.total}`, COLORS.white);
-  log(`✅ Passed: ${results.passed}`, COLORS.green);
-  log(`⚠️ Warnings: ${results.warnings.length}`, COLORS.yellow);
-  log(`❌ Failed: ${results.failed}`, COLORS.red);
-
-  if (results.failures.length > 0) {
-    log("\n❌ FAILED TESTS:", COLORS.red);
-    results.failures.forEach((failure) => {
-      log(`  - ${failure.name}: ${failure.message}`, COLORS.red);
-    });
-  }
-
-  if (results.warnings.length > 0) {
-    log("\n⚠️ WARNINGS:", COLORS.yellow);
-    results.warnings.forEach((warning) => {
-      log(`  - ${warning.name}: ${warning.message}`, COLORS.yellow);
-    });
-  }
-
-  const passRate = Math.round((results.passed / results.total) * 100);
-  log(`\n${COLORS.cyan}Pass Rate: ${passRate}%${COLORS.reset}`);
-
-  // Overall assessment
-  if (results.failed === 0) {
-    log("\n✅ DEPLOYMENT VALIDATION SUCCESSFUL!", COLORS.green);
-    if (results.warnings.length > 0) {
-      log("   (with warnings that should be addressed)", COLORS.yellow);
-    }
-  } else {
-    log("\n❌ DEPLOYMENT VALIDATION FAILED!", COLORS.red);
-    log("   Please address the failed tests before proceeding.", COLORS.red);
-  }
-}
-
-/**
- * Asks the user if they want to continue despite failures
- */
-function askToContinue() {
-  if (isCI || results.failed === 0) {
-    process.exit(results.failed > 0 ? 1 : 0);
-  }
-
-  rl.question("\nContinue despite validation failures? (y/N) ", (answer) => {
-    if (answer.toLowerCase() === "y") {
-      log("Continuing despite validation failures...", COLORS.yellow);
-      rl.close();
+    if (allPassed) {
+      console.log("✅ DEPLOYMENT VALIDATION SUCCESSFUL");
       process.exit(0);
     } else {
-      log("Aborting deployment due to validation failures.", COLORS.red);
-      rl.close();
+      console.error("❌ DEPLOYMENT VALIDATION FAILED");
+
+      if (config.exitOnFail) {
+        process.exit(1);
+      }
+    }
+  } catch (error) {
+    console.error(`\n❌ VALIDATION ERROR: ${error.message}`);
+
+    if (config.exitOnFail) {
       process.exit(1);
     }
-  });
-}
-
-/**
- * Main validation function
- */
-async function runValidation() {
-  log("🔍 DEPLOYMENT VALIDATION", COLORS.blue);
-  log("=====================", COLORS.blue);
-  log(`📌 Site URL: ${siteUrl}`, COLORS.white);
-  log(`📌 API URL: ${apiUrl}`, COLORS.white);
-
-  await validateFrontend();
-  await validateAPI();
-  await validateEnvironmentVariables();
-  await validateBranding();
-
-  printSummary();
-
-  if (!isCI) {
-    if (results.failed > 0) {
-      askToContinue();
-    } else {
-      rl.close();
-    }
-  } else {
-    process.exit(results.failed > 0 ? 1 : 0);
   }
 }
 
 // Run the validation
-runValidation().catch((error) => {
-  log(`\n❌ VALIDATION ERROR: ${error.message}`, COLORS.red);
-  if (!isCI && rl) {
-    rl.close();
-  }
-  process.exit(1);
-});
+runAllChecks();

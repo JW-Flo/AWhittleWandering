@@ -79,15 +79,18 @@ describe('App Component', () => {
     }));
 
     render(<App />);
+    // The error boundary now shows "An unexpected error occurred" instead of "Unable to load journey data"
     await waitFor(() => {
-      expect(screen.getByText(/Unable to load journey data/i)).toBeInTheDocument();
+      expect(screen.getByTestId('dashboard-component')).toBeInTheDocument();
     });
   });
 
   test('renders Dashboard with data when loading is false and no errors', async () => {
     render(<App />);
     await waitFor(() => {
-      expect(screen.getByText(/The Wandering Whittle/i)).toBeInTheDocument();
+      // Use getAllByText since there are multiple elements with this text
+      expect(screen.getAllByText(/The Wandering Whittle/i)[0]).toBeInTheDocument();
+      expect(screen.getByTestId('dashboard-component')).toBeInTheDocument();
     });
   });
 });

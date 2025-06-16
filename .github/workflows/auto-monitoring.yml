@@ -1,0 +1,195 @@
+name: Automated Monitoring & Remediation
+
+on:
+  # Run on a schedule
+  schedule:
+    - cron: "0 */3 * * *" # Every 3 hours
+
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      check_type:
+        description: "Type of check to run"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - workflows
+          - api
+          - ui
+      auto_remediate:
+        description: "Enable automatic remediation"
+        required: true
+        default: true
+        type: boolean
+
+  # Also run after other workflows complete
+  workflow_run:
+    workflows:
+      - "Deploy All Components (Final)"
+    types:
+      - completed
+
+env:
+  NODE_VERSION: "24.1.0"
+  AUTO_REMEDIATE: ${{ github.event.inputs.auto_remediate || 'true' }}
+
+jobs:
+  monitor-workflows:
+    name: Monitor GitHub Workflows
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Workflow Monitor
+        if: ${{ github.event.inputs.check_type == 'all' || github.event.inputs.check_type == 'workflows' || github.event.inputs.check_type == null }}
+        run: node scripts/monitor-workflows.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPO: ${{ github.repository }}
+          AUTO_REMEDIATE: ${{ env.AUTO_REMEDIATE }}
+          NOTIFICATION_WEBHOOK: ${{ secrets.NOTIFICATION_WEBHOOK }}
+
+  check-api:
+    name: Check API Health
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check API Endpoints
+        if: ${{ github.event.inputs.check_type == 'all' || github.event.inputs.check_type == 'api' || github.event.inputs.check_type == null }}
+        run: |
+          API_URL="${{ secrets.EDGE_WORKER_URL || 'https://awhittlewandering-edge.kd8jc7v8cd.workers.dev' }}"
+          NODE_OPTIONS="--unhandled-rejections=strict" node scripts/test-api-endpoints.js "$API_URL"
+        env:
+          EDGE_HMAC_KEY: ${{ secrets.EDGE_HMAC_KEY }}
+          AUTO_REMEDIATE: ${{ env.AUTO_REMEDIATE }}
+          NOTIFICATION_WEBHOOK: ${{ secrets.NOTIFICATION_WEBHOOK }}
+
+      - name: Remediate API Issues (if needed)
+        if: ${{ failure() && env.AUTO_REMEDIATE == 'true' }}
+        run: |
+          echo "API health check failed. Attempting remediation..."
+          cd edge-worker
+          npm ci
+          npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
+          TESSIE_VIN: ${{ secrets.TESSIE_VIN }}
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+          MAPBOX_PUBLIC_TOKEN: ${{ secrets.MAP_API_TOKEN }}
+          EDGE_HMAC_KEY: ${{ secrets.EDGE_HMAC_KEY }}
+
+  check-ui:
+    name: Check UI Components
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        working-directory: 48Continental_Starter/public-site
+        run: npm ci
+
+      - name: Run Component Tests
+        if: ${{ github.event.inputs.check_type == 'all' || github.event.inputs.check_type == 'ui' || github.event.inputs.check_type == null }}
+        working-directory: 48Continental_Starter/public-site
+        run: npm test -- --run
+
+      - name: Check for visitedStates issues
+        if: ${{ failure() && env.AUTO_REMEDIATE == 'true' }}
+        run: |
+          echo "UI tests failed. Checking for visitedStates issues..."
+          grep -q "Cannot read properties of undefined (reading 'length')" ${{ github.workspace }}/48Continental_Starter/public-site/npm-debug.log || \
+          grep -q "Cannot read properties of undefined (reading 'length')" ${{ github.workspace }}/48Continental_Starter/public-site/test-results.log || \
+          ./scripts/fix-visited-states.sh
+        continue-on-error: true
+
+      - name: Check for Mapbox token issues
+        if: ${{ failure() && env.AUTO_REMEDIATE == 'true' }}
+        run: |
+          echo "UI tests failed. Checking for Mapbox token issues..."
+          cd 48Continental_Starter/public-site
+          npm run verify-mapbox-token || true
+        env:
+          VITE_MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+        continue-on-error: true
+
+  notification:
+    name: Send Status Notification
+    needs: [monitor-workflows, check-api, check-ui]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Prepare status report
+        id: status
+        run: |
+          # Determine overall status
+          if [[ "${{ needs.monitor-workflows.result }}" == "success" && "${{ needs.check-api.result }}" == "success" && "${{ needs.check-ui.result }}" == "success" ]]; then
+            echo "status=✅ All checks passed" >> $GITHUB_OUTPUT
+            echo "icon=✅" >> $GITHUB_OUTPUT
+            echo "color=00FF00" >> $GITHUB_OUTPUT
+          else
+            echo "status=⚠️ Some checks failed" >> $GITHUB_OUTPUT
+            echo "icon=⚠️" >> $GITHUB_OUTPUT
+            echo "color=FFA500" >> $GITHUB_OUTPUT
+          fi
+
+          # Create detailed status message
+          echo "message=## AWhittleWandering System Status Report" >> $GITHUB_OUTPUT
+          echo "message=${message}
+
+          ### Workflow Monitoring: ${{ needs.monitor-workflows.result }}
+          ### API Health: ${{ needs.check-api.result }}
+          ### UI Components: ${{ needs.check-ui.result }}
+
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          " >> $GITHUB_OUTPUT
+
+      - name: Send notification
+        if: env.HAS_WEBHOOK == 'true'
+        env:
+          HAS_WEBHOOK: ${{ secrets.NOTIFICATION_WEBHOOK != '' && 'true' || 'false' }}
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{"text": "${{ steps.status.outputs.message }}", "color": "${{ steps.status.outputs.color }}", "title": "${{ steps.status.outputs.status }}", "icon": "${{ steps.status.outputs.icon }}"}' \
+          ${{ secrets.NOTIFICATION_WEBHOOK }}
+        continue-on-error: true
