@@ -113,7 +113,7 @@ function addCorsHeaders(response: Response): Response {
     const headers = new Headers(response.headers);
     headers.set('Access-Control-Allow-Origin', '*');
     headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-signature');
+    headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-signature, cache-control');
     headers.set('Access-Control-Max-Age', '86400');
     
     return new Response(response.body, {
@@ -157,7 +157,7 @@ async function handleWeatherRisk(request: Request, env: Env): Promise<Response> 
     const corsHeaders = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-signature',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-signature, cache-control',
         'Content-Type': 'application/json'
     };
 
@@ -267,7 +267,7 @@ async function handleRouteOptimization(request: Request, env: Env): Promise<Resp
     const corsHeaders = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-signature',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-signature, cache-control',
         'Content-Type': 'application/json'
     };
 
@@ -418,7 +418,7 @@ async function handleTessieVehicle(request: Request, env: Env): Promise<Response
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, cache-control'
     };
 
     try {
@@ -598,7 +598,7 @@ async function handleWeatherAPI(request: Request, env: Env): Promise<Response> {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
+        'Access-Control-Allow-Headers': 'Content-Type, cache-control'
     };
 
     try {
@@ -631,7 +631,7 @@ async function handleStationsAPI(_request: Request, _env: Env): Promise<Response
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
+        'Access-Control-Allow-Headers': 'Content-Type, cache-control'
     };
 
     try {
@@ -689,7 +689,7 @@ async function handleTripAPI(_request: Request, _env: Env): Promise<Response> {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
+        'Access-Control-Allow-Headers': 'Content-Type, cache-control'
     };
 
     try {
