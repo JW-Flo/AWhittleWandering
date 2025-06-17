@@ -31,6 +31,28 @@ if [[ -f "$PROJECT_ROOT/.env" ]]; then
   source "$PROJECT_ROOT/.env"
 fi
 
+# Run validation script and handle critical/non-critical failures
+echo "==== Running tools and MCP validation ===="
+"$PROJECT_ROOT/scripts/validate-all-tools.sh"
+VALIDATION_EXIT_CODE=$?
+if [[ $VALIDATION_EXIT_CODE -ne 0 ]]; then
+  # Check for critical failures in the validation report
+  LAST_REPORT=$(ls -t "$PROJECT_ROOT"/docs/testing/validation_report_*.md 2>/dev/null | head -n1)
+  if [[ -f "$LAST_REPORT" ]]; then
+    if grep -q "Critical failures:" "$LAST_REPORT"; then
+      echo "Blocking deployment due to critical validation failures."
+      cat "$LAST_REPORT"
+      exit 1
+    else
+      echo "Non-critical validation failures detected. Proceeding with deployment."
+      cat "$LAST_REPORT"
+    fi
+  else
+    echo "Validation failed and no report found. Blocking deployment."
+    exit 1
+  fi
+fi
+
 # Parse arguments
 while [[ $# -gt 0 ]]; do
   key="$1"
