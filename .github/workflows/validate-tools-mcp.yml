@@ -1,0 +1,67 @@
+name: MCP and Tools Validation
+
+on:
+  # Run on a schedule (twice a day)
+  schedule:
+    - cron: '0 6,18 * * *'
+  
+  # Also allow manual triggering
+  workflow_dispatch:
+    inputs:
+      full_validation:
+        description: 'Run full validation (including slow tests)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  validate:
+    name: Validate MCP and Tools
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          # Install any global dependencies needed for validation
+          npm install -g ts-node
+
+      - name: Run validation script
+        run: |
+          chmod +x ./scripts/validate-all-tools.sh
+          ./scripts/validate-all-tools.sh
+        env:
+          FULL_VALIDATION: ${{ github.event.inputs.full_validation || 'false' }}
+
+      - name: Upload validation report
+        uses: actions/upload-artifact@v3
+        with:
+          name: validation-report
+          path: docs/testing/validation_report_*.md
+          retention-days: 30
+
+      - name: Post validation summary
+        if: always()
+        run: |
+          REPORT_PATH=$(find docs/testing -name "validation_report_*.md" -type f -print -quit)
+          if [ -f "$REPORT_PATH" ]; then
+            echo "## Validation Report" >> $GITHUB_STEP_SUMMARY
+            cat "$REPORT_PATH" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## Validation Report" >> $GITHUB_STEP_SUMMARY
+            echo "No validation report was generated." >> $GITHUB_STEP_SUMMARY
+          fi
