@@ -1,12 +1,94 @@
 # A Whittle Wandering (48 Continental)
 
-A real-time tracking system for a 60-day Tesla road trip through all 48 contiguous U.S. states.
+A comprehensive real-time tracking system for a 60-day Tesla road trip through all 48 contiguous U.S. states. This project provides live vehicle tracking, trip statistics, weather integration, and interactive mapping capabilities.
 
-## Project Description
+## 🚗 Project Overview
 
-This project tracks a Tesla vehicle on a 60-day journey across all 48 contiguous United States, providing real-time updates on location, weather, state visits, and trip progress. The system consists of multiple interconnected components that work together to create a seamless experience for users following the journey.
+The Wandering Whittle is a live, production system that tracks our Tesla Model Y as we journey through all 48 contiguous states. The system provides:
 
-## System Architecture
+- **Real-time vehicle tracking** with GPS coordinates and telemetry
+- **Interactive map visualization** with route planning and state progress
+- **Live trip statistics** including distance traveled, states visited, and charging information
+- **Weather integration** for current conditions along the route
+- **Social sharing capabilities** for trip milestones
+
+## 🏗️ Architecture
+
+This is a distributed system built with modern web technologies:
+
+- **Frontend**: React 18 application with Vite, deployed on Cloudflare Pages
+- **Backend**: Cloudflare Workers for API endpoints and data processing
+- **Storage**: Cloudflare KV for persistent trip data and caching
+- **External APIs**: Tessie (Tesla data), OpenWeather (weather), Mapbox (maps)
+- **Real-time**: WebSocket streaming for live updates
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+ and npm
+- Cloudflare account (for deployment)
+- API keys for external services (see [Environment Setup](#environment-setup))
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/JW-Flo/AWhittleWandering.git
+cd AWhittleWandering
+
+# Install dependencies
+npm install
+
+# Set up environment variables (see Environment Setup section)
+cp .env.example .env
+# Edit .env with your API keys
+```
+
+### Environment Setup
+
+Create a `.env` file based on `.env.example` and configure the following:
+
+```
+
+#### Required Environment Variables
+
+- `TESSIE_API_TOKEN` - Tesla vehicle data via Tessie API
+- `TESSIE_VIN` - Your Tesla vehicle identification number
+- `MAPBOX_TOKEN` - Mapbox API token for map rendering
+- `OPENWEATHER_API_KEY` - OpenWeatherMap API key for weather data
+- `EDGE_HMAC_KEY` - Security key for API authentication
+- `CF_API_TOKEN` - Cloudflare API token (for deployment)
+- `CF_ACCOUNT_ID` - Cloudflare account ID (for deployment)
+
+See [Environment Setup Guide](docs/GITHUB_SECRETS_SETUP.md) for detailed instructions on obtaining these credentials.
+
+### Development
+
+```bash
+# Start the frontend development server
+cd 48Continental_Starter/public-site
+npm install
+npm run dev
+
+# In another terminal, start the edge worker locally
+cd edge-worker
+npm install
+npm run dev
+```
+
+### Deployment
+
+```bash
+# Deploy edge worker
+cd edge-worker
+npm run deploy
+
+# Deploy frontend (automatically via GitHub Actions)
+git push origin main
+```
+
+## 📁 Repository Structure
 
 The system is built with the following core components:
 
@@ -133,9 +215,65 @@ For more detailed information, refer to the following documentation:
 - [Deployment Strategy](docs/DEPLOYMENT_STRATEGY.md) - Deployment approach and considerations
 - [MCP Server Architecture](docs/mcp-server-architecture/index.md) - MCP server design and implementation
 
-## License
+## 🧪 Testing
 
-This project is licensed under the terms of the LICENSE file included in the repository.
+The project includes comprehensive testing infrastructure:
+
+```bash
+# Run API endpoint tests
+node scripts/test-api-endpoints.js
+
+# Run frontend component tests  
+cd 48Continental_Starter/public-site
+npm run test
+
+# Validate deployment
+node scripts/deployment-success-validator.js
+```
+
+## 📊 Monitoring & Analytics
+
+- **Real-time monitoring**: GitHub Actions workflows for continuous integration
+- **Performance tracking**: Built-in analytics for map loading and API response times
+- **Error reporting**: Comprehensive logging and error tracking
+- **Health checks**: Automated endpoint validation and system health monitoring
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+### Development Guidelines
+
+- Follow existing code style and formatting
+- Add tests for new functionality
+- Update documentation for any API changes
+- Ensure all tests pass before submitting PR
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🔗 Links
+
+- **Live Website**: [The Wandering Whittle](https://main.continentalusa-site.pages.dev)
+- **API Documentation**: [Edge Worker API](docs/PROJECT_SUMMARY.md)
+- **Technical Docs**: [Architecture Guide](docs/mcp-server-architecture/index.md)
+
+## 📞 Support
+
+For questions or issues:
+
+1. Check the [documentation](docs/) directory
+2. Review existing [GitHub issues](https://github.com/JW-Flo/AWhittleWandering/issues)
+3. Create a new issue with detailed description
+
+---
+
+Built with ❤️ for the 48 Continental journey
 
 ## Contact
 

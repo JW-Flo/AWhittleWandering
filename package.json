@@ -8,7 +8,14 @@
     "verify-dns": "node scripts/verify-dns-change.js",
     "configure-cloudflare": "node scripts/configure-cloudflare.js",
     "setup-dns": "npm run configure-cloudflare && sleep 10 && npm run verify-dns",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "install:all": "npm install && cd edge-worker && npm install && cd ../48Continental_Starter/public-site && npm install",
+    "build:edge": "cd edge-worker && npm run build",
+    "build:site": "cd 48Continental_Starter/public-site && npm run build",
+    "build": "npm run build:edge && npm run build:site",
+    "dev:edge": "cd edge-worker && npm run dev",
+    "dev:site": "cd 48Continental_Starter/public-site && npm run dev",
+    "lint": "cd edge-worker && npm run lint",
+    "test": "node scripts/test-api-endpoints.js"
   },
   "author": "",
   "license": "ISC",

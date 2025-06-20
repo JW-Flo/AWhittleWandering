@@ -1,7 +1,0 @@
-﻿2025-06-12T14:47:45.6451189Z ##[group]Run echo "TESSIE_API_TOKEN=test_token" > .dev.vars
-2025-06-12T14:47:45.6451675Z [36;1mecho "TESSIE_API_TOKEN=test_token" > .dev.vars[0m
-2025-06-12T14:47:45.6452223Z [36;1mecho "EDGE_HMAC_KEY=48continental_secure_key" >> .dev.vars[0m
-2025-06-12T14:47:45.6452865Z [36;1mecho "MAPBOX_TOKEN=test_mapbox_token" >> .dev.vars[0m
-2025-06-12T14:47:45.6453411Z [36;1mecho "OPENWEATHER_API_KEY=test_weather_key" >> .dev.vars[0m
-2025-06-12T14:47:45.6506858Z shell: /usr/bin/bash -e {0}
-2025-06-12T14:47:45.6507101Z ##[endgroup]

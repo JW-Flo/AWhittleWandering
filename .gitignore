@@ -46,3 +46,15 @@ yarn-error.log*
 
 # Build artifacts
 *.tsbuildinfo
+
+# Binary files and documentation artifacts
+*.pkg
+*.dmg
+*.exe
+*.msi
+*.zip
+*.tar.gz
+*.webarchive
+
+# Large documentation files
+*.pdf
