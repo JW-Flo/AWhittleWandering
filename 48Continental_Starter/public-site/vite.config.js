@@ -54,7 +54,7 @@ export default defineConfig(({ mode }) => {
           env.MAPBOX_TOKEN ||
           env.MAP_API_TOKEN ||
           // Default token as last resort - this should be a valid production token
-          "pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA"
+          "          process.env.VITE_MAPBOX_TOKEN || "your_mapbox_token_here""
       ),
 
       // OTHER ENVIRONMENT VARIABLES - using consistent pattern

@@ -25,6 +25,12 @@ ios-client/DerivedData/
 .env
 .env.local
 .env.*.local
+.env.production
+.env.staging
+.env.development
+**/.env
+**/.env.local
+**/.env.*.local
 
 # Editor files
 .vscode/

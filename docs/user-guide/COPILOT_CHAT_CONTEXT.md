@@ -48,7 +48,7 @@ graph LR
 1. **Symptom**: Perpetual loading spinner on map
    - **Root Cause**: MapBox token loading incorrectly from environment variables
    - **Solution**: Use hardcoded token in `src/components/Map.jsx`
-   - **Token**: `pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2liaTA4enIwIn0.tU9_tLaaxXxhfcVX4WhOeA`
+   - **Token**: `your_mapbox_token_here` (Configure in environment variables)
 
 2. **Symptom**: Map loads but vehicle doesn't appear
    - **Root Cause**: Vehicle data API connection failure
@@ -108,7 +108,7 @@ graph LR
    
      ```shell
      VITE_EDGE_WORKER_URL=https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev
-     VITE_MAPBOX_TOKEN=pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2liaTA4enIwIn0.tU9_tLaaxXxhfcVX4WhOeA
+     VITE_MAPBOX_TOKEN=your_mapbox_token_here
      VITE_API_BASE_URL=https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev
      VITE_USE_SIMULATED_DATA=true
      ```
@@ -204,7 +204,7 @@ npm run pre-deploy
 |----------|-----------|---------|---------------|
 | VITE_EDGE_WORKER_URL | Public Site | API endpoint | [Edge Worker URL](https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev) |
 | VITE_API_BASE_URL | Public Site | API endpoint | Should match VITE_EDGE_WORKER_URL |
-| VITE_MAPBOX_TOKEN | Public Site | Map rendering | pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2liaTA4enIwIn0.tU9_tLaaxXxhfcVX4WhOeA |
+| VITE_MAPBOX_TOKEN | Public Site | Map rendering | your_mapbox_token_here |
 | VITE_USE_SIMULATED_DATA | Public Site | Data fallback | true |
 | TESSIE_API_TOKEN | Edge Worker | Tesla API access | Your Tessie token |
 | TESSIE_VIN | Edge Worker | Vehicle identifier | Your Tesla VIN |

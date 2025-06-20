@@ -34,7 +34,7 @@ Create `48Continental_Starter/public-site/.env.local`:
 VITE_TESSIE_API_TOKEN=your_actual_tessie_token
 VITE_TESSIE_VIN=your_actual_vehicle_vin
 VITE_API_BASE_URL=http://localhost:8787
-VITE_MAPBOX_TOKEN=pk.eyJ1IjoidGhld2FuZGVyaW5nd2hpdHRsZSIsImEiOiJjbHQxaXhzejYwYmU2MmpxdHl0MHowN3UzIn0.Q7xKTRlXvtimBHd39JqN1A
+VITE_MAPBOX_TOKEN=your_mapbox_token_here
 VITE_ENABLE_STREAMING=true
 VITE_USE_SIMULATED_DATA=false
 ```

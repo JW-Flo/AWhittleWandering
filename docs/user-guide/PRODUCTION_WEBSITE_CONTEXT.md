@@ -29,7 +29,7 @@ Frontend (Public Site) <--> Edge Worker <--> External APIs
 
 ### MapBox Token
 - **Issue**: Direct hardcoded token in Map.jsx works more reliably than environment variable
-- **Solution**: Use hardcoded token `pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2liaTA4enIwIn0.tU9_tLaaxXxhfcVX4WhOeA`
+- **Solution**: Configure environment variable `VITE_MAPBOX_TOKEN=your_mapbox_token_here`
 - **Location**: `/src/components/Map.jsx`
 
 ### API Connection Configuration
@@ -73,7 +73,7 @@ For a successful build and deployment:
 2. **Essential Environment Variables**:
    ```
    VITE_EDGE_WORKER_URL=https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev
-   VITE_MAPBOX_TOKEN=pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2liaTA4enIwIn0.tU9_tLaaxXxhfcVX4WhOeA
+   VITE_MAPBOX_TOKEN=your_mapbox_token_here
    VITE_API_BASE_URL=https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev
    VITE_USE_SIMULATED_DATA=true
    ```
