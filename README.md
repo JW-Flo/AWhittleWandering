@@ -20,21 +20,24 @@ The system is built with the following core components:
 ## Repository Structure
 
 ```
-├── 48Continental_Starter/     # Original project structure
+├── 48Continental_Starter/     # Legacy React frontend (being consolidated)
 │   └── public-site/           # React frontend application
-├── awhittlewandering/         # New consolidated codebase
+├── awhittlewandering/         # New consolidated codebase (preferred)
 │   ├── packages/
 │   │   └── frontend/          # React application
 │   └── workers/               # Cloudflare Workers
-├── edge-worker/               # Edge Worker API implementation
-├── mcp-server/                # MCP server implementation
+├── edge-worker/               # Edge Worker API implementation (active)
+├── mcp-server/                # MCP server implementation (active)
 ├── mcp-48continental/         # MCP plugins for 48 Continental project
-├── n8n/                       # n8n workflows for automation
+├── ContinentalUSA-mobile/     # Mobile app (Expo/React Native)
+├── ios-client/                # iOS Swift client
 ├── shared/                    # Shared utilities and services
 ├── scripts/                   # Deployment and utility scripts
 ├── docs/                      # Project documentation
 └── .github/                   # GitHub Actions workflows
 ```
+
+> **Note**: The repository is currently undergoing consolidation. New development should focus on the `awhittlewandering/` directory where possible. Legacy directories are being maintained for compatibility.
 
 ## Key Features
 
@@ -65,6 +68,39 @@ To deploy the project:
 ./scripts/deploy-project.sh --component edge-worker
 ./scripts/deploy-project.sh --component public-site
 ```
+
+## Quick Start
+
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+- Git
+
+### Setup
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/JW-Flo/AWhittleWandering.git
+   cd AWhittleWandering
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Configure environment**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your API keys (see CONTRIBUTING.md for details)
+   ```
+
+4. **Choose your development area**
+   - **Edge Worker**: `cd edge-worker`
+   - **Frontend**: `cd awhittlewandering/packages/frontend` 
+   - **MCP Server**: `cd mcp-server`
+   - **Mobile App**: `cd ContinentalUSA-mobile`
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development setup instructions.
 
 ## Environment Setup
 

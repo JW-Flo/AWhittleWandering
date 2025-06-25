@@ -63,3 +63,7 @@ test-results/
 # Package manager locks in subdirectories (keep root lock)
 packages/*/package-lock.json
 packages/*/yarn.lock
+
+# Runtime process files
+.48continental_processes
+.*_processes
