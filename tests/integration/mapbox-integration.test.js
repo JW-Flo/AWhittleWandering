@@ -22,8 +22,7 @@ jest.mock("mapbox-gl", () => {
 
 describe("Mapbox Integration Tests", () => {
   beforeEach(() => {
-    mapboxgl.accessToken =
-      "pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2liaTA4enIwIn0.tU9_tLaaxXxhfcVX4WhOeA";
+    mapboxgl.accessToken = "pk.test.token.for.integration.tests"; // Test token - not a real key
   });
 
   it("should initialize the map with correct parameters", () => {
@@ -47,9 +46,7 @@ describe("Mapbox Integration Tests", () => {
   });
 
   it("should use the correct access token", () => {
-    expect(mapboxgl.accessToken).toBe(
-      "pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJmNXlwY2IycGdtMnFva2liaTA4enIwIn0.tU9_tLaaxXxhfcVX4WhOeA"
-    );
+    expect(mapboxgl.accessToken).toBe("pk.test.token.for.integration.tests");
   });
 
   it("should handle map events correctly", () => {
