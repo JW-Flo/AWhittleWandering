@@ -2,6 +2,10 @@
 
 A real-time tracking system for a 60-day Tesla road trip through all 48 contiguous U.S. states.
 
+## 🔒 Security Notice
+
+**IMPORTANT**: This repository has been cleaned of most hardcoded API keys, but some legacy files may still contain tokens. Please review [SECURITY_REPORT.md](SECURITY_REPORT.md) before production use and replace any remaining `pk.eyJ...` tokens with your own credentials.
+
 ## Project Description
 
 This project tracks a Tesla vehicle on a 60-day journey across all 48 contiguous United States, providing real-time updates on location, weather, state visits, and trip progress. The system consists of multiple interconnected components that work together to create a seamless experience for users following the journey.
