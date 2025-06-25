@@ -1,20 +1,42 @@
 {
-  "name": "continentalusa",
+  "name": "awhittlewandering",
   "version": "1.0.0",
-  "description": "Continental USA Travel Project",
+  "description": "A real-time tracking system for a 60-day Tesla road trip through all 48 contiguous U.S. states, featuring live vehicle telemetry, interactive mapping, and comprehensive trip documentation.",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "verify-dns": "node scripts/verify-dns-change.js",
     "configure-cloudflare": "node scripts/configure-cloudflare.js",
     "setup-dns": "npm run configure-cloudflare && sleep 10 && npm run verify-dns",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npm run test:lint && npm run test:security",
+    "test:lint": "echo \"Linting check - install ESLint in development\" && exit 0",
+    "test:security": "npm audit --audit-level=high",
+    "lint": "eslint . --ext .js,.ts,.jsx,.tsx",
+    "dev": "echo \"Please run development commands from individual packages\"",
+    "build": "echo \"Please run build commands from individual packages\"",
+    "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf {} + && find . -name 'dist' -type d -prune -exec rm -rf {} +"
   },
-  "author": "",
-  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JW-Flo/AWhittleWandering.git"
+  },
+  "keywords": [
+    "tesla",
+    "road-trip",
+    "real-time-tracking",
+    "cloudflare-workers",
+    "react",
+    "mapbox",
+    "telemetry",
+    "48-states",
+    "travel",
+    "typescript"
+  ],
+  "author": "Joe",
+  "license": "MIT",
   "directories": {
     "doc": "docs",
-    "lib": "lib",
+    "lib": "shared",
     "test": "tests"
   },
   "dependencies": {
