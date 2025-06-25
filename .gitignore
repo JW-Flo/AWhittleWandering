@@ -21,10 +21,21 @@ ios-client/DerivedData/
 *.cache
 .cache/
 
-# Environment variables
+# Environment variables - Enhanced security
 .env
 .env.local
 .env.*.local
+.env.working
+.env.optimal
+.env.example
+**/*.env*
+**/config/secrets.json
+**/credentials.json
+
+# API Keys and tokens (additional protection)
+**/sk-*
+**/api-key*
+**/secret-*
 
 # Editor files
 .vscode/
@@ -40,3 +51,12 @@ yarn-error.log*
 
 # Build artifacts
 *.tsbuildinfo
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Icon?

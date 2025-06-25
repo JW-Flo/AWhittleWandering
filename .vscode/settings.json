@@ -13,7 +13,7 @@
     "app-developer-copilot.useOwnModel": true,
     "app-developer-copilot.apiProvider": "openai",
     "app-developer-copilot.model": "gpt-4o-mini",
-    "app-developer-copilot.apiKey": "nullsk-proj-X_aA9K7Foqsg3Fw4lB7cmlBQHS7R0zaQZ6G9EE_eAsqr8LMzYNFHv4ot9kV8sG1bkekeAekMKHT3BlbkFJHWzFlVP1fu1K-lUv7C3yyL73CHaHUbSRxEX9BIkevXUoL0ve4ai6-DPbwKjSsnKVt4_NDCv8sA",
+    "app-developer-copilot.apiKey": "${COPILOT_API_KEY}",
     "editor.experimentalGpuAcceleration": "on",
     "workbench.commandPalette.experimental.suggestCommands": true,
     "workbench.experimental.cloudChanges.autoStore": "onShutdown",
