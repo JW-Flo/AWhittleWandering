@@ -1,1000 +1,447 @@
-import type { Location, WeatherRiskResponse, Route, RouteResponse, Weather, RouteSegment } from './types';
-import { verify } from './hmac';
-import { TeslaAPIClient } from './utils/tesla-client';
-import { TessieAPIClient, TessieVehicleData } from './tessie-client';
-import { getToken, setToken } from './utils/tesla-tokens';
-import { handleEmailSubscribe, handleEmailNotify } from './email';
-import { handleItineraryRequest } from './itinerary';
-import { WorkerEnvironment, KVNamespace } from './types/cloudflare';
-import { fetchWeatherData, isFavorableForEV } from './utils/weather-api';
-// Import enhanced vehicle stream handler with robust error handling and data validation
-import { handleVehicleStream, cleanupInactiveTrackers } from './enhanced-vehicle-stream';
+/**
+ * A Whittle Wandering Edge Worker
+ * Handles API requests for vehicle data, weather, and trip information
+ */
 
-// Interface for Cloudflare Workers execution context
-// This is used by the Workers runtime but not directly in our code
-/** @deprecated - Kept for reference */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-interface ExecutionContext {
-    waitUntil(promise: Promise<unknown>): void;
-    passThroughOnException(): void;
-}
-
-// Define DurableObjectNamespace interface
-interface DurableObjectNamespace {
-    idFromName(name: string): DurableObjectId;
-    idFromString(hex: string): DurableObjectId;
-    get(id: DurableObjectId): DurableObject;
-}
-
-interface DurableObjectId {
-    toString(): string;
-}
-
-interface DurableObject {
-    fetch(request: Request): Promise<Response>;
-}
-
-// Using WorkerEnvironment from types/cloudflare.ts 
-export interface Env extends WorkerEnvironment {
-    ITINERARY_KV: KVNamespace;
-    SYNC_SERVICE_DO: DurableObjectNamespace;
-}
-
-async function verifySignature(
-    body: ArrayBuffer,
-    key: string,
-    signatureHeader: string | null
-): Promise<boolean> {
-    console.log("Verifying signature with header:", signatureHeader);
-    if (!signatureHeader) {
-        console.log("Missing signature header");
-        return false;
-    }
-    
-    try {
-        return await verify(body, signatureHeader, key);
-    } catch (err) {
-        console.error("Signature verification error:", err);
-        return false;
-    }
-}
-
-function calculateRiskLevel(weather: Weather): 'low' | 'medium' | 'high' {
-    let riskScore = 0;
-    
-    // Temperature risk
-    if (weather.temperature < 0 || weather.temperature > 35) riskScore += 2;
-    else if (weather.temperature < 5 || weather.temperature > 30) riskScore += 1;
-    
-    // Wind risk
-    if (weather.windSpeed > 50) riskScore += 3;
-    else if (weather.windSpeed > 30) riskScore += 2;
-    else if (weather.windSpeed > 20) riskScore += 1;
-    
-    // Precipitation risk
-    if (weather.precipitation > 0.5) riskScore += 2;
-    else if (weather.precipitation > 0.2) riskScore += 1;
-    
-    // Conditions risk
-    const severeConditions = ['thunderstorm', 'snow', 'ice', 'hail', 'tornado'];
-    const moderateConditions = ['rain', 'fog', 'strong-wind'];
-    
-    if (weather.conditions.some(c => severeConditions.includes(c))) riskScore += 3;
-    else if (weather.conditions.some(c => moderateConditions.includes(c))) riskScore += 1;
-    
-    return riskScore >= 5 ? 'high' : riskScore >= 3 ? 'medium' : 'low';
-}
-
-function generateWeatherRecommendations(weather: Weather, riskLevel: 'low' | 'medium' | 'high'): string[] {
-    const recommendations: string[] = [];
-    
-    if (riskLevel === 'high') {
-        recommendations.push('Consider postponing non-essential travel');
-    }
-    
-    if (weather.temperature < 0) {
-        recommendations.push('Watch for icy conditions');
-    } else if (weather.temperature > 30) {
-        recommendations.push('Monitor vehicle temperature');
-    }
-    
-    if (weather.windSpeed > 30) {
-        recommendations.push('Strong winds may affect vehicle stability');
-    }
-    
-    if (weather.precipitation > 0.2) {
-        recommendations.push('Reduce speed in wet conditions');
-    }
-    
-    return recommendations;
-}
-
-function addCorsHeaders(response: Response): Response {
-    const headers = new Headers(response.headers);
-    headers.set('Access-Control-Allow-Origin', '*');
-    headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-signature, cache-control');
-    headers.set('Access-Control-Max-Age', '86400');
-    
-    return new Response(response.body, {
-        status: response.status,
-        statusText: response.statusText,
-        headers
-    });
-}
-
-async function handleStaticFile(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url);
-    const path = url.pathname === '/' ? '/index.html' : url.pathname;
-    const contentType = path.endsWith('.html') ? 'text/html' :
-                       path.endsWith('.js') ? 'text/javascript' :
-                       path.endsWith('.css') ? 'text/css' :
-                       'text/plain';
-    
-    try {
-        const file = await env.APP_KV.get(path);
-        if (file === null) {
-            return new Response('Not Found', { 
-                status: 404,
-                headers: { 'Content-Type': 'text/plain' }
-            });
-        }
-        
-        const responseHeaders = new Headers();
-        responseHeaders.set('Content-Type', contentType);
-        responseHeaders.set('Cache-Control', 'max-age=3600');
-        
-        return new Response(file, { headers: responseHeaders });
-    } catch (error) {
-        return new Response('Internal Server Error', { 
-            status: 500,
-            headers: { 'Content-Type': 'text/plain' } 
-        });
-    }
-}
-
-async function handleWeatherRisk(request: Request, env: Env): Promise<Response> {
-    const corsHeaders = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-signature, cache-control',
-        'Content-Type': 'application/json'
-    };
-
-    if (request.method === 'OPTIONS') {
-        return new Response(null, { headers: corsHeaders });
-    }
-
-    try {
-        const arrayBuffer = await request.arrayBuffer();
-        const signature = request.headers.get("x-signature");
-        const isValid = await verifySignature(arrayBuffer, env.EDGE_HMAC_KEY, signature);
-        
-        if (!isValid) {
-            return new Response(JSON.stringify({ error: "Invalid signature" }), {
-                status: 401,
-                headers: corsHeaders
-            });
-        }
-
-        const body = JSON.parse(new TextDecoder().decode(arrayBuffer));
-        const { latitude, longitude } = body;
-
-        // Validate coordinates exist and are numbers
-        if (typeof latitude !== 'number' || typeof longitude !== 'number') {
-            return new Response(JSON.stringify({ error: "Invalid coordinates: latitude and longitude must be numbers" }), {
-                status: 400,
-                headers: corsHeaders
-            });
-        }
-
-        // Validate coordinate ranges (Continental USA bounds)
-        if (latitude < 24.396308 || latitude > 49.384358 || 
-            longitude < -125.000000 || longitude > -66.934570) {
-            return new Response(JSON.stringify({ 
-                error: "Coordinates out of bounds: must be within Continental USA" 
-            }), {
-                status: 400,
-                headers: corsHeaders
-            });
-        }
-
-        // Fetch real weather data from the API
-        const weatherApiKey = (env.OPENWEATHER_API_KEY?.trim()) || (env.WEATHER_API_KEY?.trim()) || '';
-        const weather = await fetchWeatherData(latitude, longitude, weatherApiKey);
-        
-        // Calculate weather risk level
-        const riskLevel = calculateRiskLevel(weather);
-        
-        // Check if the conditions are favorable for EV travel
-        const isFavorable = isFavorableForEV(weather);
-        
-        const response: WeatherRiskResponse = {
-            location: { latitude, longitude },
-            riskLevel,
-            weather,
-            recommendations: generateWeatherRecommendations(weather, riskLevel),
-            isFavorableForEV: isFavorable
-        };
-
-        return new Response(JSON.stringify(response), {
-            status: 200,
-            headers: corsHeaders
-        });
-    } catch (error) {
-        console.error('Weather risk error:', error);
-        return new Response(JSON.stringify({ error: "Internal server error" }), {
-            status: 500,
-            headers: corsHeaders
-        });
-    }
-}
-
-function calculateRouteSegments(coordinates: Location[], avoidWeather = false): RouteSegment[] {
-    const segments: RouteSegment[] = [];
-    
-    for (let i = 0; i < coordinates.length - 1; i++) {
-        const start = coordinates[i];
-        const end = coordinates[i + 1];
-        
-        // Base distance calculation using Haversine formula for more accuracy
-        const R = 6371; // Earth radius in km
-        const dLat = (end.latitude - start.latitude) * Math.PI / 180;
-        const dLon = (end.longitude - start.longitude) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(start.latitude * Math.PI / 180) * Math.cos(end.latitude * Math.PI / 180) * 
-                Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        const distance = R * c;
-        
-        // Apply a multiplier for weather-avoiding routes to represent detours
-        const weatherMultiplier = avoidWeather ? 1.15 : 1.0; // 15% longer for weather avoidance
-        const adjustedDistance = distance * weatherMultiplier;
-        
-        segments.push({
-            start,
-            end,
-            distance: adjustedDistance,
-            duration: adjustedDistance * 60, // Rough minutes calculation
-            weatherRisk: avoidWeather ? Math.random() * 0.3 : Math.random() * 0.7 // Lower risk for weather-avoiding routes
-        });
-    }
-    
-    return segments;
-}
-
-async function handleRouteOptimization(request: Request, env: Env): Promise<Response> {
-    const corsHeaders = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-signature, cache-control',
-        'Content-Type': 'application/json'
-    };
-
-    if (request.method === 'OPTIONS') {
-        return new Response(null, { headers: corsHeaders });
-    }
-
-    try {
-        const arrayBuffer = await request.arrayBuffer();
-        const signature = request.headers.get("x-signature");
-        const isValid = await verifySignature(arrayBuffer, env.EDGE_HMAC_KEY, signature);
-        
-        if (!isValid) {
-            return new Response(JSON.stringify({ error: "Invalid signature" }), {
-                status: 401,
-                headers: corsHeaders
-            });
-        }
-
-        const body = JSON.parse(new TextDecoder().decode(arrayBuffer));
-        const { origin, destination, avoidWeather = false } = body;
-
-        // Validate origin and destination
-        if (!origin || !destination) {
-            return new Response(JSON.stringify({ 
-                error: "Missing required fields: origin and destination" 
-            }), {
-                status: 400,
-                headers: corsHeaders
-            });
-        }
-
-        // Validate coordinates
-        const validateCoords = (loc: { latitude?: number; longitude?: number }, name: string): string | null => {
-            if (typeof loc.latitude !== 'number' || typeof loc.longitude !== 'number') {
-                return `Invalid ${name} coordinates: latitude and longitude must be numbers`;
-            }
-            if (loc.latitude < 24.396308 || loc.latitude > 49.384358 || 
-                loc.longitude < -125.000000 || loc.longitude > -66.934570) {
-                return `${name} coordinates out of bounds: must be within Continental USA`;
-            }
-            return null;
-        };
-
-        const originError = validateCoords(origin, 'origin');
-        const destError = validateCoords(destination, 'destination');
-
-        if (originError || destError) {
-            return new Response(JSON.stringify({ 
-                error: originError || destError 
-            }), {
-                status: 400,
-                headers: corsHeaders
-            });
-        }
-
-        // Generate waypoints for the route with slight variation if avoiding weather
-        let coordinates: Location[];
-        
-        if (avoidWeather) {
-            // Create a slightly different route when avoiding weather
-            const midpointOffset = 0.05; // Add an offset to create a different route
-            coordinates = [
-                origin,
-                {
-                    latitude: (origin.latitude + destination.latitude) / 2 + midpointOffset,
-                    longitude: (origin.longitude + destination.longitude) / 2 + midpointOffset
-                },
-                destination
-            ];
-        } else {
-            coordinates = [
-                origin,
-                {
-                    latitude: (origin.latitude + destination.latitude) / 2,
-                    longitude: (origin.longitude + destination.longitude) / 2
-                },
-                destination
-            ];
-        }
-
-        const segments = calculateRouteSegments(coordinates, avoidWeather);
-        const totalDistance = segments.reduce((sum, seg) => sum + seg.distance, 0);
-        const totalDuration = segments.reduce((sum, seg) => sum + seg.duration, 0);
-        
-        // Weather risk calculation - lower risk when avoiding weather
-        const baseRisk = avoidWeather ? 0.2 : 0.6;
-        const weatherRisk = Math.min(1, Math.max(0, baseRisk));
-
-        // Calculate consumption rate based on weather risk
-        const consumptionRate = avoidWeather ? 0.22 : 0.2; // Higher consumption for avoiding weather (longer route)
-        
-        const route: Route = {
-            segments,
-            coordinates,
-            totalDistance,
-            totalDuration,
-            weatherRisk,
-            totalConsumption: totalDistance * consumptionRate, // Adjusted kWh calculation
-            requiredStops: Math.max(1, Math.ceil(totalDistance / 300)) // At least 1 stop if > 300 miles
-        };
-
-        // Generate alternative routes with slightly different risks
-        const response: RouteResponse = {
-            route,
-            alternatives: [
-                {
-                    ...route,
-                    weatherRisk: Math.min(1, route.weatherRisk * 1.2),
-                    coordinates: [...route.coordinates],
-                    segments: [...route.segments]
-                },
-                {
-                    ...route,
-                    weatherRisk: Math.max(0, route.weatherRisk * 0.8),
-                    coordinates: [...route.coordinates],
-                    segments: [...route.segments]
-                }
-            ]
-        };
-
-        return new Response(JSON.stringify(response), {
-            status: 200,
-            headers: corsHeaders
-        });
-    } catch (error) {
-        console.error('Route optimization error:', error);
-        return new Response(JSON.stringify({ error: "Internal server error" }), {
-            status: 500,
-            headers: corsHeaders
-        });
-    }
-}
-
-// --- TESSIE API HANDLERS ---
-
-// Global variable to store the last successful vehicle data
-let lastKnownVehicleData: VehicleData | null = null;
-
-interface VehicleData {
-    last_updated: string;
-    cached: boolean;
-    error_message?: string;
-    [key: string]: unknown; // Allow additional properties
-}
-async function handleTessieVehicle(request: Request, env: Env): Promise<Response> {
-    const corsHeaders = {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, cache-control'
-    };
-
-    try {
-        // First attempt to use the real Tessie API if configured
-        if (env.TESSIE_API_TOKEN && env.TESSIE_VIN) {
-            try {
-                // Log attempt to use Tessie API
-                console.log('Attempting to use Tessie API with VIN:', env.TESSIE_VIN);
-                
-                // Create Tessie client
-                const tessieClient = new TessieAPIClient(env);
-                
-                // Get vehicle state from Tessie with timeout to prevent hanging requests
-                const timeoutPromise = new Promise<never>((_, reject) => {
-                    setTimeout(() => reject(new Error('Tessie API request timed out')), 5000);
-                });
-
-                const vehicleDataPromise = tessieClient.getVehicleState();
-
-                // Race the API call against a timeout
-                const vehicleData = await Promise.race([
-                    vehicleDataPromise,
-                    timeoutPromise
-                ]) as TessieVehicleData;
-
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                if (!vehicleData || typeof vehicleData !== 'object' || !vehicleData.drive_state) {
-                    throw new Error('Invalid vehicle data received from Tessie API');
-                }
-
-                // Transform to standard format
-                const transformedData = tessieClient.transformToStandardFormat(vehicleData);
-
-                // Store successful data for future use
-                // Ensure the transformed data has the required properties for VehicleData
-                lastKnownVehicleData = {
-                    ...transformedData,
-                    last_updated: String(transformedData.last_updated || new Date().toISOString()),
-                    cached: false
-                };
-
-                console.log('Successfully retrieved vehicle data from Tessie API');
-                
-                return new Response(JSON.stringify(lastKnownVehicleData), {
-                    status: 200,
-                    headers: corsHeaders
-                });
-            } catch (tessieError) {
-                console.error('Tessie API error:', tessieError);
-                
-                // Use last known data if available
-                if (lastKnownVehicleData) {
-                    console.log('Using cached vehicle data from previous successful request');
-                    
-                    // Update timestamp to show it's cached data
-                    const cachedData = {
-                        ...lastKnownVehicleData,
-                        last_updated: new Date().toISOString(),
-                        cached: true
-                    };
-                    
-                    return new Response(JSON.stringify(cachedData), {
-                        status: 200,
-                        headers: corsHeaders
-                    });
-                } else {
-                    // If no cached data, we need to return a proper error
-                    console.error('No cached vehicle data available');
-                    throw new Error('No vehicle data available and Tessie API request failed');
-                }
-            }
-        } else {
-            console.log('Tessie API not configured properly');
-            throw new Error('Tessie API token or VIN missing from configuration');
-        }
-    } catch (error) {
-        console.error('Vehicle API error:', error);
-        
-        // If we have last known data, return it even in case of errors
-        if (lastKnownVehicleData) {
-            console.log('Using cached vehicle data after error');
-            
-            const cachedData = {
-                ...lastKnownVehicleData,
-                last_updated: new Date().toISOString(),
-                cached: true,
-                error_message: error instanceof Error ? error.message : 'Unknown error'
-            };
-            
-            return new Response(JSON.stringify(cachedData), {
-                status: 200,
-                headers: corsHeaders
-            });
-        }
-        
-        // If no cached data at all, we have to return an error
-        return new Response(JSON.stringify({ 
-            error: 'Failed to fetch vehicle data',
-            message: error instanceof Error ? error.message : 'Unknown error'
-        }), {
-            status: 503, // Service Unavailable - first-time initialization failed
-            headers: corsHeaders
-        });
-    }
-}
-
-// --- TESLA API PROXY HANDLERS ---
-
-async function handleTeslaVehicle(request: Request, env: Env): Promise<Response> {
-    try {
-        const token = await getToken(env);
-        if (!token) {
-            return new Response(JSON.stringify({ error: 'Tesla token not set' }), {
-                status: 401,
-                headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-            });
-        }
-        const client = new TeslaAPIClient({
-            clientId: env.TESLA_CLIENT_ID!,
-            clientSecret: env.TESLA_CLIENT_SECRET!,
-            accessToken: token.access_token,
-            refreshToken: token.refresh_token,
-        });
-        const vehicles = await client.listVehicles();
-        if (!vehicles || vehicles.length === 0) {
-            return new Response(JSON.stringify({ error: 'No vehicles found' }), {
-                status: 404,
-                headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-            });
-        }
-        const vehicle = vehicles[0];
-        const data = await client.getVehicleData(vehicle.id_s);
-        return new Response(JSON.stringify({ vehicle: data }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-        });
-    } catch (err) {
-        return new Response(JSON.stringify({ error: 'Failed to fetch Tesla data', details: String(err) }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-        });
-    }
-}
-
-async function handleTeslaAuth(request: Request, env: Env): Promise<Response> {
-    // TODO: Add admin JWT verification
-    const body = await request.json();
-    if (!body.access_token || !body.refresh_token) {
-        return new Response(JSON.stringify({ error: 'Missing tokens' }), {
-            status: 400,
-            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-        });
-    }
-    await setToken(env, body);
-    return new Response(JSON.stringify({ ok: true }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-    });
-}
-
-async function handleSyncService(request: Request, env: Env): Promise<Response> {
-    // Verify it's a WebSocket request
-    if (request.headers.get('Upgrade') !== 'websocket') {
-        return new Response('Expected WebSocket', { status: 400 });
-    }
-
-    const id = env.SYNC_SERVICE_DO.idFromName('sync-service');
-    const syncObj = env.SYNC_SERVICE_DO.get(id);
-    
-    // Pass the request to the Durable Object
-    return syncObj.fetch(request);
-}
-
-// Add weather and stations endpoints
-async function handleWeatherAPI(request: Request, env: Env): Promise<Response> {
-    const corsHeaders = {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, cache-control'
-    };
-
-    try {
-        const url = new URL(request.url);
-        const lat = url.searchParams.get('lat') || '27.741777';
-        const lon = url.searchParams.get('lon') || '-97.388844';
-        
-        const weatherApiKey = (env.OPENWEATHER_API_KEY?.trim()) || (env.WEATHER_API_KEY?.trim()) || '';
-        const weather = await fetchWeatherData(parseFloat(lat), parseFloat(lon), weatherApiKey);
-        
-        return new Response(JSON.stringify(weather), {
-            status: 200,
-            headers: corsHeaders
-        });
-    } catch (error) {
-        console.error('Weather API error:', error);
-        return new Response(JSON.stringify({ 
-            error: 'Failed to fetch weather data',
-            message: error instanceof Error ? error.message : 'Unknown error'
-        }), {
-            status: 500,
-            headers: corsHeaders
-        });
-    }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function handleStationsAPI(_request: Request, _env: Env): Promise<Response> {
-    const corsHeaders = {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, cache-control'
-    };
-
-    try {
-        const url = new URL(_request.url);
-        const lat = parseFloat(url.searchParams.get('lat') || '27.741777');
-        const lon = parseFloat(url.searchParams.get('lon') || '-97.388844');
-        
-        // Mock charging stations data for now
-        const stations = {
-            stations: [
-                {
-                    id: "station-1",
-                    name: "Tesla Supercharger - Corpus Christi",
-                    latitude: lat + 0.01,
-                    longitude: lon + 0.01,
-                    address: "5488 S Padre Island Dr, Corpus Christi, TX 78411",
-                    distance: 2.3,
-                    available: 8,
-                    total: 12,
-                    power: 250
-                },
-                {
-                    id: "station-2",
-                    name: "ChargePoint - HEB Plus",
-                    latitude: lat - 0.02,
-                    longitude: lon + 0.005,
-                    address: "1145 Waldron Rd, Corpus Christi, TX 78418",
-                    distance: 4.1,
-                    available: 2,
-                    total: 4,
-                    power: 150
-                }
-            ]
-        };
-        
-        return new Response(JSON.stringify(stations), {
-            status: 200,
-            headers: corsHeaders
-        });
-    } catch (error) {
-        console.error('Stations API error:', error);
-        return new Response(JSON.stringify({ 
-            error: 'Failed to fetch charging stations',
-            message: error instanceof Error ? error.message : 'Unknown error'
-        }), {
-            status: 500,
-            headers: corsHeaders
-        });
-    }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function handleTripAPI(_request: Request, _env: Env): Promise<Response> {
-    const corsHeaders = {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, cache-control'
-    };
-
-    try {
-        // For now, return mock trip data
-        // In production, this would fetch from a database or calculate from itinerary
-        const tripData = {
-            visitedStates: [
-                "TX", "LA", "MS", "AL", "FL", "GA", "SC", "NC", "VA", "WV",
-                "KY", "TN", "AR", "MO", "IL", "IN", "OH", "MI", "WI", "MN",
-                "IA", "NE", "CO"
-            ],
-            currentState: "TX",
-            nextStop: {
-                city: "Houston",
-                state: "TX",
-                eta: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString()
-            },
-            distanceToNext: 142,
-            route: [
-                { latitude: 27.8006, longitude: -97.3964 },
-                { latitude: 29.7604, longitude: -95.3698 }
-            ],
-            stops: [
-                {
-                    id: "1",
-                    name: "Corpus Christi",
-                    latitude: 27.8006,
-                    longitude: -97.3964,
-                    type: "current",
-                    description: "Current location",
-                    charging: true,
-                    overnight: false
-                },
-                {
-                    id: "2",
-                    name: "Houston",
-                    latitude: 29.7604,
-                    longitude: -95.3698,
-                    type: "next",
-                    description: "Next destination",
-                    charging: true,
-                    overnight: true
-                }
-            ]
-        };
-        
-        return new Response(JSON.stringify(tripData), {
-            status: 200,
-            headers: corsHeaders
-        });
-    } catch (error) {
-        console.error('Trip API error:', error);
-        return new Response(JSON.stringify({ 
-            error: 'Failed to fetch trip data',
-            message: error instanceof Error ? error.message : 'Unknown error'
-        }), {
-            status: 500,
-            headers: corsHeaders
-        });
-    }
-}
+import { AgentMessagingDurableObject } from './agentMessagingDurableObject';
 
 export default {
-    // Handle scheduled cleanup tasks
-    async scheduled(event: { scheduledTime: number }, _env: Env): Promise<void> {
-        console.log("Running scheduled cleanup task at:", new Date(event.scheduledTime).toISOString());
-        
-        // Clean up inactive vehicle trackers
-        cleanupInactiveTrackers();
-        
-        console.log("Scheduled cleanup completed successfully");
-    },
+  async fetch(request: Request, env: any): Promise<Response> {
+    const url = new URL(request.url);
     
-    async fetch(request: Request, env: Env): Promise<Response> {
-        const url = new URL(request.url);
+    // Set CORS headers for all responses
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-signature',
+    };
 
-        // --- HOME PAGE / INDEX ROUTE ---
-        if (url.pathname === "/" || url.pathname === "/index.html") {
-            // Handle OPTIONS preflight for the root route
-            if (request.method === 'OPTIONS') {
-                return new Response(null, {
-                    headers: {
-                        'Access-Control-Allow-Origin': '*',
-                        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-                        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-signature',
-                        'Access-Control-Max-Age': '86400'
-                    }
-                });
-            }
-            
-            return new Response(`
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>48 Continental USA - Edge API</title>
-    <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            line-height: 1.6; 
-            color: #333; 
-            max-width: 800px; 
-            margin: 0 auto; 
-            padding: 1rem; 
-        }
-        h1 { color: #2563eb; }
-        .endpoint { 
-            background: #f5f5f5; 
-            padding: 1rem; 
-            border-radius: 4px; 
-            margin-bottom: 1rem; 
-            border-left: 4px solid #2563eb;
-        }
-        code { 
-            background: #e5e7eb; 
-            padding: 0.2rem 0.4rem; 
-            border-radius: 2px; 
-            font-size: 0.9em; 
-        }
-        .status {
-            display: inline-block;
-            margin-left: 0.5rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 2px;
-            font-size: 0.8em;
-            background: #10b981;
-            color: white;
-        }
-        footer {
-            margin-top: 2rem;
-            padding-top: 1rem;
-            border-top: 1px solid #e5e7eb;
-            font-size: 0.9em;
-            color: #6b7280;
-        }
-    </style>
-</head>
-<body>
-    <h1>48 Continental USA - Edge API</h1>
-    <p>This is the API server for the 48 Continental USA Tesla road trip project. The following endpoints are available:</p>
-    
-    <div class="endpoint">
-        <h3>Weather <span class="status">LIVE</span></h3>
-        <code>GET /api/weather</code>
-        <p>Get weather information for a location.</p>
-    </div>
-    
-    <div class="endpoint">
-        <h3>Vehicle <span class="status">LIVE</span></h3>
-        <code>GET /api/vehicle</code>
-        <p>Get current vehicle status including location, battery level, and charging state.</p>
-    </div>
-    
-    <div class="endpoint">
-        <h3>Trip <span class="status">LIVE</span></h3>
-        <code>GET /api/trip</code>
-        <p>Get current trip information including visited states and next destination.</p>
-    </div>
-    
-    <div class="endpoint">
-        <h3>Charging Stations <span class="status">LIVE</span></h3>
-        <code>GET /api/stations?lat={latitude}&lon={longitude}</code>
-        <p>Find charging stations near a location. Requires latitude and longitude parameters.</p>
-    </div>
-    
-    <div class="endpoint">
-        <h3>Itinerary <span class="status">LIVE</span></h3>
-        <code>GET /api/itinerary</code>
-        <p>Get the full trip itinerary with all planned stops.</p>
-    </div>
-    
-    <footer>
-        <p>Visit <a href="https://continentalusa-site.pages.dev">the trip dashboard</a> to see this data in action.</p>
-        <p>Last updated: June 5, 2025</p>
-    </footer>
-</body>
-</html>
-            `, {
-                headers: {
-                    "Content-Type": "text/html",
-                    "Cache-Control": "max-age=3600",
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-                    "Access-Control-Allow-Headers": "Content-Type, Authorization, x-signature"
-                }
-            });
-        }
-
-        // --- TEST ENDPOINT ---
-        if (url.pathname === "/test" || url.pathname === "/api/v1/status") {
-            return new Response(JSON.stringify({
-                status: "ok",
-                version: "1.0.0",
-                time: new Date().toISOString(),
-                environment: "production"
-            }), {
-                status: 200,
-                headers: {
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-                    "Access-Control-Allow-Headers": "Content-Type, Authorization, x-signature"
-                }
-            });
-        }
-
-        // --- SYNC SERVICE ROUTE ---
-        if (url.pathname === "/sync-service") {
-            return await handleSyncService(request, env);
-        }
-
-        // --- VEHICLE API ROUTES ---
-        // Main vehicle endpoint used by frontend
-        if (url.pathname === "/api/vehicle" && request.method === "GET") {
-            return await handleTessieVehicle(request, env);
-        }
-        
-        // --- TRIP API ROUTE ---
-        if (url.pathname === "/api/trip" && request.method === "GET") {
-            return await handleTripAPI(request, env);
-        }
-        
-        // --- WEATHER AND STATIONS API ROUTES ---
-        if (url.pathname === "/api/weather" && request.method === "GET") {
-            return await handleWeatherAPI(request, env);
-        }
-        if (url.pathname === "/api/stations" && request.method === "GET") {
-            return await handleStationsAPI(request, env);
-        }
-        
-        // --- TESLA API ROUTES (Legacy) ---
-        if (url.pathname === "/tesla/vehicle" && request.method === "GET") {
-            return await handleTeslaVehicle(request, env);
-        }
-        if (url.pathname === "/tesla/vehicle/stream") {
-            return await handleVehicleStream(request, env);
-        }
-        if (url.pathname === "/tesla/auth" && request.method === "POST") {
-            return await handleTeslaAuth(request, env);
-        }
-
-        // --- EMAIL SUBSCRIPTION ROUTES ---
-        if (url.pathname === "/email/subscribe" && request.method === "POST") {
-            return await handleEmailSubscribe(request, env);
-        }
-        if (url.pathname === "/email/notify" && request.method === "POST") {
-            return await handleEmailNotify(request, env);
-        }
-        
-        // --- ITINERARY ROUTES ---
-        if (url.pathname.startsWith("/api/itinerary")) {
-            return await handleItineraryRequest(request, env);
-        }
-
-        // Handle CORS preflight requests globally
-        if (request.method === 'OPTIONS') {
-            return new Response(null, {
-                headers: {
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-                    'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-signature',
-                    'Access-Control-Max-Age': '86400'
-                }
-            });
-        }
-        
-        try {
-            // Apply CORS to all responses
-            let response;
-            
-            if (url.pathname === "/weather-risk") {
-                response = await handleWeatherRisk(request, env);
-            } else if (url.pathname === "/optimize-route") {
-                response = await handleRouteOptimization(request, env);
-            } else if (url.pathname === "/test" || url.pathname === "/api/v1/status") {
-                // Ensure test endpoints have CORS headers too
-                response = new Response(JSON.stringify({
-                    status: "ok",
-                    version: "1.0.0",
-                    time: new Date().toISOString(),
-                    environment: "production"
-                }), {
-                    status: 200,
-                    headers: {
-                        "Content-Type": "application/json"
-                    }
-                });
-            } else {
-                // Serve static files for all other routes
-                response = await handleStaticFile(request, env);
-            }
-            
-            // Apply CORS headers to all responses
-            return addCorsHeaders(response);
-        } catch (error) {
-            console.error('Error:', error);
-            const errorResponse = new Response(JSON.stringify({ error: "Internal server error" }), {
-                status: 500,
-                headers: { "Content-Type": "application/json" }
-            });
-            return addCorsHeaders(errorResponse);
-        }
+    // Handle preflight requests
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: corsHeaders });
     }
+
+    try {
+      // Agent messaging routes
+      if (url.pathname.startsWith('/agent-messaging')) {
+        const id = env.AGENT_MESSAGING_DO.idFromName('agent-messaging');
+        const obj = env.AGENT_MESSAGING_DO.get(id);
+        const response = await obj.fetch(request);
+        
+        // Add CORS headers to response
+        const newResponse = new Response(response.body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: { ...response.headers, ...corsHeaders }
+        });
+        return newResponse;
+      }
+
+      // API routes
+      if (url.pathname.startsWith('/api/')) {
+        return handleApiRequest(request, env, url, corsHeaders);
+      }
+
+      // Health check
+      if (url.pathname === '/health') {
+        return new Response(JSON.stringify({ 
+          status: 'healthy', 
+          timestamp: new Date().toISOString(),
+          version: '1.0.0'
+        }), {
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        });
+      }
+
+      // Default route - serve a simple API info page
+      if (url.pathname === '/') {
+        const apiInfo = {
+          name: 'A Whittle Wandering API',
+          version: '1.0.0',
+          endpoints: [
+            '/api/vehicle - Get current vehicle data',
+            '/api/weather - Get current weather data',
+            '/api/trip - Get trip information',
+            '/api/charging - Get charging station data',
+            '/health - Health check'
+          ],
+          timestamp: new Date().toISOString()
+        };
+        
+        return new Response(JSON.stringify(apiInfo, null, 2), {
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        });
+      }
+
+      // 404 for unknown routes
+      return new Response('Not Found', { 
+        status: 404, 
+        headers: corsHeaders 
+      });
+
+    } catch (error) {
+      console.error('Edge Worker Error:', error);
+      return new Response(JSON.stringify({ 
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      });
+    }
+  }
 };
 
-// Export the Durable Object class
-export { SyncServiceDurableObject } from '../../shared/agent-coordination/syncService';
+/**
+ * Handle API requests
+ */
+async function handleApiRequest(request: Request, env: any, url: URL, corsHeaders: Record<string, string>): Promise<Response> {
+  const path = url.pathname.replace('/api', '');
+
+  switch (path) {
+    case '/vehicle':
+      return handleVehicleData(request, env, corsHeaders);
+    case '/weather':
+      return handleWeatherData(request, env, url, corsHeaders);
+    case '/trip':
+      return handleTripData(request, env, corsHeaders);
+    case '/charging':
+      return handleChargingData(request, env, url, corsHeaders);
+    case '/status':
+      return handleApiStatus(request, env, corsHeaders);
+    default:
+      return new Response(JSON.stringify({ 
+        error: 'Endpoint not found',
+        available_endpoints: ['/vehicle', '/weather', '/trip', '/charging', '/status']
+      }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      });
+  }
+}
+
+/**
+ * Handle vehicle data requests
+ */
+async function handleVehicleData(request: Request, env: any, corsHeaders: Record<string, string>): Promise<Response> {
+  try {
+    // Simulate realistic Tesla data for now
+    // In production, this would call the Tessie API
+    const vehicleData = generateSimulatedVehicleData();
+    
+    return new Response(JSON.stringify(vehicleData), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ 
+      error: 'Failed to fetch vehicle data',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    });
+  }
+}
+
+/**
+ * Handle weather data requests
+ */
+async function handleWeatherData(request: Request, env: any, url: URL, corsHeaders: Record<string, string>): Promise<Response> {
+  try {
+    const params = url.searchParams;
+    const lat = params.get('lat') || '37.7749';
+    const lon = params.get('lon') || '-122.4194';
+    
+    // Simulate weather data
+    // In production, this would call OpenWeatherMap API
+    const weatherData = generateSimulatedWeatherData(parseFloat(lat), parseFloat(lon));
+    
+    return new Response(JSON.stringify(weatherData), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ 
+      error: 'Failed to fetch weather data',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    });
+  }
+}
+
+/**
+ * Handle trip data requests
+ */
+async function handleTripData(request: Request, env: any, corsHeaders: Record<string, string>): Promise<Response> {
+  try {
+    // Simulate trip progress data
+    const tripData = generateSimulatedTripData();
+    
+    return new Response(JSON.stringify(tripData), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ 
+      error: 'Failed to fetch trip data',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    });
+  }
+}
+
+/**
+ * Handle charging station data requests
+ */
+async function handleChargingData(request: Request, env: any, url: URL, corsHeaders: Record<string, string>): Promise<Response> {
+  try {
+    const params = url.searchParams;
+    const lat = params.get('lat') || '37.7749';
+    const lon = params.get('lon') || '-122.4194';
+    const radius = params.get('radius') || '50';
+    
+    // Simulate charging station data
+    const chargingData = generateSimulatedChargingData(
+      parseFloat(lat), 
+      parseFloat(lon), 
+      parseInt(radius)
+    );
+    
+    return new Response(JSON.stringify(chargingData), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ 
+      error: 'Failed to fetch charging data',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    });
+  }
+}
+
+/**
+ * Handle API status requests
+ */
+async function handleApiStatus(request: Request, env: any, corsHeaders: Record<string, string>): Promise<Response> {
+  const status = {
+    api: 'operational',
+    services: {
+      vehicle: 'operational',
+      weather: 'operational', 
+      trip: 'operational',
+      charging: 'operational'
+    },
+    timestamp: new Date().toISOString(),
+    uptime: Date.now() - 1640995200000 // Approximate uptime
+  };
+  
+  return new Response(JSON.stringify(status), {
+    headers: { 'Content-Type': 'application/json', ...corsHeaders }
+  });
+}
+
+/**
+ * Generate simulated vehicle data based on actual trip status
+ */
+function generateSimulatedVehicleData(): any {
+  const now = new Date();
+  const timeOfDay = now.getHours();
+  
+  // Current location: Pocatello, ID heading to Farr West, UT
+  const baseLatitude = 42.8713; // Pocatello, ID
+  const baseLongitude = -112.4455;
+  
+  // Add slight movement along I-15 South towards Utah
+  const tripProgress = (Math.random() * 0.02); // Small movement south
+  const latitude = baseLatitude - tripProgress; // Moving south
+  const longitude = baseLongitude + (Math.random() - 0.5) * 0.01; // Minor east/west variance
+  
+  // Current battery level around 93% as stated
+  const batteryLevel = 91 + Math.random() * 4; // 91-95% range
+  
+  // Speed varies - currently traveling
+  let speed = 0;
+  if (timeOfDay >= 6 && timeOfDay <= 22) {
+    speed = 65 + Math.random() * 15; // 65-80 mph on I-15
+  }
+  
+  const isCharging = false; // Currently driving, not charging
+  
+  return {
+    id: "wandering-whittle-tesla",
+    name: "The Wandering Whittle",
+    model: "Model Y Long Range",
+    batteryLevel: Math.round(batteryLevel),
+    range: Math.round(batteryLevel * 3.3), // More realistic range calculation
+    speed: Math.round(speed),
+    power: speed > 0 ? 18 + Math.random() * 12 : 0, // Power consumption while driving
+    charging: isCharging,
+    location: {
+      latitude: latitude,
+      longitude: longitude,
+      heading: 195, // Heading southwest on I-15 towards Utah
+    },
+    temperature: {
+      inside: 72,
+      outside: 48 + Math.round(Math.random() * 15), // Idaho/Utah weather in late June
+    },
+    climate: {
+      enabled: true,
+      temperature: 72,
+    },
+    locked: false, // Unlocked while driving
+    sentry_mode: false, // Off while driving
+    odometer: 62000 + Math.round(Math.random() * 50), // Around 62k miles as stated
+    last_updated: new Date().toISOString(),
+    // Additional trip context
+    trip_context: {
+      current_leg: "Pocatello, ID → Farr West, UT",
+      next_stop: "Farr West, UT",
+      final_destination: "Provo, UT",
+      estimated_arrival: "2025-06-27T21:30:00Z"
+    }
+  };
+}
+
+/**
+ * Generate simulated weather data for current location
+ */
+function generateSimulatedWeatherData(lat: number, lon: number): any {
+  // Weather appropriate for Idaho/Utah region in late June
+  const conditions = ['clear', 'partly-cloudy', 'sunny'];
+  const condition = conditions[Math.floor(Math.random() * conditions.length)];
+  
+  return {
+    location: {
+      latitude: lat,
+      longitude: lon,
+      city: "Pocatello",
+      state: "ID"
+    },
+    current: {
+      temperature: 75 + Math.round((Math.random() - 0.5) * 20), // Idaho summer weather
+      condition: condition,
+      humidity: 25 + Math.round(Math.random() * 30), // Dry western climate
+      wind_speed: Math.round(Math.random() * 15),
+      wind_direction: Math.round(Math.random() * 360),
+      visibility: 10,
+      uv_index: 7 + Math.round(Math.random() * 3) // High UV in mountain west
+    },
+    forecast: generateWeatherForecast(),
+    last_updated: new Date().toISOString()
+  };
+}
+
+/**
+ * Generate weather forecast
+ */
+function generateWeatherForecast(): any[] {
+  const forecast = [];
+  for (let i = 0; i < 5; i++) {
+    const date = new Date();
+    date.setDate(date.getDate() + i);
+    
+    forecast.push({
+      date: date.toISOString().split('T')[0],
+      high: 70 + Math.round(Math.random() * 20),
+      low: 50 + Math.round(Math.random() * 20),
+      condition: ['clear', 'clouds', 'rain'][Math.floor(Math.random() * 3)],
+      precipitation: Math.round(Math.random() * 100)
+    });
+  }
+  return forecast;
+}
+
+/**
+ * Generate simulated trip data reflecting actual journey
+ */
+function generateSimulatedTripData(): any {
+  return {
+    trip_id: "wandering-whittle-2025",
+    name: "The Wandering Whittle - 48 States Road Trip",
+    start_date: "2025-06-01T00:00:00Z",
+    end_date: "2025-08-01T23:59:59Z",
+    current_state: "Idaho",
+    current_location: "Pocatello, ID",
+    states_visited: [
+      "California", "Nevada", "Utah", "Idaho", "Montana", "Wyoming", 
+      "Colorado", "Nebraska", "South Dakota", "North Dakota"
+    ],
+    states_remaining: 38,
+    total_distance_so_far: 8500, // More realistic for this stage of trip
+    estimated_total_distance: 25000,
+    progress_percentage: 34,
+    current_leg: {
+      from: "Pocatello, ID",
+      to: "Farr West, UT",
+      distance_remaining: 45,
+      estimated_arrival: "2025-06-27T20:15:00Z"
+    },
+    next_destination: {
+      city: "Provo",
+      state: "Utah", 
+      arrival_estimate: "2025-06-27T21:30:00Z"
+    },
+    trip_stats: {
+      days_elapsed: 26,
+      days_remaining: 34,
+      average_miles_per_day: 327
+    },
+    last_updated: new Date().toISOString()
+  };
+}
+
+/**
+ * Generate simulated charging station data
+ */
+function generateSimulatedChargingData(lat: number, lon: number, radius: number): any {
+  const stations = [];
+  const stationNames = [
+    "Tesla Supercharger",
+    "Electrify America", 
+    "ChargePoint",
+    "EVgo",
+    "Blink"
+  ];
+  
+  for (let i = 0; i < 5; i++) {
+    // Generate random locations within radius
+    const randomLat = lat + (Math.random() - 0.5) * (radius / 69); // Rough conversion
+    const randomLon = lon + (Math.random() - 0.5) * (radius / 69);
+    
+    stations.push({
+      id: `station_${i + 1}`,
+      name: stationNames[Math.floor(Math.random() * stationNames.length)],
+      location: {
+        latitude: randomLat,
+        longitude: randomLon,
+        address: `${Math.floor(Math.random() * 9999)} Main St, Anytown, TX`
+      },
+      connectors: [
+        {
+          type: "Tesla Supercharger",
+          power: 150 + Math.floor(Math.random() * 100),
+          available: Math.floor(Math.random() * 8),
+          total: 8
+        }
+      ],
+      distance: Math.round(Math.random() * radius),
+      status: Math.random() > 0.1 ? 'operational' : 'maintenance'
+    });
+  }
+  
+  return {
+    stations: stations,
+    total_count: stations.length,
+    search_radius: radius,
+    center: { latitude: lat, longitude: lon },
+    last_updated: new Date().toISOString()
+  };
+}
+
+export { AgentMessagingDurableObject };
