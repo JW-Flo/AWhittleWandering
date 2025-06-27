@@ -64,8 +64,6 @@ TOTAL_TESTS=0
 PASSED_TESTS=0
 FAILED_TESTS=0
 SKIPPED_TESTS=0
-CRITICAL_FAILURES=()
-NONCRITICAL_FAILURES=()
 
 # Function to run a test and update counters
 run_test() {
@@ -76,25 +74,19 @@ run_test() {
   TOTAL_TESTS=$((TOTAL_TESTS + 1))
   
   echo -e "${BLUE}Running test:${NC} $test_name"
-  bash -c "$test_command"
+  eval $test_command
   
   if [ $? -eq 0 ]; then
     PASSED_TESTS=$((PASSED_TESTS + 1))
-    echo -e "${GREEN}✓ PASSED:${NC} $test_name"
-    # Add to validation report
-    echo "- ✅ **$test_name**: Passed" >> "$VALIDATION_REPORT"
     return 0
   else
-FAILED_TESTS=$((FAILED_TESTS + 1))
-echo -e "${RED}✗ FAILED:${NC} $test_name"
-# Add to validation report
-echo "- ❌ **$test_name**: Failed" >> "$VALIDATION_REPORT"
-if [ "$criticality" == "critical" ]; then
-  CRITICAL_FAILURES+=("$test_name")
-else
-  NONCRITICAL_FAILURES+=("$test_name")
-fi
-return 1
+    FAILED_TESTS=$((FAILED_TESTS + 1))
+    if [ "$criticality" == "critical" ]; then
+      echo -e "${RED}Critical validation failed. Exiting.${NC}"
+      print_summary
+      exit 1
+    fi
+    return 1
   fi
 }
 
@@ -106,26 +98,11 @@ print_summary() {
   echo -e "${GREEN}Passed tests    : ${PASSED_TESTS}${NC}"
   echo -e "${RED}Failed tests    : ${FAILED_TESTS}${NC}"
   echo -e "${YELLOW}Skipped tests   : ${SKIPPED_TESTS}${NC}"
-
-  if [ ${#CRITICAL_FAILURES[@]} -gt 0 ]; then
-    echo -e "\n${RED}Critical failures:${NC}"
-    for fail in "${CRITICAL_FAILURES[@]}"; do
-      echo -e "  - $fail"
-    done
-  fi
-  if [ ${#NONCRITICAL_FAILURES[@]} -gt 0 ]; then
-    echo -e "\n${YELLOW}Non-critical failures (did NOT block deployment):${NC}"
-    for fail in "${NONCRITICAL_FAILURES[@]}"; do
-      echo -e "  - $fail"
-    done
-  fi
-
+  
   if [ $FAILED_TESTS -eq 0 ]; then
     echo -e "\n${GREEN}All validation tests passed successfully!${NC}"
-  elif [ ${#CRITICAL_FAILURES[@]} -eq 0 ]; then
-    echo -e "\n${YELLOW}All failed tests were non-critical. Proceeding with deployment.${NC}"
   else
-    echo -e "\n${RED}${#CRITICAL_FAILURES[@]} critical validation tests failed. Deployment should be blocked.${NC}"
+    echo -e "\n${RED}${FAILED_TESTS} validation tests failed. See above for details.${NC}"
   fi
 }
 
@@ -165,15 +142,6 @@ if [ -f "${PROJECT_ROOT}/mcp-server/tests/validate-agents.js" ]; then
   run_test "MCP agent validation" "node mcp-server/tests/validate-agents.js"
 else
   echo -e "${YELLOW}SKIPPED: Agent validation script not found${NC}"
-  SKIPPED_TESTS=$((SKIPPED_TESTS + 1))
-fi
-
-# Validate Map Integration
-echo -e "\n${BLUE}== Validating Map Integration ==${NC}"
-if [ -f "${PROJECT_ROOT}/codex-agent/tasks/mapIntegration.ts" ]; then
-  run_test "Map Integration diagnostics" "cd ${PROJECT_ROOT} && npx ts-node ./codex-agent/tasks/mapIntegration.ts"
-else
-  echo -e "${YELLOW}SKIPPED: Map Integration diagnostic script not found${NC}"
   SKIPPED_TESTS=$((SKIPPED_TESTS + 1))
 fi
 

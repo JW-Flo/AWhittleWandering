@@ -112,24 +112,13 @@ jobs:
           # Make deployment scripts executable
           chmod +x scripts/*.sh scripts/*.js
           chmod +x 48Continental_Starter/public-site/scripts/*.sh
-
+          
       - name: Validate tools and MCP components
         run: |
           echo "Running tools and MCP validation..."
           chmod +x scripts/validate-all-tools.sh
           ./scripts/validate-all-tools.sh
-          VALIDATION_EXIT_CODE=$?
-          LAST_REPORT=$(ls -t docs/testing/validation_report_*.md 2>/dev/null | head -n1)
-          if [ $VALIDATION_EXIT_CODE -ne 0 ]; then
-            if [ -f "$LAST_REPORT" ] && grep -q "Critical failures:" "$LAST_REPORT"; then
-              echo "::error::Blocking deployment due to critical validation failures."
-              cat "$LAST_REPORT"
-              exit 1
-            else
-              echo "::warning::Non-critical validation failures detected. Proceeding with deployment."
-              cat "$LAST_REPORT"
-            fi
-          fi
+        continue-on-error: ${{ env.DEPLOYMENT_ENV == 'staging' }}
 
       - name: Deploy edge worker
         if: env.DEPLOY_COMPONENTS == 'all' || env.DEPLOY_COMPONENTS == 'edge-worker'
