@@ -1,0 +1,84 @@
+name: Simplified Deployment
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      deploy_components:
+        description: "Components to deploy"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - public-site
+          - edge-worker
+
+env:
+  NODE_VERSION: "18"
+
+jobs:
+  deploy:
+    name: Deploy A Whittle Wandering
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_COMPONENTS: ${{ github.event.inputs.deploy_components || 'all' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install -g wrangler@latest
+
+      - name: Setup minimal environment
+        run: |
+          # Create minimal .env file with only required secrets
+          echo "CF_API_TOKEN=${{ secrets.CF_API_TOKEN }}" > .env
+          echo "CF_ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }}" >> .env
+          
+          # Export environment variables
+          echo "VITE_MAPBOX_TOKEN=${{ secrets.MAPBOX_TOKEN }}" >> .env
+
+          # Make deployment scripts executable
+          chmod +x scripts/*.sh scripts/*.js
+          chmod +x 48Continental_Starter/public-site/scripts/*.sh
+
+      # Deploy edge worker if requested
+      - name: Deploy edge worker
+        if: env.DEPLOY_COMPONENTS == 'all' || env.DEPLOY_COMPONENTS == 'edge-worker'
+        run: |
+          cd edge-worker
+          npm ci
+          echo "Deploying Edge Worker..."
+          CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_TOKEN }} CLOUDFLARE_ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }} npx wrangler deploy
+          echo "Edge Worker deployment completed"
+
+      # Deploy public site if requested
+      - name: Deploy public site
+        if: env.DEPLOY_COMPONENTS == 'all' || env.DEPLOY_COMPONENTS == 'public-site'
+        run: |
+          cd 48Continental_Starter/public-site
+          npm ci
+          
+          # Build the site
+          VITE_MAPBOX_TOKEN="${{ secrets.MAPBOX_TOKEN }}" npm run build
+          
+          # Deploy to Cloudflare Pages
+          echo "Deploying Public Site..."
+          CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_TOKEN }} CLOUDFLARE_ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }} npx wrangler pages deploy dist --project-name="awhittlewandering-site" --branch="main"
+          echo "Public Site deployment completed"
+
+      - name: Notify on completion
+        run: |
+          echo "::notice::🎉 Deployment completed! Site should be live shortly."

@@ -2,6 +2,27 @@
 
 A real-time tracking system for a 60-day Tesla road trip through all 48 contiguous U.S. states.
 
+## Quick Start (Simplified)
+
+**Want to just deploy the site? Skip all the complexity below:**
+
+1. **Local Development**:
+   ```bash
+   cd 48Continental_Starter/public-site
+   npm install
+   npm run dev
+   ```
+
+2. **Build & Deploy**:
+   ```bash
+   npm run build   # Builds the site
+   npm run deploy  # Deploys to Cloudflare Pages
+   ```
+
+3. **Automatic Deployment**: Push to main branch and GitHub Actions will auto-deploy.
+
+---
+
 ## Project Description
 
 This project tracks a Tesla vehicle on a 60-day journey across all 48 contiguous United States, providing real-time updates on location, weather, state visits, and trip progress. The system consists of multiple interconnected components that work together to create a seamless experience for users following the journey.
