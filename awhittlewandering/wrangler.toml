@@ -15,10 +15,16 @@ LIVE_TELEMETRY_ENABLED = "false"
 # Preview environment configuration
 [env.preview]
 # Preview environment settings
+[[env.preview.routes]]
+pattern = "https://preview.awhittlewandering.com/*"
+zone_name = "preview.awhittlewandering.com"
 
 # Production environment configuration
 [env.production]
 # Production environment settings
+[[env.production.routes]]
+pattern = "https://awhittlewandering.com/*"
+zone_name = "awhittlewandering.com"
 
 # Browser Rendering API configuration
 [browser]
