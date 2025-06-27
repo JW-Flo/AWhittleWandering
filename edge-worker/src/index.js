@@ -9,8 +9,6 @@ import { AgentMessagingDurableObject } from "./agentMessagingDurableObject";
 const API_VERSION = "1.0.0";
 const APP_START_TIMESTAMP_MS = 1640995200000;
 
-import { AgentMessagingDurableObject } from "./agentMessagingDurableObject";
-
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -52,10 +50,10 @@ export default {
       // Health check
       if (url.pathname === "/health") {
         return new Response(
-            version: API_VERSION,
+          JSON.stringify({
             status: "healthy",
             timestamp: new Date().toISOString(),
-            version: "1.0.0",
+            version: API_VERSION,
           }),
           {
             headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -63,11 +61,11 @@ export default {
         );
       }
 
+      // Default route - serve a simple API info page
+      if (url.pathname === "/") {
+        const apiInfo = {
           name: "A Whittle Wandering API",
           version: API_VERSION,
-          endpoints: [
-          name: "A Whittle Wandering API",
-          version: "1.0.0",
           endpoints: [
             "/api/vehicle - Get current vehicle data",
             "/api/weather - Get current weather data",
@@ -282,150 +280,161 @@ async function handleApiStatus(request, env, corsHeaders) {
 }
 
 /**
- * Generate simulated vehicle data
+ * Fetch real vehicle data from Tessie API or Tesla Fleet API
+ * @returns {Promise<Object>} Vehicle data object
  */
-function generateSimulatedVehicleData() {
-  const now = new Date();
-  const timeOfDay = now.getHours();
-
-  // Simulate current location: somewhere in Texas (from the screenshot)
-  const baseLatitude = 27.741777; // Corpus Christi, TX
-  const baseLongitude = -97.388844;
-
-  // Add some random movement
-  const latitude = baseLatitude + (Math.random() - 0.5) * 0.1;
-  const longitude = baseLongitude + (Math.random() - 0.5) * 0.1;
-
-  // Battery level varies throughout the day
-  let batteryLevel;
-  if (timeOfDay >= 6 && timeOfDay <= 8) {
-    batteryLevel = 85 + Math.random() * 10; // Morning charge
-  } else if (timeOfDay >= 12 && timeOfDay <= 14) {
-    batteryLevel = 60 + Math.random() * 25; // Midday
-  } else if (timeOfDay >= 18 && timeOfDay <= 22) {
-    batteryLevel = 70 + Math.random() * 25; // Evening
-  } else {
-    batteryLevel = 30 + Math.random() * 40; // Night/early morning
-  }
-
-  // Speed varies by time of day
-  let speed = 0;
-  if (timeOfDay >= 7 && timeOfDay <= 19) {
-    speed = 45 + Math.random() * 35; // 45-80 mph during day
-  }
-
-  const isCharging = batteryLevel < 40 && speed === 0;
-
-  return {
-    id: "wandering-whittle-tesla",
-    name: "The Wandering Whittle",
-    model: "Model Y Long Range",
-    batteryLevel: Math.round(batteryLevel),
-    range: Math.round(batteryLevel * 3.5),
-    speed: Math.round(speed),
-    power: isCharging
-      ? -(50 + Math.random() * 150)
-      : speed > 0
-      ? 15 + Math.random() * 25
-      : 0,
-    charging: isCharging,
-    location: {
-      latitude: latitude,
-      longitude: longitude,
-      heading: Math.round(Math.random() * 360),
-    },
-    temperature: {
-      inside: 72,
-      outside: 68 + Math.round((Math.random() - 0.5) * 20),
-    },
-    climate: {
-      enabled: true,
-      temperature: 72,
-    },
-    locked: !isCharging && speed === 0,
-    sentry_mode: speed === 0 && !isCharging,
-    odometer: 15420 + Math.round(Math.random() * 100),
-    last_updated: new Date().toISOString(),
-  };
-}
-
-/**
- * Generate simulated weather data
- */
-function generateSimulatedWeatherData(lat, lon) {
-  const conditions = ["clear", "clouds", "rain", "snow", "thunderstorm"];
-  const condition = conditions[Math.floor(Math.random() * conditions.length)];
-
-  return {
-    location: {
-      latitude: lat,
-      longitude: lon,
-      city: "Current Location",
-      state: "TX",
-    },
-    current: {
-      temperature: 68 + Math.round((Math.random() - 0.5) * 30),
-      condition: condition,
-      humidity: 40 + Math.round(Math.random() * 40),
-      wind_speed: Math.round(Math.random() * 20),
-      wind_direction: Math.round(Math.random() * 360),
-      visibility: 10,
-      uv_index: Math.round(Math.random() * 10),
-    },
-    forecast: generateWeatherForecast(),
-    last_updated: new Date().toISOString(),
-  };
-}
-
-/**
- * Generate weather forecast
- */
-function generateWeatherForecast() {
-  const forecast = [];
-  for (let i = 0; i < 5; i++) {
-    const date = new Date();
-    date.setDate(date.getDate() + i);
-
-    forecast.push({
-      date: date.toISOString().split("T")[0],
-      high: 70 + Math.round(Math.random() * 20),
-      low: 50 + Math.round(Math.random() * 20),
-      condition: ["clear", "clouds", "rain"][Math.floor(Math.random() * 3)],
-      precipitation: Math.round(Math.random() * 100),
+async function fetchVehicleData() {
+  try {
+    // TODO: Implement real Tesla API integration
+    // This should call Tessie API or Tesla Fleet API
+    const response = await fetch('https://api.tessie.com/vehicles', {
+      headers: {
+        'Authorization': `Bearer ${TESSIE_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
     });
+    
+    if (!response.ok) {
+      throw new Error(`Tesla API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    return {
+      id: data.id,
+      name: data.display_name,
+      model: data.vehicle_config?.car_type || "Tesla Model Y",
+      batteryLevel: data.charge_state?.battery_level || 0,
+      range: data.charge_state?.est_battery_range || 0,
+      speed: data.drive_state?.speed || 0,
+      power: data.charge_state?.charger_power || 0,
+      charging: data.charge_state?.charging_state === "Charging",
+      location: {
+        latitude: data.drive_state?.latitude || 0,
+        longitude: data.drive_state?.longitude || 0,
+        heading: data.drive_state?.heading || 0,
+      },
+      temperature: {
+        inside: data.climate_state?.inside_temp || 20,
+        outside: data.climate_state?.outside_temp || 20,
+      },
+      climate: {
+        enabled: data.climate_state?.is_climate_on || false,
+        temperature: data.climate_state?.driver_temp_setting || 20,
+      },
+      locked: data.vehicle_state?.locked || true,
+      sentry_mode: data.vehicle_state?.sentry_mode || false,
+      odometer: data.vehicle_state?.odometer || 0,
+      last_updated: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error('Failed to fetch vehicle data:', error);
+    throw new Error('Unable to retrieve vehicle data');
   }
-  return forecast;
 }
 
 /**
- * Generate simulated trip data
+ * Fetch real weather data from OpenWeatherMap API
+ * @param {number} lat - Latitude coordinate
+ * @param {number} lon - Longitude coordinate  
+ * @returns {Promise<Object>} Weather data object
  */
-function generateSimulatedTripData() {
-  return {
-    trip_id: "wandering-whittle-2025",
-    name: "The Wandering Whittle - 48 States Road Trip",
-    start_date: "2025-06-01T00:00:00Z",
-    end_date: "2025-08-01T23:59:59Z",
-    current_state: "Texas",
-    states_visited: [
-      "California",
-      "Nevada",
-      "Utah",
-      "Colorado",
-      "New Mexico",
-      "Texas",
-    ],
-    states_remaining: 42,
-    total_distance: 15420,
-    distance_remaining: 8000,
-    progress_percentage: 35,
-    next_destination: {
-      city: "Austin",
-      state: "Texas",
-      arrival_estimate: "2025-06-28T15:00:00Z",
-    },
-    last_updated: new Date().toISOString(),
-  };
+async function fetchWeatherData(lat, lon) {
+  try {
+    const API_KEY = process.env.OPENWEATHER_API_KEY;
+    if (!API_KEY) {
+      throw new Error('OpenWeatherMap API key not configured');
+    }
+
+    const currentWeatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=imperial`;
+    const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=imperial`;
+
+    const [currentResponse, forecastResponse] = await Promise.all([
+      fetch(currentWeatherUrl),
+      fetch(forecastUrl)
+    ]);
+
+    if (!currentResponse.ok || !forecastResponse.ok) {
+      throw new Error('Failed to fetch weather data from OpenWeatherMap');
+    }
+
+    const currentData = await currentResponse.json();
+    const forecastData = await forecastResponse.json();
+
+    return {
+      location: {
+        latitude: lat,
+        longitude: lon,
+        city: currentData.name,
+        state: currentData.sys?.country || "US",
+      },
+      current: {
+        temperature: Math.round(currentData.main.temp),
+        condition: currentData.weather[0]?.main?.toLowerCase() || "clear",
+        humidity: currentData.main.humidity,
+        wind_speed: Math.round(currentData.wind?.speed || 0),
+        wind_direction: currentData.wind?.deg || 0,
+        visibility: Math.round((currentData.visibility || 10000) / 1000),
+        uv_index: 0, // Requires separate API call
+      },
+      forecast: forecastData.list.slice(0, 5).map(item => ({
+        date: new Date(item.dt * 1000).toISOString().split("T")[0],
+        high: Math.round(item.main.temp_max),
+        low: Math.round(item.main.temp_min),
+        condition: item.weather[0]?.main?.toLowerCase() || "clear",
+        precipitation: Math.round((item.pop || 0) * 100),
+      })),
+      last_updated: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error('Failed to fetch weather data:', error);
+    throw new Error('Unable to retrieve weather data');
+  }
+}
+
+/**
+ * Fetch real trip data from database or trip management system
+ * @returns {Promise<Object>} Trip data object
+ */
+async function fetchTripData() {
+  try {
+    // TODO: Implement database integration for trip tracking
+    // This should connect to your trip management database
+    const response = await fetch(`${TRIP_API_BASE_URL}/current-trip`, {
+      headers: {
+        'Authorization': `Bearer ${TRIP_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Trip API error: ${response.status}`);
+    }
+
+    const tripData = await response.json();
+
+    return {
+      trip_id: tripData.id,
+      name: tripData.name,
+      start_date: tripData.start_date,
+      end_date: tripData.end_date,
+      current_state: tripData.current_location?.state,
+      states_visited: tripData.states_completed || [],
+      states_remaining: 48 - (tripData.states_completed?.length || 0),
+      total_distance: tripData.total_miles || 0,
+      distance_remaining: tripData.remaining_miles || 0,
+      progress_percentage: tripData.completion_percentage || 0,
+      next_destination: {
+        city: tripData.next_stop?.city,
+        state: tripData.next_stop?.state,
+        arrival_estimate: tripData.next_stop?.eta,
+      },
+      last_updated: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error('Failed to fetch trip data:', error);
+    throw new Error('Unable to retrieve trip data');
+  }
 }
 
 /**
