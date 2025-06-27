@@ -74,7 +74,7 @@ run_test() {
   TOTAL_TESTS=$((TOTAL_TESTS + 1))
   
   echo -e "${BLUE}Running test:${NC} $test_name"
-  eval $test_command
+  eval "$test_command"
   
   if [ $? -eq 0 ]; then
     PASSED_TESTS=$((PASSED_TESTS + 1))
