@@ -16,12 +16,18 @@ id = "41e8cca6911d47338647d950d2344d91"
 
 [durable_objects]
 bindings = [
-  { name = "awhittlewandering-edge", class_name = "SyncServiceDurableObject" }
+  { name = "AGENT_MESSAGING_DO", class_name = "AgentMessagingDurableObject" }
 ]
 
 [[migrations]]
 tag = "v1"
 new_classes = ["SyncServiceDurableObject"]
+
+[[migrations]]
+tag = "v2"
+renamed_classes = [
+  { from = "SyncServiceDurableObject", to = "AgentMessagingDurableObject" }
+]
 
 # Scheduled cleanup job - runs every hour to clean up inactive trackers
 [triggers]

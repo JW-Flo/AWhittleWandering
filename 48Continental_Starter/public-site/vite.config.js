@@ -62,8 +62,19 @@ export default defineConfig(({ mode }) => {
         env.VITE_EDGE_WORKER_URL ||
           "https://awhittlewandering-edge.kd8jc7v8cd.workers.dev"
       ),
+      "import.meta.env.VITE_API_BASE_URL": JSON.stringify(
+        env.VITE_API_BASE_URL ||
+          "https://awhittlewandering-edge.kd8jc7v8cd.workers.dev"
+      ),
+      "import.meta.env.VITE_WEBSOCKET_ENDPOINT": JSON.stringify(
+        env.VITE_WEBSOCKET_ENDPOINT ||
+          "wss://awhittlewandering-edge.kd8jc7v8cd.workers.dev/ws"
+      ),
       "import.meta.env.VITE_USE_SIMULATED_DATA": JSON.stringify(
         env.VITE_USE_SIMULATED_DATA || "false"
+      ),
+      "import.meta.env.VITE_ENABLE_STREAMING": JSON.stringify(
+        env.VITE_ENABLE_STREAMING || "true"
       ),
 
       // Ensure DEV flag for conditional development-only code

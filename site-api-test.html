@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test - Latest Site</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { border-color: green; background-color: #f0fff0; }
+        .error { border-color: red; background-color: #fff0f0; }
+        .loading { border-color: orange; background-color: #fff8f0; }
+        pre { max-height: 200px; overflow: auto; background: #f5f5f5; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Testing Latest Deployed Site</h1>
+    <div id="results"></div>
+    
+    <script>
+        async function testSiteAndAPI() {
+            const results = document.getElementById('results');
+            
+            const tests = [
+                {
+                    name: 'Latest Site Status',
+                    url: 'https://9b9c25e6.awhittlewandering-site.pages.dev',
+                    type: 'site'
+                },
+                {
+                    name: 'Edge Worker Vehicle Data',
+                    url: 'https://awhittlewandering-edge.kd8jc7v8cd.workers.dev/api/vehicle',
+                    type: 'api'
+                },
+                {
+                    name: 'CORS Test (from browser)',
+                    url: 'https://awhittlewandering-edge.kd8jc7v8cd.workers.dev/api/vehicle',
+                    type: 'cors'
+                }
+            ];
+            
+            for (const test of tests) {
+                const testDiv = document.createElement('div');
+                testDiv.className = 'test-result loading';
+                testDiv.innerHTML = `<h3>${test.name}</h3><p>Testing...</p>`;
+                results.appendChild(testDiv);
+                
+                try {
+                    let response;
+                    let data;
+                    
+                    if (test.type === 'cors') {
+                        // Test CORS specifically
+                        response = await fetch(test.url, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Cache-Control': 'no-cache'
+                            }
+                        });
+                    } else {
+                        response = await fetch(test.url);
+                    }
+                    
+                    const status = response.status;
+                    const statusText = response.statusText;
+                    
+                    if (test.type === 'site') {
+                        const text = await response.text();
+                        const hasMapbox = text.includes('mapbox');
+                        const hasToken = text.includes('pk.eyJ1');
+                        const hasAPI = text.includes('awhittlewandering-edge');
+                        
+                        testDiv.className = 'test-result success';
+                        testDiv.innerHTML = `
+                            <h3>${test.name} ✅</h3>
+                            <p><strong>Status:</strong> ${status} ${statusText}</p>
+                            <p><strong>Mapbox Integration:</strong> ${hasMapbox ? '✅' : '❌'}</p>
+                            <p><strong>Access Token:</strong> ${hasToken ? '✅' : '❌'}</p>
+                            <p><strong>API Configuration:</strong> ${hasAPI ? '✅' : '❌'}</p>
+                        `;
+                    } else {
+                        data = await response.json();
+                        testDiv.className = 'test-result success';
+                        testDiv.innerHTML = `
+                            <h3>${test.name} ✅</h3>
+                            <p><strong>Status:</strong> ${status} ${statusText}</p>
+                            <p><strong>CORS Headers:</strong> ${response.headers.get('access-control-allow-origin') ? '✅' : '❌'}</p>
+                            <details>
+                                <summary>Response Data</summary>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                            </details>
+                        `;
+                    }
+                    
+                } catch (error) {
+                    testDiv.className = 'test-result error';
+                    testDiv.innerHTML = `
+                        <h3>${test.name} ❌</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>Details:</strong> ${error.toString()}</p>
+                    `;
+                }
+            }
+            
+            // Test the exact API call that React would make
+            results.innerHTML += '<h2>React Hook Simulation</h2>';
+            
+            try {
+                const reactTestDiv = document.createElement('div');
+                reactTestDiv.className = 'test-result loading';
+                reactTestDiv.innerHTML = '<h3>Simulating useVehicleData Hook</h3><p>Testing...</p>';
+                results.appendChild(reactTestDiv);
+                
+                // Simulate the exact API call from useVehicleData
+                const apiUrl = 'https://awhittlewandering-edge.kd8jc7v8cd.workers.dev';
+                const response = await fetch(`${apiUrl}/api/vehicle`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    },
+                    signal: AbortSignal.timeout(8000)
+                });
+                
+                const data = await response.json();
+                
+                reactTestDiv.className = 'test-result success';
+                reactTestDiv.innerHTML = `
+                    <h3>React Hook Simulation ✅</h3>
+                    <p><strong>Status:</strong> ${response.status} ${response.statusText}</p>
+                    <p><strong>Location:</strong> ${data.location?.latitude}, ${data.location?.longitude}</p>
+                    <p><strong>Battery:</strong> ${data.batteryLevel}%</p>
+                    <p><strong>Speed:</strong> ${data.speed} mph</p>
+                    <p><strong>Last Updated:</strong> ${data.last_updated}</p>
+                    <details>
+                        <summary>Full Response</summary>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </details>
+                `;
+                
+            } catch (error) {
+                const reactTestDiv = document.querySelector('div:last-child');
+                reactTestDiv.className = 'test-result error';
+                reactTestDiv.innerHTML = `
+                    <h3>React Hook Simulation ❌</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p>This is likely the issue preventing the map from loading data!</p>
+                `;
+            }
+        }
+        
+        window.onload = testSiteAndAPI;
+    </script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Debug Test</title>
+</head>
+<body>
+    <h1>Debugging Site Map Data Load Issues</h1>
+    <div id="test-results"></div>
+    
+    <script>
+        async function testSiteAPIs() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '<h2>Testing APIs...</h2>';
+            
+            const tests = [
+                {
+                    name: 'Edge Worker Vehicle API',
+                    url: 'https://awhittlewandering-edge.kd8jc7v8cd.workers.dev/api/vehicle'
+                },
+                {
+                    name: 'Edge Worker Trip API', 
+                    url: 'https://awhittlewandering-edge.kd8jc7v8cd.workers.dev/api/trip'
+                },
+                {
+                    name: 'Edge Worker Weather API',
+                    url: 'https://awhittlewandering-edge.kd8jc7v8cd.workers.dev/api/weather?lat=42.87&lon=-112.44'
+                },
+                {
+                    name: 'Site Health Check',
+                    url: 'https://9b9c25e6.awhittlewandering-site.pages.dev'
+                },
+                {
+                    name: 'Mapbox Token Test',
+                    url: 'https://api.mapbox.com/styles/v1/mapbox/streets-v11?access_token=pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA'
+                }
+            ];
+            
+            for (const test of tests) {
+                try {
+                    console.log(`Testing: ${test.name}`);
+                    const response = await fetch(test.url);
+                    const status = response.status;
+                    
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch {
+                        data = await response.text();
+                        data = data.substring(0, 200) + '...';
+                    }
+                    
+                    results.innerHTML += `
+                        <div style="margin: 10px 0; padding: 10px; border: 1px solid ${status === 200 ? 'green' : 'red'};">
+                            <h3>${test.name}</h3>
+                            <p><strong>Status:</strong> ${status} ${status === 200 ? '✅' : '❌'}</p>
+                            <p><strong>URL:</strong> ${test.url}</p>
+                            <details>
+                                <summary>Response Data</summary>
+                                <pre style="max-height: 200px; overflow: auto;">${JSON.stringify(data, null, 2)}</pre>
+                            </details>
+                        </div>
+                    `;
+                } catch (error) {
+                    results.innerHTML += `
+                        <div style="margin: 10px 0; padding: 10px; border: 1px solid red;">
+                            <h3>${test.name}</h3>
+                            <p><strong>Status:</strong> ERROR ❌</p>
+                            <p><strong>Error:</strong> ${error.message}</p>
+                            <p><strong>URL:</strong> ${test.url}</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            // Test specific site functionality
+            results.innerHTML += '<h2>Testing Site Functionality...</h2>';
+            
+            try {
+                // Test if site loads and has expected elements
+                const siteResponse = await fetch('https://9b9c25e6.awhittlewandering-site.pages.dev');
+                const siteHtml = await siteResponse.text();
+                
+                const hasMapbox = siteHtml.includes('mapbox');
+                const hasToken = siteHtml.includes('pk.eyJ1');
+                const hasReact = siteHtml.includes('react');
+                
+                results.innerHTML += `
+                    <div style="margin: 10px 0; padding: 10px; border: 1px solid blue;">
+                        <h3>Site Analysis</h3>
+                        <p>Mapbox Integration: ${hasMapbox ? '✅' : '❌'}</p>
+                        <p>Access Token Present: ${hasToken ? '✅' : '❌'}</p>
+                        <p>React Framework: ${hasReact ? '✅' : '❌'}</p>
+                    </div>
+                `;
+            } catch (error) {
+                results.innerHTML += `
+                    <div style="margin: 10px 0; padding: 10px; border: 1px solid red;">
+                        <h3>Site Analysis Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Run tests when page loads
+        window.onload = testSiteAPIs;
+    </script>
+</body>
+</html>

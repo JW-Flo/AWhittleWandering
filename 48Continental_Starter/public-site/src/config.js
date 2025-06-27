@@ -12,10 +12,10 @@ export const CONFIG = {
   api: {
     baseUrl:
       import.meta.env.VITE_API_BASE_URL ||
-      "https://thewanderingwhittle-edge.kd8jc7v8cd.workers.dev",
+      "https://awhittlewandering-edge.kd8jc7v8cd.workers.dev",
     websocket:
       import.meta.env.VITE_WEBSOCKET_ENDPOINT ||
-      "wss://thewanderingwhittle-edge.workers.dev/ws",
+      "wss://awhittlewandering-edge.kd8jc7v8cd.workers.dev/ws",
   },
   simulation: {
     enabled: import.meta.env.VITE_USE_SIMULATED_DATA === "true",
