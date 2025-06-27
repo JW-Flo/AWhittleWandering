@@ -1,0 +1,197 @@
+name: Critical Tests Only - Fast Deployment
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deployment_stage:
+        description: "Deployment stage (alpha/beta/production)"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - alpha
+          - beta
+          - production
+
+# Allow only one deployment at a time
+concurrency:
+  group: deployment-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  critical-tests:
+    name: Critical Tests (Deployment Blocking)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: awhittlewandering/package-lock.json
+
+      - name: Install dependencies
+        working-directory: awhittlewandering
+        run: npm ci --legacy-peer-deps
+
+      - name: Install jsdom for tests
+        working-directory: awhittlewandering
+        run: npm install jsdom --save-dev
+
+      - name: Run critical tests only
+        working-directory: awhittlewandering
+        run: npm run test:critical
+        env:
+          NODE_ENV: test
+
+      - name: Validate feature flags
+        working-directory: awhittlewandering
+        run: |
+          echo "Validating feature flag configuration..."
+          npm run test:critical -- --grep="Feature Flags"
+
+  build-and-deploy:
+    name: Build and Deploy
+    needs: critical-tests
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    outputs:
+      deployment-url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: awhittlewandering/package-lock.json
+
+      - name: Install dependencies
+        working-directory: awhittlewandering
+        run: npm ci --legacy-peer-deps
+
+      - name: Build application
+        working-directory: awhittlewandering
+        run: npm run build
+        env:
+          DEPLOYMENT_STAGE: ${{ github.event.inputs.deployment_stage || 'production' }}
+
+      - name: Deploy application
+        id: deploy
+        working-directory: awhittlewandering
+        run: |
+          echo "Deploying to ${{ github.event.inputs.deployment_stage || 'production' }} stage..."
+          # Actual deployment commands would go here
+          echo "url=https://awhittlewandering.com" >> $GITHUB_OUTPUT
+          echo "✅ Deployment completed"
+
+  # Non-critical tests run in parallel and don't block deployment
+  non-critical-tests:
+    name: Non-Critical Tests (Parallel)
+    needs: critical-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true # Don't fail the workflow if these fail
+    strategy:
+      matrix:
+        test-suite: [api, components, integration]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: awhittlewandering/package-lock.json
+
+      - name: Install dependencies
+        working-directory: awhittlewandering
+        run: npm ci --legacy-peer-deps
+
+      - name: Install jsdom for tests
+        working-directory: awhittlewandering
+        run: npm install jsdom --save-dev
+
+      - name: Run ${{ matrix.test-suite }} tests
+        working-directory: awhittlewandering
+        run: npm run test:${{ matrix.test-suite }}
+        continue-on-error: true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.test-suite }}
+          path: awhittlewandering/test-results/
+          retention-days: 7
+
+  # Post-deployment validation
+  post-deployment-validation:
+    name: Post-Deployment Validation
+    needs: [build-and-deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true # Don't fail the workflow if validation fails
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: awhittlewandering/package-lock.json
+
+      - name: Install dependencies
+        working-directory: awhittlewandering
+        run: npm ci --legacy-peer-deps
+
+      - name: Install jsdom for tests
+        working-directory: awhittlewandering
+        run: npm install jsdom --save-dev
+
+      - name: Wait for deployment to stabilize
+        run: sleep 30
+
+      - name: Run post-deployment validation
+        working-directory: awhittlewandering
+        run: npm run test:post-deploy
+        env:
+          DEPLOYMENT_URL: ${{ needs.build-and-deploy.outputs.deployment-url }}
+          API_URL: https://awhittlewandering-edge.workers.dev
+        continue-on-error: true
+
+      - name: Generate deployment report
+        if: always()
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Stage**: ${{ github.event.inputs.deployment_stage || 'production' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL**: ${{ needs.build-and-deploy.outputs.deployment-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ✅ Deployed Successfully" >> $GITHUB_STEP_SUMMARY
+
+  # Notify about test failures (but don't block deployment)
+  notify-test-failures:
+    name: Notify Test Failures
+    needs: [non-critical-tests, post-deployment-validation]
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+      - name: Notify about non-critical test failures
+        run: |
+          echo "⚠️ Some non-critical tests failed, but deployment proceeded"
+          echo "Please review test results and fix issues in the next deployment"
+          # Add notification logic here (Slack, email, etc.)

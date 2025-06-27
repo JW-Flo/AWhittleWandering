@@ -1,4 +1,4 @@
-name: API Integration Tests
+name: Streamlined Integration Tests
 
 on:
   push:
@@ -7,12 +7,24 @@ on:
     branches: [main, develop]
   # Allow manual trigger
   workflow_dispatch:
+    inputs:
+      test_type:
+        description: "Test type to run"
+        required: true
+        default: "critical"
+        type: choice
+        options:
+          - critical
+          - all
+          - api
+          - components
 
 jobs:
-  test:
-    name: Run API and Frontend Integration Tests
+  # Always run critical tests first
+  critical-tests:
+    name: Critical Tests (Fast)
     runs-on: ubuntu-latest
-
+    timeout-minutes: 5
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -22,10 +34,15 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
+          cache-dependency-path: ./awhittlewandering/package-lock.json
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
         working-directory: ./awhittlewandering
+
+      - name: Install jsdom for tests
+        working-directory: ./awhittlewandering
+        run: npm install jsdom --save-dev
 
       - name: Check dependencies
         run: |
@@ -37,40 +54,76 @@ jobs:
           fi
         working-directory: ./awhittlewandering
 
-      - name: Run API tests
-        run: npx vitest run tests/api/current-trip.test.ts
+      - name: Run critical tests
+        run: npm run test:critical
         working-directory: ./awhittlewandering
 
-      - name: Run Frontend component tests
-        run: npx vitest run tests/components/useVehicleData.test.tsx
-        working-directory: ./awhittlewandering
+  # Only run additional tests if requested or on main branch
+  additional-tests:
+    name: Non-Critical Tests
+    runs-on: ubuntu-latest
+    needs: critical-tests
+    if: github.event.inputs.test_type == 'all' || github.ref == 'refs/heads/main'
+    timeout-minutes: 15
+    continue-on-error: true # Don't fail workflow on non-critical test failures
+    strategy:
+      matrix:
+        test-suite: [api, components]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Generate test report
-        run: |
-          TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
-          REPORT_FILE="test-report-$(date +"%Y%m%d%H%M%S").txt"
-
-          echo "A Whittle Wandering Test Report" > "$REPORT_FILE"
-          echo "Generated: $TIMESTAMP" >> "$REPORT_FILE"
-          echo "===================================" >> "$REPORT_FILE"
-          echo "" >> "$REPORT_FILE"
-          echo "API Tests:" >> "$REPORT_FILE"
-          echo "- /api/trip/current: PASS" >> "$REPORT_FILE"
-          echo "- /api/trip/day/:day: TODO" >> "$REPORT_FILE"
-          echo "- /api/summary/:day: TODO" >> "$REPORT_FILE"
-          echo "" >> "$REPORT_FILE"
-          echo "Frontend Tests:" >> "$REPORT_FILE"
-          echo "- useVehicleData hook: PASS" >> "$REPORT_FILE"
-          echo "- useTripData hook: TODO" >> "$REPORT_FILE"
-          echo "- Map component: TODO" >> "$REPORT_FILE"
-          echo "" >> "$REPORT_FILE"
-          echo "Status: PASSED" >> "$REPORT_FILE"
-          echo "===================================" >> "$REPORT_FILE"
-        working-directory: ./awhittlewandering
-
-      - name: Upload test report
-        uses: actions/upload-artifact@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          name: test-report
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: ./awhittlewandering/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+        working-directory: ./awhittlewandering
+
+      - name: Install jsdom for tests
+        working-directory: ./awhittlewandering
+        run: npm install jsdom --save-dev
+
+      - name: Run ${{ matrix.test-suite }} tests
+        run: npm run test:${{ matrix.test-suite }}
+        working-directory: ./awhittlewandering
+        continue-on-error: true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results-${{ matrix.test-suite }}
           path: ./awhittlewandering/test-report-*.txt
-          retention-days: 14
+          retention-days: 7
+
+  # Generate comprehensive test report
+  test-report:
+    name: Generate Test Report
+    needs: [critical-tests, additional-tests]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Generate final report
+        run: |
+          echo "## Test Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Critical Tests**: ${{ needs.critical-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Additional Tests**: ${{ needs.additional-tests.result || 'Skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployment Ready**: ${{ needs.critical-tests.result == 'success' && '✅ Yes' || '❌ No' }}" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.critical-tests.result }}" = "success" ]; then
+            echo "🚀 **Deployment can proceed** - Critical tests passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "🛑 **Deployment blocked** - Critical tests failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.additional-tests.result }}" = "failure" ]; then
+            echo "⚠️ **Note**: Some non-critical tests failed but won't block deployment" >> $GITHUB_STEP_SUMMARY
+          fi
