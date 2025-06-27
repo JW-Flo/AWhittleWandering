@@ -46,7 +46,7 @@ jobs:
           # Create minimal .env file with only required secrets
           echo "CF_API_TOKEN=${{ secrets.CF_API_TOKEN }}" > .env
           echo "CF_ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }}" >> .env
-          
+
           # Export environment variables
           echo "VITE_MAPBOX_TOKEN=${{ secrets.MAPBOX_TOKEN }}" >> .env
 
@@ -70,10 +70,10 @@ jobs:
         run: |
           cd 48Continental_Starter/public-site
           npm ci
-          
+
           # Build the site
           VITE_MAPBOX_TOKEN="${{ secrets.MAPBOX_TOKEN }}" npm run build
-          
+
           # Deploy to Cloudflare Pages
           echo "Deploying Public Site..."
           CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_TOKEN }} CLOUDFLARE_ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }} npx wrangler pages deploy dist --project-name="awhittlewandering-site" --branch="main"
