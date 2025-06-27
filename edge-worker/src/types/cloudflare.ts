@@ -55,4 +55,6 @@ export interface WorkerEnvironment {
   OPENWEATHER_API_KEY?: string;
   ABRP_API_KEY?: string;
   MAPBOX_TOKEN?: string;
+  LIVE_TELEMETRY_ENABLED?: string;
+  ADMIN_JWT_SECRET?: string;
 }
