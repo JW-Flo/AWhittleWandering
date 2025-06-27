@@ -5,6 +5,8 @@ on:
 jobs:
   ping:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # needed to update .last_good_deploy on rollback
     steps:
       - uses: actions/checkout@v4
       - name: Ping Health
@@ -20,15 +22,8 @@ jobs:
       - name: Roll Back
         if: steps.ping.outputs.failing == 'true'
         run: |
+          echo "Health failed 3× – rolling back"
           DEPLOY_ID=$(cat .last_good_deploy)
           npx wrangler rollback $DEPLOY_ID --env production --yes
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-      - name: Slack Alert
-        if: steps.ping.outputs.failing == 'true'
-        run: |
-          curl -X POST -H "Content-type: application/json" \
-            --data '{"text":"🔴 AWW prod health failed 3× – auto‑rolled back."}' \
-            $SLACK_ALERT_URL
-        env:
-          SLACK_ALERT_URL: ${{ secrets.SLACK_ALERT_URL }}
