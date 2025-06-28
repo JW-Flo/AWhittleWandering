@@ -65,6 +65,25 @@ function jsonResponse(data, status = 200) {
     });
 }
 /**
+ * Health endpoint - for automated monitoring
+ */
+router.get('/health', () => {
+    return jsonResponse({
+        status: 'ok',
+        timestamp: Date.now()
+    });
+});
+/**
+ * Version endpoint - returns API version info
+ */
+router.get('/api/version', () => {
+    return jsonResponse({
+        version: API_VERSION,
+        environment: 'production',
+        server: 'Cloudflare Workers'
+    });
+});
+/**
  * Root API endpoint - returns basic info
  */
 router.get('/api', () => {
