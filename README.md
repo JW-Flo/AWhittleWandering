@@ -1,175 +1,166 @@
-# A Whittle Wandering (48 Continental)
+ # A Whittle Wandering
 
-A real-time tracking system for a 60-day Tesla road trip through all 48 contiguous U.S. states.
+Real-time Tesla road trip tracker for the 48 continental United States.
 
-## Quick Start (Simplified)
+## Project Overview
 
-**Want to just deploy the site? Skip all the complexity below:**
+A Whittle Wandering is a live road trip tracker that follows a 60-day journey across all 48 continental United States in a Tesla. The application provides real-time location tracking, vehicle telemetry, and trip statistics through an interactive map interface.
 
-1. **Local Development**:
-   ```bash
-   cd 48Continental_Starter/public-site
-   npm install
-   npm run dev
-   ```
+### Key Features
 
-2. **Build & Deploy**:
-   ```bash
-   npm run build   # Builds the site
-   npm run deploy  # Deploys to Cloudflare Pages
-   ```
+- Real-time vehicle location tracking via Tessie API
+- Interactive Mapbox-powered map interface
+- Trip statistics and state tracking
+- Weather information integration
+- Secure API gateway with Cloudflare Workers
+- Responsive design for all devices
 
-3. **Automatic Deployment**: Push to main branch and GitHub Actions will auto-deploy.
+## Architecture
 
----
+The application uses a modern, serverless architecture:
 
-## 🎯 Current Status (June 27, 2025)
+- **Frontend**: React/Vite application hosted on Cloudflare Pages
+- **Backend**: Cloudflare Workers providing secure API access
+- **Data Sources**: 
+  - Tessie API for Tesla vehicle telemetry
+  - OpenWeather API for weather information
+  - Mapbox for mapping and visualization
+- **Caching**: Cloudflare KV for caching API responses
+- **Deployment**: GitHub Actions CI/CD pipeline
 
-✅ **FULLY OPERATIONAL**: All systems deployed and functional
-- **Website**: https://faa9b25d.awhittlewandering-site.pages.dev
-- **API Endpoints**: https://awhittlewandering-edge.kd8jc7v8cd.workers.dev  
-- **Current Location**: Pocatello, ID → Farr West, UT → Provo, UT
-- **Trip Progress**: 34% complete (10 states visited, 38 remaining)
-- **Vehicle Stats**: 62,036 miles, 94% battery, traveling I-15 South
-- **Data Integration**: Real-time vehicle, weather, trip, and charging APIs
+## Deployment
 
----
+### Prerequisites
 
-## Project Description
+- Node.js 20+ installed
+- Cloudflare account with Workers and Pages enabled
+- Tessie API access (for Tesla integration)
+- Mapbox API token
+- OpenWeather API key
 
-This project tracks a Tesla vehicle on a 60-day journey across all 48 contiguous United States, providing real-time updates on location, weather, state visits, and trip progress. The system consists of multiple interconnected components that work together to create a seamless experience for users following the journey.
+### Environment Variables
 
-## System Architecture
-
-The system is built with the following core components:
-
-- **Public Website**: React-based frontend for user interaction
-- **Edge Worker**: Cloudflare Workers API backend
-- **MCP Server**: Mission Control Platform running on a persistent iMac
-- **Vehicle Telemetry**: Integration with Tessie API for Tesla data
-- **Weather Integration**: Real-time weather data along the route
-- **Deployment Pipeline**: Automated testing and deployment
-
-## Repository Structure
+Create a `.env` file at the root of the project with the following variables:
 
 ```
-├── 48Continental_Starter/     # Original project structure
-│   └── public-site/           # React frontend application
-├── awhittlewandering/         # New consolidated codebase
-│   ├── packages/
-│   │   └── frontend/          # React application
-│   └── workers/               # Cloudflare Workers
-├── edge-worker/               # Edge Worker API implementation
-├── mcp-server/                # MCP server implementation
-├── mcp-48continental/         # MCP plugins for 48 Continental project
-├── n8n/                       # n8n workflows for automation
-├── shared/                    # Shared utilities and services
-├── scripts/                   # Deployment and utility scripts
-├── docs/                      # Project documentation
-└── .github/                   # GitHub Actions workflows
+# Cloudflare credentials
+CF_API_TOKEN=your_cloudflare_api_token_here
+CF_ACCOUNT_ID=your_cloudflare_account_id_here
+
+# Tesla vehicle telemetry via Tessie API
+TESSIE_API_TOKEN=your_tessie_api_token_here
+TESSIE_VIN=your_tesla_vehicle_id_here
+
+# Mapbox for mapping functionality
+MAPBOX_TOKEN=your_mapbox_token_here
+MAPBOX_API_TOKEN=your_mapbox_private_token_here
+
+# Edge HMAC key for API security
+EDGE_HMAC_KEY=your_edge_hmac_security_key_here
+
+# OpenWeather API for weather data
+OPENWEATHER_API_KEY=your_openweather_api_key_here
 ```
 
-## Key Features
+### Deployment Methods
 
-- Real-time vehicle tracking on an interactive map
-- Current weather conditions along the route
-- State visit tracking and visualization
-- Trip progress and statistics
-- Automated deployment and monitoring
-- Resilient infrastructure with fallback mechanisms
+#### Option 1: Using the Deployment Script
 
-## Deployment Process
-
-The project uses a comprehensive deployment process:
-
-1. **Environment Validation**: Checks for required environment variables
-2. **Component Deployment**: Deploys each component in the correct order
-3. **Testing**: Runs automated tests to verify functionality
-4. **Verification**: Performs post-deployment checks
-5. **Reporting**: Generates deployment reports
-
-To deploy the project:
+The easiest way to deploy the application is using the provided deployment script:
 
 ```bash
-# Deploy everything
-./scripts/deploy-project.sh
+# Make the script executable (if not already)
+chmod +x scripts/deploy-website.sh
 
-# Deploy specific components
-./scripts/deploy-project.sh --component edge-worker
-./scripts/deploy-project.sh --component public-site
+# Run the deployment script
+./scripts/deploy-website.sh
 ```
 
-## Environment Setup
+This script will:
+1. Validate environment variables
+2. Install dependencies
+3. Build the frontend
+4. Deploy the site worker (frontend)
+5. Deploy the API worker (backend)
 
-The following environment variables are required:
+#### Option 2: GitHub Actions Deployment
 
-```
-CF_API_TOKEN=your_cloudflare_api_token
-CF_ACCOUNT_ID=your_cloudflare_account_id
-TESSIE_API_TOKEN=your_tessie_api_token
-TESSIE_VIN=your_tesla_vehicle_id
-OPENWEATHER_API_KEY=your_openweather_api_key
-MAPBOX_TOKEN=your_mapbox_token
-EDGE_HMAC_KEY=your_edge_hmac_key
-```
+The project includes a GitHub Actions workflow that automatically deploys the application when changes are pushed to the main branch.
 
-Create a `.env` file in the project root with these variables or set them in your environment.
+To use GitHub Actions deployment:
 
-## Development
+1. Add the required secrets to your GitHub repository:
+   - `CF_API_TOKEN`
+   - `CF_ACCOUNT_ID`
+   - `MAPBOX_TOKEN`
+   - `MAPBOX_API_TOKEN`
+   - `TESSIE_API_TOKEN`
+   - `TESSIE_VIN`
+   - `EDGE_HMAC_KEY`
+   - `OPENWEATHER_API_KEY`
 
-To set up a local development environment:
+2. Push changes to the main branch to trigger the deployment workflow.
+
+#### Option 3: Manual Deployment
+
+You can also deploy the application manually using Wrangler:
 
 ```bash
+# Change directory to the project folder
+cd awhittlewandering
+
 # Install dependencies
 npm install
 
-# Start frontend development server
-cd 48Continental_Starter/public-site
-npm run dev
+# Build the frontend
+npm run build:frontend
 
-# Start edge worker locally
-cd edge-worker
-npm run dev
+# Deploy the site worker
+npx wrangler deploy --config wrangler-site.toml
+
+# Deploy the API worker
+npx wrangler deploy --config wrangler.toml
 ```
 
-## Testing
+### Verifying Deployment
 
-The project includes various testing scripts:
+After deployment, you can verify that the application is working correctly by:
+
+1. Visiting the website (https://awhittlewandering.com)
+2. Checking the API health endpoint (https://api.awhittlewandering.com/health)
+3. Verifying that vehicle data is loading on the map
+
+## Development
+
+### Local Development
 
 ```bash
-# Test API endpoints
-node scripts/test-api-endpoints.js
+# Install dependencies
+cd awhittlewandering
+npm install
 
-# Verify Mapbox token
-cd 48Continental_Starter/public-site
-./scripts/verify-mapbox-token.sh
-
-# Validate deployment
-node scripts/deployment-success-validator.js
+# Start the frontend development server
+npm run dev
 ```
 
-## CI/CD
+### Code Structure
 
-The project uses GitHub Actions for continuous integration and deployment. The workflows are defined in:
+- `awhittlewandering/packages/frontend/`: React frontend application
+- `awhittlewandering/workers/`: Cloudflare Workers for API and site hosting
+- `awhittlewandering/packages/shared/`: Shared types and utilities
 
-```
-.github/workflows/deploy-all-final.yml
-.github/workflows/test-edge-worker.yml
-.github/workflows/auto-monitoring.yml
-```
+## Troubleshooting
 
-## Documentation
+### Common Issues
 
-For more detailed information, refer to the following documentation:
+1. **MapBox Token Issues**: If the map fails to load, verify that your Mapbox token is correctly set in both environment variables and wrangler configuration files.
 
-- [Project Summary](docs/PROJECT_SUMMARY.md) - Complete project overview
-- [Deployment Strategy](docs/DEPLOYMENT_STRATEGY.md) - Deployment approach and considerations
-- [MCP Server Architecture](docs/mcp-server-architecture/index.md) - MCP server design and implementation
+2. **Tessie API Connection**: If vehicle data is not updating, check Tessie API connectivity and ensure the VIN is correct.
+
+3. **Deployment Failures**: If deployment fails, check the Cloudflare API token permissions and account ID.
+
+4. **Type Errors**: If you encounter TypeScript errors, run `npm run check-types` to identify the specific issues.
 
 ## License
 
-This project is licensed under the terms of the LICENSE file included in the repository.
-
-## Contact
-
-For questions or support, please open an issue in the repository or contact the project maintainers.
+This project is licensed under the MIT License - see the LICENSE file for details.
