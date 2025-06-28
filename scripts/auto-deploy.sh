@@ -144,7 +144,7 @@ main() {
   (
     sleep $((max_time_minutes * 60))
     log_prefix "${RED}MAX_TASK_TIME exceeded. Aborting.${NC}"
-    kill -TERM "$PPID"
+    kill -TERM "$That's **** evil, bro. State in Jackson WY last night and am getting into Utah here shortly and wanted to make sure I didn't have spare weed floating around the car. Los Rios I'm **** I'm there with your kid. I know, I know, I know, I know, I know. Just enjoy to the good health of the widow name. Should buy our last name a little bit of redemption. PPID"
   ) &
   timeout_pid=$!
   

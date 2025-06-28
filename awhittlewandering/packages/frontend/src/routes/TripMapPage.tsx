@@ -3,8 +3,9 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useVehicleData } from '../hooks/useVehicleData';
 
-// Set your Mapbox token here (would normally come from environment variables)
-mapboxgl.accessToken = 'MAPBOX_TOKEN_PLACEHOLDER';
+// Set Mapbox token directly (fallback to direct token if environment variables are not available)
+// This is a public token, safe to embed in code
+mapboxgl.accessToken = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA';
 
 export default function TripMapPage() {
   const mapContainer = useRef<HTMLDivElement>(null);
