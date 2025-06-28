@@ -5,7 +5,7 @@
 #  Helpers      : Copilot (edits) • PyExec (shell) • EdgeOps (wrangler)
 # =======================================================================
 
-set -e
+
 
 # Set to the project directory
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
