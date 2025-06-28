@@ -1,0 +1,152 @@
+name: AWhittleWandering – One‑Shot Autopilot Deployment
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - preview
+          - production
+
+jobs:
+  prepare:
+    name: Prepare Deployment
+    runs-on: ubuntu-latest
+    outputs:
+      branch_name: ${{ steps.create_branch.outputs.branch_name }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create deployment branch
+        id: create_branch
+        run: |
+          BRANCH_NAME="auto-deploy/$(date +%Y%m%d-%H%M)"
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          git checkout -b $BRANCH_NAME
+          git push -u origin $BRANCH_NAME
+
+  build:
+    name: Build and Health Check
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BRANCH_NAME: ${{ needs.prepare.outputs.branch_name }}
+    steps:
+      - name: Checkout deployment branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BRANCH_NAME }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies
+        run: |
+          npm clean-install --workspaces
+        working-directory: awhittlewandering
+
+      - name: Build frontend
+        id: build
+        run: |
+          npm run build -w packages/frontend
+        working-directory: awhittlewandering
+        env:
+          VITE_MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+          VITE_ENABLE_STREAMING: "true"
+          VITE_MAP_RETRY_ATTEMPTS: "3"
+          VITE_MAP_RETRY_DELAY: "2000"
+
+      - name: Deploy to preview
+        id: preview
+        run: |
+          npm install -g wrangler
+          wrangler deploy --env preview --minify --config wrangler-site.toml
+          PREVIEW_URL=$(wrangler deployments list --json | jq -r '.[0].url')
+          echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
+        working-directory: awhittlewandering
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+
+      - name: Smoke test
+        run: |
+          echo "Running smoke test on ${{ steps.preview.outputs.preview_url }}"
+          curl -sSL "${{ steps.preview.outputs.preview_url }}/health" || exit 1
+          curl -sSL "${{ steps.preview.outputs.preview_url }}/api/version" || exit 1
+
+  deploy:
+    name: Production Deployment
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.environment == 'production' || github.event_name == 'push' }}
+    env:
+      BRANCH_NAME: ${{ needs.prepare.outputs.branch_name }}
+    steps:
+      - name: Checkout deployment branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BRANCH_NAME }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install wrangler
+        run: npm install -g wrangler
+
+      - name: Deploy to production
+        id: deploy
+        run: |
+          wrangler deploy --env production --minify --config wrangler-site.toml
+          DEPLOY_ID=$(wrangler deployments list --json | jq -r '.[0].id')
+          echo $DEPLOY_ID > .last_good_deploy
+          echo "deploy_id=$DEPLOY_ID" >> $GITHUB_OUTPUT
+        working-directory: awhittlewandering
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+
+      - name: Commit deployment ID
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git add .last_good_deploy
+          git commit -m "Update last good deploy ID: ${{ steps.deploy.outputs.deploy_id }}"
+          git push origin ${{ env.BRANCH_NAME }}
+
+      - name: Merge to main
+        run: |
+          git checkout main
+          git merge ${{ env.BRANCH_NAME }} --no-ff -m "Merge deployment ${{ env.BRANCH_NAME }}"
+          git push origin main
+
+  notify:
+    name: Notify Completion
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Success notification
+        if: ${{ needs.deploy.result == 'success' }}
+        run: |
+          echo "✅ Deployment successfully completed!"
+
+      - name: Failure notification
+        if: ${{ needs.deploy.result != 'success' }}
+        run: |
+          echo "❌ Deployment failed! Check logs for details."

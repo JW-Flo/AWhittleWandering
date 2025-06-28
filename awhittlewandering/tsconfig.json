@@ -4,9 +4,10 @@
     "module": "ESNext",
     "moduleResolution": "node",
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "strict": true,
     "lib": ["ES2022", "DOM"],
-    "types": ["@cloudflare/workers-types"],
+    "types": ["@cloudflare/workers-types", "node"],
     "jsx": "react-jsx",
     "skipLibCheck": true,
     "resolveJsonModule": true,
@@ -21,7 +22,8 @@
     "packages/**/*.ts",
     "packages/**/*.tsx",
     "workers/**/*.ts",
-    "packages/shared/itty-router.d.ts"
+    "packages/shared/itty-router.d.ts",
+    "packages/shared/types.ts"
   ],
   "exclude": ["node_modules"]
 }

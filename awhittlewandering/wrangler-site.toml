@@ -1,17 +1,18 @@
-# Wrangler configuration for the main site worker
+Not a worry exclamation point. I'm sure y'all are getting quite busy with packing. # Wrangler configuration for the main site worker
 name = "aww-site"
 main = "./workers/site.ts"
 compatibility_date = "2025-06-15"
 
 # Environment variables
 [vars]
-MAPBOX_TOKEN = ""
+MAPBOX_TOKEN = "${MAPBOX_TOKEN}"
+MAPBOX_API_TOKEN = "sk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteGVzYTUxajlqMmtwenI5bHl1NDk4In0.3D0MbddcATKNja5NnvwYZQ"
 APP_NAME = "A Whittle Wandering"
 MAP_STYLE = "mapbox://styles/mapbox/streets-v12"
 ENABLE_STREAMING = "true"
 ENABLE_MAP_PERFORMANCE_MONITORING = "true"
 MAP_RETRY_ATTEMPTS = "3"
-MAP_RETRY_DELAY = "1000"
+MAP_RETRY_DELAY = "2000"
 
 # KV Namespace for trip data
 kv_namespaces = [

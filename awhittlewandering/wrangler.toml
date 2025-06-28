@@ -10,23 +10,21 @@ ENABLE_STREAMING = "true"
 ENABLE_MAP_PERFORMANCE_MONITORING = "true"
 MAP_RETRY_ATTEMPTS = "3"
 MAP_RETRY_DELAY = "2000"
+LIVE_TELEMETRY_ENABLED = "false"
 
-# Route configuration for each worker
-[[routes]]
-pattern = "awhittlewandering.com/*"
-script = "aww-site"
+# Preview environment configuration
+[env.preview]
+# Preview environment settings
+[[env.preview.routes]]
+pattern = "https://preview.awhittlewandering.com/*"
+zone_name = "preview.awhittlewandering.com"
 
-[[routes]]
-pattern = "awhittlewandering.com/api/*"
-script = "aww-api"
-
-[[routes]]
-pattern = "awhittlewandering.com/render/*"
-script = "aww-browser"
-
-[[routes]]
-pattern = "awhittlewandering.com/dispatch/*"
-script = "aww-dispatch"
+# Production environment configuration
+[env.production]
+# Production environment settings
+[[env.production.routes]]
+pattern = "https://awhittlewandering.com/*"
+zone_name = "awhittlewandering.com"
 
 # Browser Rendering API configuration
 [browser]
@@ -37,7 +35,7 @@ binding = "BROWSER"
 binding = "AI_GATEWAY"
 
 # Workers for Platforms configuration
-[dispatch_namespaces]
+[[dispatch_namespaces]]
 binding = "DISPATCH"
 namespace = "aww-dispatch"
 
@@ -55,6 +53,11 @@ bucket_name = "aww-static-assets"
 [[durable_objects.bindings]]
 name = "BROWSER_SESSIONS"
 class_name = "BrowserSession"
+
+# Required migrations for Durable Objects
+[[migrations]]
+tag = "v1"
+new_classes = ["BrowserSession"]
 
 # Dev configuration
 [dev]

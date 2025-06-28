@@ -1,77 +1,99 @@
-#!/usr/bin/env bash
-#
-# One-shot helper to spin-up n8n (if not already running) and trigger the
-# `website-deployment` workflow in production.  Exits non-zero on failure.
-#
-# Usage:
-#   ./scripts/deploy-website.sh
-#
-# Prereqs:
-#   • docker & docker-compose installed
-#   • `n8n/docker-compose.yml` in repo
-#   • env vars N8N_USER / N8N_PASS (basic-auth)  – or set API_KEY token below
-#
+#!/bin/bash
 set -euo pipefail
-cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-N8N_HOST=${N8N_HOST:-http://localhost:5678}
-DEPLOY_WF_NAME="website-deployment"
+# Deploy Website Script for A Whittle Wandering
+# This script handles deployment of the AWhittleWandering website to Cloudflare
+# It ensures proper environment variables and handles both site and API workers
 
-log(){ echo -e "\033[1;34m[deploy]\033[0m $*"; }
+echo "===== A Whittle Wandering Deployment Script ====="
+echo "Starting deployment process..."
 
-# 1. Ensure containers up ------------------------------------------------------
-if ! curl -fs "${N8N_HOST}/healthz" >/dev/null 2>&1; then
-  log "Starting n8n containers…"
-  docker compose -f n8n/docker-compose.yml up -d
-  # wait for health
-  for i in {1..30}; do
-    if curl -fs "${N8N_HOST}/healthz" >/dev/null 2>&1; then break; fi
-    sleep 2
-  done
-  curl -fs "${N8N_HOST}/healthz" >/dev/null || { echo "n8n did not start"; exit 1; }
-fi
-log "n8n healthy 👍"
-
-# 2. Find workflow ID ----------------------------------------------------------
-auth() {
-  if [[ -n "${API_KEY:-}" ]]; then
-    echo "-H 'X-N8N-API-KEY: ${API_KEY}'"
-  else
-    echo "-u ${N8N_USER:?Missing N8N_USER}:${N8N_PASS:?Missing N8N_PASS}"
-  fi
-}
-
-WF_JSON=$(eval curl -fs $(auth) "${N8N_HOST}/rest/workflows?filter=${DEPLOY_WF_NAME}")
-WF_ID=$(echo "$WF_JSON" | jq -r '.data[] | select(.name=="'"$DEPLOY_WF_NAME"'") | .id')
-[[ -n "$WF_ID" ]] || { echo "workflow '${DEPLOY_WF_NAME}' not found"; exit 2; }
-
-log "Triggering workflow id=$WF_ID"
-
-# 3. Execute workflow ----------------------------------------------------------
-AUTH_ARGS=()
-if [[ -n "${API_KEY:-}" ]]; then
-  AUTH_ARGS=(-H "X-N8N-API-KEY: ${API_KEY}")
-else
-  AUTH_ARGS=(-u "${N8N_USER:?Missing N8N_USER}:${N8N_PASS:?Missing N8N_PASS}")
+# Check if .env file exists
+if [ ! -f ".env" ]; then
+  echo "Error: .env file not found. Please create one with required variables."
+  exit 1
 fi
 
-EXEC_JSON=$(curl -fsX POST \
-  "${AUTH_ARGS[@]}" \
-  -H 'Content-Type: application/json' \
-  -d '{"workflowId":'"$WF_ID"', "query": {"env":"production","full_build":"true"}}' \
-  "${N8N_HOST}/rest/executions")
+# Load environment variables
+source .env
 
-EXEC_ID=$(echo "$EXEC_JSON" | jq -r '.id')
-[[ -n "$EXEC_ID" ]] || { echo "failed to start execution"; exit 3; }
+# Validate required environment variables
+if [ -z "$CF_API_TOKEN" ] || [ -z "$CF_ACCOUNT_ID" ]; then
+  echo "Error: CF_API_TOKEN and CF_ACCOUNT_ID must be set in .env file."
+  exit 1
+fi
 
-log "Execution started → id=$EXEC_ID"
+if [ -z "$MAPBOX_TOKEN" ]; then
+  echo "Error: MAPBOX_TOKEN must be set in .env file."
+  exit 1
+fi
 
-# 4. Poll until finished -------------------------------------------------------
-while :; do
-  STATUS=$(eval curl -fs $(auth) "${N8N_HOST}/rest/executions/${EXEC_ID}" | jq -r '.status')
-  [[ "$STATUS" == "finished" || "$STATUS" == "failed" ]] && break
-  sleep 5
-done
+if [ -z "$TESSIE_API_TOKEN" ] || [ -z "$TESSIE_VIN" ]; then
+  echo "Error: TESSIE_API_TOKEN and TESSIE_VIN must be set in .env file."
+  exit 1
+fi
 
-[[ "$STATUS" == "finished" ]] || { echo "n8n execution failed"; exit 4; }
-log "🚀 Website deployed successfully!"
+# Change to the awhittlewandering directory
+cd awhittlewandering
+
+# Install dependencies if node_modules doesn't exist
+if [ ! -d "node_modules" ]; then
+  echo "Installing dependencies..."
+  npm ci
+fi
+
+# Update .env file for the frontend
+echo "Creating/updating frontend .env file..."
+cat > .env << EOF
+# A Whittle Wandering Environment Variables
+# Production configuration
+
+# Cloudflare credentials
+CF_API_TOKEN=$CF_API_TOKEN
+CF_ACCOUNT_ID=$CF_ACCOUNT_ID
+
+# Tesla vehicle telemetry via Tessie API
+TESSIE_API_TOKEN=$TESSIE_API_TOKEN
+TESSIE_VIN=$TESSIE_VIN
+
+# Mapbox for mapping functionality
+MAPBOX_TOKEN=$MAPBOX_TOKEN
+VITE_MAPBOX_TOKEN=$MAPBOX_TOKEN
+REACT_APP_MAPBOX_TOKEN=$MAPBOX_TOKEN
+
+# Mapbox API token (private)
+MAPBOX_API_TOKEN=$MAPBOX_API_TOKEN
+
+# Edge HMAC key for API security
+EDGE_HMAC_KEY=$EDGE_HMAC_KEY
+
+# OpenWeather API for weather data
+OPENWEATHER_API_KEY=$OPENWEATHER_API_KEY
+
+# Deployment environment (production or staging)
+DEPLOYMENT_ENV=production
+
+# Configuration for frontend
+VITE_ENABLE_STREAMING=true
+VITE_MAP_RETRY_ATTEMPTS=3
+VITE_MAP_RETRY_DELAY=2000
+VITE_APP_NAME=A Whittle Wandering
+EOF
+
+echo "Building the application..."
+npm run build:all
+
+echo "Deploying the site worker..."
+CLOUDFLARE_API_TOKEN=$CF_API_TOKEN CLOUDFLARE_ACCOUNT_ID=$CF_ACCOUNT_ID npx wrangler deploy --config wrangler-site.toml
+
+echo "Deploying the API worker..."
+CLOUDFLARE_API_TOKEN=$CF_API_TOKEN CLOUDFLARE_ACCOUNT_ID=$CF_ACCOUNT_ID npx wrangler deploy --config wrangler.toml
+
+echo "===== Deployment completed successfully! ====="
+echo "Website should now be available at https://awhittlewandering.com"
+echo "API should be available at https://api.awhittlewandering.com"
+
+# Store the current commit as the last good deploy
+cd ..
+git rev-parse --short HEAD > .last_good_deploy
+echo "Stored $(cat .last_good_deploy) as the last good deployment."
