@@ -36,7 +36,7 @@ export function useVehicleData(): UseVehicleDataResult {
           throw new Error(`Failed to fetch current trip data: ${response.status}`);
         }
         
-        const data = await response.json();
+        const data = await response.json() as any;
         
         // Set current location from the latest telemetry data
         if (data.telemetry) {
@@ -74,7 +74,7 @@ export function useVehicleData(): UseVehicleDataResult {
           throw new Error(`Failed to fetch day ${day} data: ${response.status}`);
         }
         
-        const data = await response.json();
+        const data = await response.json() as any;
         
         // Transform telemetry data to the format we need
         if (data.telemetry && Array.isArray(data.telemetry)) {

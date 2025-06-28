@@ -7,94 +7,78 @@
  * - DOM automation flows
  * - Uses Cloudflare's Browser Rendering API
  */
-import { Router } from "itty-router";
+import { Router } from 'itty-router';
 // Create a new router
 const router = Router();
 // Set security headers for all responses
 const SECURITY_HEADERS = {
-  "Content-Security-Policy":
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;",
-  "Cross-Origin-Embedder-Policy": "require-corp",
-  "Cross-Origin-Opener-Policy": "same-origin",
-  "Cross-Origin-Resource-Policy": "same-origin",
-  "X-Content-Type-Options": "nosniff",
-  "X-Frame-Options": "DENY",
-  "X-XSS-Protection": "1; mode=block",
-  "Referrer-Policy": "strict-origin-when-cross-origin",
+    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;",
+    'Cross-Origin-Embedder-Policy': 'require-corp',
+    'Cross-Origin-Opener-Policy': 'same-origin',
+    'Cross-Origin-Resource-Policy': 'same-origin',
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'X-XSS-Protection': '1; mode=block',
+    'Referrer-Policy': 'strict-origin-when-cross-origin'
 };
 // Supported formats for screenshots and PDFs
 var OutputFormat;
 (function (OutputFormat) {
-  OutputFormat["PNG"] = "png";
-  OutputFormat["JPEG"] = "jpeg";
-  OutputFormat["WEBP"] = "webp";
-  OutputFormat["PDF"] = "pdf";
+    OutputFormat["PNG"] = "png";
+    OutputFormat["JPEG"] = "jpeg";
+    OutputFormat["WEBP"] = "webp";
+    OutputFormat["PDF"] = "pdf";
 })(OutputFormat || (OutputFormat = {}));
 /**
  * Helper to create JSON responses
  */
 function jsonResponse(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      ...SECURITY_HEADERS,
-    },
-  });
+    return new Response(JSON.stringify(data), {
+        status,
+        headers: {
+            'Content-Type': 'application/json',
+            ...SECURITY_HEADERS
+        }
+    });
 }
 /**
  * Helper to create binary responses (images, PDFs)
  */
 function binaryResponse(data, contentType, filename) {
-  const headers = {
-    "Content-Type": contentType,
-    ...SECURITY_HEADERS,
-  };
-  if (filename) {
-    headers["Content-Disposition"] = `attachment; filename="${filename}"`;
-  }
-  return new Response(data, { headers });
+    const headers = {
+        'Content-Type': contentType,
+        ...SECURITY_HEADERS
+    };
+    if (filename) {
+        headers['Content-Disposition'] = `attachment; filename="${filename}"`;
+    }
+    return new Response(data, { headers });
 }
 /**
  * Authentication middleware for render endpoints
  */
 async function requireAuth(request, env) {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-  const token = authHeader.split(" ")[1];
-  if (token !== env.MCP_API_KEY) {
-    return new Response("Forbidden", { status: 403 });
-  }
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return new Response('Unauthorized', { status: 401 });
+    }
+    const token = authHeader.split(' ')[1];
+    if (token !== env.MCP_API_KEY) {
+        return new Response('Forbidden', { status: 403 });
+    }
 }
 /**
  * Root endpoint - provides basic info
  */
-router.get("/render", () => {
-  return jsonResponse({
-    name: "A Whittle Wandering Browser Rendering API",
-    endpoints: [
-      {
-        path: "/render/screenshot",
-        method: "GET",
-        description: "Take a screenshot of a URL",
-        auth: true,
-      },
-      {
-        path: "/render/pdf",
-        method: "GET",
-        description: "Generate a PDF from a URL",
-        auth: true,
-      },
-      {
-        path: "/render/og-image",
-        method: "GET",
-        description: "Generate an Open Graph image",
-        auth: true,
-      },
-    ],
-  });
+router.get('/render', () => {
+    return jsonResponse({
+        name: 'A Whittle Wandering Browser Rendering API',
+        endpoints: [
+            { path: '/render/screenshot', method: 'GET', description: 'Take a screenshot of a URL', auth: true },
+            { path: '/render/pdf', method: 'GET', description: 'Generate a PDF from a URL', auth: true },
+            { path: '/render/og-image', method: 'GET', description: 'Generate an Open Graph image', auth: true }
+        ]
+    });
 });
 /**
  * Generate a screenshot of a URL
@@ -106,106 +90,90 @@ router.get("/render", () => {
  * - fullPage: Whether to capture the full page - default: false
  * - download: Whether to download the image - default: false
  */
-router.get("/render/screenshot", async (request, env) => {
-  // Check authentication
-  const authResult = await requireAuth(request, env);
-  if (authResult instanceof Response) {
-    return authResult;
-  }
-  try {
-    const url = new URL(request.url);
-    const targetUrl = url.searchParams.get("url");
-    if (!targetUrl) {
-      return jsonResponse(
-        {
-          error: "Missing required parameter: url",
-        },
-        400
-      );
+router.get('/render/screenshot', async (request, env) => {
+    // Check authentication
+    const authResult = await requireAuth(request, env);
+    if (authResult instanceof Response) {
+        return authResult;
     }
-    // Validate the URL
     try {
-      new URL(targetUrl);
-    } catch (error) {
-      return jsonResponse(
-        {
-          error: "Invalid URL provided",
-        },
-        400
-      );
-    }
-    // Parse screenshot options
-    const format = url.searchParams.get("format") || OutputFormat.PNG;
-    const width = parseInt(url.searchParams.get("width") || "1280", 10);
-    const height = parseInt(url.searchParams.get("height") || "800", 10);
-    const fullPage = url.searchParams.get("fullPage") === "true";
-    const download = url.searchParams.get("download") === "true";
-    // Validate format
-    if (
-      ![OutputFormat.PNG, OutputFormat.JPEG, OutputFormat.WEBP].includes(format)
-    ) {
-      return jsonResponse(
-        {
-          error: "Invalid format. Supported formats: png, jpeg, webp",
-        },
-        400
-      );
-    }
-    // Connect to the browser
-    const browser = env.BROWSER;
-    if (!browser) {
-      return jsonResponse(
-        {
-          error: "Browser Rendering API is not configured",
-        },
-        501
-      );
-    }
-    // Take the screenshot
-    const screenshot = await browser.run(
-      {
-        timeout: 30000,
-        viewport: { width, height },
-      },
-      async (instance) => {
-        const page = await instance.newPage();
-        await page.goto(targetUrl, { waitUntil: "networkidle0" });
-        // Wait an extra second for any animations to complete
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const url = new URL(request.url);
+        const targetUrl = url.searchParams.get('url');
+        if (!targetUrl) {
+            return jsonResponse({
+                error: 'Missing required parameter: url'
+            }, 400);
+        }
+        // Validate the URL
+        try {
+            new URL(targetUrl);
+        }
+        catch (error) {
+            return jsonResponse({
+                error: 'Invalid URL provided'
+            }, 400);
+        }
+        // Parse screenshot options
+        const format = (url.searchParams.get('format') || OutputFormat.PNG);
+        const width = parseInt(url.searchParams.get('width') || '1280', 10);
+        const height = parseInt(url.searchParams.get('height') || '800', 10);
+        const fullPage = url.searchParams.get('fullPage') === 'true';
+        const download = url.searchParams.get('download') === 'true';
+        // Validate format
+        if (![OutputFormat.PNG, OutputFormat.JPEG, OutputFormat.WEBP].includes(format)) {
+            return jsonResponse({
+                error: 'Invalid format. Supported formats: png, jpeg, webp'
+            }, 400);
+        }
+        // Connect to the browser
+        const browser = env.BROWSER;
+        if (!browser) {
+            return jsonResponse({
+                error: 'Browser Rendering API is not configured'
+            }, 501);
+        }
         // Take the screenshot
-        const buffer = await page.screenshot({
-          fullPage,
-          type: format === OutputFormat.WEBP ? OutputFormat.PNG : format, // screenshot() doesn't support webp directly
+        const screenshot = await browser.run({
+            timeout: 30000,
+            viewport: { width, height }
+        }, async (instance) => {
+            const page = await instance.newPage();
+            await page.goto(targetUrl, { waitUntil: 'networkidle0' });
+            // Wait an extra second for any animations to complete
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Take the screenshot
+            const buffer = await page.screenshot({
+                fullPage,
+                type: format === OutputFormat.WEBP ? OutputFormat.PNG : format // screenshot() doesn't support webp directly
+            });
+            await page.close();
+            return buffer;
         });
-        await page.close();
-        return buffer;
-      }
-    );
-    // Since screenshot() doesn't support webp, if format is webp, serve as PNG with correct content-type and extension
-    let contentType;
-    let actualFormat = format;
-    if (format === OutputFormat.WEBP) {
-      contentType = "image/png";
-      actualFormat = OutputFormat.PNG;
-    } else if (format === OutputFormat.JPEG) {
-      contentType = "image/jpeg";
-    } else {
-      contentType = "image/png";
+        // Handle webp conversion if needed (would be implemented if necessary)
+        // Determine content type
+        let contentType;
+        switch (format) {
+            case OutputFormat.JPEG:
+                contentType = 'image/jpeg';
+                break;
+            case OutputFormat.WEBP:
+                contentType = 'image/webp';
+                break;
+            case OutputFormat.PNG:
+            default:
+                contentType = 'image/png';
+                break;
+        }
+        // Return the screenshot
+        const filename = download ? `screenshot-${new Date().toISOString().split('T')[0]}.${format}` : undefined;
+        return binaryResponse(screenshot, contentType, filename);
     }
-    // Return the screenshot
-    const filename = download
-      ? `screenshot-${new Date().toISOString().split("T")[0]}.${actualFormat}`
-      : undefined;
-    return binaryResponse(screenshot, contentType, filename);
-  } catch (error) {
-    console.error("Error generating screenshot:", error);
-    return jsonResponse(
-      {
-        error: "Failed to generate screenshot",
-      },
-      500
-    );
-  }
+    catch (error) {
+        console.error('Error generating screenshot:', error);
+        return jsonResponse({
+            error: 'Failed to generate screenshot'
+        }, 500);
+    }
 });
 /**
  * Generate a PDF from a URL
@@ -216,83 +184,68 @@ router.get("/render/screenshot", async (request, env) => {
  * - printBackground: Whether to print background graphics - default: true
  * - download: Whether to download the PDF - default: false
  */
-router.get("/render/pdf", async (request, env) => {
-  // Check authentication
-  const authResult = await requireAuth(request, env);
-  if (authResult instanceof Response) {
-    return authResult;
-  }
-  try {
-    const url = new URL(request.url);
-    const targetUrl = url.searchParams.get("url");
-    if (!targetUrl) {
-      return jsonResponse(
-        {
-          error: "Missing required parameter: url",
-        },
-        400
-      );
+router.get('/render/pdf', async (request, env) => {
+    // Check authentication
+    const authResult = await requireAuth(request, env);
+    if (authResult instanceof Response) {
+        return authResult;
     }
-    // Validate the URL
     try {
-      new URL(targetUrl);
-    } catch (error) {
-      return jsonResponse(
-        {
-          error: "Invalid URL provided",
-        },
-        400
-      );
-    }
-    // Parse PDF options
-    const format = url.searchParams.get("format") || "a4";
-    const landscape = url.searchParams.get("landscape") === "true";
-    const printBackground = url.searchParams.get("printBackground") !== "false"; // default to true
-    const download = url.searchParams.get("download") === "true";
-    // Connect to the browser
-    const browser = env.BROWSER;
-    if (!browser) {
-      return jsonResponse(
-        {
-          error: "Browser Rendering API is not configured",
-        },
-        501
-      );
-    }
-    // Generate the PDF
-    const pdf = await browser.run(
-      {
-        timeout: 30000,
-      },
-      async (instance) => {
-        const page = await instance.newPage();
-        await page.goto(targetUrl, { waitUntil: "networkidle0" });
-        // Wait an extra second for any final rendering
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const url = new URL(request.url);
+        const targetUrl = url.searchParams.get('url');
+        if (!targetUrl) {
+            return jsonResponse({
+                error: 'Missing required parameter: url'
+            }, 400);
+        }
+        // Validate the URL
+        try {
+            new URL(targetUrl);
+        }
+        catch (error) {
+            return jsonResponse({
+                error: 'Invalid URL provided'
+            }, 400);
+        }
+        // Parse PDF options
+        const format = url.searchParams.get('format') || 'a4';
+        const landscape = url.searchParams.get('landscape') === 'true';
+        const printBackground = url.searchParams.get('printBackground') !== 'false'; // default to true
+        const download = url.searchParams.get('download') === 'true';
+        // Connect to the browser
+        const browser = env.BROWSER;
+        if (!browser) {
+            return jsonResponse({
+                error: 'Browser Rendering API is not configured'
+            }, 501);
+        }
         // Generate the PDF
-        const buffer = await page.pdf({
-          format,
-          landscape,
-          printBackground,
+        const pdf = await browser.run({
+            timeout: 30000
+        }, async (instance) => {
+            const page = await instance.newPage();
+            await page.goto(targetUrl, { waitUntil: 'networkidle0' });
+            // Wait an extra second for any final rendering
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Generate the PDF
+            const buffer = await page.pdf({
+                format,
+                landscape,
+                printBackground
+            });
+            await page.close();
+            return buffer;
         });
-        await page.close();
-        return buffer;
-      }
-    );
-    // Return the PDF
-    const filename = download
-      ? `document-${new Date().toISOString().split("T")[0]}.pdf`
-      : undefined;
-    return binaryResponse(pdf, "application/pdf", filename);
-  } catch (error) {
-    console.error("Error generating PDF:", error);
-    return jsonResponse(
-      {
-        error: "Failed to generate PDF",
-      },
-      500
-    );
-  }
+        // Return the PDF
+        const filename = download ? `document-${new Date().toISOString().split('T')[0]}.pdf` : undefined;
+        return binaryResponse(pdf, 'application/pdf', filename);
+    }
+    catch (error) {
+        console.error('Error generating PDF:', error);
+        return jsonResponse({
+            error: 'Failed to generate PDF'
+        }, 500);
+    }
 });
 /**
  * Generate an Open Graph image for social media
@@ -302,46 +255,38 @@ router.get("/render/pdf", async (request, env) => {
  * - imageUrl: Background image URL (optional)
  * - download: Whether to download the image - default: false
  */
-router.get("/render/og-image", async (request, env) => {
-  // Check authentication
-  const authResult = await requireAuth(request, env);
-  if (authResult instanceof Response) {
-    return authResult;
-  }
-  try {
-    const url = new URL(request.url);
-    const title = url.searchParams.get("title");
-    if (!title) {
-      return jsonResponse(
-        {
-          error: "Missing required parameter: title",
-        },
-        400
-      );
+router.get('/render/og-image', async (request, env) => {
+    // Check authentication
+    const authResult = await requireAuth(request, env);
+    if (authResult instanceof Response) {
+        return authResult;
     }
-    const description = url.searchParams.get("description") || "";
-    const imageUrl = url.searchParams.get("imageUrl") || "";
-    const download = url.searchParams.get("download") === "true";
-    // Connect to the browser
-    const browser = env.BROWSER;
-    if (!browser) {
-      return jsonResponse(
-        {
-          error: "Browser Rendering API is not configured",
-        },
-        501
-      );
-    }
-    // Generate the OG image
-    const ogImage = await browser.run(
-      {
-        timeout: 30000,
-        viewport: { width: 1200, height: 630 },
-      },
-      async (instance) => {
-        const page = await instance.newPage();
-        // Create a simple HTML template for the OG image
-        const html = `
+    try {
+        const url = new URL(request.url);
+        const title = url.searchParams.get('title');
+        if (!title) {
+            return jsonResponse({
+                error: 'Missing required parameter: title'
+            }, 400);
+        }
+        const description = url.searchParams.get('description') || '';
+        const imageUrl = url.searchParams.get('imageUrl') || '';
+        const download = url.searchParams.get('download') === 'true';
+        // Connect to the browser
+        const browser = env.BROWSER;
+        if (!browser) {
+            return jsonResponse({
+                error: 'Browser Rendering API is not configured'
+            }, 501);
+        }
+        // Generate the OG image
+        const ogImage = await browser.run({
+            timeout: 30000,
+            viewport: { width: 1200, height: 630 }
+        }, async (instance) => {
+            const page = await instance.newPage();
+            // Create a simple HTML template for the OG image
+            const html = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -407,99 +352,89 @@ router.get("/render/og-image", async (request, env) => {
           </style>
         </head>
         <body>
-          ${imageUrl ? `<div class="background" style="background-image: url('${imageUrl}')"></div>` : ""}
+          ${imageUrl ? `<div class="background" style="background-image: url('${imageUrl}')"></div>` : ''}
           <div class="content">
             <h1>${title}</h1>
-            ${description ? `<p>${description}</p>` : ""}
+            ${description ? `<p>${description}</p>` : ''}
           </div>
           <div class="logo">A Whittle Wandering</div>
         </body>
         </html>
       `;
-        await page.evaluate((content) => {
-          document.documentElement.innerHTML = content;
-        }, html);
-        // Wait for any images to load
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        // Take the screenshot
-        const buffer = await page.screenshot({
-          type: "png",
+            await page.evaluate((content) => {
+                document.documentElement.innerHTML = content;
+            }, html);
+            // Wait for any images to load
+            await new Promise(resolve => setTimeout(resolve, 500));
+            // Take the screenshot
+            const buffer = await page.screenshot({
+                type: 'png'
+            });
+            await page.close();
+            return buffer;
         });
-        await page.close();
-        return buffer;
-      }
-    );
-    // Return the OG image
-    const filename = download
-      ? `og-image-${new Date().toISOString().split("T")[0]}.png`
-      : undefined;
-    return binaryResponse(ogImage, "image/png", filename);
-  } catch (error) {
-    console.error("Error generating OG image:", error);
-    return jsonResponse(
-      {
-        error: "Failed to generate OG image",
-      },
-      500
-    );
-  }
+        // Return the OG image
+        const filename = download ? `og-image-${new Date().toISOString().split('T')[0]}.png` : undefined;
+        return binaryResponse(ogImage, 'image/png', filename);
+    }
+    catch (error) {
+        console.error('Error generating OG image:', error);
+        return jsonResponse({
+            error: 'Failed to generate OG image'
+        }, 500);
+    }
 });
 /**
  * 404 handler for any unmatched routes
  */
-router.all("*", () => {
-  return jsonResponse(
-    {
-      error: "Endpoint not found",
-    },
-    404
-  );
+router.all('*', () => {
+    return jsonResponse({
+        error: 'Endpoint not found'
+    }, 404);
 });
 /**
  * Main handler for Browser Worker requests
  */
 export default {
-  async fetch(request, env, ctx) {
-    // Set CORS headers for all responses
-    const corsHeaders = {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    };
-    // Handle OPTIONS requests for CORS
-    if (request.method === "OPTIONS") {
-      return new Response(null, {
-        status: 204,
-        headers: corsHeaders,
-      });
-    }
-    // Route the request through our router
-    try {
-      const response = await router.handle(request, env);
-      // Add CORS headers to the response
-      const newHeaders = new Headers(response.headers);
-      Object.entries(corsHeaders).forEach(([key, value]) => {
-        newHeaders.set(key, value);
-      });
-      return new Response(response.body, {
-        status: response.status,
-        statusText: response.statusText,
-        headers: newHeaders,
-      });
-    } catch (error) {
-      console.error("Error handling request:", error);
-      return new Response(
-        JSON.stringify({
-          error: "Internal server error",
-        }),
-        {
-          status: 500,
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders,
-          },
+    async fetch(request, env, ctx) {
+        // Set CORS headers for all responses
+        const corsHeaders = {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        };
+        // Handle OPTIONS requests for CORS
+        if (request.method === 'OPTIONS') {
+            return new Response(null, {
+                status: 204,
+                headers: corsHeaders
+            });
         }
-      );
+        // Route the request through our router
+        try {
+            const response = await router.handle(request, env);
+            // Add CORS headers to the response
+            const newHeaders = new Headers(response.headers);
+            Object.entries(corsHeaders).forEach(([key, value]) => {
+                newHeaders.set(key, value);
+            });
+            return new Response(response.body, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: newHeaders
+            });
+        }
+        catch (error) {
+            console.error('Error handling request:', error);
+            return new Response(JSON.stringify({
+                error: 'Internal server error'
+            }), {
+                status: 500,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...corsHeaders
+                }
+            });
+        }
     }
-  },
 };
