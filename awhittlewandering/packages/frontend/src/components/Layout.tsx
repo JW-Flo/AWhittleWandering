@@ -25,7 +25,7 @@ export default function Layout() {
             <li className={isActive('/map')}>
               <Link to="/map">Live Map</Link>
             </li>
-            <li className={isActive('/daily-log') || location.pathname.startsWith('/daily-log/')}>
+            <li className={isActive('/daily-log') || (location.pathname.startsWith('/daily-log/') ? 'active' : '')}>
               <Link to="/daily-log">Daily Log</Link>
             </li>
             <li className={isActive('/about')}>

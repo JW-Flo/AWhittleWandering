@@ -1,7 +1,7 @@
 import React from 'react';
 
 export default function AboutPage() {
-  I am paying attention to the road I am. I'm looking like right now I probably **** I can't see through a **** car. Radar can, **** Oh, sorry. What? You got it. Nice. No. Soon. Sure. The supporters, golden gentleman of a being on your own. return (
+  return (
     <div className="about-page">
       <h1>About Our Journey</h1>
       

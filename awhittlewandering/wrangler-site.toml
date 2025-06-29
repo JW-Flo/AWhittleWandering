@@ -1,4 +1,4 @@
-Not a worry exclamation point. I'm sure y'all are getting quite busy with packing. # Wrangler configuration for the main site worker
+# Wrangler configuration for the main site worker
 name = "aww-site"
 main = "./workers/site.ts"
 compatibility_date = "2025-06-15"
