@@ -138,90 +138,74 @@ export default {
         return createJSONResponse({ error: 'Dispatch service unavailable' }, 503);
       }
       
-      // Handle static assets served from KV/R2
+      // Try to serve static assets from Workers Sites KV
       try {
-        // First try to get from __STATIC_CONTENT (KV for assets) if configured
-        if (env.__STATIC_CONTENT) {
-          const response = await getAssetFromKV({
-            request,
-            waitUntil: ctx.waitUntil.bind(ctx),
-            cacheControl: DEFAULT_CACHE_CONTROL
-          });
-          
-          return addSecurityHeaders(response);
+        const response = await getAssetFromKV({
+          request,
+          waitUntil: ctx.waitUntil.bind(ctx),
+        }, {
+          cacheControl: DEFAULT_CACHE_CONTROL,
+          mapRequestToAsset: (req) => {
+            // For client-side routing, always serve index.html for non-asset requests
+            const url = new URL(req.url);
+            
+            // If it's a static asset, serve it directly
+            if (url.pathname.startsWith('/assets/') || 
+                url.pathname.endsWith('.js') ||
+                url.pathname.endsWith('.css') ||
+                url.pathname.endsWith('.ico') ||
+                url.pathname.endsWith('.png') ||
+                url.pathname.endsWith('.jpg') ||
+                url.pathname.endsWith('.svg')) {
+              return req;
+            }
+            
+            // For all other routes (SPA routing), serve index.html
+            return new Request(`${url.origin}/index.html`, req);
+          }
+        });
+        
+        return addSecurityHeaders(response);
+      } catch (error) {
+        console.error('KV asset retrieval error:', error, 'for path:', pathname);
+        
+        // If it's an asset request that failed, return 404
+        if (pathname.startsWith('/assets/') || 
+            pathname.endsWith('.js') || 
+            pathname.endsWith('.css') ||
+            pathname.includes('.')) {
+          return new Response(`Asset not found: ${pathname}`, { status: 404 });
         }
         
-        // Fallback to R2 bucket if available
-        if (env.STATIC_ASSETS) {
-          // Extract the path without leading slash
-          const path = pathname.replace(/^\//, '');
-          
-          // Fetch from R2 bucket
-          const object = await env.STATIC_ASSETS.get(path || 'index.html');
-          
-          if (object) {
-            // Determine content type
-            const contentType = getContentType(path);
-            
-            const headers = new Headers();
-            headers.set('Content-Type', contentType);
-            headers.set('Cache-Control', 'public, max-age=14400'); // 4 hours
-            
-            return addSecurityHeaders(new Response(object.body, { headers }));
-          }
-        }
-      } catch (error) {
-        console.error('Asset retrieval error:', error);
-        // Continue to serve the SPA as fallback
+        // For page routes, serve a fallback HTML
+        const htmlContent = `
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>A Whittle Wandering</title>
+            <meta name="description" content="Follow our 60-day journey across all 48 continental US states in a Tesla.">
+            <link rel="preconnect" href="https://api.mapbox.com" />
+            <link href='https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css' rel='stylesheet' />
+          </head>
+          <body>
+            <div id="root">
+              <div style="padding: 20px; text-align: center; font-family: Arial, sans-serif;">
+                <h1>A Whittle Wandering</h1>
+                <p>60 Days, 48 States, One Tesla, One Epic Journey</p>
+                <p>Assets are being loaded...</p>
+                <div style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 5px;">
+                  <small>Error loading assets. Displaying fallback page.</small>
+                </div>
+              </div>
+            </div>
+          </body>
+          </html>
+        `;
+        
+        return addSecurityHeaders(createHTMLResponse(htmlContent));
       }
-      
-      // For all other routes, serve the SPA - client-side routing will take over
-      // Get the index.html file from KV or create a basic response
-      let htmlContent = `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>A Whittle Wandering</title>
-          <meta name="description" content="Follow our 60-day journey across all 48 continental US states in a Tesla.">
-          <link rel="stylesheet" href="/styles.css">
-          <script defer src="/main.js"></script>
-        </head>
-        <body>
-          <div id="root">
-            <p>Loading A Whittle Wandering...</p>
-          </div>
-        </body>
-        </html>
-      `;
-      
-      // Try to get the real index.html if it exists in KV
-      try {
-        if (env.__STATIC_CONTENT) {
-          // Create a new request for index.html
-          const indexRequest = new Request(new URL('/index.html', request.url).toString(), request);
-          const response = await getAssetFromKV({
-            request: indexRequest,
-            waitUntil: ctx.waitUntil.bind(ctx),
-            cacheControl: DEFAULT_CACHE_CONTROL
-          });
-          
-          htmlContent = await response.text();
-        } else if (env.STATIC_ASSETS) {
-          // Try to get index.html from R2
-          const indexObject = await env.STATIC_ASSETS.get('index.html');
-          if (indexObject) {
-            htmlContent = await indexObject.text();
-          }
-        }
-      } catch (error) {
-        console.error('Failed to retrieve index.html:', error);
-        // Continue with the basic HTML
-      }
-      
-      // Return the HTML with security headers
-      return addSecurityHeaders(createHTMLResponse(htmlContent));
     } catch (error) {
       console.error('Site worker error:', error);
       return createHTMLResponse('Internal Server Error', 500);
