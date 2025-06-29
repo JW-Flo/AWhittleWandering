@@ -1,0 +1,755 @@
+# Code Citations
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name
+```
+
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+```
+
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type"
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type"
+```
+
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "str
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "str
+```
+
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "strin
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "strin
+```
+
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"
+```
+
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+        
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+        
+```
+
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+            
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+            
+```
+
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "
+```
+
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status"
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status"
+```
+
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"typ
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"typ
+```
+
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type":
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type":
+```
+
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type": "strin
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type": "strin
+```
+
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type": "string"},
+ 
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type": "string"},
+ 
+```
+
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type": "string"},
+          
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type": "string"},
+          
+```
+
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type": "string"},
+                "v
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type": "string"},
+                "v
+```
+
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type": "string"},
+                "version
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type": "string"},
+                "version
+```
+
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type": "string"},
+                "version": {"
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type": "string"},
+                "version": {"
+```
+
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type": "string"},
+                "version": {"type"
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type": "string"},
+                "version": {"type"
+```
+
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type": "string"},
+                "version": {"type": "
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type": "string"},
+                "version": {"type": "
+```
+
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type": "string"},
+                "version": {"type": "string
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type": "string"},
+                "version": {"type": "string
+```
+
+
+## License: GPL-3.0
+https://github.com/LordAsdi/SMO_AutoSplit/blob/ba97bfb1d6a5e78e6d85b6c88d5138bace9dc061/src/route_handler.py
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type": "string"},
+                "version": {"type": "string"
+```
+
+
+## License: MIT
+https://github.com/maritimeconnectivity/g1128-msr-service-specification/blob/2890403770b97b6b8c6c07c472418dd1047b30c0/service-specification.md
+
+```
+": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "status": {"type": "string"},
+                "version": {"type": "string"
+```
+
