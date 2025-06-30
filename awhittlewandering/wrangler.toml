@@ -3,7 +3,7 @@
 # CLOUDFLARE_AI_GATEWAY_TOKEN) are injected by GitHub Actions or `wrangler secret put`.
 
 name          = "continentalusa"
-account_id    = "${CF_ACCOUNT_ID}"
+account_id    = "${CLOUDFLARE_ACCOUNT_ID}"
 main          = "workers/site.ts"
 compatibility_date = "2025-06-29"
 
@@ -30,13 +30,13 @@ binding = "AI_GATEWAY"
 [env.production]
 [[env.production.routes]]
 pattern  = "https://awhittlewandering.com/*"
-zone_id  = "${CF_ZONE_ID}"
+zone_id  = "${CLOUDFLARE_ZONE_ID}"
 
 # Preview (PR) deployments
 [env.preview]
 [[env.preview.routes]]
 pattern  = "https://preview.awhittlewandering.com/*"
-zone_id  = "${CF_ZONE_ID}"
+zone_id  = "${CLOUDFLARE_ZONE_ID}"
 
 # Local development
 [dev]
