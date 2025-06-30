@@ -10,7 +10,7 @@
 
 import { Env, ExecutionContext } from '../packages/shared/types';
 import { getAssetFromKV } from '@cloudflare/kv-asset-handler';
-
+import assetManifest from '__STATIC_CONTENT_MANIFEST' assert { type: 'json' };
 // Cloudflare Pages default caching values
 const DEFAULT_CACHE_CONTROL = {
   browserTTL: 0, // No browser cache by default
@@ -145,6 +145,8 @@ export default {
           waitUntil: ctx.waitUntil.bind(ctx),
         }, {
           cacheControl: DEFAULT_CACHE_CONTROL,
+          ASSET_NAMESPACE: (env as any).__STATIC_CONTENT,
+          ASSET_MANIFEST: assetManifest,
           mapRequestToAsset: (req) => {
             // For client-side routing, always serve index.html for non-asset requests
             const url = new URL(req.url);
