@@ -1,66 +1,45 @@
-name = "aww"
-main = "workers/site.ts"
-compatibility_date = "2025-06-15"
+# Unified Wrangler configuration
+# Secrets (CF_ACCOUNT_ID, CLOUDFLARE_API_TOKEN, CF_ZONE_ID, TRIP_DATA_ID, TRIP_DATA_PREVIEW_ID,
+# CLOUDFLARE_AI_GATEWAY_TOKEN) are injected by GitHub Actions or `wrangler secret put`.
 
-# Non-secret configuration
+name          = "continentalusa"
+account_id    = "${CF_ACCOUNT_ID}"
+main          = "workers/site.ts"
+compatibility_date = "2025-06-29"
+
+# Runtime-safe, non-secret variables available to the Worker
 [vars]
-MAP_STYLE = "mapbox://styles/mapbox/outdoors-v12"
-APP_NAME = "A Whittle Wandering"
-ENABLE_STREAMING = "true"
+MAP_STYLE                     = "mapbox://styles/mapbox/outdoors-v12"
+APP_NAME                      = "A Whittle Wandering"
+ENABLE_STREAMING              = "true"
 ENABLE_MAP_PERFORMANCE_MONITORING = "true"
-MAP_RETRY_ATTEMPTS = "3"
-MAP_RETRY_DELAY = "2000"
-LIVE_TELEMETRY_ENABLED = "false"
+MAP_RETRY_ATTEMPTS            = "3"
+MAP_RETRY_DELAY               = "2000"
 
-# Preview environment configuration
-[env.preview]
-# Preview environment settings
-[[env.preview.routes]]
-pattern = "https://preview.awhittlewandering.com/*"
-zone_name = "preview.awhittlewandering.com"
+# KV namespace (data uploaded separately)
+[[kv_namespaces]]
+binding     = "TRIP_DATA"
+id          = "${TRIP_DATA_ID}"
+preview_id  = "${TRIP_DATA_PREVIEW_ID}"
 
-# Production environment configuration
-[env.production]
-# Production environment settings
-[[env.production.routes]]
-pattern = "https://awhittlewandering.com/*"
-zone_name = "awhittlewandering.com"
-
-# Browser Rendering API configuration
-[browser]
-binding = "BROWSER"
-
-# AI Gateway configuration
+# Optional AI gateway binding; token supplied via secret
 [ai]
 binding = "AI_GATEWAY"
 
-# Workers for Platforms configuration
-[[dispatch_namespaces]]
-binding = "DISPATCH"
-namespace = "aww-dispatch"
+# Production deployment
+[env.production]
+[[env.production.routes]]
+pattern  = "https://awhittlewandering.com/*"
+zone_id  = "${CF_ZONE_ID}"
 
-# KV namespace for data storage
-[[kv_namespaces]]
-binding = "TRIP_DATA"
-id = "TRIP_DATA_ID"
+# Preview (PR) deployments
+[env.preview]
+[[env.preview.routes]]
+pattern  = "https://preview.awhittlewandering.com/*"
+zone_id  = "${CF_ZONE_ID}"
 
-# R2 bucket for static assets
-[[r2_buckets]]
-binding = "STATIC_ASSETS"
-bucket_name = "aww-static-assets"
-
-# Durable Objects for stateful operations
-[[durable_objects.bindings]]
-name = "BROWSER_SESSIONS"
-class_name = "BrowserSession"
-
-# Required migrations for Durable Objects
-[[migrations]]
-tag = "v1"
-new_classes = ["BrowserSession"]
-
-# Dev configuration
+# Local development
 [dev]
-port = 8787
-local_protocol = "http"
+port            = 8787
+local_protocol  = "http"
 upstream_protocol = "https"
