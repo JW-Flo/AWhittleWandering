@@ -78,7 +78,6 @@
     "esbuild": "^0.25.4",
     "escalade": "^3.2.0",
     "escape-string-regexp": "^4.0.0",
-    "eslint": "^8.57.1",
     "eslint-scope": "^7.2.2",
     "eslint-visitor-keys": "^3.4.3",
     "espree": "^9.6.1",
@@ -290,6 +289,10 @@
     "youch": "^3.3.4",
     "zod": "^3.25.48"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "eslint": "^8.57.1",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/parser": "^6.13.1"
+  },
   "keywords": []
 }
