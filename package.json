@@ -6,7 +6,10 @@
   "type": "module",
   "scripts": {
     "build": "./scripts/simple-build.sh",
-    "deploy": "cd 48Continental_Starter/public-site && npm run build && npx wrangler pages deploy dist --project-name=awhittlewandering-site"
+    "deploy": "cd 48Continental_Starter/public-site && npm run build && npx wrangler pages deploy dist --project-name=awhittlewandering-site",
+    "lint": "pnpm -r exec eslint . --ext .ts,.tsx --max-warnings 0",
+    "check-types": "pnpm -r exec tsc --noEmit",
+    "test": "echo \"No tests specified\" && exit 0"
   },
   "author": "",
   "license": "ISC",
