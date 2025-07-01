@@ -40,9 +40,23 @@ zone_id  = "${CLOUDFLARE_ZONE_ID}"
 
 # Staging environment
 [env.staging]
+account_id = "620865722bd88ef0a77dbbb60c91392e"
+
+[env.staging.vars]
+MAP_STYLE = "mapbox://styles/mapbox/outdoors-v12"
+APP_NAME = "A Whittle Wandering"
+ENABLE_STREAMING = "true"
+ENABLE_MAP_PERFORMANCE_MONITORING = "true"
+MAP_RETRY_ATTEMPTS = "3"
+MAP_RETRY_DELAY = "2000"
+
+
+[env.staging.ai]
+binding = "AI_GATEWAY"
+
 [[env.staging.routes]]
-pattern  = "https://staging.awhittlewandering.com/*"
-zone_id  = "${CLOUDFLARE_ZONE_ID}"
+pattern = "https://staging.awhittlewandering.com/*"
+zone_id = "4983dcf0cbfebc73e920a2f1f27acabc"
 
 # Local development
 [dev]
