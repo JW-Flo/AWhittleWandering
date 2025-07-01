@@ -1,5 +1,4 @@
 import { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
 
 interface DrawerProps {
   children: ReactNode;
@@ -96,7 +95,6 @@ export default function TripDrawer({ children }: DrawerProps) {
           <label
             className="btn btn-square btn-xs absolute -right-3 top-1/2 hidden lg:inline-flex rotate-180 translate-y-[-50%]"
             aria-label="Hide drawer"
-            className="btn btn-square btn-xs absolute -right-3 top-1/2 hidden lg:inline-flex rotate-180 translate-y-[-50%]"
           >
             ❯
           </label>

@@ -38,6 +38,12 @@ zone_id  = "${CLOUDFLARE_ZONE_ID}"
 pattern  = "https://preview.awhittlewandering.com/*"
 zone_id  = "${CLOUDFLARE_ZONE_ID}"
 
+# Staging environment
+[env.staging]
+[[env.staging.routes]]
+pattern  = "https://staging.awhittlewandering.com/*"
+zone_id  = "${CLOUDFLARE_ZONE_ID}"
+
 # Local development
 [dev]
 port            = 8787

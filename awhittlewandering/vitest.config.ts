@@ -5,7 +5,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom', // Use jsdom for React component tests
-    setupFiles: ['./tests/api/setup.ts'],
+    setupFiles: ['./tests/api/setup.ts', './packages/frontend/vitest.setup.ts'],
     include: [
       'tests/**/*.test.ts',
       'tests/**/*.test.tsx'
