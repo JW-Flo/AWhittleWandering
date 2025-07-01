@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    /* ----- Language & Module Targets ----- */
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
+
+    /* ----- Type Safety & Diagnostics ----- */
+    "strict": true,
+    "noFallthroughCasesInSwitch": true,
+
+    /* ----- Interop & Ecosystem ----- */
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+
+    /* ----- Declaration & Library Settings ----- */
+    "lib": ["ES2022", "DOM"],
+    "jsx": "react-jsx",
+
+    /* ----- Build Performance ----- */
+    "skipLibCheck": true,
+    "incremental": true,
+
+    /* ----- Pathing & Workspace Aliases ----- */
+    "baseUrl": ".",
+    "paths": {
+      "@awhittlewandering/*": ["awhittlewandering/packages/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+}
