@@ -13,7 +13,7 @@ export default function Layout() {
         <div className="logo">
           <Link to="/">
             <h1>A Whittle Wandering</h1>
-            <span className="tagline">60 days, 48 states, One Tesla, One epic journey</span>
+            <span className="tagline">48 states, One Tesla, One epic journey</span>
           </Link>
         </div>
         
@@ -46,14 +46,6 @@ export default function Layout() {
             <p>© {new Date().getFullYear()} A Whittle Wandering</p>
           </div>
           
-          <div className="footer-section">
-            <h3>Follow the Journey</h3>
-            <div className="social-links">
-              <a href="https://twitter.com/awhittlewander" target="_blank" rel="noopener noreferrer">Twitter</a>
-              <a href="https://instagram.com/awhittlewandering" target="_blank" rel="noopener noreferrer">Instagram</a>
-              <a href="https://youtube.com/awhittlewandering" target="_blank" rel="noopener noreferrer">YouTube</a>
-            </div>
-          </div>
           
           <div className="footer-section">
             <h3>Resources</h3>

@@ -1,5 +1,10 @@
+import TripDrawer from '../components/TripDrawer';
 import EnhancedTripMap from '../components/EnhancedTripMap';
 
 export default function TripMapPage() {
-  return <EnhancedTripMap />;
+  return (
+    <TripDrawer>
+      <EnhancedTripMap />
+    </TripDrawer>
+  );
 }
