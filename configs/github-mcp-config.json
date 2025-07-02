@@ -1,7 +1,4 @@
 {
-  // GitHub Integration MCP Server configuration
-  // Add this to your settings.json under the "mcp.servers" section
-
   "github-mcp": {
     "command": "npx",
     "args": [
@@ -17,15 +14,70 @@
       "GITHUB_MAX_RESULTS": "100",
       "GITHUB_TIMEOUT": "30000"
     }
-  }
+  },
 
-  // Also add this to your "mcp.inputs" section:
-  /*
-  {
-    "type": "promptString",
-    "id": "githubToken",
-    "description": "GitHub Personal Access Token with repo, read:user, and read:org scopes",
-    "password": true
+  "code-analysis-server": {
+    "baseUrl": "http://localhost:9011",
+    "tools": {
+      "analyze_code": {
+        "endpoint": "/eslint",
+        "method": "POST",
+        "description": "Run ESLint on provided code block"
+      },
+      "type_check": {
+        "endpoint": "/tsc",
+        "method": "POST",
+        "description": "Run TypeScript diagnostics on provided sources"
+      },
+      "format_code": {
+        "endpoint": "/prettier",
+        "method": "POST",
+        "description": "Return Prettier-formatted version of provided code"
+      }
+    }
+  },
+
+  "doc-processing-server": {
+    "baseUrl": "http://localhost:9012",
+    "tools": {
+      "process_doc": {
+        "endpoint": "/extract",
+        "method": "POST",
+        "description": "Extract plain text preview & metadata from raw text or uploaded file"
+      }
+    }
+  },
+
+  "knowledge-graph-server": {
+    "baseUrl": "http://localhost:9013",
+    "tools": {
+      "kg_query": {
+        "endpoint": "/query",
+        "method": "POST",
+        "description": "Execute Cypher query against local Neo4j (or stub) and return records"
+      }
+    }
+  },
+
+  "deployment-server": {
+    "baseUrl": "http://localhost:9014",
+    "tools": {
+      "trigger_deploy": {
+        "endpoint": "/wranglerDeploy",
+        "method": "POST",
+        "description": "Trigger Cloudflare Wrangler deploy; optional { env } body"
+      }
+    }
+  },
+
+  "test-runner-server": {
+    "baseUrl": "http://localhost:9015",
+    "tools": {
+      "run_tests": {
+        "endpoint": "/run_unit",
+        "method": "POST",
+        "description": "Run vitest unit tests and return JSON summary"
+      }
+    }
   }
-  */
 }

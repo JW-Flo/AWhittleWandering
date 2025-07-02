@@ -88,6 +88,102 @@ services:
     networks:
       - n8n_network
 
+  doc-processing:
+    build:
+      context: ./mcp/doc-processing-server
+      dockerfile: Dockerfile
+    container_name: doc-processing
+    ports:
+      - "9012:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+    volumes:
+      - ./mcp/doc-processing-server:/app
+    depends_on:
+      mcp-server:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9012/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - n8n_network
+
+  knowledge-graph:
+    build:
+      context: ./mcp/knowledge-graph-server
+      dockerfile: Dockerfile
+    container_name: knowledge-graph
+    ports:
+      - "9013:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+    volumes:
+      - ./mcp/knowledge-graph-server:/app
+    depends_on:
+      mcp-server:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9013/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - n8n_network
+
+  deployment:
+    build:
+      context: ./mcp/deployment-server
+      dockerfile: Dockerfile
+    container_name: deployment-server
+    ports:
+      - "9014:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+    volumes:
+      - ./mcp/deployment-server:/app
+    depends_on:
+      mcp-server:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9014/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - n8n_network
+
+  test-runner:
+    build:
+      context: ./mcp/test-runner-server
+      dockerfile: Dockerfile
+    container_name: test-runner
+    ports:
+      - "9015:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+    volumes:
+      - ./mcp/test-runner-server:/app
+    depends_on:
+      mcp-server:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9015/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - n8n_network
+
 volumes:
   postgres_data:
     name: n8n_postgres_data # Named volume for easier identification

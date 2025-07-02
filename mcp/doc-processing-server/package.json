@@ -1,0 +1,19 @@
+{
+  "name": "doc-processing-server",
+  "version": "0.1.0",
+  "description": "MCP server that extracts structured text from documents",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.0",
+    "busboy": "^1.6.0",
+    "pdf-parse": "^1.1.1"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
