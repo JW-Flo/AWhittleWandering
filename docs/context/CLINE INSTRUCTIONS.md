@@ -128,7 +128,7 @@
 
 The implementation should focus on creating a reliable, real-time tracking experience that accurately displays the Tesla's journey across the 48 continental states, emphasizing waypoint achievements and state visits rather than adhering to a specific timeline.
 
-did you use @/awhittlewandering/docs/__Project Overview and Current Goals__.pdf to create this? ensuring you address each and every concern and that the Cline agent can handle all the necessary steps
+Did you use @/awhittlewandering/docs/__Project Overview and Current Goals__.pdf to create this? Ensure you address each and every concern, and that the Cline agent can handle all the necessary steps.
 
 # Task: Complete AWhittleWandering Website Deployment & Fix CI/CD Pipeline
 

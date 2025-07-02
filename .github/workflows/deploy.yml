@@ -41,6 +41,9 @@ jobs:
     needs: build-test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
@@ -48,10 +51,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v1
-      - name: Production Deploy
-        run: wrangler deploy
+      - name: Install dependencies
+        run: bun install
         working-directory: awhittlewandering
-        run: cd awhittlewandering && wrangler deploy
+      - name: Production Deploy
+        working-directory: awhittlewandering
+        run: wrangler deploy
 
   post-deploy-validation:
     needs: deploy
