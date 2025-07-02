@@ -8,7 +8,7 @@
  * - Implements streaming for improved performance
  */
 
-import { Env, ExecutionContext } from '../packages/shared/types';
+import { Env, ExecutionContext } from '../packages/shared/types.js';
 // import { getAssetFromKV } from '@cloudflare/kv-asset-handler';
 // Cloudflare Pages default caching values
 const DEFAULT_CACHE_CONTROL = {
@@ -107,7 +107,6 @@ function addSecurityHeaders(response: Response): Response {
 /**
  * The main handler for all site requests
  */
-export default {
 /**
  * Returns the HTML content for the staging environment.
  */
@@ -167,6 +166,7 @@ function getStagingHtmlContent(): string {
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    const url = new URL(request.url);
     const { pathname } = url;
     
     try {
@@ -195,8 +195,8 @@ export default {
       }
       
       // For staging, serve a simple HTML page
-      // For staging, serve a simple HTML page
       return addSecurityHeaders(createHTMLResponse(getStagingHtmlContent()));
+    } catch (error) {
       console.error('Site worker error:', error);
       return createHTMLResponse('Internal Server Error', 500);
     }

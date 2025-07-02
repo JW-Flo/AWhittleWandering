@@ -55,6 +55,19 @@ export default function Layout() {
               <li><a href="https://www.nps.gov/" target="_blank" rel="noopener noreferrer">National Parks</a></li>
             </ul>
           </div>
+          
+          <div className="footer-section">
+            <h3>Follow Us</h3>
+            <ul>
+              <li>
+                <a href="https://www.instagram.com/awhittlewandering/" 
+                   target="_blank" 
+                   rel="noopener noreferrer">
+                  Instagram
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
         
         <div className="footer-bottom">
