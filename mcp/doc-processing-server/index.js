@@ -42,28 +42,36 @@ app.post("/extract", (req, res) => {
       const writeStream = fs.createWriteStream(tmpFile);
       file.pipe(writeStream);
 
+      writeStream.on("finish", async () => {
+        try {
+          let result;
+          if (mimetype === "application/pdf") {
+            const dataBuffer = await fs.promises.readFile(tmpFile);
+            const pdf = await pdfParse(dataBuffer);
+            result = { type: "pdf", data: extractPlain(pdf.text) };
+          } else {
+            const raw = await fs.promises.readFile(tmpFile, "utf8");
+            result = { type: "plain-file", data: extractPlain(raw) };
+          }
+          await fs.promises.unlink(tmpFile);
+          if (!processed) {
+            processed = true;
+            res.json(result);
+          }
+        } catch (err) {
+          console.error(err);
+          if (!processed) {
+            processed = true;
+            res.status(500).json({ error: "Processing failed" });
+          }
+        }
+      });
+
       writeStream.on("error", (err) => {
         console.error("Write stream error:", err);
         if (!processed) {
-        let result;
-        if (mimetype === "application/pdf") {
-          const dataBuffer = await fs.promises.readFile(tmpFile);
-          const pdf = await pdfParse(dataBuffer);
-          result = { type: "pdf", data: extractPlain(pdf.text) };
-        } else {
-          const raw = await fs.promises.readFile(tmpFile, "utf8");
-          result = { type: "plain-file", data: extractPlain(raw) };
-        }
-        await fs.promises.unlink(tmpFile);
-        if (!processed) {
           processed = true;
-          res.json(result);
-        }
-        }
-        fs.unlinkSync(tmpFile);
-        if (!processed) {
-          processed = true;
-          res.json(result);
+          res.status(500).json({ error: "File write failed" });
         }
       });
     } catch (err) {

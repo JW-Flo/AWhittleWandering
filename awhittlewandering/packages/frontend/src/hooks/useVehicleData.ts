@@ -15,6 +15,8 @@ interface UseVehicleDataResult {
   routeHistory: VehicleLocation[] | null;
   isLoading: boolean;
   error: Error | null;
+  isStale?: boolean;
+  statusMessage?: string;
 }
 
 /**
@@ -25,119 +27,112 @@ export function useVehicleData(): UseVehicleDataResult {
   const [routeHistory, setRouteHistory] = useState(null as VehicleLocation[] | null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null as Error | null);
+  const [isStale, setIsStale] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
 
   // API base URL for the deployed API worker
-  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://aww-api.kd8jc7v8cd.workers.dev';
+  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
 
   useEffect(() => {
-    // Function to fetch the current trip day
-    async function fetchCurrentTripDay() {
+    // Function to fetch live telemetry data
+    async function fetchTelemetryData() {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/trip/current`);
+        const response = await fetch(`${API_BASE_URL}/api/telemetry`);
         
         if (!response.ok) {
-          throw new Error(`Failed to fetch current trip data: ${response.status}`);
+          throw new Error(`Failed to fetch telemetry data: ${response.status}`);
         }
         
-        const data = await response.json() as any;
+        const telemetryResponse = await response.json() as any;
         
-        // Set current location from the latest telemetry data
-        if (data.telemetry) {
+        if (telemetryResponse.data) {
           setCurrentLocation({
-            latitude: data.telemetry.latitude,
-            longitude: data.telemetry.longitude,
-            timestamp: data.telemetry.timestamp,
-            state: data.telemetry.stateCode,
-            batteryLevel: data.telemetry.batteryLevel,
-            charging: data.telemetry.charging,
-            speed: data.telemetry.speed
+            latitude: telemetryResponse.data.latitude,
+            longitude: telemetryResponse.data.longitude,
+            timestamp: telemetryResponse.data.timestamp,
+            state: telemetryResponse.data.stateCode,
+            batteryLevel: telemetryResponse.data.batteryLevel,
+            charging: telemetryResponse.data.charging,
+            speed: telemetryResponse.data.speed
           });
+          
+          // Handle stale data
+          setIsStale(!telemetryResponse.fresh);
+          if (!telemetryResponse.fresh && telemetryResponse.age) {
+            const ageMinutes = Math.floor(telemetryResponse.age / 60000);
+            setStatusMessage(`Data delayed, showing last update ${ageMinutes} minutes ago`);
+          } else {
+            setStatusMessage('');
+          }
+          
+          setError(null);
+        } else if (telemetryResponse.error) {
+          throw new Error(telemetryResponse.error);
         }
         
-        // Fetch route history for the current day
-        if (data.day) {
-          fetchRouteHistory(data.day);
-        } else {
-          // If no day is available, we're done loading
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       } catch (err) {
-        console.error('Error fetching current trip data:', err);
-        
-        // If we can't fetch real data, show demo data for the live map
-        console.log('Loading demo data for development...');
-        setCurrentLocation({
-          latitude: 39.7392,  // Denver, CO coordinates
-          longitude: -104.9903,
-          timestamp: Date.now(),
-          state: 'CO',
-          batteryLevel: 85,
-          charging: false,
-          speed: 65
-        });
-        
-        // Set demo route history (a path through Colorado)
-        setRouteHistory([
-          { latitude: 39.7392, longitude: -104.9903, timestamp: Date.now() - 3600000, state: 'CO', batteryLevel: 90, charging: false, speed: 0 },
-          { latitude: 39.7500, longitude: -105.0000, timestamp: Date.now() - 1800000, state: 'CO', batteryLevel: 87, charging: false, speed: 55 },
-          { latitude: 39.7392, longitude: -104.9903, timestamp: Date.now(), state: 'CO', batteryLevel: 85, charging: false, speed: 65 }
-        ]);
-        
-        // Clear error since we have demo data
-        setError(null);
+        console.error('Error fetching telemetry data:', err);
+        setError(err instanceof Error ? err : new Error(String(err)));
+        setStatusMessage('Live telemetry currently unavailable');
         setIsLoading(false);
       }
     }
 
-    // Function to fetch route history for a specific day
-    async function fetchRouteHistory(day: number) {
+    // Function to fetch route history from trip API (fallback)
+    async function fetchRouteHistoryData() {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/trip/day/${day}`);
+        const response = await fetch(`${API_BASE_URL}/api/trip/current`);
         
-        if (!response.ok) {
-          throw new Error(`Failed to fetch day ${day} data: ${response.status}`);
-        }
-        
-        const data = await response.json() as any;
-        
-        // Transform telemetry data to the format we need
-        if (data.telemetry && Array.isArray(data.telemetry)) {
-          const history = data.telemetry.map((point: any) => ({
-            latitude: point.latitude,
-            longitude: point.longitude,
-            timestamp: point.timestamp,
-            state: point.stateCode,
-            batteryLevel: point.batteryLevel,
-            charging: point.charging,
-            speed: point.speed
-          }));
+        if (response.ok) {
+          const data = await response.json() as any;
           
-          setRouteHistory(history);
+          if (data.day) {
+            const dayResponse = await fetch(`${API_BASE_URL}/api/trip/day/${data.day}`);
+            if (dayResponse.ok) {
+              const dayData = await dayResponse.json() as any;
+              
+              if (dayData.telemetry && Array.isArray(dayData.telemetry)) {
+                const history = dayData.telemetry.map((point: any) => ({
+                  latitude: point.latitude,
+                  longitude: point.longitude,
+                  timestamp: point.timestamp,
+                  state: point.stateCode,
+                  batteryLevel: point.batteryLevel,
+                  charging: point.charging,
+                  speed: point.speed
+                }));
+                
+                setRouteHistory(history);
+              }
+            }
+          }
         }
       } catch (err) {
-        console.error(`Error fetching route history for day ${day}:`, err);
-        setError(err instanceof Error ? err : new Error(String(err)));
-      } finally {
-        setIsLoading(false);
+        console.error('Error fetching route history:', err);
+        // Don't set error for route history - it's optional
       }
     }
 
     // Start the data fetching process
-    fetchCurrentTripDay();
+    fetchTelemetryData();
+    fetchRouteHistoryData();
     
     // Set up a polling interval to refresh data
     const intervalId = setInterval(() => {
-      fetchCurrentTripDay();
+      fetchTelemetryData();
     }, 60000); // Update every minute
     
     // Clean up interval on unmount
     return () => clearInterval(intervalId);
-  }, []);
+  }, [API_BASE_URL]);
 
   return {
     currentLocation,
     routeHistory,
     isLoading,
-    error
+    error,
+    isStale,
+    statusMessage
   };
 }

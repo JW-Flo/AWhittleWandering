@@ -22,6 +22,32 @@ binding     = "TRIP_DATA"
 id          = "8016b1e4a16f4f7b75bce91e37573"
 preview_id  = "8016b1e4a16f4f7b75bce91e37573"
 
+# New KV namespaces for enhanced services
+[[kv_namespaces]]
+binding     = "TELEMETRY_CACHE"
+id          = "b5f7e1a8d9c2e4f6b8a0c3e5f7a9c1e3"
+preview_id  = "b5f7e1a8d9c2e4f6b8a0c3e5f7a9c1e3"
+
+[[kv_namespaces]]
+binding     = "WEATHER_CACHE"
+id          = "c6f8e2b9d0c3f5e7c9b1d4f6e8a0c2f4"
+preview_id  = "c6f8e2b9d0c3f5e7c9b1d4f6e8a0c2f4"
+
+[[kv_namespaces]]
+binding     = "LIMIT_METRICS"
+id          = "d7f9e3c0d1c4f6e8d0c2e5f7e9b1d3f5"
+preview_id  = "d7f9e3c0d1c4f6e8d0c2e5f7e9b1d3f5"
+
+# Durable Objects
+[[durable_objects.bindings]]
+name = "TELEMETRY_DO"
+class_name = "TelemetryCacheDO"
+
+# Durable Object migrations
+[[migrations]]
+tag = "v1"
+new_classes = ["TelemetryCacheDO"]
+
 # Optional AI gateway binding; token supplied via secret
 [ai]
 binding = "AI_GATEWAY"
@@ -50,6 +76,31 @@ ENABLE_MAP_PERFORMANCE_MONITORING = "true"
 MAP_RETRY_ATTEMPTS = "3"
 MAP_RETRY_DELAY = "2000"
 
+# KV namespaces for staging
+[[env.staging.kv_namespaces]]
+binding     = "TRIP_DATA"
+id          = "401fa8cef771467097fe2d6f0fa39b8f"
+preview_id  = "401fa8cef771467097fe2d6f0fa39b8f"
+
+[[env.staging.kv_namespaces]]
+binding     = "TELEMETRY_CACHE"
+id          = "84dc7a601900432082c503e67c7daa0d"
+preview_id  = "84dc7a601900432082c503e67c7daa0d"
+
+[[env.staging.kv_namespaces]]
+binding     = "WEATHER_CACHE"
+id          = "a4a6f4d1629a4f90bc48196255c0b484"
+preview_id  = "a4a6f4d1629a4f90bc48196255c0b484"
+
+[[env.staging.kv_namespaces]]
+binding     = "LIMIT_METRICS"
+id          = "07638f1fa90b481d9a98b855e14c3c55"
+preview_id  = "07638f1fa90b481d9a98b855e14c3c55"
+
+# Durable Objects for staging
+[[env.staging.durable_objects.bindings]]
+name = "TELEMETRY_DO"
+class_name = "TelemetryCacheDO"
 
 [env.staging.ai]
 binding = "AI_GATEWAY"
