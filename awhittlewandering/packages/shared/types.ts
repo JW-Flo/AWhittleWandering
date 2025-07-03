@@ -27,12 +27,22 @@ export interface Env {
   
   // API keys and secrets (will be set in actual deployments)
   TESSIE_API_KEY?: string;
+  TESSIE_TOKEN?: string;
   MCP_SERVER_KEY?: string;
   MCP_API_KEY?: string;
   OPENWEATHER_API_KEY?: string;
-  AI_GATEWAY?: string;
+  MAPBOX_SECRET_TOKEN?: string;
+  AI_GATEWAY?: any;
   BROWSER?: any;
   DISPATCH?: any;
+  
+  // KV Namespaces for new services
+  TELEMETRY_CACHE?: KVNamespace;
+  WEATHER_CACHE?: KVNamespace;
+  LIMIT_METRICS?: KVNamespace;
+  
+  // Durable Objects
+  TELEMETRY_DO?: any;
 }
 
 // Cloudflare Worker ExecutionContext
