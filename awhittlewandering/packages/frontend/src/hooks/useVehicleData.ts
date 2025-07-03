@@ -31,7 +31,7 @@ export function useVehicleData(): UseVehicleDataResult {
   const [statusMessage, setStatusMessage] = useState('');
 
   // API base URL for the deployed API worker
-  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
+  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL ?? window.location.origin;
 
   useEffect(() => {
     // Function to fetch live telemetry data

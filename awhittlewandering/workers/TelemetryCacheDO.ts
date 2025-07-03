@@ -180,7 +180,7 @@ export class TelemetryCacheDO {
       charging: vehicleData.charge_state?.charging_state === 'Charging',
       speed: vehicleData.drive_state?.speed,
       heading: vehicleData.drive_state?.heading,
-      altitude: vehicleData.drive_state?.gps_as_of,
+      altitude: vehicleData.drive_state?.elevation ?? undefined,
       temperature: vehicleData.climate_state?.outside_temp
     };
   }
