@@ -152,7 +152,7 @@ async function handleTelemetryRequest(request: Request, env: Env): Promise<Respo
   }
   
   // Forward request to Durable Object
-  const doRequest = new Request(`http://localhost/latest`, {
+  const doRequest = new Request('/latest', {
     method: request.method,
     headers: request.headers,
     body: request.body
