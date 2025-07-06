@@ -1,0 +1,8 @@
+packages:
+  - 'frontend'
+  - 'backend'
+  - 'backend/**'
+  - 'ios'
+  - 'ios/**'
+  - 'shared'
+  - 'mcp/*'
