@@ -1,166 +1,156 @@
- # A Whittle Wandering
+# Continental USA – Monorepo  
 
-Real-time Tesla road trip tracker for the 48 continental United States.
+Real-time Tesla road-trip tracker rebuilt as a **pnpm monorepo** with shared code, Cloudflare Workers backend, React web frontend, native iOS client, and multiple MCP servers.
 
-## Project Overview
+## Directory Layout
 
-A Whittle Wandering is a live road trip tracker that follows a 60-day journey across all 48 continental United States in a Tesla. The application provides real-time location tracking, vehicle telemetry, and trip statistics through an interactive map interface.
+```
+frontend/          # React + Vite web app
+backend/
+  ├─ workers/      # Cloudflare Workers (api, site, proxies…)
+  └─ edge-worker/  # Cloudflare Edge-Worker service (Wrangler)
+ios/               # Xcode Swift Package app
+shared/
+  └─ schemas/      # Zod schemas shared across workspaces
+mcp/*              # Independent MCP servers (unchanged)
+```
 
-### Key Features
+## Prerequisites
 
-- Real-time vehicle location tracking via Tessie API
-- Interactive Mapbox-powered map interface
-- Trip statistics and state tracking
-- Weather information integration
-- Secure API gateway with Cloudflare Workers
-- Responsive design for all devices
+| Tool | Version |
+|------|---------|
+| Node | 20+ |
+| pnpm | 9+ |
+| Wrangler | 4+ |
+| Xcode | 15+ (for iOS build) |
 
-## Architecture
+Clone, then install all workspaces once:
 
-The application uses a modern, serverless architecture:
+```bash
+git clone https://github.com/JW-Flo/ContinentalUSA.git
+cd ContinentalUSA
+pnpm install --frozen-lockfile
+```
 
-- **Frontend**: React/Vite application hosted on Cloudflare Pages
-- **Backend**: Cloudflare Workers providing secure API access
-- **Data Sources**: 
-  - Tessie API for Tesla vehicle telemetry
-  - OpenWeather API for weather information
-  - Mapbox for mapping and visualization
-- **Caching**: Cloudflare KV for caching API responses
-- **Deployment**: GitHub Actions CI/CD pipeline
+> The repo uses **pnpm workspaces** – one install sets up every package.
+
+## Environment Variables
+
+Create `.env` at the repo root:
+
+```env
+# --- Cloudflare ---
+CLOUDFLARE_API_TOKEN=xxxxxxxx
+CLOUDFLARE_ACCOUNT_ID=xxxxxxxx
+CLOUDFLARE_ZONE_ID=xxxxxxxx     # needed for Pages / KV
+
+# --- Vehicle Telemetry (Tessie) ---
+TESSIE_API_TOKEN=xxxxxxxx
+TESSIE_VIN=xxxxxxxxxxxxxxxxx
+
+# --- Mapbox ---
+MAPBOX_TOKEN=pk.ey...
+MAPBOX_API_TOKEN=sk.ey...
+
+# --- OpenWeather ---
+OPENWEATHER_API_KEY=xxxxxxxx
+
+# --- Security ---
+EDGE_HMAC_KEY=superSecretKey
+```
+
+## Workspace Scripts
+
+| Command | Purpose |
+|---------|---------|
+| `pnpm run dev --filter frontend` | Start React dev server |
+| `pnpm run dev --filter backend`  | Start Miniflare (local workers) |
+| `pnpm run build --filter <workspace>` | Build any workspace (matrix CI) |
+| `pnpm run test --recursive` | Run all Vitest tests |
+| `pnpm run lint` / `pnpm run check-types` | Lint & type-check at root |
+
+### Typical Dev Loop
+
+```bash
+# Front-end
+pnpm run dev --filter frontend
+
+# API Workers (live reload)
+pnpm run dev --filter backend
+```
 
 ## Deployment
 
-### Prerequisites
+### GitHub Actions (recommended)
 
-- Node.js 20+ installed
-- Cloudflare account with Workers and Pages enabled
-- Tessie API access (for Tesla integration)
-- Mapbox API token
-- OpenWeather API key
+Push to **staging** or open a PR – the updated `.github/workflows/ci.yml`:
 
-### Environment Variables
+1. Installs deps once  
+2. Lints & type-checks root  
+3. Builds matrix `frontend, backend, shared`  
+4. Runs vitest recursively  
+5. Publishes **backend/edge-worker** via Wrangler on staging / PRs
 
-Create a `.env` file at the root of the project with the following variables:
+Production deploy triggers on `main`.
 
-```
-# Cloudflare credentials
-CF_API_TOKEN=your_cloudflare_api_token_here
-CF_ACCOUNT_ID=your_cloudflare_account_id_here
-
-# Tesla vehicle telemetry via Tessie API
-TESSIE_API_TOKEN=your_tessie_api_token_here
-TESSIE_VIN=your_tesla_vehicle_id_here
-
-# Mapbox for mapping functionality
-MAPBOX_TOKEN=your_mapbox_token_here
-MAPBOX_API_TOKEN=your_mapbox_private_token_here
-
-# Edge HMAC key for API security
-EDGE_HMAC_KEY=your_edge_hmac_security_key_here
-
-# OpenWeather API for weather data
-OPENWEATHER_API_KEY=your_openweather_api_key_here
-```
-
-### Deployment Methods
-
-#### Option 1: Using the Deployment Script
-
-The easiest way to deploy the application is using the provided deployment script:
+### Manual Wrangler Deploy
 
 ```bash
-# Make the script executable (if not already)
-chmod +x scripts/deploy-website.sh
+# Build workspaces
+pnpm run build --filter frontend
+pnpm run build --filter backend
 
-# Run the deployment script
-./scripts/deploy-website.sh
+# Deploy edge worker (API + site proxy)
+cd backend/edge-worker
+npx wrangler deploy --env=production
 ```
 
-This script will:
-1. Validate environment variables
-2. Install dependencies
-3. Build the frontend
-4. Deploy the site worker (frontend)
-5. Deploy the API worker (backend)
+## Shared Schemas
 
-#### Option 2: GitHub Actions Deployment
+`shared/schemas/telemetrySchema.ts` defines the canonical vehicle telemetry model via Zod:
 
-The project includes a GitHub Actions workflow that automatically deploys the application when changes are pushed to the main branch.
+```ts
+import { z } from 'zod';
 
-To use GitHub Actions deployment:
+export const TelemetrySchema = z.object({
+  latitude: z.number(),
+  longitude: z.number(),
+  timestamp: z.number(),
+  batteryLevel: z.number().optional(),
+  charging: z.boolean().optional(),
+  speed: z.number().optional(),
+  heading: z.number().optional(),
+  altitude: z.number().optional(),
+  temperature: z.number().optional(),
+});
 
-1. Add the required secrets to your GitHub repository:
-   - `CF_API_TOKEN`
-   - `CF_ACCOUNT_ID`
-   - `MAPBOX_TOKEN`
-   - `MAPBOX_API_TOKEN`
-   - `TESSIE_API_TOKEN`
-   - `TESSIE_VIN`
-   - `EDGE_HMAC_KEY`
-   - `OPENWEATHER_API_KEY`
-
-2. Push changes to the main branch to trigger the deployment workflow.
-
-#### Option 3: Manual Deployment
-
-You can also deploy the application manually using Wrangler:
-
-```bash
-# Change directory to the project folder
-cd awhittlewandering
-
-# Install dependencies
-npm install
-
-# Build the frontend
-npm run build:frontend
-
-# Deploy the site worker
-npx wrangler deploy --config wrangler-site.toml
-
-# Deploy the API worker
-npx wrangler deploy --config wrangler.toml
+export type Telemetry = z.infer<typeof TelemetrySchema>;
 ```
 
-### Verifying Deployment
+Import it in any workspace:
 
-After deployment, you can verify that the application is working correctly by:
-
-1. Visiting the website (https://awhittlewandering.com)
-2. Checking the API health endpoint (https://api.awhittlewandering.com/health)
-3. Verifying that vehicle data is loading on the map
-
-## Development
-
-### Local Development
-
-```bash
-# Install dependencies
-cd awhittlewandering
-npm install
-
-# Start the frontend development server
-npm run dev
+```ts
+import { TelemetrySchema } from 'shared/schemas/telemetrySchema';
 ```
 
-### Code Structure
+## Code Structure Highlights
 
-- `awhittlewandering/packages/frontend/`: React frontend application
-- `awhittlewandering/workers/`: Cloudflare Workers for API and site hosting
-- `awhittlewandering/packages/shared/`: Shared types and utilities
+| Path | Description |
+|------|-------------|
+| `frontend/src/` | React pages, components, hooks |
+| `backend/workers/*.ts` | KV-caching API Worker scripts |
+| `backend/edge-worker/src/` | Edge-worker entrypoint, HMAC auth |
+| `shared/` | Runtime-agnostic utilities & type defs |
+| `ios/ios-client/` | Swift Package with UIKit / SwiftUI views |
+| `mcp/*` | Dockerised MCP tools (code-analysis, test-runner, etc.) |
 
 ## Troubleshooting
 
-### Common Issues
-
-1. **MapBox Token Issues**: If the map fails to load, verify that your Mapbox token is correctly set in both environment variables and wrangler configuration files.
-
-2. **Tessie API Connection**: If vehicle data is not updating, check Tessie API connectivity and ensure the VIN is correct.
-
-3. **Deployment Failures**: If deployment fails, check the Cloudflare API token permissions and account ID.
-
-4. **Type Errors**: If you encounter TypeScript errors, run `npm run check-types` to identify the specific issues.
+1. **pnpm install fails** – ensure Node 20+, pnpm 9+, and no npm lockfiles.
+2. **Local worker 403** – check `EDGE_HMAC_KEY` matches client header.
+3. **Map blank** – verify `MAPBOX_TOKEN` set and referrer allowed.
+4. **CI red** – run `pnpm run lint && pnpm run check-types && pnpm run test --recursive` locally.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT
