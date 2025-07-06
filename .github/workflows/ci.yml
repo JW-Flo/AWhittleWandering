@@ -20,6 +20,9 @@ concurrency:
 jobs:
   build-test-deploy:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: [frontend, backend, shared]
     env:
       NODE_VERSION: "20"
       PNPM_VERSION: "9"
@@ -55,7 +58,7 @@ jobs:
 
       # ---------- Unit tests ----------
       - name: Test (Vitest)
-        run: pnpm run test --reporter=junit --outputFile=results.xml
+        run: pnpm run test --recursive --reporter=junit --outputFile=results.xml
 
       - name: Upload test results
         if: always()
@@ -65,12 +68,13 @@ jobs:
           path: results.xml
 
       # ---------- Build ----------
-      - name: Build frontend
-        run: pnpm --filter @awhittlewandering/frontend run build
+      - name: Build workspace
+        run: pnpm run build --filter ${{ matrix.project }}
 
       # ---------- Wrangler Publish ----------
       - name: Wrangler publish (staging/preview)
         if: github.ref_name == 'staging' || github.event_name == 'pull_request'
+        working-directory: backend/edge-worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -85,5 +89,5 @@ jobs:
         with:
           name: build-artifacts
           path: |
-            awhittlewandering/packages/frontend/dist
+            frontend/dist
             .wrangler
