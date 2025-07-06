@@ -151,6 +151,32 @@ import { TelemetrySchema } from 'shared/schemas/telemetrySchema';
 3. **Map blank** – verify `MAPBOX_TOKEN` set and referrer allowed.
 4. **CI red** – run `pnpm run lint && pnpm run check-types && pnpm run test --recursive` locally.
 
+## Architecture Overview
+
+We follow a modern, industry-standard architecture comparable to patterns used at Netflix, Meta, and Apple:
+
+1. **Frontend – React + Vite + Tailwind**  
+   • Component-based SPA with route-level code-splitting for fast loads.  
+   • Tailwind utility classes enforce design consistency while enabling rapid iteration.
+
+2. **Edge Layer – Cloudflare Workers**  
+   • Handles low-latency caching, secure API proxying (Mapbox, Weather, Tessie).  
+   • Durable Objects store real-time telemetry close to users.
+
+3. **Core Services – Dockerised Node Microservices**  
+   • Responsibility-segregated servers (knowledge-graph, doc-processing, test-runner, etc.).  
+   • Containerised for deterministic builds and horizontal scaling.
+
+4. **Monorepo & Shared Types**  
+   • `pnpm` workspaces with a single-install workflow.  
+   • Shared TypeScript interfaces in `packages/shared/` guarantee contract fidelity across FE/BE.
+
+5. **Automated CI/CD**  
+   • GitHub Actions lint, type-check, test, and build every workspace.  
+   • Successful pipelines deploy Workers via Wrangler and publish container images.
+
+This layered design yields scalability, resilience, and developer velocity while minimising latency at the edge.
+
 ## License
 
 MIT
