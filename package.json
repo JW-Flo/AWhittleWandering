@@ -2,7 +2,7 @@
   "name": "continentalusa",
   "version": "1.0.0",
   "private": true,
-  "workspaces": ["frontend", "backend", "shared", "ios", "mcp/*"],
+  "workspaces": ["frontend", "backend", "shared", "ios/ios-client", "mcp/*"],
   "description": "Continental USA Travel Project",
   "main": "index.js",
   "type": "module",
