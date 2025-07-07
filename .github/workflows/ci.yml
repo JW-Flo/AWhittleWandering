@@ -25,7 +25,7 @@ jobs:
         project: [frontend, backend, shared]
     env:
       NODE_VERSION: "20"
-      PNPM_VERSION: "9"
+      BUN_VERSION: "latest"
       # Ensure Wrangler uses staging env on staging branch
       WRANGLER_ENV: ${{ github.ref_name == 'staging' && 'staging' || 'preview' }}
     steps:
@@ -36,29 +36,27 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: ${{ env.PNPM_VERSION }}
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install
 
       # ---------- Lint ----------
       - name: Lint
-        run: pnpm run lint
+        run: bun run lint
         continue-on-error: false
 
       # ---------- Type-check ----------
       - name: Type-check
-        run: pnpm run check-types
+        run: bun run check-types
         continue-on-error: false
 
       # ---------- Unit tests ----------
       - name: Test (Vitest)
-        run: pnpm run test --recursive --reporter=junit --outputFile=results.xml
+        run: bun run test --recursive --reporter=junit --outputFile=results.xml
 
       - name: Upload test results
         if: always()
@@ -69,7 +67,7 @@ jobs:
 
       # ---------- Build ----------
       - name: Build workspace
-        run: pnpm run build --filter ${{ matrix.project }}
+        run: bun run build --filter ${{ matrix.project }}
 
       # ---------- Wrangler Publish ----------
       - name: Wrangler publish (staging/preview)

@@ -9,8 +9,8 @@
   "scripts": {
     "build": "./scripts/simple-build.sh",
     "deploy": "cd 48Continental_Starter/public-site && npm run build && npx wrangler pages deploy dist --project-name=awhittlewandering-site",
-    "lint": "pnpm -r exec eslint . --ext .ts,.tsx",
-    "check-types": "pnpm -r exec tsc --noEmit",
+    "lint": "bun eslint . --ext .ts,.tsx",
+    "check-types": "bun tsc --noEmit",
     "test": "echo \"No tests specified\" && exit 0"
   },
   "author": "",
