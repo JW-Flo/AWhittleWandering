@@ -3,11 +3,22 @@
   "parser": "@typescript-eslint/parser",
   "plugins": ["@typescript-eslint"],
   "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+  "parserOptions": {
+    "project": [
+      "./tsconfig.json",
+      "./frontend/tsconfig.json",
+      "./backend/edge-worker/tsconfig.json",
+      "./awhittlewandering/consolidated/ContinentalUSA-mobile/tsconfig.json"
+    ],
+    "tsconfigRootDir": "."
+  },
+  "ignorePatterns": [
+    "dist/**",
+    "node_modules/**",
+    "src/__tests__/**",
+    "awhittlewandering/**"
+  ],
   "rules": {
-    "@typescript-eslint/no-explicit-any": "warn",
-    "@typescript-eslint/no-unused-vars": [
-      "warn",
-      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
-    ]
+    "@typescript-eslint/no-explicit-any": "error"
   }
 }

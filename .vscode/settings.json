@@ -46,5 +46,23 @@
   "python.analysis.reportExtraTelemetry": true,
   "python.analysis.supportAllPythonDocuments": true,
   "typescript.tsserver.experimental.enableProjectDiagnostics": true,
-  "github.copilot.nextEditSuggestions.enabled": true
+  "github.copilot.nextEditSuggestions.enabled": true,
+  "githubPullRequests.experimental.useQuickChat": true,
+  "github.copilot.chat.edits.temporalContext.enabled": true,
+  "github.copilot.chat.editor.temporalContext.enabled": true,
+  "github.copilot.chat.agent.terminal.denyList": {
+    ".*/": true
+  },
+  "github.copilot.chat.agent.terminal.allowList": {
+    ".*/": true
+  },
+  "github.copilot.advanced": {
+    "enableExperimentalFeatures": true,
+    "enableNextEditSuggestions": true,
+    "enableEditorTemporalContext": true,
+    "enableChatTemporalContext": true,
+    "enableAgentTerminal": true,
+    "enableAgentThinkingTool": true
+  },
+  "github.copilot.chat.experimental.enableAgentTerminal": true
 }
