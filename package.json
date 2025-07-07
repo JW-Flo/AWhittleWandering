@@ -7,8 +7,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "build": "./scripts/simple-build.sh",
-    "deploy": "cd 48Continental_Starter/public-site && npm run build && npx wrangler pages deploy dist --project-name=awhittlewandering-site",
+    "build": "bun run ./scripts/simple-build.sh",
+    "deploy": "cd 48Continental_Starter/public-site && bun run build && bun wrangler pages deploy dist --project-name=awhittlewandering-site",
     "lint": "bun eslint . --ext .ts,.tsx",
     "check-types": "bun tsc --noEmit",
     "test": "echo \"No tests specified\" && exit 0"

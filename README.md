@@ -2,19 +2,6 @@
 
 Real-time Tesla road-trip tracker rebuilt as a **bun monorepo** with shared code, Cloudflare Workers backend, React web frontend, native iOS client, and multiple MCP servers.
 
-## Directory Layout
-
-```
-frontend/          # React + Vite web app
-backend/
-  ├─ workers/      # Cloudflare Workers (api, site, proxies…)
-  └─ edge-worker/  # Cloudflare Edge-Worker service (Wrangler)
-ios/               # Xcode Swift Package app
-shared/
-  └─ schemas/      # Zod schemas shared across workspaces
-mcp/*              # Independent MCP servers (unchanged)
-```
-
 ## Prerequisites
 
 | Tool | Version |
@@ -30,31 +17,6 @@ Clone, then install all workspaces once:
 git clone https://github.com/JW-Flo/ContinentalUSA.git
 cd ContinentalUSA
 bun install
-```
-
-## Environment Variables
-
-Create `.env` at the repo root:
-
-```env
-# --- Cloudflare ---
-CLOUDFLARE_API_TOKEN=xxxxxxxx
-CLOUDFLARE_ACCOUNT_ID=xxxxxxxx
-CLOUDFLARE_ZONE_ID=xxxxxxxx     # needed for Pages / KV
-
-# --- Vehicle Telemetry (Tessie) ---
-TESSIE_API_TOKEN=xxxxxxxx
-TESSIE_VIN=xxxxxxxxxxxxxxxxx
-
-# --- Mapbox ---
-MAPBOX_TOKEN=pk.ey...
-MAPBOX_API_TOKEN=sk.ey...
-
-# --- OpenWeather ---
-OPENWEATHER_API_KEY=xxxxxxxx
-
-# --- Security ---
-EDGE_HMAC_KEY=superSecretKey
 ```
 
 ## Workspace Scripts
