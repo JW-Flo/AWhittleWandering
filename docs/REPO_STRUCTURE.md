@@ -12,14 +12,15 @@ This monorepo is organized around four top-level domains that map directly to ru
 
 | Folder   | Purpose | Build / Deploy |
 |----------|---------|----------------|
-| **frontend** | Web UI, built with React 19, Vite, Vitest, Tailwind. | `pnpm --filter frontend run build` → static assets deployed to Pages / CDN. |
+| **frontend** | Web UI, built with React 19, Vite, Vitest, Tailwind. | `bun run build --filter frontend` → static assets deployed to Pages / CDN. |
 | **ios** | Native Swift code (previously `ios/ios-client`). Fastlane + Xcode build scripts reside here. | `fastlane ios build` or Xcode Cloud. |
-| **backend** | Cloudflare **edge-worker** plus supporting `workers/` TypeScript services. All server-side APIs that power both web and iOS. | `pnpm --filter backend run build` then `wrangler deploy`. |
+| **backend** | Cloudflare **edge-worker** plus supporting `workers/` TypeScript services. All server-side APIs that power both web and iOS. | `bun run build --filter backend` then `wrangler deploy`. |
 | **mcp/** | One sub-folder per MCP tool server (`code-analysis-server`, `doc-processing-server`, etc.). Each is containerised via Docker. | `docker-compose up -d` or GitHub Actions job per service. |
 
 ## Workspace Configuration
 
 `package.json`
+
 ```json
 "workspaces": [
   "frontend",
@@ -28,16 +29,6 @@ This monorepo is organized around four top-level domains that map directly to ru
   "mcp/*",
   "shared"
 ]
-```
-
-`pnpm-workspace.yaml`
-```yaml
-packages:
-  - "frontend"
-  - "ios"
-  - "backend"
-  - "mcp/*"
-  - "shared"
 ```
 
 ## Rationale

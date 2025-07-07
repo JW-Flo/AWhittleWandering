@@ -1,6 +1,6 @@
-# Continental USA – Monorepo  
+# Continental USA – Monorepo
 
-Real-time Tesla road-trip tracker rebuilt as a **pnpm monorepo** with shared code, Cloudflare Workers backend, React web frontend, native iOS client, and multiple MCP servers.
+Real-time Tesla road-trip tracker rebuilt as a **bun monorepo** with shared code, Cloudflare Workers backend, React web frontend, native iOS client, and multiple MCP servers.
 
 ## Directory Layout
 
@@ -20,7 +20,7 @@ mcp/*              # Independent MCP servers (unchanged)
 | Tool | Version |
 |------|---------|
 | Node | 20+ |
-| pnpm | 9+ |
+| Bun | Latest |
 | Wrangler | 4+ |
 | Xcode | 15+ (for iOS build) |
 
@@ -29,10 +29,8 @@ Clone, then install all workspaces once:
 ```bash
 git clone https://github.com/JW-Flo/ContinentalUSA.git
 cd ContinentalUSA
-pnpm install --frozen-lockfile
+bun install
 ```
-
-> The repo uses **pnpm workspaces** – one install sets up every package.
 
 ## Environment Variables
 
@@ -63,20 +61,20 @@ EDGE_HMAC_KEY=superSecretKey
 
 | Command | Purpose |
 |---------|---------|
-| `pnpm run dev --filter frontend` | Start React dev server |
-| `pnpm run dev --filter backend`  | Start Miniflare (local workers) |
-| `pnpm run build --filter <workspace>` | Build any workspace (matrix CI) |
-| `pnpm run test --recursive` | Run all Vitest tests |
-| `pnpm run lint` / `pnpm run check-types` | Lint & type-check at root |
+| `bun run dev --filter frontend` | Start React dev server |
+| `bun run dev --filter backend`  | Start Miniflare (local workers) |
+| `bun run build --filter <workspace>` | Build any workspace (matrix CI) |
+| `bun run test --recursive` | Run all Vitest tests |
+| `bun run lint` / `bun run check-types` | Lint & type-check at root |
 
 ### Typical Dev Loop
 
 ```bash
 # Front-end
-pnpm run dev --filter frontend
+bun run dev --filter frontend
 
 # API Workers (live reload)
-pnpm run dev --filter backend
+bun run dev --filter backend
 ```
 
 ## Deployment
@@ -97,8 +95,8 @@ Production deploy triggers on `main`.
 
 ```bash
 # Build workspaces
-pnpm run build --filter frontend
-pnpm run build --filter backend
+bun run build --filter frontend
+bun run build --filter backend
 
 # Deploy edge worker (API + site proxy)
 cd backend/edge-worker

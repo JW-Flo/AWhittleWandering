@@ -1,5 +1,34 @@
 {
   "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        ".*"
+      ]
+    },
+    "sequentialthinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-puppeteer"
+      ]
+    },
+    "cloudflare": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://bindings.mcp.cloudflare.com/sse"
+      ]
+    },
     "github": {
       "command": "docker",
       "args": [
@@ -15,26 +44,10 @@
         "ghcr.io/github/github-mcp-server"
       ],
       "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_PERSONAL_ACCESS_TOKEN}",
-        "GITHUB_TOOLSETS": "${env:GITHUB_TOOLSETS}",
-        "GITHUB_READ_ONLY": "${env:GITHUB_READ_ONLY}"
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "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",
+        "GITHUB_TOOLSETS": "repos,issues,pull-requests",
+        "GITHUB_READ_ONLY": ""
       }
-    },
-    "filesystem": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", ".*"]
-    },
-    "sequentialthinking": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
-    },
-    "puppeteer": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
-    },
-    "cloudflare": {
-      "command": "npx",
-      "args": ["mcp-remote", "https://bindings.mcp.cloudflare.com/sse"]
     }
   }
 }
