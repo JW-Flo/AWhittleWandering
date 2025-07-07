@@ -8,5 +8,9 @@
     "allowJs": true,
     "outDir": "./dist"
   },
-  "include": ["edge-worker/**/*.ts", "shared/**/*.ts"]
+  "include": [
+    "backend/edge-worker/src/**/*.ts",
+    "backend/workers/**/*.ts",
+    "shared/**/*.ts"
+  ]
 }

@@ -1,25 +1,30 @@
+import { DurableObjectState, WebSocket, WebSocketPair } from '@cloudflare/workers-types';
+
 export class AgentMessagingDurableObject {
-  private state: any;
-  private env: any;
+  private state: DurableObjectState;
+  private env: Record<string, unknown>;
   private clients: Set<WebSocket>;
 
-  constructor(state: any, env: any) {
+  constructor(state: DurableObjectState, env: Record<string, unknown>) {
     this.state = state;
     this.env = env;
     this.clients = new Set();
   }
 
-  async fetch(request: Request): Promise<Response> {
+  async fetch(request: Request) {
     if (request.headers.get('Upgrade') !== 'websocket') {
       return new Response('Expected websocket', { status: 400 });
     }
 
-    const [client, server] = Object.values(new WebSocketPair()) as [WebSocket, WebSocket];
+    const pair = new WebSocketPair();
+    const { 0: client, 1: server } = pair;
     this.handleSession(server);
-    return new Response(null, { status: 101, webSocket: client });
-  }
+    const response = new Response(null, { status: 101 });
+    // @ts-ignore: webSocket is a non-standard property for Cloudflare Workers
+    (response as any).webSocket = client;
+    return response;
 
-  private handleSession(webSocket: WebSocket): void {
+  private handleSession(webSocket: WebSocket) {
     webSocket.accept();
     this.clients.add(webSocket);
 

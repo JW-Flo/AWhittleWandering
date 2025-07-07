@@ -14,9 +14,8 @@ const TEST_SECRET = 'test-jwt-secret-key-for-unit-tests';
 
 // Generate a valid JWT token with different claims for testing
 function generateTestToken(
-  payload: Record<string, any> = {}, 
-  expiresIn: number = 3600, 
-  secret: string = TEST_SECRET
+  payload: Record<string, unknown> = {},
+  expiresIn: number = 3600
 ): string {
   // Default payload with admin rights and expiration
   const defaultPayload = {
@@ -34,7 +33,7 @@ function generateTestToken(
   };
 
   // Base64Url encode header and payload
-  const base64UrlEncode = (obj: any): string => {
+  const base64UrlEncode = (obj: unknown): string => {
     return btoa(JSON.stringify(obj))
       .replace(/=/g, '')
       .replace(/\+/g, '-')
