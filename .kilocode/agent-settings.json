@@ -1,0 +1,47 @@
+{
+  "$schema": "https://raw.githubusercontent.com/kilocode-ai/settings-schema/main/v1.json",
+  "providers": {
+    "model": "claude3-sonnet-20240620",
+    "cache": true,
+    "editingDiffs": true
+  },
+  "autoApprove": {
+    "includeOutsideWorkspace": false,
+    "includeProtectedFiles": false,
+    "delayMs": 1000,
+    "allowedExecutePrefixes": [
+      "npm test",
+      "pnpm test",
+      "pnpm install",
+      "tsc",
+      "wrangler",
+      "git log",
+      "git diff"
+    ]
+  },
+  "context": {
+    "condensationThreshold": 85
+  },
+  "prompts": {
+    "architect": {
+      "systemPrompt": "<<<PASTE THE COMBINED COST-MINIMISED ROO + CLINE SYSTEM PROMPT TEXT HERE>>>"
+    }
+  },
+  "terminal": {
+    "autoApproveExecute": false
+  },
+  "mcpServers": {
+    "enabled": [
+      "github.com/NightTrek/Software-planning-mcp",
+      "github.com/21st-dev/magic-mcp"
+    ]
+  },
+  "checkpoints": {
+    "enabled": false
+  },
+  "env": {
+    "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_PERSONAL_ACCESS_TOKEN}",
+    "GITHUB_TOOLSETS": "${env:GITHUB_TOOLSETS}",
+    "GITHUB_READ_ONLY": "${env:GITHUB_READ_ONLY}"
+  }
+}
