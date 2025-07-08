@@ -24,9 +24,9 @@ git push origin main
 Execute comprehensive validation:
 ```bash
 # Test all API endpoints
-cd awhittlewandering && npm run test:api
+cd awhittlewandering && bun run test:api
 # Validate frontend builds
-cd packages/frontend && npm run build && npm run preview
+cd packages/frontend && bun run build && bun run preview
 # Test edge worker deployments
 wrangler dev --config wrangler-api.toml
 wrangler dev --config wrangler-site.toml

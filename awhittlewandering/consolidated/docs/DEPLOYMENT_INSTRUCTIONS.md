@@ -53,7 +53,7 @@ docker compose -f configs/docker-compose.yml up -d
 
 # Start Workers development server
 cd awhittlewandering
-npm run dev
+bun run dev
 # or
 bun dev
 ```

@@ -33,15 +33,15 @@
 ### Edge Worker Deployment
 1. Run pre-deployment checks
    ```bash
-   npm run test
+   bun run test
    ```
 2. Build production bundle
    ```bash
-   npm run build
+   bun run build
    ```
 3. Deploy to Cloudflare
    ```bash
-   npm run deploy
+   bun run deploy
    ```
 4. Verify deployment
    - Check worker status in Cloudflare dashboard
@@ -61,11 +61,11 @@
 ### Documentation Deployment
 1. Build documentation
    ```bash
-   npm run docs:build
+   bun run docs:build
    ```
 2. Deploy to hosting
    ```bash
-   npm run docs:deploy
+   bun run docs:deploy
    ```
 3. Verify documentation site
 
@@ -118,7 +118,7 @@ To run these tasks:
 ### Edge Worker Rollback
 ```bash
 cd edge-worker
-npm run rollback
+bun run rollback
 ```
 
 ### iOS App Rollback
@@ -129,5 +129,5 @@ npm run rollback
 ```bash
 cd docs
 git checkout last-stable-tag
-npm run deploy
+bun run deploy
 ```

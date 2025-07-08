@@ -158,7 +158,7 @@ validate_deployment() {
     cd "$PROJECT_ROOT"
     
     if [ -d "tests/post-deploy" ]; then
-        npm run test:post-deploy
+        bun run test:post-deploy
     else
         echo -e "${YELLOW}No post-deployment tests configured${NC}"
     fi

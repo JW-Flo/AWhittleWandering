@@ -14,8 +14,8 @@ A robust, multi-source credential management system for the 48 Continental proje
 
 ```bash
 cd shared/credential-manager
-npm install
-npm run build
+bun install
+bun run build
 ```
 
 ## Configuration
@@ -194,4 +194,4 @@ npm test
 To build:
 
 ```bash
-npm run build
+bun run build

@@ -109,7 +109,7 @@ If GitHub Actions is not configured, perform manual deployment:
 
 ```bash
 cd edge-worker
-npm install
+bun install
 npx wrangler deploy
 ```
 
@@ -117,8 +117,8 @@ npx wrangler deploy
 
 ```bash
 cd 48Continental_Starter/public-site
-npm install
-npm run build
+bun install
+bun run build
 npx wrangler pages deploy build
 ```
 
@@ -149,7 +149,7 @@ node scripts/check-api-data.cjs
 
 ```bash
 cd mcp-server
-npm install
+bun install
 ```
 
 2. Create or update .env file with necessary configuration:

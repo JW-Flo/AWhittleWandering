@@ -35,7 +35,7 @@ A Whittle Wandering is a monorepo project built using Cloudflare Workers for edg
 
 2. Install dependencies:
    ```bash
-   npm install
+   bun install
    ```
 
 3. Create `.env` file based on `.env.example`:
@@ -50,7 +50,7 @@ A Whittle Wandering is a monorepo project built using Cloudflare Workers for edg
 To run the project locally:
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 This will start the development server with hot reloading enabled.
@@ -60,7 +60,7 @@ This will start the development server with hot reloading enabled.
 To build the project for production:
 
 ```bash
-npm run build
+bun run build
 ```
 
 ### Deployment
@@ -68,7 +68,7 @@ npm run build
 Deploy to Cloudflare Workers:
 
 ```bash
-npm run deploy
+bun run deploy
 ```
 
 ## Project Structure

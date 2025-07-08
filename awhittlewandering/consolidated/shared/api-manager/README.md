@@ -15,8 +15,8 @@ Resilient API access system for the 48 Continental project. This module provides
 
 ```bash
 cd shared/api-manager
-npm install
-npm run build
+bun install
+bun run build
 ```
 
 ## Usage
@@ -218,4 +218,4 @@ npm test
 To build:
 
 ```bash
-npm run build
+bun run build

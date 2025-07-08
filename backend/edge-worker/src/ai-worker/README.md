@@ -26,7 +26,7 @@ This Cloudflare Worker provides AI capabilities for the 48 Continental project, 
 1. Install dependencies:
 
 ```bash
-npm install -g wrangler
+bun install -g wrangler
 ```
 
 2. Login to Cloudflare:

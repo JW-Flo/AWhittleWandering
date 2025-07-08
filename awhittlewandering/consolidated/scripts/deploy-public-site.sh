@@ -60,16 +60,16 @@ deploy_public_site() {
     echo "VITE_MAPBOX_TOKEN=pk.eyJ1IjoidGhld2FuZGVyaW5nd2hpdHRsZSIsImEiOiJjbHQxaXhzejYwYmU2MmpxdHl0MHowN3UzIn0.Q7xKTRlXvtimBHd39JqN1A" >> .env
     
     echo -e "\n${BOLD}Step 2: Installing dependencies${NC}"
-    echo "Running npm ci..."
-    npm ci
+    echo "Running bun install..."
+    bun install
     
     echo -e "\n${BOLD}Step 3: Building the site${NC}"
-    echo "Running npm run build..."
-    npm run build
+    echo "Running bun run build..."
+    bun run build
     
     echo -e "\n${BOLD}Step 4: Deploying to Cloudflare Pages${NC}"
     echo "Installing wrangler..."
-    npm install -D wrangler@latest
+    bun install -D wrangler@latest
     
     echo "Deploying to Cloudflare Pages..."
     npx wrangler pages deploy dist --project-name=continentalusa-site

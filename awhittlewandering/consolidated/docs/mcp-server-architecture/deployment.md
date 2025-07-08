@@ -216,7 +216,7 @@ jobs:
         with:
           node-version: '16'
       - name: Install dependencies
-        run: npm ci
+        run: bun install
       - name: Run tests
         run: npm test
       - name: Deploy to Cloudflare Workers

@@ -413,7 +413,7 @@ TESSIE_BASE=https://api.tessie.com\
 \f4 \cf10 \cb8 \strokec10 steps:\cf2 \strokec2 \
   \cf12 \strokec12 -\cf2 \strokec2  \cf10 \strokec10 name:\cf2 \strokec2  \cf9 \strokec9 Fetch\cf2 \strokec2  \cf9 \strokec9 vehicle\cf2 \strokec2  \cf9 \strokec9 odometer\cf2 \strokec2 \
     \cf10 \strokec10 run:\cf2 \strokec2  \cf9 \strokec9 |\
-      npm ci\
+      bun install\
       node scripts/get-odometer.js\
 \pard\pardeftab720\partightenfactor0
 \cf2 \strokec2     \cf10 \strokec10 env:\cf2 \strokec2 \

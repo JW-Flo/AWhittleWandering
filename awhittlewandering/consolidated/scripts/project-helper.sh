@@ -29,11 +29,11 @@ cat <<EOF | sed \
   {GREEN}•{NC} tests/       - Test files
 
 {YELLOW}Common Commands:{NC}
-  {GREEN}•{NC} npm run start         - Start all services
-  {GREEN}•{NC} npm run deploy        - Deploy everything
-  {GREEN}•{NC} npm run build:edge    - Build edge worker
-  {GREEN}•{NC} npm run build:site    - Build public site
-  {GREEN}•{NC} npm run build:mobile  - Build mobile app
+  {GREEN}•{NC} bun run start         - Start all services
+  {GREEN}•{NC} bun run deploy        - Deploy everything
+  {GREEN}•{NC} bun run build:edge    - Build edge worker
+  {GREEN}•{NC} bun run build:site    - Build public site
+  {GREEN}•{NC} bun run build:mobile  - Build mobile app
 
 {YELLOW}Environment Files:{NC}
   {GREEN}•{NC} .env        - Main environment file

@@ -8,7 +8,7 @@
 
 4. Implement change; run local checks **inside MCP**:
      mcp run -- wrangler dev
-     mcp run -- npm run codegen:ts
+     mcp run -- bun run codegen:ts
      mcp run -- swift run tools/codegen-swift
      mcp run -- npm test
      mcp run -- xcodebuild test -scheme MCPClient -destination 'generic/platform=iOS'

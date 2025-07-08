@@ -1,0 +1,1 @@
+const filteredData = Array.isArray(data) ? data.filter(item => item.isValid) : [];

@@ -1,0 +1,355 @@
+﻿2025-07-07T18:30:17.4229637Z Current runner version: '2.325.0'
+2025-07-07T18:30:17.4269232Z ##[group]Runner Image Provisioner
+2025-07-07T18:30:17.4270205Z Hosted Compute Agent
+2025-07-07T18:30:17.4270838Z Version: 20250620.352
+2025-07-07T18:30:17.4271457Z Commit: f262f3aba23b10ea191b2a62bdee1ca4c3d344da
+2025-07-07T18:30:17.4272121Z Build Date: 2025-06-20T19:27:17Z
+2025-07-07T18:30:17.4272778Z ##[endgroup]
+2025-07-07T18:30:17.4273345Z ##[group]Operating System
+2025-07-07T18:30:17.4273885Z Ubuntu
+2025-07-07T18:30:17.4274691Z 24.04.2
+2025-07-07T18:30:17.4275236Z LTS
+2025-07-07T18:30:17.4275713Z ##[endgroup]
+2025-07-07T18:30:17.4276233Z ##[group]Runner Image
+2025-07-07T18:30:17.4276846Z Image: ubuntu-24.04
+2025-07-07T18:30:17.4277327Z Version: 20250622.1.0
+2025-07-07T18:30:17.4278396Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250622.1/images/ubuntu/Ubuntu2404-Readme.md
+2025-07-07T18:30:17.4279981Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250622.1
+2025-07-07T18:30:17.4281024Z ##[endgroup]
+2025-07-07T18:30:17.4282154Z ##[group]GITHUB_TOKEN Permissions
+2025-07-07T18:30:17.4284055Z Contents: read
+2025-07-07T18:30:17.4285094Z Metadata: read
+2025-07-07T18:30:17.4285644Z Packages: read
+2025-07-07T18:30:17.4286103Z ##[endgroup]
+2025-07-07T18:30:17.4288356Z Secret source: Actions
+2025-07-07T18:30:17.4289053Z Prepare workflow directory
+2025-07-07T18:30:17.4730398Z Prepare all required actions
+2025-07-07T18:30:17.4789686Z Getting action download info
+2025-07-07T18:30:17.8192327Z ##[group]Download immutable action package 'actions/checkout@v4'
+2025-07-07T18:30:17.8193325Z Version: 4.2.2
+2025-07-07T18:30:17.8194745Z Digest: sha256:ccb2698953eaebd21c7bf6268a94f9c26518a7e38e27e0b83c1fe1ad049819b1
+2025-07-07T18:30:17.8196132Z Source commit SHA: 11bd71901bbe5b1630ceea73d27597364c9af683
+2025-07-07T18:30:17.8196865Z ##[endgroup]
+2025-07-07T18:30:18.0064009Z ##[group]Download immutable action package 'actions/setup-node@v4'
+2025-07-07T18:30:18.0065303Z Version: 4.4.0
+2025-07-07T18:30:18.0066132Z Digest: sha256:9427cefe82346e992fb5b949e3569b39d537ae41aa3086483b14eceebfc16bc1
+2025-07-07T18:30:18.0067169Z Source commit SHA: 49933ea5288caeca8642d1e84afbd3f7d6820020
+2025-07-07T18:30:18.0067858Z ##[endgroup]
+2025-07-07T18:30:18.2336082Z Complete job name: Test
+2025-07-07T18:30:18.3019458Z ##[group]Run actions/checkout@v4
+2025-07-07T18:30:18.3020305Z with:
+2025-07-07T18:30:18.3020733Z   repository: JW-Flo/AWhittleWandering
+2025-07-07T18:30:18.3021421Z   token: ***
+2025-07-07T18:30:18.3021807Z   ssh-strict: true
+2025-07-07T18:30:18.3022239Z   ssh-user: git
+2025-07-07T18:30:18.3022764Z   persist-credentials: true
+2025-07-07T18:30:18.3023216Z   clean: true
+2025-07-07T18:30:18.3023620Z   sparse-checkout-cone-mode: true
+2025-07-07T18:30:18.3024103Z   fetch-depth: 1
+2025-07-07T18:30:18.3024632Z   fetch-tags: false
+2025-07-07T18:30:18.3025119Z   show-progress: true
+2025-07-07T18:30:18.3025520Z   lfs: false
+2025-07-07T18:30:18.3025896Z   submodules: false
+2025-07-07T18:30:18.3026301Z   set-safe-directory: true
+2025-07-07T18:30:18.3027044Z ##[endgroup]
+2025-07-07T18:30:18.4290325Z Syncing repository: JW-Flo/AWhittleWandering
+2025-07-07T18:30:18.4294108Z ##[group]Getting Git version info
+2025-07-07T18:30:18.4297051Z Working directory is '/home/runner/work/AWhittleWandering/AWhittleWandering'
+2025-07-07T18:30:18.4299284Z [command]/usr/bin/git version
+2025-07-07T18:30:18.5295959Z git version 2.49.0
+2025-07-07T18:30:18.5301550Z ##[endgroup]
+2025-07-07T18:30:18.5309577Z Temporarily overriding HOME='/home/runner/work/_temp/7bced99d-4f79-4780-b553-80acf8a89ad0' before making global git config changes
+2025-07-07T18:30:18.5311942Z Adding repository directory to the temporary git global config as a safe directory
+2025-07-07T18:30:18.5313970Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AWhittleWandering/AWhittleWandering
+2025-07-07T18:30:18.5317919Z Deleting the contents of '/home/runner/work/AWhittleWandering/AWhittleWandering'
+2025-07-07T18:30:18.5319816Z ##[group]Initializing the repository
+2025-07-07T18:30:18.5321553Z [command]/usr/bin/git init /home/runner/work/AWhittleWandering/AWhittleWandering
+2025-07-07T18:30:18.5323221Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-07-07T18:30:18.5325159Z hint: is subject to change. To configure the initial branch name to use in all
+2025-07-07T18:30:18.5326717Z hint: of your new repositories, which will suppress this warning, call:
+2025-07-07T18:30:18.5327897Z hint:
+2025-07-07T18:30:18.5328700Z hint: 	git config --global init.defaultBranch <name>
+2025-07-07T18:30:18.5329712Z hint:
+2025-07-07T18:30:18.5330642Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-07-07T18:30:18.5332239Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-07-07T18:30:18.5333559Z hint:
+2025-07-07T18:30:18.5334205Z hint: 	git branch -m <name>
+2025-07-07T18:30:18.5335825Z Initialized empty Git repository in /home/runner/work/AWhittleWandering/AWhittleWandering/.git/
+2025-07-07T18:30:18.5338783Z [command]/usr/bin/git remote add origin https://github.com/JW-Flo/AWhittleWandering
+2025-07-07T18:30:18.5341450Z ##[endgroup]
+2025-07-07T18:30:18.5342570Z ##[group]Disabling automatic garbage collection
+2025-07-07T18:30:18.5343688Z [command]/usr/bin/git config --local gc.auto 0
+2025-07-07T18:30:18.5347306Z ##[endgroup]
+2025-07-07T18:30:18.5348501Z ##[group]Setting up auth
+2025-07-07T18:30:18.5349662Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-07-07T18:30:18.5353137Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-07-07T18:30:18.5357322Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-07-07T18:30:18.5361471Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-07-07T18:30:18.5530911Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-07-07T18:30:18.5585401Z ##[endgroup]
+2025-07-07T18:30:18.5587997Z ##[group]Fetching the repository
+2025-07-07T18:30:18.5593613Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +c09f9c846e80b4079a828767d683e3391f745a62:refs/remotes/pull/15/merge
+2025-07-07T18:30:23.0155735Z From https://github.com/JW-Flo/AWhittleWandering
+2025-07-07T18:30:23.0159764Z  * [new ref]         c09f9c846e80b4079a828767d683e3391f745a62 -> pull/15/merge
+2025-07-07T18:30:23.0184147Z ##[endgroup]
+2025-07-07T18:30:23.0187409Z ##[group]Determining the checkout info
+2025-07-07T18:30:23.0188905Z ##[endgroup]
+2025-07-07T18:30:23.0194066Z [command]/usr/bin/git sparse-checkout disable
+2025-07-07T18:30:23.0234418Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-07-07T18:30:23.0267294Z ##[group]Checking out the ref
+2025-07-07T18:30:23.0271073Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/15/merge
+2025-07-07T18:30:23.7364045Z Note: switching to 'refs/remotes/pull/15/merge'.
+2025-07-07T18:30:23.7365446Z 
+2025-07-07T18:30:23.7365925Z You are in 'detached HEAD' state. You can look around, make experimental
+2025-07-07T18:30:23.7366851Z changes and commit them, and you can discard any commits you make in this
+2025-07-07T18:30:23.7367739Z state without impacting any branches by switching back to a branch.
+2025-07-07T18:30:23.7368330Z 
+2025-07-07T18:30:23.7368770Z If you want to create a new branch to retain commits you create, you may
+2025-07-07T18:30:23.7370522Z do so (now or later) by using -c with the switch command. Example:
+2025-07-07T18:30:23.7370971Z 
+2025-07-07T18:30:23.7371141Z   git switch -c <new-branch-name>
+2025-07-07T18:30:23.7371418Z 
+2025-07-07T18:30:23.7371597Z Or undo this operation with:
+2025-07-07T18:30:23.7371848Z 
+2025-07-07T18:30:23.7372370Z   git switch -
+2025-07-07T18:30:23.7372600Z 
+2025-07-07T18:30:23.7372951Z Turn off this advice by setting config variable advice.detachedHead to false
+2025-07-07T18:30:23.7373428Z 
+2025-07-07T18:30:23.7374034Z HEAD is now at c09f9c8 Merge 95fb943d9bd1be59d237cf26ee2da3671fa7209f into 7f337d666d8d3c0f81ac1b7b18da44fb8e726c9e
+2025-07-07T18:30:23.7442644Z ##[endgroup]
+2025-07-07T18:30:23.7485226Z [command]/usr/bin/git log -1 --format=%H
+2025-07-07T18:30:23.7510554Z c09f9c846e80b4079a828767d683e3391f745a62
+2025-07-07T18:30:23.7753449Z ##[group]Run actions/setup-node@v4
+2025-07-07T18:30:23.7753760Z with:
+2025-07-07T18:30:23.7753948Z   node-version: 20
+2025-07-07T18:30:23.7754143Z   cache: npm
+2025-07-07T18:30:23.7754716Z   cache-dependency-path: 48Continental_Starter/public-site/package-lock.json
+2025-07-07T18:30:23.7755213Z   always-auth: false
+2025-07-07T18:30:23.7755410Z   check-latest: false
+2025-07-07T18:30:23.7755747Z   token: ***
+2025-07-07T18:30:23.7755938Z ##[endgroup]
+2025-07-07T18:30:23.9689515Z Found in cache @ /opt/hostedtoolcache/node/20.19.2/x64
+2025-07-07T18:30:23.9690409Z ##[group]Environment details
+2025-07-07T18:30:25.7716220Z node: v20.19.2
+2025-07-07T18:30:25.7717460Z npm: 10.8.2
+2025-07-07T18:30:25.7724710Z yarn: 1.22.22
+2025-07-07T18:30:25.7726235Z ##[endgroup]
+2025-07-07T18:30:25.7753063Z [command]/opt/hostedtoolcache/node/20.19.2/x64/bin/npm config get cache
+2025-07-07T18:30:26.0074966Z /home/runner/.npm
+2025-07-07T18:30:26.2159054Z npm cache is not found
+2025-07-07T18:30:26.2331957Z ##[group]Run npm ci
+2025-07-07T18:30:26.2332251Z [36;1mnpm ci[0m
+2025-07-07T18:30:26.2430762Z shell: /usr/bin/bash -e {0}
+2025-07-07T18:30:26.2431082Z ##[endgroup]
+2025-07-07T18:30:34.3920588Z 
+2025-07-07T18:30:34.3930218Z > wandering-whittle@1.0.0 preinstall
+2025-07-07T18:30:34.3931383Z > echo 'Skipping Node.js version check for local development'
+2025-07-07T18:30:34.3932053Z 
+2025-07-07T18:30:34.3997375Z Skipping Node.js version check for local development
+2025-07-07T18:30:34.4007459Z 
+2025-07-07T18:30:34.4008000Z > wandering-whittle@1.0.0 postinstall
+2025-07-07T18:30:34.4010353Z > echo 'Setup complete. Run npm run dev to start development server.'
+2025-07-07T18:30:34.4011061Z 
+2025-07-07T18:30:34.4074759Z Setup complete. Run npm run dev to start development server.
+2025-07-07T18:30:34.4163982Z 
+2025-07-07T18:30:34.4175799Z added 302 packages, and audited 303 packages in 8s
+2025-07-07T18:30:34.4176599Z 
+2025-07-07T18:30:34.4177021Z 44 packages are looking for funding
+2025-07-07T18:30:34.4179463Z   run `npm fund` for details
+2025-07-07T18:30:34.4181605Z 
+2025-07-07T18:30:34.4182065Z found 0 vulnerabilities
+2025-07-07T18:30:34.4530109Z ##[group]Run npm run test:run
+2025-07-07T18:30:34.4530665Z [36;1mnpm run test:run[0m
+2025-07-07T18:30:34.4590849Z shell: /usr/bin/bash -e {0}
+2025-07-07T18:30:34.4591114Z env:
+2025-07-07T18:30:34.4591298Z   VITE_MAPBOX_TOKEN: 
+2025-07-07T18:30:34.4591516Z   VITE_USE_SIMULATED_DATA: true
+2025-07-07T18:30:34.4591739Z ##[endgroup]
+2025-07-07T18:30:34.7286884Z 
+2025-07-07T18:30:34.7287623Z > wandering-whittle@1.0.0 test:run
+2025-07-07T18:30:34.7288153Z > vitest run
+2025-07-07T18:30:34.7288365Z 
+2025-07-07T18:30:35.3715247Z 
+2025-07-07T18:30:35.3726899Z [1m[46m RUN [49m[22m [36mv3.2.1 [39m[90m/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site[39m
+2025-07-07T18:30:35.3728096Z 
+2025-07-07T18:30:38.0121754Z [90mstdout[2m | src/__tests__/App.test.jsx[2m > [22m[2mApp Component[2m > [22m[2mrenders Dashboard with data when loading is false and no errors
+2025-07-07T18:30:38.0123573Z [22m[39m[MapboxToken] Retrieved from: HARDCODED_FALLBACK
+2025-07-07T18:30:38.0124409Z [MapboxToken] Retrieved from: window.__MAPBOX_TOKEN__
+2025-07-07T18:30:38.0125428Z [MapboxGL] Token initialization attempt completed {
+2025-07-07T18:30:38.0126246Z   success: [33mtrue[39m,
+2025-07-07T18:30:38.0126716Z   tokenSet: [33mtrue[39m,
+2025-07-07T18:30:38.0127360Z   tokenPreview: [32m'pk.eyJ1Ijo...'[39m,
+2025-07-07T18:30:38.0128049Z   mapboxVersion: [32m'Not loaded'[39m
+2025-07-07T18:30:38.0128988Z }
+2025-07-07T18:30:38.0129486Z [MapboxToken] Retrieved from: window.__MAPBOX_TOKEN__
+2025-07-07T18:30:38.0130218Z 🗺️ Mapbox Token Diagnostics
+2025-07-07T18:30:38.0130629Z   Environment: test
+2025-07-07T18:30:38.0131255Z   ┌─────────────────┬────────┬───────────┬─────────────────┐
+2025-07-07T18:30:38.0132020Z   │ (index)         │ exists │ valid     │ preview         │
+2025-07-07T18:30:38.0132779Z   ├─────────────────┼────────┼───────────┼─────────────────┤
+2025-07-07T18:30:38.0133689Z   │ metaTag         │ [33mfalse[39m  │ [33mfalse[39m     │ [1mnull[22m            │
+2025-07-07T18:30:38.0142520Z   │ windowGlobal    │ [33mtrue[39m   │ [33mtrue[39m      │ [32m'pk.eyJ1Ijo...'[39m │
+2025-07-07T18:30:38.0143662Z   │ envVariable     │ [33mfalse[39m  │ [33mfalse[39m     │ [1mnull[22m            │
+2025-07-07T18:30:38.0144959Z   │ configuredToken │ [33mtrue[39m   │ [33mtrue[39m      │ [32m'pk.eyJ1Ijo...'[39m │
+2025-07-07T18:30:38.0146096Z   │ mapboxGl        │ [33mfalse[39m  │ [90mundefined[39m │ [1mnull[22m            │
+2025-07-07T18:30:38.0147002Z   └─────────────────┴────────┴───────────┴─────────────────┘
+2025-07-07T18:30:38.0147883Z Map component using centralized coordinate format utility from mapUtils.js
+2025-07-07T18:30:38.0148400Z 
+2025-07-07T18:30:38.0149703Z [90mstderr[2m | src/__tests__/App.test.jsx[2m > [22m[2mApp Component[2m > [22m[2mrenders Dashboard with data when loading is false and no errors
+2025-07-07T18:30:38.0150934Z [22m[39m  ⚠️ Mapbox token issues detected: [
+2025-07-07T18:30:38.0151618Z     [32m'mapboxgl.accessToken not set'[39m,
+2025-07-07T18:30:38.0152354Z     [32m'VITE_MAPBOX_TOKEN env variable not injected'[39m
+2025-07-07T18:30:38.0152930Z   ]
+2025-07-07T18:30:38.0153082Z 
+2025-07-07T18:30:38.3240363Z [90mstderr[2m | src/__tests__/App.test.jsx[2m > [22m[2mApp Component[2m > [22m[2mrenders Dashboard with data when loading is false and no errors
+2025-07-07T18:30:38.3245921Z [22m[39mError: Uncaught [TypeError: Cannot read properties of undefined (reading 'filter')]
+2025-07-07T18:30:38.3252836Z     at reportException (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/node_modules/jsdom/lib/jsdom/living/helpers/runtime-script-errors.js:66:24)
+2025-07-07T18:30:38.3278059Z     at innerInvokeEventListeners (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:353:9)
+2025-07-07T18:30:38.3281210Z     at invokeEventListeners (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:286:3)
+2025-07-07T18:30:38.3283940Z     at HTMLUnknownElementImpl._dispatch (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:233:9)
+2025-07-07T18:30:38.3300458Z     at HTMLUnknownElementImpl.dispatchEvent (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:104:17)
+2025-07-07T18:30:38.3303190Z     at HTMLUnknownElement.dispatchEvent (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/node_modules/jsdom/lib/jsdom/living/generated/EventTarget.js:241:34)
+2025-07-07T18:30:38.3308299Z     at Object.invokeGuardedCallbackDev (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/node_modules/react-dom/cjs/react-dom.development.js:4213:16)
+2025-07-07T18:30:38.3311965Z     at invokeGuardedCallback (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/node_modules/react-dom/cjs/react-dom.development.js:4277:31)
+2025-07-07T18:30:38.3314726Z     at reportUncaughtErrorInDEV (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/node_modules/react-dom/cjs/react-dom.development.js:22877:5)
+2025-07-07T18:30:38.3337321Z     at captureCommitPhaseError (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/node_modules/react-dom/cjs/react-dom.development.js:27165:5) TypeError: Cannot read properties of undefined (reading 'filter')
+2025-07-07T18:30:38.3340800Z     at [90m/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/[39msrc/components/TripStatistics.jsx:210:22
+2025-07-07T18:30:38.3344188Z     at commitHookEffectListMount [90m(/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/[39mnode_modules/[4mreact-dom[24m/cjs/react-dom.development.js:23189:26[90m)[39m
+2025-07-07T18:30:38.3347925Z     at commitPassiveMountOnFiber [90m(/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/[39mnode_modules/[4mreact-dom[24m/cjs/react-dom.development.js:24970:11[90m)[39m
+2025-07-07T18:30:38.3351866Z     at commitPassiveMountEffects_complete [90m(/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/[39mnode_modules/[4mreact-dom[24m/cjs/react-dom.development.js:24930:9[90m)[39m
+2025-07-07T18:30:38.3357034Z     at commitPassiveMountEffects_begin [90m(/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/[39mnode_modules/[4mreact-dom[24m/cjs/react-dom.development.js:24917:7[90m)[39m
+2025-07-07T18:30:38.3361175Z     at commitPassiveMountEffects [90m(/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/[39mnode_modules/[4mreact-dom[24m/cjs/react-dom.development.js:24905:3[90m)[39m
+2025-07-07T18:30:38.3366469Z     at flushPassiveEffectsImpl [90m(/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/[39mnode_modules/[4mreact-dom[24m/cjs/react-dom.development.js:27078:3[90m)[39m
+2025-07-07T18:30:38.3369582Z     at flushPassiveEffects [90m(/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/[39mnode_modules/[4mreact-dom[24m/cjs/react-dom.development.js:27023:14[90m)[39m
+2025-07-07T18:30:38.3372393Z     at [90m/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/[39mnode_modules/[4mreact-dom[24m/cjs/react-dom.development.js:26808:9
+2025-07-07T18:30:38.3375389Z     at workLoop [90m(/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/[39mnode_modules/[4mscheduler[24m/cjs/scheduler.development.js:266:34[90m)[39m
+2025-07-07T18:30:38.3377118Z The above error occurred in the <TripStatistics> component:
+2025-07-07T18:30:38.3377860Z 
+2025-07-07T18:30:38.3378979Z     at TripStatistics (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/src/components/TripStatistics.jsx:125:27)
+2025-07-07T18:30:38.3380369Z     at div
+2025-07-07T18:30:38.3381447Z     at Map (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/src/components/Map.jsx:211:16)
+2025-07-07T18:30:38.3383448Z     at MapErrorBoundary (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/src/components/MapErrorBoundary.jsx:9:5)
+2025-07-07T18:30:38.3385050Z     at div
+2025-07-07T18:30:38.3386304Z     at EnhancedMap (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/src/components/EnhancedMap.jsx:9:73)
+2025-07-07T18:30:38.3387612Z     at Suspense
+2025-07-07T18:30:38.3387960Z     at div
+2025-07-07T18:30:38.3388265Z     at div
+2025-07-07T18:30:38.3389449Z     at Dashboard (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/src/components/Dashboard.jsx:26:16)
+2025-07-07T18:30:38.3390594Z     at div
+2025-07-07T18:30:38.3391640Z     at App (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/src/App.jsx:20:71)
+2025-07-07T18:30:38.3392481Z 
+2025-07-07T18:30:38.3393319Z React will try to recreate this component tree from scratch using the error boundary you provided, MapErrorBoundary.
+2025-07-07T18:30:38.3395075Z Map Error: TypeError: Cannot read properties of undefined (reading 'filter')
+2025-07-07T18:30:38.3396890Z     at [90m/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/[39msrc/components/TripStatistics.jsx:210:22
+2025-07-07T18:30:38.3399748Z     at commitHookEffectListMount [90m(/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/[39mnode_modules/[4mreact-dom[24m/cjs/react-dom.development.js:23189:26[90m)[39m
+2025-07-07T18:30:38.3403020Z     at commitPassiveMountOnFiber [90m(/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/[39mnode_modules/[4mreact-dom[24m/cjs/react-dom.development.js:24970:11[90m)[39m
+2025-07-07T18:30:38.3465197Z     at commitPassiveMountEffects_complete [90m(/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/[39mnode_modules/[4mreact-dom[24m/cjs/react-dom.development.js:24930:9[90m)[39m
+2025-07-07T18:30:38.3468653Z     at commitPassiveMountEffects_begin [90m(/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/[39mnode_modules/[4mreact-dom[24m/cjs/react-dom.development.js:24917:7[90m)[39m
+2025-07-07T18:30:38.3471846Z     at commitPassiveMountEffects [90m(/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/[39mnode_modules/[4mreact-dom[24m/cjs/react-dom.development.js:24905:3[90m)[39m
+2025-07-07T18:30:38.3475176Z     at flushPassiveEffectsImpl [90m(/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/[39mnode_modules/[4mreact-dom[24m/cjs/react-dom.development.js:27078:3[90m)[39m
+2025-07-07T18:30:38.3478279Z     at flushPassiveEffects [90m(/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/[39mnode_modules/[4mreact-dom[24m/cjs/react-dom.development.js:27023:14[90m)[39m
+2025-07-07T18:30:38.3481097Z     at [90m/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/[39mnode_modules/[4mreact-dom[24m/cjs/react-dom.development.js:26808:9
+2025-07-07T18:30:38.3483892Z     at workLoop [90m(/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/[39mnode_modules/[4mscheduler[24m/cjs/scheduler.development.js:266:34[90m)[39m
+2025-07-07T18:30:38.3485539Z Component Stack: 
+2025-07-07T18:30:38.3487209Z     at TripStatistics (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/src/components/TripStatistics.jsx:125:27)
+2025-07-07T18:30:38.3488397Z     at div
+2025-07-07T18:30:38.3489469Z     at Map (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/src/components/Map.jsx:211:16)
+2025-07-07T18:30:38.3491465Z     at MapErrorBoundary (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/src/components/MapErrorBoundary.jsx:9:5)
+2025-07-07T18:30:38.3492727Z     at div
+2025-07-07T18:30:38.3493951Z     at EnhancedMap (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/src/components/EnhancedMap.jsx:9:73)
+2025-07-07T18:30:38.3495357Z     at Suspense
+2025-07-07T18:30:38.3495705Z     at div
+2025-07-07T18:30:38.3496006Z     at div
+2025-07-07T18:30:38.3497194Z     at Dashboard (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/src/components/Dashboard.jsx:26:16)
+2025-07-07T18:30:38.3498355Z     at div
+2025-07-07T18:30:38.3499300Z     at App (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/src/App.jsx:20:71)
+2025-07-07T18:30:38.3500370Z Map Error Details: {
+2025-07-07T18:30:38.3501219Z   error: [32m"Cannot read properties of undefined (reading 'filter')"[39m,
+2025-07-07T18:30:38.3502386Z   stack: [32m"TypeError: Cannot read properties of undefined (reading 'filter')\n"[39m +
+2025-07-07T18:30:38.3504295Z     [32m'    at /home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/src/components/TripStatistics.jsx:210:22\n'[39m +
+2025-07-07T18:30:38.3508966Z     [32m'    at commitHookEffectListMount (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/node_modules/react-dom/cjs/react-dom.development.js:23189:26)\n'[39m +
+2025-07-07T18:30:38.3512045Z     [32m'    at commitPassiveMountOnFiber (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/node_modules/react-dom/cjs/react-dom.development.js:24970:11)\n'[39m +
+2025-07-07T18:30:38.3515369Z     [32m'    at commitPassiveMountEffects_complete (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/node_modules/react-dom/cjs/react-dom.development.js:24930:9)\n'[39m +
+2025-07-07T18:30:38.3518373Z     [32m'    at commitPassiveMountEffects_begin (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/node_modules/react-dom/cjs/react-dom.development.js:24917:7)\n'[39m +
+2025-07-07T18:30:38.3521297Z     [32m'    at commitPassiveMountEffects (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/node_modules/react-dom/cjs/react-dom.development.js:24905:3)\n'[39m +
+2025-07-07T18:30:38.3524156Z     [32m'    at flushPassiveEffectsImpl (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/node_modules/react-dom/cjs/react-dom.development.js:27078:3)\n'[39m +
+2025-07-07T18:30:38.3527021Z     [32m'    at flushPassiveEffects (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/node_modules/react-dom/cjs/react-dom.development.js:27023:14)\n'[39m +
+2025-07-07T18:30:38.3529599Z     [32m'    at /home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/node_modules/react-dom/cjs/react-dom.development.js:26808:9\n'[39m +
+2025-07-07T18:30:38.3531989Z     [32m'    at workLoop (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/node_modules/scheduler/cjs/scheduler.development.js:266:34)'[39m,
+2025-07-07T18:30:38.3533270Z   errorInfo: {
+2025-07-07T18:30:38.3533727Z     componentStack: [32m'\n'[39m +
+2025-07-07T18:30:38.3535572Z       [32m'    at TripStatistics (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/src/components/TripStatistics.jsx:125:27)\n'[39m +
+2025-07-07T18:30:38.3536917Z       [32m'    at div\n'[39m +
+2025-07-07T18:30:38.3538494Z       [32m'    at Map (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/src/components/Map.jsx:211:16)\n'[39m +
+2025-07-07T18:30:38.3540763Z       [32m'    at MapErrorBoundary (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/src/components/MapErrorBoundary.jsx:9:5)\n'[39m +
+2025-07-07T18:30:38.3542067Z       [32m'    at div\n'[39m +
+2025-07-07T18:30:38.3546928Z       [32m'    at EnhancedMap (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/src/components/EnhancedMap.jsx:9:73)\n'[39m +
+2025-07-07T18:30:38.3548263Z       [32m'    at Suspense\n'[39m +
+2025-07-07T18:30:38.3548765Z       [32m'    at div\n'[39m +
+2025-07-07T18:30:38.3549236Z       [32m'    at div\n'[39m +
+2025-07-07T18:30:38.3550706Z       [32m'    at Dashboard (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/src/components/Dashboard.jsx:26:16)\n'[39m +
+2025-07-07T18:30:38.3551934Z       [32m'    at div\n'[39m +
+2025-07-07T18:30:38.3553165Z       [32m'    at App (/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/src/App.jsx:20:71)'[39m
+2025-07-07T18:30:38.3554118Z   },
+2025-07-07T18:30:38.3554775Z   errorType: [32m'unknown'[39m,
+2025-07-07T18:30:38.3555249Z   errorCount: [33m1[39m,
+2025-07-07T18:30:38.3555597Z   props: {
+2025-07-07T18:30:38.3556021Z     hasTripData: [33mtrue[39m,
+2025-07-07T18:30:38.3556525Z     hasVehicleData: [33mtrue[39m,
+2025-07-07T18:30:38.3557157Z     mapLayers: {
+2025-07-07T18:30:38.3557579Z       weather: [33mfalse[39m,
+2025-07-07T18:30:38.3558037Z       traffic: [33mfalse[39m,
+2025-07-07T18:30:38.3558512Z       satellite: [33mfalse[39m,
+2025-07-07T18:30:38.3559031Z       chargingStations: [33mtrue[39m
+2025-07-07T18:30:38.3559418Z     }
+2025-07-07T18:30:38.3559676Z   }
+2025-07-07T18:30:38.3559930Z }
+2025-07-07T18:30:38.3560073Z 
+2025-07-07T18:30:38.3562116Z  [32m✓[39m src/__tests__/App.test.jsx [2m([22m[2m3 tests[22m[2m)[22m[33m 1254[2mms[22m[39m
+2025-07-07T18:30:38.3563366Z    [33m[2m✓[22m[39m App Component[2m > [22mrenders error message if any hook returns error [33m 617[2mms[22m[39m
+2025-07-07T18:30:38.3564937Z    [33m[2m✓[22m[39m App Component[2m > [22mrenders Dashboard with data when loading is false and no errors [33m 598[2mms[22m[39m
+2025-07-07T18:30:39.9202107Z  [32m✓[39m src/__tests__/App.realdata.test.jsx [2m([22m[2m1 test[22m[2m)[22m[33m 570[2mms[22m[39m
+2025-07-07T18:30:39.9205613Z    [33m[2m✓[22m[39m App Component with real data[2m > [22mrenders loading state and then dashboard with real data [33m 569[2mms[22m[39m
+2025-07-07T18:30:40.7467214Z 
+2025-07-07T18:30:40.7468319Z [31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Suites 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+2025-07-07T18:30:40.7468757Z 
+2025-07-07T18:30:40.7476170Z [41m[1m FAIL [22m[49m src/components/diagnostics/__tests__/CompressionDiagnostics.test.jsx[2m [ src/components/diagnostics/__tests__/CompressionDiagnostics.test.jsx ][22m
+2025-07-07T18:30:40.7507055Z [31m[1mError[22m: Failed to resolve import "../../../../edge-worker/src/telemetryCompression.js" from "src/components/diagnostics/CompressionDiagnostics.jsx". Does the file exist?[39m
+2025-07-07T18:30:40.7511060Z   Plugin: [35mvite:import-analysis[39m
+2025-07-07T18:30:40.7512792Z   File: [36m/home/runner/work/AWhittleWandering/AWhittleWandering/48Continental_Starter/public-site/src/components/diagnostics/CompressionDiagnostics.jsx[39m:9:74
+2025-07-07T18:30:40.7514834Z [33m  4  |  let COMPRESSION_TIERS, encodeTelemetry, decodeTelemetry;
+2025-07-07T18:30:40.7515404Z   5  |  try {
+2025-07-07T18:30:40.7516381Z   6  |    ({ COMPRESSION_TIERS, encodeTelemetry, decodeTelemetry } = await import("../../../../edge-worker/src/telemetryCompression.js"));
+2025-07-07T18:30:40.7517417Z      |                                                                            ^
+2025-07-07T18:30:40.7517890Z   7  |  } catch (e) {
+2025-07-07T18:30:40.7518641Z   8  |    COMPRESSION_TIERS = { LOSSLESS: 1, NEAR_LOSSLESS: 2, LOSSY: 3 };[39m
+2025-07-07T18:30:40.7523648Z [90m [2m❯[22m TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:[2m42499:41[22m[39m
+2025-07-07T18:30:40.7535061Z [90m [2m❯[22m TransformPluginContext.error node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:[2m42496:16[22m[39m
+2025-07-07T18:30:40.7535830Z 
+2025-07-07T18:30:40.7536879Z [90m [2m❯[22m normalizeUrl node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:[2m40475:23[22m[39m
+2025-07-07T18:30:40.7538357Z [90m [2m❯[22m node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:[2m40594:37[22m[39m
+2025-07-07T18:30:40.7539907Z [90m [2m❯[22m TransformPluginContext.transform node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:[2m40521:7[22m[39m
+2025-07-07T18:30:40.7546110Z [2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (3)[39m
+2025-07-07T18:30:40.7549079Z [2m      Tests [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+2025-07-07T18:30:40.7551752Z [2m   Start at [22m 18:30:35
+2025-07-07T18:30:40.7556115Z [90m [2m❯[22m EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:[2m42294:18[22m[39m
+2025-07-07T18:30:40.7557793Z [90m [2m❯[22m loadAndTransform node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:[2m35735:27[22m[39m
+2025-07-07T18:30:40.7577766Z 
+2025-07-07T18:30:40.7578294Z [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+2025-07-07T18:30:40.7578987Z 
+2025-07-07T18:30:40.7580359Z [2m   Duration [22m 5.37s[2m (transform 677ms, setup 449ms, collect 732ms, tests 1.82s, environment 1.48s, prepare 277ms)[22m
+2025-07-07T18:30:40.7595197Z 
+2025-07-07T18:30:40.8691179Z ##[error]Process completed with exit code 1.
+2025-07-07T18:30:40.8790066Z Post job cleanup.
+2025-07-07T18:30:40.9797403Z [command]/usr/bin/git version
+2025-07-07T18:30:40.9850756Z git version 2.49.0
+2025-07-07T18:30:40.9900643Z Temporarily overriding HOME='/home/runner/work/_temp/c41c7e39-a7ef-4c91-902c-ee04f86cae24' before making global git config changes
+2025-07-07T18:30:40.9903382Z Adding repository directory to the temporary git global config as a safe directory
+2025-07-07T18:30:40.9908451Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/AWhittleWandering/AWhittleWandering
+2025-07-07T18:30:40.9948684Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-07-07T18:30:40.9986790Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-07-07T18:30:41.0239360Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-07-07T18:30:41.0268311Z http.https://github.com/.extraheader
+2025-07-07T18:30:41.0282454Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-07-07T18:30:41.0319729Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-07-07T18:30:41.0680028Z Cleaning up orphan processes

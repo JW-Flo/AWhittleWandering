@@ -106,10 +106,10 @@ import { TelemetrySchema } from 'shared/schemas/telemetrySchema';
 
 ## Troubleshooting
 
-1. **pnpm install fails** – ensure Node 20+, pnpm 9+, and no npm lockfiles.
+1. **pbun install fails** – ensure Node 20+, pnpm 9+, and no npm lockfiles.
 2. **Local worker 403** – check `EDGE_HMAC_KEY` matches client header.
 3. **Map blank** – verify `MAPBOX_TOKEN` set and referrer allowed.
-4. **CI red** – run `pnpm run lint && pnpm run check-types && pnpm run test --recursive` locally.
+4. **CI red** – run `pbun run lint && pbun run check-types && pbun run test --recursive` locally.
 
 ## Architecture Overview
 

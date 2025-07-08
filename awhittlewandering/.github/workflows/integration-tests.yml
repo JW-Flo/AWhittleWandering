@@ -37,12 +37,12 @@ jobs:
           cache-dependency-path: ./awhittlewandering/package-lock.json
 
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: bun install --legacy-peer-deps
         working-directory: ./awhittlewandering
 
       - name: Install jsdom for tests
         working-directory: ./awhittlewandering
-        run: npm install jsdom --save-dev
+        run: bun install jsdom --save-dev
 
       - name: Check dependencies
         run: |
@@ -55,7 +55,7 @@ jobs:
         working-directory: ./awhittlewandering
 
       - name: Run critical tests
-        run: npm run test:critical
+        run: bun run test:critical
         working-directory: ./awhittlewandering
 
   # Only run additional tests if requested or on main branch
@@ -81,15 +81,15 @@ jobs:
           cache-dependency-path: ./awhittlewandering/package-lock.json
 
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: bun install --legacy-peer-deps
         working-directory: ./awhittlewandering
 
       - name: Install jsdom for tests
         working-directory: ./awhittlewandering
-        run: npm install jsdom --save-dev
+        run: bun install jsdom --save-dev
 
       - name: Run ${{ matrix.test-suite }} tests
-        run: npm run test:${{ matrix.test-suite }}
+        run: bun run test:${{ matrix.test-suite }}
         working-directory: ./awhittlewandering
         continue-on-error: true
 

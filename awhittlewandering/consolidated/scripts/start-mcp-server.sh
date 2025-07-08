@@ -33,7 +33,7 @@ fi
 # Install dependencies if node_modules doesn't exist
 if [ ! -d "node_modules" ]; then
     echo -e "${YELLOW}Installing dependencies...${NC}"
-    npm install
+    bun install
 fi
 
 # Check if .env exists, create from example if not

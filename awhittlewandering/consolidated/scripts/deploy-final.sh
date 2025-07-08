@@ -179,7 +179,7 @@ echo -e "\n${BLUE}STEP 4: Deploying Edge Worker${NC}"
 
 cd edge-worker
 echo -e "${YELLOW}Installing dependencies...${NC}"
-npm install
+bun install
 
 echo -e "${YELLOW}Deploying edge worker...${NC}"
 if confirm "Deploy the edge worker now?"; then
@@ -205,10 +205,10 @@ echo -e "\n${BLUE}STEP 5: Deploying Public Site${NC}"
 
 cd 48Continental_Starter/public-site
 echo -e "${YELLOW}Installing dependencies...${NC}"
-npm install
+bun install
 
 echo -e "${YELLOW}Building public site...${NC}"
-npm run build
+bun run build
 
 echo -e "${YELLOW}Deploying public site...${NC}"
 if confirm "Deploy the public site now?"; then
@@ -246,7 +246,7 @@ if confirm "Do you want to configure the MCP server for persistent operation?"; 
   
   cd mcp-server
   echo -e "${YELLOW}Installing dependencies...${NC}"
-  npm install
+  bun install
   
   echo -e "${YELLOW}Checking .env file...${NC}"
   if [ ! -f ".env" ] && [ -f ".env.example" ]; then

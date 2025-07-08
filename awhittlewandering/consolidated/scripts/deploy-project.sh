@@ -192,7 +192,7 @@ function deploy_edge_worker() {
   goto_directory "$PROJECT_ROOT/edge-worker" || return 1
   
   # Install dependencies
-  execute_command "npm ci" "Installing edge worker dependencies" || return 1
+  execute_command "bun install" "Installing edge worker dependencies" || return 1
   
   # Set environment variables for deployment
   local deploy_command="CLOUDFLARE_API_TOKEN=\"$CF_API_TOKEN\" CLOUDFLARE_ACCOUNT_ID=\"$CF_ACCOUNT_ID\" npx wrangler deploy"
@@ -222,14 +222,14 @@ function deploy_public_site() {
   fi
   
   # Install dependencies
-  execute_command "npm ci" "Installing public site dependencies" || return 1
+  execute_command "bun install" "Installing public site dependencies" || return 1
   
   # Verify Mapbox token
   execute_command "./scripts/verify-mapbox-token.sh || echo 'Warning: Mapbox token verification issue'" \
     "Verifying Mapbox token" || print_status "warn" "Continuing despite Mapbox token verification issue"
   
   # Build the site
-  execute_command "npm run build" "Building public site" || return 1
+  execute_command "bun run build" "Building public site" || return 1
   
   # Check if build directory exists
   if [[ ! -d "dist" && "$DRY_RUN" == "false" ]]; then
@@ -258,7 +258,7 @@ function deploy_mcp_server() {
   }
   
   # Install dependencies
-  execute_command "npm ci" "Installing MCP server dependencies" || return 1
+  execute_command "bun install" "Installing MCP server dependencies" || return 1
   
   # Create or update .env file for the MCP server
   local env_file=".env"
@@ -274,7 +274,7 @@ EDGE_HMAC_KEY=$EDGE_HMAC_KEY"
   
   # Build if needed
   if [[ -f "package.json" ]] && grep -q "\"build\"" "package.json"; then
-    execute_command "npm run build" "Building MCP server" || return 1
+    execute_command "bun run build" "Building MCP server" || return 1
   fi
   
   # Restart the service if running in production

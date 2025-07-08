@@ -171,7 +171,7 @@ if [ -d "$ROOT_DIR/AWhittleWandering_Website/public-site" ]; then
   echo "#### Build Script Test" >> "$REPORT_FILE"
   
   # Try to run a build test without actually building
-  if npm run build --dry-run > /dev/null 2>&1; then
+  if bun run build --dry-run > /dev/null 2>&1; then
     echo "✅ Build script executes without errors" >> "$REPORT_FILE"
   else
     echo "⚠️ Build script has errors" >> "$REPORT_FILE"

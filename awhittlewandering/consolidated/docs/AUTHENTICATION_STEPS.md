@@ -50,7 +50,7 @@ If the diagnostic script identifies issues, redeploy the edge worker:
 
 ```bash
 cd edge-worker
-npm run build
+bun run build
 npx wrangler deploy
 ```
 
@@ -60,7 +60,7 @@ The public site is currently offline. Deploy it using:
 
 ```bash
 cd 48Continental_Starter/public-site
-npm run build
+bun run build
 npx wrangler pages deploy ./dist
 ```
 

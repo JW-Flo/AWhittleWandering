@@ -508,10 +508,10 @@ server.defineTool("startLocalDev", {
 
     if (component === "public-site") {
       workingDir = PUBLIC_SITE_DIR;
-      command = "npm run dev";
+      command = "bun run dev";
     } else if (component === "edge-worker") {
       workingDir = EDGE_WORKER_DIR;
-      command = "npm run dev";
+      command = "bun run dev";
     } else {
       // Run the root start script for all components
       workingDir = PROJECT_ROOT;

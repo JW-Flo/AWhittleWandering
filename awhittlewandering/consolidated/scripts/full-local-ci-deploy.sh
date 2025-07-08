@@ -123,8 +123,8 @@ if command -v bun >/dev/null 2>&1; then
     bun run build:frontend
 else
     log_info "Using npm for dependency installation..."
-    npm ci
-    npm run build:frontend
+    bun install
+    bun run build:frontend
 fi
 
 popd >/dev/null

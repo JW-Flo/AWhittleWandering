@@ -28,7 +28,7 @@ mcp-server/
 
 1. Install dependencies:
    ```
-   npm install
+   bun install
    ```
 
 2. Copy and configure environment variables:

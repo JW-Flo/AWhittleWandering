@@ -32,19 +32,19 @@ jobs:
 
       - name: Install dependencies
         working-directory: awhittlewandering
-        run: npm ci
+        run: bun install
 
       - name: Lint
         working-directory: awhittlewandering
-        run: npm run lint
+        run: bun run lint
 
       - name: Type check
         working-directory: awhittlewandering
-        run: npm run check-types
+        run: bun run check-types
 
       - name: Run critical tests
         working-directory: awhittlewandering
-        run: npm run test:critical
+        run: bun run test:critical
 
   build:
     name: Build
@@ -63,11 +63,11 @@ jobs:
 
       - name: Install dependencies
         working-directory: awhittlewandering
-        run: npm ci
+        run: bun install
 
       - name: Build frontend
         working-directory: awhittlewandering
-        run: npm run build:frontend
+        run: bun run build:frontend
         env:
           VITE_MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
           VITE_ENABLE_STREAMING: "true"
@@ -99,7 +99,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: awhittlewandering
-        run: npm ci
+        run: bun install
 
       - name: Download frontend build
         uses: actions/download-artifact@v4
@@ -168,7 +168,7 @@ jobs:
 
       - name: Run post-deployment tests
         working-directory: awhittlewandering
-        run: npm run test:post-deploy
+        run: bun run test:post-deploy
         env:
           BASE_URL: https://awhittlewandering.com
           API_URL: https://api.awhittlewandering.com
@@ -196,8 +196,8 @@ jobs:
       - name: Deploy previous version
         working-directory: awhittlewandering
         run: |
-          npm ci
-          npm run build:all
+          bun install
+          bun run build:all
           npx wrangler deploy --config wrangler-site.toml
           npx wrangler deploy --config wrangler.toml
         env:

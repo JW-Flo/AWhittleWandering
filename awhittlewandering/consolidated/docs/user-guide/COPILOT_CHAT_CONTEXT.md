@@ -91,8 +91,8 @@ graph LR
    
    ```bash
    cd edge-worker
-   npm install
-   npm run build
+   bun install
+   bun run build
    npx wrangler deploy
    ```
 
@@ -117,8 +117,8 @@ graph LR
    
    ```bash
    cd 48Continental_Starter/public-site
-   npm install
-   npm run build
+   bun install
+   bun run build
    npx wrangler pages deploy dist --project-name continentalusa-site
    ```
 
@@ -178,21 +178,21 @@ If the site is not functioning properly:
 ```bash
 # Build and deploy Edge Worker
 cd edge-worker
-npm install
-npm run build
+bun install
+bun run build
 npx wrangler deploy
 
 # Build and deploy Public Site
 cd 48Continental_Starter/public-site
-npm install
-npm run build
+bun install
+bun run build
 npx wrangler pages deploy dist
 
 # Verify deployments
 ./scripts/verify-deployment.sh
 
 # Run pre-deployment checks
-npm run pre-deploy
+bun run pre-deploy
 
 # Deploy all components
 ./scripts/deploy-all.sh

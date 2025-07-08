@@ -41,7 +41,7 @@ While the map works properly in development environments, it consistently fails 
 
 2. **Reproduction**:
    - Issue only occurs in production builds
-   - Local `npm run build && npm run preview` sometimes works
+   - Local `bun run build && bun run preview` sometimes works
    - Cloudflare Pages deployments consistently fail
 
 3. **Troubleshooting Steps Attempted**:

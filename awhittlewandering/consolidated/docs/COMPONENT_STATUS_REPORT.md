@@ -164,7 +164,7 @@ This is a comprehensive evaluation of all components in the ContinentalUSA repos
 **Status:** ❌ Lint Blocks Deployment
 
 **❌ Issues:**
-- `npm run pre-deploy` fails due to edge-worker lint errors
+- `bun run pre-deploy` fails due to edge-worker lint errors
 - This blocks the entire deployment pipeline
 
 ---
@@ -196,7 +196,7 @@ Multiple components are missing required dependencies:
 - `axios` types (tessie client)
 - `dotenv` types (examples)
 
-**Solution:** Run `npm install` in each problematic directory.
+**Solution:** Run `bun install` in each problematic directory.
 
 ---
 

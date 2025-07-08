@@ -57,11 +57,11 @@ VITE_USE_SIMULATED_DATA=false
 ```bash
 # Terminal 1: Start Edge Worker
 cd edge-worker
-npm run dev
+bun run dev
 
 # Terminal 2: Start Frontend
 cd 48Continental_Starter/public-site
-npm run dev
+bun run dev
 ```
 
 ## Next Steps After Stabilization

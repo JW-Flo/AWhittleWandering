@@ -27,7 +27,7 @@ Update path references in all package.json files:
 1. **Root package.json**:
    ```json
    "scripts": {
-     "build:site": "cd AWhittleWandering_Website/public-site && npm run build",
+     "build:site": "cd AWhittleWandering_Website/public-site && bun run build",
      "start:site": "cd AWhittleWandering_Website/public-site && npm start"
    }
    ```
@@ -42,13 +42,13 @@ Update all tasks in `.vscode/tasks.json`:
     {
       "label": "Build Edge Worker",
       "type": "shell",
-      "command": "cd ${workspaceFolder}/edge-worker && npm run build",
+      "command": "cd ${workspaceFolder}/edge-worker && bun run build",
       "group": "build"
     },
     {
       "label": "Deploy: Edge Worker",
       "type": "shell",
-      "command": "npm run deploy:edge",
+      "command": "bun run deploy:edge",
       "group": "none"
     }
   ]

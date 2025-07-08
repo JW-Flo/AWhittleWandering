@@ -16,7 +16,7 @@ mkdir -p .cache
 
 # Install or update any required dependencies
 echo -e "${BLUE}Checking dependencies...${NC}"
-npm install --quiet --no-fund
+bun install --quiet --no-fund
 
 # Setup environment variables from secrets
 # These are assumed to be already available in the environment

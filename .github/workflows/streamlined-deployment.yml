@@ -40,15 +40,15 @@ jobs:
 
       - name: Install dependencies
         working-directory: awhittlewandering
-        run: npm ci --legacy-peer-deps
+        run: bun install --legacy-peer-deps
 
       - name: Install jsdom for tests
         working-directory: awhittlewandering
-        run: npm install jsdom --save-dev
+        run: bun install jsdom --save-dev
 
       - name: Run critical tests only
         working-directory: awhittlewandering
-        run: npm run test:critical
+        run: bun run test:critical
         env:
           NODE_ENV: test
 
@@ -56,7 +56,7 @@ jobs:
         working-directory: awhittlewandering
         run: |
           echo "Validating feature flag configuration..."
-          npm run test:critical -- --grep="Feature Flags"
+          bun run test:critical -- --grep="Feature Flags"
 
   build-and-deploy:
     name: Build and Deploy
@@ -78,11 +78,11 @@ jobs:
 
       - name: Install dependencies
         working-directory: awhittlewandering
-        run: npm ci --legacy-peer-deps
+        run: bun install --legacy-peer-deps
 
       - name: Build application
         working-directory: awhittlewandering
-        run: npm run build
+        run: bun run build
         env:
           DEPLOYMENT_STAGE: ${{ github.event.inputs.deployment_stage || 'production' }}
 
@@ -118,15 +118,15 @@ jobs:
 
       - name: Install dependencies
         working-directory: awhittlewandering
-        run: npm ci --legacy-peer-deps
+        run: bun install --legacy-peer-deps
 
       - name: Install jsdom for tests
         working-directory: awhittlewandering
-        run: npm install jsdom --save-dev
+        run: bun install jsdom --save-dev
 
       - name: Run ${{ matrix.test-suite }} tests
         working-directory: awhittlewandering
-        run: npm run test:${{ matrix.test-suite }}
+        run: bun run test:${{ matrix.test-suite }}
         continue-on-error: true
 
       - name: Upload test results
@@ -157,18 +157,18 @@ jobs:
 
       - name: Install dependencies
         working-directory: awhittlewandering
-        run: npm ci --legacy-peer-deps
+        run: bun install --legacy-peer-deps
 
       - name: Install jsdom for tests
         working-directory: awhittlewandering
-        run: npm install jsdom --save-dev
+        run: bun install jsdom --save-dev
 
       - name: Wait for deployment to stabilize
         run: sleep 30
 
       - name: Run post-deployment validation
         working-directory: awhittlewandering
-        run: npm run test:post-deploy
+        run: bun run test:post-deploy
         env:
           DEPLOYMENT_URL: ${{ needs.build-and-deploy.outputs.deployment-url }}
           API_URL: https://awhittlewandering-edge.workers.dev

@@ -62,7 +62,7 @@ jobs:
       - name: Build frontend
         id: build
         run: |
-          npm run build -w packages/frontend
+          bun run build -w packages/frontend
         working-directory: awhittlewandering
         env:
           VITE_MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
@@ -73,7 +73,7 @@ jobs:
       - name: Deploy to preview
         id: preview
         run: |
-          npm install -g wrangler
+          bun install -g wrangler
           wrangler deploy --env preview --minify --config wrangler-site.toml
           PREVIEW_URL=$(wrangler deployments list --json | jq -r '.[0].url')
           echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
@@ -107,7 +107,7 @@ jobs:
           node-version: 20
 
       - name: Install wrangler
-        run: npm install -g wrangler
+        run: bun install -g wrangler
 
       - name: Deploy to production
         id: deploy

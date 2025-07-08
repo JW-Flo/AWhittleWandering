@@ -23,7 +23,7 @@ fi
 # Check if wrangler is installed locally
 if [ ! -f "node_modules/.bin/wrangler" ]; then
     echo "📦 Installing Wrangler CLI locally..."
-    npm install -D wrangler@latest
+    bun install -D wrangler@latest
 fi
 
 echo "✅ Environment variables set"

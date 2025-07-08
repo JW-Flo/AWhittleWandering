@@ -189,7 +189,7 @@ deploy_edge_worker() {
   
   # Install dependencies
   log "STEP" "Installing edge worker dependencies"
-  run_command "npm ci" "Installing edge worker dependencies"
+  run_command "bun install" "Installing edge worker dependencies"
   
   # Set wrangler secrets
   log "STEP" "Setting wrangler secrets"
@@ -248,11 +248,11 @@ EOL
   
   # Install dependencies
   log "STEP" "Installing public site dependencies"
-  run_command "npm ci" "Installing public site dependencies"
+  run_command "bun install" "Installing public site dependencies"
   
   # Build the site
   log "STEP" "Building public site"
-  run_command "npm run build" "Building public site"
+  run_command "bun run build" "Building public site"
   
   # Deploy to Cloudflare Pages
   log "STEP" "Deploying to Cloudflare Pages"

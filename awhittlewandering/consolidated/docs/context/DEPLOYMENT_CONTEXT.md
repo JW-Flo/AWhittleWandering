@@ -49,7 +49,7 @@ This document provides essential context about the deployment environment, endpo
 | Project Name | continentalusa-site |
 | Production Branch | main |
 | Framework | React |
-| Build Command | npm run build |
+| Build Command | bun run build |
 | Build Output Directory | build |
 
 ## Environment Variables
