@@ -46,6 +46,15 @@ jobs:
         working-directory: awhittlewandering
         run: bun run test:critical
 
+      - name: Install missing ESLint plugin
+        working-directory: awhittlewandering
+        run: bun add -d @typescript-eslint/eslint-plugin
+
+      - name: Install bun runtime
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "bun installed successfully"
+
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -214,3 +223,14 @@ jobs:
         run: |
           echo "Deployment failed, rolled back to previous version"
           # Add notification mechanism here (e.g., Slack, email)
+
+  test-secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print secrets
+        run: |
+          echo "MAPBOX_TOKEN=${{ secrets.MAPBOX_TOKEN }}"
+          echo "CF_API_TOKEN=${{ secrets.CF_API_TOKEN }}"
+          echo "TESSIE_API_TOKEN=${{ secrets.TESSIE_API_TOKEN }}"
+          echo "EDGE_HMAC_KEY=${{ secrets.EDGE_HMAC_KEY }}"
+          echo "OPENWEATHER_API_KEY=${{ secrets.OPENWEATHER_API_KEY }}"
