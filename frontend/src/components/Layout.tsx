@@ -70,6 +70,13 @@ export default function Layout() {
           </div>
         </div>
         
+        <div className="tolkien-quote">
+          <blockquote>
+            "Not all who wander are lost"
+          </blockquote>
+          <cite>— J.R.R. Tolkien</cite>
+        </div>
+        
         <div className="footer-bottom">
           <p>Powered by Cloudflare Workers | Built with ❤️ in the USA</p>
         </div>
