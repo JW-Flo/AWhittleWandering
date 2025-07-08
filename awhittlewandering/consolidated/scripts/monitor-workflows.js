@@ -92,7 +92,7 @@ const knownIssues = {
     remediate: async () => {
       logger.info("Detected Mapbox token issue, verifying token...");
       await executeCommand(
-        "cd 48Continental_Starter/public-site && npm run verify-mapbox-token"
+        "cd 48Continental_Starter/public-site && bun run verify-mapbox-token"
       );
       return true;
     },

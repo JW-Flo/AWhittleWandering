@@ -52,11 +52,11 @@ EOF
     # Install dependencies if needed
     if [ ! -d "node_modules" ]; then
         echo "Installing Edge Worker dependencies..."
-        npm install
+        bun install
     fi
     
     # Start the worker
-    npm run dev &
+    bun run dev &
     EDGE_WORKER_PID=$!
     echo "Edge Worker started with PID: $EDGE_WORKER_PID"
     
@@ -92,11 +92,11 @@ EOF
     # Install dependencies if needed
     if [ ! -d "node_modules" ]; then
         echo "Installing Frontend dependencies..."
-        npm install
+        bun install
     fi
     
     # Start the frontend
-    npm run dev &
+    bun run dev &
     FRONTEND_PID=$!
     echo "Frontend started with PID: $FRONTEND_PID"
     

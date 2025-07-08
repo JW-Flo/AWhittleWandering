@@ -21,7 +21,7 @@ Please update to the latest version to prevent critical errors.
 ```
 
 **Solution Implemented:**
-- Updated workflow to use local Wrangler installation (`npm install -D wrangler@latest`)
+- Updated workflow to use local Wrangler installation (`bun install -D wrangler@latest`)
 - Uses `npx wrangler` commands following Cloudflare best practices
 - Eliminates version deprecation warnings
 
@@ -113,14 +113,14 @@ The new workflow file `.github/workflows/deploy-all-final.yml` should be used fo
 
 # Test local deployment
 cd edge-worker
-npm install -D wrangler@latest
+bun install -D wrangler@latest
 npx wrangler deploy --dry-run
 
 # Test public site build
 cd 48Continental_Starter/public-site
-npm ci
-npm run build
-npm run test
+bun install
+bun run build
+bun run test
 ```
 
 ## Rollback Plan

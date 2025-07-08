@@ -12,8 +12,8 @@ echo -e "${YELLOW}Starting full project build...${NC}"
 # Build Edge Worker
 echo -e "\n${YELLOW}Building Edge Worker...${NC}"
 cd "$(dirname "$0")/../edge-worker"
-npm install
-npm run build
+bun install
+bun run build
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Edge Worker build successful${NC}"
 else
@@ -55,8 +55,8 @@ fi
 # Build Documentation
 echo -e "\n${YELLOW}Generating documentation...${NC}"
 cd ../docs
-npm install
-npm run build
+bun install
+bun run build
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Documentation build successful${NC}"
 else

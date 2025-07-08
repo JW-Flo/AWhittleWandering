@@ -58,7 +58,7 @@
 
 3. Verify:
    ```bash
-   npm run verify-dns
+   bun run verify-dns
    ```
 
 4. Monitor for any issues:

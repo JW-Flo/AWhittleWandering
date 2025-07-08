@@ -17,35 +17,35 @@ The testing infrastructure for this project consists of several integrated compo
 
 ```bash
 cd 48Continental_Starter/public-site
-npm run test:unit
+bun run test:unit
 ```
 
 ### Integration Tests
 
 ```bash
 cd 48Continental_Starter/public-site
-npm run test:integration
+bun run test:integration
 ```
 
 ### End-to-End Tests
 
 ```bash
 cd 48Continental_Starter/public-site
-npm run test:e2e
+bun run test:e2e
 ```
 
 ### Performance Tests
 
 ```bash
 cd 48Continental_Starter/public-site
-npm run test:performance
+bun run test:performance
 ```
 
 ### Running All Tests
 
 ```bash
 cd 48Continental_Starter/public-site
-npm run test:all
+bun run test:all
 ```
 
 ## Continuous Integration

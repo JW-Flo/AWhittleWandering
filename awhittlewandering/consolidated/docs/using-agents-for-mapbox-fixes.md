@@ -14,7 +14,7 @@ The project already has an MCP server with tools to handle token issues:
 
    ```bash
    cd /Users/joe/Projects/Personal/ContinentalUSA
-   npm run start:mcp
+   bun run start:mcp
    ```
 
 2. Use the `syncEnvironmentVariables` tool that's already built into your MCP server:

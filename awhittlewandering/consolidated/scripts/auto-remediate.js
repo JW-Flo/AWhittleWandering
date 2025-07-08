@@ -514,7 +514,7 @@ export default mapboxConfig;
 
             // Check if the script contains build validation
             const hasValidation =
-              content.includes("npm run build") &&
+              content.includes("bun run build") &&
               (content.includes("validateBuild") ||
                 content.includes("validate-build") ||
                 content.includes("if [ $? -ne 0 ]"));
@@ -544,7 +544,7 @@ export default mapboxConfig;
             let content = await fsPromises.readFile(scriptPath, "utf8");
 
             // Look for build command in the script
-            const buildMatch = content.match(/npm run build/);
+            const buildMatch = content.match(/bun run build/);
 
             if (buildMatch) {
               // Add validation after the build command
@@ -776,7 +776,7 @@ async function validateFixes() {
       logger.info("Running linting to validate JS/TS changes");
 
       try {
-        execSync("npm run lint", { stdio: "pipe", encoding: "utf8" });
+        execSync("bun run lint", { stdio: "pipe", encoding: "utf8" });
         logger.success("Linting passed");
       } catch (error) {
         logger.warn("Linting failed, but continuing with validation");
@@ -801,7 +801,7 @@ async function validateFixes() {
       logger.info("Running build to validate build-related changes");
 
       try {
-        execSync("npm run build", { stdio: "pipe", encoding: "utf8" });
+        execSync("bun run build", { stdio: "pipe", encoding: "utf8" });
         logger.success("Build passed");
       } catch (error) {
         logger.error("Build failed after applying fixes");

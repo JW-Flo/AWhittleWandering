@@ -137,7 +137,7 @@ echo "✅ All essential checks passed"
 # run_test "Node.js version check" "node --version | grep -E 'v[0-9]+\.[0-9]+\.[0-9]+' &> /dev/null" "critical"
 # 
 # # Check if npm is installed
-# run_test "npm installation check" "command -v npm &> /dev/null" "critical"
+# run_test "bun installation check" "command -v npm &> /dev/null" "critical"
 # 
 # # Check if required directories exist
 # run_test "MCP server directory check" "[ -d \"${PROJECT_ROOT}/mcp-server\" ]" "critical"

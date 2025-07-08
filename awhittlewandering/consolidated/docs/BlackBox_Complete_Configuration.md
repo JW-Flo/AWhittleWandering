@@ -149,7 +149,7 @@ PART 2: PROJECT TASK DEFINITION
  * ```yaml
  * - name: Install and deploy
  *   run: |
- *     npm install -g wrangler
+ *     bun install -g wrangler
  *     wrangler deploy
  * ```
  * 

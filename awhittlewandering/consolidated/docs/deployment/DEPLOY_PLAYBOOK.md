@@ -109,7 +109,7 @@ graph LR
 
  Populate GitHub Secrets (see §5)
 
- Install Wrangler CLI (npm install -g wrangler)
+ Install Wrangler CLI (bun install -g wrangler)
 
  Validate Tessie account & token are active
 
@@ -138,7 +138,7 @@ Project: awhittlewandering-site
 
 Root: 48Continental_Starter/public-site
 
-Build: npm run build → dist
+Build: bun run build → dist
 
 Env: all VITE_* variables
 
@@ -185,13 +185,13 @@ Edit
 # Frontend
 
 cd 48Continental_Starter/public-site
-npm ci && npm run build
+bun install && bun run build
 npx serve dist
 
 # Worker
 
 cd edge-worker
-npm ci
+bun install
 npx wrangler dev
 curl <http://127.0.0.1:8787/api/v1/status>
 <a id="9"></a>
@@ -201,7 +201,7 @@ bash
 Copy
 Edit
 cd 48Continental_Starter/public-site
-npm ci && npm run build
+bun install && bun run build
 npx wrangler pages deploy dist --project-name awhittlewandering-site
 Verify <https://awhittlewandering-site.pages.dev>.
 
@@ -212,7 +212,7 @@ bash
 Copy
 Edit
 cd edge-worker
-npm ci
+bun install
 
 # wrangler secret put ... for tokens
 

@@ -85,8 +85,8 @@ npx wrangler deploy
 ```bash
 # Build the site
 cd 48Continental_Starter/public-site
-npm install
-npm run build
+bun install
+bun run build
 
 # Deploy to Cloudflare Pages
 npx wrangler pages deploy dist

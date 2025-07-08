@@ -40,7 +40,7 @@ The WebSocket implementation acts as a bridge between the Tesla API and the fron
 3. Or test directly from the frontend:
    ```
    cd 48Continental_Starter/public-site
-   npm run dev
+   bun run dev
    ```
 
 ## Deployment

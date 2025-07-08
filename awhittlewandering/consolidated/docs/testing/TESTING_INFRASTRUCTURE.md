@@ -101,7 +101,7 @@ When adding new tests:
 Common issues:
 
 - **Type errors**: Ensure React and testing-library types are correctly imported
-- **Missing dependencies**: Run `npm install --legacy-peer-deps` if needed
+- **Missing dependencies**: Run `bun install --legacy-peer-deps` if needed
 - **Failed tests**: Check the test report for detailed error information
 
 ## Conclusion

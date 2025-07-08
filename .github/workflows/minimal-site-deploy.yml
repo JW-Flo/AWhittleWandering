@@ -26,13 +26,13 @@ jobs:
         working-directory: 48Continental_Starter/public-site
         run: |
           # Install dependencies
-          npm ci
+          bun install
 
           # Build the site (note: using fallback mapbox token if not available)
-          npm run build
+          bun run build
 
           # Install wrangler
-          npm install -g wrangler
+          bun install -g wrangler
 
           # Deploy to Cloudflare Pages
           echo "Deploying to Cloudflare Pages..."

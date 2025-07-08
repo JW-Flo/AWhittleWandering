@@ -16,9 +16,9 @@ mkdir -p .cache
 
 # Install or update any required dependencies
 echo -e "${BLUE}Checking dependencies...${NC}"
-npm install --quiet --no-fund
+bun install --quiet --no-fund
 if [ $? -ne 0 ]; then
-  echo -e "${RED:-\033[0;31m}❌ npm install failed. Exiting.${NC}"
+  echo -e "${RED:-\033[0;31m}❌ bun install failed. Exiting.${NC}"
   exit 1
 fi
 

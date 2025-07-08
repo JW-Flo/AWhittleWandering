@@ -8,10 +8,10 @@ echo "🚀 Building the site..."
 cd 48Continental_Starter/public-site
 
 # Install dependencies
-npm ci
+bun install
 
 # Build the site
-npm run build
+bun run build
 
 # Check if build was successful
 if [ -d "dist" ] && [ "$(ls -A dist)" ]; then

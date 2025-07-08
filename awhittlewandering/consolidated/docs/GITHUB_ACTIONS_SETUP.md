@@ -103,7 +103,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd edge-worker
-          npm ci
+          bun install
 
       - name: Run tests
         run: |

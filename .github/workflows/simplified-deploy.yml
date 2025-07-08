@@ -38,8 +38,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm ci
-          npm install -g wrangler@latest
+          bun install
+          bun install -g wrangler@latest
 
       - name: Setup minimal environment
         run: |
@@ -59,7 +59,7 @@ jobs:
         if: env.DEPLOY_COMPONENTS == 'all' || env.DEPLOY_COMPONENTS == 'edge-worker'
         run: |
           cd edge-worker
-          npm ci
+          bun install
           echo "Deploying Edge Worker..."
           CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_TOKEN }} CLOUDFLARE_ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }} npx wrangler deploy
           echo "Edge Worker deployment completed"
@@ -69,10 +69,10 @@ jobs:
         if: env.DEPLOY_COMPONENTS == 'all' || env.DEPLOY_COMPONENTS == 'public-site'
         run: |
           cd 48Continental_Starter/public-site
-          npm ci
+          bun install
 
           # Build the site
-          VITE_MAPBOX_TOKEN="${{ secrets.MAPBOX_TOKEN }}" npm run build
+          VITE_MAPBOX_TOKEN="${{ secrets.MAPBOX_TOKEN }}" bun run build
 
           # Deploy to Cloudflare Pages
           echo "Deploying Public Site..."

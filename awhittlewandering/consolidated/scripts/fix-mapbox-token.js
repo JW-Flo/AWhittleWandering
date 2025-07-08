@@ -75,7 +75,7 @@ const req = http.request(
 req.on("error", (error) => {
   console.error("❌ Error connecting to MCP server:", error.message);
   console.log(
-    "Make sure the MCP server is running. Start it with: npm run start:mcp"
+    "Make sure the MCP server is running. Start it with: bun run start:mcp"
   );
 });
 

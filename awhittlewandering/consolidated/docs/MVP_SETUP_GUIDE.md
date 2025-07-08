@@ -23,8 +23,8 @@ git clone <repository-url>
 cd ContinentalUSA
 
 # Install all dependencies
-cd edge-worker && npm install && cd ..
-cd 48Continental_Starter/public-site && npm install && cd ../..
+cd edge-worker && bun install && cd ..
+cd 48Continental_Starter/public-site && bun install && cd ../..
 ```
 
 ### 2. Configure Environment Variables
@@ -164,7 +164,7 @@ VITE_USE_SIMULATED_DATA=true
 ### Logs
 
 - **Frontend Logs**: Browser Developer Console
-- **Edge Worker Logs**: Terminal where `npm run dev` is running
+- **Edge Worker Logs**: Terminal where `bun run dev` is running
 
 ## Testing the Integration
 

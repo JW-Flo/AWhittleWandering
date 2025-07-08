@@ -65,7 +65,7 @@ task_build() {
   npm clean-install --workspaces
   
   log_prefix "Building frontend..."
-  npm run build -w packages/frontend
+  bun run build -w packages/frontend
   
   if [[ $? -ne 0 ]]; then
     log_prefix "${RED}ERROR: Build failed.${NC}"

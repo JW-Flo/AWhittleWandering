@@ -111,11 +111,11 @@ echo "📦 Installing dependencies..."
 
 # Install edge-worker dependencies
 echo "Installing edge-worker dependencies..."
-cd edge-worker && npm install && cd ..
+cd edge-worker && bun install && cd ..
 
 # Install frontend dependencies
 echo "Installing frontend dependencies..."
-cd 48Continental_Starter/public-site && npm install && cd ../..
+cd 48Continental_Starter/public-site && bun install && cd ../..
 
 echo ""
 echo "✅ Setup complete!"
@@ -124,8 +124,8 @@ echo "🚀 To start the services, run:"
 echo "   ./scripts/start-services.sh"
 echo ""
 echo "Or manually start each service:"
-echo "   Terminal 1: cd edge-worker && npm run dev"
-echo "   Terminal 2: cd 48Continental_Starter/public-site && npm run dev"
+echo "   Terminal 1: cd edge-worker && bun run dev"
+echo "   Terminal 2: cd 48Continental_Starter/public-site && bun run dev"
 echo ""
 echo "📱 Then open: http://localhost:5175"
 echo ""

@@ -122,7 +122,7 @@ function deployWorker() {
   log("Deploying worker with updated configuration...");
 
   // Build the worker first
-  const buildResult = executeCommand("npm run build", { cwd: EDGE_WORKER_DIR });
+  const buildResult = executeCommand("bun run build", { cwd: EDGE_WORKER_DIR });
   if (!buildResult.success) {
     log("❌ Failed to build worker");
     log(buildResult.error);

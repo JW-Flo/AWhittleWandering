@@ -10,7 +10,7 @@ echo "Starting deployment process..."
 # Check if Wrangler is installed
 if ! command -v wrangler &> /dev/null; then
     echo "Wrangler CLI not found. Installing..."
-    npm install -g wrangler
+    bun install -g wrangler
 fi
 
 # Check for CLOUDFLARE_API_TOKEN

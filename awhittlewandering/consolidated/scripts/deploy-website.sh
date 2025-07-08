@@ -39,7 +39,7 @@ cd awhittlewandering
 # Install dependencies if node_modules doesn't exist
 if [ ! -d "node_modules" ]; then
   echo "Installing dependencies..."
-  npm ci
+  bun install
 fi
 
 # Update .env file for the frontend
@@ -81,7 +81,7 @@ VITE_APP_NAME=A Whittle Wandering
 EOF
 
 echo "Building the application..."
-npm run build:all
+bun run build:all
 
 echo "Deploying the site worker..."
 CLOUDFLARE_API_TOKEN=$CF_API_TOKEN CLOUDFLARE_ACCOUNT_ID=$CF_ACCOUNT_ID npx wrangler deploy --config wrangler-site.toml

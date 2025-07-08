@@ -21,7 +21,7 @@
    - Current Version ID: 58cc9d6d-d860-453f-b42b-1e6e049e7225
 
 3. ✅ Public Site Deployment
-   - Built the site with npm run build
+   - Built the site with bun run build
    - Deployed to Cloudflare Pages
    - Deployment URL: https://41731fc4.continentalusa-site.pages.dev
    - Main branch URL: https://main.continentalusa-site.pages.dev
@@ -118,7 +118,7 @@ npx wrangler deploy
 
 # Deploy the public site
 cd 48Continental_Starter/public-site
-npm run build
+bun run build
 npx wrangler pages deploy dist
 
 # Set environment variables for the vehicle API

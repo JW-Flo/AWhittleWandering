@@ -109,7 +109,7 @@ cd /Users/joe/Projects/Personal/ContinentalUSA
 
 The validation process is integrated into the CI/CD pipeline with these steps:
 
-1. **Pre-Deployment Check**: Run `npm run pre-deploy` to execute all validation tests
+1. **Pre-Deployment Check**: Run `bun run pre-deploy` to execute all validation tests
 2. **Deployment Conditional**: Only proceed with deployment if all validations pass
 3. **Post-Deployment Verification**: After deployment, run `scripts/verify-deployment.sh`
 4. **Monitoring**: Set up continuous monitoring for MCP components

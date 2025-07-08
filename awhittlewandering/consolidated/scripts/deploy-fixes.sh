@@ -4,7 +4,7 @@ echo "Deploying 48 Continental USA fixes..."
 
 # Build the public site
 echo "Building public site..."
-cd 48Continental_Starter/public-site && npm run build
+cd 48Continental_Starter/public-site && bun run build
 
 # Deploy to Cloudflare Pages
 echo "Deploying to Cloudflare Pages..."
@@ -15,7 +15,7 @@ cd ../..
 
 # Deploy edge worker
 echo "Deploying edge worker..."
-cd edge-worker && npm run deploy
+cd edge-worker && bun run deploy
 
 echo "Deployment complete! Testing endpoints..."
 

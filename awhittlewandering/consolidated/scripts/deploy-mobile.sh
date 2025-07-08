@@ -14,7 +14,7 @@ cd "$(dirname "$0")/../ContinentalUSA-mobile"
 
 # iOS Build
 echo -e "\n${YELLOW}Building iOS app...${NC}"
-npm run build:ios
+bun run build:ios
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}iOS build successful${NC}"
 else
@@ -24,7 +24,7 @@ fi
 
 # Android Build
 echo -e "\n${YELLOW}Building Android app...${NC}"
-npm run build:android
+bun run build:android
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Android build successful${NC}"
 else

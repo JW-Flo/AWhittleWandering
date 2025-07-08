@@ -188,7 +188,7 @@ async function main() {
     console.log("\n✨ Configuration complete!");
     console.log("\nNext steps:");
     console.log("1. Wait 5-10 minutes for changes to propagate");
-    console.log("2. Run 'npm run verify-dns' to check configuration");
+    console.log("2. Run 'bun run verify-dns' to check configuration");
     console.log("3. Test site access at https://www.awhittlewandering.com");
   } catch (error) {
     console.error(
