@@ -11,6 +11,7 @@ import JourneyTimeline from './JourneyTimeline';
 import AdventureMilestones from './AdventureMilestones';
 import AdventureCsvUploader from './AdventureCsvUploader';
 import TeslaMap from './TeslaMap';
+import TimelineDataDisplay from './TimelineDataDisplay';
 import { calculateTripStatistics } from '@/utils/stateDetection';
 
 const RoadTripTracker = () => {
@@ -82,7 +83,10 @@ const RoadTripTracker = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-8">
-          {/* Hero Section */}
+          {/* Live Timeline Data Integration */}
+          <TimelineDataDisplay />
+
+          {/* Legacy Adventure Stats (for backup) */}
           <AdventureHero
             currentLocation={currentState?.state || 'California'}
             daysElapsed={55}
