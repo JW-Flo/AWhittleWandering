@@ -382,5 +382,11 @@ export const useJourneyTessieApi = (apiKey?: string, vehicleId?: string) => {
     loadJourneyData,
     fetchDriveHistory,
     fetchChargeHistory,
+    
+    // State setters for mock data
+    setJourneyAnalytics,
+    setDriveHistory,
+    setChargeHistory,
+    setExtendedStays,
   };
 };

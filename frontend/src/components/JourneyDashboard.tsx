@@ -28,11 +28,17 @@ const JourneyDashboard: React.FC<JourneyDashboardProps> = ({
     isLoading,
     error,
     loadJourneyData,
+    setJourneyAnalytics,
+    setDriveHistory,
+    setChargeHistory,
+    setExtendedStays,
   } = useJourneyTessieApi(apiKey, vehicleId);
 
   useEffect(() => {
     if (vehicleId && apiKey) {
       loadJourneyData(startDate, endDate);
+    } else {
+      console.warn('No Tessie API key provided - please configure your API credentials');
     }
   }, [vehicleId, apiKey, startDate, endDate, loadJourneyData]);
 

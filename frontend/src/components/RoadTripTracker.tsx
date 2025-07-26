@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Calendar, Clock, Trophy, Camera, PenTool, Target, Route, Zap, Upload, Map as MapIcon, CheckCircle, Shield, Settings } from 'lucide-react';
+import { MapPin, Calendar, Clock, Trophy, Camera, PenTool, Target, Route, Zap, Upload, Map as MapIcon, CheckCircle, Shield, Settings, Image } from 'lucide-react';
 import { journeyTimeline, journeyStats } from '@/data/journeyData';
 import { useAdminAuth } from '@/lib/auth';
 import useUnifiedJourneyData from '@/hooks/useUnifiedJourneyData';
@@ -19,6 +19,7 @@ import InteractiveRoutePlanner from './InteractiveRoutePlanner';
 import TimelineDataDisplay from './TimelineDataDisplay';
 import JourneyDashboard from './JourneyDashboard';
 import ApiConfig from './ApiConfig';
+import MediaManager from './MediaManager';
 import { calculateTripStatistics } from '@/utils/stateDetection';
 
 const RoadTripTracker = () => {
@@ -33,7 +34,7 @@ const RoadTripTracker = () => {
   const [showAdvancedMap, setShowAdvancedMap] = useState<boolean>(false);
   
   // Admin authentication and unified data
-  const { isAuthenticated, canModifyJourney } = useAdminAuth();
+  const { isAuthenticated, canModifyJourney, canUploadMedia } = useAdminAuth();
   const { overview, currentStatus, loading: dataLoading, error: dataError } = useUnifiedJourneyData();
   
   const visitedStates = journeyTimeline.filter(state => state.current);
@@ -73,7 +74,7 @@ const RoadTripTracker = () => {
     <div className="space-y-8">
       {/* Adventure Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className={`grid w-full ${isAuthenticated ? 'grid-cols-8' : 'grid-cols-6'} bg-[hsl(var(--tesla-gray))]`}>
+        <TabsList className={`grid w-full ${isAuthenticated ? 'grid-cols-9' : 'grid-cols-6'} bg-[hsl(var(--tesla-gray))]`}>
           <TabsTrigger value="overview" className="data-[state=active]:bg-[hsl(var(--adventure-orange))] data-[state=active]:text-white">
             <MapIcon className="w-4 h-4 mr-2" />
             Overview
@@ -98,6 +99,13 @@ const RoadTripTracker = () => {
             <Trophy className="w-4 h-4 mr-2" />
             Achievements
           </TabsTrigger>
+          {isAuthenticated && canUploadMedia && (
+            <TabsTrigger value="media" className="data-[state=active]:bg-[hsl(var(--adventure-orange))] data-[state=active]:text-white">
+              <Image className="w-4 h-4 mr-2" />
+              Media
+              <Badge variant="secondary" className="ml-2 bg-tesla-cyan text-xs">Admin</Badge>
+            </TabsTrigger>
+          )}
           {isAuthenticated && canModifyJourney && (
             <>
               <TabsTrigger value="import" className="data-[state=active]:bg-[hsl(var(--adventure-orange))] data-[state=active]:text-white">
@@ -440,6 +448,19 @@ const RoadTripTracker = () => {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+        )}
+
+        {isAuthenticated && canUploadMedia && (
+          <TabsContent value="media" className="space-y-6">
+            <MediaManager 
+              tripStates={journeyTimeline.map(state => state.state)}
+              currentLocation={currentState ? {
+                state: currentState.state,
+                city: 'Current Location',
+                coordinates: currentState.location || { lat: 0, lng: 0 }
+              } : undefined}
+            />
           </TabsContent>
         )}
 
