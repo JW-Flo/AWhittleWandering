@@ -139,18 +139,19 @@ app.get('/api/v1/timeline', (c) => {
   return c.json(timelineData);
 });
 
-// Enhanced trip status with live updates and correct data
+// Enhanced trip status with live updates and CURRENT DATA
 app.get('/api/v1/trip/live-status', (c) => {
   return c.json({
     currentTrip: {
       name: 'A Whittle Wandering - Continental USA Road Trip',
-      status: 'active',
+      status: 'active', // Currently in progress
       startDate: '2025-06-01',
       currentDate: new Date().toISOString(),
       currentLocation: {
         state: 'Connecticut',
         city: 'Stratford',
-        coordinates: { lat: 41.1865, lng: -73.1532 }
+        coordinates: { lat: 41.1865, lng: -73.1532 },
+        status: 'Leaving this afternoon to head south'
       },
       progress: {
         statesVisited: 29,
@@ -161,9 +162,9 @@ app.get('/api/v1/trip/live-status', (c) => {
         progressPercentage: (29 / 48) * 100 // 60.4%
       },
       nextDestinations: [
-        { state: 'New Jersey', eta: 'Next planned state' },
-        { state: 'Delaware', eta: 'Following New Jersey' },
-        { state: 'Maryland', eta: 'Mid-Atlantic continuation' }
+        { state: 'New Jersey', eta: 'Tonight - driving south', planned: true },
+        { state: 'Delaware', eta: 'Tomorrow morning', planned: true },
+        { state: 'Maryland', eta: 'Tomorrow afternoon', planned: true }
       ],
       recentMilestones: [
         { date: '2025-07-25', milestone: 'Visited Rhode Island - State #29' },
@@ -179,6 +180,95 @@ app.get('/api/v1/trip/live-status', (c) => {
       refreshInterval: 30000, // 30 seconds
       apiStatus: 'connected'
     }
+  });
+});
+
+// Media upload endpoint
+app.post('/api/v1/media/upload', async (c) => {
+  try {
+    const formData = await c.req.formData();
+    const files = formData.getAll('media') as File[];
+    const location = formData.get('location');
+    const waypoint = formData.get('waypoint');
+    
+    if (!files.length) {
+      return c.json({ error: 'No files provided' }, 400);
+    }
+
+    const uploadedMedia: any[] = [];
+    
+    for (const file of files) {
+      // In production, upload to Cloudflare R2 or similar storage
+      // For now, return mock response
+      const mediaEntry = {
+        id: `media-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        filename: file.name,
+        type: file.type,
+        size: file.size,
+        uploadedAt: new Date().toISOString(),
+        location: location ? JSON.parse(location as string) : null,
+        waypoint: waypoint || null,
+        url: `https://storage.example.com/uploads/${file.name}` // Mock URL
+      };
+      
+      uploadedMedia.push(mediaEntry);
+    }
+
+    return c.json({
+      success: true,
+      message: `Uploaded ${files.length} media files`,
+      media: uploadedMedia
+    });
+  } catch (error) {
+    return c.json({
+      success: false,
+      error: 'Media upload failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+// Smart tracking events endpoint
+app.post('/api/v1/tracking/event', async (c) => {
+  try {
+    const eventData = await c.req.json();
+    
+    // Validate event data
+    const requiredFields = ['type', 'timestamp', 'location'];
+    for (const field of requiredFields) {
+      if (!eventData[field]) {
+        return c.json({ error: `Missing required field: ${field}` }, 400);
+      }
+    }
+
+    // In production, store in database
+    const trackingEvent = {
+      id: `event-${Date.now()}`,
+      ...eventData,
+      receivedAt: new Date().toISOString()
+    };
+
+    return c.json({
+      success: true,
+      message: 'Tracking event recorded',
+      event: trackingEvent
+    });
+  } catch (error) {
+    return c.json({
+      success: false,
+      error: 'Failed to record tracking event',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+// Get tracking events
+app.get('/api/v1/tracking/events', (c) => {
+  // In production, fetch from database
+  return c.json({
+    events: [], // Would return stored tracking events
+    totalEvents: 0,
+    lastUpdate: new Date().toISOString()
   });
 });
 

@@ -34,7 +34,7 @@ const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange, routePoints = [
   const [tokenInput, setTokenInput] = useState(mapboxToken || '');
 
   useEffect(() => {
-    if (!map.current || !mapboxToken) return;
+    if (!mapboxToken || !mapContainer.current) return;
 
     // Initialize map
     mapboxgl.accessToken = mapboxToken;
@@ -57,6 +57,7 @@ const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange, routePoints = [
 
     // Wait for map to load before adding route
     map.current.on('load', () => {
+      console.log('Map loaded, adding route with', routePoints.length, 'points');
       if (routePoints.length > 0) {
         addRouteToMap();
       }
@@ -64,7 +65,10 @@ const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange, routePoints = [
 
     // Cleanup
     return () => {
-      map.current?.remove();
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
     };
   }, [mapboxToken]);
 
@@ -78,55 +82,77 @@ const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange, routePoints = [
   const addRouteToMap = () => {
     if (!map.current || routePoints.length === 0) return;
 
+    console.log('Adding route to map with', routePoints.length, 'points');
+
     // Create route line coordinates
     const coordinates = routePoints.map(point => [point.longitude, point.latitude]);
 
-    // Add route source and layer
-    if (!map.current.getSource('route')) {
-      map.current.addSource('route', {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: coordinates
-          }
-        }
-      });
-
-      map.current.addLayer({
-        id: 'route',
-        type: 'line',
-        source: 'route',
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': '#FF6B35', // Adventure orange
-          'line-width': 4,
-          'line-opacity': 0.8
-        }
-      });
+    // Remove existing route if it exists
+    if (map.current.getLayer('route')) {
+      map.current.removeLayer('route');
     }
+    if (map.current.getSource('route')) {
+      map.current.removeSource('route');
+    }
+
+    // Add route source and layer
+    map.current.addSource('route', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: coordinates
+        }
+      }
+    });
+
+    map.current.addLayer({
+      id: 'route',
+      type: 'line',
+      source: 'route',
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round'
+      },
+      paint: {
+        'line-color': '#3B82F6', // Electric blue
+        'line-width': 4,
+        'line-opacity': 0.9,
+        'line-blur': 0.5
+      }
+    });
 
     // Add waypoint markers
     routePoints.forEach((point, index) => {
       const el = document.createElement('div');
-      el.className = 'waypoint-marker';
-      el.innerHTML = `
-        <div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg">
-          <div class="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-bold text-white bg-black bg-opacity-70 px-1 rounded">
-            ${index + 1}
-          </div>
-        </div>
+      el.className = 'waypoint-marker relative';
+      el.style.cssText = `
+        width: 24px;
+        height: 24px;
+        background: linear-gradient(135deg, #3B82F6, #10B981);
+        border: 3px solid white;
+        border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        cursor: pointer;
+        position: relative;
       `;
 
-      const popup = new mapboxgl.Popup({ offset: 15 }).setHTML(`
-        <div class="p-2">
-          <h4 class="font-bold">${point.state}</h4>
-          <p class="text-sm">${point.date}</p>
+      // Add state number
+      const numberEl = document.createElement('div');
+      numberEl.className = 'absolute -top-8 left-1/2 transform -translate-x-1/2 text-xs font-bold text-white bg-gray-900 bg-opacity-80 px-2 py-1 rounded-md';
+      numberEl.textContent = (index + 1).toString();
+      el.appendChild(numberEl);
+
+      const popup = new mapboxgl.Popup({ 
+        offset: 25,
+        className: 'electric-popup'
+      }).setHTML(`
+        <div class="p-3 bg-gray-900 text-white rounded-lg border border-blue-500">
+          <h4 class="font-bold text-blue-400">${point.state}</h4>
+          <p class="text-sm text-gray-300">${point.date}</p>
+          <p class="text-xs text-blue-300 mt-1">Stop #${index + 1}</p>
         </div>
       `);
 
@@ -143,8 +169,8 @@ const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange, routePoints = [
       }, new mapboxgl.LngLatBounds(coordinates[0] as [number, number], coordinates[0] as [number, number]));
 
       map.current.fitBounds(bounds, {
-        padding: 50,
-        maxZoom: 6
+        padding: 60,
+        maxZoom: 7
       });
     }
   };
