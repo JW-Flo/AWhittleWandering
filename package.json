@@ -1,0 +1,30 @@
+{
+  "name": "awhittlewandering",
+  "version": "1.0.0",
+  "description": "48 Continental US Tesla Road Trip Tracker",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "frontend", 
+    "backend/*"
+  ],
+  "scripts": {
+    "build": "bun run build:all",
+    "build:all": "bun run build:shared && bun run build:backend",
+    "build:shared": "cd shared && bun run build",
+    "build:backend": "cd backend/edge-worker && bun run build",
+    "deploy": "bun run build && ./scripts/deploy.sh",
+    "dev": "bun run dev:backend",
+    "dev:backend": "cd backend/edge-worker && bun run dev",
+    "tesla:import": "bun run scripts/import-tesla-data.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "csv-parser": "^3.0.0"
+  },
+  "dependencies": {
+    "zod": "^3.22.0"
+  }
+}

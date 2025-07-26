@@ -1,0 +1,6 @@
+name = "awhittlewandering-api"
+main = "dist/worker.js"
+compatibility_date = "2024-07-24"
+
+[env.production]
+name = "awhittlewandering-api"
