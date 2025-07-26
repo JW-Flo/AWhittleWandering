@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MapPin, Calendar, Clock, Trophy, Camera, PenTool, Target, Route, Zap, Upload, Map as MapIcon, CheckCircle, Shield, Settings } from 'lucide-react';
 import { journeyTimeline, journeyStats } from '@/data/journeyData';
 import { useAdminAuth } from '@/lib/auth';
+import useUnifiedJourneyData from '@/hooks/useUnifiedJourneyData';
 import AdventureHero from './AdventureHero';
 import JourneyTimeline from './JourneyTimeline';
 import AdventureMilestones from './AdventureMilestones';
@@ -31,8 +32,9 @@ const RoadTripTracker = () => {
   const [tessieVehicleId, setTessieVehicleId] = useState<string>('midnightshadow');
   const [showAdvancedMap, setShowAdvancedMap] = useState<boolean>(false);
   
-  // Admin authentication
+  // Admin authentication and unified data
   const { isAuthenticated, canModifyJourney } = useAdminAuth();
+  const { overview, currentStatus, loading: dataLoading, error: dataError } = useUnifiedJourneyData();
   
   const visitedStates = journeyTimeline.filter(state => state.current);
   const currentState = journeyTimeline.find(state => state.current);
@@ -362,10 +364,10 @@ const RoadTripTracker = () => {
                     mapboxToken={mapboxToken}
                     routePoints={routeLocations}
                     currentLocation={{
-                      lat: 41.1865,
-                      lng: -73.1532,
+                      lat: currentStatus?.location?.coordinates?.lat || 41.1865,
+                      lng: currentStatus?.location?.coordinates?.lng || -73.1532,
                       heading: 180,
-                      speed: 0
+                      speed: currentStatus?.vehicle?.speed || 0
                     }}
                     showElevationProfile={true}
                     showRouteAnimation={true}
@@ -400,11 +402,11 @@ const RoadTripTracker = () => {
             onRouteChange={(waypoints) => console.log('Route changed:', waypoints)}
             onOptimizedRouteGenerated={(route) => console.log('Optimized route:', route)}
             currentLocation={{
-              lat: 41.1865,
-              lng: -73.1532
+              lat: currentStatus?.location?.coordinates?.lat || 41.1865,
+              lng: currentStatus?.location?.coordinates?.lng || -73.1532
             }}
-            vehicleRange={300}
-            vehicleBatteryLevel={80}
+            vehicleRange={currentStatus?.vehicle?.batteryRange || 300}
+            vehicleBatteryLevel={currentStatus?.vehicle?.batteryLevel || 80}
           />
         </TabsContent>
 
