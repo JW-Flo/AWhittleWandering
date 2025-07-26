@@ -4,20 +4,25 @@ import VehicleStats from '@/components/VehicleStats';
 import TessieApiSetup from '@/components/TessieApiSetup';
 import RoadTripTracker from '@/components/RoadTripTracker';
 import MediaUpload from '@/components/MediaUpload';
+import AdminLogin from '@/components/AdminLogin';
 import { useTessieApi } from '@/hooks/useTessieApi';
 import { useSmartTracking } from '@/hooks/useSmartTracking';
+import { useAdminAuth } from '@/lib/auth';
 import { secureKeyStorage } from '@/lib/config';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RefreshCw, Car, Zap, Map, Route, Camera } from 'lucide-react';
+import { RefreshCw, Car, Zap, Map, Route, Camera, Shield } from 'lucide-react';
 
 const Index = () => {
   const [tessieApiKey, setTessieApiKey] = useState<string | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
+
+  // Admin authentication
+  const { isAuthenticated, canUploadMedia } = useAdminAuth();
 
   // Load saved API keys from localStorage and environment
   useEffect(() => {
@@ -155,7 +160,7 @@ const Index = () => {
         )}
 
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-tesla-gray">
+          <TabsList className={`grid w-full ${isAuthenticated ? 'grid-cols-4' : 'grid-cols-3'} bg-tesla-gray`}>
             <TabsTrigger value="dashboard" className="data-[state=active]:bg-primary">
               <Car className="w-4 h-4 mr-2" />
               Live Dashboard
@@ -167,7 +172,16 @@ const Index = () => {
             <TabsTrigger value="media" className="data-[state=active]:bg-primary">
               <Camera className="w-4 h-4 mr-2" />
               Trip Media
+              {canUploadMedia && (
+                <Badge variant="secondary" className="ml-2 bg-tesla-cyan text-xs">Admin</Badge>
+              )}
             </TabsTrigger>
+            {isAuthenticated && (
+              <TabsTrigger value="admin" className="data-[state=active]:bg-primary">
+                <Shield className="w-4 h-4 mr-2" />
+                Admin Panel
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
@@ -237,6 +251,55 @@ const Index = () => {
               } : undefined}
             />
           </TabsContent>
+
+          {isAuthenticated && (
+            <TabsContent value="admin" className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <AdminLogin />
+                
+                <Card className="admin-stats border-tesla-cyan/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-tesla-cyan">
+                      <Shield className="w-5 h-5" />
+                      Admin Dashboard
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Journey Status</p>
+                        <p className="font-medium">29 states visited</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Media Access</p>
+                        <Badge variant={canUploadMedia ? "default" : "secondary"}>
+                          {canUploadMedia ? "Enabled" : "Restricted"}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    <div className="pt-4 border-t space-y-2">
+                      <p className="text-sm text-muted-foreground">Admin Capabilities:</p>
+                      <ul className="text-sm space-y-1">
+                        <li className="flex items-center gap-2">
+                          <Badge variant="outline" className="w-2 h-2 p-0 bg-green-500"></Badge>
+                          Upload photos and videos
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Badge variant="outline" className="w-2 h-2 p-0 bg-green-500"></Badge>
+                          Modify journey data
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Badge variant="outline" className="w-2 h-2 p-0 bg-green-500"></Badge>
+                          Access analytics
+                        </li>
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
       </main>
     </div>
