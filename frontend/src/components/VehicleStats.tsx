@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Battery, Zap, Thermometer, MapPin, Clock, Gauge } from 'lucide-react';
+import { formatTemperature } from '@/utils/temperature';
 
 interface VehicleStatsProps {
   batteryLevel?: number;
@@ -103,7 +104,7 @@ const VehicleStats = ({
                   <Thermometer className="w-4 h-4 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">Temp</span>
                 </div>
-                <span className="text-xl font-bold">{temperature}°F</span>
+                <span className="text-xl font-bold">{formatTemperature(temperature, 'F')}</span>
               </div>
             )}
           </div>

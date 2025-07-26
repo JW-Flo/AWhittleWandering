@@ -56,9 +56,22 @@ const Index = () => {
   // Smart tracking for charging stops, overnight stays, etc.
   const { events: trackingEvents, addManualEvent } = useSmartTracking();
 
-  // No more demo mode - always use real Tessie API data
-  const displayVehicles = vehicles;
+  // Filter vehicles to only show "Midnight Shadow"
+  const midnightShadowVehicle = vehicles.find(v => 
+    v.display_name?.toLowerCase().includes('midnight shadow') || 
+    v.display_name?.toLowerCase().includes('midnightshadow')
+  );
+  
+  // Use only Midnight Shadow vehicle data
+  const displayVehicles = midnightShadowVehicle ? [midnightShadowVehicle] : vehicles;
   const displayVehicleData = vehicleData;
+
+  // Auto-select Midnight Shadow if available
+  React.useEffect(() => {
+    if (midnightShadowVehicle && !selectedVehicle) {
+      setSelectedVehicle(midnightShadowVehicle.id);
+    }
+  }, [midnightShadowVehicle, selectedVehicle, setSelectedVehicle]);
 
   const handleTessieApiSubmit = (apiKey: string) => {
     localStorage.setItem('tessie_api_key', apiKey);
@@ -119,19 +132,15 @@ const Index = () => {
                   Demo Mode
                 </Badge>
               )}
-              {displayVehicles.length > 1 && (
-                <Select value={selectedVehicle || ''} onValueChange={setSelectedVehicle}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Select vehicle" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {displayVehicles.map((vehicle) => (
-                      <SelectItem key={vehicle.id} value={vehicle.id}>
-                        {vehicle.display_name || `Tesla ${vehicle.vin?.slice(-4)}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              
+              {/* Show Midnight Shadow vehicle info instead of dropdown */}
+              {midnightShadowVehicle && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-tesla-gray/20 rounded-lg border border-tesla-cyan/20">
+                  <div className="w-2 h-2 bg-tesla-cyan rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium text-tesla-cyan">
+                    {midnightShadowVehicle.display_name || 'Midnight Shadow'}
+                  </span>
+                </div>
               )}
               
               <Button 
