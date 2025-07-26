@@ -6,8 +6,16 @@ const app = new Hono();
 
 // Enable CORS for frontend access
 app.use('*', cors({
-  origin: ['http://localhost:8080', 'http://localhost:8081', 'http://localhost:8082', 'https://awhittlewandering.pages.dev'],
-  allowMethods: ['GET', 'POST', 'OPTIONS'],
+  origin: [
+    'http://localhost:8080', 
+    'http://localhost:8081', 
+    'http://localhost:8082', 
+    'http://localhost:8083', 
+    'https://awhittlewandering.com',
+    'https://www.awhittlewandering.com',
+    'https://awhittlewandering.pages.dev'
+  ],
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
 }));
 
@@ -223,6 +231,193 @@ app.post('/api/v1/media/upload', async (c) => {
     return c.json({
       success: false,
       error: 'Media upload failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+// Get media gallery
+app.get('/api/v1/media/list', async (c) => {
+  try {
+    const url = new URL(c.req.url);
+    const state = url.searchParams.get('state');
+    const type = url.searchParams.get('type');
+    const tags = url.searchParams.get('tags');
+
+    // Mock media data - in production would fetch from storage
+    const mockMediaItems = [
+      {
+        id: 'sample-1',
+        type: 'photo',
+        filename: 'tesla-grand-canyon.jpg',
+        url: 'https://via.placeholder.com/800x600?text=Tesla+at+Grand+Canyon',
+        title: 'Tesla at Grand Canyon',
+        description: 'Our Tesla parked at the South Rim of Grand Canyon during sunset. Amazing views!',
+        location: {
+          state: 'Arizona',
+          city: 'Grand Canyon Village',
+          coordinates: { lat: 36.1069, lng: -112.1129 }
+        },
+        timestamp: '2025-06-07T18:30:00Z',
+        tags: ['tesla', 'grand-canyon', 'sunset', 'scenic'],
+        tripDay: 7,
+        fileSize: 2456789,
+        uploadedAt: '2025-06-07T19:00:00Z',
+        isFavorite: true,
+        views: 45
+      },
+      {
+        id: 'sample-2',
+        type: 'video',
+        filename: 'charging-supercharger.mp4',
+        url: 'https://via.placeholder.com/800x600?text=Charging+Video',
+        thumbnailUrl: 'https://via.placeholder.com/800x600?text=Charging+Thumbnail',
+        title: 'Supercharger Stop in Nevada',
+        description: 'Quick charging session at a Tesla Supercharger in Nevada desert.',
+        location: {
+          state: 'Nevada',
+          city: 'Las Vegas',
+          coordinates: { lat: 36.1699, lng: -115.1398 }
+        },
+        timestamp: '2025-06-09T14:15:00Z',
+        tags: ['tesla', 'supercharger', 'charging', 'road-trip'],
+        tripDay: 9,
+        fileSize: 15678900,
+        uploadedAt: '2025-06-09T14:30:00Z',
+        isFavorite: false,
+        views: 23
+      },
+      {
+        id: 'sample-3',
+        type: 'photo',
+        filename: 'yellowstone-geyser.jpg',
+        url: 'https://via.placeholder.com/800x600?text=Yellowstone+Geyser',
+        title: 'Old Faithful Yellowstone',
+        description: 'Spectacular eruption of Old Faithful geyser during our Yellowstone visit.',
+        location: {
+          state: 'Wyoming',
+          city: 'Yellowstone National Park',
+          coordinates: { lat: 44.4605, lng: -110.8281 }
+        },
+        timestamp: '2025-06-23T15:20:00Z',
+        tags: ['yellowstone', 'geyser', 'national-park', 'nature'],
+        tripDay: 23,
+        fileSize: 3245678,
+        uploadedAt: '2025-06-23T16:00:00Z',
+        isFavorite: true,
+        views: 67
+      },
+      {
+        id: 'sample-4',
+        type: 'photo',
+        filename: 'seattle-skyline.jpg',
+        url: 'https://via.placeholder.com/800x600?text=Seattle+Skyline',
+        title: 'Seattle Skyline',
+        description: 'Beautiful view of Seattle skyline from Kerry Park during our Washington visit.',
+        location: {
+          state: 'Washington',
+          city: 'Seattle',
+          coordinates: { lat: 47.6062, lng: -122.3321 }
+        },
+        timestamp: '2025-06-18T19:45:00Z',
+        tags: ['seattle', 'skyline', 'city', 'washington'],
+        tripDay: 18,
+        fileSize: 2987654,
+        uploadedAt: '2025-06-18T20:15:00Z',
+        isFavorite: false,
+        views: 34
+      }
+    ];
+
+    // Apply filters
+    let filteredMedia = mockMediaItems;
+    
+    if (state) {
+      filteredMedia = filteredMedia.filter(item => 
+        item.location.state.toLowerCase().includes(state.toLowerCase())
+      );
+    }
+    
+    if (type) {
+      filteredMedia = filteredMedia.filter(item => item.type === type);
+    }
+    
+    if (tags) {
+      const tagList = tags.split(',');
+      filteredMedia = filteredMedia.filter(item =>
+        tagList.some(tag => item.tags.includes(tag.trim()))
+      );
+    }
+
+    return c.json({
+      success: true,
+      media: filteredMedia,
+      total: filteredMedia.length,
+      filters: { state, type, tags }
+    });
+  } catch (error) {
+    return c.json({
+      success: false,
+      error: 'Failed to fetch media',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+// Delete media item
+app.delete('/api/v1/media/:id', async (c) => {
+  try {
+    const mediaId = c.req.param('id');
+    const authHeader = c.req.header('Authorization');
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    // In production, verify admin token and delete from storage
+    // For now, return success
+    return c.json({
+      success: true,
+      message: `Media ${mediaId} deleted`,
+      mediaId
+    });
+  } catch (error) {
+    return c.json({
+      success: false,
+      error: 'Delete failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+// Update media item
+app.put('/api/v1/media/:id', async (c) => {
+  try {
+    const mediaId = c.req.param('id');
+    const authHeader = c.req.header('Authorization');
+    const updates = await c.req.json();
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    // In production, verify admin token and update in storage
+    // For now, return mock updated item
+    const updatedMedia = {
+      id: mediaId,
+      ...updates,
+      updatedAt: new Date().toISOString()
+    };
+
+    return c.json({
+      success: true,
+      message: `Media ${mediaId} updated`,
+      media: updatedMedia
+    });
+  } catch (error) {
+    return c.json({
+      success: false,
+      error: 'Update failed',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, 500);
   }

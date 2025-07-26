@@ -1,0 +1,15 @@
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+  
+# Cache static assets
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# API requests - allow CORS for the custom domain
+/api/*
+  Access-Control-Allow-Origin: https://awhittlewandering.com
+  Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization

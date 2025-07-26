@@ -2,5 +2,15 @@ name = "awhittlewandering-api"
 main = "dist/worker.js"
 compatibility_date = "2024-07-24"
 
+# Custom domain configuration for API (will be enabled when DNS propagates)
+# [[routes]]
+# pattern = "api.andreysergeevich.me/*"
+# zone_name = "andreysergeevich.me"
+
 [env.production]
 name = "awhittlewandering-api"
+
+# Production domain routing (will be enabled when DNS propagates)
+# [[env.production.routes]]
+# pattern = "api.andreysergeevich.me/*"
+# zone_name = "andreysergeevich.me"

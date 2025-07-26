@@ -1,8 +1,17 @@
 // Centralized API configuration for the Tesla Road Trip Tracker
 // Handles all API endpoints and provides consistent error handling
 
+const getApiBaseUrl = () => {
+  // Use production API endpoint when deployed to awhittlewandering.com
+  if (typeof window !== 'undefined' && window.location.hostname === 'awhittlewandering.com') {
+    return 'https://api.andreysergeevich.me';
+  }
+  // Use current working API for development until custom domain DNS propagates
+  return 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
+};
+
 export const API_CONFIG = {
-  BASE_URL: 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev',
+  BASE_URL: getApiBaseUrl(),
   ENDPOINTS: {
     UNIFIED_DATA: '/api/v1/unified-data',
     TIMELINE: '/api/v1/timeline',
