@@ -3,6 +3,7 @@ import TeslaMap from '@/components/TeslaMap';
 import SmartVehicleStats from '@/components/SmartVehicleStats';
 import TessieApiSetup from '@/components/TessieApiSetup';
 import TessieApiDebugger from '@/components/TessieApiDebugger';
+import DataDebugger from '@/components/DataDebugger';
 import RoadTripTracker from '@/components/RoadTripTracker';
 import MediaUpload from '@/components/MediaUpload';
 import AdminLogin from '@/components/AdminLogin';
@@ -373,6 +374,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="debug" className="space-y-6">
+            <DataDebugger tessieApiKey={tessieApiKey || undefined} />
             <TessieApiDebugger apiKey={tessieApiKey} />
           </TabsContent>
 
