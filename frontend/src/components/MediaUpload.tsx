@@ -4,8 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Camera, Upload, MapPin, Clock, FileImage, Video, X } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Camera, Upload, MapPin, Clock, FileImage, Video, X, Shield, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAdminAuth } from '@/lib/auth';
+import AdminLogin from './AdminLogin';
 
 interface MediaFile {
   id: string;
@@ -34,12 +37,43 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
   const [dragActive, setDragActive] = useState(false);
   const [uploadedMedia, setUploadedMedia] = useState<MediaFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Admin authentication
+  const { isAuthenticated, canUploadMedia } = useAdminAuth();
 
   // Supported iPhone formats
   const supportedFormats = [
     'image/jpeg', 'image/png', 'image/heic', 'image/heif',
     'video/mp4', 'video/mov', 'video/quicktime'
   ];
+
+  // If not authenticated, show admin login
+  if (!isAuthenticated || !canUploadMedia) {
+    return (
+      <Card className="media-upload-restricted">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-yellow-500" />
+            Media Upload - Admin Access Required
+          </CardTitle>
+          <CardDescription>
+            Media upload functionality is restricted to administrators to prevent unauthorized content modification.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Alert className="border-yellow-200 bg-yellow-50">
+            <Lock className="w-4 h-4" />
+            <AlertDescription className="text-yellow-800">
+              <strong>Security Notice:</strong> Media uploads can affect the journey tracking experience. 
+              Only authorized administrators can upload photos and videos to maintain content integrity.
+            </AlertDescription>
+          </Alert>
+          
+          <AdminLogin onAuthChange={() => {}} />
+        </CardContent>
+      </Card>
+    );
+  }
 
   const extractEXIFData = async (file: File): Promise<{ location?: { lat: number; lng: number }; timestamp?: Date }> => {
     return new Promise((resolve) => {
