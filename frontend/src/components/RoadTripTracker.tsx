@@ -13,6 +13,8 @@ import AdventureMilestones from './AdventureMilestones';
 import AdventureCsvUploader from './AdventureCsvUploader';
 import TeslaMap from './TeslaMap';
 import EnhancedTeslaMap from './EnhancedTeslaMap';
+import AdvancedTeslaMap from './AdvancedTeslaMap';
+import InteractiveRoutePlanner from './InteractiveRoutePlanner';
 import TimelineDataDisplay from './TimelineDataDisplay';
 import JourneyDashboard from './JourneyDashboard';
 import ApiConfig from './ApiConfig';
@@ -27,6 +29,7 @@ const RoadTripTracker = () => {
   const [routeLocations, setRouteLocations] = useState<Array<{lat: number, lng: number, timestamp: string}>>([]);
   const [tessieApiKey, setTessieApiKey] = useState<string>('');
   const [tessieVehicleId, setTessieVehicleId] = useState<string>('midnightshadow');
+  const [showAdvancedMap, setShowAdvancedMap] = useState<boolean>(false);
   
   // Admin authentication
   const { isAuthenticated, canModifyJourney } = useAdminAuth();
@@ -68,10 +71,10 @@ const RoadTripTracker = () => {
     <div className="space-y-8">
       {/* Adventure Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className={`grid w-full ${isAuthenticated ? 'grid-cols-7' : 'grid-cols-5'} bg-[hsl(var(--tesla-gray))]`}>
+        <TabsList className={`grid w-full ${isAuthenticated ? 'grid-cols-8' : 'grid-cols-6'} bg-[hsl(var(--tesla-gray))]`}>
           <TabsTrigger value="overview" className="data-[state=active]:bg-[hsl(var(--adventure-orange))] data-[state=active]:text-white">
             <MapIcon className="w-4 h-4 mr-2" />
-            Adventure Overview
+            Overview
           </TabsTrigger>
           <TabsTrigger value="journey" className="data-[state=active]:bg-[hsl(var(--adventure-orange))] data-[state=active]:text-white">
             <Zap className="w-4 h-4 mr-2" />
@@ -81,9 +84,13 @@ const RoadTripTracker = () => {
             <Route className="w-4 h-4 mr-2" />
             Route Map
           </TabsTrigger>
+          <TabsTrigger value="planner" className="data-[state=active]:bg-[hsl(var(--adventure-orange))] data-[state=active]:text-white">
+            <Target className="w-4 h-4 mr-2" />
+            Route Planner
+          </TabsTrigger>
           <TabsTrigger value="timeline" className="data-[state=active]:bg-[hsl(var(--adventure-orange))] data-[state=active]:text-white">
             <Clock className="w-4 h-4 mr-2" />
-            Journey Timeline
+            Timeline
           </TabsTrigger>
           <TabsTrigger value="achievements" className="data-[state=active]:bg-[hsl(var(--adventure-orange))] data-[state=active]:text-white">
             <Trophy className="w-4 h-4 mr-2" />
@@ -337,18 +344,45 @@ const RoadTripTracker = () => {
               <CardTitle className="flex items-center gap-2 text-gradient">
                 <Route className="w-5 h-5" />
                 Enhanced Adventure Route Map
+                <div className="ml-auto flex gap-2">
+                  <Button
+                    size="sm"
+                    variant={showAdvancedMap ? "default" : "outline"}
+                    onClick={() => setShowAdvancedMap(!showAdvancedMap)}
+                  >
+                    {showAdvancedMap ? "Standard View" : "Advanced View"}
+                  </Button>
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-96 w-full">
-                <EnhancedTeslaMap
-                  vehicleId={tessieVehicleId}
-                  apiKey={tessieApiKey}
-                  mapboxToken={mapboxToken}
-                  startDate="2025-06-03"
-                  endDate="2025-07-26"
-                  onLocationData={handleMapDataAvailable}
-                />
+                {showAdvancedMap ? (
+                  <AdvancedTeslaMap
+                    mapboxToken={mapboxToken}
+                    routePoints={routeLocations}
+                    currentLocation={{
+                      lat: 41.1865,
+                      lng: -73.1532,
+                      heading: 180,
+                      speed: 0
+                    }}
+                    showElevationProfile={true}
+                    showRouteAnimation={true}
+                    showClusters={true}
+                    onRouteStatsChange={(stats) => console.log('Route stats:', stats)}
+                    onLocationClick={(location) => console.log('Location clicked:', location)}
+                  />
+                ) : (
+                  <EnhancedTeslaMap
+                    vehicleId={tessieVehicleId}
+                    apiKey={tessieApiKey}
+                    mapboxToken={mapboxToken}
+                    startDate="2025-06-03"
+                    endDate="2025-07-26"
+                    onLocationData={handleMapDataAvailable}
+                  />
+                )}
               </div>
               {routeLocations.length > 0 && (
                 <div className="mt-4 p-3 bg-[hsl(var(--adventure-green)/0.1)] rounded-lg">
@@ -359,6 +393,19 @@ const RoadTripTracker = () => {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="planner" className="space-y-6">
+          <InteractiveRoutePlanner
+            onRouteChange={(waypoints) => console.log('Route changed:', waypoints)}
+            onOptimizedRouteGenerated={(route) => console.log('Optimized route:', route)}
+            currentLocation={{
+              lat: 41.1865,
+              lng: -73.1532
+            }}
+            vehicleRange={300}
+            vehicleBatteryLevel={80}
+          />
         </TabsContent>
 
         <TabsContent value="timeline" className="space-y-6">
