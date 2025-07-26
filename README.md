@@ -11,6 +11,7 @@ This application tracks a Tesla vehicle's journey across all 48 continental Unit
 **Current Status**: ✅ **Phase 4 In Progress** - Admin Media Management system implemented!
 
 **Key Features**:
+
 - 📊 **Real-time Tesla Telemetry**: Live battery levels, location tracking, and vehicle status
 - 🗺️ **Interactive Trip Mapping**: Visual progress across all 48 states with route optimization  
 - ⚡ **Charging Analytics**: Supercharger usage, charging session analysis, and cost tracking
@@ -52,6 +53,7 @@ This is a modern, cloud-native application built with performance and scalabilit
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - **Bun** (v1.2+) - Fast JavaScript runtime and package manager
 - **Git** - Version control
 - **Cloudflare Account** - For Workers deployment (free tier works)
@@ -104,12 +106,14 @@ bun run deploy:frontend
 ## 🔌 Tesla Integration
 
 ### Data Sources
+
 - **Tesla Mobile Connector API**: Real-time vehicle telemetry
 - **CSV Exports**: Historical battery and charging data
 - **Supercharger Network API**: Station locations and availability
 - **Tesla Fleet API**: Enhanced vehicle data (if available)
 
 ### Supported Data Types
+
 - ⚡ **Battery Telemetry**: State of charge, voltage, temperature, charging rate
 - 📍 **Location Data**: GPS coordinates, elevation, heading, speed
 - 🚗 **Vehicle Status**: Doors, windows, climate control, software version
@@ -136,10 +140,13 @@ bun run tesla:analyze --start-date=2025-07-01
 ### Core Endpoints
 
 #### Tesla Telemetry
+
 ```bash
 POST /api/v1/telemetry
 ```
+
 Submit real-time Tesla vehicle data
+
 ```json
 {
   "timestamp": "2025-07-26T12:00:00Z",
@@ -162,10 +169,13 @@ Submit real-time Tesla vehicle data
 ```
 
 #### Trip Status
+
 ```bash
 GET /api/v1/trip/status
 ```
+
 Get current trip progress and statistics
+
 ```json
 {
   "statesVisited": 12,
@@ -178,10 +188,13 @@ Get current trip progress and statistics
 ```
 
 #### Health Check
+
 ```bash
 GET /health
 ```
+
 API health and status monitoring
+
 ```json
 {
   "status": "ok",
@@ -193,6 +206,7 @@ API health and status monitoring
 ## 📊 Data Schema
 
 ### Tesla Telemetry Schema (Zod Validation)
+
 ```typescript
 const TeslaTelemetrySchema = z.object({
   timestamp: z.string().datetime(),
@@ -221,6 +235,7 @@ const TeslaTelemetrySchema = z.object({
 ## 🔧 Configuration
 
 ### Environment Variables
+
 ```bash
 # Cloudflare Workers
 CLOUDFLARE_API_TOKEN=your_cloudflare_token
@@ -238,6 +253,7 @@ WEBHOOK_URL=your_monitoring_webhook
 ```
 
 ### Cloudflare Workers Configuration
+
 ```toml
 # wrangler.toml
 name = "awhittlewandering-api"
@@ -256,18 +272,21 @@ id = "your_kv_namespace_id"
 ## 🚗 Road Trip Features
 
 ### State Tracking
+
 - **Visual Progress Map**: Interactive US map showing visited states
 - **State Checklist**: 48-state completion tracker with timestamps
 - **Route Optimization**: Suggested efficient paths to unvisited states
 - **Milestone Celebrations**: Automated alerts for state #10, #25, #40, #48
 
 ### Charging Network Analysis
+
 - **Supercharger Mapping**: All charging stops with session details
 - **Cost Tracking**: Total charging costs and per-kWh pricing
 - **Charging Speed Analysis**: Peak rates and optimal charging windows
 - **Network Coverage**: Gaps in charging infrastructure along routes
 
 ### Performance Insights
+
 - **Efficiency Tracking**: Miles per kWh across different terrains
 - **Weather Impact**: How temperature affects battery performance
 - **Driving Patterns**: Highway vs city efficiency comparisons
@@ -278,6 +297,7 @@ id = "your_kv_namespace_id"
 **Current Status**: Fully functional React-based dashboard with real-time data integration!
 
 **Live Features**:
+
 - 🗺️ **Interactive Maps**: Real-time vehicle location with 3D terrain visualization
 - 📊 **Live Analytics**: Battery performance and journey progress charts  
 - 📋 **Trip Timeline**: Real-time journey updates with 29 states conquered
@@ -292,6 +312,7 @@ id = "your_kv_namespace_id"
 ## 🛠️ Technology Stack
 
 **Backend**:
+
 - **Cloudflare Workers** - Global edge compute for ultra-low latency
 - **Hono** - Fast, lightweight web framework
 - **TypeScript** - Type-safe development
@@ -299,6 +320,7 @@ id = "your_kv_namespace_id"
 - **Bun** - Fast JavaScript runtime and package manager
 
 **Frontend** (Planned):
+
 - **React 18** - Modern UI framework
 - **Vite** - Fast build tooling
 - **Tailwind CSS** - Utility-first styling
@@ -306,6 +328,7 @@ id = "your_kv_namespace_id"
 - **Chart.js** - Data visualization
 
 **Data & Infrastructure**:
+
 - **Cloudflare KV** - Edge key-value storage
 - **GitHub Actions** - CI/CD automation
 - **Tesla API** - Vehicle data integration
@@ -321,6 +344,7 @@ We welcome contributions! This project documents a real Tesla road trip adventur
 5. **Open a Pull Request**
 
 ### Development Guidelines
+
 - Use TypeScript for all new code
 - Follow existing code style and formatting
 - Add tests for new functionality
@@ -330,12 +354,14 @@ We welcome contributions! This project documents a real Tesla road trip adventur
 ## 📈 Roadmap
 
 ### Phase 1: Core Infrastructure ✅ COMPLETED
+
 - [x] Cloudflare Workers API deployment
 - [x] Tesla telemetry data ingestion
 - [x] TypeScript schemas and validation
 - [x] Basic health monitoring
 
 ### Phase 2: Enhanced Tessie API Integration ✅ COMPLETED  
+
 - [x] Complete Tessie API integration with drive/charge history
 - [x] Real-time journey dashboard with comprehensive analytics
 - [x] Enhanced map visualization with actual route data
@@ -343,6 +369,7 @@ We welcome contributions! This project documents a real Tesla road trip adventur
 - [x] Admin-secured API configuration management
 
 ### Phase 3: Advanced Map Visualization ✅ COMPLETED
+
 - [x] React dashboard development with live data
 - [x] Interactive mapping with Mapbox and 3D terrain
 - [x] Advanced route visualization with animation
@@ -351,6 +378,7 @@ We welcome contributions! This project documents a real Tesla road trip adventur
 - [x] Douglas-Peucker route smoothing and optimization
 
 ### Phase 4: Admin Media Management 🚧 IN PROGRESS
+
 - [ ] Photo/video upload and management system
 - [ ] Trip media gallery with timeline integration
 - [ ] Admin authentication for media operations
@@ -358,12 +386,14 @@ We welcome contributions! This project documents a real Tesla road trip adventur
 - [ ] Social sharing integration
 
 ### Phase 5: Enhanced Timeline Features 📋 PLANNED
+
 - [ ] Interactive timeline with media integration
 - [ ] Advanced journey analytics and insights
 - [ ] Achievement system and milestone tracking
 - [ ] Weather impact analysis and visualization
 
 ### Phase 6: Performance Optimization 🎯 PLANNED
+
 - [ ] Route optimization algorithms
 - [ ] Predictive analytics for charging stops
 - [ ] Mobile app development
