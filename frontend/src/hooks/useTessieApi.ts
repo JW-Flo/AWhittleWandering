@@ -70,10 +70,7 @@ export const useTessieApi = (apiKey?: string) => {
         setSelectedVehicle(transformedVehicles[0].id);
       }
 
-      toast({
-        title: "Connected successfully",
-        description: `Found ${data.results?.length || 0} vehicle(s)`,
-      });
+      // Toast removed per user request - was showing "Connected successfully found 2 vehicles"
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch vehicles';
       setError(errorMessage);
