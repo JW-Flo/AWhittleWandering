@@ -6,15 +6,24 @@ export const API_KEYS = {
 
 // Store keys securely in localStorage on first use
 export const secureKeyStorage = {
-  storeKeys() {
-    localStorage.setItem('tessie_api_key', API_KEYS.TESSIE_API_KEY);
-    localStorage.setItem('mapbox_token', API_KEYS.MAPBOX_TOKEN);
+  storeKeys: (tessieKey?: string, mapboxToken?: string) => {
+    if (tessieKey) {
+      localStorage.setItem('tessie_api_key', tessieKey);
+    }
+    if (mapboxToken) {
+      localStorage.setItem('mapbox_token', mapboxToken);
+    }
   },
   
-  getStoredKeys() {
+  getStoredKeys: () => {
     return {
-      tessieKey: localStorage.getItem('tessie_api_key') || API_KEYS.TESSIE_API_KEY,
-      mapboxToken: localStorage.getItem('mapbox_token') || API_KEYS.MAPBOX_TOKEN,
+      tessieKey: localStorage.getItem('tessie_api_key') || import.meta.env.VITE_TESSIE_API_KEY,
+      mapboxToken: localStorage.getItem('mapbox_token') || import.meta.env.VITE_MAPBOX_TOKEN
     };
+  },
+  
+  clearKeys: () => {
+    localStorage.removeItem('tessie_api_key');
+    localStorage.removeItem('mapbox_token');
   }
 };
