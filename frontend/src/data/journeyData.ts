@@ -24,18 +24,18 @@ export interface TimelineEvent {
   };
 }
 
-// Real journey statistics from actual trip data
+// Real journey statistics from actual trip data - CURRENT STATUS
 export const journeyStats = {
   totalStates: 48, // Goal: All 48 continental US states
-  visitedStates: 29, // Updated to match actual CSV data (29 states visited)
-  remainingStates: 19, // 48 - 29 = 19 remaining
-  tripDuration: 56, // June 1 - July 26, 2025 (56 days elapsed)
+  visitedStates: 29, // Currently visited (as of July 26, 2025)
+  remainingStates: 19, // 48 - 29 = 19 states remaining
+  tripDuration: 56, // June 1 - July 26, 2025 (56 days so far)
   daysElapsed: 56,
-  daysRemaining: 0, // Trip is ongoing
+  daysRemaining: null, // Ongoing journey, end date TBD
   startDate: '2025-06-01',
-  endDate: '2025-07-26',
-  currentState: 'Connecticut', // Based on final coordinates (41.205, -73.14)
-  totalMiles: 11950, // Odometer: 70,128 - 58,178 = 11,950 miles
+  endDate: null, // Journey in progress
+  currentState: 'Connecticut', // Leaving this afternoon to head south
+  totalMiles: 11950, // Actual miles so far
   averageMilesPerDay: 213 // 11,950 miles / 56 days
 };
 
@@ -268,7 +268,7 @@ export const journeyTimeline: TimelineEvent[] = [
   {
     state: 'Connecticut',
     date: 'July 20-26, 2025',
-    highlights: ['Stratford stay with Deanna', 'Constitution State home base', 'Current location'],
+    highlights: ['Staying with Deanna in Stratford', 'Constitution State adventures', 'Preparing for southern journey'],
     type: 'milestone',
     current: true,
     location: { lat: 41.1865, lng: -73.1532 }
@@ -284,7 +284,7 @@ export const journeyTimeline: TimelineEvent[] = [
 
 // Legacy stats removed - using real data from above
 
-// Achievement system based on real journey
+// Achievement system based on real journey with expanded depth
 export const journeyAchievements = [
   {
     id: 'journey_start',
@@ -294,7 +294,8 @@ export const journeyAchievements = [
     progress: 1,
     total: 1,
     achieved: true,
-    rarity: 'common'
+    rarity: 'common',
+    points: 50
   },
   {
     id: 'first_week',
@@ -304,7 +305,19 @@ export const journeyAchievements = [
     progress: 1,
     total: 1,
     achieved: true,
-    rarity: 'common'
+    rarity: 'common',
+    points: 100
+  },
+  {
+    id: 'desert_explorer',
+    title: 'Desert Storm',
+    description: 'Conquered the southwestern desert states',
+    icon: 'Sun',
+    progress: 4,
+    total: 4,
+    achieved: true,
+    rarity: 'rare',
+    points: 300
   },
   {
     id: 'first_ten_states',
@@ -314,7 +327,41 @@ export const journeyAchievements = [
     progress: 29,
     total: 10,
     achieved: true,
-    rarity: 'rare'
+    rarity: 'rare',
+    points: 500
+  },
+  {
+    id: 'pacific_coast',
+    title: 'Pacific Coast Highway Master',
+    description: 'Drove the legendary California coastline',
+    icon: 'Waves',
+    progress: 1,
+    total: 1,
+    achieved: true,
+    rarity: 'epic',
+    points: 750
+  },
+  {
+    id: 'mountain_climber',
+    title: 'Summit Conquerer',
+    description: 'Summited Lone Mountain in Montana!',
+    icon: 'Mountain',
+    progress: 1,
+    total: 1,
+    achieved: true,
+    rarity: 'legendary',
+    points: 1000
+  },
+  {
+    id: 'national_parks',
+    title: 'National Park Explorer',
+    description: 'Visited 5+ National Parks on this journey',
+    icon: 'Trees',
+    progress: 7,
+    total: 5,
+    achieved: true,
+    rarity: 'epic',
+    points: 800
   },
   {
     id: 'halfway_hero',
@@ -324,7 +371,30 @@ export const journeyAchievements = [
     progress: 29,
     total: 24,
     achieved: true,
-    rarity: 'epic'
+    rarity: 'epic',
+    points: 1200
+  },
+  {
+    id: 'great_lakes',
+    title: 'Great Lakes Navigator',
+    description: 'Explored the Great Lakes region',
+    icon: 'Droplets',
+    progress: 3,
+    total: 3,
+    achieved: true,
+    rarity: 'rare',
+    points: 400
+  },
+  {
+    id: 'midwest_master',
+    title: 'Heartland Hero',
+    description: 'Conquered the American Midwest',
+    icon: 'Wheat',
+    progress: 6,
+    total: 6,
+    achieved: true,
+    rarity: 'rare',
+    points: 600
   },
   {
     id: 'new_england_complete',
@@ -334,7 +404,41 @@ export const journeyAchievements = [
     progress: 6,
     total: 6,
     achieved: true,
-    rarity: 'rare'
+    rarity: 'epic',
+    points: 900
+  },
+  {
+    id: 'sunrise_hiker',
+    title: 'Sunrise Summit',
+    description: 'Hiked Cadillac Mountain for the first sunrise in America',
+    icon: 'Sunrise',
+    progress: 1,
+    total: 1,
+    achieved: true,
+    rarity: 'legendary',
+    points: 1500
+  },
+  {
+    id: 'cheese_connoisseur',
+    title: 'Cheese Castle Champion',
+    description: 'Discovered Wisconsin\'s famous Mars Cheese Castle',
+    icon: 'Coffee',
+    progress: 1,
+    total: 1,
+    achieved: true,
+    rarity: 'rare',
+    points: 250
+  },
+  {
+    id: 'baseball_fan',
+    title: 'Wrigleyville Wanderer',
+    description: 'Explored iconic Wrigleyville in Chicago',
+    icon: 'MapPin',
+    progress: 1,
+    total: 1,
+    achieved: true,
+    rarity: 'common',
+    points: 150
   },
   {
     id: 'mileage_master',
@@ -344,17 +448,19 @@ export const journeyAchievements = [
     progress: 11950,
     total: 10000,
     achieved: true,
-    rarity: 'epic'
+    rarity: 'epic',
+    points: 1000
   },
   {
-    id: 'mountain_explorer',
-    title: 'Mountain State Master',
-    description: 'Explored the western mountain states',
-    icon: 'Mountain',
+    id: 'state_hopper',
+    title: 'State Hopping Pro',
+    description: 'Visited multiple states in a single day',
+    icon: 'Zap',
     progress: 8,
-    total: 10,
-    achieved: false,
-    rarity: 'rare'
+    total: 5,
+    achieved: true,
+    rarity: 'rare',
+    points: 350
   },
   {
     id: 'two_month_warrior',
@@ -364,26 +470,106 @@ export const journeyAchievements = [
     progress: 56,
     total: 56,
     achieved: true,
-    rarity: 'epic'
+    rarity: 'epic',
+    points: 800
+  },
+  {
+    id: 'friend_gatherer',
+    title: 'Social Butterfly',
+    description: 'Stayed with friends in multiple states',
+    icon: 'Users',
+    progress: 8,
+    total: 5,
+    achieved: true,
+    rarity: 'rare',
+    points: 400
   },
   {
     id: 'tesla_champion',
     title: 'Electric Road Warrior',
-    description: 'Proving Tesla can conquer America!',
+    description: 'Proving Tesla can conquer America, state by state!',
     icon: 'Zap',
     progress: 29,
-    total: 30,
+    total: 48,
     achieved: false,
-    rarity: 'epic'
+    rarity: 'epic',
+    points: 1200
+  },
+  {
+    id: 'camping_expert',
+    title: 'Wilderness Camper',
+    description: 'Spent nights camping in the great outdoors',
+    icon: 'Tent',
+    progress: 4,
+    total: 3,
+    achieved: true,
+    rarity: 'rare',
+    points: 500
+  },
+  {
+    id: 'fourtheenth_july',
+    title: 'Independence Day Explorer',
+    description: 'Celebrated July 4th on the road in the Badlands',
+    icon: 'Sparkles',
+    progress: 1,
+    total: 1,
+    achieved: true,
+    rarity: 'rare',
+    points: 300
+  },
+  {
+    id: 'new_england_complete',
+    title: 'New England Champion',
+    description: 'Conquered all the New England states',
+    icon: 'Flag',
+    progress: 6,
+    total: 6,
+    achieved: true,
+    rarity: 'epic',
+    points: 900
+  },
+  {
+    id: 'two_month_warrior',
+    title: 'Two Month Adventure',
+    description: 'Sustained the adventure for over 8 weeks',
+    icon: 'Clock',
+    progress: 56,
+    total: 56,
+    achieved: true,
+    rarity: 'epic',
+    points: 800
+  },
+  {
+    id: 'east_coast_finish',
+    title: 'Atlantic Ocean Arrival',
+    description: 'Reached the Atlantic coast - ready for the south!',
+    icon: 'Waves',
+    progress: 1,
+    total: 1,
+    achieved: true,
+    rarity: 'epic',
+    points: 900
   },
   {
     id: 'cross_country_champion',
     title: 'Continental Champion',
-    description: 'Visited all 48 continental US states',
+    description: 'Visit all 48 continental US states',
     icon: 'Award',
     progress: 29,
     total: 48,
     achieved: false,
-    rarity: 'legendary'
+    rarity: 'legendary',
+    points: 5000
+  },
+  {
+    id: 'ultimate_wanderer',
+    title: 'A Whittle Wandering Legend',
+    description: 'Complete the ultimate American road trip adventure',
+    icon: 'Crown',
+    progress: 29,
+    total: 48,
+    achieved: false,
+    rarity: 'mythic',
+    points: 10000
   }
 ];

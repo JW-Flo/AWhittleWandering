@@ -3,14 +3,16 @@ import TeslaMap from '@/components/TeslaMap';
 import VehicleStats from '@/components/VehicleStats';
 import TessieApiSetup from '@/components/TessieApiSetup';
 import RoadTripTracker from '@/components/RoadTripTracker';
+import MediaUpload from '@/components/MediaUpload';
 import { useTessieApi } from '@/hooks/useTessieApi';
+import { useSmartTracking } from '@/hooks/useSmartTracking';
 import { secureKeyStorage } from '@/lib/config';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RefreshCw, Car, Zap, Map, Route } from 'lucide-react';
+import { RefreshCw, Car, Zap, Map, Route, Camera } from 'lucide-react';
 
 const Index = () => {
   const [tessieApiKey, setTessieApiKey] = useState<string | null>(null);
@@ -45,6 +47,9 @@ const Index = () => {
     error,
     refetch 
   } = useTessieApi(isDemoMode ? undefined : tessieApiKey || undefined);
+  
+  // Smart tracking for charging stops, overnight stays, etc.
+  const { events: trackingEvents, addManualEvent } = useSmartTracking();
 
   // No more demo mode - always use real Tessie API data
   const displayVehicles = vehicles;
@@ -150,7 +155,7 @@ const Index = () => {
         )}
 
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 bg-tesla-gray">
+          <TabsList className="grid w-full grid-cols-3 bg-tesla-gray">
             <TabsTrigger value="dashboard" className="data-[state=active]:bg-primary">
               <Car className="w-4 h-4 mr-2" />
               Live Dashboard
@@ -158,6 +163,10 @@ const Index = () => {
             <TabsTrigger value="roadtrip" className="data-[state=active]:bg-primary">
               <Route className="w-4 h-4 mr-2" />
               Road Trip Tracker
+            </TabsTrigger>
+            <TabsTrigger value="media" className="data-[state=active]:bg-primary">
+              <Camera className="w-4 h-4 mr-2" />
+              Trip Media
             </TabsTrigger>
           </TabsList>
 
@@ -211,6 +220,22 @@ const Index = () => {
 
           <TabsContent value="roadtrip" className="space-y-6">
             <RoadTripTracker />
+          </TabsContent>
+
+          <TabsContent value="media" className="space-y-6">
+            <MediaUpload
+              onMediaUploaded={(media) => {
+                console.log('Media uploaded:', media);
+                // In production, could trigger map updates, add to timeline, etc.
+              }}
+              currentLocation={displayVehicleData ? {
+                state: 'Connecticut', // Current state - would get from actual location
+                coordinates: {
+                  lat: displayVehicleData.latitude,
+                  lng: displayVehicleData.longitude
+                }
+              } : undefined}
+            />
           </TabsContent>
         </Tabs>
       </main>
