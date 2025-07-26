@@ -18,8 +18,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RefreshCw, Car, Zap, Map, Route, Camera, Shield } from 'lucide-react';
 
 const Index = () => {
-  const [tessieApiKey, setTessieApiKey] = useState<string | null>(null);
-  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [tessieApiKey, setTessieApiKey] = useState<string | null>(
+    import.meta.env.VITE_TESSIE_API_KEY || null
+  );
+  const [mapboxToken, setMapboxToken] = useState<string | null>(
+    import.meta.env.VITE_MAPBOX_TOKEN || null
+  );
   const [isDemoMode, setIsDemoMode] = useState(false);
 
   // Admin authentication
@@ -29,11 +33,21 @@ const Index = () => {
   useEffect(() => {
     const { tessieKey, mapboxToken: mbToken } = secureKeyStorage.getStoredKeys();
     
-    if (tessieKey) {
+    console.log('Loading API keys:', { 
+      tessieFromStorage: !!localStorage.getItem('tessie_api_key'),
+      tessieFromEnv: !!import.meta.env.VITE_TESSIE_API_KEY,
+      mapboxFromStorage: !!localStorage.getItem('mapbox_token'),
+      mapboxFromEnv: !!import.meta.env.VITE_MAPBOX_TOKEN,
+      finalTessie: !!tessieKey,
+      finalMapbox: !!mbToken,
+      currentTessieState: !!tessieApiKey,
+      currentMapboxState: !!mapboxToken
+    });
+    
+    if (tessieKey && tessieKey !== tessieApiKey) {
       setTessieApiKey(tessieKey);
-      secureKeyStorage.storeKeys(); // Ensure keys are stored securely
     }
-    if (mbToken) {
+    if (mbToken && mbToken !== mapboxToken) {
       setMapboxToken(mbToken);
     }
     
@@ -42,7 +56,7 @@ const Index = () => {
     if (savedDemoMode) {
       setIsDemoMode(true);
     }
-  }, []);
+  }, [tessieApiKey, mapboxToken]);
 
   const { 
     vehicles, 
@@ -106,7 +120,16 @@ const Index = () => {
 
   // Show API setup if no TESSIE key and not in demo mode
   if (!tessieApiKey && !isDemoMode) {
-    return <TessieApiSetup onApiKeySubmit={handleTessieApiSubmit} onDemoMode={handleDemoMode} isLoading={isLoading} />;
+    // If we have environment variables, don't show setup
+    const envTessieKey = import.meta.env.VITE_TESSIE_API_KEY;
+    if (envTessieKey) {
+      // Use env key but don't show setup screen
+      React.useEffect(() => {
+        setTessieApiKey(envTessieKey);
+      }, []);
+    } else {
+      return <TessieApiSetup onApiKeySubmit={handleTessieApiSubmit} onDemoMode={handleDemoMode} isLoading={isLoading} />;
+    }
   }
 
   return (

@@ -28,6 +28,7 @@ import {
   Heart,
   MessageCircle
 } from 'lucide-react';
+import { journeyTimeline } from '@/data/journeyData';
 
 interface TimelineEvent {
   id: string;
@@ -87,8 +88,40 @@ interface SmartTimelineProps {
   };
 }
 
+// Generate sample timeline events from the journey data
+const generateSampleEvents = (): TimelineEvent[] => {
+  return journeyTimeline.slice(0, 10).map((journey, index) => ({
+    id: `journey-${index}`,
+    timestamp: journey.date,
+    type: journey.type === 'milestone' ? 'milestone' : 'drive',
+    title: `${journey.state} Adventure`,
+    description: journey.highlights.join(', '),
+    location: {
+      name: journey.state,
+      coordinates: journey.location || { lat: 0, lng: 0 },
+      state: journey.state,
+      city: journey.state
+    },
+    data: {
+      distance: Math.floor(Math.random() * 300) + 100,
+      duration: Math.floor(Math.random() * 8) + 2,
+      averageSpeed: Math.floor(Math.random() * 20) + 50,
+      photos: Math.floor(Math.random() * 10) + 1,
+      peopleEncountered: ['Local photographer', 'Fellow travelers'],
+      socialInteractions: Math.floor(Math.random() * 5) + 1,
+      milestonePoints: journey.type === 'milestone' ? 100 : 25
+    },
+    insights: {
+      efficiency: 3.5 + Math.random() * 0.8,
+      routeOptimization: 'Optimal scenic route taken',
+      chargingStrategy: 'Strategic overnight charging',
+      weatherImpact: 'Favorable conditions'
+    }
+  }));
+};
+
 const SmartTimeline: React.FC<SmartTimelineProps> = ({
-  events = [],
+  events,
   currentLocation,
   isLoading = false,
   onEventClick,
@@ -248,7 +281,8 @@ const SmartTimeline: React.FC<SmartTimelineProps> = ({
     }
   ];
 
-  const timelineEvents = events.length > 0 ? events : sampleEvents;
+  // Use provided events or generate sample events from journey data
+  const timelineEvents = events && events.length > 0 ? events : generateSampleEvents();
 
   // Filter events based on active filters
   const filteredEvents = useMemo(() => {
