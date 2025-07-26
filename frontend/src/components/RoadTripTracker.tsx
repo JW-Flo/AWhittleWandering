@@ -83,17 +83,11 @@ const RoadTripTracker = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-8">
-          {/* Live Timeline Data Integration */}
+          {/* Live Adventure Hero */}
+          <AdventureHero />
+          
+          {/* Enhanced Timeline Display */}
           <TimelineDataDisplay />
-
-          {/* Legacy Adventure Stats (for backup) */}
-          <AdventureHero
-            currentLocation={currentState?.state || 'California'}
-            daysElapsed={55}
-            totalDays={55}
-            statesVisited={29}
-            totalStates={31}
-          />
 
           {/* Key Adventure Statistics */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
