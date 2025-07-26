@@ -1,0 +1,151 @@
+{
+  "type": "telemetry",
+  "totalEntries": 10,
+  "statesVisited": 5,
+  "states": [
+    "Texas",
+    "New Mexico",
+    "Arizona",
+    "Utah",
+    "California"
+  ],
+  "totalMiles": 634,
+  "entries": [
+    {
+      "timestamp": 1748779200000,
+      "latitude": 27.8006,
+      "longitude": -97.3964,
+      "speed": 0,
+      "heading": 0,
+      "battery_level": 85,
+      "battery_range": 250,
+      "odometer": 58046,
+      "outside_temp": 78,
+      "charging_state": "Disconnected",
+      "state": "Texas"
+    },
+    {
+      "timestamp": 1748784600000,
+      "latitude": 27.9506,
+      "longitude": -97.5964,
+      "speed": 65,
+      "heading": 45,
+      "battery_level": 82,
+      "battery_range": 240,
+      "odometer": 58075,
+      "outside_temp": 82,
+      "charging_state": "Disconnected",
+      "state": "Texas"
+    },
+    {
+      "timestamp": 1748888100000,
+      "latitude": 32.1776,
+      "longitude": -104.5281,
+      "speed": 55,
+      "heading": 270,
+      "battery_level": 78,
+      "battery_range": 230,
+      "odometer": 58180,
+      "outside_temp": 85,
+      "charging_state": "Disconnected",
+      "state": "New Mexico"
+    },
+    {
+      "timestamp": 1748983500000,
+      "latitude": 32.1776,
+      "longitude": -104.5281,
+      "speed": 0,
+      "heading": 0,
+      "battery_level": 65,
+      "battery_range": 200,
+      "odometer": 58185,
+      "outside_temp": 88,
+      "charging_state": "Charging",
+      "state": "New Mexico"
+    },
+    {
+      "timestamp": 1749047400000,
+      "latitude": 30.8865,
+      "longitude": -103.0134,
+      "speed": 70,
+      "heading": 315,
+      "battery_level": 88,
+      "battery_range": 270,
+      "odometer": 58245,
+      "outside_temp": 79,
+      "charging_state": "Disconnected",
+      "state": "Texas"
+    },
+    {
+      "timestamp": 1749139200000,
+      "latitude": 31.7619,
+      "longitude": -106.485,
+      "speed": 45,
+      "heading": 290,
+      "battery_level": 75,
+      "battery_range": 220,
+      "odometer": 58320,
+      "outside_temp": 85,
+      "charging_state": "Disconnected",
+      "state": "Texas"
+    },
+    {
+      "timestamp": 1749212100000,
+      "latitude": 34.8697,
+      "longitude": -111.761,
+      "speed": 60,
+      "heading": 0,
+      "battery_level": 82,
+      "battery_range": 240,
+      "odometer": 58420,
+      "outside_temp": 68,
+      "charging_state": "Disconnected",
+      "state": "Arizona"
+    },
+    {
+      "timestamp": 1749335400000,
+      "latitude": 36.0544,
+      "longitude": -112.1401,
+      "speed": 35,
+      "heading": 45,
+      "battery_level": 70,
+      "battery_range": 210,
+      "odometer": 58485,
+      "outside_temp": 72,
+      "charging_state": "Disconnected",
+      "state": "Arizona"
+    },
+    {
+      "timestamp": 1749397500000,
+      "latitude": 37.2982,
+      "longitude": -113.0263,
+      "speed": 40,
+      "heading": 315,
+      "battery_level": 85,
+      "battery_range": 250,
+      "odometer": 58540,
+      "outside_temp": 75,
+      "charging_state": "Disconnected",
+      "state": "Utah"
+    },
+    {
+      "timestamp": 1749493200000,
+      "latitude": 34.0522,
+      "longitude": -118.2437,
+      "speed": 25,
+      "heading": 180,
+      "battery_level": 78,
+      "battery_range": 230,
+      "odometer": 58680,
+      "outside_temp": 85,
+      "charging_state": "Disconnected",
+      "state": "California"
+    }
+  ],
+  "summary": {
+    "startTime": 1748779200000,
+    "endTime": 1749493200000,
+    "totalStates": 5,
+    "totalMiles": 634
+  }
+}
