@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, Route, Clock, Trophy } from 'lucide-react';
-import { api } from '@/lib/api-config';
+import { useTessieApi, HistoricalDrive, HistoricalCharge } from '@/hooks/useTessieApi';
+import { calculateJourneyStats } from '@/utils/journeyCalculations';
 
 interface TimelineEntry {
   date: string;
@@ -23,36 +24,100 @@ interface TimelineData {
   };
 }
 
-const TimelineDataDisplay = () => {
+interface TimelineDataDisplayProps {
+  tessieApiKey?: string;
+}
+
+const TimelineDataDisplay: React.FC<TimelineDataDisplayProps> = ({ tessieApiKey }) => {
   const [timelineData, setTimelineData] = useState<TimelineData | null>(null);
-  const [liveStatus, setLiveStatus] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Use Tessie API data instead of external API
+  const { 
+    vehicleData, 
+    historicalDrives, 
+    historicalCharges, 
+    isLoading: tessieLoading,
+    error: tessieError 
+  } = useTessieApi(tessieApiKey);
+
   useEffect(() => {
-    const fetchTimelineData = async () => {
-      try {
-        // Fetch timeline data using centralized API
-        const timeline = await api.getTimeline() as TimelineData;
-        setTimelineData(timeline);
+    if (tessieLoading) {
+      setLoading(true);
+      return;
+    }
 
-        // Fetch live status using centralized API
-        const live = await api.getLiveStatus();
-        setLiveStatus(live);
+    if (tessieError) {
+      setError(tessieError);
+      setLoading(false);
+      return;
+    }
 
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load data');
-      } finally {
-        setLoading(false);
-      }
-    };
+    try {
+      // Convert Tessie data to timeline format
+      const journeyStats = calculateJourneyStats(
+        historicalDrives, 
+        historicalCharges,
+        vehicleData ? { lat: vehicleData.latitude, lng: vehicleData.longitude } : undefined
+      );
 
-    fetchTimelineData();
+      // Create timeline entries from drives
+      const timelineEntries: TimelineEntry[] = historicalDrives.slice(-10).map(drive => ({
+        date: new Date(drive.start_time).toLocaleDateString(),
+        state: getStateFromAddress(drive.start_address),
+        keyStops: `${drive.start_address} → ${drive.end_address} (${drive.distance_miles} mi)`
+      }));
+
+      // Get unique states from drives
+      const states = Array.from(new Set(
+        historicalDrives.map(drive => getStateFromAddress(drive.start_address))
+          .concat(historicalDrives.map(drive => getStateFromAddress(drive.end_address)))
+      )).filter(state => state !== 'Unknown');
+
+      const timeline: TimelineData = {
+        type: 'tesla-journey',
+        totalEntries: historicalDrives.length,
+        statesVisited: journeyStats.statesConquered,
+        states,
+        entries: timelineEntries,
+        summary: {
+          startDate: '2025-06-01',
+          endDate: new Date().toISOString().split('T')[0],
+          totalStates: journeyStats.statesConquered
+        }
+      };
+
+      setTimelineData(timeline);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to process Tesla data');
+    } finally {
+      setLoading(false);
+    }
+  }, [historicalDrives, historicalCharges, vehicleData, tessieLoading, tessieError]);
+
+  // Simple state extraction from address
+  const getStateFromAddress = (address: string): string => {
+    if (!address) return 'Unknown';
     
-    // Set up live updates every 30 seconds
-    const interval = setInterval(fetchTimelineData, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    const statePatterns = [
+      'Connecticut', 'Massachusetts', 'Rhode Island', 'Vermont', 'New Hampshire', 'Maine',
+      'New York', 'New Jersey', 'Pennsylvania', 'Delaware', 'Maryland', 'Virginia',
+      'North Carolina', 'South Carolina', 'Georgia', 'Florida', 'Alabama', 'Mississippi',
+      'Tennessee', 'Kentucky', 'West Virginia', 'Ohio', 'Indiana', 'Illinois', 'Michigan',
+      'Wisconsin', 'Minnesota', 'Iowa', 'Missouri', 'Arkansas', 'Louisiana', 'Texas',
+      'Oklahoma', 'Kansas', 'Nebraska', 'South Dakota', 'North Dakota', 'Montana',
+      'Wyoming', 'Colorado', 'New Mexico', 'Arizona', 'Utah', 'Idaho', 'Nevada',
+      'California', 'Oregon', 'Washington'
+    ];
+    
+    for (const state of statePatterns) {
+      if (address.includes(state)) return state;
+    }
+    
+    return 'Unknown';
+  };
 
   if (loading) {
     return (
@@ -78,7 +143,7 @@ const TimelineDataDisplay = () => {
     );
   }
 
-  if (!timelineData || !liveStatus) {
+  if (!timelineData) {
     return (
       <Card className="story-card">
         <CardContent className="p-6">
@@ -87,6 +152,13 @@ const TimelineDataDisplay = () => {
       </Card>
     );
   }
+
+  // Calculate journey stats from actual Tesla data
+  const journeyStats = calculateJourneyStats(
+    historicalDrives, 
+    historicalCharges,
+    vehicleData ? { lat: vehicleData.latitude, lng: vehicleData.longitude } : undefined
+  );
 
   const progressPercentage = (timelineData.statesVisited / 48) * 100;
   const recentEntries = timelineData.entries.slice(-5).reverse();
@@ -111,14 +183,14 @@ const TimelineDataDisplay = () => {
               </Badge>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold adventure-stat">{liveStatus?.currentTrip?.progress?.totalMiles?.toLocaleString()}</div>
+              <div className="text-4xl font-bold adventure-stat">{journeyStats.totalJourneyMiles.toLocaleString()}</div>
               <p className="text-muted-foreground">Miles Traveled</p>
               <Badge className="mt-2 bg-adventure-orange/20 text-adventure-orange">
-                {liveStatus?.currentTrip?.progress?.averageMilesPerDay} avg/day
+                {journeyStats.averageDailyMiles} avg/day
               </Badge>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold adventure-stat">{liveStatus?.currentTrip?.progress?.daysElapsed}</div>
+              <div className="text-4xl font-bold adventure-stat">{journeyStats.daysElapsed}</div>
               <p className="text-muted-foreground">Days of Adventure</p>
               <Badge className="mt-2 bg-adventure-blue/20 text-adventure-blue">
                 since June 1st
@@ -144,8 +216,8 @@ const TimelineDataDisplay = () => {
           <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-adventure-gold/10 to-adventure-orange/10 rounded-lg">
             <MapPin className="w-8 h-8 text-adventure-orange animate-pulse" />
             <div>
-              <p className="text-lg font-bold">{liveStatus?.currentTrip?.currentLocation?.state}</p>
-              <p className="text-sm text-muted-foreground">{liveStatus?.currentTrip?.currentLocation?.city}</p>
+              <p className="text-lg font-bold">{journeyStats.currentState}</p>
+              <p className="text-sm text-muted-foreground">Current location from Tesla</p>
               <Badge className="mt-1 bg-adventure-orange text-white">Currently Exploring</Badge>
             </div>
           </div>
@@ -215,19 +287,19 @@ const TimelineDataDisplay = () => {
         </CardContent>
       </Card>
 
-      {/* Tessie Integration Status */}
+      {/* Tesla Integration Status */}
       <Card className="milestone-card">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
             <Clock className="w-5 h-5 text-adventure-teal" />
             <div>
-              <p className="text-sm font-medium">Live Data Integration</p>
+              <p className="text-sm font-medium">Tesla Data Integration</p>
               <p className="text-xs text-muted-foreground">
-                Last updated: {new Date(liveStatus?.tessieIntegration?.lastUpdate).toLocaleTimeString()}
+                Last updated: {vehicleData ? new Date(vehicleData.timestamp).toLocaleTimeString() : 'Never'}
               </p>
             </div>
             <Badge className="ml-auto bg-adventure-teal/20 text-adventure-teal">
-              {liveStatus?.tessieIntegration?.apiStatus === 'connected' ? '🟢 Live' : '🔴 Offline'}
+              {vehicleData ? '🟢 Live' : '🔴 Offline'}
             </Badge>
           </div>
         </CardContent>
