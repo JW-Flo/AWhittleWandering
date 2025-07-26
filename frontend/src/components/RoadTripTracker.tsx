@@ -4,8 +4,9 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Calendar, Clock, Trophy, Camera, PenTool, Target, Route, Zap, Upload, Map as MapIcon, CheckCircle } from 'lucide-react';
+import { MapPin, Calendar, Clock, Trophy, Camera, PenTool, Target, Route, Zap, Upload, Map as MapIcon, CheckCircle, Shield } from 'lucide-react';
 import { journeyTimeline, journeyStats } from '@/data/journeyData';
+import { useAdminAuth } from '@/lib/auth';
 import AdventureHero from './AdventureHero';
 import JourneyTimeline from './JourneyTimeline';
 import AdventureMilestones from './AdventureMilestones';
@@ -21,6 +22,9 @@ const RoadTripTracker = () => {
   );
   const [tripStatistics, setTripStatistics] = useState(journeyStats);
   const [routeLocations, setRouteLocations] = useState<Array<{lat: number, lng: number, timestamp: string}>>([]);
+  
+  // Admin authentication
+  const { isAuthenticated, canModifyJourney } = useAdminAuth();
   
   const visitedStates = journeyTimeline.filter(state => state.current);
   const currentState = journeyTimeline.find(state => state.current);
@@ -59,7 +63,7 @@ const RoadTripTracker = () => {
     <div className="space-y-8">
       {/* Adventure Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 bg-[hsl(var(--tesla-gray))]">
+        <TabsList className={`grid w-full ${isAuthenticated ? 'grid-cols-5' : 'grid-cols-4'} bg-[hsl(var(--tesla-gray))]`}>
           <TabsTrigger value="overview" className="data-[state=active]:bg-[hsl(var(--adventure-orange))] data-[state=active]:text-white">
             <MapIcon className="w-4 h-4 mr-2" />
             Adventure Overview
@@ -76,10 +80,13 @@ const RoadTripTracker = () => {
             <Trophy className="w-4 h-4 mr-2" />
             Achievements
           </TabsTrigger>
-          <TabsTrigger value="import" className="data-[state=active]:bg-[hsl(var(--adventure-orange))] data-[state=active]:text-white">
-            <Upload className="w-4 h-4 mr-2" />
-            Import Data
-          </TabsTrigger>
+          {isAuthenticated && canModifyJourney && (
+            <TabsTrigger value="import" className="data-[state=active]:bg-[hsl(var(--adventure-orange))] data-[state=active]:text-white">
+              <Upload className="w-4 h-4 mr-2" />
+              Import Data
+              <Badge variant="secondary" className="ml-2 bg-tesla-cyan text-xs">Admin</Badge>
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-8">
@@ -345,28 +352,30 @@ const RoadTripTracker = () => {
           <AdventureMilestones />
         </TabsContent>
 
-        <TabsContent value="import" className="space-y-6">
-          <AdventureCsvUploader 
-            onDataImported={handleDataImport}
-            onMapDataAvailable={handleMapDataAvailable}
-          />
-          
-          {importedData.length > 0 && (
-            <Card className="story-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-gradient">
-                  <CheckCircle className="w-5 h-5" />
-                  Imported Adventure Data
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Successfully imported {importedData.length} records. This data will be processed to update your journey statistics and milestones.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
+        {isAuthenticated && canModifyJourney && (
+          <TabsContent value="import" className="space-y-6">
+            <AdventureCsvUploader 
+              onDataImported={handleDataImport}
+              onMapDataAvailable={handleMapDataAvailable}
+            />
+            
+            {importedData.length > 0 && (
+              <Card className="story-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-gradient">
+                    <CheckCircle className="w-5 h-5" />
+                    Imported Adventure Data
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Successfully imported {importedData.length} records. This data will be processed to update your journey statistics and milestones.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

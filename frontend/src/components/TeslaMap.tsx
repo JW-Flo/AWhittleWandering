@@ -44,13 +44,16 @@ const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange, routePoints = [
       style: 'mapbox://styles/mapbox/dark-v11',
       zoom: 4,
       center: vehicleLocation ? [vehicleLocation.longitude, vehicleLocation.latitude] : [-95.7129, 37.0902], // Center of USA
-      pitch: 0,
+      pitch: 0, // Force flat 2D view
+      bearing: 0, // No rotation
+      projection: 'mercator', // Standard 2D projection
     });
 
-    // Add navigation controls
+    // Add navigation controls with pitch disabled
     map.current.addControl(
       new mapboxgl.NavigationControl({
-        visualizePitch: true,
+        visualizePitch: false, // Disable pitch visualization
+        showCompass: false, // Disable compass to prevent 3D navigation
       }),
       'top-right'
     );
@@ -60,6 +63,18 @@ const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange, routePoints = [
       console.log('Map loaded, adding route with', routePoints.length, 'points');
       if (routePoints.length > 0) {
         addRouteToMap();
+      }
+      
+      // Disable 3D terrain and buildings if they exist
+      if (map.current?.getLayer('building')) {
+        map.current.setLayoutProperty('building', 'visibility', 'none');
+      }
+    });
+
+    // Force 2D mode - prevent pitch changes
+    map.current.on('pitchstart', () => {
+      if (map.current) {
+        map.current.setPitch(0);
       }
     });
 

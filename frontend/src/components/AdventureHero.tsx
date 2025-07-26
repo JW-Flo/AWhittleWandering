@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Calendar, Clock, Compass, RefreshCw } from 'lucide-react';
 import { useUnifiedJourneyData } from '@/hooks/useUnifiedJourneyData';
+import { formatTemperature } from '@/utils/temperature';
 
 const AdventureHero: React.FC = () => {
   const { overview, currentStatus, loading, error, lastUpdate } = useUnifiedJourneyData();
@@ -108,7 +109,7 @@ const AdventureHero: React.FC = () => {
               <div className="text-xs text-white/70">Miles</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-[hsl(var(--adventure-orange))]">{currentStatus.vehicle.outsideTemp}°F</div>
+              <div className="text-2xl font-bold text-[hsl(var(--adventure-orange))]">{formatTemperature(currentStatus.vehicle.outsideTemp, 'F')}</div>
               <div className="text-xs text-white/70">Outside</div>
             </div>
             <div className="text-center">
