@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
-interface Vehicle {
+export interface Vehicle {
   id: string;
   display_name: string;
   state: string;
   vin: string;
 }
 
-interface VehicleData {
+export interface VehicleData {
   battery_level: number;
   battery_range: number;
   charging_state: 'Charging' | 'Complete' | 'Disconnected';
@@ -22,15 +22,77 @@ interface VehicleData {
   timestamp: number;
 }
 
+export interface HistoricalDrive {
+  id: string;
+  start_time: string;
+  end_time: string;
+  start_address: string;
+  end_address: string;
+  distance_miles: number;
+  duration_hours: number;
+  start_battery_level: number;
+  end_battery_level: number;
+  start_coordinates: { lat: number; lng: number };
+  end_coordinates: { lat: number; lng: number };
+  path?: Array<{ lat: number; lng: number; timestamp: string }>;
+}
+
+export interface HistoricalCharge {
+  id: string;
+  start_time: string;
+  end_time: string;
+  location: string;
+  energy_added_kwh: number;
+  cost: number;
+  start_battery_level: number;
+  end_battery_level: number;
+  coordinates: { lat: number; lng: number };
+}
+
+interface JourneyEvent {
+  id: string;
+  type: 'drive' | 'charge' | 'park';
+  start_time: string;
+  end_time: string;
+  location: string;
+  coordinates: { lat: number; lng: number };
+  metadata: {
+    battery_start?: number;
+    battery_end?: number;
+    distance_miles?: number;
+    energy_added_kwh?: number;
+    cost?: number;
+    duration_hours?: number;
+  };
+}
+
+interface TelemetryPoint {
+  timestamp: string;
+  latitude: number;
+  longitude: number;
+  speed?: number;
+  battery_level?: number;
+  odometer?: number;
+  heading?: number;
+}
+
 export const useTessieApi = (apiKey?: string) => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<string | null>(null);
+  const [selectedVehicleVin, setSelectedVehicleVin] = useState<string | null>(null);
   const [vehicleData, setVehicleData] = useState<VehicleData | null>(null);
+  const [historicalDrives, setHistoricalDrives] = useState<HistoricalDrive[]>([]);
+  const [historicalCharges, setHistoricalCharges] = useState<HistoricalCharge[]>([]);
+  const [journeyEvents, setJourneyEvents] = useState<JourneyEvent[]>([]);
+  const [telemetryData, setTelemetryData] = useState<TelemetryPoint[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Demo data for testing
+  // Check if we're in demo mode (no API key provided)
+  const isDemoMode = !apiKey;
+
+  // Demo data for when no API key is provided
   const demoVehicle: Vehicle = {
     id: 'demo-midnight-shadow',
     display_name: 'Midnight Shadow',
@@ -51,22 +113,6 @@ export const useTessieApi = (apiKey?: string) => {
     heading: 67,
     timestamp: Date.now(),
   };
-
-  // Check if we're in demo mode (no API key provided)
-  const isDemoMode = !apiKey;
-
-  // Demo mode logic
-  useEffect(() => {
-    if (isDemoMode) {
-      console.log('Running in demo mode');
-      setVehicles([demoVehicle]);
-      setSelectedVehicle(demoVehicle.id);
-      setVehicleData(demoVehicleData);
-      setError(null);
-      setIsLoading(false);
-      return;
-    }
-  }, [isDemoMode]);
 
   const makeApiCall = useCallback(async (endpoint: string) => {
     if (!apiKey) {
@@ -125,9 +171,10 @@ export const useTessieApi = (apiKey?: string) => {
       setVehicles(transformedVehicles);
       
       if (transformedVehicles.length > 0 && !selectedVehicle) {
-        const firstVehicleId = transformedVehicles[0].id;
-        console.log('Auto-selecting first vehicle:', firstVehicleId);
-        setSelectedVehicle(firstVehicleId);
+        const firstVehicle = transformedVehicles[0];
+        console.log('Auto-selecting first vehicle:', firstVehicle);
+        setSelectedVehicle(firstVehicle.id);
+        setSelectedVehicleVin(firstVehicle.vin);
       }
 
     } catch (err) {
@@ -144,25 +191,16 @@ export const useTessieApi = (apiKey?: string) => {
     }
   }, [apiKey, makeApiCall, selectedVehicle, toast]);
 
-  const fetchVehicleData = useCallback(async (vehicleId: string) => {
-    if (!apiKey || !vehicleId) {
-      console.log('Missing API key or vehicle ID:', { hasApiKey: !!apiKey, vehicleId });
+  const fetchVehicleData = useCallback(async (vehicleVin: string) => {
+    if (!apiKey || !vehicleVin) {
+      console.log('Missing API key or vehicle VIN:', { hasApiKey: !!apiKey, vehicleVin });
       return;
     }
 
     try {
-      console.log('Fetching vehicle data for:', vehicleId);
-      // Use the vehicles endpoint to get current data (which already includes everything)
-      const vehiclesData = await makeApiCall('vehicles');
-      const currentVehicle = vehiclesData.results?.find((v: any) => 
-        (v.last_state?.id_s || v.vin) === vehicleId
-      );
-
-      if (!currentVehicle?.last_state) {
-        throw new Error('Vehicle data not found');
-      }
-
-      const state = currentVehicle.last_state;
+      console.log('Fetching vehicle data for VIN:', vehicleVin);
+      // Use the specific VIN endpoint for current data
+      const state = await makeApiCall(`${vehicleVin}/state`);
       console.log('Raw vehicle state:', state);
       
       const combinedData: VehicleData = {
@@ -189,17 +227,236 @@ export const useTessieApi = (apiKey?: string) => {
     }
   }, [apiKey, makeApiCall]);
 
+  const fetchHistoricalDrives = useCallback(async (vehicleVin: string, startDate: string, endDate: string) => {
+    if (!apiKey || !vehicleVin) {
+      console.log('Missing API key or vehicle VIN for historical drives');
+      return;
+    }
+
+    try {
+      console.log('Fetching historical drives from Tessie API...', { vehicleVin, startDate, endDate });
+      
+      // Convert dates to Unix timestamps for Tessie API
+      const fromTimestamp = Math.floor(new Date(startDate).getTime() / 1000);
+      const toTimestamp = Math.floor(new Date(endDate).getTime() / 1000);
+      
+      console.log('Date conversion:', { 
+        startDate, 
+        endDate, 
+        fromTimestamp, 
+        toTimestamp 
+      });
+      
+      const data = await makeApiCall(`${vehicleVin}/drives?from=${fromTimestamp}&to=${toTimestamp}`);
+      
+      console.log('Raw historical drives data:', data);
+      console.log('Sample drive data structure:', data.results?.[0]);
+      
+      const drives: HistoricalDrive[] = data.results?.map((drive: any, index: number) => {
+        // Map Tessie API fields to our interface
+        const driveData = {
+          id: drive.id || `drive-${drive.started_at}`,
+          start_time: new Date(drive.started_at * 1000).toISOString(), // Convert Unix timestamp
+          end_time: new Date(drive.ended_at * 1000).toISOString(),     // Convert Unix timestamp
+          start_address: drive.starting_location || 'Unknown',
+          end_address: drive.ending_location || 'Unknown',
+          distance_miles: drive.odometer_distance || 0,              // Correct field name
+          duration_hours: drive.ended_at && drive.started_at ? (drive.ended_at - drive.started_at) / 3600 : 0,
+          start_battery_level: drive.starting_battery || 0,          // Correct field name
+          end_battery_level: drive.ending_battery || 0,              // Correct field name
+          start_coordinates: {
+            lat: drive.starting_latitude || 0,                       // Correct field name
+            lng: drive.starting_longitude || 0                       // Correct field name
+          },
+          end_coordinates: {
+            lat: drive.ending_latitude || 0,                         // Correct field name
+            lng: drive.ending_longitude || 0                         // Correct field name
+          }
+        };
+        
+        if (index < 3) {
+          console.log(`Drive ${index} mapping:`, {
+            raw: drive,
+            mapped: driveData,
+            distance_found: drive.odometer_distance
+          });
+        }
+        
+        return driveData;
+      }) || [];
+
+      console.log('Processed historical drives:', drives);
+      setHistoricalDrives(drives);
+    } catch (err) {
+      console.error('Error fetching historical drives:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch historical drives');
+    }
+  }, [apiKey, makeApiCall]);
+
+  const fetchHistoricalCharges = useCallback(async (vehicleVin: string, startDate: string, endDate: string) => {
+    if (!apiKey || !vehicleVin) {
+      console.log('Missing API key or vehicle VIN for historical charges');
+      return;
+    }
+
+    try {
+      console.log('Fetching historical charges from Tessie API...', { vehicleVin, startDate, endDate });
+      
+      // Convert dates to Unix timestamps for Tessie API
+      const fromTimestamp = Math.floor(new Date(startDate).getTime() / 1000);
+      const toTimestamp = Math.floor(new Date(endDate).getTime() / 1000);
+      
+      console.log('Date conversion for charges:', { 
+        startDate, 
+        endDate, 
+        fromTimestamp, 
+        toTimestamp 
+      });
+      
+      const data = await makeApiCall(`${vehicleVin}/charges?from=${fromTimestamp}&to=${toTimestamp}`);
+      
+      console.log('Raw historical charges data:', data);
+      console.log('Sample charge data structure:', data.results?.[0]);
+      
+      const charges: HistoricalCharge[] = data.results?.map((charge: any, index: number) => {
+        // Map Tessie API fields to our interface
+        const chargeData = {
+          id: charge.id || `charge-${charge.started_at}`,
+          start_time: new Date(charge.started_at * 1000).toISOString(), // Convert Unix timestamp
+          end_time: new Date(charge.ended_at * 1000).toISOString(),     // Convert Unix timestamp
+          location: charge.location || 'Unknown',
+          energy_added_kwh: charge.energy_added || 0,                   // Correct field name
+          cost: charge.cost || 0,
+          start_battery_level: charge.starting_battery || 0,            // Correct field name
+          end_battery_level: charge.ending_battery || 0,                // Correct field name
+          coordinates: {
+            lat: charge.latitude || 0,
+            lng: charge.longitude || 0
+          }
+        };
+        
+        if (index < 3) {
+          console.log(`Charge ${index} mapping:`, {
+            raw: charge,
+            mapped: chargeData,
+            energy_found: charge.energy_added
+          });
+        }
+        
+        return chargeData;
+      }) || [];
+
+      console.log('Processed historical charges:', charges);
+      setHistoricalCharges(charges);
+    } catch (err) {
+      console.error('Error fetching historical charges:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch historical charges');
+    }
+  }, [apiKey, makeApiCall]);
+
+  const fetchTelemetryData = useCallback(async (vehicleVin: string, startDate: string, endDate: string) => {
+    if (!apiKey || !vehicleVin) {
+      console.log('Missing API key or vehicle VIN for telemetry data');
+      return;
+    }
+
+    try {
+      console.log('Fetching telemetry data from Tessie API...', { vehicleVin, startDate, endDate });
+      const data = await makeApiCall(`${vehicleVin}/telemetry?start_date=${startDate}&end_date=${endDate}`);
+      
+      console.log('Raw telemetry data:', data);
+      
+      const telemetry: TelemetryPoint[] = data.results?.map((point: any) => ({
+        timestamp: point.timestamp,
+        latitude: point.latitude || 0,
+        longitude: point.longitude || 0,
+        speed: point.speed,
+        battery_level: point.battery_level,
+        odometer: point.odometer,
+        heading: point.heading
+      })) || [];
+
+      console.log('Processed telemetry data:', telemetry.length, 'points');
+      setTelemetryData(telemetry);
+    } catch (err) {
+      console.error('Error fetching telemetry data:', err);
+      // Don't set error for telemetry as it's optional
+    }
+  }, [apiKey, makeApiCall]);
+
+  const createJourneyEventLog = useCallback(() => {
+    console.log('Creating comprehensive journey event log...');
+    const events: JourneyEvent[] = [];
+
+    // Add drive events
+    historicalDrives.forEach(drive => {
+      events.push({
+        id: drive.id,
+        type: 'drive',
+        start_time: drive.start_time,
+        end_time: drive.end_time,
+        location: `${drive.start_address} → ${drive.end_address}`,
+        coordinates: drive.start_coordinates,
+        metadata: {
+          battery_start: drive.start_battery_level,
+          battery_end: drive.end_battery_level,
+          distance_miles: drive.distance_miles,
+          duration_hours: drive.duration_hours
+        }
+      });
+    });
+
+    // Add charge events
+    historicalCharges.forEach(charge => {
+      events.push({
+        id: charge.id,
+        type: 'charge',
+        start_time: charge.start_time,
+        end_time: charge.end_time,
+        location: charge.location,
+        coordinates: charge.coordinates,
+        metadata: {
+          battery_start: charge.start_battery_level,
+          battery_end: charge.end_battery_level,
+          energy_added_kwh: charge.energy_added_kwh,
+          cost: charge.cost
+        }
+      });
+    });
+
+    // Sort events by start time
+    events.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+
+    console.log('Journey event log created:', events.length, 'events');
+    setJourneyEvents(events);
+    
+    return events;
+  }, [historicalDrives, historicalCharges]);
+
+  // Demo mode logic
+  useEffect(() => {
+    if (isDemoMode) {
+      console.log('Running in demo mode');
+      setVehicles([demoVehicle]);
+      setSelectedVehicle(demoVehicle.id);
+      setVehicleData(demoVehicleData);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+  }, [isDemoMode]);
+
   // Auto-refresh vehicle data every 30 seconds
   useEffect(() => {
-    if (isDemoMode || !selectedVehicle || !apiKey) return;
+    if (isDemoMode || !selectedVehicleVin || !apiKey) return;
 
-    fetchVehicleData(selectedVehicle);
+    fetchVehicleData(selectedVehicleVin);
     const interval = setInterval(() => {
-      fetchVehicleData(selectedVehicle);
+      fetchVehicleData(selectedVehicleVin);
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [selectedVehicle, apiKey, fetchVehicleData, isDemoMode]);
+  }, [selectedVehicleVin, apiKey, fetchVehicleData, isDemoMode]);
 
   // Fetch vehicles when API key changes
   useEffect(() => {
@@ -210,11 +467,42 @@ export const useTessieApi = (apiKey?: string) => {
     }
   }, [apiKey, fetchVehicles, isDemoMode]);
 
+  // Fetch historical data when vehicle is selected
+  useEffect(() => {
+    if (isDemoMode || !selectedVehicleVin || !apiKey) return;
+
+    const journeyStartDate = '2025-06-01';
+    const currentDate = new Date().toISOString().split('T')[0];
+    
+    console.log('Fetching historical data from', journeyStartDate, 'to', currentDate, 'for VIN:', selectedVehicleVin);
+    fetchHistoricalDrives(selectedVehicleVin, journeyStartDate, currentDate);
+    fetchHistoricalCharges(selectedVehicleVin, journeyStartDate, currentDate);
+    fetchTelemetryData(selectedVehicleVin, journeyStartDate, currentDate);
+  }, [selectedVehicleVin, apiKey, fetchHistoricalDrives, fetchHistoricalCharges, fetchTelemetryData, isDemoMode]);
+
+  // Create journey event log when historical data changes
+  useEffect(() => {
+    if (historicalDrives.length > 0 || historicalCharges.length > 0) {
+      createJourneyEventLog();
+    }
+  }, [historicalDrives, historicalCharges, createJourneyEventLog]);
+
   return {
     vehicles,
     selectedVehicle,
-    setSelectedVehicle,
+    selectedVehicleVin,
+    setSelectedVehicle: (vehicleId: string) => {
+      setSelectedVehicle(vehicleId);
+      const vehicle = vehicles.find(v => v.id === vehicleId);
+      if (vehicle) {
+        setSelectedVehicleVin(vehicle.vin);
+      }
+    },
     vehicleData,
+    historicalDrives,
+    historicalCharges,
+    journeyEvents,
+    telemetryData,
     isLoading,
     error,
     refetch: () => {
@@ -225,9 +513,19 @@ export const useTessieApi = (apiKey?: string) => {
         return;
       }
       
-      if (selectedVehicle) {
-        fetchVehicleData(selectedVehicle);
+      if (selectedVehicleVin) {
+        fetchVehicleData(selectedVehicleVin);
       }
     },
+    refreshHistoricalData: () => {
+      if (isDemoMode || !selectedVehicleVin || !apiKey) return;
+      
+      const journeyStartDate = '2025-06-01';
+      const currentDate = new Date().toISOString().split('T')[0];
+      
+      fetchHistoricalDrives(selectedVehicleVin, journeyStartDate, currentDate);
+      fetchHistoricalCharges(selectedVehicleVin, journeyStartDate, currentDate);
+      fetchTelemetryData(selectedVehicleVin, journeyStartDate, currentDate);
+    }
   };
 };
