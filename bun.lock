@@ -63,6 +63,7 @@
         "cmdk": "^1.0.0",
         "date-fns": "^3.6.0",
         "embla-carousel-react": "^8.3.0",
+        "exif-js": "^2.3.0",
         "input-otp": "^1.2.4",
         "lucide-react": "^0.462.0",
         "mapbox-gl": "^3.13.0",
@@ -733,6 +734,8 @@
     "esutils": ["esutils@2.0.3", "", {}, "sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g=="],
 
     "eventemitter3": ["eventemitter3@4.0.7", "", {}, "sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw=="],
+
+    "exif-js": ["exif-js@2.3.0", "", {}, "sha512-1Og9pAzG2FZRVlaavH8bB8BTeHcjMdJhKmeQITkX+uLRCD0xPtKAdZ2clZmQdJ56p9adXtJ8+jwrGp/4505lYg=="],
 
     "exit-hook": ["exit-hook@2.2.1", "", {}, "sha512-eNTPlAD67BmP31LDINZ3U7HSF8l57TxOY2PmBJ1shpCvpnxBF93mWCE8YHBnXs8qiUZJc9WDcWIeC3a2HIAMfw=="],
 
