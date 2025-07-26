@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, Route, Clock, Trophy } from 'lucide-react';
+import { api } from '@/lib/api-config';
 
 interface TimelineEntry {
   date: string;
@@ -31,16 +32,12 @@ const TimelineDataDisplay = () => {
   useEffect(() => {
     const fetchTimelineData = async () => {
       try {
-        // Fetch timeline data
-        const timelineResponse = await fetch('https://awhittlewandering-api.kd8jc7v8cd.workers.dev/api/v1/timeline');
-        if (!timelineResponse.ok) throw new Error('Failed to fetch timeline data');
-        const timeline = await timelineResponse.json();
+        // Fetch timeline data using centralized API
+        const timeline = await api.getTimeline() as TimelineData;
         setTimelineData(timeline);
 
-        // Fetch live status
-        const liveResponse = await fetch('https://awhittlewandering-api.kd8jc7v8cd.workers.dev/api/v1/trip/live-status');
-        if (!liveResponse.ok) throw new Error('Failed to fetch live status');
-        const live = await liveResponse.json();
+        // Fetch live status using centralized API
+        const live = await api.getLiveStatus();
         setLiveStatus(live);
 
       } catch (err) {
