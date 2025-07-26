@@ -1,5 +1,5 @@
-// Real journey data for A Whittle Wandering
-// 31-state cross-country adventure from June 1 - July 26, 2025
+// Real journey data based on actual Tesla trip from June-July 2025
+// Based on actual CSV telemetry data from A Whittle Wandering adventure
 
 export interface JourneyState {
   state: string;
@@ -24,7 +24,22 @@ export interface TimelineEvent {
   };
 }
 
-// A Whittle Wandering - Real Journey Timeline (June 1 - July 26, 2025)
+// Real journey statistics from actual trip data
+export const journeyStats = {
+  totalStates: 48, // Goal: All 48 continental US states
+  visitedStates: 17, // Detected from GPS coordinates in CSV
+  remainingStates: 31,
+  tripDuration: 54, // June 3 - July 26, 2025 (53 days elapsed)
+  daysElapsed: 53,
+  daysRemaining: 1,
+  startDate: '2025-06-03',
+  endDate: '2025-07-26',
+  currentState: 'Connecticut', // Based on final coordinates (41.205, -73.14)
+  totalMiles: 11950, // Odometer: 69,996 - 58,046 = 11,950 miles
+  averageMilesPerDay: 225 // 11,950 miles / 53 days
+};
+
+// A Whittle Wandering - Real Journey Timeline based on CSV telemetry data
 export const journeyTimeline: TimelineEvent[] = [
   {
     state: 'Connecticut',
@@ -232,26 +247,14 @@ export const journeyTimeline: TimelineEvent[] = [
   }
 ];
 
-export const journeyStats = {
-  totalStates: 31,
-  visitedStates: 29,
-  remainingStates: 2,
-  tripDuration: 55,
-  daysElapsed: 55,
-  daysRemaining: 0,
-  startDate: '2025-06-01',
-  endDate: '2025-07-26',
-  currentState: 'California',
-  totalMiles: 6850,
-  averageMilesPerDay: 125
-};
+// Legacy stats removed - using real data from above
 
 // Achievement system based on real journey
 export const journeyAchievements = [
   {
     id: 'journey_start',
-    title: 'The Adventure Begins',
-    description: 'Started the epic 31-state journey',
+    title: 'The Adventure Begins', 
+    description: 'Started the epic 48-state Tesla journey in Texas',
     icon: 'Play',
     progress: 1,
     total: 1,
@@ -271,41 +274,51 @@ export const journeyAchievements = [
   {
     id: 'southern_sweep',
     title: 'Southern Explorer',
-    description: 'Visited all southern states on the route',
+    description: 'Explored the Gulf Coast states',
     icon: 'Compass',
-    progress: 8,
+    progress: 5,
     total: 8,
-    achieved: true,
+    achieved: false,
     rarity: 'rare'
   },
   {
-    id: 'halfway_hero',
-    title: 'Halfway Hero',
-    description: 'Reached the halfway point of the journey',
-    icon: 'Trophy',
-    progress: 15,
-    total: 15,
-    achieved: true,
-    rarity: 'epic'
-  },
-  {
-    id: 'mountain_master',
-    title: 'Mountain Master',
-    description: 'Conquered the Rocky Mountain states',
-    icon: 'Mountain',
+    id: 'northeast_navigator',
+    title: 'New England Explorer',
+    description: 'Conquered all the New England states',
+    icon: 'MapPin',
     progress: 6,
     total: 6,
     achieved: true,
     rarity: 'rare'
   },
   {
-    id: 'coast_to_coast',
-    title: 'Coast to Coast Champion',
-    description: 'Completed the entire cross-country journey',
+    id: 'halfway_hero',
+    title: 'Halfway Hero',
+    description: 'Reached 24 states - halfway to the goal!',
+    icon: 'Trophy',
+    progress: 17,
+    total: 24,
+    achieved: false,
+    rarity: 'epic'
+  },
+  {
+    id: 'cross_country_champion',
+    title: 'Continental Champion',
+    description: 'Visited all 48 continental US states',
     icon: 'Award',
-    progress: 31,
-    total: 31,
-    achieved: true,
+    progress: 17,
+    total: 48,
+    achieved: false,
     rarity: 'legendary'
+  },
+  {
+    id: 'mileage_master',
+    title: '10,000 Mile Master',
+    description: 'Drove over 10,000 miles on this epic journey',
+    icon: 'Gauge',
+    progress: 11950,
+    total: 10000,
+    achieved: true,
+    rarity: 'epic'
   }
 ];

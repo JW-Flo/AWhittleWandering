@@ -23,7 +23,7 @@ const RoadTripTracker = () => {
   
   const visitedStates = journeyTimeline.filter(state => state.current);
   const currentState = journeyTimeline.find(state => state.current);
-  const progressPercentage = (tripStatistics.visitedStates / tripStatistics.totalStates) * 100;
+  const progressPercentage = (tripStatistics.visitedStates / 48) * 100; // 48 total states, not 31
 
   const handleDataImport = (data: any[]) => {
     setImportedData(data);
@@ -31,17 +31,17 @@ const RoadTripTracker = () => {
     // Calculate real trip statistics from imported data
     const stats = calculateTripStatistics(data);
     setTripStatistics({
-      totalStates: 31,
-      visitedStates: stats.statesDetected.length,
-      remainingStates: 31 - stats.statesDetected.length,
-      tripDuration: 55,
-      daysElapsed: stats.daysElapsed,
-      daysRemaining: Math.max(55 - stats.daysElapsed, 0),
-      startDate: '2025-06-01',
+      totalStates: 48, // Goal is all 48 continental states
+      visitedStates: stats.statesDetected?.length || 17,
+      remainingStates: 48 - (stats.statesDetected?.length || 17),
+      tripDuration: 54,
+      daysElapsed: stats.daysElapsed || 53,
+      daysRemaining: Math.max(54 - (stats.daysElapsed || 53), 0),
+      startDate: '2025-06-03',
       endDate: '2025-07-26',
-      currentState: 'California',
-      totalMiles: stats.totalMiles || 6850,
-      averageMilesPerDay: stats.averageMilesPerDay || 125
+      currentState: 'Connecticut',
+      totalMiles: stats.totalMiles || 11950,
+      averageMilesPerDay: stats.averageMilesPerDay || 225
     });
   };
 
