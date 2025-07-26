@@ -25,9 +25,16 @@ interface TeslaMapProps {
   mapboxToken?: string;
   onTokenChange?: (token: string) => void;
   routePoints?: RoutePoint[];
+  historicalDrives?: Array<{
+    start_coordinates: { lat: number; lng: number };
+    end_coordinates: { lat: number; lng: number };
+    start_address: string;
+    end_address: string;
+    start_time: string;
+  }>;
 }
 
-const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange, routePoints = [] }: TeslaMapProps) => {
+const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange, routePoints = [], historicalDrives = [] }: TeslaMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const vehicleMarker = useRef<mapboxgl.Marker | null>(null);
@@ -60,9 +67,10 @@ const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange, routePoints = [
 
     // Wait for map to load before adding route
     map.current.on('load', () => {
-      console.log('Map loaded, adding route with', routePoints.length, 'points');
-      if (routePoints.length > 0) {
-        addRouteToMap();
+      console.log('Map loaded, checking for route data');
+      const dataToUse = routePoints.length > 0 ? routePoints : generateRouteFromDrives();
+      if (dataToUse.length > 0) {
+        addRouteToMap(dataToUse);
       }
       
       // Disable 3D terrain and buildings if they exist
@@ -87,20 +95,55 @@ const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange, routePoints = [
     };
   }, [mapboxToken]);
 
-  // Update route when routePoints change
+  // Update route when routePoints or historicalDrives change
   useEffect(() => {
-    if (map.current && map.current.isStyleLoaded() && routePoints.length > 0) {
-      addRouteToMap();
+    if (map.current && map.current.isStyleLoaded()) {
+      const dataToUse = routePoints.length > 0 ? routePoints : generateRouteFromDrives();
+      if (dataToUse.length > 0) {
+        addRouteToMap(dataToUse);
+      }
     }
-  }, [routePoints]);
+  }, [routePoints, historicalDrives]);
 
-  const addRouteToMap = () => {
-    if (!map.current || routePoints.length === 0) return;
+  const generateRouteFromDrives = () => {
+    if (historicalDrives.length === 0) return [];
+    
+    console.log('Generating route from historical drives:', historicalDrives.length);
+    
+    const routeFromDrives: RoutePoint[] = [];
+    
+    historicalDrives.forEach((drive, index) => {
+      // Add start point
+      routeFromDrives.push({
+        latitude: drive.start_coordinates.lat,
+        longitude: drive.start_coordinates.lng,
+        state: drive.start_address.split(',').pop()?.trim() || 'Unknown',
+        date: new Date(drive.start_time).toLocaleDateString()
+      });
+      
+      // Add end point (avoid duplicates)
+      const lastPoint = routeFromDrives[routeFromDrives.length - 1];
+      if (lastPoint.latitude !== drive.end_coordinates.lat || lastPoint.longitude !== drive.end_coordinates.lng) {
+        routeFromDrives.push({
+          latitude: drive.end_coordinates.lat,
+          longitude: drive.end_coordinates.lng,
+          state: drive.end_address.split(',').pop()?.trim() || 'Unknown',
+          date: new Date(drive.start_time).toLocaleDateString()
+        });
+      }
+    });
+    
+    console.log('Generated route points from drives:', routeFromDrives.length);
+    return routeFromDrives;
+  };
 
-    console.log('Adding route to map with', routePoints.length, 'points');
+  const addRouteToMap = (routeData: RoutePoint[] = routePoints) => {
+    if (!map.current || routeData.length === 0) return;
+
+    console.log('Adding route to map with', routeData.length, 'points');
 
     // Create route line coordinates
-    const coordinates = routePoints.map(point => [point.longitude, point.latitude]);
+    const coordinates = routeData.map(point => [point.longitude, point.latitude]);
 
     // Remove existing route if it exists
     if (map.current.getLayer('route')) {
@@ -140,7 +183,7 @@ const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange, routePoints = [
     });
 
     // Add waypoint markers
-    routePoints.forEach((point, index) => {
+    routeData.forEach((point, index) => {
       const el = document.createElement('div');
       el.className = 'waypoint-marker relative';
       el.style.cssText = `
@@ -259,37 +302,42 @@ const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange, routePoints = [
             <MapPin className="w-12 h-12 text-primary mx-auto mb-4" />
             <CardTitle>Setup Map</CardTitle>
             <CardDescription>
-              Enter your Mapbox public token to display the interactive map
+              {import.meta.env.VITE_MAPBOX_TOKEN ? 
+                'Loading map with default token...' : 
+                'Enter your Mapbox public token to display the interactive map'
+              }
             </CardDescription>
           </CardHeader>
-          <div className="space-y-4">
-            <Input
-              type="text"
-              placeholder="pk.eyJ1IjoieW91cnVzZXJuYW1lIi..."
-              value={tokenInput}
-              onChange={(e) => setTokenInput(e.target.value)}
-              className="font-mono text-sm"
-            />
-            <Button 
-              onClick={handleTokenSubmit} 
-              className="w-full"
-              disabled={!tokenInput.trim()}
-            >
-              <Navigation className="w-4 h-4 mr-2" />
-              Initialize Map
-            </Button>
-            <p className="text-xs text-muted-foreground text-center">
-              Get your token at{' '}
-              <a 
-                href="https://mapbox.com/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
+          {!import.meta.env.VITE_MAPBOX_TOKEN && (
+            <div className="space-y-4">
+              <Input
+                type="text"
+                placeholder="pk.eyJ1IjoieW91cnVzZXJuYW1lIi..."
+                value={tokenInput}
+                onChange={(e) => setTokenInput(e.target.value)}
+                className="font-mono text-sm"
+              />
+              <Button 
+                onClick={handleTokenSubmit} 
+                className="w-full"
+                disabled={!tokenInput.trim()}
               >
-                mapbox.com
-              </a>
-            </p>
-          </div>
+                <Navigation className="w-4 h-4 mr-2" />
+                Initialize Map
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                Get your token at{' '}
+                <a 
+                  href="https://mapbox.com/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  mapbox.com
+                </a>
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     );

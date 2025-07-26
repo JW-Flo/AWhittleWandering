@@ -2,20 +2,23 @@ import React, { useState, useEffect } from 'react';
 import TeslaMap from '@/components/TeslaMap';
 import SmartVehicleStats from '@/components/SmartVehicleStats';
 import TessieApiSetup from '@/components/TessieApiSetup';
+import TessieApiDebugger from '@/components/TessieApiDebugger';
 import RoadTripTracker from '@/components/RoadTripTracker';
 import MediaUpload from '@/components/MediaUpload';
 import AdminLogin from '@/components/AdminLogin';
+import DebugInfo from '@/components/DebugInfo';
 import { useTessieApi } from '@/hooks/useTessieApi';
 import { useSmartTracking } from '@/hooks/useSmartTracking';
 import { useAdminAuth } from '@/lib/auth';
 import { secureKeyStorage } from '@/lib/config';
 import { SECURITY_CONFIG } from '@/utils/securityConfig';
+import { calculateJourneyStats, calculateJourneyInsights } from '@/utils/journeyCalculations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RefreshCw, Car, Zap, Map, Route, Camera, Shield } from 'lucide-react';
+import { RefreshCw, Car, Zap, Map, Route, Camera, Shield, Bug } from 'lucide-react';
 
 const Index = () => {
   const [tessieApiKey, setTessieApiKey] = useState<string | null>(
@@ -63,6 +66,8 @@ const Index = () => {
     selectedVehicle, 
     setSelectedVehicle, 
     vehicleData, 
+    historicalDrives,
+    historicalCharges,
     isLoading, 
     error,
     refetch 
@@ -70,6 +75,48 @@ const Index = () => {
   
   // Smart tracking for charging stops, overnight stays, etc.
   const { events: trackingEvents, addManualEvent } = useSmartTracking();
+
+  // Calculate real journey statistics from API data
+  const journeyStats = React.useMemo(() => {
+    if (isDemoMode || historicalDrives.length === 0) {
+      // Demo data for when no real data is available
+      return {
+        totalJourneyMiles: 950,
+        statesConquered: 3,
+        completionPercentage: 6.3,
+        daysElapsed: 56,
+        currentState: 'Connecticut',
+        averageDailyMiles: 17,
+        totalCharges: 12,
+        averageChargesPerDay: 0.2,
+        totalEnergyUsed: 250,
+        averageEfficiency: 3.8,
+        nextDestination: {
+          state: 'Massachusetts',
+          distance: 47,
+          eta: 'Aug 3, 6:30 AM'
+        }
+      };
+    }
+    
+    return calculateJourneyStats(
+      historicalDrives, 
+      historicalCharges,
+      vehicleData ? { lat: vehicleData.latitude, lng: vehicleData.longitude } : undefined
+    );
+  }, [historicalDrives, historicalCharges, vehicleData, isDemoMode]);
+
+  // Calculate insights from journey data
+  const journeyInsights = React.useMemo(() => {
+    if (isDemoMode || historicalDrives.length === 0) {
+      return {
+        efficiency: { milesPerKwh: 3.8, totalEnergyUsed: 250 },
+        patterns: { averageStopDuration: 45, preferredChargingTimes: ['14:00', '20:00'] }
+      };
+    }
+    
+    return calculateJourneyInsights(historicalDrives, historicalCharges);
+  }, [historicalDrives, historicalCharges, isDemoMode]);
 
   // Filter vehicles to only show "Midnight Shadow"
   const midnightShadowVehicle = vehicles.find(v => 
@@ -177,6 +224,18 @@ const Index = () => {
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
                 {isDemoMode ? 'Demo' : 'Refresh'}
               </Button>
+              
+              {/* Debug info for development */}
+              <DebugInfo 
+                tessieApiKey={tessieApiKey}
+                mapboxToken={mapboxToken}
+                isDemoMode={isDemoMode}
+                vehicles={vehicles}
+                vehicleData={vehicleData}
+                historicalDrives={historicalDrives}
+                historicalCharges={historicalCharges}
+                error={error}
+              />
             </div>
           </div>
         </div>
@@ -193,7 +252,7 @@ const Index = () => {
         )}
 
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className={`grid w-full ${isAuthenticated ? 'grid-cols-4' : 'grid-cols-3'} bg-tesla-gray`}>
+          <TabsList className={`grid w-full ${isAuthenticated ? 'grid-cols-5' : 'grid-cols-4'} bg-tesla-gray`}>
             <TabsTrigger value="dashboard" className="data-[state=active]:bg-primary">
               <Car className="w-4 h-4 mr-2" />
               Live Dashboard
@@ -208,6 +267,10 @@ const Index = () => {
               {canUploadMedia && (
                 <Badge variant="secondary" className="ml-2 bg-tesla-cyan text-xs">Admin</Badge>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="debug" className="data-[state=active]:bg-primary">
+              <Bug className="w-4 h-4 mr-2" />
+              API Debug
             </TabsTrigger>
             {isAuthenticated && (
               <TabsTrigger value="admin" className="data-[state=active]:bg-primary">
@@ -245,6 +308,7 @@ const Index = () => {
                       } : undefined}
                       mapboxToken={mapboxToken || undefined}
                       onTokenChange={handleMapboxTokenChange}
+                      historicalDrives={historicalDrives}
                     />
                   </CardContent>
                 </Card>
@@ -261,22 +325,22 @@ const Index = () => {
                   speed={displayVehicleData?.speed}
                   lastUpdate={formatLastUpdate(displayVehicleData?.timestamp)}
                   journeyStats={{
-                    totalJourneyMiles: 11950,
-                    statesConquered: 29,
-                    completionPercentage: 60.4,
-                    daysElapsed: 56,
+                    totalJourneyMiles: journeyStats.totalJourneyMiles,
+                    statesConquered: journeyStats.statesConquered,
+                    completionPercentage: journeyStats.completionPercentage,
+                    daysElapsed: journeyStats.daysElapsed,
                     isCharging: getChargingState(displayVehicleData?.charging_state) === 'charging',
-                    currentState: 'Connecticut',
+                    currentState: journeyStats.currentState,
                     currentLocation: displayVehicleData ? { 
                       lat: displayVehicleData.latitude, 
                       lng: displayVehicleData.longitude 
                     } : undefined,
-                    dailyAverages: { miles: 213, charges: 1.2 }
+                    dailyAverages: { 
+                      miles: journeyStats.averageDailyMiles, 
+                      charges: journeyStats.averageChargesPerDay 
+                    }
                   }}
-                  insights={{
-                    efficiency: { milesPerKwh: 3.8, totalEnergyUsed: 3145 },
-                    patterns: { averageStopDuration: 45, preferredChargingTimes: ['14:00', '20:00'] }
-                  }}
+                  insights={journeyInsights}
                   isLoading={isLoading}
                   error={error || undefined}
                 />
@@ -306,6 +370,10 @@ const Index = () => {
                 }
               } : undefined}
             />
+          </TabsContent>
+
+          <TabsContent value="debug" className="space-y-6">
+            <TessieApiDebugger apiKey={tessieApiKey} />
           </TabsContent>
 
           {isAuthenticated && (
