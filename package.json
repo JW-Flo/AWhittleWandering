@@ -11,12 +11,15 @@
   ],
   "scripts": {
     "build": "bun run build:all",
-    "build:all": "bun run build:shared && bun run build:backend",
+    "build:all": "bun run build:shared && bun run build:backend && bun run build:frontend",
     "build:shared": "cd shared && bun run build",
     "build:backend": "cd backend/edge-worker && bun run build",
+    "build:frontend": "cd frontend && bun run build",
     "deploy": "bun run build && ./scripts/deploy.sh",
-    "dev": "bun run dev:backend",
+    "deploy:frontend": "cd frontend && bun run build && echo 'Deploy frontend to Cloudflare Pages'",
+    "dev": "bun run --parallel dev:backend dev:frontend",
     "dev:backend": "cd backend/edge-worker && bun run dev",
+    "dev:frontend": "cd frontend && bun run dev",
     "tesla:import": "bun run scripts/import-tesla-data.ts"
   },
   "devDependencies": {
