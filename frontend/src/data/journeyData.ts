@@ -27,223 +27,258 @@ export interface TimelineEvent {
 // Real journey statistics from actual trip data
 export const journeyStats = {
   totalStates: 48, // Goal: All 48 continental US states
-  visitedStates: 17, // Detected from GPS coordinates in CSV
-  remainingStates: 31,
-  tripDuration: 54, // June 3 - July 26, 2025 (53 days elapsed)
-  daysElapsed: 53,
-  daysRemaining: 1,
-  startDate: '2025-06-03',
+  visitedStates: 29, // Updated to match actual CSV data (29 states visited)
+  remainingStates: 19, // 48 - 29 = 19 remaining
+  tripDuration: 56, // June 1 - July 26, 2025 (56 days elapsed)
+  daysElapsed: 56,
+  daysRemaining: 0, // Trip is ongoing
+  startDate: '2025-06-01',
   endDate: '2025-07-26',
   currentState: 'Connecticut', // Based on final coordinates (41.205, -73.14)
-  totalMiles: 11950, // Odometer: 69,996 - 58,046 = 11,950 miles
-  averageMilesPerDay: 225 // 11,950 miles / 53 days
+  totalMiles: 11950, // Odometer: 70,128 - 58,178 = 11,950 miles
+  averageMilesPerDay: 213 // 11,950 miles / 56 days
 };
 
-// A Whittle Wandering - Real Journey Timeline based on CSV telemetry data
+// A Whittle Wandering - Real Journey Timeline based on actual trip description
 export const journeyTimeline: TimelineEvent[] = [
   {
-    state: 'Connecticut',
+    state: 'Texas',
     date: 'June 1, 2025',
-    highlights: ['Journey begins!', 'Final preparations', 'Family farewells'],
+    highlights: ['Journey begins in Corpus Christi!', 'Tesla charged and ready', 'Adventure starts'],
     type: 'milestone',
-    location: { lat: 41.2048, lng: -73.1502 }
+    location: { lat: 27.8006, lng: -97.3964 }
   },
   {
-    state: 'New York',
-    date: 'June 2, 2025',
-    highlights: ['Empire State Building', 'Central Park drive', 'Brooklyn Bridge'],
-    type: 'cultural',
-    location: { lat: 40.7128, lng: -74.0060 }
-  },
-  {
-    state: 'Pennsylvania',
-    date: 'June 4, 2025',
-    highlights: ['Liberty Bell', 'Philly cheesesteaks', 'Independence Hall'],
-    type: 'cultural',
-    location: { lat: 39.9526, lng: -75.1652 }
-  },
-  {
-    state: 'Delaware',
-    date: 'June 5, 2025',
-    highlights: ['First State charm', 'Coastal beauty', 'Quick but memorable'],
-    type: 'scenic',
-    location: { lat: 38.9108, lng: -75.5277 }
-  },
-  {
-    state: 'Maryland',
-    date: 'June 6, 2025',
-    highlights: ['Baltimore Inner Harbor', 'Crab cakes', 'Fort McHenry'],
-    type: 'cultural',
-    location: { lat: 39.2904, lng: -76.6122 }
-  },
-  {
-    state: 'Virginia',
-    date: 'June 8, 2025',
-    highlights: ['Blue Ridge Mountains', 'Historic Williamsburg', 'Shenandoah Valley'],
-    type: 'scenic',
-    location: { lat: 37.4316, lng: -78.6569 }
-  },
-  {
-    state: 'North Carolina',
-    date: 'June 10, 2025',
-    highlights: ['Great Smoky Mountains', 'Asheville art scene', 'BBQ traditions'],
-    type: 'scenic',
-    location: { lat: 35.7796, lng: -78.6382 }
-  },
-  {
-    state: 'South Carolina',
-    date: 'June 12, 2025',
-    highlights: ['Charleston charm', 'Rainbow Row', 'Southern hospitality'],
-    type: 'cultural',
-    location: { lat: 32.7767, lng: -79.9311 }
-  },
-  {
-    state: 'Georgia',
-    date: 'June 14, 2025',
-    highlights: ['Savannah squares', 'Peach cobbler', 'Historic district'],
-    type: 'cultural',
-    location: { lat: 32.0835, lng: -81.0998 }
-  },
-  {
-    state: 'Florida',
-    date: 'June 16, 2025',
-    highlights: ['Key West sunset', 'Everglades wildlife', 'Miami Beach'],
+    state: 'New Mexico',
+    date: 'June 2-3, 2025',
+    highlights: ['Carlsbad Caverns exploration', 'Underground wonders', 'First state conquered'],
     type: 'adventure',
-    location: { lat: 25.7617, lng: -80.1918 }
-  },
-  {
-    state: 'Alabama',
-    date: 'June 19, 2025',
-    highlights: ['Birmingham history', 'Gulf Coast beaches', 'Sweet tea'],
-    type: 'cultural',
-    location: { lat: 32.3617, lng: -86.2792 }
-  },
-  {
-    state: 'Mississippi',
-    date: 'June 21, 2025',
-    highlights: ['Delta blues', 'Natchez Trace', 'River views'],
-    type: 'cultural',
-    location: { lat: 32.3547, lng: -89.3985 }
-  },
-  {
-    state: 'Louisiana',
-    date: 'June 23, 2025',
-    highlights: ['New Orleans jazz', 'French Quarter', 'Beignets and coffee'],
-    type: 'cultural',
-    location: { lat: 29.9511, lng: -90.0715 }
+    location: { lat: 32.1776, lng: -104.4569 }
   },
   {
     state: 'Texas',
-    date: 'June 25, 2025',
-    highlights: ['Austin music scene', 'BBQ paradise', 'Hill Country drives'],
-    type: 'adventure',
-    location: { lat: 30.2672, lng: -97.7431 }
-  },
-  {
-    state: 'Arkansas',
-    date: 'June 28, 2025',
-    highlights: ['Hot Springs relaxation', 'Ozark Mountains', 'Diamond mining'],
+    date: 'June 4, 2025',
+    highlights: ['Fort Stockton overnight', 'Back through Texas', 'Tesla supercharging'],
     type: 'scenic',
-    location: { lat: 34.7465, lng: -92.2896 }
+    location: { lat: 30.8957, lng: -102.8790 }
   },
   {
-    state: 'Oklahoma',
-    date: 'June 30, 2025',
-    highlights: ['Route 66 memories', 'Oklahoma City charm', 'Prairie sunsets'],
+    state: 'Texas',
+    date: 'June 5, 2025',
+    highlights: ['El Paso Tesla service', 'Vehicle maintenance', 'Border city vibes'],
     type: 'adventure',
-    location: { lat: 35.4676, lng: -97.5164 }
+    location: { lat: 31.7619, lng: -106.4850 }
   },
   {
-    state: 'Kansas',
-    date: 'July 2, 2025',
-    highlights: ['Sunflower fields', 'Dorothy\'s homeland', 'Endless horizons'],
-    type: 'scenic',
-    location: { lat: 39.0119, lng: -98.4842 }
-  },
-  {
-    state: 'Colorado',
-    date: 'July 4, 2025',
-    highlights: ['Rocky Mountain peaks', 'Denver fireworks', 'Mile-high celebrations'],
+    state: 'Arizona',
+    date: 'June 6-7, 2025',
+    highlights: ['Sedona red rocks', 'Grand Canyon Desert View Watchtower', 'Breathtaking vistas'],
     type: 'milestone',
-    location: { lat: 39.7392, lng: -104.9903 }
-  },
-  {
-    state: 'Nebraska',
-    date: 'July 6, 2025',
-    highlights: ['Chimney Rock', 'Pioneer spirit', 'Great Plains beauty'],
-    type: 'scenic',
-    location: { lat: 41.4925, lng: -99.9018 }
-  },
-  {
-    state: 'South Dakota',
-    date: 'July 8, 2025',
-    highlights: ['Mount Rushmore majesty', 'Badlands adventure', 'Black Hills'],
-    type: 'milestone',
-    location: { lat: 43.9695, lng: -99.9018 }
-  },
-  {
-    state: 'North Dakota',
-    date: 'July 10, 2025',
-    highlights: ['Theodore Roosevelt Park', 'Prairie wilderness', 'Medora charm'],
-    type: 'scenic',
-    location: { lat: 47.5515, lng: -101.0020 }
-  },
-  {
-    state: 'Montana',
-    date: 'July 12, 2025',
-    highlights: ['Glacier National Park', 'Big Sky country', 'Going-to-the-Sun Road'],
-    type: 'scenic',
-    location: { lat: 47.0527, lng: -109.6333 }
-  },
-  {
-    state: 'Wyoming',
-    date: 'July 14, 2025',
-    highlights: ['Yellowstone geysers', 'Grand Teton peaks', 'Wildlife encounters'],
-    type: 'adventure',
-    location: { lat: 43.0759, lng: -107.2903 }
-  },
-  {
-    state: 'Idaho',
-    date: 'July 16, 2025',
-    highlights: ['Sawtooth Mountains', 'Sun Valley beauty', 'Potato country'],
-    type: 'scenic',
-    location: { lat: 44.0682, lng: -114.7420 }
+    location: { lat: 36.0544, lng: -112.1401 }
   },
   {
     state: 'Utah',
-    date: 'July 18, 2025',
-    highlights: ['Arches National Park', 'Salt Lake serenity', 'Red rock wonders'],
+    date: 'June 8, 2025',
+    highlights: ['Zion National Park', 'First Utah adventure', 'Towering canyon walls'],
     type: 'scenic',
-    location: { lat: 39.3210, lng: -111.0937 }
+    location: { lat: 37.2982, lng: -113.0263 }
   },
   {
     state: 'Nevada',
-    date: 'July 20, 2025',
-    highlights: ['Las Vegas lights', 'Valley of Fire', 'Desert landscapes'],
+    date: 'June 9, 2025',
+    highlights: ['Drove through Las Vegas', 'Desert crossing', 'Bright lights brief stop'],
     type: 'adventure',
     location: { lat: 36.1716, lng: -115.1391 }
   },
   {
-    state: 'Arizona',
-    date: 'July 22, 2025',
-    highlights: ['Grand Canyon wonder', 'Sedona red rocks', 'Desert sunsets'],
-    type: 'milestone',
-    location: { lat: 34.0489, lng: -111.0937 }
-  },
-  {
-    state: 'New Mexico',
-    date: 'July 24, 2025',
-    highlights: ['Santa Fe art', 'White Sands magic', 'Southwestern culture'],
-    type: 'cultural',
-    location: { lat: 35.6870, lng: -105.9378 }
-  },
-  {
     state: 'California',
-    date: 'July 26, 2025',
-    highlights: ['Pacific Coast arrival', 'Golden Gate triumph', 'Journey complete!'],
+    date: 'June 9-14, 2025',
+    highlights: ['Los Angeles 4-day stay', 'PCH coastal drive north', 'Redwoods National Park'],
+    type: 'milestone',
+    location: { lat: 41.2132, lng: -124.0046 }
+  },
+  {
+    state: 'Oregon',
+    date: 'June 15, 2025',
+    highlights: ['Cannon Beach beauty', 'Pacific coastline', 'Haystack Rock views'],
+    type: 'scenic',
+    location: { lat: 45.8912, lng: -123.9615 }
+  },
+  {
+    state: 'Washington',
+    date: 'June 16, 2025',
+    highlights: ['Verlot, Mount Baker-Snoqualmie', 'Mountain wilderness'],
+    type: 'scenic',
+    location: { lat: 48.0781, lng: -121.7432 }
+  },
+  {
+    state: 'Washington',
+    date: 'June 22, 2025',
+    highlights: ['Olympia National Park camping', 'Overnight in nature'],
+    type: 'adventure',
+    location: { lat: 47.8021, lng: -123.6044 }
+  },
+  {
+    state: 'Washington',
+    date: 'June 23, 2025',
+    highlights: ['Sequim with Brian', 'Left for Seattle 9pm', 'Executive Hotel Pacific arrival'],
+    type: 'cultural',
+    location: { lat: 47.6062, lng: -122.3321 }
+  },
+  {
+    state: 'Idaho',
+    date: 'June 20, 2025',
+    highlights: ['Coeur d\'Alene camping', 'Lake views overnight', 'Mountain fresh air'],
+    type: 'scenic',
+    location: { lat: 47.6777, lng: -116.7804 }
+  },
+  {
+    state: 'Montana',
+    date: 'June 21-22, 2025',
+    highlights: ['Bozeman arrival', 'Big Sky adventure', 'Summited Lone Mountain!'],
+    type: 'milestone',
+    location: { lat: 45.6870, lng: -111.0429 }
+  },
+  {
+    state: 'Wyoming',
+    date: 'June 23-24, 2025',
+    highlights: ['Yellowstone National Park', 'Geysers and wildlife', 'Two amazing days'],
+    type: 'adventure',
+    location: { lat: 44.4280, lng: -110.5885 }
+  },
+  {
+    state: 'Utah',
+    date: 'June 25-26, 2025',
+    highlights: ['Salt Lake City return', '2-day Provo visit', 'Utah round two'],
+    type: 'cultural',
+    location: { lat: 40.2731, lng: -111.6585 }
+  },
+  {
+    state: 'Colorado',
+    date: 'June 27-28, 2025',
+    highlights: ['Denver with Josh', 'Fort Collins with Caleb', 'Rocky Mountain state'],
+    type: 'cultural',
+    location: { lat: 40.5853, lng: -105.0844 }
+  },
+  {
+    state: 'Nebraska',
+    date: 'July 3, 2025',
+    highlights: ['Lincoln arrival evening', '4-day stay planned', 'Great Plains crossing'],
+    type: 'scenic',
+    location: { lat: 40.8136, lng: -96.7026 }
+  },
+  {
+    state: 'Iowa',
+    date: 'July 4, 2025',
+    highlights: ['Council Bluffs stop', 'Independence Day travel', 'Midwest journey'],
+    type: 'milestone',
+    location: { lat: 41.2619, lng: -95.8608 }
+  },
+  {
+    state: 'South Dakota',
+    date: 'July 4, 2025',
+    highlights: ['Badlands National Park', 'Dramatic landscapes', 'Fourth of July adventure'],
+    type: 'adventure',
+    location: { lat: 43.8554, lng: -102.3397 }
+  },
+  {
+    state: 'North Dakota',
+    date: 'July 10-11, 2025',
+    highlights: ['Jasper Hotel downtown Fargo', 'Prairie state conquered', 'Thursday overnight stay'],
+    type: 'cultural',
+    location: { lat: 46.8772, lng: -96.7898 }
+  },
+  {
+    state: 'Minnesota',
+    date: 'July 6, 2025',
+    highlights: ['Minneapolis city visit', 'Twin Cities exploration', 'Land of 10,000 lakes'],
+    type: 'cultural',
+    location: { lat: 44.9778, lng: -93.2650 }
+  },
+  {
+    state: 'Wisconsin',
+    date: 'July 7, 2025',
+    highlights: ['Mars Cheese Castle in Kenosha', 'Wisconsin cheese culture', 'Dairy state delights'],
+    type: 'cultural',
+    location: { lat: 42.5847, lng: -87.8212 }
+  },
+  {
+    state: 'Illinois',
+    date: 'July 8, 2025',
+    highlights: ['Chicago Wrigleyville', 'Met Connor McBride', 'Windy City adventures'],
+    type: 'cultural',
+    location: { lat: 41.8781, lng: -87.6298 }
+  },
+  {
+    state: 'Indiana',
+    date: 'July 9, 2025',
+    highlights: ['Terre Haute with Jack Lavey', 'Turkey Run State Park', 'Hoosier state nature'],
+    type: 'scenic',
+    location: { lat: 39.4664, lng: -87.4139 }
+  },
+  {
+    state: 'Ohio',
+    date: 'July 10-12, 2025',
+    highlights: ['John Bryan SP, Clifton Gorge', '2 nights Cincinnati with Cameron Hynes', 'Buckeye state highlights'],
+    type: 'scenic',
+    location: { lat: 39.1031, lng: -84.5120 }
+  },
+  {
+    state: 'Pennsylvania',
+    date: 'July 13, 2025',
+    highlights: ['Erie and Lake Erie', 'Great Lakes shoreline', 'Keystone state waters'],
+    type: 'scenic',
+    location: { lat: 42.1292, lng: -80.0851 }
+  },
+  {
+    state: 'New York',
+    date: 'July 14, 2025',
+    highlights: ['Albany with Phil Dalton', 'Hudson Valley views'],
+    type: 'cultural',
+    location: { lat: 42.6526, lng: -73.7562 }
+  },
+  {
+    state: 'Vermont',
+    date: 'July 15, 2025',
+    highlights: ['Green Mountain National Forest', 'Vermont wilderness', 'Mountain state serenity'],
+    type: 'scenic',
+    location: { lat: 44.0459, lng: -72.7107 }
+  },
+  {
+    state: 'New Hampshire',
+    date: 'July 16, 2025',
+    highlights: ['White Mountain Visitor Center', 'Live Free or Die state', 'Mountain exploration'],
+    type: 'scenic',
+    location: { lat: 44.2619, lng: -71.9989 }
+  },
+  {
+    state: 'Maine',
+    date: 'July 17-18, 2025',
+    highlights: ['Bar Harbor beauty', 'Cadillac Mountain sunrise hike', 'Easternmost adventures'],
+    type: 'milestone',
+    location: { lat: 44.3876, lng: -68.2039 }
+  },
+  {
+    state: 'Massachusetts',
+    date: 'July 19, 2025',
+    highlights: ['Drive-through to Connecticut', 'Bay State passage', 'Historic corridors'],
+    type: 'cultural',
+    location: { lat: 42.3601, lng: -71.0589 }
+  },
+  {
+    state: 'Connecticut',
+    date: 'July 20-26, 2025',
+    highlights: ['Stratford stay with Deanna', 'Constitution State home base', 'Current location'],
     type: 'milestone',
     current: true,
-    location: { lat: 37.7749, lng: -122.4194 }
+    location: { lat: 41.1865, lng: -73.1532 }
+  },
+  {
+    state: 'Rhode Island',
+    date: 'July 25, 2025',
+    highlights: ['Watch Hill Point coastal visit', 'Ocean State beauty', 'Smallest state conquered'],
+    type: 'scenic',
+    location: { lat: 41.3217, lng: -71.8562 }
   }
 ];
 
@@ -272,22 +307,12 @@ export const journeyAchievements = [
     rarity: 'common'
   },
   {
-    id: 'southern_sweep',
-    title: 'Southern Explorer',
-    description: 'Explored the Gulf Coast states',
-    icon: 'Compass',
-    progress: 5,
-    total: 8,
-    achieved: false,
-    rarity: 'rare'
-  },
-  {
-    id: 'northeast_navigator',
-    title: 'New England Explorer',
-    description: 'Conquered all the New England states',
-    icon: 'MapPin',
-    progress: 6,
-    total: 6,
+    id: 'first_ten_states',
+    title: 'Double Digit Explorer',
+    description: 'Conquered your first 10 states!',
+    icon: 'Target',
+    progress: 29,
+    total: 10,
     achieved: true,
     rarity: 'rare'
   },
@@ -296,8 +321,58 @@ export const journeyAchievements = [
     title: 'Halfway Hero',
     description: 'Reached 24 states - halfway to the goal!',
     icon: 'Trophy',
-    progress: 17,
+    progress: 29,
     total: 24,
+    achieved: true,
+    rarity: 'epic'
+  },
+  {
+    id: 'new_england_complete',
+    title: 'New England Champion',
+    description: 'Conquered all the New England states',
+    icon: 'Flag',
+    progress: 6,
+    total: 6,
+    achieved: true,
+    rarity: 'rare'
+  },
+  {
+    id: 'mileage_master',
+    title: '10,000 Mile Master',
+    description: 'Drove over 10,000 miles on this epic journey',
+    icon: 'Route',
+    progress: 11950,
+    total: 10000,
+    achieved: true,
+    rarity: 'epic'
+  },
+  {
+    id: 'mountain_explorer',
+    title: 'Mountain State Master',
+    description: 'Explored the western mountain states',
+    icon: 'Mountain',
+    progress: 8,
+    total: 10,
+    achieved: false,
+    rarity: 'rare'
+  },
+  {
+    id: 'two_month_warrior',
+    title: 'Two Month Adventure',
+    description: 'Sustained the adventure for over 8 weeks',
+    icon: 'Clock',
+    progress: 56,
+    total: 56,
+    achieved: true,
+    rarity: 'epic'
+  },
+  {
+    id: 'tesla_champion',
+    title: 'Electric Road Warrior',
+    description: 'Proving Tesla can conquer America!',
+    icon: 'Zap',
+    progress: 29,
+    total: 30,
     achieved: false,
     rarity: 'epic'
   },
@@ -306,19 +381,9 @@ export const journeyAchievements = [
     title: 'Continental Champion',
     description: 'Visited all 48 continental US states',
     icon: 'Award',
-    progress: 17,
+    progress: 29,
     total: 48,
     achieved: false,
     rarity: 'legendary'
-  },
-  {
-    id: 'mileage_master',
-    title: '10,000 Mile Master',
-    description: 'Drove over 10,000 miles on this epic journey',
-    icon: 'Gauge',
-    progress: 11950,
-    total: 10000,
-    achieved: true,
-    rarity: 'epic'
   }
 ];

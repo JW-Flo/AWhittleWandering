@@ -61,24 +61,51 @@ const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange }: TeslaMapProps
       vehicleMarker.current.remove();
     }
 
-    // Create Tesla vehicle marker
+    // Create enhanced Tesla vehicle marker
     const el = document.createElement('div');
     el.className = 'tesla-marker';
     el.innerHTML = `
-      <div class="w-6 h-6 bg-primary rounded-full border-2 border-background shadow-lg flex items-center justify-center">
-        <div class="w-2 h-2 bg-background rounded-full"></div>
+      <div class="relative">
+        <div class="w-8 h-8 bg-red-500 rounded-full border-4 border-white shadow-xl flex items-center justify-center animate-pulse">
+          <div class="w-3 h-3 bg-white rounded-full"></div>
+        </div>
+        <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-red-500"></div>
       </div>
     `;
 
-    // Add new marker
+    // Add popup with vehicle info
+    const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+      <div class="p-3 min-w-48">
+        <h3 class="font-bold text-lg mb-2">Tesla Model Y</h3>
+        <div class="space-y-1 text-sm">
+          <div class="flex justify-between">
+            <span>Location:</span>
+            <span class="font-medium">Connecticut</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Speed:</span>
+            <span class="font-medium">${vehicleLocation.speed || 0} mph</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Heading:</span>
+            <span class="font-medium">${vehicleLocation.heading || 0}°</span>
+          </div>
+        </div>
+        <div class="mt-2 text-xs text-gray-600">A Whittle Wandering - Day 56</div>
+      </div>
+    `);
+
+    // Add new marker with popup
     vehicleMarker.current = new mapboxgl.Marker(el)
       .setLngLat([vehicleLocation.longitude, vehicleLocation.latitude])
+      .setPopup(popup)
       .addTo(map.current);
 
-    // Center map on vehicle
+    // Center map on vehicle with a nice animation
     map.current.flyTo({
       center: [vehicleLocation.longitude, vehicleLocation.latitude],
-      zoom: 15,
+      zoom: 12,
+      duration: 2000,
       essential: true
     });
   }, [vehicleLocation]);
