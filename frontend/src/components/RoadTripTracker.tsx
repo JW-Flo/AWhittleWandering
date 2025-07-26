@@ -17,7 +17,7 @@ import { calculateTripStatistics } from '@/utils/stateDetection';
 const RoadTripTracker = () => {
   const [importedData, setImportedData] = useState<any[]>([]);
   const [mapboxToken, setMapboxToken] = useState<string>(() => 
-    localStorage.getItem('mapboxToken') || ''
+    localStorage.getItem('mapboxToken') || 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA'
   );
   const [tripStatistics, setTripStatistics] = useState(journeyStats);
   const [routeLocations, setRouteLocations] = useState<Array<{lat: number, lng: number, timestamp: string}>>([]);
@@ -312,6 +312,12 @@ const RoadTripTracker = () => {
                 <TeslaMap
                   mapboxToken={mapboxToken}
                   onTokenChange={handleTokenChange}
+                  vehicleLocation={{
+                    latitude: 41.1865,
+                    longitude: -73.1532,
+                    heading: 180,
+                    speed: 0
+                  }}
                 />
               </div>
               {routeLocations.length > 0 && (

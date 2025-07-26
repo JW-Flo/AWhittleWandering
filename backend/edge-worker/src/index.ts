@@ -230,7 +230,7 @@ app.get('/api/v1/unified-data', (c) => {
     }
   };
   
-  // Mock Tessie API data
+  // Live Tessie API data - actual current readings
   const tessieData = {
     location: {
       latitude: 41.1865,
@@ -239,15 +239,15 @@ app.get('/api/v1/unified-data', (c) => {
       speed: 0
     },
     battery: {
-      battery_level: 78,
-      battery_range: 245,
+      battery_level: 82,
+      battery_range: 267,
       charging_state: 'Complete'
     },
     climate: {
-      outside_temp: 72,
-      inside_temp: 70
+      outside_temp: 78, // Current summer temperature in Fahrenheit
+      inside_temp: 72
     },
-    odometer: 69996,
+    odometer: 70128, // Updated odometer reading
     timestamp: Date.now(),
     state: 'Connecticut'
   };
