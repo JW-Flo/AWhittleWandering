@@ -13,20 +13,28 @@ interface VehicleLocation {
   speed?: number;
 }
 
+interface RoutePoint {
+  latitude: number;
+  longitude: number;
+  state: string;
+  date: string;
+}
+
 interface TeslaMapProps {
   vehicleLocation?: VehicleLocation;
   mapboxToken?: string;
   onTokenChange?: (token: string) => void;
+  routePoints?: RoutePoint[];
 }
 
-const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange }: TeslaMapProps) => {
+const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange, routePoints = [] }: TeslaMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const vehicleMarker = useRef<mapboxgl.Marker | null>(null);
   const [tokenInput, setTokenInput] = useState(mapboxToken || '');
 
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken) return;
+    if (!map.current || !mapboxToken) return;
 
     // Initialize map
     mapboxgl.accessToken = mapboxToken;
@@ -34,8 +42,8 @@ const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange }: TeslaMapProps
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/dark-v11',
-      zoom: 10,
-      center: vehicleLocation ? [vehicleLocation.longitude, vehicleLocation.latitude] : [-122.4194, 37.7749],
+      zoom: 4,
+      center: vehicleLocation ? [vehicleLocation.longitude, vehicleLocation.latitude] : [-95.7129, 37.0902], // Center of USA
       pitch: 0,
     });
 
@@ -47,11 +55,99 @@ const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange }: TeslaMapProps
       'top-right'
     );
 
+    // Wait for map to load before adding route
+    map.current.on('load', () => {
+      if (routePoints.length > 0) {
+        addRouteToMap();
+      }
+    });
+
     // Cleanup
     return () => {
       map.current?.remove();
     };
   }, [mapboxToken]);
+
+  // Update route when routePoints change
+  useEffect(() => {
+    if (map.current && map.current.isStyleLoaded() && routePoints.length > 0) {
+      addRouteToMap();
+    }
+  }, [routePoints]);
+
+  const addRouteToMap = () => {
+    if (!map.current || routePoints.length === 0) return;
+
+    // Create route line coordinates
+    const coordinates = routePoints.map(point => [point.longitude, point.latitude]);
+
+    // Add route source and layer
+    if (!map.current.getSource('route')) {
+      map.current.addSource('route', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: coordinates
+          }
+        }
+      });
+
+      map.current.addLayer({
+        id: 'route',
+        type: 'line',
+        source: 'route',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#FF6B35', // Adventure orange
+          'line-width': 4,
+          'line-opacity': 0.8
+        }
+      });
+    }
+
+    // Add waypoint markers
+    routePoints.forEach((point, index) => {
+      const el = document.createElement('div');
+      el.className = 'waypoint-marker';
+      el.innerHTML = `
+        <div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg">
+          <div class="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-bold text-white bg-black bg-opacity-70 px-1 rounded">
+            ${index + 1}
+          </div>
+        </div>
+      `;
+
+      const popup = new mapboxgl.Popup({ offset: 15 }).setHTML(`
+        <div class="p-2">
+          <h4 class="font-bold">${point.state}</h4>
+          <p class="text-sm">${point.date}</p>
+        </div>
+      `);
+
+      new mapboxgl.Marker(el)
+        .setLngLat([point.longitude, point.latitude])
+        .setPopup(popup)
+        .addTo(map.current!);
+    });
+
+    // Fit map to show all points
+    if (coordinates.length > 0) {
+      const bounds = coordinates.reduce((bounds, coord) => {
+        return bounds.extend(coord as [number, number]);
+      }, new mapboxgl.LngLatBounds(coordinates[0] as [number, number], coordinates[0] as [number, number]));
+
+      map.current.fitBounds(bounds, {
+        padding: 50,
+        maxZoom: 6
+      });
+    }
+  };
 
   useEffect(() => {
     if (!map.current || !vehicleLocation) return;

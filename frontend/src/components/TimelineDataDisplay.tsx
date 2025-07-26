@@ -32,13 +32,13 @@ const TimelineDataDisplay = () => {
     const fetchTimelineData = async () => {
       try {
         // Fetch timeline data
-        const timelineResponse = await fetch('/api/v1/timeline');
+        const timelineResponse = await fetch('https://awhittlewandering-api.kd8jc7v8cd.workers.dev/api/v1/timeline');
         if (!timelineResponse.ok) throw new Error('Failed to fetch timeline data');
         const timeline = await timelineResponse.json();
         setTimelineData(timeline);
 
         // Fetch live status
-        const liveResponse = await fetch('/api/v1/trip/live-status');
+        const liveResponse = await fetch('https://awhittlewandering-api.kd8jc7v8cd.workers.dev/api/v1/trip/live-status');
         if (!liveResponse.ok) throw new Error('Failed to fetch live status');
         const live = await liveResponse.json();
         setLiveStatus(live);

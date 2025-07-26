@@ -318,6 +318,12 @@ const RoadTripTracker = () => {
                     heading: 180,
                     speed: 0
                   }}
+                  routePoints={journeyTimeline.map(event => ({
+                    latitude: event.location?.lat || 0,
+                    longitude: event.location?.lng || 0,
+                    state: event.state,
+                    date: event.date
+                  }))}
                 />
               </div>
               {routeLocations.length > 0 && (

@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Calendar, Camera, Star, Mountain, Sunset } from 'lucide-react';
 import { journeyTimeline, type TimelineEvent } from '@/data/journeyData';
+import { useUnifiedJourneyData } from '@/hooks/useUnifiedJourneyData';
 
 const getTypeIcon = (type: string) => {
   switch (type) {
@@ -25,6 +26,42 @@ const getTypeColor = (type: string) => {
 };
 
 const JourneyTimeline: React.FC = () => {
+  const { data, loading, error } = useUnifiedJourneyData();
+  
+  // Use live data if available, fallback to static data
+  const timelineEntries = data?.journey?.timeline?.entries || [];
+  const displayTimeline = timelineEntries.length > 0 ? 
+    timelineEntries.map((entry: any) => ({
+      state: entry.state,
+      date: entry.date,
+      highlights: entry.keyStops ? [entry.keyStops] : ['Adventure continues...'],
+      type: 'adventure' as const,
+      current: entry.state === data?.journey?.currentStatus?.location?.state
+    })) : journeyTimeline;
+
+  if (loading) {
+    return (
+      <Card className="story-card animate-pulse">
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            <div className="h-4 bg-tesla-gray rounded w-3/4"></div>
+            <div className="h-4 bg-tesla-gray rounded w-1/2"></div>
+            <div className="h-4 bg-tesla-gray rounded w-2/3"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="story-card border-destructive/20">
+        <CardContent className="p-6">
+          <p className="text-destructive">Error loading timeline: {error}</p>
+        </CardContent>
+      </Card>
+    );
+  }
   return (
     <Card className="story-card">
       <CardHeader>
@@ -39,12 +76,12 @@ const JourneyTimeline: React.FC = () => {
           <div className="absolute left-6 top-4 bottom-4 w-0.5 bg-gradient-to-b from-[hsl(var(--tesla-blue))] via-[hsl(var(--adventure-orange))] to-[hsl(var(--tesla-gray))]" />
           
           <div className="space-y-6">
-            {journeyTimeline.slice(0, 10).map((event, index) => {
+            {displayTimeline.slice(0, 10).map((event, index) => {
               const IconComponent = getTypeIcon(event.type);
               const iconColor = getTypeColor(event.type);
               
               return (
-                <div key={event.state} className="relative flex gap-4">
+                <div key={`${event.state}-${index}`} className="relative flex gap-4">
                   {/* Timeline dot */}
                   <div className={`relative z-10 flex items-center justify-center w-12 h-12 rounded-full ${
                     event.current ? 'bg-[hsl(var(--adventure-orange))] animate-pulse' : 'bg-[hsl(var(--tesla-gray-light))]'
