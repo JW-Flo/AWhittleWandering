@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Calendar, Clock, Trophy, Camera, PenTool, Target, Route, Zap, Upload, Map as MapIcon, CheckCircle, Shield } from 'lucide-react';
+import { MapPin, Calendar, Clock, Trophy, Camera, PenTool, Target, Route, Zap, Upload, Map as MapIcon, CheckCircle, Shield, Settings } from 'lucide-react';
 import { journeyTimeline, journeyStats } from '@/data/journeyData';
 import { useAdminAuth } from '@/lib/auth';
 import AdventureHero from './AdventureHero';
@@ -12,7 +12,10 @@ import JourneyTimeline from './JourneyTimeline';
 import AdventureMilestones from './AdventureMilestones';
 import AdventureCsvUploader from './AdventureCsvUploader';
 import TeslaMap from './TeslaMap';
+import EnhancedTeslaMap from './EnhancedTeslaMap';
 import TimelineDataDisplay from './TimelineDataDisplay';
+import JourneyDashboard from './JourneyDashboard';
+import ApiConfig from './ApiConfig';
 import { calculateTripStatistics } from '@/utils/stateDetection';
 
 const RoadTripTracker = () => {
@@ -22,6 +25,8 @@ const RoadTripTracker = () => {
   );
   const [tripStatistics, setTripStatistics] = useState(journeyStats);
   const [routeLocations, setRouteLocations] = useState<Array<{lat: number, lng: number, timestamp: string}>>([]);
+  const [tessieApiKey, setTessieApiKey] = useState<string>('');
+  const [tessieVehicleId, setTessieVehicleId] = useState<string>('midnightshadow');
   
   // Admin authentication
   const { isAuthenticated, canModifyJourney } = useAdminAuth();
@@ -63,10 +68,14 @@ const RoadTripTracker = () => {
     <div className="space-y-8">
       {/* Adventure Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className={`grid w-full ${isAuthenticated ? 'grid-cols-5' : 'grid-cols-4'} bg-[hsl(var(--tesla-gray))]`}>
+        <TabsList className={`grid w-full ${isAuthenticated ? 'grid-cols-7' : 'grid-cols-5'} bg-[hsl(var(--tesla-gray))]`}>
           <TabsTrigger value="overview" className="data-[state=active]:bg-[hsl(var(--adventure-orange))] data-[state=active]:text-white">
             <MapIcon className="w-4 h-4 mr-2" />
             Adventure Overview
+          </TabsTrigger>
+          <TabsTrigger value="journey" className="data-[state=active]:bg-[hsl(var(--adventure-orange))] data-[state=active]:text-white">
+            <Zap className="w-4 h-4 mr-2" />
+            Live Journey
           </TabsTrigger>
           <TabsTrigger value="map" className="data-[state=active]:bg-[hsl(var(--adventure-orange))] data-[state=active]:text-white">
             <Route className="w-4 h-4 mr-2" />
@@ -81,11 +90,18 @@ const RoadTripTracker = () => {
             Achievements
           </TabsTrigger>
           {isAuthenticated && canModifyJourney && (
-            <TabsTrigger value="import" className="data-[state=active]:bg-[hsl(var(--adventure-orange))] data-[state=active]:text-white">
-              <Upload className="w-4 h-4 mr-2" />
-              Import Data
-              <Badge variant="secondary" className="ml-2 bg-tesla-cyan text-xs">Admin</Badge>
-            </TabsTrigger>
+            <>
+              <TabsTrigger value="import" className="data-[state=active]:bg-[hsl(var(--adventure-orange))] data-[state=active]:text-white">
+                <Upload className="w-4 h-4 mr-2" />
+                Import Data
+                <Badge variant="secondary" className="ml-2 bg-tesla-cyan text-xs">Admin</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="config" className="data-[state=active]:bg-[hsl(var(--adventure-orange))] data-[state=active]:text-white">
+                <Settings className="w-4 h-4 mr-2" />
+                API Config
+                <Badge variant="secondary" className="ml-2 bg-tesla-cyan text-xs">Admin</Badge>
+              </TabsTrigger>
+            </>
           )}
         </TabsList>
 
@@ -306,37 +322,38 @@ const RoadTripTracker = () => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="journey" className="space-y-6">
+          <JourneyDashboard 
+            vehicleId={tessieVehicleId} 
+            apiKey={tessieApiKey}
+            startDate="2025-06-03"
+            endDate="2025-07-26"
+          />
+        </TabsContent>
+
         <TabsContent value="map" className="space-y-6">
           <Card className="story-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-gradient">
                 <Route className="w-5 h-5" />
-                Adventure Route Map
+                Enhanced Adventure Route Map
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-96 w-full">
-                <TeslaMap
+                <EnhancedTeslaMap
+                  vehicleId={tessieVehicleId}
+                  apiKey={tessieApiKey}
                   mapboxToken={mapboxToken}
-                  onTokenChange={handleTokenChange}
-                  vehicleLocation={{
-                    latitude: 41.1865,
-                    longitude: -73.1532,
-                    heading: 180,
-                    speed: 0
-                  }}
-                  routePoints={journeyTimeline.map(event => ({
-                    latitude: event.location?.lat || 0,
-                    longitude: event.location?.lng || 0,
-                    state: event.state,
-                    date: event.date
-                  }))}
+                  startDate="2025-06-03"
+                  endDate="2025-07-26"
+                  onLocationData={handleMapDataAvailable}
                 />
               </div>
               {routeLocations.length > 0 && (
                 <div className="mt-4 p-3 bg-[hsl(var(--adventure-green)/0.1)] rounded-lg">
                   <p className="text-sm text-[hsl(var(--adventure-green))]">
-                    🗺️ Route data loaded: {routeLocations.length.toLocaleString()} location points
+                    🗺️ Real route data loaded: {routeLocations.length.toLocaleString()} location points from Tessie API
                   </p>
                 </div>
               )}
@@ -374,6 +391,17 @@ const RoadTripTracker = () => {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+        )}
+
+        {isAuthenticated && canModifyJourney && (
+          <TabsContent value="config" className="space-y-6">
+            <ApiConfig 
+              onApiKeyChange={setTessieApiKey}
+              onVehicleIdChange={setTessieVehicleId}
+              currentApiKey={tessieApiKey}
+              currentVehicleId={tessieVehicleId}
+            />
           </TabsContent>
         )}
       </Tabs>
