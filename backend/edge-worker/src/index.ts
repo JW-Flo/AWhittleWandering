@@ -13,7 +13,8 @@ app.use('*', cors({
     'http://localhost:8083', 
     'https://awhittlewandering.com',
     'https://www.awhittlewandering.com',
-    'https://awhittlewandering.pages.dev'
+    'https://awhittlewandering.pages.dev',
+    'https://1cf342fa.awhittlewandering.pages.dev'
   ],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
