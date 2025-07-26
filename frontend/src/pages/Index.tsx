@@ -4,28 +4,36 @@ import VehicleStats from '@/components/VehicleStats';
 import TessieApiSetup from '@/components/TessieApiSetup';
 import RoadTripTracker from '@/components/RoadTripTracker';
 import { useTessieApi } from '@/hooks/useTessieApi';
+import { secureKeyStorage } from '@/lib/config';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RefreshCw, Car, Zap, Map, Route } from 'lucide-react';
-// Real Tessie API integration - no more mock data needed
 
 const Index = () => {
   const [tessieApiKey, setTessieApiKey] = useState<string | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
 
-  // Load saved API keys from localStorage
+  // Load saved API keys from localStorage and environment
   useEffect(() => {
-    const savedTessieKey = localStorage.getItem('tessie_api_key');
-    const savedMapboxToken = localStorage.getItem('mapbox_token');
-    const savedDemoMode = localStorage.getItem('demo_mode') === 'true';
+    const { tessieKey, mapboxToken: mbToken } = secureKeyStorage.getStoredKeys();
     
-    if (savedTessieKey) setTessieApiKey(savedTessieKey);
-    if (savedMapboxToken) setMapboxToken(savedMapboxToken);
-    if (savedDemoMode) setIsDemoMode(true);
+    if (tessieKey) {
+      setTessieApiKey(tessieKey);
+      secureKeyStorage.storeKeys(); // Ensure keys are stored securely
+    }
+    if (mbToken) {
+      setMapboxToken(mbToken);
+    }
+    
+    // Check if we should start in demo mode
+    const savedDemoMode = localStorage.getItem('demo_mode') === 'true';
+    if (savedDemoMode) {
+      setIsDemoMode(true);
+    }
   }, []);
 
   const { 
