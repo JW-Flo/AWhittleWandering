@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import TeslaMap from '@/components/TeslaMap';
-import VehicleStats from '@/components/VehicleStats';
+import SmartVehicleStats from '@/components/SmartVehicleStats';
 import TessieApiSetup from '@/components/TessieApiSetup';
 import RoadTripTracker from '@/components/RoadTripTracker';
 import MediaUpload from '@/components/MediaUpload';
@@ -9,6 +9,7 @@ import { useTessieApi } from '@/hooks/useTessieApi';
 import { useSmartTracking } from '@/hooks/useSmartTracking';
 import { useAdminAuth } from '@/lib/auth';
 import { secureKeyStorage } from '@/lib/config';
+import { SECURITY_CONFIG } from '@/utils/securityConfig';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -228,7 +229,7 @@ const Index = () => {
 
               {/* Stats Section */}
               <div className="space-y-4">
-                <VehicleStats
+                <SmartVehicleStats
                   batteryLevel={displayVehicleData?.battery_level}
                   range={displayVehicleData?.battery_range}
                   chargingState={getChargingState(displayVehicleData?.charging_state)}
@@ -236,13 +237,36 @@ const Index = () => {
                   odometer={displayVehicleData?.odometer}
                   speed={displayVehicleData?.speed}
                   lastUpdate={formatLastUpdate(displayVehicleData?.timestamp)}
+                  journeyStats={{
+                    totalJourneyMiles: 11950,
+                    statesConquered: 29,
+                    completionPercentage: 60.4,
+                    daysElapsed: 56,
+                    isCharging: getChargingState(displayVehicleData?.charging_state) === 'charging',
+                    currentState: 'Connecticut',
+                    currentLocation: displayVehicleData ? { 
+                      lat: displayVehicleData.latitude, 
+                      lng: displayVehicleData.longitude 
+                    } : undefined,
+                    dailyAverages: { miles: 213, charges: 1.2 }
+                  }}
+                  insights={{
+                    efficiency: { milesPerKwh: 3.8, totalEnergyUsed: 3145 },
+                    patterns: { averageStopDuration: 45, preferredChargingTimes: ['14:00', '20:00'] }
+                  }}
+                  isLoading={isLoading}
+                  error={error || undefined}
                 />
               </div>
             </div>
           </TabsContent>
 
           <TabsContent value="roadtrip" className="space-y-6">
-            <RoadTripTracker />
+            <RoadTripTracker 
+              tessieApiKey={tessieApiKey}
+              trackingEvents={trackingEvents}
+              onAddManualEvent={addManualEvent}
+            />
           </TabsContent>
 
           <TabsContent value="media" className="space-y-6">

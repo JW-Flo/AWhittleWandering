@@ -8,8 +8,9 @@ import { MapPin, Calendar, Clock, Trophy, Camera, PenTool, Target, Route, Zap, U
 import { journeyTimeline, journeyStats } from '@/data/journeyData';
 import { useAdminAuth } from '@/lib/auth';
 import useUnifiedJourneyData from '@/hooks/useUnifiedJourneyData';
+import { TrackingEvent } from '@/hooks/useSmartTracking';
 import AdventureHero from './AdventureHero';
-import JourneyTimeline from './JourneyTimeline';
+import SmartTimeline from './SmartTimeline';
 import AdventureMilestones from './AdventureMilestones';
 import AdventureCsvUploader from './AdventureCsvUploader';
 import TeslaMap from './TeslaMap';
@@ -20,18 +21,36 @@ import TimelineDataDisplay from './TimelineDataDisplay';
 import JourneyDashboard from './JourneyDashboard';
 import ApiConfig from './ApiConfig';
 import MediaManager from './MediaManager';
+import RealTimeLocationTracker from './RealTimeLocationTracker';
 import { calculateTripStatistics } from '@/utils/stateDetection';
 
-const RoadTripTracker = () => {
+interface RoadTripTrackerProps {
+  tessieApiKey?: string;
+  trackingEvents?: TrackingEvent[];
+  onAddManualEvent?: (event: Omit<TrackingEvent, 'id'>) => void;
+}
+
+const RoadTripTracker = ({ 
+  tessieApiKey: providedApiKey = '', 
+  trackingEvents = [],
+  onAddManualEvent 
+}: RoadTripTrackerProps) => {
   const [importedData, setImportedData] = useState<any[]>([]);
   const [mapboxToken, setMapboxToken] = useState<string>(() => 
     localStorage.getItem('mapboxToken') || 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA'
   );
   const [tripStatistics, setTripStatistics] = useState(journeyStats);
   const [routeLocations, setRouteLocations] = useState<Array<{lat: number, lng: number, timestamp: string}>>([]);
-  const [tessieApiKey, setTessieApiKey] = useState<string>('');
+  const [tessieApiKey, setTessieApiKey] = useState<string>(providedApiKey || '');
   const [tessieVehicleId, setTessieVehicleId] = useState<string>('midnightshadow');
   const [showAdvancedMap, setShowAdvancedMap] = useState<boolean>(false);
+  
+  // Sync provided API key with local state
+  React.useEffect(() => {
+    if (providedApiKey) {
+      setTessieApiKey(providedApiKey);
+    }
+  }, [providedApiKey]);
   
   // Admin authentication and unified data
   const { isAuthenticated, canModifyJourney, canUploadMedia } = useAdminAuth();
@@ -74,7 +93,7 @@ const RoadTripTracker = () => {
     <div className="space-y-8">
       {/* Adventure Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className={`grid w-full ${isAuthenticated ? 'grid-cols-9' : 'grid-cols-6'} bg-[hsl(var(--tesla-gray))]`}>
+        <TabsList className={`grid w-full ${isAuthenticated ? 'grid-cols-10' : 'grid-cols-7'} bg-[hsl(var(--tesla-gray))]`}>
           <TabsTrigger value="overview" className="data-[state=active]:bg-[hsl(var(--adventure-orange))] data-[state=active]:text-white">
             <MapIcon className="w-4 h-4 mr-2" />
             Overview
@@ -82,6 +101,10 @@ const RoadTripTracker = () => {
           <TabsTrigger value="journey" className="data-[state=active]:bg-[hsl(var(--adventure-orange))] data-[state=active]:text-white">
             <Zap className="w-4 h-4 mr-2" />
             Live Journey
+          </TabsTrigger>
+          <TabsTrigger value="tracking" className="data-[state=active]:bg-[hsl(var(--adventure-orange))] data-[state=active]:text-white">
+            <MapPin className="w-4 h-4 mr-2" />
+            Live Tracking
           </TabsTrigger>
           <TabsTrigger value="map" className="data-[state=active]:bg-[hsl(var(--adventure-orange))] data-[state=active]:text-white">
             <Route className="w-4 h-4 mr-2" />
@@ -340,11 +363,90 @@ const RoadTripTracker = () => {
         </TabsContent>
 
         <TabsContent value="journey" className="space-y-6">
+          {/* Current Drive Map */}
+          <Card className="story-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-gradient">
+                <MapIcon className="w-5 h-5" />
+                Current Drive Location
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64 w-full rounded-lg overflow-hidden">
+                <TeslaMap
+                  vehicleLocation={{
+                    latitude: currentStatus?.location?.coordinates?.lat || 41.1865,
+                    longitude: currentStatus?.location?.coordinates?.lng || -73.1532,
+                    heading: 67,
+                    speed: currentStatus?.vehicle?.speed || 0
+                  }}
+                  mapboxToken={mapboxToken}
+                />
+              </div>
+              <div className="mt-3 text-sm text-muted-foreground text-center">
+                📍 {currentStatus?.location?.city || 'Greenwich'}, {currentStatus?.location?.state || 'Connecticut'}
+              </div>
+            </CardContent>
+          </Card>
+
           <JourneyDashboard 
             vehicleId={tessieVehicleId} 
             apiKey={tessieApiKey}
             startDate="2025-06-03"
             endDate="2025-07-26"
+            trackingEvents={trackingEvents}
+          />
+        </TabsContent>
+
+        <TabsContent value="tracking" className="space-y-6">
+          <RealTimeLocationTracker
+            location={{
+              coordinates: { 
+                lat: currentStatus?.location?.coordinates?.lat || 41.1865, 
+                lng: currentStatus?.location?.coordinates?.lng || -73.1532 
+              },
+              address: {
+                city: 'Greenwich',
+                state: 'Connecticut',
+                country: 'United States'
+              },
+              accuracy: 5.2,
+              heading: 67,
+              speed: currentStatus?.vehicle?.speed || 0,
+              timestamp: new Date().toISOString()
+            }}
+            vehicle={{
+              batteryLevel: currentStatus?.vehicle?.batteryLevel || 82,
+              range: currentStatus?.vehicle?.batteryRange || 267,
+              chargingState: (currentStatus?.vehicle?.chargingState as 'charging' | 'complete' | 'disconnected') || 'complete',
+              temperature: {
+                inside: 72,
+                outside: currentStatus?.vehicle?.outsideTemp || 78
+              },
+              odometer: currentStatus?.vehicle?.odometer || 70128,
+              speed: currentStatus?.vehicle?.speed || 0,
+              heading: 67,
+              isMoving: (currentStatus?.vehicle?.speed || 0) > 0,
+              lastUpdate: new Date().toISOString(),
+              connectionStatus: 'online'
+            }}
+            journey={{
+              currentState: 'Connecticut',
+              statesVisited: 29,
+              totalStates: 48,
+              journeyMiles: 11950,
+              targetMiles: 15000,
+              daysElapsed: 56,
+              completionPercentage: 60.4,
+              nextStateEstimate: {
+                state: 'Massachusetts',
+                distance: 47,
+                estimatedArrival: '2024-08-03T10:30:00Z'
+              }
+            }}
+            updateInterval={30000}
+            autoRefresh={true}
+            showDetailedMetrics={true}
           />
         </TabsContent>
 
@@ -419,7 +521,7 @@ const RoadTripTracker = () => {
         </TabsContent>
 
         <TabsContent value="timeline" className="space-y-6">
-          <JourneyTimeline />
+          <SmartTimeline />
         </TabsContent>
 
         <TabsContent value="achievements" className="space-y-6">

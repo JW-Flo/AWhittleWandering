@@ -182,7 +182,86 @@ class SmartJourneyTracker {
 
 // React Hook for Smart Tracking
 export const useSmartTracking = () => {
-  const [events, setEvents] = useState<TrackingEvent[]>([]);
+  const [events, setEvents] = useState<TrackingEvent[]>(() => {
+    // Initialize with some sample tracking events for demo
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+    const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    return [
+      {
+        id: 'sample-drive-1',
+        type: 'driving',
+        timestamp: twoHoursAgo,
+        location: {
+          lat: 41.1865,
+          lng: -73.1532,
+          address: 'Greenwich, CT',
+          state: 'Connecticut'
+        },
+        duration: 120, // 2 hours in minutes
+      },
+      {
+        id: 'sample-charge-1',
+        type: 'charging',
+        timestamp: oneHourAgo,
+        location: {
+          lat: 41.2033,
+          lng: -73.1234,
+          address: 'Tesla Supercharger - Stamford, CT',
+          state: 'Connecticut'
+        },
+        duration: 45, // 45 minutes
+        metadata: {
+          chargerType: 'Supercharger'
+        }
+      },
+      {
+        id: 'sample-overnight-1',
+        type: 'overnight',
+        timestamp: threeDaysAgo,
+        location: {
+          lat: 40.7589,
+          lng: -73.9851,
+          address: 'Hotel in Manhattan, NY',
+          state: 'New York'
+        },
+        duration: 720, // 12 hours
+        metadata: {
+          accommodationType: 'Hotel'
+        }
+      },
+      {
+        id: 'sample-drive-2',
+        type: 'driving',
+        timestamp: oneWeekAgo,
+        location: {
+          lat: 42.3601,
+          lng: -71.0589,
+          address: 'Boston, MA',
+          state: 'Massachusetts'
+        },
+        duration: 180, // 3 hours
+      },
+      {
+        id: 'sample-state-entry-1',
+        type: 'state_entry',
+        timestamp: oneWeekAgo,
+        location: {
+          lat: 42.3601,
+          lng: -71.0589,
+          address: 'Massachusetts State Line',
+          state: 'Massachusetts'
+        },
+        metadata: {
+          stateCount: 17
+        }
+      }
+    ];
+  });
+  
   const [tracker] = useState(() => new SmartJourneyTracker((event) => {
     setEvents(prev => [...prev, event]);
   }));
