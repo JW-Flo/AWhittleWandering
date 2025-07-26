@@ -8,90 +8,105 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 220 13% 9%;
+    /* Warm and inviting background */
+    --background: 220 15% 8%;
     --foreground: 210 40% 98%;
 
-    --card: 224 27% 11%;
+    /* Adventure-themed cards */
+    --card: 224 25% 12%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 224 27% 11%;
+    --popover: 224 25% 12%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 193 100% 43%;
-    --primary-foreground: 220 13% 9%;
+    /* Vibrant primary colors */
+    --primary: 45 100% 58%;  /* Warm sunshine gold */
+    --primary-foreground: 220 15% 8%;
 
-    --secondary: 220 13% 15%;
+    --secondary: 220 15% 18%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 220 13% 15%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 220 15% 18%;
+    --muted-foreground: 215 20.2% 70%;
 
-    --accent: 193 100% 43%;
-    --accent-foreground: 220 13% 9%;
+    --accent: 16 100% 65%;  /* Adventure orange */
+    --accent-foreground: 220 15% 8%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 220 13% 20%;
-    --input: 220 13% 15%;
-    --ring: 193 100% 43%;
+    --border: 220 15% 25%;
+    --input: 220 15% 18%;
+    --ring: 45 100% 58%;
 
-    /* Tesla-inspired colors */
-    --tesla-blue: 193 100% 43%;
-    --tesla-blue-dark: 193 100% 35%;
-    --tesla-cyan: 180 100% 50%;
-    --tesla-dark: 220 13% 9%;
-    --tesla-darker: 220 20% 6%;
-    --tesla-gray: 220 13% 15%;
-    --tesla-gray-light: 220 13% 20%;
+    /* Enhanced adventure color palette */
+    --adventure-orange: 16 100% 65%;     /* Sunset orange */
+    --adventure-red: 355 85% 62%;        /* Warm sunset red */
+    --adventure-gold: 45 100% 58%;       /* Golden hour */
+    --adventure-purple: 280 85% 70%;     /* Magical purple */
+    --adventure-green: 120 65% 55%;      /* Nature green */
+    --adventure-teal: 174 100% 45%;      /* Ocean teal */
+    --adventure-blue: 200 100% 55%;      /* Sky blue */
+    --adventure-pink: 330 85% 68%;       /* Warm pink */
+    --adventure-lime: 75 85% 60%;        /* Electric lime */
+    --adventure-coral: 15 85% 68%;       /* Coral sunset */
 
-    /* Adventure Colors */
-    --adventure-orange: 25 100% 58%;
-    --adventure-red: 0 84% 60%;
-    --adventure-gold: 43 96% 56%;
-    --adventure-purple: 252 95% 75%;
-    --adventure-green: 120 62% 50%;
-    --adventure-teal: 174 100% 40%;
-    
-    /* Story-telling Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--tesla-blue)), hsl(var(--tesla-cyan)));
+    /* Tesla-inspired but more colorful */
+    --tesla-blue: 200 100% 55%;
+    --tesla-blue-dark: 200 85% 45%;
+    --tesla-cyan: 180 100% 55%;
+    --tesla-dark: 220 15% 8%;
+    --tesla-darker: 220 20% 5%;
+    --tesla-gray: 220 15% 18%;
+    --tesla-gray-light: 220 15% 25%;
+
+    /* Enhanced gradients with more personality */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--adventure-gold)), hsl(var(--adventure-orange)));
     --gradient-adventure: linear-gradient(135deg, hsl(var(--adventure-orange)), hsl(var(--adventure-red)));
-    --gradient-hero: linear-gradient(135deg, hsl(var(--tesla-blue) / 0.9), hsl(var(--adventure-purple) / 0.8));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--adventure-blue) / 0.9), hsl(var(--adventure-purple) / 0.8));
     --gradient-sunset: linear-gradient(135deg, hsl(var(--adventure-orange)), hsl(var(--adventure-gold)));
+    --gradient-ocean: linear-gradient(135deg, hsl(var(--adventure-teal)), hsl(var(--adventure-blue)));
+    --gradient-forest: linear-gradient(135deg, hsl(var(--adventure-green)), hsl(var(--adventure-teal)));
+    --gradient-magic: linear-gradient(135deg, hsl(var(--adventure-purple)), hsl(var(--adventure-pink)));
+    --gradient-energy: linear-gradient(135deg, hsl(var(--adventure-lime)), hsl(var(--adventure-green)));
     --gradient-card: linear-gradient(145deg, hsl(var(--tesla-gray)), hsl(var(--tesla-dark)));
     --gradient-card-hover: linear-gradient(145deg, hsl(var(--tesla-gray-light)), hsl(var(--tesla-gray)));
-    --gradient-glow: radial-gradient(circle at center, hsl(var(--tesla-blue) / 0.3), transparent 70%);
-    --gradient-milestone: linear-gradient(135deg, hsl(var(--adventure-gold) / 0.2), hsl(var(--adventure-orange) / 0.1));
+    --gradient-glow: radial-gradient(circle at center, hsl(var(--adventure-gold) / 0.4), transparent 70%);
+    --gradient-milestone: linear-gradient(135deg, hsl(var(--adventure-gold) / 0.3), hsl(var(--adventure-orange) / 0.2));
+    --gradient-rainbow: linear-gradient(90deg, 
+      hsl(var(--adventure-red)), 
+      hsl(var(--adventure-orange)), 
+      hsl(var(--adventure-gold)), 
+      hsl(var(--adventure-green)), 
+      hsl(var(--adventure-blue)), 
+      hsl(var(--adventure-purple))
+    );
 
-    /* Immersive Shadows */
-    --shadow-tesla: 0 8px 32px hsl(var(--tesla-blue) / 0.2);
-    --shadow-adventure: 0 12px 40px hsl(var(--adventure-orange) / 0.3);
-    --shadow-card: 0 4px 20px hsl(var(--tesla-darker) / 0.5);
-    --shadow-hero: 0 20px 80px hsl(var(--tesla-blue) / 0.4);
-    --shadow-milestone: 0 8px 30px hsl(var(--adventure-gold) / 0.3);
+    /* More vibrant shadows */
+    --shadow-tesla: 0 8px 32px hsl(var(--adventure-blue) / 0.3);
+    --shadow-adventure: 0 12px 40px hsl(var(--adventure-orange) / 0.4);
+    --shadow-card: 0 4px 20px hsl(var(--tesla-darker) / 0.6);
+    --shadow-hero: 0 20px 80px hsl(var(--adventure-gold) / 0.5);
+    --shadow-milestone: 0 8px 30px hsl(var(--adventure-gold) / 0.4);
+    --shadow-magic: 0 16px 60px hsl(var(--adventure-purple) / 0.3);
+    --shadow-energy: 0 8px 32px hsl(var(--adventure-lime) / 0.3);
 
     /* Story Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     --transition-story: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar colors updated for better contrast */
+    --sidebar-background: 220 15% 12%;
+    --sidebar-foreground: 210 40% 95%;
+    --sidebar-primary: 45 100% 58%;
+    --sidebar-primary-foreground: 220 15% 8%;
+    --sidebar-accent: 220 15% 20%;
+    --sidebar-accent-foreground: 210 40% 95%;
+    --sidebar-border: 220 15% 25%;
+    --sidebar-ring: 45 100% 58%;
   }
 
   .dark {
@@ -145,52 +160,54 @@ All colors MUST be HSL.
 }
 
 @layer components {
-  /* Hero Elements */
+  /* Enhanced Hero Elements */
   .hero-card {
-    @apply relative overflow-hidden;
+    @apply relative overflow-hidden rounded-2xl;
     background: var(--gradient-hero);
     box-shadow: var(--shadow-hero);
     backdrop-filter: blur(20px);
-    border: 1px solid hsl(var(--tesla-blue) / 0.3);
+    border: 2px solid hsl(var(--adventure-gold) / 0.4);
   }
   
   .hero-card::before {
     content: '';
-    @apply absolute inset-0 opacity-20;
+    @apply absolute inset-0 opacity-30;
     background: var(--gradient-glow);
     animation: pulse-glow 4s ease-in-out infinite;
   }
   
   /* Adventure Milestone Cards */
   .milestone-card {
-    @apply relative overflow-hidden transition-all duration-500 hover:scale-105;
+    @apply relative overflow-hidden transition-all duration-500 hover:scale-105 rounded-xl;
     background: var(--gradient-milestone);
     box-shadow: var(--shadow-milestone);
-    border: 1px solid hsl(var(--adventure-gold) / 0.3);
+    border: 2px solid hsl(var(--adventure-gold) / 0.4);
   }
   
   .milestone-card:hover {
     box-shadow: var(--shadow-adventure);
     transform: translateY(-8px) scale(1.02);
+    border-color: hsl(var(--adventure-orange) / 0.6);
   }
   
-  /* Story Cards */
+  /* Enhanced Story Cards */
   .story-card {
-    @apply relative overflow-hidden transition-all duration-300;
+    @apply relative overflow-hidden transition-all duration-300 rounded-xl;
     background: var(--gradient-card);
     box-shadow: var(--shadow-card);
-    border: 1px solid hsl(var(--tesla-gray-light));
+    border: 2px solid hsl(var(--tesla-gray-light));
   }
   
   .story-card:hover {
     background: var(--gradient-card-hover);
     transform: translateY(-4px);
-    box-shadow: 0 8px 32px hsl(var(--tesla-blue) / 0.15);
+    box-shadow: 0 8px 32px hsl(var(--adventure-gold) / 0.2);
+    border-color: hsl(var(--adventure-gold) / 0.4);
   }
   
-  /* Progress Bar with Journey Feel */
+  /* Vibrant Progress Bar */
   .journey-progress {
-    @apply relative overflow-hidden;
+    @apply relative overflow-hidden rounded-full;
     background: linear-gradient(90deg, 
       hsl(var(--tesla-gray)) 0%, 
       hsl(var(--tesla-gray-light)) 50%, 
@@ -199,22 +216,57 @@ All colors MUST be HSL.
   
   .journey-progress .progress-fill {
     background: var(--gradient-adventure);
-    box-shadow: 0 0 20px hsl(var(--adventure-orange) / 0.5);
+    box-shadow: 0 0 20px hsl(var(--adventure-orange) / 0.6);
   }
   
-  /* State Badge Animations */
+  /* Enhanced State Badge */
   .state-badge {
-    @apply transition-all duration-300;
+    @apply transition-all duration-300 rounded-lg px-3 py-1;
+    background: var(--gradient-energy);
+    color: hsl(var(--tesla-dark));
+    font-weight: 600;
   }
   
   .state-badge:hover {
     transform: scale(1.05);
-    box-shadow: 0 4px 16px hsl(var(--primary) / 0.3);
+    box-shadow: 0 4px 16px hsl(var(--adventure-lime) / 0.4);
+  }
+  
+  /* Fun button styles */
+  .adventure-button {
+    @apply relative overflow-hidden transition-all duration-300 rounded-xl px-6 py-3;
+    background: var(--gradient-sunset);
+    color: hsl(var(--tesla-dark));
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+  
+  .adventure-button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-adventure);
+  }
+  
+  .adventure-button::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: var(--gradient-magic);
+  }
+  
+  .adventure-button:hover::before {
+    opacity: 0.9;
+  }
+  
+  /* Magic card effect */
+  .magic-card {
+    @apply relative overflow-hidden rounded-2xl;
+    background: var(--gradient-magic);
+    box-shadow: var(--shadow-magic);
+    border: 2px solid hsl(var(--adventure-purple) / 0.4);
   }
   
   /* Typography for Storytelling */
   .story-title {
-    @apply text-4xl font-bold bg-gradient-to-r from-[hsl(var(--tesla-blue))] to-[hsl(var(--adventure-gold))] bg-clip-text text-transparent;
+    @apply text-4xl font-bold bg-gradient-to-r from-[hsl(var(--adventure-gold))] to-[hsl(var(--adventure-orange))] bg-clip-text text-transparent;
     font-family: 'Inter', -apple-system, sans-serif;
     letter-spacing: -0.02em;
   }
@@ -223,6 +275,24 @@ All colors MUST be HSL.
     @apply text-3xl font-extrabold;
     font-family: 'Inter', -apple-system, sans-serif;
     letter-spacing: -0.05em;
+    background: var(--gradient-rainbow);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  /* Tesla card with adventure twist */
+  .tesla-card {
+    @apply relative overflow-hidden rounded-xl transition-all duration-300;
+    background: var(--gradient-ocean);
+    box-shadow: var(--shadow-tesla);
+    border: 2px solid hsl(var(--adventure-teal) / 0.4);
+  }
+  
+  .tesla-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hero);
+    border-color: hsl(var(--adventure-blue) / 0.6);
   }
 }
 

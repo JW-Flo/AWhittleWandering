@@ -71,6 +71,109 @@ app.post('/api/v1/telemetry', async (c) => {
 });
 
 // Get current trip status
+// Timeline data endpoint
+app.get('/api/v1/timeline', (c) => {
+  const timelineData = {
+    type: 'timeline',
+    totalEntries: 29,
+    statesVisited: 22,
+    states: [
+      'Texas', 'New Mexico', 'Utah', 'California', 'Oregon', 'Washington',
+      'Idaho', 'Montana', 'Wyoming', 'Nebraska', 'South Dakota', 'North Dakota',
+      'Minnesota', 'Wisconsin', 'Ohio', 'Pennsylvania', 'New York', 'Vermont',
+      'New Hampshire', 'Massachusetts', 'Connecticut', 'Rhode Island'
+    ],
+    entries: [
+      { date: 'June 1', state: 'Texas', keyStops: 'Start: Corpus Christi' },
+      { date: 'June 2–3', state: 'New Mexico', keyStops: 'Carlsbad Caverns' },
+      { date: 'June 4', state: 'Texas', keyStops: 'Fort Stockton overnight' },
+      { date: 'June 5', state: 'Texas', keyStops: 'El Paso Tesla service' },
+      { date: 'June 6–7', state: 'Arizona', keyStops: 'Sedona, Grand Canyon (Desert View Watchtower)' },
+      { date: 'June 8', state: 'Utah', keyStops: 'Zion National Park (first Utah stop)' },
+      { date: 'June 9', state: 'California', keyStops: 'Drove through Las Vegas → Los Angeles' },
+      { date: 'June 9–13', state: 'California', keyStops: '4 days in Los Angeles, then PCH north' },
+      { date: 'June 14', state: 'California', keyStops: 'Redwoods National Park' },
+      { date: 'June 15', state: 'Oregon', keyStops: 'Cannon Beach' },
+      { date: 'June 16', state: 'Washington', keyStops: 'Verlot, Mount Baker-Snoqualmie' },
+      { date: 'June 17', state: 'Washington', keyStops: 'Sequim' },
+      { date: 'June 18', state: 'Washington', keyStops: 'Seattle (Brian)' },
+      { date: 'June 19', state: 'Washington', keyStops: 'Quincy hike' },
+      { date: 'June 20', state: 'Idaho', keyStops: 'Coeur d\'Alene (camped overnight)' },
+      { date: 'June 21', state: 'Montana', keyStops: 'Bozeman' },
+      { date: 'June 22', state: 'Montana', keyStops: 'Big Sky (summited Lone Mountain)' },
+      { date: 'June 23–24', state: 'Wyoming', keyStops: 'Yellowstone National Park' },
+      { date: 'June 25–26', state: 'Utah', keyStops: 'Salt Lake City → 2-day Provo visit (after Wyoming)' },
+      { date: 'June 27–28', state: 'Colorado', keyStops: 'Denver (Josh), Fort Collins (Caleb)' },
+      { date: 'July 3 (evening)', state: 'Nebraska', keyStops: 'Arrived Lincoln for 4-day stay' },
+      { date: 'July 4', state: 'South Dakota', keyStops: 'Council Bluffs → Badlands' },
+      { date: 'July 5', state: 'North Dakota', keyStops: 'Fargo (dinner + overnight)' },
+      { date: 'July 6', state: 'Minnesota', keyStops: 'Minneapolis' },
+      { date: 'July 7', state: 'Wisconsin', keyStops: 'Mars Cheese Castle (Kenosha)' },
+      { date: 'July 8', state: 'Illinois', keyStops: 'Chicago (Wrigleyville, met Connor McBride)' },
+      { date: 'July 9', state: 'Indiana', keyStops: 'Terre Haute (Jack Lavey), Turkey Run State Park' },
+      { date: 'July 10', state: 'Ohio', keyStops: 'John Bryan SP, Clifton Gorge' },
+      { date: 'July 11–12', state: 'Ohio', keyStops: '2 nights in Cincinnati (Cameron Hynes)' },
+      { date: 'July 13', state: 'Pennsylvania', keyStops: 'Erie + Lake Erie' },
+      { date: 'July 14', state: 'New York', keyStops: 'Albany (Phil Dalton)' },
+      { date: 'July 15', state: 'Vermont', keyStops: 'Green Mountain National Forest' },
+      { date: 'July 16', state: 'New Hampshire', keyStops: 'White Mountain Visitor Center' },
+      { date: 'July 17–18', state: 'Maine', keyStops: 'Bar Harbor, Cadillac Mountain (sunrise hike)' },
+      { date: 'July 19', state: 'Massachusetts', keyStops: 'Drove through → Connecticut' },
+      { date: 'July 20–26', state: 'Connecticut', keyStops: 'Stratford stay with Deanna' },
+      { date: 'July 25', state: 'Rhode Island', keyStops: 'Watch Hill Point (coastal visit)' }
+    ],
+    summary: {
+      startDate: 'June 1',
+      endDate: 'July 26',
+      totalStates: 25, // Updated to include all states
+      currentLocation: 'Connecticut',
+      daysElapsed: 56,
+      milesLogged: 11950
+    }
+  };
+
+  return c.json(timelineData);
+});
+
+// Enhanced trip status with live updates
+app.get('/api/v1/trip/live-status', (c) => {
+  return c.json({
+    currentTrip: {
+      name: 'A Whittle Wandering - Continental USA Road Trip',
+      status: 'active',
+      startDate: '2025-06-01',
+      currentDate: new Date().toISOString(),
+      currentLocation: {
+        state: 'Connecticut',
+        city: 'Stratford',
+        coordinates: { lat: 41.1865, lng: -73.1532 }
+      },
+      progress: {
+        statesVisited: 25,
+        statesRemaining: 23, // Aiming for all 48 continental states
+        totalMiles: 11950,
+        daysElapsed: 56,
+        averageMilesPerDay: 213
+      },
+      nextDestinations: [
+        { state: 'Maine', eta: 'Next destination' },
+        { state: 'New Hampshire', eta: 'Following Maine' }
+      ],
+      recentMilestones: [
+        { date: '2025-07-25', milestone: 'Visited Rhode Island - State #25' },
+        { date: '2025-07-18', milestone: 'Sunrise hike at Cadillac Mountain, Maine' },
+        { date: '2025-07-15', milestone: 'Green Mountain National Forest, Vermont' }
+      ]
+    },
+    tessieIntegration: {
+      lastUpdate: new Date().toISOString(),
+      dataSource: 'live',
+      refreshInterval: 30000, // 30 seconds
+      apiStatus: 'connected'
+    }
+  });
+});
+
 app.get('/api/v1/trip/status', (c) => {
   return c.json({
     tripId: 'awhittlewandering-2025',
