@@ -14,6 +14,7 @@ import { useAdminAuth } from '@/lib/auth';
 import { secureKeyStorage } from '@/lib/config';
 import { SECURITY_CONFIG } from '@/utils/securityConfig';
 import { calculateJourneyStats, calculateJourneyInsights } from '@/utils/journeyCalculations';
+import { testTessieApi } from '@/utils/testTessieApi';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,7 @@ const Index = () => {
   useEffect(() => {
     const { tessieKey, mapboxToken: mbToken } = secureKeyStorage.getStoredKeys();
     
+    console.log('=== API KEY LOADING DEBUG ===');
     console.log('Loading API keys:', { 
       tessieFromStorage: !!localStorage.getItem('tessie_api_key'),
       tessieFromEnv: !!import.meta.env.VITE_TESSIE_API_KEY,
@@ -45,20 +47,29 @@ const Index = () => {
       finalTessie: !!tessieKey,
       finalMapbox: !!mbToken,
       currentTessieState: !!tessieApiKey,
-      currentMapboxState: !!mapboxToken
+      currentMapboxState: !!mapboxToken,
+      tessieKeyValue: tessieKey ? tessieKey.substring(0, 10) + '...' : 'NULL',
+      envTessieValue: import.meta.env.VITE_TESSIE_API_KEY ? import.meta.env.VITE_TESSIE_API_KEY.substring(0, 10) + '...' : 'NULL'
     });
     
     if (tessieKey && tessieKey !== tessieApiKey) {
+      console.log('Setting new tessie API key from storage');
       setTessieApiKey(tessieKey);
     }
     if (mbToken && mbToken !== mapboxToken) {
+      console.log('Setting new mapbox token from storage');
       setMapboxToken(mbToken);
     }
     
     // Check if we should start in demo mode
     const savedDemoMode = localStorage.getItem('demo_mode') === 'true';
-    if (savedDemoMode) {
+    console.log('Demo mode settings:', { savedDemoMode, currentDemoMode: isDemoMode });
+    if (savedDemoMode && !tessieKey && !import.meta.env.VITE_TESSIE_API_KEY) {
+      console.log('Enabling demo mode because no API key available');
       setIsDemoMode(true);
+    } else if (tessieKey || import.meta.env.VITE_TESSIE_API_KEY) {
+      console.log('Disabling demo mode because API key is available');
+      setIsDemoMode(false);
     }
   }, [tessieApiKey, mapboxToken]);
 
@@ -74,12 +85,33 @@ const Index = () => {
     refetch 
   } = useTessieApi(isDemoMode ? undefined : tessieApiKey || undefined);
   
+  // Debug logging for API state
+  React.useEffect(() => {
+    console.log('=== TESSIE API HOOK DEBUG ===');
+    console.log('isDemoMode:', isDemoMode);
+    console.log('tessieApiKey:', tessieApiKey ? 'EXISTS' : 'NULL');
+    console.log('vehicles.length:', vehicles.length);
+    console.log('historicalDrives.length:', historicalDrives.length);
+    console.log('historicalCharges.length:', historicalCharges.length);
+    console.log('isLoading:', isLoading);
+    console.log('error:', error);
+    console.log('selectedVehicle:', selectedVehicle);
+  }, [vehicles, historicalDrives, historicalCharges, isLoading, error, selectedVehicle, tessieApiKey, isDemoMode]);
+  
   // Smart tracking for charging stops, overnight stays, etc.
   const { events: trackingEvents, addManualEvent } = useSmartTracking();
 
   // Calculate real journey statistics from API data
   const journeyStats = React.useMemo(() => {
+    console.log('=== JOURNEY STATS CALCULATION ===');
+    console.log('isDemoMode:', isDemoMode);
+    console.log('historicalDrives.length:', historicalDrives.length);
+    console.log('historicalCharges.length:', historicalCharges.length);
+    console.log('tessieApiKey exists:', !!tessieApiKey);
+    console.log('Sample drives:', historicalDrives.slice(0, 2));
+    
     if (isDemoMode || historicalDrives.length === 0) {
+      console.log('Using demo data because:', { isDemoMode, noDrives: historicalDrives.length === 0 });
       // Demo data for when no real data is available
       return {
         totalJourneyMiles: 950,
@@ -182,6 +214,80 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Debug Panel - Visible at top */}
+      <div className="bg-yellow-900/50 p-4 border-b border-yellow-700">
+        <h3 className="text-yellow-200 font-bold mb-2">🐛 DEBUG INFO</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div>
+            <strong>API Key:</strong> {tessieApiKey ? '✅ SET' : '❌ MISSING'}
+          </div>
+          <div>
+            <strong>Demo Mode:</strong> {isDemoMode ? '🎭 ON' : '🚗 OFF'}
+          </div>
+          <div>
+            <strong>Vehicles:</strong> {vehicles.length}
+          </div>
+          <div>
+            <strong>Drives:</strong> {historicalDrives.length}
+          </div>
+          <div>
+            <strong>Loading:</strong> {isLoading ? '⏳ YES' : '✅ NO'}
+          </div>
+          <div>
+            <strong>Error:</strong> {error ? '❌ YES' : '✅ NO'}
+          </div>
+          <div>
+            <strong>Selected Vehicle:</strong> {selectedVehicle || 'NONE'}
+          </div>
+          <div>
+            <strong>Journey Miles:</strong> {journeyStats.totalJourneyMiles}
+          </div>
+        </div>
+        {error && (
+          <div className="mt-2 text-red-300 bg-red-900/30 p-2 rounded">
+            <strong>Error:</strong> {error}
+          </div>
+        )}
+        <div className="mt-2 flex gap-2">
+          <Button 
+            onClick={() => {
+              console.log('Manual refresh triggered');
+              refetch();
+            }}
+            size="sm"
+            variant="outline"
+          >
+            🔄 Refresh Vehicle Data
+          </Button>
+          <Button 
+            onClick={() => {
+              console.log('Demo mode toggle');
+              setIsDemoMode(!isDemoMode);
+            }}
+            size="sm"
+            variant="outline"
+          >
+            {isDemoMode ? '🚗 Use Real Data' : '🎭 Use Demo Data'}
+          </Button>
+          <Button 
+            onClick={async () => {
+              if (tessieApiKey) {
+                console.log('Testing Tessie API...');
+                const result = await testTessieApi(tessieApiKey);
+                console.log('Test result:', result);
+                alert(`API Test: ${result.success ? 'SUCCESS' : 'FAILED'}\n${result.success ? `Found ${result.vehicleCount} vehicles` : result.error}`);
+              } else {
+                alert('No API key available to test');
+              }
+            }}
+            size="sm"
+            variant="outline"
+          >
+            🧪 Test API
+          </Button>
+        </div>
+      </div>
+      
       {/* Header */}
       <header className="border-b border-tesla-gray-light bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
