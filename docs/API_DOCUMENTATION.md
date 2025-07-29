@@ -34,9 +34,11 @@ Authorization: Bearer <tessie_api_key>
 ```
 
 ### Get Vehicle State
+
 **Endpoint:** `GET /{vin}/state`
 
 **Response:**
+
 ```json
 {
   "charge_state": {
@@ -62,14 +64,17 @@ Authorization: Bearer <tessie_api_key>
 ```
 
 ### Get Historical Drives
+
 **Endpoint:** `GET /{vin}/drives?from={unix_timestamp}&to={unix_timestamp}`
 
 **Parameters:**
+
 - `from`: Unix timestamp in seconds (start date)
 - `to`: Unix timestamp in seconds (end date)
 - `distance_format`: "mi" or "km" (default: "mi")
 
 **Response:**
+
 ```json
 {
   "results": [
@@ -99,14 +104,17 @@ Authorization: Bearer <tessie_api_key>
 ```
 
 ### Get Historical Charges
+
 **Endpoint:** `GET /{vin}/charges?from={unix_timestamp}&to={unix_timestamp}`
 
 **Parameters:**
+
 - `from`: Unix timestamp in seconds (start date)
 - `to`: Unix timestamp in seconds (end date)
 - `superchargers_only`: boolean (default: false)
 
 **Response:**
+
 ```json
 {
   "results": [
@@ -136,30 +144,36 @@ Authorization: Bearer <tessie_api_key>
 **Base URL:** `https://api.mapbox.com`
 
 ### Authentication
+
 ```
 access_token={mapbox_token}
 ```
 
 ### Mapbox GL JS
+
 **CDN:** `https://api.mapbox.com/mapbox-gl-js/`
 
 **Usage:** Map rendering, geocoding, routing
 
 **Key Methods:**
+
 - `mapboxgl.accessToken = token`
 - `new mapboxgl.Map(options)`
 - `map.addSource(id, source)`
 - `map.addLayer(layer)`
 
 **Style URLs:**
+
 - `mapbox://styles/mapbox/dark-v11`
 - `mapbox://styles/mapbox/satellite-v9`
 - `mapbox://styles/mapbox/streets-v11`
 
 ### Geocoding API
+
 **Endpoint:** `GET /geocoding/v5/mapbox.places/{query}.json`
 
 **Response:**
+
 ```json
 {
   "type": "FeatureCollection",
@@ -181,9 +195,11 @@ access_token={mapbox_token}
 ```
 
 ### Directions API
+
 **Endpoint:** `GET /directions/v5/mapbox/driving/{coordinates}`
 
 **Response:**
+
 ```json
 {
   "routes": [
@@ -208,14 +224,17 @@ access_token={mapbox_token}
 **Base URL:** `https://api.openweathermap.org/data/2.5`
 
 ### Authentication
+
 ```
 appid={api_key}
 ```
 
 ### Current Weather
+
 **Endpoint:** `GET /weather?lat={lat}&lon={lon}&appid={api_key}&units=metric`
 
 **Response:**
+
 ```json
 {
   "coord": {
@@ -254,9 +273,11 @@ appid={api_key}
 **Base URL:** `https://awhittlewandering-api.{subdomain}.workers.dev`
 
 ### Upload Media
+
 **Endpoint:** `POST /api/upload`
 
 **Request:**
+
 ```
 Content-Type: multipart/form-data
 
@@ -265,6 +286,7 @@ location: JSON string
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -287,9 +309,11 @@ location: JSON string
 ```
 
 ### Get Media
+
 **Endpoint:** `GET /api/media`
 
 **Response:**
+
 ```json
 {
   "media": [
@@ -320,6 +344,7 @@ location: JSON string
 ### Tessie → Our Interface
 
 **Drives:**
+
 ```typescript
 // Tessie API → Our HistoricalDrive interface
 {
@@ -344,6 +369,7 @@ location: JSON string
 ```
 
 **Charges:**
+
 ```typescript
 // Tessie API → Our HistoricalCharge interface
 {
@@ -367,6 +393,7 @@ location: JSON string
 ### Common Error Responses
 
 **Tessie API Errors:**
+
 ```json
 {
   "error": "Invalid VIN",
@@ -375,6 +402,7 @@ location: JSON string
 ```
 
 **Rate Limiting:**
+
 ```json
 {
   "error": "Rate limit exceeded",
@@ -383,6 +411,7 @@ location: JSON string
 ```
 
 **Authentication Errors:**
+
 ```json
 {
   "error": "Unauthorized",
@@ -409,6 +438,7 @@ VITE_API_BASE_URL=https://awhittlewandering-api.subdomain.workers.dev
 ## 8. TypeScript Interfaces
 
 All interfaces are defined in their respective hook/component files:
+
 - `useTessieApi.ts` - Tessie API types
 - `TeslaMap.tsx` - Mapbox types
 - Backend types in `backend/edge-worker/src/index.ts`
