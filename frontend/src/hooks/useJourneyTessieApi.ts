@@ -1,8 +1,8 @@
-// Enhanced Tessie API integration for A Whittle Wandering journey tracking
-// Provides drive history, charge history, location tracking, and extended stay detection
+// COMPATIBILITY WRAPPER: Enhanced Tessie API integration for A Whittle Wandering journey tracking
+// This is now a wrapper around useUnifiedTessieApi for backward compatibility
 
-import { useState, useEffect, useCallback } from 'react';
-import { formatTemperature } from '@/utils/temperature';
+import { useUnifiedTessieApi } from './useUnifiedTessieApi';
+import { useMemo } from 'react';
 
 interface ExtendedStay {
   id: string;
@@ -15,7 +15,7 @@ interface ExtendedStay {
   durationHours: number;
   durationDays: number;
   reason: 'charging' | 'overnight' | 'extended_visit' | 'multi_day_stay';
-  chargingSessions?: ChargeSession[];
+  chargingSessions?: any[];
 }
 
 interface DriveSession {
