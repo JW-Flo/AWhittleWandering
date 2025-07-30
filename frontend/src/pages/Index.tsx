@@ -17,6 +17,7 @@ import { secureKeyStorage } from '@/lib/config';
 import { SECURITY_CONFIG } from '@/utils/securityConfig';
 import { calculateJourneyStats, calculateJourneyInsights } from '@/utils/journeyCalculations';
 import { testTessieApi } from '@/utils/testTessieApi';
+import { isAdminDomain } from '@/utils/adminAccess';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -25,13 +26,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RefreshCw, Car, Zap, Map, Route, Camera, Shield, Bug } from 'lucide-react';
 
 const Index = () => {
+  // Check if user is on admin domain for admin functions
+  const isAdmin = isAdminDomain();
+  
   const [tessieApiKey, setTessieApiKey] = useState<string | null>(
     import.meta.env.VITE_TESSIE_API_KEY || null
   );
   const [mapboxToken, setMapboxToken] = useState<string | null>(
     import.meta.env.VITE_MAPBOX_TOKEN || null
   );
-  const [isDemoMode, setIsDemoMode] = useState(false);
 
   // Admin authentication
   const { isAuthenticated, canUploadMedia } = useAdminAuth();
@@ -75,7 +78,7 @@ const Index = () => {
     }
   }, [tessieApiKey, mapboxToken]);
 
-  // Use unified Tessie API hook to replace all conflicting ones
+  // Use unified Tessie API hook - PRODUCTION ONLY
   const { 
     vehicles, 
     selectedVehicle, 
@@ -88,12 +91,11 @@ const Index = () => {
     error,
     refetch,
     refreshHistoricalData 
-  } = useUnifiedTessieApi(isDemoMode ? undefined : tessieApiKey || undefined);
+  } = useUnifiedTessieApi(tessieApiKey || undefined);
   
   // Enhanced debug logging
   React.useEffect(() => {
     console.log('🔍 === UNIFIED TESSIE API HOOK DEBUG ===');
-    console.log('🎭 isDemoMode:', isDemoMode);
     console.log('🔑 tessieApiKey:', tessieApiKey ? 'EXISTS' : 'NULL');
     console.log('🚗 vehicles.length:', vehicles.length);
     console.log('🛣️ historicalDrives.length:', historicalDrives.length);
@@ -109,7 +111,7 @@ const Index = () => {
     if (historicalCharges.length > 0) {
       console.log('📊 Sample charge data:', historicalCharges[0]);
     }
-  }, [vehicles, historicalDrives, historicalCharges, isLoading, error, selectedVehicle, selectedVehicleVin, tessieApiKey, isDemoMode]);
+  }, [vehicles, historicalDrives, historicalCharges, isLoading, error, selectedVehicle, selectedVehicleVin, tessieApiKey]);
   
   // Smart tracking for charging stops, overnight stays, etc.
   const { events: trackingEvents, addManualEvent } = useSmartTracking();
@@ -250,35 +252,36 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Enhanced System Status Panel */}
-      <div className="p-4 border-b">
-        <SystemStatusPanel
-          tessieApiKey={tessieApiKey}
-          isDemoMode={isDemoMode}
-          vehicles={vehicles}
-          vehicleData={vehicleData}
-          historicalDrives={historicalDrives}
-          historicalCharges={historicalCharges}
-          isLoading={isLoading}
-          error={error}
-          onRefresh={() => {
-            console.log('🔄 Manual refresh triggered');
-            refetch();
-          }}
-          onRefreshHistorical={() => {
-            console.log('📊 Refreshing historical data');
-            refreshHistoricalData();
-          }}
-          onToggleDemo={() => {
-            console.log('🎭 Demo mode toggle');
-            setIsDemoMode(!isDemoMode);
-          }}
-          journeyStats={journeyStats}
-        />
-      </div>
+      {/* Enhanced System Status Panel - ADMIN ONLY */}
+      {isAdmin && (
+        <div className="p-4 border-b">
+          <SystemStatusPanel
+            tessieApiKey={tessieApiKey}
+            isDemoMode={false} // PRODUCTION ONLY
+            vehicles={vehicles}
+            vehicleData={vehicleData}
+            historicalDrives={historicalDrives}
+            historicalCharges={historicalCharges}
+            isLoading={isLoading}
+            error={error}
+            onRefresh={() => {
+              console.log('🔄 Manual refresh triggered');
+              refetch();
+            }}
+            onRefreshHistorical={() => {
+              console.log('📊 Refreshing historical data');
+              refreshHistoricalData();
+            }}
+            onToggleDemo={() => {
+              console.log('🚫 Demo mode disabled in production');
+            }}
+            journeyStats={journeyStats}
+          />
+        </div>
+      )}
 
-      {/* API Test Component */}
-      <ApiTest apiKey={tessieApiKey} />
+      {/* API Test Component - ADMIN ONLY */}
+      {isAdmin && <ApiTest apiKey={tessieApiKey} />}
       
       {/* Header */}
       <header className="border-b border-tesla-gray-light bg-card/50 backdrop-blur-sm">
@@ -456,19 +459,33 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="media" className="space-y-6">
-            <MediaUpload
-              onMediaUploaded={(media) => {
-                console.log('Media uploaded:', media);
-                // In production, could trigger map updates, add to timeline, etc.
-              }}
-              currentLocation={displayVehicleData ? {
-                state: 'Connecticut', // Current state - would get from actual location
-                coordinates: {
-                  lat: displayVehicleData.latitude,
-                  lng: displayVehicleData.longitude
-                }
-              } : undefined}
-            />
+            {isAdmin ? (
+              <MediaUpload
+                onMediaUploaded={(media) => {
+                  console.log('Media uploaded:', media);
+                  // In production, could trigger map updates, add to timeline, etc.
+                }}
+                currentLocation={displayVehicleData ? {
+                  state: 'Connecticut', // Current state - would get from actual location
+                  coordinates: {
+                    lat: displayVehicleData.latitude,
+                    lng: displayVehicleData.longitude
+                  }
+                } : undefined}
+              />
+            ) : (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <h3 className="text-lg font-semibold mb-2">Admin Access Required</h3>
+                  <p className="text-gray-600 mb-4">
+                    Trip media upload is only available on the admin portal.
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Please visit <strong>awhittlewandering.admin.com</strong> to access admin functions.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="debug" className="space-y-6">

@@ -60,134 +60,10 @@ export const useUnifiedTessieApi = (apiKey?: string) => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Check if we're in demo mode (no API key provided)
-  const isDemoMode = !apiKey;
-
-  // Demo data for when no API key is provided
-  const demoVehicle: Vehicle = {
-    id: 'demo-midnight-shadow',
-    display_name: 'Midnight Shadow',
-    state: 'online',
-    vin: 'DEMO123'
-  };
-
-  const demoVehicleData: VehicleData = {
-    battery_level: 82,
-    battery_range: 267,
-    charging_state: 'Complete',
-    inside_temp: 72,
-    outside_temp: 78,
-    odometer: 70128,
-    speed: 0,
-    latitude: 41.1865, // Greenwich, CT
-    longitude: -73.1532,
-    heading: 67,
-    timestamp: Date.now(),
-  };
-
-  const demoHistoricalDrives: HistoricalDrive[] = [
-    {
-      id: 'demo-drive-1',
-      start_time: '2025-06-01T10:00:00Z',
-      end_time: '2025-06-01T15:30:00Z',
-      start_address: 'Corpus Christi, TX',
-      end_address: 'Carlsbad, NM',
-      distance_miles: 287,
-      duration_hours: 5.5,
-      start_battery_level: 95,
-      end_battery_level: 45,
-      start_coordinates: { lat: 27.8006, lng: -97.3964 },
-      end_coordinates: { lat: 32.4207, lng: -104.2288 }
-    },
-    {
-      id: 'demo-drive-2',
-      start_time: '2025-06-03T09:00:00Z',
-      end_time: '2025-06-03T14:00:00Z',
-      start_address: 'Carlsbad, NM',
-      end_address: 'Amarillo, TX',
-      distance_miles: 234,
-      duration_hours: 5.0,
-      start_battery_level: 88,
-      end_battery_level: 42,
-      start_coordinates: { lat: 32.4207, lng: -104.2288 },
-      end_coordinates: { lat: 35.2220, lng: -101.8313 }
-    },
-    {
-      id: 'demo-drive-3',
-      start_time: '2025-06-05T08:00:00Z',
-      end_time: '2025-06-05T13:30:00Z',
-      start_address: 'Amarillo, TX',
-      end_address: 'Oklahoma City, OK',
-      distance_miles: 259,
-      duration_hours: 5.5,
-      start_battery_level: 90,
-      end_battery_level: 38,
-      start_coordinates: { lat: 35.2220, lng: -101.8313 },
-      end_coordinates: { lat: 35.4676, lng: -97.5164 }
-    },
-    {
-      id: 'demo-drive-4',
-      start_time: '2025-06-07T07:30:00Z',
-      end_time: '2025-06-07T14:00:00Z',
-      start_address: 'Oklahoma City, OK',
-      end_address: 'Little Rock, AR',
-      distance_miles: 342,
-      duration_hours: 6.5,
-      start_battery_level: 88,
-      end_battery_level: 22,
-      start_coordinates: { lat: 35.4676, lng: -97.5164 },
-      end_coordinates: { lat: 34.7465, lng: -92.2896 }
-    },
-    {
-      id: 'demo-drive-5',
-      start_time: '2025-06-09T09:00:00Z',
-      end_time: '2025-06-09T15:30:00Z',
-      start_address: 'Little Rock, AR',
-      end_address: 'Nashville, TN',
-      distance_miles: 339,
-      duration_hours: 6.5,
-      start_battery_level: 92,
-      end_battery_level: 28,
-      start_coordinates: { lat: 34.7465, lng: -92.2896 },
-      end_coordinates: { lat: 36.1627, lng: -86.7816 }
-    }
-  ];
-
-  const demoHistoricalCharges: HistoricalCharge[] = [
-    {
-      id: 'demo-charge-1',
-      start_time: '2025-06-01T16:00:00Z',
-      end_time: '2025-06-01T17:30:00Z',
-      location: 'Tesla Supercharger - Carlsbad, NM',
-      energy_added_kwh: 45.2,
-      cost: 18.50,
-      start_battery_level: 45,
-      end_battery_level: 88,
-      coordinates: { lat: 32.4207, lng: -104.2288 }
-    },
-    {
-      id: 'demo-charge-2',
-      start_time: '2025-06-03T14:30:00Z',
-      end_time: '2025-06-03T16:00:00Z',
-      location: 'Tesla Supercharger - Amarillo, TX',
-      energy_added_kwh: 52.1,
-      cost: 21.75,
-      start_battery_level: 42,
-      end_battery_level: 90,
-      coordinates: { lat: 35.2220, lng: -101.8313 }
-    },
-    {
-      id: 'demo-charge-3',
-      start_time: '2025-06-05T14:00:00Z',
-      end_time: '2025-06-05T15:45:00Z',
-      location: 'Tesla Supercharger - Oklahoma City, OK',
-      energy_added_kwh: 48.7,
-      cost: 19.80,
-      start_battery_level: 38,
-      end_battery_level: 88,
-      coordinates: { lat: 35.4676, lng: -97.5164 }
-    }
-  ];
+  // PRODUCTION MODE ONLY - NO DEMO DATA
+  if (!apiKey) {
+    console.error('🚨 API KEY REQUIRED - No demo mode available');
+  }
 
   const makeApiCall = useCallback(async (endpoint: string) => {
     if (!apiKey) {
@@ -403,25 +279,9 @@ export const useUnifiedTessieApi = (apiKey?: string) => {
     }
   }, [apiKey, makeApiCall]);
 
-  // Demo mode logic
+  // Auto-refresh vehicle data every 30 seconds (PRODUCTION ONLY)
   useEffect(() => {
-    if (isDemoMode) {
-      console.log('🎭 Running in demo mode');
-      setVehicles([demoVehicle]);
-      setSelectedVehicle(demoVehicle.id);
-      setSelectedVehicleVin(demoVehicle.vin);
-      setVehicleData(demoVehicleData);
-      setHistoricalDrives(demoHistoricalDrives);
-      setHistoricalCharges(demoHistoricalCharges);
-      setError(null);
-      setIsLoading(false);
-      return;
-    }
-  }, [isDemoMode]);
-
-  // Auto-refresh vehicle data every 30 seconds
-  useEffect(() => {
-    if (isDemoMode || !selectedVehicleVin || !apiKey) return;
+    if (!selectedVehicleVin || !apiKey) return;
 
     fetchVehicleData(selectedVehicleVin);
     const interval = setInterval(() => {
@@ -429,28 +289,27 @@ export const useUnifiedTessieApi = (apiKey?: string) => {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [selectedVehicleVin, apiKey, fetchVehicleData, isDemoMode]);
+  }, [selectedVehicleVin, apiKey, fetchVehicleData]);
 
-  // Fetch vehicles when API key changes
+  // Fetch vehicles when API key changes (PRODUCTION ONLY)
   useEffect(() => {
-    if (isDemoMode) return;
-    
     if (apiKey) {
       fetchVehicles();
     }
-  }, [apiKey, fetchVehicles, isDemoMode]);
+  }, [apiKey, fetchVehicles]);
 
-  // Fetch historical data when vehicle is selected
+  // Fetch historical data when vehicle is selected (PRODUCTION ONLY)
   useEffect(() => {
-    if (isDemoMode || !selectedVehicleVin || !apiKey) return;
+    if (!selectedVehicleVin || !apiKey) return;
 
+    // Use correct 2025 timestamps: June 1, 2025 to July 30, 2025
     const journeyStartDate = '2025-06-01';
-    const currentDate = new Date().toISOString().split('T')[0];
+    const currentDate = '2025-07-30'; // Fixed to actual journey end date
     
-    console.log('📊 Fetching historical data from', journeyStartDate, 'to', currentDate);
+    console.log('📊 Fetching ALL REAL historical data from', journeyStartDate, 'to', currentDate);
     fetchHistoricalDrives(selectedVehicleVin, journeyStartDate, currentDate);
     fetchHistoricalCharges(selectedVehicleVin, journeyStartDate, currentDate);
-  }, [selectedVehicleVin, apiKey, fetchHistoricalDrives, fetchHistoricalCharges, isDemoMode]);
+  }, [selectedVehicleVin, apiKey, fetchHistoricalDrives, fetchHistoricalCharges]);
 
   return {
     vehicles,
@@ -469,22 +328,24 @@ export const useUnifiedTessieApi = (apiKey?: string) => {
     isLoading,
     error,
     refetch: () => {
-      if (isDemoMode) {
-        console.log('🎭 Demo mode - simulating refresh');
-        setVehicleData(prev => prev ? { ...prev, timestamp: Date.now() } : null);
+      if (!selectedVehicleVin || !apiKey) {
+        console.error('🚨 Cannot refresh - missing API key or vehicle VIN');
         return;
       }
       
-      if (selectedVehicleVin) {
-        fetchVehicleData(selectedVehicleVin);
-      }
+      fetchVehicleData(selectedVehicleVin);
     },
     refreshHistoricalData: () => {
-      if (isDemoMode || !selectedVehicleVin || !apiKey) return;
+      if (!selectedVehicleVin || !apiKey) {
+        console.error('🚨 Cannot refresh historical data - missing API key or vehicle VIN');
+        return;
+      }
       
+      // Use correct 2025 timestamps for the full journey
       const journeyStartDate = '2025-06-01';
-      const currentDate = new Date().toISOString().split('T')[0];
+      const currentDate = '2025-07-30'; // Fixed journey end date
       
+      console.log('🔄 Refreshing ALL REAL historical data:', journeyStartDate, 'to', currentDate);
       fetchHistoricalDrives(selectedVehicleVin, journeyStartDate, currentDate);
       fetchHistoricalCharges(selectedVehicleVin, journeyStartDate, currentDate);
     }
