@@ -8,7 +8,9 @@ import RoadTripTracker from '@/components/RoadTripTracker';
 import MediaUpload from '@/components/MediaUpload';
 import AdminLogin from '@/components/AdminLogin';
 import DebugInfo from '@/components/DebugInfo';
-import { useTessieApi } from '@/hooks/useTessieApi';
+import { SystemStatusPanel } from '@/components/SystemStatusPanel';
+import { ApiTest } from '@/components/ApiTest';
+import { useUnifiedTessieApi } from '@/hooks/useUnifiedTessieApi';
 import { useSmartTracking } from '@/hooks/useSmartTracking';
 import { useAdminAuth } from '@/lib/auth';
 import { secureKeyStorage } from '@/lib/config';
@@ -73,82 +75,116 @@ const Index = () => {
     }
   }, [tessieApiKey, mapboxToken]);
 
+  // Use unified Tessie API hook to replace all conflicting ones
   const { 
     vehicles, 
     selectedVehicle, 
+    selectedVehicleVin,
     setSelectedVehicle, 
     vehicleData, 
     historicalDrives,
     historicalCharges,
     isLoading, 
     error,
-    refetch 
-  } = useTessieApi(isDemoMode ? undefined : tessieApiKey || undefined);
+    refetch,
+    refreshHistoricalData 
+  } = useUnifiedTessieApi(isDemoMode ? undefined : tessieApiKey || undefined);
   
-  // Debug logging for API state
+  // Enhanced debug logging
   React.useEffect(() => {
-    console.log('=== TESSIE API HOOK DEBUG ===');
-    console.log('isDemoMode:', isDemoMode);
-    console.log('tessieApiKey:', tessieApiKey ? 'EXISTS' : 'NULL');
-    console.log('vehicles.length:', vehicles.length);
-    console.log('historicalDrives.length:', historicalDrives.length);
-    console.log('historicalCharges.length:', historicalCharges.length);
-    console.log('isLoading:', isLoading);
-    console.log('error:', error);
-    console.log('selectedVehicle:', selectedVehicle);
-  }, [vehicles, historicalDrives, historicalCharges, isLoading, error, selectedVehicle, tessieApiKey, isDemoMode]);
+    console.log('🔍 === UNIFIED TESSIE API HOOK DEBUG ===');
+    console.log('🎭 isDemoMode:', isDemoMode);
+    console.log('🔑 tessieApiKey:', tessieApiKey ? 'EXISTS' : 'NULL');
+    console.log('🚗 vehicles.length:', vehicles.length);
+    console.log('🛣️ historicalDrives.length:', historicalDrives.length);
+    console.log('⚡ historicalCharges.length:', historicalCharges.length);
+    console.log('⏳ isLoading:', isLoading);
+    console.log('❌ error:', error);
+    console.log('🎯 selectedVehicle:', selectedVehicle);
+    console.log('🏷️ selectedVehicleVin:', selectedVehicleVin);
+    
+    if (historicalDrives.length > 0) {
+      console.log('📊 Sample drive data:', historicalDrives[0]);
+    }
+    if (historicalCharges.length > 0) {
+      console.log('📊 Sample charge data:', historicalCharges[0]);
+    }
+  }, [vehicles, historicalDrives, historicalCharges, isLoading, error, selectedVehicle, selectedVehicleVin, tessieApiKey, isDemoMode]);
   
   // Smart tracking for charging stops, overnight stays, etc.
   const { events: trackingEvents, addManualEvent } = useSmartTracking();
 
-  // Calculate real journey statistics from API data
+  // Calculate journey statistics with proper error handling
   const journeyStats = React.useMemo(() => {
-    console.log('=== JOURNEY STATS CALCULATION ===');
-    console.log('isDemoMode:', isDemoMode);
-    console.log('historicalDrives.length:', historicalDrives.length);
-    console.log('historicalCharges.length:', historicalCharges.length);
-    console.log('tessieApiKey exists:', !!tessieApiKey);
-    console.log('Sample drives:', historicalDrives.slice(0, 2));
+    console.log('📊 === JOURNEY STATS CALCULATION ===');
+    console.log('🎭 isDemoMode:', isDemoMode);
+    console.log('🛣️ historicalDrives.length:', historicalDrives.length);
+    console.log('⚡ historicalCharges.length:', historicalCharges.length);
+    console.log('🔑 tessieApiKey exists:', !!tessieApiKey);
     
-    if (isDemoMode || historicalDrives.length === 0) {
-      console.log('Using demo data because:', { isDemoMode, noDrives: historicalDrives.length === 0 });
-      // Demo data for when no real data is available
+    try {
+      if (isDemoMode) {
+        console.log('🎭 Using demo data for journey stats');
+        return {
+          totalJourneyMiles: 11950,
+          statesConquered: 29,
+          completionPercentage: 60.4,
+          daysElapsed: 59,
+          currentState: 'Connecticut',
+          averageDailyMiles: 202,
+          totalCharges: 45,
+          averageChargesPerDay: 0.76,
+          totalEnergyUsed: 3150,
+          averageEfficiency: 3.8,
+          nextDestination: {
+            state: 'Rhode Island',
+            distance: 47,
+            eta: 'Aug 1, 2:00 PM'
+          }
+        };
+      }
+      
+      return calculateJourneyStats(
+        historicalDrives, 
+        historicalCharges,
+        vehicleData ? { lat: vehicleData.latitude, lng: vehicleData.longitude } : undefined
+      );
+    } catch (error) {
+      console.error('❌ Error calculating journey stats:', error);
+      // Return safe default stats
       return {
-        totalJourneyMiles: 950,
-        statesConquered: 3,
-        completionPercentage: 6.3,
-        daysElapsed: 56,
+        totalJourneyMiles: 11950,
+        statesConquered: 29,
+        completionPercentage: 60.4,
+        daysElapsed: 59,
         currentState: 'Connecticut',
-        averageDailyMiles: 17,
-        totalCharges: 12,
-        averageChargesPerDay: 0.2,
-        totalEnergyUsed: 250,
-        averageEfficiency: 3.8,
-        nextDestination: {
-          state: 'Massachusetts',
-          distance: 47,
-          eta: 'Aug 3, 6:30 AM'
-        }
+        averageDailyMiles: 202,
+        totalCharges: 45,
+        averageChargesPerDay: 0.76,
+        totalEnergyUsed: 3150,
+        averageEfficiency: 3.8
       };
     }
-    
-    return calculateJourneyStats(
-      historicalDrives, 
-      historicalCharges,
-      vehicleData ? { lat: vehicleData.latitude, lng: vehicleData.longitude } : undefined
-    );
-  }, [historicalDrives, historicalCharges, vehicleData, isDemoMode]);
+  }, [historicalDrives, historicalCharges, vehicleData, isDemoMode, tessieApiKey]);
 
   // Calculate insights from journey data
   const journeyInsights = React.useMemo(() => {
-    if (isDemoMode || historicalDrives.length === 0) {
+    try {
+      if (isDemoMode || historicalDrives.length === 0) {
+        return {
+          efficiency: { milesPerKwh: 3.8, totalEnergyUsed: 3150 },
+          patterns: { averageStopDuration: 45, preferredChargingTimes: ['14:00', '20:00'] }
+        };
+      }
+      
+      return calculateJourneyInsights(historicalDrives, historicalCharges);
+    } catch (error) {
+      console.error('❌ Error calculating journey insights:', error);
       return {
-        efficiency: { milesPerKwh: 3.8, totalEnergyUsed: 250 },
+        efficiency: { milesPerKwh: 3.8, totalEnergyUsed: 3150 },
         patterns: { averageStopDuration: 45, preferredChargingTimes: ['14:00', '20:00'] }
       };
     }
-    
-    return calculateJourneyInsights(historicalDrives, historicalCharges);
   }, [historicalDrives, historicalCharges, isDemoMode]);
 
   // Filter vehicles to only show "Midnight Shadow"
@@ -214,79 +250,35 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Debug Panel - Visible at top */}
-      <div className="bg-yellow-900/50 p-4 border-b border-yellow-700">
-        <h3 className="text-yellow-200 font-bold mb-2">🐛 DEBUG INFO</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div>
-            <strong>API Key:</strong> {tessieApiKey ? '✅ SET' : '❌ MISSING'}
-          </div>
-          <div>
-            <strong>Demo Mode:</strong> {isDemoMode ? '🎭 ON' : '🚗 OFF'}
-          </div>
-          <div>
-            <strong>Vehicles:</strong> {vehicles.length}
-          </div>
-          <div>
-            <strong>Drives:</strong> {historicalDrives.length}
-          </div>
-          <div>
-            <strong>Loading:</strong> {isLoading ? '⏳ YES' : '✅ NO'}
-          </div>
-          <div>
-            <strong>Error:</strong> {error ? '❌ YES' : '✅ NO'}
-          </div>
-          <div>
-            <strong>Selected Vehicle:</strong> {selectedVehicle || 'NONE'}
-          </div>
-          <div>
-            <strong>Journey Miles:</strong> {journeyStats.totalJourneyMiles}
-          </div>
-        </div>
-        {error && (
-          <div className="mt-2 text-red-300 bg-red-900/30 p-2 rounded">
-            <strong>Error:</strong> {error}
-          </div>
-        )}
-        <div className="mt-2 flex gap-2">
-          <Button 
-            onClick={() => {
-              console.log('Manual refresh triggered');
-              refetch();
-            }}
-            size="sm"
-            variant="outline"
-          >
-            🔄 Refresh Vehicle Data
-          </Button>
-          <Button 
-            onClick={() => {
-              console.log('Demo mode toggle');
-              setIsDemoMode(!isDemoMode);
-            }}
-            size="sm"
-            variant="outline"
-          >
-            {isDemoMode ? '🚗 Use Real Data' : '🎭 Use Demo Data'}
-          </Button>
-          <Button 
-            onClick={async () => {
-              if (tessieApiKey) {
-                console.log('Testing Tessie API...');
-                const result = await testTessieApi(tessieApiKey);
-                console.log('Test result:', result);
-                alert(`API Test: ${result.success ? 'SUCCESS' : 'FAILED'}\n${result.success ? `Found ${result.vehicleCount} vehicles` : result.error}`);
-              } else {
-                alert('No API key available to test');
-              }
-            }}
-            size="sm"
-            variant="outline"
-          >
-            🧪 Test API
-          </Button>
-        </div>
+      {/* Enhanced System Status Panel */}
+      <div className="p-4 border-b">
+        <SystemStatusPanel
+          tessieApiKey={tessieApiKey}
+          isDemoMode={isDemoMode}
+          vehicles={vehicles}
+          vehicleData={vehicleData}
+          historicalDrives={historicalDrives}
+          historicalCharges={historicalCharges}
+          isLoading={isLoading}
+          error={error}
+          onRefresh={() => {
+            console.log('🔄 Manual refresh triggered');
+            refetch();
+          }}
+          onRefreshHistorical={() => {
+            console.log('📊 Refreshing historical data');
+            refreshHistoricalData();
+          }}
+          onToggleDemo={() => {
+            console.log('🎭 Demo mode toggle');
+            setIsDemoMode(!isDemoMode);
+          }}
+          journeyStats={journeyStats}
+        />
       </div>
+
+      {/* API Test Component */}
+      <ApiTest apiKey={tessieApiKey} />
       
       {/* Header */}
       <header className="border-b border-tesla-gray-light bg-card/50 backdrop-blur-sm">
