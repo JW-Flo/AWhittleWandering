@@ -65,17 +65,6 @@ const Index = () => {
       console.log('Setting new mapbox token from storage');
       setMapboxToken(mbToken);
     }
-    
-    // Check if we should start in demo mode
-    const savedDemoMode = localStorage.getItem('demo_mode') === 'true';
-    console.log('Demo mode settings:', { savedDemoMode, currentDemoMode: isDemoMode });
-    if (savedDemoMode && !tessieKey && !import.meta.env.VITE_TESSIE_API_KEY) {
-      console.log('Enabling demo mode because no API key available');
-      setIsDemoMode(true);
-    } else if (tessieKey || import.meta.env.VITE_TESSIE_API_KEY) {
-      console.log('Disabling demo mode because API key is available');
-      setIsDemoMode(false);
-    }
   }, [tessieApiKey, mapboxToken]);
 
   // Use unified Tessie API hook - PRODUCTION ONLY
@@ -109,70 +98,45 @@ const Index = () => {
       console.log('📊 Sample drive data:', historicalDrives[0]);
     }
     if (historicalCharges.length > 0) {
-      console.log('📊 Sample charge data:', historicalCharges[0]);
+      console.log('🔋 Sample charge data:', historicalCharges[0]);
     }
-  }, [vehicles, historicalDrives, historicalCharges, isLoading, error, selectedVehicle, selectedVehicleVin, tessieApiKey]);
-  
-  // Smart tracking for charging stops, overnight stays, etc.
-  const { events: trackingEvents, addManualEvent } = useSmartTracking();
+  }, [vehicles, historicalDrives, historicalCharges, tessieApiKey, selectedVehicle, isLoading, error]);
 
   // Calculate journey statistics with proper error handling
   const journeyStats = React.useMemo(() => {
     console.log('📊 === JOURNEY STATS CALCULATION ===');
-    console.log('🎭 isDemoMode:', isDemoMode);
     console.log('🛣️ historicalDrives.length:', historicalDrives.length);
     console.log('⚡ historicalCharges.length:', historicalCharges.length);
     console.log('🔑 tessieApiKey exists:', !!tessieApiKey);
     
     try {
-      if (isDemoMode) {
-        console.log('🎭 Using demo data for journey stats');
-        return {
-          totalJourneyMiles: 11950,
-          statesConquered: 29,
-          completionPercentage: 60.4,
-          daysElapsed: 59,
-          currentState: 'Connecticut',
-          averageDailyMiles: 202,
-          totalCharges: 45,
-          averageChargesPerDay: 0.76,
-          totalEnergyUsed: 3150,
-          averageEfficiency: 3.8,
-          nextDestination: {
-            state: 'Rhode Island',
-            distance: 47,
-            eta: 'Aug 1, 2:00 PM'
-          }
-        };
-      }
-      
+      // Use real data calculation for production
       return calculateJourneyStats(
         historicalDrives, 
-        historicalCharges,
-        vehicleData ? { lat: vehicleData.latitude, lng: vehicleData.longitude } : undefined
+        historicalCharges, 
+        vehicleData?.drive_state?.shift_state
       );
     } catch (error) {
       console.error('❌ Error calculating journey stats:', error);
-      // Return safe default stats
       return {
-        totalJourneyMiles: 11950,
-        statesConquered: 29,
-        completionPercentage: 60.4,
-        daysElapsed: 59,
-        currentState: 'Connecticut',
-        averageDailyMiles: 202,
-        totalCharges: 45,
-        averageChargesPerDay: 0.76,
-        totalEnergyUsed: 3150,
-        averageEfficiency: 3.8
+        totalJourneyMiles: 0,
+        statesConquered: 0,
+        completionPercentage: 0,
+        daysElapsed: 0,
+        currentState: '',
+        averageDailyMiles: 0,
+        totalCharges: 0,
+        averageChargesPerDay: 0,
+        totalEnergyUsed: 0,
+        averageEfficiency: 0
       };
     }
-  }, [historicalDrives, historicalCharges, vehicleData, isDemoMode, tessieApiKey]);
+  }, [historicalDrives, historicalCharges, vehicleData, tessieApiKey]);
 
   // Calculate insights from journey data
   const journeyInsights = React.useMemo(() => {
     try {
-      if (isDemoMode || historicalDrives.length === 0) {
+      if (historicalDrives.length === 0) {
         return {
           efficiency: { milesPerKwh: 3.8, totalEnergyUsed: 3150 },
           patterns: { averageStopDuration: 45, preferredChargingTimes: ['14:00', '20:00'] }
@@ -187,15 +151,14 @@ const Index = () => {
         patterns: { averageStopDuration: 45, preferredChargingTimes: ['14:00', '20:00'] }
       };
     }
-  }, [historicalDrives, historicalCharges, isDemoMode]);
+  }, [historicalDrives, historicalCharges]);
 
   // Filter vehicles to only show "Midnight Shadow"
   const midnightShadowVehicle = vehicles.find(v => 
-    v.display_name?.toLowerCase().includes('midnight shadow') || 
-    v.display_name?.toLowerCase().includes('midnightshadow')
+    v.display_name?.toLowerCase().includes('midnight') || 
+    v.display_name?.toLowerCase().includes('shadow')
   );
   
-  // Use only Midnight Shadow vehicle data
   const displayVehicles = midnightShadowVehicle ? [midnightShadowVehicle] : vehicles;
   const displayVehicleData = vehicleData;
 
@@ -210,12 +173,11 @@ const Index = () => {
     localStorage.setItem('tessie_api_key', apiKey);
     localStorage.removeItem('demo_mode');
     setTessieApiKey(apiKey);
-    setIsDemoMode(false);
   };
 
   const handleDemoMode = () => {
-    localStorage.setItem('demo_mode', 'true');
-    setIsDemoMode(true);
+    // Demo mode disabled in production
+    console.log('Demo mode is disabled in production');
   };
 
   const handleMapboxTokenChange = (token: string) => {
@@ -223,21 +185,16 @@ const Index = () => {
     setMapboxToken(token);
   };
 
-  const formatLastUpdate = (timestamp?: number) => {
-    if (!timestamp) return 'Never';
-    return new Date(timestamp).toLocaleTimeString();
-  };
+  const { 
+    isTracking, 
+    currentLocation, 
+    startTracking, 
+    stopTracking,
+    trackingHistory 
+  } = useSmartTracking(displayVehicleData);
 
-  const getChargingState = (state?: string) => {
-    switch (state?.toLowerCase()) {
-      case 'charging': return 'charging';
-      case 'complete': return 'complete';
-      default: return 'disconnected';
-    }
-  };
-
-  // Show API setup if no TESSIE key and not in demo mode
-  if (!tessieApiKey && !isDemoMode) {
+  // Show API setup if no TESSIE key (production mode only)
+  if (!tessieApiKey) {
     // If we have environment variables, don't show setup
     const envTessieKey = import.meta.env.VITE_TESSIE_API_KEY;
     if (envTessieKey) {
@@ -251,93 +208,78 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Enhanced System Status Panel - ADMIN ONLY */}
-      {isAdmin && (
-        <div className="p-4 border-b">
-          <SystemStatusPanel
-            tessieApiKey={tessieApiKey}
-            isDemoMode={false} // PRODUCTION ONLY
-            vehicles={vehicles}
-            vehicleData={vehicleData}
-            historicalDrives={historicalDrives}
-            historicalCharges={historicalCharges}
-            isLoading={isLoading}
-            error={error}
-            onRefresh={() => {
-              console.log('🔄 Manual refresh triggered');
-              refetch();
-            }}
-            onRefreshHistorical={() => {
-              console.log('📊 Refreshing historical data');
-              refreshHistoricalData();
-            }}
-            onToggleDemo={() => {
-              console.log('🚫 Demo mode disabled in production');
-            }}
-            journeyStats={journeyStats}
-          />
-        </div>
-      )}
-
-      {/* API Test Component - ADMIN ONLY */}
-      {isAdmin && <ApiTest apiKey={tessieApiKey} />}
-      
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       {/* Header */}
-      <header className="border-b border-tesla-gray-light bg-card/50 backdrop-blur-sm">
+      <header className="bg-black/40 backdrop-blur-md border-b border-white/10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-tesla-cyan rounded-lg flex items-center justify-center">
-                <Car className="w-6 h-6 text-background" />
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-tesla-cyan to-purple-500 flex items-center justify-center">
+                <Car className="w-6 h-6 text-white" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold">A Whittle Wandering</h1>
                 <p className="text-sm text-muted-foreground">
-                  {isDemoMode ? 'Demo Mode - Sample Data' : 'Powered by TESSIE'}
+                  Powered by TESSIE
                 </p>
               </div>
             </div>
             
             <div className="flex items-center gap-4">
-              {isDemoMode && (
-                <Badge variant="outline" className="border-tesla-cyan text-tesla-cyan">
-                  Demo Mode
-                </Badge>
-              )}
-              
-              {/* Show Midnight Shadow vehicle info instead of dropdown */}
-              {midnightShadowVehicle && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-tesla-gray/20 rounded-lg border border-tesla-cyan/20">
-                  <div className="w-2 h-2 bg-tesla-cyan rounded-full animate-pulse"></div>
-                  <span className="text-sm font-medium text-tesla-cyan">
-                    {midnightShadowVehicle.display_name || 'Midnight Shadow'}
-                  </span>
-                </div>
+              {/* Vehicle Selection */}
+              {displayVehicles.length > 1 && (
+                <Select value={selectedVehicle || ''} onValueChange={setSelectedVehicle}>
+                  <SelectTrigger className="w-[200px] bg-white/10 border-white/20">
+                    <SelectValue placeholder="Select Vehicle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {displayVehicles.map((vehicle) => (
+                      <SelectItem key={vehicle.id} value={vehicle.id}>
+                        {vehicle.display_name || `${vehicle.year} ${vehicle.model}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
               
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={refetch}
-                disabled={isLoading || isDemoMode}
+                disabled={isLoading}
                 className="gap-2"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                {isDemoMode ? 'Demo' : 'Refresh'}
+                Refresh
               </Button>
               
               {/* Debug info for development */}
               <DebugInfo 
                 tessieApiKey={tessieApiKey}
                 mapboxToken={mapboxToken}
-                isDemoMode={isDemoMode}
+                isDemoMode={false}
                 vehicles={vehicles}
                 vehicleData={vehicleData}
                 historicalDrives={historicalDrives}
                 historicalCharges={historicalCharges}
                 error={error}
+                isLoading={isLoading}
               />
+              
+              {/* Admin Functions - Only visible on admin domain */}
+              {isAdmin && (
+                <>
+                  <SystemStatusPanel 
+                    tessieStatus={!error && vehicles.length > 0}
+                    mapboxStatus={!!mapboxToken}
+                    dataStatus={historicalDrives.length > 0}
+                  />
+                  
+                  <TessieApiDebugger apiKey={tessieApiKey} />
+                  
+                  <ApiTest />
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -345,203 +287,143 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
-        {error && (
-          <Card className="mb-6 border-destructive/20 bg-destructive/5">
-            <CardContent className="p-4">
-              <p className="text-destructive text-sm">{error}</p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Tesla Map */}
+          <Card className="bg-black/20 border-white/10">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div className="flex items-center gap-2">
+                <Map className="w-5 h-5 text-tesla-cyan" />
+                <CardTitle className="text-lg">
+                  Live Location
+                </CardTitle>
+                {displayVehicleData && (
+                  <Badge variant="secondary" className="bg-tesla-cyan/20 text-tesla-cyan">
+                    Live
+                  </Badge>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="h-[calc(100%-80px)]">
+              <TeslaMap
+                vehicleData={displayVehicleData}
+                mapboxToken={mapboxToken}
+                onTokenUpdate={handleMapboxTokenChange}
+                className="w-full h-full rounded-lg"
+                drives={historicalDrives}
+                charges={historicalCharges}
+                isDemoMode={false} // PRODUCTION ONLY
+              />
             </CardContent>
           </Card>
-        )}
 
-        <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className={`grid w-full ${isAuthenticated ? 'grid-cols-5' : 'grid-cols-4'} bg-tesla-gray`}>
-            <TabsTrigger value="dashboard" className="data-[state=active]:bg-primary">
-              <Car className="w-4 h-4 mr-2" />
-              Live Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="roadtrip" className="data-[state=active]:bg-primary">
-              <Route className="w-4 h-4 mr-2" />
-              Road Trip Tracker
-            </TabsTrigger>
-            <TabsTrigger value="media" className="data-[state=active]:bg-primary">
-              <Camera className="w-4 h-4 mr-2" />
-              Trip Media
-              {canUploadMedia && (
-                <Badge variant="secondary" className="ml-2 bg-tesla-cyan text-xs">Admin</Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="debug" className="data-[state=active]:bg-primary">
-              <Bug className="w-4 h-4 mr-2" />
-              API Debug
-            </TabsTrigger>
-            {isAuthenticated && (
-              <TabsTrigger value="admin" className="data-[state=active]:bg-primary">
-                <Shield className="w-4 h-4 mr-2" />
-                Admin Panel
-              </TabsTrigger>
-            )}
-          </TabsList>
-
-          <TabsContent value="dashboard" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-280px)]">
-              {/* Map Section */}
-              <div className="lg:col-span-2">
-                <Card className="h-full border-tesla-gray-light">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center gap-2">
-                        <Zap className="w-5 h-5 text-primary" />
-                        Live Location
-                      </CardTitle>
-                      {displayVehicleData && (
-                        <Badge variant="secondary" className="bg-tesla-cyan/20 text-tesla-cyan">
-                          {isDemoMode ? 'Demo' : 'Live'}
-                        </Badge>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="h-[calc(100%-80px)]">
-                    <TeslaMap
-                      vehicleLocation={displayVehicleData ? {
-                        latitude: displayVehicleData.latitude,
-                        longitude: displayVehicleData.longitude,
-                        heading: displayVehicleData.heading,
-                        speed: displayVehicleData.speed
-                      } : undefined}
-                      mapboxToken={mapboxToken || undefined}
-                      onTokenChange={handleMapboxTokenChange}
-                      historicalDrives={historicalDrives}
-                    />
-                  </CardContent>
-                </Card>
+          {/* Smart Vehicle Stats */}
+          <Card className="bg-black/20 border-white/10">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-yellow-400" />
+                <CardTitle className="text-lg">Vehicle Status</CardTitle>
               </div>
+            </CardHeader>
+            <CardContent>
+              <SmartVehicleStats 
+                vehicleData={displayVehicleData}
+                journeyStats={journeyStats}
+                insights={journeyInsights}
+              />
+            </CardContent>
+          </Card>
+        </div>
 
-              {/* Stats Section */}
-              <div className="space-y-4">
-                <SmartVehicleStats
-                  batteryLevel={displayVehicleData?.battery_level}
-                  range={displayVehicleData?.battery_range}
-                  chargingState={getChargingState(displayVehicleData?.charging_state)}
-                  temperature={displayVehicleData?.outside_temp}
-                  odometer={displayVehicleData?.odometer}
-                  speed={displayVehicleData?.speed}
-                  lastUpdate={formatLastUpdate(displayVehicleData?.timestamp)}
-                  journeyStats={{
-                    totalJourneyMiles: journeyStats.totalJourneyMiles,
-                    statesConquered: journeyStats.statesConquered,
-                    completionPercentage: journeyStats.completionPercentage,
-                    daysElapsed: journeyStats.daysElapsed,
-                    isCharging: getChargingState(displayVehicleData?.charging_state) === 'charging',
-                    currentState: journeyStats.currentState,
-                    currentLocation: displayVehicleData ? { 
-                      lat: displayVehicleData.latitude, 
-                      lng: displayVehicleData.longitude 
-                    } : undefined,
-                    dailyAverages: { 
+        {/* Journey Dashboard */}
+        <div className="mt-6">
+          <Card className="bg-black/20 border-white/10">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Route className="w-5 h-5 text-blue-400" />
+                <CardTitle>Continental USA Journey</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="tracker" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="tracker">Journey Progress</TabsTrigger>
+                  <TabsTrigger value="data">Trip Data</TabsTrigger>
+                  {isAdmin && (
+                    <TabsTrigger value="media">Media Upload</TabsTrigger>
+                  )}
+                </TabsList>
+
+                <TabsContent value="tracker" className="space-y-4">
+                  <RoadTripTracker 
+                    journeyStats={journeyStats}
+                    drives={historicalDrives}
+                    charges={historicalCharges}
+                    dailyAverages={{ 
                       miles: journeyStats.averageDailyMiles, 
                       charges: journeyStats.averageChargesPerDay 
-                    }
-                  }}
-                  insights={journeyInsights}
-                  isLoading={isLoading}
-                  error={error || undefined}
-                />
-              </div>
-            </div>
-          </TabsContent>
+                    }}
+                    currentLocation={displayVehicleData ? {
+                      lat: displayVehicleData.drive_state?.latitude || 0,
+                      lng: displayVehicleData.drive_state?.longitude || 0,
+                      address: displayVehicleData.drive_state?.active_route_destination || 'Unknown'
+                    } : null}
+                  />
+                </TabsContent>
 
-          <TabsContent value="roadtrip" className="space-y-6">
-            <RoadTripTracker 
-              tessieApiKey={tessieApiKey}
-              trackingEvents={trackingEvents}
-              onAddManualEvent={addManualEvent}
-            />
-          </TabsContent>
+                <TabsContent value="data" className="space-y-4">
+                  <DataDebugger 
+                    drives={historicalDrives}
+                    charges={historicalCharges}
+                    vehicleData={displayVehicleData}
+                  />
+                </TabsContent>
 
-          <TabsContent value="media" className="space-y-6">
-            {isAdmin ? (
-              <MediaUpload
-                onMediaUploaded={(media) => {
-                  console.log('Media uploaded:', media);
-                  // In production, could trigger map updates, add to timeline, etc.
-                }}
-                currentLocation={displayVehicleData ? {
-                  state: 'Connecticut', // Current state - would get from actual location
-                  coordinates: {
-                    lat: displayVehicleData.latitude,
-                    lng: displayVehicleData.longitude
-                  }
-                } : undefined}
-              />
-            ) : (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <h3 className="text-lg font-semibold mb-2">Admin Access Required</h3>
-                  <p className="text-gray-600 mb-4">
-                    Trip media upload is only available on the admin portal.
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Please visit <strong>awhittlewandering.admin.com</strong> to access admin functions.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="debug" className="space-y-6">
-            <DataDebugger tessieApiKey={tessieApiKey || undefined} />
-            <TessieApiDebugger apiKey={tessieApiKey} />
-          </TabsContent>
-
-          {isAuthenticated && (
-            <TabsContent value="admin" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <AdminLogin />
-                
-                <Card className="admin-stats border-tesla-cyan/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-tesla-cyan">
-                      <Shield className="w-5 h-5" />
-                      Admin Dashboard
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">Journey Status</p>
-                        <p className="font-medium">29 states visited</p>
+                {isAdmin && (
+                  <TabsContent value="media" className="space-y-4">
+                    {isAuthenticated ? (
+                      <MediaUpload 
+                        canUpload={canUploadMedia}
+                        onUploadComplete={() => {
+                          console.log('Media upload completed');
+                        }}
+                      />
+                    ) : (
+                      <div className="text-center py-8">
+                        <Shield className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+                        <p className="text-lg font-medium mb-2">Admin Access Required</p>
+                        <p className="text-muted-foreground mb-4">
+                          Trip media upload is only available on the admin portal.
+                        </p>
+                        <AdminLogin />
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">Media Access</p>
-                        <Badge variant={canUploadMedia ? "default" : "secondary"}>
-                          {canUploadMedia ? "Enabled" : "Restricted"}
-                        </Badge>
-                      </div>
-                    </div>
-                    
-                    <div className="pt-4 border-t space-y-2">
-                      <p className="text-sm text-muted-foreground">Admin Capabilities:</p>
-                      <ul className="text-sm space-y-1">
-                        <li className="flex items-center gap-2">
-                          <Badge variant="outline" className="w-2 h-2 p-0 bg-green-500"></Badge>
-                          Upload photos and videos
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <Badge variant="outline" className="w-2 h-2 p-0 bg-green-500"></Badge>
-                          Modify journey data
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <Badge variant="outline" className="w-2 h-2 p-0 bg-green-500"></Badge>
-                          Access analytics
-                        </li>
-                      </ul>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          )}
-        </Tabs>
+                    )}
+                  </TabsContent>
+                )}
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="mt-6">
+            <Card className="bg-red-900/20 border-red-500/20">
+              <CardHeader>
+                <CardTitle className="text-red-400">Connection Error</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-red-300">{error}</p>
+                <Button 
+                  variant="outline" 
+                  onClick={refetch} 
+                  className="mt-4 border-red-500/50 hover:bg-red-500/10"
+                >
+                  Retry Connection
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </main>
     </div>
   );
