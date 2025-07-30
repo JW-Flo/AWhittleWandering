@@ -4,7 +4,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { useJourneyTessieApi } from '@/hooks/useJourneyTessieApi';
+import { useUnifiedTessieApi } from '@/hooks/useUnifiedTessieApi';
 
 interface EnhancedTeslaMapProps {
   vehicleId: string;
@@ -28,14 +28,13 @@ const EnhancedTeslaMap: React.FC<EnhancedTeslaMapProps> = ({
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   
   const {
-    driveHistory,
-    chargeHistory,
-    extendedStays,
-    locationHistory,
+    historicalDrives: driveHistory,
+    historicalCharges: chargeHistory,
+    vehicleData,
     isLoading,
     error,
-    loadJourneyData,
-  } = useJourneyTessieApi(apiKey, vehicleId);
+    refreshHistoricalData: loadJourneyData,
+  } = useUnifiedTessieApi(apiKey);
 
   // Initialize map
   useEffect(() => {
@@ -71,7 +70,7 @@ const EnhancedTeslaMap: React.FC<EnhancedTeslaMapProps> = ({
   // Load journey data on mount
   useEffect(() => {
     if (vehicleId && apiKey) {
-      loadJourneyData(startDate, endDate);
+      loadJourneyData();
     }
   }, [vehicleId, apiKey, startDate, endDate, loadJourneyData]);
 
