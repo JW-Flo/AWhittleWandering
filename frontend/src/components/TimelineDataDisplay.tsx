@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, Route, Clock, Trophy } from 'lucide-react';
-import { useTessieApi, HistoricalDrive, HistoricalCharge } from '@/hooks/useTessieApi';
+import { useUnifiedTessieApi, HistoricalDrive, HistoricalCharge } from '@/hooks/useUnifiedTessieApi';
 import { calculateJourneyStats } from '@/utils/journeyCalculations';
 
 interface TimelineEntry {
@@ -40,7 +40,7 @@ const TimelineDataDisplay: React.FC<TimelineDataDisplayProps> = ({ tessieApiKey 
     historicalCharges, 
     isLoading: tessieLoading,
     error: tessieError 
-  } = useTessieApi(tessieApiKey);
+  } = useUnifiedTessieApi(tessieApiKey);
 
   useEffect(() => {
     if (tessieLoading) {

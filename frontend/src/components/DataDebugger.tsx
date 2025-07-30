@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useTessieApi } from '@/hooks/useTessieApi';
+import { useUnifiedTessieApi } from '@/hooks/useUnifiedTessieApi';
 
 interface DataDebuggerProps {
   tessieApiKey?: string;
@@ -15,7 +15,7 @@ const DataDebugger: React.FC<DataDebuggerProps> = ({ tessieApiKey }) => {
     historicalCharges, 
     isLoading, 
     error 
-  } = useTessieApi(tessieApiKey);
+  } = useUnifiedTessieApi(tessieApiKey);
 
   return (
     <Card className="w-full">
