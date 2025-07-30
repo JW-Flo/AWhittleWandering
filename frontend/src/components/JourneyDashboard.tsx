@@ -2,7 +2,7 @@
 // Displays drive history, charge sessions, extended stays, and journey analytics
 
 import React, { useEffect, useState } from 'react';
-import { useJourneyTessieApi } from '@/hooks/useJourneyTessieApi';
+import { useUnifiedTessieApi } from '@/hooks/useUnifiedTessieApi';
 import { TrackingEvent } from '@/hooks/useSmartTracking';
 import { formatTemperature } from '@/utils/temperature';
 
@@ -24,18 +24,22 @@ const JourneyDashboard: React.FC<JourneyDashboardProps> = ({
   const [activeTab, setActiveTab] = useState<'overview' | 'drives' | 'charges' | 'stays'>('overview');
   
   const {
-    driveHistory,
-    chargeHistory,
-    extendedStays,
-    journeyAnalytics,
+    historicalDrives: driveHistory,
+    historicalCharges: chargeHistory,
+    vehicleData,
     isLoading,
     error,
-    loadJourneyData,
-    setJourneyAnalytics,
-    setDriveHistory,
-    setChargeHistory,
-    setExtendedStays,
-  } = useJourneyTessieApi(apiKey, vehicleId);
+    refreshHistoricalData: loadJourneyData,
+  } = useUnifiedTessieApi(apiKey);
+
+  // Mock extended stays and journey analytics until we implement them
+  const extendedStays: any[] = [];
+  const journeyAnalytics = {
+    totalMiles: driveHistory.reduce((sum, drive) => sum + (drive.distance_miles || 0), 0),
+    totalCharges: chargeHistory.length,
+    averageStopDuration: chargeHistory.length > 0 ? 45 : 0,
+    preferredChargingTimes: ['14:00', '20:00']
+  };
 
   useEffect(() => {
     if (vehicleId && apiKey) {
