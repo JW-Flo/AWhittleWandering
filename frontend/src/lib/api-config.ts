@@ -2,15 +2,8 @@
 // Handles all API endpoints and provides consistent error handling
 
 const getApiBaseUrl = () => {
-  // Use production API endpoint when deployed to awhittlewandering.com
-  if (typeof window !== 'undefined' && window.location.hostname === 'awhittlewandering.com') {
-    return 'https://admin-api.awhittlewandering.com';
-  }
-  // Use production API for admin portal
-  if (typeof window !== 'undefined' && window.location.hostname === 'admin.awhittlewandering.com') {
-    return 'https://admin-api.awhittlewandering.com';
-  }
-  // Use development API for local development
+  // Temporarily use fallback API while custom domain DNS propagates
+  // TODO: Switch back to admin-api.awhittlewandering.com when DNS is configured
   return 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
 };
 

@@ -2,15 +2,16 @@ name = "awhittlewandering-api"
 main = "dist/worker.js"
 compatibility_date = "2024-07-24"
 
-# Custom domain configuration for API
-[[routes]]
-pattern = "admin-api.awhittlewandering.com/*"
-zone_name = "awhittlewandering.com"
+# Temporarily using workers.dev subdomain
+# Custom domain configuration for API (disabled until DNS is properly configured)
+# [[routes]]
+# pattern = "admin-api.awhittlewandering.com/*"
+# zone_name = "awhittlewandering.com"
 
 [env.production]
 name = "awhittlewandering-api"
 
-# Production domain routing
-[[env.production.routes]]
-pattern = "admin-api.awhittlewandering.com/*"
-zone_name = "awhittlewandering.com"
+# Production domain routing (disabled until DNS is properly configured)
+# [[env.production.routes]]
+# pattern = "admin-api.awhittlewandering.com/*"
+# zone_name = "awhittlewandering.com"
