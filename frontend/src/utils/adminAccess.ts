@@ -7,11 +7,11 @@ export const isAdminDomain = (): boolean => {
   const hostname = window.location.hostname;
   
   // Allow admin access on:
-  // - awhittlewandering.admin.com
+  // - admin.awhittlewandering.com
   // - localhost (for development)
   // - 127.0.0.1 (for development)
   return (
-    hostname === 'awhittlewandering.admin.com' ||
+    hostname === 'admin.awhittlewandering.com' ||
     hostname === 'localhost' ||
     hostname === '127.0.0.1' ||
     hostname.includes('localhost') ||
@@ -24,14 +24,14 @@ export const requireAdmin = (): boolean => {
   
   if (!isAdmin) {
     console.warn('🚫 Admin access denied - not on admin domain');
-    console.warn('Admin functions only available on: awhittlewandering.admin.com');
+    console.warn('Admin functions only available on: admin.awhittlewandering.com');
   }
   
   return isAdmin;
 };
 
 export const getAdminUrl = (path: string = ''): string => {
-  return `https://awhittlewandering.admin.com${path}`;
+  return `https://admin.awhittlewandering.com${path}`;
 };
 
 export const redirectToAdmin = (path: string = ''): void => {
