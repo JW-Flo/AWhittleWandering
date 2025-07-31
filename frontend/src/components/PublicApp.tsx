@@ -17,49 +17,12 @@ const PublicApp: React.FC = () => {
     charges, 
     currentLocation, 
     journeyInsights, 
+    routePoints, // Get real route points from hook
     loading, 
     error, 
     isLive, 
     refresh 
   } = useRobustData();
-
-  // Generate route points from drives data for the map
-  const routePoints = drives.length > 0 ? drives.slice(0, 10).map((drive, index) => ({
-    latitude: 40 + (index * 2), // Mock coordinates - these would come from actual drive data
-    longitude: -100 + (index * 3),
-    state: drive.end_location?.address?.split(', ')[1] || 'Unknown',
-    date: new Date(drive.start_date).toLocaleDateString()
-  })) : [
-    // Known major stops from the actual journey
-    { latitude: 27.8006, longitude: -97.3964, state: 'Texas', date: 'June 1' },
-    { latitude: 32.2548, longitude: -104.3681, state: 'New Mexico', date: 'June 2' },
-    { latitude: 34.0489, longitude: -111.0937, state: 'Arizona', date: 'June 6' },
-    { latitude: 39.3210, longitude: -111.0937, state: 'Utah', date: 'June 8' },
-    { latitude: 34.0522, longitude: -118.2437, state: 'California', date: 'June 9' },
-    { latitude: 45.5152, longitude: -122.6784, state: 'Oregon', date: 'June 15' },
-    { latitude: 47.6062, longitude: -122.3321, state: 'Washington', date: 'June 16' },
-    { latitude: 47.6587, longitude: -116.7804, state: 'Idaho', date: 'June 20' },
-    { latitude: 45.6770, longitude: -111.0429, state: 'Montana', date: 'June 21' },
-    { latitude: 44.2619, longitude: -110.8384, state: 'Wyoming', date: 'June 23' },
-    { latitude: 39.7392, longitude: -104.9903, state: 'Colorado', date: 'June 27' },
-    { latitude: 40.8136, longitude: -96.7026, state: 'Nebraska', date: 'July 3' },
-    { latitude: 41.5868, longitude: -93.6250, state: 'Iowa', date: 'July 4' },
-    { latitude: 44.5000, longitude: -100.0000, state: 'South Dakota', date: 'July 4' },
-    { latitude: 46.8083, longitude: -96.7898, state: 'North Dakota', date: 'July 5' },
-    { latitude: 44.9537, longitude: -93.0900, state: 'Minnesota', date: 'July 6' },
-    { latitude: 44.2619, longitude: -89.6165, state: 'Wisconsin', date: 'July 7' },
-    { latitude: 41.8781, longitude: -87.6298, state: 'Illinois', date: 'July 8' },
-    { latitude: 39.7910, longitude: -86.1480, state: 'Indiana', date: 'July 9' },
-    { latitude: 40.3888, longitude: -82.7649, state: 'Ohio', date: 'July 10' },
-    { latitude: 42.1540, longitude: -80.0348, state: 'Pennsylvania', date: 'July 13' },
-    { latitude: 42.6526, longitude: -73.7562, state: 'New York', date: 'July 14' },
-    { latitude: 44.0459, longitude: -72.7107, state: 'Vermont', date: 'July 15' },
-    { latitude: 43.4525, longitude: -71.5639, state: 'New Hampshire', date: 'July 16' },
-    { latitude: 44.3106, longitude: -68.2073, state: 'Maine', date: 'July 17' },
-    { latitude: 42.2352, longitude: -71.0275, state: 'Massachusetts', date: 'July 19' },
-    { latitude: 41.1865, longitude: -73.1532, state: 'Connecticut', date: 'July 20' },
-    { latitude: 41.4901, longitude: -71.3128, state: 'Rhode Island', date: 'July 25' }
-  ];
 
   // Get Mapbox token from environment - gracefully handle missing token
   const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN || process.env.REACT_APP_MAPBOX_TOKEN || '';
