@@ -4,7 +4,7 @@ compatibility_date = "2024-07-24"
 
 # Custom domain configuration for API
 [[routes]]
-pattern = "api.awhittlewandering.com/*"
+pattern = "admin-api.awhittlewandering.com/*"
 zone_name = "awhittlewandering.com"
 
 [env.production]
@@ -12,5 +12,5 @@ name = "awhittlewandering-api"
 
 # Production domain routing
 [[env.production.routes]]
-pattern = "api.awhittlewandering.com/*"
+pattern = "admin-api.awhittlewandering.com/*"
 zone_name = "awhittlewandering.com"
