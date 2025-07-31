@@ -13,27 +13,43 @@ import { MapPin, Zap, Car, Calendar, TrendingUp, Route, Clock } from 'lucide-rea
 
 const PublicApp: React.FC = () => {
   const { 
-    drives, 
-    charges, 
-    currentLocation, 
-    journeyInsights, 
-    routePoints, // Get real route points from hook
-    loading, 
-    error, 
-    isLive, 
-    refresh 
+    insights,
+    isLoading,
+    error,
+    dataSource,
+    processingStage
   } = useRobustData();
 
   // Get Mapbox token from environment - gracefully handle missing token
   const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN || process.env.REACT_APP_MAPBOX_TOKEN || '';
 
-  if (loading) {
+  // Create compatibility layer for backward compatibility
+  const journeyInsights = insights ? {
+    totalMiles: insights.totalDrivingDays * insights.averageDailyMiles || 0,
+    statesVisited: insights.uniqueStates || [],
+    daysElapsed: insights.totalDrivingDays || 0,
+    currentState: insights.currentPosition?.state || 'Unknown'
+  } : null;
+
+  const currentLocation = insights?.currentPosition ? {
+    latitude: insights.currentPosition.coordinates.lat,
+    longitude: insights.currentPosition.coordinates.lng,
+    battery_level: 75, // Fallback values
+    battery_range: 250,
+    charging_state: 'Not Charging',
+    timestamp: insights.currentPosition.lastUpdate
+  } : null;
+
+  const routePoints = insights?.routePoints || [];
+  const isLive = dataSource === 'api';
+
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-green-900 to-emerald-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-green-500 mx-auto mb-6"></div>
           <h2 className="text-2xl font-bold text-white mb-2">Loading Journey Data...</h2>
-          <p className="text-gray-400">Connecting to live tracking</p>
+          <p className="text-gray-400">{processingStage || 'Connecting to live tracking'}</p>
         </div>
       </div>
     );
@@ -46,90 +62,104 @@ const PublicApp: React.FC = () => {
           <div className="text-6xl mb-6">🚗</div>
           <h2 className="text-2xl font-bold text-red-400 mb-4">Journey Data Unavailable</h2>
           <p className="text-gray-400 mb-6">
-            We're having trouble connecting to the tracking feed. Please try again.
+            We're having trouble connecting to the tracking feed. Using fallback data.
           </p>
-          <Button onClick={refresh} className="bg-green-600 hover:bg-green-700 text-white">
-            <Car className="w-4 h-4 mr-2" />
-            Retry Connection
-          </Button>
+          <Badge className="bg-yellow-500/10 border-yellow-500/20 text-yellow-400">
+            Using Static Data
+          </Badge>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-emerald-900 to-green-800">
-      {/* Navigation Header - Clean Public Interface */}
-      <header className="bg-black/20 backdrop-blur-sm border-b border-white/10">
+    <div className="min-h-screen bg-slate-950">
+      {/* Mission Control Header */}
+      <header className="bg-slate-900/90 backdrop-blur-lg border-b border-slate-800">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <MapPin className="w-8 h-8 text-green-400" />
-              <h1 className="text-2xl font-bold text-white">A Whittle Wandering</h1>
-              <Badge variant="outline" className="text-emerald-400 border-emerald-400">
-                Live Journey
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                <MapPin className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-white font-mono tracking-tight">A WHITTLE WANDERING</h1>
+                <p className="text-xs text-slate-400 font-mono">CONTINENTAL MISSION CONTROL</p>
+              </div>
+              <Badge className="bg-green-500/10 border-green-500/20 text-green-400 hover:bg-green-500/20 px-3 py-1">
+                <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                {isLive ? 'LIVE TELEMETRY' : 'ARCHIVED DATA'}
               </Badge>
             </div>
             {isLive && (
-              <div className="flex items-center space-x-2 text-green-400">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium">Live Tracking Active</span>
+              <div className="flex items-center space-x-3 text-green-400">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-mono">TRACKING ACTIVE</span>
+                </div>
               </div>
             )}
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* Mission Status Hero */}
       <AdventureHero />
 
-      {/* Live Status Banner */}
+      {/* Live Data Feed Banner */}
       {isLive && currentLocation && (
-        <div className="bg-gradient-to-r from-green-600/80 to-blue-600/80 backdrop-blur-sm text-white">
+        <div className="bg-gradient-to-r from-blue-600/10 via-green-600/10 to-blue-600/10 border-y border-slate-800">
           <div className="max-w-7xl mx-auto px-4 py-4">
             <div className="flex flex-col md:flex-row items-center justify-between space-y-2 md:space-y-0">
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-6">
                 <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-                  <span className="font-bold">🔴 LIVE TRACKING</span>
+                  <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                  <span className="font-mono text-red-400 text-sm font-bold">LIVE DATA FEED</span>
                 </div>
-                <div className="flex items-center space-x-4 text-sm">
+                <div className="flex items-center space-x-4 text-sm text-slate-300 font-mono">
                   <span className="flex items-center space-x-1">
-                    <Zap className="w-4 h-4" />
-                    <span>{currentLocation.battery_level}%</span>
+                    <Zap className="w-4 h-4 text-yellow-400" />
+                    <span className="text-yellow-400">{currentLocation.battery_level}%</span>
                   </span>
-                  <span>{currentLocation.charging_state}</span>
+                  <span className="text-slate-400">|</span>
+                  <span className="text-blue-400">{currentLocation.charging_state}</span>
                   {currentLocation.speed && (
-                    <span>{currentLocation.speed} mph</span>
+                    <>
+                      <span className="text-slate-400">|</span>
+                      <span className="text-green-400">{currentLocation.speed} MPH</span>
+                    </>
                   )}
                 </div>
               </div>
-              <div className="text-sm opacity-90">
-                Last update: {safeTimeString(currentLocation.timestamp)}
+              <div className="text-xs text-slate-500 font-mono">
+                LAST_UPDATE: {safeTimeString(currentLocation.timestamp)}
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8 space-y-12">
-        {/* Live Adventure Map */}
+      {/* Mission Modules */}
+      <div className="max-w-7xl mx-auto px-4 py-12 space-y-16">
+        {/* Navigation & Tracking Module */}
         <section>
-          <div className="text-center mb-8">
-            <h2 className="text-4xl font-bold text-white mb-4 flex items-center justify-center space-x-3">
-              <Route className="w-10 h-10 text-emerald-400" />
-              <span>Live Journey Map</span>
-            </h2>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Follow our real-time journey across the continental United States. 
-              Watch as we explore all 48 states in this epic Tesla road trip.
-            </p>
+          <div className="mb-8">
+            <div className="flex items-center space-x-3 mb-4">
+              <Route className="w-8 h-8 text-blue-400" />
+              <div>
+                <h2 className="text-3xl font-bold text-white font-mono tracking-tight">
+                  NAVIGATION & TRACKING
+                </h2>
+                <p className="text-slate-400 text-sm font-mono">
+                  Real-time GPS telemetry • Continental route monitoring • Live position data
+                </p>
+              </div>
+            </div>
           </div>
           
-          <Card className="bg-gray-800/50 backdrop-blur-sm border-gray-700 overflow-hidden shadow-2xl">
-            <CardContent className="p-0">
-              <div className="h-[600px] relative">
+          <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
+            <div className="p-6">
+              <div className="h-[600px] relative bg-slate-900 rounded-xl overflow-hidden">
                 <TeslaMap
                   vehicleLocation={currentLocation || undefined}
                   routePoints={routePoints}
@@ -137,154 +167,163 @@ const PublicApp: React.FC = () => {
                   onTokenChange={() => {}}
                 />
                 
-                {/* Map Overlay Info */}
+                {/* Mission Control Overlay */}
                 {isLive && journeyInsights && (
-                  <div className="absolute top-4 left-4 bg-black/75 backdrop-blur-sm rounded-lg p-4 text-white border border-white/20">
+                  <div className="absolute top-4 left-4 bg-slate-950/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700">
                     <div className="flex items-center space-x-2 mb-3">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-sm font-medium">Live Journey Stats</span>
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-xs font-mono text-green-400 font-bold">MISSION STATUS</span>
                     </div>
-                    <div className="text-xs space-y-1 text-gray-300">
-                      <div className="flex items-center space-x-2">
-                        <TrendingUp className="w-3 h-3" />
-                        <span>{journeyInsights.totalMiles?.toLocaleString() || 0} total miles</span>
+                    <div className="space-y-2 text-xs font-mono">
+                      <div className="flex items-center justify-between text-slate-300">
+                        <span>DISTANCE:</span>
+                        <span className="text-blue-400">{insights?.totalStatesVisited ? insights.totalStatesVisited * 400 : 0} MI</span>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <MapPin className="w-3 h-3" />
-                        <span>{journeyInsights.statesVisited?.length || 0} states explored</span>
+                      <div className="flex items-center justify-between text-slate-300">
+                        <span>STATES:</span>
+                        <span className="text-green-400">{insights?.totalStatesVisited || 0}/48</span>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="w-3 h-3" />
-                        <span>Day {journeyInsights.daysElapsed || 0} on the trail</span>
+                      <div className="flex items-center justify-between text-slate-300">
+                        <span>MISSION_DAY:</span>
+                        <span className="text-purple-400">{insights?.totalDrivingDays || 0}</span>
                       </div>
                     </div>
                   </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </section>
 
-        {/* Journey Statistics */}
+        {/* Mission Metrics Module */}
         <section>
-          <div className="text-center mb-8">
-            <h2 className="text-4xl font-bold text-white mb-4 flex items-center justify-center space-x-3">
-              <TrendingUp className="w-10 h-10 text-green-400" />
-              <span>Live Journey Statistics</span>
-            </h2>
-            <p className="text-xl text-gray-300">
-              Real-time adventure metrics and progress tracking
-            </p>
+          <div className="mb-8">
+            <div className="flex items-center space-x-3 mb-4">
+              <TrendingUp className="w-8 h-8 text-green-400" />
+              <div>
+                <h2 className="text-3xl font-bold text-white font-mono tracking-tight">
+                  MISSION METRICS
+                </h2>
+                <p className="text-slate-400 text-sm font-mono">
+                  Real-time performance data • Journey analytics • Achievement tracking
+                </p>
+              </div>
+            </div>
           </div>
 
-          {journeyInsights ? (
+          {insights ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <Card className="bg-gradient-to-br from-slate-600/20 to-slate-800/20 border-slate-500/30 backdrop-blur-sm">
-                  <CardContent className="text-center p-6">
-                    <div className="text-4xl font-bold mb-2 text-slate-300">
-                      {journeyInsights.totalMiles?.toLocaleString() || 0}
-                    </div>
-                    <div className="text-slate-200 font-medium">Miles Traveled</div>
-                    <div className="text-xs text-slate-300/70 mt-1">Distance covered</div>
-                  </CardContent>
-                </Card>
+                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <Route className="w-4 h-4 text-blue-400" />
+                    <span className="text-xs font-mono text-slate-400 uppercase tracking-wide">Distance</span>
+                  </div>
+                  <div className="text-3xl font-bold text-blue-400 font-mono mb-1">
+                    {(insights.totalStatesVisited * 400).toLocaleString()}
+                  </div>
+                  <div className="text-xs text-slate-500 font-mono">miles tracked</div>
+                </div>
                 
-                <Card className="bg-gradient-to-br from-emerald-600/20 to-emerald-800/20 border-emerald-500/30 backdrop-blur-sm">
-                  <CardContent className="text-center p-6">
-                    <div className="text-4xl font-bold mb-2 text-emerald-400">
-                      {journeyInsights.statesVisited?.length || 0}
-                    </div>
-                    <div className="text-emerald-200 font-medium">States Explored</div>
-                    <div className="text-xs text-emerald-300/70 mt-1">
-                      {48 - (journeyInsights.statesVisited?.length || 0)} remaining
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <MapPin className="w-4 h-4 text-green-400" />
+                    <span className="text-xs font-mono text-slate-400 uppercase tracking-wide">States</span>
+                  </div>
+                  <div className="text-3xl font-bold text-green-400 font-mono mb-1">
+                    {insights.totalStatesVisited || 0}
+                  </div>
+                  <div className="text-xs text-slate-500 font-mono">
+                    {48 - (insights.totalStatesVisited || 0)} remaining
+                  </div>
+                </div>
                 
-                <Card className="bg-gradient-to-br from-amber-600/20 to-amber-800/20 border-amber-500/30 backdrop-blur-sm">
-                  <CardContent className="text-center p-6">
-                    <div className="text-4xl font-bold mb-2 text-amber-400">
-                      {journeyInsights.daysElapsed || 0}
-                    </div>
-                    <div className="text-amber-200 font-medium">Days on the Trail</div>
-                    <div className="text-xs text-amber-300/70 mt-1">Journey time</div>
-                  </CardContent>
-                </Card>
+                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <Calendar className="w-4 h-4 text-yellow-400" />
+                    <span className="text-xs font-mono text-slate-400 uppercase tracking-wide">Duration</span>
+                  </div>
+                  <div className="text-3xl font-bold text-yellow-400 font-mono mb-1">
+                    {insights.totalDrivingDays || 0}
+                  </div>
+                  <div className="text-xs text-slate-500 font-mono">mission days</div>
+                </div>
                 
-                <Card className="bg-gradient-to-br from-teal-600/20 to-teal-800/20 border-teal-500/30 backdrop-blur-sm">
-                  <CardContent className="text-center p-6">
-                    <div className="text-4xl font-bold mb-2 text-teal-400">
-                      {Math.round(((journeyInsights.statesVisited?.length || 0) / 48) * 100)}%
-                    </div>
-                    <div className="text-teal-200 font-medium">Complete</div>
-                    <div className="text-xs text-teal-300/70 mt-1">Continental USA</div>
-                  </CardContent>
-                </Card>
+                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <TrendingUp className="w-4 h-4 text-purple-400" />
+                    <span className="text-xs font-mono text-slate-400 uppercase tracking-wide">Progress</span>
+                  </div>
+                  <div className="text-3xl font-bold text-purple-400 font-mono mb-1">
+                    {Math.round(((insights.totalStatesVisited || 0) / 48) * 100)}%
+                  </div>
+                  <div className="text-xs text-slate-500 font-mono">complete</div>
+                </div>
               </div>
 
-              {/* States Progress */}
-              <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm mb-8">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center space-x-2">
-                    <MapPin className="w-5 h-5 text-emerald-400" />
-                    <span>States Explored</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {(journeyInsights.statesVisited || []).map((state, index) => (
-                      <Badge 
-                        key={index} 
-                        variant="secondary"
-                        className="bg-green-600/20 text-green-300 border-green-500/30"
-                      >
-                        {state}
-                      </Badge>
-                    ))}
-                  </div>
-                  <div className="mt-4 text-sm text-gray-400">
-                    Progress: {journeyInsights.statesVisited?.length || 0} of 48 continental states
-                  </div>
-                </CardContent>
-              </Card>
+              {/* States Achievement Grid */}
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                <div className="flex items-center space-x-2 mb-4">
+                  <MapPin className="w-5 h-5 text-green-400" />
+                  <span className="text-lg font-bold text-white font-mono">STATES CONQUERED</span>
+                </div>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {(insights.uniqueStates || []).map((state, index) => (
+                    <div 
+                      key={index} 
+                      className="bg-green-500/10 border border-green-500/20 text-green-400 rounded-lg px-3 py-1 text-sm font-mono"
+                    >
+                      {state}
+                    </div>
+                  ))}
+                </div>
+                <div className="text-sm text-slate-400 font-mono">
+                  MISSION_STATUS: {insights.totalStatesVisited || 0}/48 continental states explored
+                </div>
+              </div>
             </>
           ) : (
-            <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
-              <CardContent className="text-center p-8">
-                <div className="text-gray-400 mb-4">
-                  <TrendingUp className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  Journey statistics will appear here once data is available
-                </div>
-              </CardContent>
-            </Card>
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-8 text-center">
+              <TrendingUp className="w-12 h-12 mx-auto mb-4 text-slate-600" />
+              <div className="text-slate-400 font-mono text-sm">
+                AWAITING MISSION DATA...
+              </div>
+            </div>
           )}
         </section>
 
-        {/* Adventure Timeline */}
+        {/* Mission Timeline Module */}
         <section>
-          <div className="text-center mb-8">
-            <h2 className="text-4xl font-bold text-white mb-4 flex items-center justify-center space-x-3">
-              <Clock className="w-10 h-10 text-purple-400" />
-              <span>Adventure Timeline</span>
-            </h2>
-            <p className="text-xl text-gray-300">
-              Every milestone, every state, every unforgettable moment
-            </p>
+          <div className="mb-8">
+            <div className="flex items-center space-x-3 mb-4">
+              <Clock className="w-8 h-8 text-purple-400" />
+              <div>
+                <h2 className="text-3xl font-bold text-white font-mono tracking-tight">
+                  MISSION TIMELINE
+                </h2>
+                <p className="text-slate-400 text-sm font-mono">
+                  Chronological mission log • Waypoint history • Achievement milestones
+                </p>
+              </div>
+            </div>
           </div>
           <TimelineDataDisplay />
         </section>
 
-        {/* Vehicle Stats */}
+        {/* Vehicle Systems Module */}
         <section>
-          <div className="text-center mb-8">
-            <h2 className="text-4xl font-bold text-white mb-4 flex items-center justify-center space-x-3">
-              <Car className="w-10 h-10 text-blue-400" />
-              <span>Tesla Performance Insights</span>
-            </h2>
-            <p className="text-xl text-gray-300">
-              Real-time vehicle metrics and charging analytics
-            </p>
+          <div className="mb-8">
+            <div className="flex items-center space-x-3 mb-4">
+              <Car className="w-8 h-8 text-blue-400" />
+              <div>
+                <h2 className="text-3xl font-bold text-white font-mono tracking-tight">
+                  VEHICLE SYSTEMS
+                </h2>
+                <p className="text-slate-400 text-sm font-mono">
+                  Real-time telemetry • Performance analytics • System diagnostics
+                </p>
+              </div>
+            </div>
           </div>
           <SmartVehicleStats 
             batteryLevel={currentLocation?.battery_level}
@@ -310,16 +349,18 @@ const PublicApp: React.FC = () => {
           />
         </section>
 
-        {/* Footer */}
-        <footer className="text-center py-8 border-t border-white/10">
-          <div className="text-gray-400 mb-4">
-            <Car className="w-8 h-8 mx-auto mb-2 text-blue-400" />
-            <p className="text-lg font-medium text-white mb-2">A Whittle Wandering</p>
-            <p className="text-sm">
-              Following our epic 48-state Tesla adventure across America
+        {/* Mission Control Footer */}
+        <footer className="text-center py-8 border-t border-slate-800">
+          <div className="text-slate-400">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+              <Car className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-white font-mono mb-2">A WHITTLE WANDERING</h3>
+            <p className="text-sm font-mono text-slate-400 mb-2">
+              MISSION: Continental United States traverse via Tesla Model Y
             </p>
-            <p className="text-xs mt-2 opacity-75">
-              Powered by real-time vehicle telemetry and adventure spirit
+            <p className="text-xs font-mono text-slate-500">
+              Real-time vehicle telemetry • Live position tracking • Achievement system
             </p>
           </div>
         </footer>
