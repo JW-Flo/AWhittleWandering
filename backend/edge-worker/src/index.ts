@@ -282,6 +282,8 @@ app.get('/api/v1/unified-data', async (c) => {
       error: 'Failed to fetch data and no cache available',
       tessieStatus: {
         connected: false,
+        lastUpdate: new Date().toISOString(),
+        dataFreshness: "unknown",
         error: error instanceof Error ? error.message : 'Unknown error'
       }
     }, 500);
