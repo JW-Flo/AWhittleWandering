@@ -37,6 +37,10 @@ interface TessieVehicleState {
   vehicle_state?: {
     odometer?: number;
   };
+  // Add more fields as needed based on your API response
+  timestamp?: number;
+  shiftState?: string;
+  power?: number;
 }
 
 export interface UnifiedApiData {
@@ -72,22 +76,8 @@ export interface UnifiedApiData {
     };
   };
   timeline: {
-    drives: Array<{
-      id: number;
-      date: string;
-      startLocation: string;
-      endLocation: string;
-      distance: number;
-      duration: number;
-      energyUsed: number;
-    }>;
-    charges: Array<{
-      id: number;
-      date: string;
-      location: string;
-      energyAdded: number;
-      duration: number;
-    }>;
+    drives: TeslaDriveData[];
+    charges: TeslaChargeData[];
   };
   liveData: {
     timestamp: number;
@@ -100,7 +90,7 @@ export interface UnifiedApiData {
   tessieStatus: {
     connected: boolean;
     lastUpdate: string;
-    dataFreshness: 'live' | 'cached';
+    dataFreshness: 'live' | 'cached' | 'unknown';
     error?: string;
   };
 }
@@ -174,6 +164,6 @@ export const useUnifiedApiData = (pollInterval: number = 30000) => {
     lastUpdate,
     refetch,
     isConnected: data?.tessieStatus?.connected ?? false,
-    dataFreshness: data?.tessieStatus?.dataFreshness ?? 'cached' as const
+    dataFreshness: data?.tessieStatus?.dataFreshness ?? 'unknown'
   };
 };
