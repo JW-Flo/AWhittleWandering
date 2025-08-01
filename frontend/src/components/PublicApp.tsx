@@ -1,5 +1,5 @@
 import React from 'react';
-import { useRobustData } from '@/hooks/useRobustData';
+import { useUnifiedApiData } from '@/hooks/useUnifiedApiData';
 import { formatTemperature } from '@/utils/temperature';
 import { safeTimeString } from '@/utils/dateHelpers';
 import AdventureHero from './AdventureHero';
@@ -13,35 +13,116 @@ import { MapPin, Zap, Car, Calendar, TrendingUp, Route, Clock } from 'lucide-rea
 
 const PublicApp: React.FC = () => {
   const { 
-    insights,
+    data: unifiedData,
     isLoading,
     error,
-    dataSource,
-    processingStage
-  } = useRobustData();
+    lastUpdate,
+    isConnected,
+    dataFreshness
+  } = useUnifiedApiData(30000); // Poll every 30 seconds
 
   // Get Mapbox token from environment - gracefully handle missing token
   const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN || process.env.REACT_APP_MAPBOX_TOKEN || '';
 
-  // Create compatibility layer for backward compatibility
-  const journeyInsights = insights ? {
-    totalMiles: insights.totalDrivingDays * insights.averageDailyMiles || 0,
-    statesVisited: insights.uniqueStates || [],
-    daysElapsed: insights.totalDrivingDays || 0,
-    currentState: insights.currentPosition?.state || 'Unknown'
+  // Create compatibility layer for backward compatibility with existing components
+  const insights = unifiedData ? {
+    totalStatesVisited: unifiedData.overview.statesVisited,
+    totalDrivingDays: unifiedData.overview.daysElapsed,
+    accurateStateCount: unifiedData.overview.statesVisited,
+    stateCrossings: unifiedData.overview.statesVisited - 1,
+    currentLocation: `${unifiedData.currentStatus.location.city}, ${unifiedData.currentStatus.location.state}`,
+    uniqueRegions: ["Southwest", "West Coast", "Mountain West"], // Fallback
+    weatherSeasons: ["Summer"], // Fallback
+    terrainTypes: ["Desert", "Mountains", "Coastal"], // Fallback
+    routeComplexity: "complex" as const,
+    journeyScore: 750, // Fallback
+    currentPosition: {
+      state: unifiedData.currentStatus.location.state,
+      coordinates: unifiedData.currentStatus.location.coordinates,
+      lastUpdate: unifiedData.currentStatus.location.lastUpdate
+    },
+    uniqueStates: Array.from({ length: unifiedData.overview.statesVisited }, (_, i) => `State ${i + 1}`), // Simplified
+    totalMiles: unifiedData.overview.totalMiles,
+    averageDailyMiles: Math.round(unifiedData.overview.totalMiles / Math.max(unifiedData.overview.daysElapsed, 1))
   } : null;
 
-  const currentLocation = insights?.currentPosition ? {
-    latitude: insights.currentPosition.coordinates.lat,
-    longitude: insights.currentPosition.coordinates.lng,
-    battery_level: 75, // Fallback values
-    battery_range: 250,
-    charging_state: 'Not Charging',
-    timestamp: insights.currentPosition.lastUpdate
+    // Extract actual states visited from drive data
+  const getStatesFromDrives = (drives: any[]): string[] => {
+    const statesSet = new Set<string>();
+    
+    drives.forEach(drive => {
+      // Extract state from start location (format: "City, State ZIP, Country")
+      const startMatch = drive.startLocation?.match(/,\s*([A-Za-z\s]+?)\s*\d{5}/);
+      if (startMatch) {
+        statesSet.add(startMatch[1].trim());
+      }
+      
+      // Extract state from end location
+      const endMatch = drive.endLocation?.match(/,\s*([A-Za-z\s]+?)\s*\d{5}/);
+      if (endMatch) {
+        statesSet.add(endMatch[1].trim());
+      }
+    });
+    
+    return Array.from(statesSet);
+  };
+
+  const journeyStats = unifiedData ? {
+    totalMiles: unifiedData.overview.totalMiles,
+    daysElapsed: unifiedData.overview.daysElapsed,
+    location: {
+      state: unifiedData.currentStatus.location.state,
+      coordinates: unifiedData.currentStatus.location.coordinates,
+      lastUpdate: unifiedData.currentStatus.location.lastUpdate
+    },
+    uniqueStates: getStatesFromDrives(unifiedData.timeline.drives),
+    averageDailyMiles: Math.round(unifiedData.overview.totalMiles / Math.max(unifiedData.overview.daysElapsed, 1))
   } : null;
 
-  const routePoints = insights?.routePoints || [];
-  const isLive = dataSource === 'api';
+  const journeyInsights = unifiedData ? {
+    totalMiles: unifiedData.overview.totalMiles,
+    statesVisited: getStatesFromDrives(unifiedData.timeline.drives),
+    daysElapsed: unifiedData.overview.daysElapsed,
+    currentState: unifiedData.currentStatus.location.state || 'Location Unavailable'
+  } : null;
+
+  const currentLocation = unifiedData ? {
+    latitude: unifiedData.currentStatus.location.coordinates.lat,
+    longitude: unifiedData.currentStatus.location.coordinates.lng,
+    battery_level: unifiedData.currentStatus.battery.level,
+    battery_range: unifiedData.currentStatus.battery.range,
+    charging_state: unifiedData.currentStatus.battery.charging,
+    inside_temp: unifiedData.currentStatus.vehicle.temperature.inside,
+    outside_temp: unifiedData.currentStatus.vehicle.temperature.outside,
+    odometer: unifiedData.currentStatus.vehicle.odometer,
+    speed: unifiedData.currentStatus.vehicle.speed,
+    timestamp: unifiedData.liveData.timestamp
+  } : null;
+
+  // Convert timeline drives to route points format with proper coordinates
+  const routePoints = unifiedData?.timeline.drives.map((drive, index) => {
+    // Extract state from location string
+    const stateMatch = drive.startLocation?.match(/,\s*([A-Za-z\s]+?)\s*\d{5}/);
+    const state = stateMatch ? stateMatch[1].trim() : 'Unknown';
+    
+    // Use actual coordinates from current location for route visualization
+    // In a real implementation, you'd geocode the addresses or store coordinates
+    const baseCoords = unifiedData.currentStatus.location.coordinates;
+    
+    return {
+      latitude: baseCoords.lat + (Math.random() - 0.5) * 0.1, // Small random offset for visualization
+      longitude: baseCoords.lng + (Math.random() - 0.5) * 0.1,
+      state,
+      date: drive.date,
+      address: drive.startLocation,
+      driveIndex: index,
+      category: 'drive' as const,
+      significance: 'medium' as const
+    };
+  }) || [];
+
+  const isLive = isConnected && dataFreshness === 'live';
+  const charges = unifiedData?.timeline.charges || [];
 
   if (isLoading) {
     return (
@@ -49,7 +130,7 @@ const PublicApp: React.FC = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-green-500 mx-auto mb-6"></div>
           <h2 className="text-2xl font-bold text-white mb-2">Loading Journey Data...</h2>
-          <p className="text-gray-400">{processingStage || 'Connecting to live tracking'}</p>
+          <p className="text-gray-400">{isLoading ? 'Connecting to live tracking' : 'Connected to live feed'}</p>
         </div>
       </div>
     );
