@@ -91,7 +91,7 @@ interface Env {
   TELEMETRY_ANALYTICS: AnalyticsEngine;
   DATA_PROCESSOR: Queue;
   TESSIE_API_KEY: string;
-  TESLA_VEHICLE_VIN: string;
+  TESLA_VIN: string;
   OPENWEATHER_API_KEY: string;
   JWT_SECRET: string;
   ADMIN_PASSWORD: string;
@@ -226,7 +226,7 @@ app.get('/api/v1/unified-data', async (c) => {
 // Full data sync - runs every 30 minutes
 app.get('/api/v1/cron/full-sync', async (c) => {
   const tessieApiKey = c.env.TESSIE_API_KEY;
-  const vehicleVin = c.env.TESLA_VEHICLE_VIN || 'default-vin'; // Make configurable
+  const vehicleVin = c.env.TESLA_VIN || 'default-vin'; // Make configurable
   
   if (!tessieApiKey) {
     return c.json({ error: 'TESSIE_API_KEY not configured' }, 500);
@@ -239,7 +239,7 @@ app.get('/api/v1/cron/full-sync', async (c) => {
 // Quick state update - runs every 5 minutes  
 app.get('/api/v1/cron/quick-update', async (c) => {
   const tessieApiKey = c.env.TESSIE_API_KEY;
-  const vehicleVin = c.env.TESLA_VEHICLE_VIN || 'default-vin'; // Make configurable
+  const vehicleVin = c.env.TESLA_VIN || 'default-vin'; // Make configurable
   
   if (!tessieApiKey) {
     return c.json({ error: 'TESSIE_API_KEY not configured' }, 500);
@@ -252,7 +252,7 @@ app.get('/api/v1/cron/quick-update', async (c) => {
 // Historical backfill - runs daily
 app.get('/api/v1/cron/backfill', async (c) => {
   const tessieApiKey = c.env.TESSIE_API_KEY;
-  const vehicleVin = c.env.TESLA_VEHICLE_VIN || 'default-vin'; // Make configurable
+  const vehicleVin = c.env.TESLA_VIN || 'default-vin'; // Make configurable
   
   if (!tessieApiKey) {
     return c.json({ error: 'TESSIE_API_KEY not configured' }, 500);
@@ -265,7 +265,7 @@ app.get('/api/v1/cron/backfill', async (c) => {
 // Data quality check - runs hourly
 app.get('/api/v1/cron/quality-check', async (c) => {
   const tessieApiKey = c.env.TESSIE_API_KEY;
-  const vehicleVin = c.env.TESLA_VEHICLE_VIN || 'default-vin'; // Make configurable
+  const vehicleVin = c.env.TESLA_VIN || 'default-vin'; // Make configurable
   
   if (!tessieApiKey) {
     return c.json({ error: 'TESSIE_API_KEY not configured' }, 500);
@@ -278,7 +278,7 @@ app.get('/api/v1/cron/quality-check', async (c) => {
 // AI/ML processing - runs every 6 hours
 app.get('/api/v1/cron/ai-processing', async (c) => {
   const tessieApiKey = c.env.TESSIE_API_KEY;
-  const vehicleVin = c.env.TESLA_VEHICLE_VIN || 'default-vin'; // Make configurable
+  const vehicleVin = c.env.TESLA_VIN || 'default-vin'; // Make configurable
   
   if (!tessieApiKey) {
     return c.json({ error: 'TESSIE_API_KEY not configured' }, 500);
@@ -291,7 +291,7 @@ app.get('/api/v1/cron/ai-processing', async (c) => {
 // Manual data ingestion trigger (for testing/admin)
 app.post('/api/v1/admin/ingest-data', async (c) => {
   const tessieApiKey = c.env.TESSIE_API_KEY;
-  const vehicleVin = c.env.TESLA_VEHICLE_VIN || 'default-vin'; // Make configurable
+  const vehicleVin = c.env.TESLA_VIN || 'default-vin'; // Make configurable
   
   if (!tessieApiKey) {
     return c.json({ error: 'TESSIE_API_KEY not configured' }, 500);
