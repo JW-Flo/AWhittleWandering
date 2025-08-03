@@ -2,19 +2,18 @@
 // Handles all API endpoints and provides consistent error handling
 
 const getApiBaseUrl = () => {
-  // Temporarily use fallback API while custom domain DNS propagates
-  // TODO: Switch back to admin-api.awhittlewandering.com when DNS is configured
+  // Use the correct production worker URL
   return 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
 };
 
 export const API_CONFIG = {
   BASE_URL: getApiBaseUrl(),
   ENDPOINTS: {
-    UNIFIED_DATA: '/api/v1/unified-data',
-    TIMELINE: '/api/v1/unified-data', // Use unified data for timeline
-    LIVE_STATUS: '/api/v1/trip/status', // Use trip status for live status
+    UNIFIED_DATA: '/unified-data',
+    TIMELINE: '/unified-data', // Use unified data for timeline
+    LIVE_STATUS: '/trip-status', // Use trip status for live status
     TELEMETRY: '/api/v1/telemetry',
-    HEALTH: '/api/v1/health'
+    HEALTH: '/health'
   },
   DEFAULT_HEADERS: {
     'Content-Type': 'application/json',

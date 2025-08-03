@@ -195,8 +195,36 @@ app.get('/api/v1/health', async (c) => {
   return c.json(health);
 });
 
+// Simple aliases for easier frontend integration
+app.get('/health', async (c) => {
+  return c.json({
+    status: 'ok',
+    timestamp: Date.now(),
+    service: 'A Whittle Wandering API'
+  });
+});
+
+app.get('/unified-data', async (c) => {
+  // Forward to the main unified data logic
+  return handleUnifiedData(c);
+});
+
+app.get('/trip-status', async (c) => {
+  // Forward to the main trip status logic - just return basic status for now
+  return c.json({
+    tripId: "continental-usa-2025",
+    tripName: "A Whittle Wandering - Continental USA",
+    status: "active",
+    timestamp: Date.now()
+  });
+});
+
 // Main unified data endpoint using D1 for aggregation
 app.get('/api/v1/unified-data', async (c) => {
+  return handleUnifiedData(c);
+});
+
+async function handleUnifiedData(c: any) {
   try {
     const cacheKey = 'unified_data_latest';
     
@@ -276,7 +304,7 @@ app.get('/api/v1/unified-data', async (c) => {
       }
     }, 500);
   }
-});
+}
 
 // API documentation
 app.get('/api/docs', (c) => {
