@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Final API Test</title>
+    <style>
+        body { 
+            font-family: monospace; 
+            background: #1a1a1a; 
+            color: #00ff00; 
+            padding: 20px; 
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+        .warning { color: #ffaa00; }
+        pre { 
+            background: #000; 
+            padding: 10px; 
+            border: 1px solid #333;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 Final CORS & API Test</h1>
+    <div id="results"></div>
+
+    <script>
+        const results = document.getElementById('results');
+        
+        async function testAPIEndpoint(url, name) {
+            const div = document.createElement('div');
+            div.innerHTML = `<h2>Testing ${name}...</h2>`;
+            results.appendChild(div);
+            
+            try {
+                const startTime = Date.now();
+                const response = await fetch(url);
+                const endTime = Date.now();
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                const responseTime = endTime - startTime;
+                
+                div.innerHTML = `
+                    <h2 class="success">✅ ${name} - SUCCESS</h2>
+                    <p>Response Time: ${responseTime}ms</p>
+                    <p>Status: ${response.status}</p>
+                    <p>CORS Headers: ${response.headers.get('access-control-allow-origin') || 'None'}</p>
+                    <details>
+                        <summary>Response Data (click to expand)</summary>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </details>
+                `;
+                
+                return { success: true, data, responseTime };
+                
+            } catch (error) {
+                div.innerHTML = `
+                    <h2 class="error">❌ ${name} - FAILED</h2>
+                    <p class="error">Error: ${error.message}</p>
+                    <p>URL: ${url}</p>
+                `;
+                
+                return { success: false, error: error.message };
+            }
+        }
+        
+        async function runAllTests() {
+            const baseUrl = 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
+            
+            const tests = [
+                { url: `${baseUrl}/health`, name: 'Health Check' },
+                { url: `${baseUrl}/trip-status`, name: 'Trip Status' },
+                { url: `${baseUrl}/unified-data`, name: 'Unified Data (Main API)' }
+            ];
+            
+            const testResults = [];
+            
+            for (const test of tests) {
+                const result = await testAPIEndpoint(test.url, test.name);
+                testResults.push({ ...test, ...result });
+                
+                // Add small delay between tests
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            // Summary
+            const summary = document.createElement('div');
+            const successful = testResults.filter(r => r.success).length;
+            const total = testResults.length;
+            
+            summary.innerHTML = `
+                <h2 class="${successful === total ? 'success' : 'warning'}">
+                    📊 Test Summary: ${successful}/${total} Passed
+                </h2>
+                ${successful === total ? 
+                    '<p class="success">🎉 All systems operational! CORS is working correctly.</p>' :
+                    '<p class="error">⚠️ Some tests failed. Check individual results above.</p>'
+                }
+                <p>Time: ${new Date().toISOString()}</p>
+            `;
+            
+            results.appendChild(summary);
+        }
+        
+        // Start tests when page loads
+        runAllTests();
+    </script>
+</body>
+</html>

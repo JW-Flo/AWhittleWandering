@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend API Debug Test</title>
+    <style>
+        body { 
+            font-family: monospace; 
+            background: #1a1a1a; 
+            color: #00ff00; 
+            padding: 20px; 
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+        .warning { color: #ffaa00; }
+        pre { 
+            background: #000; 
+            padding: 10px; 
+            border: 1px solid #333;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        button {
+            background: #333;
+            color: #00ff00;
+            border: 1px solid #555;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: monospace;
+        }
+        button:hover { background: #555; }
+        .status-box {
+            border: 1px solid #333;
+            padding: 15px;
+            margin: 10px 0;
+            background: #111;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Frontend API Debug Test</h1>
+    <p>Testing the exact same API calls that the React app makes...</p>
+    
+    <div class="status-box">
+        <h3>Test Controls</h3>
+        <button onclick="testDirectAPI()">Test Direct API Call</button>
+        <button onclick="testWithAPIConfig()">Test with API Config</button>
+        <button onclick="testUnifiedDataHook()">Test Unified Data Logic</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script>
+        const results = document.getElementById('results');
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = `[${new Date().toISOString()}] ${message}`;
+            results.appendChild(div);
+            console.log(message);
+        }
+        
+        function clearResults() {
+            results.innerHTML = '';
+        }
+        
+        // Test 1: Direct API call
+        async function testDirectAPI() {
+            log('<h3>🧪 Test 1: Direct API Call</h3>');
+            
+            try {
+                const url = 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev/unified-data';
+                log(`Making direct fetch to: ${url}`);
+                
+                const response = await fetch(url);
+                
+                log(`Response status: ${response.status} ${response.statusText}`, 'success');
+                log(`Response headers: ${JSON.stringify([...response.headers.entries()])}`, 'info');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                log('✅ Direct API call successful!', 'success');
+                log('<details><summary>Response Data (click to expand)</summary><pre>' + JSON.stringify(data, null, 2) + '</pre></details>');
+                
+            } catch (error) {
+                log(`❌ Direct API call failed: ${error.message}`, 'error');
+                log(`Error details: ${error.stack}`, 'error');
+            }
+        }
+        
+        // Test 2: Using API config (mimicking frontend)
+        async function testWithAPIConfig() {
+            log('<h3>🧪 Test 2: Using API Config</h3>');
+            
+            try {
+                // Mimic the frontend API config
+                const API_CONFIG = {
+                    BASE_URL: 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev',
+                    ENDPOINTS: { UNIFIED_DATA: '/unified-data' },
+                    DEFAULT_HEADERS: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                };
+                
+                const url = API_CONFIG.BASE_URL + API_CONFIG.ENDPOINTS.UNIFIED_DATA;
+                log(`API Config URL: ${url}`);
+                
+                const response = await fetch(url, {
+                    headers: API_CONFIG.DEFAULT_HEADERS
+                });
+                
+                log(`Response status: ${response.status}`, response.ok ? 'success' : 'error');
+                
+                if (!response.ok) {
+                    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                log('✅ API Config test successful!', 'success');
+                log('<details><summary>Response Data (click to expand)</summary><pre>' + JSON.stringify(data, null, 2) + '</pre></details>');
+                
+            } catch (error) {
+                log(`❌ API Config test failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test 3: Full unified data processing
+        async function testUnifiedDataHook() {
+            log('<h3>🧪 Test 3: Unified Data Hook Logic</h3>');
+            
+            try {
+                // Simulate the useUnifiedApiData hook logic
+                log('🔄 Fetching unified data from worker API...');
+                
+                const url = 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev/unified-data';
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const unifiedData = await response.json();
+                
+                // Log the same info that the hook logs
+                log('✅ Unified data received:', 'success');
+                log(`Connected: ${unifiedData.tessieStatus?.connected}`, 'info');
+                log(`States Visited: ${unifiedData.overview?.statesVisited}`, 'info');
+                log(`Total Miles: ${unifiedData.overview?.totalMiles}`, 'info');
+                log(`Battery Level: ${unifiedData.currentStatus?.battery?.level}`, 'info');
+                log(`Data Freshness: ${unifiedData.tessieStatus?.dataFreshness}`, 'info');
+                
+                // Check for potential issues
+                if (unifiedData.overview?.statesVisited === 0) {
+                    log('⚠️ WARNING: No states visited in data', 'warning');
+                }
+                
+                if (unifiedData.overview?.totalMiles === 0) {
+                    log('⚠️ WARNING: Total miles is 0', 'warning');
+                }
+                
+                if (!unifiedData.tessieStatus?.connected) {
+                    log('⚠️ WARNING: Tessie not connected', 'warning');
+                }
+                
+                log('<details><summary>Full Response Data</summary><pre>' + JSON.stringify(unifiedData, null, 2) + '</pre></details>');
+                
+            } catch (error) {
+                log(`❌ Hook logic test failed: ${error.message}`, 'error');
+                log(`This is the same error the React hook would encounter`, 'error');
+            }
+        }
+        
+        // Auto-run the first test
+        setTimeout(() => {
+            log('🚀 Auto-running initial API test...');
+            testDirectAPI();
+        }, 1000);
+    </script>
+</body>
+</html>

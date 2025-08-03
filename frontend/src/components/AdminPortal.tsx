@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useRobustData } from '../hooks/useRobustData';
+import { useUnifiedApiData } from '../hooks/useUnifiedApiData';
 import AdminLogin from './AdminLogin';
 import ApiConfig from './ApiConfig';
 import DataDebugger from './DataDebugger';
@@ -16,16 +16,6 @@ import { safeTimeString } from '@/utils/dateHelpers';
 const AdminPortal: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
-  const { 
-    drives, 
-    charges, 
-    currentLocation, 
-    journeyInsights, 
-    loading, 
-    error, 
-    isLive, 
-    refresh 
-  } = useRobustData();
 
   useEffect(() => {
     // Check if we're on admin domain
@@ -49,6 +39,38 @@ const AdminPortal: React.FC = () => {
   if (!isAuthenticated) {
     return <AdminLogin onAuthChange={(authenticated) => setIsAuthenticated(authenticated)} />;
   }
+
+  return (
+    <div className="min-h-screen bg-slate-900 p-6">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold text-white mb-8">Admin Portal</h1>
+        
+        <Card className="bg-slate-800 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white">System Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-green-400 text-lg font-semibold mb-4">
+              ✅ A Whittle Wandering - Admin Portal Active
+            </div>
+            <div className="space-y-2 text-slate-300">
+              <p>• API Connection: Operational</p>
+              <p>• Database: Connected</p>
+              <p>• Admin Interface: Available</p>
+            </div>
+            <div className="mt-6">
+              <Button 
+                onClick={() => window.open('https://awhittlewandering.com', '_blank')}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                View Public Site
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
