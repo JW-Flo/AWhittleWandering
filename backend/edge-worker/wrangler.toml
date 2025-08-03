@@ -1,38 +1,89 @@
 name = "awhittlewandering-api"
-main = "dist/worker.js"
+main = "src/index.ts"
 compatibility_date = "2024-07-24"
+workers_dev = true
 
-# KV namespace for caching unified data
-[[kv_namespaces]]
-binding = "UNIFIED_DATA_CACHE"
-id = "7838e32d8ad04855b13eb2d9aa4f9811"
-preview_id = "8063c164a211473498118c9beb57a9b7"
+# Durable Object migrations
+[[migrations]]
+tag = "v1"
+new_classes = [ "JourneyTracker" ]
 
-# R2 bucket for media storage
+# D1 SQL Database for Tesla data aggregation and caching
+[[d1_databases]]
+binding = "TESLA_DB"
+database_name = "tesla-journey-tracker"
+database_id = "09a6ba85-bd36-4ad3-b5a8-92e230943dcb"
+migrations_dir = "migrations"
+
+# R2 Object Storage for media files
 [[r2_buckets]]
 binding = "MEDIA_BUCKET"
 bucket_name = "awhittlewandering-media"
 
-# Temporarily using workers.dev subdomain
-# Custom domain configuration for API (disabled until DNS is properly configured)
-# [[routes]]
-# pattern = "admin-api.awhittlewandering.com/*"
-# zone_name = "awhittlewandering.com"
+# KV for session/auth tokens only (lightweight use)
+[[kv_namespaces]]
+binding = "AUTH_TOKENS"
+id = "7838e32d8ad04855b13eb2d9aa4f9811"
+preview_id = "8063c164a211473498118c9beb57a9b7"
+
+# Analytics Engine for telemetry and performance tracking
+[[analytics_engine_datasets]]
+binding = "TELEMETRY_ANALYTICS"
+
+# Queue for background data processing
+[[queues.producers]]
+binding = "DATA_PROCESSOR"
+queue = "tesla-data-processor"
+
+[[queues.consumers]]
+queue = "tesla-data-processor"
+max_batch_size = 10
+max_batch_timeout = 5
+
+# Custom domain configuration
+[[routes]]
+pattern = "api.awhittlewandering.com/*"
+zone_name = "awhittlewandering.com"
 
 [env.production]
 name = "awhittlewandering-api"
 
-# Production KV namespace
-[[env.production.kv_namespaces]]
-binding = "UNIFIED_DATA_CACHE"
-id = "7838e32d8ad04855b13eb2d9aa4f9811"
+# Production D1 Database
+[[env.production.d1_databases]]
+binding = "TESLA_DB"
+database_name = "tesla-journey-tracker-prod"
+database_id = "your-prod-d1-database-id"
 
 # Production R2 bucket
 [[env.production.r2_buckets]]
 binding = "MEDIA_BUCKET"
-bucket_name = "awhittlewandering-media"
+bucket_name = "awhittlewandering-media-prod"
 
-# Production domain routing (disabled until DNS is properly configured)
-# [[env.production.routes]]
-# pattern = "admin-api.awhittlewandering.com/*"
-# zone_name = "awhittlewandering.com"
+# Production KV for auth tokens
+[[env.production.kv_namespaces]]
+binding = "AUTH_TOKENS"
+id = "7838e32d8ad04855b13eb2d9aa4f9811"
+
+# Production Analytics Engine
+[[env.production.analytics_engine_datasets]]
+binding = "TELEMETRY_ANALYTICS"
+
+# Production Durable Objects
+[[env.production.durable_objects.bindings]]
+name = "JOURNEY_TRACKER"
+class_name = "JourneyTracker"
+
+# Production Queue
+[[env.production.queues.producers]]
+binding = "DATA_PROCESSOR"
+queue = "tesla-data-processor-prod"
+
+[[env.production.queues.consumers]]
+queue = "tesla-data-processor-prod"
+max_batch_size = 10
+max_batch_timeout = 5
+
+# Production domain routing
+[[env.production.routes]]
+pattern = "api.awhittlewandering.com/*"
+zone_name = "awhittlewandering.com"
