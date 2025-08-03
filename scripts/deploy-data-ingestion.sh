@@ -8,7 +8,7 @@ set -e
 echo "🚀 Deploying Tesla Data Ingestion System..."
 
 # Navigate to backend directory
-cd "$(dirname "$0")/backend/edge-worker"
+cd "$(dirname "$0")/../backend/edge-worker"
 
 echo "📋 Step 1: Apply enhanced database schema..."
 wrangler d1 execute tesla-journey-tracker --file=migrations/0002_enhanced_data_structure.sql --remote

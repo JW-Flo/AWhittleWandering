@@ -92,8 +92,17 @@ class JourneyDataImporter {
       const coords = this.getCoordinatesForState(current['State(s)'], telemetryData);
       const nextCoords = this.getCoordinatesForState(next['State(s)'], telemetryData);
       
-      // Calculate estimated distance and duration
-      const distance = this.calculateDistance(coords, nextCoords);
+      // Validate coordinates before calculating distance
+      let distance = 0;
+      if (
+        coords && nextCoords &&
+        typeof coords.lat === 'number' && typeof coords.lng === 'number' &&
+        typeof nextCoords.lat === 'number' && typeof nextCoords.lng === 'number' &&
+        !isNaN(coords.lat) && !isNaN(coords.lng) &&
+        !isNaN(nextCoords.lat) && !isNaN(nextCoords.lng)
+      ) {
+        distance = this.calculateDistance(coords, nextCoords);
+      }
       const duration = Math.random() * 4 + 2; // 2-6 hours estimated
       
       const drive = {
