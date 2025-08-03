@@ -359,7 +359,13 @@ const SmartTimeline: React.FC<SmartTimelineProps> = ({
   };
 
   const formatTimestamp = (timestamp: string) => {
+    if (!timestamp) {
+      return { date: 'Unknown', time: 'Unknown' };
+    }
     const date = new Date(timestamp);
+    if (isNaN(date.getTime())) {
+      return { date: 'Invalid Date', time: 'Invalid Time' };
+    }
     return {
       date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       time: date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
@@ -463,7 +469,7 @@ const SmartTimeline: React.FC<SmartTimelineProps> = ({
           <TabsContent value="timeline" className="mt-0">
             <ScrollArea className="h-[600px] pr-4">
               <div className="space-y-6">
-                {filteredEvents.map((event, index) => {
+                {filteredEvents.filter(event => event && event.timestamp).map((event, index) => {
                   const IconComponent = getEventIcon(event.type);
                   const eventColor = getEventColor(event.type);
                   const timestamp = formatTimestamp(event.timestamp);

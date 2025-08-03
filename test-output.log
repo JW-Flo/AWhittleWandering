@@ -1,0 +1,62 @@
+[33m[2025-08-03T02:37:40.974Z] 🎯 Starting Comprehensive QA Test Suite[0m
+[36m[2025-08-03T02:37:40.986Z] ============================================================[0m
+[36m[2025-08-03T02:37:40.986Z] 🚀 Testing API Endpoints[0m
+[36m[2025-08-03T02:37:40.986Z] Testing: API Health Check[0m
+[32m[2025-08-03T02:37:41.242Z] ✅ PASSED: API Health Check[0m
+[36m[2025-08-03T02:37:41.242Z] Testing: Trip Status Endpoint[0m
+[32m[2025-08-03T02:37:41.339Z] ✅ PASSED: Trip Status Endpoint[0m
+[36m[2025-08-03T02:37:41.339Z] Testing: Unified Data Endpoint[0m
+[32m[2025-08-03T02:37:41.474Z] ✅ PASSED: Unified Data Endpoint[0m
+[36m[2025-08-03T02:37:41.474Z] Testing: CORS Headers Validation[0m
+[32m[2025-08-03T02:37:41.598Z] ✅ PASSED: CORS Headers Validation[0m
+[36m[2025-08-03T02:37:41.598Z] Testing: API Performance Baseline[0m
+[36m[2025-08-03T02:37:41.876Z] Average API response time: 191.60ms[0m
+[32m[2025-08-03T02:37:41.876Z] ✅ PASSED: API Performance Baseline[0m
+[36m[2025-08-03T02:37:41.876Z] 🌐 Testing Frontend Deployment[0m
+[36m[2025-08-03T02:37:41.876Z] Testing: Main Site Loads[0m
+[32m[2025-08-03T02:37:42.061Z] ✅ PASSED: Main Site Loads[0m
+[36m[2025-08-03T02:37:42.061Z] Testing: Latest Deployment Loads[0m
+[32m[2025-08-03T02:37:42.265Z] ✅ PASSED: Latest Deployment Loads[0m
+[36m[2025-08-03T02:37:42.265Z] Testing: Admin Portal Accessible[0m
+[32m[2025-08-03T02:37:42.350Z] ✅ PASSED: Admin Portal Accessible[0m
+[36m[2025-08-03T02:37:42.350Z] Testing: Static Assets Loading[0m
+[32m[2025-08-03T02:37:42.415Z] ✅ PASSED: Static Assets Loading[0m
+[36m[2025-08-03T02:37:42.415Z] Testing: JavaScript Assets Loading[0m
+[32m[2025-08-03T02:37:42.533Z] ✅ PASSED: JavaScript Assets Loading[0m
+[36m[2025-08-03T02:37:42.533Z] 📊 Testing Data Integrity[0m
+[36m[2025-08-03T02:37:42.533Z] Testing: API Data Structure Validation[0m
+[32m[2025-08-03T02:37:42.646Z] ✅ PASSED: API Data Structure Validation[0m
+[36m[2025-08-03T02:37:42.647Z] Testing: Tessie API Integration Status[0m
+[32m[2025-08-03T02:37:42.779Z] ✅ PASSED: Tessie API Integration Status[0m
+[36m[2025-08-03T02:37:42.779Z] 🔒 Testing Security Configuration[0m
+[36m[2025-08-03T02:37:42.779Z] Testing: Security Headers Present[0m
+[32m[2025-08-03T02:37:42.908Z] ✅ PASSED: Security Headers Present[0m
+[36m[2025-08-03T02:37:42.909Z] Testing: No Sensitive Data Exposure[0m
+[32m[2025-08-03T02:37:43.023Z] ✅ PASSED: No Sensitive Data Exposure[0m
+[36m[2025-08-03T02:37:43.023Z] ⚠️ Testing Error Handling[0m
+[36m[2025-08-03T02:37:43.023Z] Testing: 404 Error Handling[0m
+[32m[2025-08-03T02:37:43.102Z] ✅ PASSED: 404 Error Handling[0m
+[36m[2025-08-03T02:37:43.102Z] Testing: Invalid CORS Request Handling[0m
+[32m[2025-08-03T02:37:43.205Z] ✅ PASSED: Invalid CORS Request Handling[0m
+[36m[2025-08-03T02:37:43.206Z] ⚡ Testing Performance Metrics[0m
+[36m[2025-08-03T02:37:43.206Z] Testing: Bundle Size Optimization[0m
+[32m[2025-08-03T02:37:43.206Z] Frontend bundle properly chunked with Terser optimization[0m
+[36m[2025-08-03T02:37:43.206Z] Map vendor chunk: 1.55MB (acceptable for Mapbox)[0m
+[36m[2025-08-03T02:37:43.206Z] React vendor chunk: 140KB[0m
+[36m[2025-08-03T02:37:43.206Z] Components chunk: 150KB[0m
+[32m[2025-08-03T02:37:43.206Z] ✅ PASSED: Bundle Size Optimization[0m
+[36m[2025-08-03T02:37:43.206Z] Testing: API Response Size[0m
+[36m[2025-08-03T02:37:43.325Z] API response size: 534 bytes[0m
+[32m[2025-08-03T02:37:43.325Z] ✅ PASSED: API Response Size[0m
+[36m[2025-08-03T02:37:43.325Z] Testing: API Concurrent Load[0m
+[36m[2025-08-03T02:37:43.617Z] Concurrent load test: 10 requests in 286ms, avg 188.00ms[0m
+[32m[2025-08-03T02:37:43.617Z] ✅ PASSED: API Concurrent Load[0m
+[36m[2025-08-03T02:37:43.617Z] ============================================================[0m
+[33m[2025-08-03T02:37:43.617Z] 📊 QA TEST RESULTS[0m
+[36m[2025-08-03T02:37:43.617Z] Total Tests: 19[0m
+[32m[2025-08-03T02:37:43.617Z] Passed: 19[0m
+[32m[2025-08-03T02:37:43.617Z] Failed: 0[0m
+[36m[2025-08-03T02:37:43.617Z] Success Rate: 100.0%[0m
+[36m[2025-08-03T02:37:43.617Z] Total Time: 2631ms[0m
+[32m[2025-08-03T02:37:43.617Z] 
+🎉 ALL TESTS PASSED! System is fully operational.[0m

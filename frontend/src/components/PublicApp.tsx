@@ -96,11 +96,11 @@ const PublicApp: React.FC = () => {
     outside_temp: unifiedData.currentStatus.vehicle.temperature.outside,
     odometer: unifiedData.currentStatus.vehicle.odometer,
     speed: unifiedData.currentStatus.vehicle.speed,
-    timestamp: unifiedData.liveData.timestamp
+    timestamp: unifiedData.currentStatus.location.lastUpdate
   } : null;
 
   // Convert timeline drives to route points format with proper coordinates
-  const routePoints = unifiedData?.timeline.drives.map((drive, index) => {
+  const routePoints = unifiedData?.timeline?.drives?.map((drive, index) => {
     // Extract state from location string
     const stateMatch = drive.startLocation?.match(/,\s*([A-Za-z\s]+?)\s*\d{5}/);
     const state = stateMatch ? stateMatch[1].trim() : 'Unknown';
