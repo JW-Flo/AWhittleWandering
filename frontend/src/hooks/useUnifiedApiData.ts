@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { api } from '@/lib/api-config';
 
 interface TeslaDriveData {
   id: number;
@@ -95,8 +96,6 @@ export interface UnifiedApiData {
   };
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
-
 export const useUnifiedApiData = (pollInterval: number = 30000) => {
   const [data, setData] = useState<UnifiedApiData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -107,17 +106,7 @@ export const useUnifiedApiData = (pollInterval: number = 30000) => {
     try {
       console.log('🔄 Fetching unified data from worker API...');
       
-      const response = await fetch(`${API_BASE_URL}/api/v1/unified-data`, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`API call failed: ${response.status} ${response.statusText}`);
-      }
-
-      const unifiedData = await response.json();
+      const unifiedData = await api.getUnifiedData() as UnifiedApiData;
       console.log('✅ Unified data received:', {
         connected: unifiedData.tessieStatus?.connected,
         statesVisited: unifiedData.overview?.statesVisited,
