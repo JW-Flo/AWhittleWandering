@@ -5,7 +5,7 @@
  * Simulates browser JavaScript execution to catch runtime errors
  */
 
-const fetch = require("node-fetch");
+import fetch from "node-fetch";
 
 class FrontendSimulation {
   constructor() {

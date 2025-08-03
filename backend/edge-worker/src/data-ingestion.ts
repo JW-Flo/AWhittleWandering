@@ -192,14 +192,14 @@ export class TeslaDataIngestion {
         try {
           await this.db.prepare(`
             INSERT OR REPLACE INTO drives (
-              id, journey_id, vin, started_at, ended_at,
+              tessie_id, journey_id, vehicle_id, started_at, ended_at,
               start_address, end_address, start_latitude, start_longitude,
               end_latitude, end_longitude, distance_miles, duration_minutes,
-              start_battery_level, end_battery_level, energy_used,
-              outside_temp_avg, raw_data
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              start_battery_level, end_battery_level, energy_used_kwh,
+              outside_temp_avg
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `).bind(
-            drive.id || `drive_${drive.started_at}`,
+            drive.id,
             'continental-usa-2025',
             this.config.vehicleVin,
             drive.started_at,
@@ -215,8 +215,7 @@ export class TeslaDataIngestion {
             drive.starting_battery || 0,
             drive.ending_battery || 0,
             drive.energy_used || 0,
-            drive.outside_temp || null,
-            JSON.stringify(drive)
+            drive.outside_temp || null
           ).run();
 
           recordsProcessed++;
@@ -270,14 +269,15 @@ export class TeslaDataIngestion {
       for (const charge of chargesData.results) {
         try {
           await this.db.prepare(`
+          await this.db.prepare(`
             INSERT OR REPLACE INTO charges (
-              id, journey_id, vin, started_at, ended_at,
+              tessie_id, journey_id, vehicle_id, started_at, ended_at,
               location, latitude, longitude, energy_added_kwh,
               cost_usd, start_battery_level, end_battery_level,
-              charger_type, charger_power, raw_data
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              charger_type, charger_power_kw
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `).bind(
-            charge.id || `charge_${charge.started_at}`,
+            charge.id,
             'continental-usa-2025',
             this.config.vehicleVin,
             charge.started_at,
@@ -290,10 +290,8 @@ export class TeslaDataIngestion {
             charge.starting_battery || 0,
             charge.ending_battery || 0,
             charge.charger_type || null,
-            charge.charger_power || null,
-            JSON.stringify(charge)
+            charge.charger_power || null
           ).run();
-
           recordsProcessed++;
         } catch (chargeError) {
           errors.push(`Charge ${charge.id}: ${chargeError.message}`);
