@@ -346,7 +346,7 @@ async function fetchTessieData(apiKey: string) {
     throw new Error(`Tessie API error: ${vehiclesRes.status}`);
   }
 
-  const vehicles = await vehiclesRes.json();
+  const vehicles = await vehiclesRes.json() as any;
   
   // Try to get state for first vehicle
   let state = null;

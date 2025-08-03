@@ -3,10 +3,10 @@ main = "src/index.ts"
 compatibility_date = "2024-07-24"
 workers_dev = true
 
-# Durable Object migrations
-[[migrations]]
-tag = "v1"
-new_classes = [ "JourneyTracker" ]
+# Durable Object migrations (disabled for now)
+# [[migrations]]
+# tag = "v1"
+# new_classes = [ "JourneyTracker" ]
 
 # D1 SQL Database for Tesla data aggregation and caching
 [[d1_databases]]
@@ -30,15 +30,15 @@ preview_id = "8063c164a211473498118c9beb57a9b7"
 [[analytics_engine_datasets]]
 binding = "TELEMETRY_ANALYTICS"
 
-# Queue for background data processing
-[[queues.producers]]
-binding = "DATA_PROCESSOR"
-queue = "tesla-data-processor"
+# Queue for background data processing (disabled for now)
+# [[queues.producers]]
+# binding = "DATA_PROCESSOR"
+# queue = "tesla-data-processor"
 
-[[queues.consumers]]
-queue = "tesla-data-processor"
-max_batch_size = 10
-max_batch_timeout = 5
+# [[queues.consumers]]
+# queue = "tesla-data-processor"
+# max_batch_size = 10
+# max_batch_timeout = 5
 
 # Custom domain configuration
 [[routes]]
@@ -48,16 +48,16 @@ zone_name = "awhittlewandering.com"
 [env.production]
 name = "awhittlewandering-api"
 
-# Production D1 Database
+# Production D1 Database (same as development - using single database)
 [[env.production.d1_databases]]
 binding = "TESLA_DB"
-database_name = "tesla-journey-tracker-prod"
-database_id = "your-prod-d1-database-id"
+database_name = "tesla-journey-tracker"
+database_id = "09a6ba85-bd36-4ad3-b5a8-92e230943dcb"
 
-# Production R2 bucket
+# Production R2 bucket (using same as dev)
 [[env.production.r2_buckets]]
 binding = "MEDIA_BUCKET"
-bucket_name = "awhittlewandering-media-prod"
+bucket_name = "awhittlewandering-media"
 
 # Production KV for auth tokens
 [[env.production.kv_namespaces]]
@@ -68,20 +68,20 @@ id = "7838e32d8ad04855b13eb2d9aa4f9811"
 [[env.production.analytics_engine_datasets]]
 binding = "TELEMETRY_ANALYTICS"
 
-# Production Durable Objects
-[[env.production.durable_objects.bindings]]
-name = "JOURNEY_TRACKER"
-class_name = "JourneyTracker"
+# Production Durable Objects (disabled for now)
+# [[env.production.durable_objects.bindings]]
+# name = "JOURNEY_TRACKER"
+# class_name = "JourneyTracker"
 
-# Production Queue
-[[env.production.queues.producers]]
-binding = "DATA_PROCESSOR"
-queue = "tesla-data-processor-prod"
+# Production Queue (disabled for now)
+# [[env.production.queues.producers]]
+# binding = "DATA_PROCESSOR"
+# queue = "tesla-data-processor-prod"
 
-[[env.production.queues.consumers]]
-queue = "tesla-data-processor-prod"
-max_batch_size = 10
-max_batch_timeout = 5
+# [[env.production.queues.consumers]]
+# queue = "tesla-data-processor-prod"
+# max_batch_size = 10
+# max_batch_timeout = 5
 
 # Production domain routing
 [[env.production.routes]]
