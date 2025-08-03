@@ -4,6 +4,17 @@ import { TeslaDataIngestion } from './data-ingestion';
 import { CronDataController } from './cron-controller';
 
 // Cloudflare Worker types for comprehensive resource integration
+interface ScheduledController {
+  readonly scheduledTime: number;
+  readonly cron: string;
+  noRetry(): void;
+}
+
+interface ExecutionContext {
+  waitUntil(promise: Promise<any>): void;
+  passThroughOnException(): void;
+}
+
 interface D1Database {
   prepare(query: string): D1PreparedStatement;
   exec(query: string): Promise<D1ExecResult>;
@@ -716,5 +727,77 @@ app.all('*', (c) => {
     ]
   }, 404);
 });
+
+// Scheduled function for Cloudflare Cron Triggers
+export async function scheduled(
+  controller: ScheduledController,
+  env: Env,
+  ctx: ExecutionContext
+): Promise<void> {
+  const tessieApiKey = env.TESSIE_API_KEY;
+  const vehicleVin = env.TESLA_VIN || 'default-vin';
+  
+  if (!tessieApiKey) {
+    console.error('TESSIE_API_KEY not configured for cron job');
+    return;
+  }
+
+  const cronController = new CronDataController(env.TESLA_DB, tessieApiKey, vehicleVin);
+  const cron = controller.cron;
+
+  try {
+    console.log(`🕒 Cron trigger: ${cron}`);
+
+    switch (cron) {
+      case '*/5 6-23 * * *':
+        // Quick state updates during active hours (every 5 minutes, 6 AM to 11 PM)
+        console.log('⚡ Running quick state update...');
+        await cronController.quickStateUpdate();
+        break;
+        
+      case '*/30 * * * *':
+        // Full sync every 30 minutes
+        console.log('🔄 Running full data sync...');
+        await cronController.fullDataSync();
+        break;
+        
+      case '0 2 * * *':
+        // Historical backfill at 2 AM daily
+        console.log('📚 Running historical backfill...');
+        await cronController.historicalBackfill();
+        break;
+        
+      case '0 * * * *':
+        // Data quality check hourly
+        console.log('🔍 Running data quality check...');
+        await cronController.dataQualityCheck();
+        break;
+        
+      case '0 */6 * * *':
+        // AI/ML processing every 6 hours
+        console.log('🤖 Running AI/ML data processing...');
+        await cronController.aiDataProcessing();
+        break;
+        
+      default:
+        console.warn(`❓ Unknown cron schedule: ${cron}`);
+    }
+    
+    console.log(`✅ Cron job completed: ${cron}`);
+  } catch (error) {
+    console.error(`❌ Cron job failed (${cron}):`, error);
+    
+    // Log error to Analytics Engine for monitoring
+    try {
+      env.TELEMETRY_ANALYTICS.writeDataPoint({
+        blobs: ['cron_error', cron, error instanceof Error ? error.message : 'Unknown error'],
+        doubles: [Date.now()],
+        indexes: ['cron_error']
+      });
+    } catch (analyticsError) {
+      console.error('Failed to log cron error to analytics:', analyticsError);
+    }
+  }
+}
 
 export default app;
