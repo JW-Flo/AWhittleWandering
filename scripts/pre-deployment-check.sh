@@ -29,10 +29,6 @@ for arg in "$@"; do
         CI_MODE=true
     fi
 done
-API_URL="https://awhittlewandering-api.kd8jc7v8cd.workers.dev"
-
-# Configurable sleep duration (in seconds) for deployment propagation
-DEPLOY_PROPAGATION_WAIT_SECONDS="${DEPLOY_PROPAGATION_WAIT_SECONDS:-10}"
 
 # Function to print colored output
 print_status() {
@@ -72,7 +68,10 @@ check_result "Comprehensive QA Tests"
 # 4. Run End-to-End Tests
 print_status $BLUE "🎯 Running End-to-End Tests..."
 node end-to-end-test.js
-git status --porcelain
+check_result "End-to-End Tests"
+
+# 5. Check Git Status
+print_status $BLUE "📝 Checking Git Status..."
 if [ -n "$(git status --porcelain)" ]; then
     print_status $YELLOW "⚠️  Uncommitted changes detected"
     print_status $YELLOW "Files with changes:"
@@ -93,10 +92,6 @@ if [ -n "$(git status --porcelain)" ]; then
         else
             print_status $YELLOW "⚠️  Proceeding with uncommitted changes"
         fi
-    fi
-else
-    print_status $GREEN "✅ No uncommitted changes"
-fi
     fi
 else
     print_status $GREEN "✅ No uncommitted changes"
@@ -127,11 +122,11 @@ print_status $BLUE "✅ Post-Deployment Validation..."
 cd ..
 sleep "$DEPLOY_PROPAGATION_WAIT_SECONDS"  # Wait for deployments to propagate
 node comprehensive-qa-test.js
+check_result "Post-Deployment Validation"
+
+print_status $GREEN "🎉 PRE-DEPLOYMENT CHECK COMPLETED SUCCESSFULLY!"
+echo "=================================="
 print_status $GREEN "✅ All systems are GO for production!"
 print_status $BLUE "🌐 Frontend: $FRONTEND_URL"
 print_status $BLUE "🔧 API: $API_URL"
-echo ""
-echo ""
-print_status $BLUE "🌐 Frontend: https://182679ee.awhittlewandering-site.pages.dev"
-print_status $BLUE "🔧 API: https://awhittlewandering-api.kd8jc7v8cd.workers.dev"
 echo ""

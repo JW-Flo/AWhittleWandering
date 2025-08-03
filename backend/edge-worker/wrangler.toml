@@ -1,6 +1,42 @@
 name = "awhittlewandering-api"
 main = "src/index.ts"
-compatibility_date = "2024-07-24"
+compatibility_date = "2023-10-30"
+
+# Cron Triggers for Automated Data Ingestion
+[[triggers]]
+crons = [
+  # Quick state updates every 5 minutes during active hours (6 AM - 11 PM EST)
+  "*/5 6-23 * * *",
+]
+route = "https://awhittlewandering-api.kd8jc7v8cd.workers.dev/api/v1/cron/quick-update"
+
+[[triggers]]
+crons = [
+  # Full data sync every 30 minutes
+  "*/30 * * * *",
+]
+route = "https://awhittlewandering-api.kd8jc7v8cd.workers.dev/api/v1/cron/full-sync"
+
+[[triggers]]
+crons = [
+  # Historical backfill daily at 2 AM EST
+  "0 2 * * *",
+]
+route = "https://awhittlewandering-api.kd8jc7v8cd.workers.dev/api/v1/cron/backfill"
+
+[[triggers]]
+crons = [
+  # Data quality check every hour
+  "0 * * * *",
+]
+route = "https://awhittlewandering-api.kd8jc7v8cd.workers.dev/api/v1/cron/quality-check"
+
+[[triggers]]
+crons = [
+  # AI/ML processing every 6 hours
+  "0 */6 * * *",
+]
+route = "https://awhittlewandering-api.kd8jc7v8cd.workers.dev/api/v1/cron/ai-processing"
 workers_dev = true
 
 # Durable Object migrations (disabled for now)

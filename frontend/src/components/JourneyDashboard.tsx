@@ -54,9 +54,9 @@ const JourneyDashboard: React.FC<JourneyDashboardProps> = ({
     if (!apiKey && trackingEvents.length > 0) {
       console.log('Using tracking events as data source:', trackingEvents.length, 'events');
       
-      // Convert tracking events to journey data format
+      // Convert tracking events to journey data format - filter out undefined events and validate timestamp
       const drives = trackingEvents
-        .filter(event => event.type === 'driving')
+        .filter(event => event && event.type === 'driving' && event.timestamp)
         .map((event, index) => ({
           id: `drive-${index}`,
           start_date: event.timestamp.toISOString(),
@@ -78,7 +78,7 @@ const JourneyDashboard: React.FC<JourneyDashboardProps> = ({
         }));
 
       const charges = trackingEvents
-        .filter(event => event.type === 'charging')
+        .filter(event => event && event.type === 'charging' && event.timestamp)
         .map((event, index) => ({
           id: `charge-${index}`,
           start_date: event.timestamp.toISOString(),
@@ -97,7 +97,7 @@ const JourneyDashboard: React.FC<JourneyDashboardProps> = ({
         }));
 
       const stays = trackingEvents
-        .filter(event => event.type === 'overnight')
+        .filter(event => event && event.type === 'overnight' && event.timestamp)
         .map((event, index) => ({
           id: `stay-${index}`,
           location: event.location?.address || 'Overnight Location',
