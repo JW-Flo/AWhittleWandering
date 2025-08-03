@@ -333,9 +333,12 @@ export class TeslaDataIngestion {
           COALESCE(SUM(d.distance_miles), 0) as total_miles,
           COUNT(DISTINCT CASE 
             WHEN d.start_address LIKE '%,%' 
-            THEN TRIM(SUBSTR(d.start_address, INSTR(d.start_address, ',') + 1, 
-                     INSTR(d.start_address || ',', ',', INSTR(d.start_address, ',') + 1) 
-                     - INSTR(d.start_address, ',') - 1))
+            THEN 
+              CASE 
+                WHEN INSTR(d.start_address, ',') > 0 
+                THEN TRIM(SUBSTR(d.start_address, INSTR(d.start_address, ',') + 1))
+                ELSE 'Unknown'
+              END
           END) as states_visited,
           MIN(d.started_at) as journey_start,
           MAX(d.ended_at) as journey_end
@@ -343,14 +346,30 @@ export class TeslaDataIngestion {
         WHERE d.journey_id = 'continental-usa-2025'
       `).first();
 
-      // Update journey record
+      // Ensure vehicle record exists first
+      await this.db.prepare(`
+        INSERT OR IGNORE INTO vehicles (
+          id, vin, display_name, model, year, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).bind(
+        this.config.vehicleVin,
+        this.config.vehicleVin,
+        'Tesla Model S',
+        'Model S',
+        2023,
+        new Date().toISOString(),
+        new Date().toISOString()
+      ).run();
+
+      // Update journey record with vehicle_id
       await this.db.prepare(`
         INSERT OR REPLACE INTO journeys (
-          id, name, start_date, end_date, total_miles, 
+          id, vehicle_id, name, start_date, end_date, total_miles, 
           states_visited, total_drives, status, last_updated
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
         'continental-usa-2025',
+        this.config.vehicleVin,  // Add required vehicle_id
         'A Whittle Wandering - Continental USA',
         stats.journey_start || new Date().toISOString(),
         stats.journey_end || new Date().toISOString(),

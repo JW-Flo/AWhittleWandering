@@ -1,43 +1,23 @@
 name = "awhittlewandering-api"
 main = "src/index.ts"
 compatibility_date = "2023-10-30"
+workers_dev = true
 
 # Cron Triggers for Automated Data Ingestion
-[[triggers]]
+[triggers]
 crons = [
-  # Quick state updates every 5 minutes during active hours (6 AM - 11 PM EST)
-  "*/5 6-23 * * *",
+  "*/5 6-23 * * *",   # Quick state updates during active hours
+  "*/30 * * * *",     # Full sync every 30 minutes
+  "0 2 * * *",        # Historical backfill at 2 AM daily
+  "0 * * * *",        # Data quality check hourly
+  "0 */6 * * *"       # AI/ML processing every 6 hours
 ]
-route = "https://awhittlewandering-api.kd8jc7v8cd.workers.dev/api/v1/cron/quick-update"
 
-[[triggers]]
-crons = [
-  # Full data sync every 30 minutes
-  "*/30 * * * *",
-]
-route = "https://awhittlewandering-api.kd8jc7v8cd.workers.dev/api/v1/cron/full-sync"
-
-[[triggers]]
-crons = [
-  # Historical backfill daily at 2 AM EST
-  "0 2 * * *",
-]
-route = "https://awhittlewandering-api.kd8jc7v8cd.workers.dev/api/v1/cron/backfill"
-
-[[triggers]]
-crons = [
-  # Data quality check every hour
-  "0 * * * *",
-]
-route = "https://awhittlewandering-api.kd8jc7v8cd.workers.dev/api/v1/cron/quality-check"
-
-[[triggers]]
-crons = [
-  # AI/ML processing every 6 hours
-  "0 */6 * * *",
-]
-route = "https://awhittlewandering-api.kd8jc7v8cd.workers.dev/api/v1/cron/ai-processing"
-workers_dev = true
+# Environment Variables
+[vars]
+# Tesla Vehicle VIN should be set as a secret or environment variable, not hardcoded here.
+# Example: Use `npx wrangler secret put TESLA_VEHICLE_VIN` to set it securely.
+# TESLA_VEHICLE_VIN will be provided via secrets
 
 # Durable Object migrations (disabled for now)
 # [[migrations]]
