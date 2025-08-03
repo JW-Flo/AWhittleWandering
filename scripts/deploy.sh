@@ -12,7 +12,7 @@ echo "🌐 Deploying edge worker..."
 cd backend/edge-worker
 bun install
 bun run build
-bun run deploy
+npx wrangler deploy
 cd ../..
 
 echo "✅ Deployment complete!"
