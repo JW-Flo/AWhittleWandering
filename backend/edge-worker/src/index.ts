@@ -98,14 +98,7 @@ const app = new Hono<{ Bindings: Env }>();
 
 // CORS configuration for all Cloudflare resources
 app.use('*', cors({
-  origin: [
-    'http://localhost:8080', 
-    'http://localhost:8081',
-    'https://awhittlewandering.com',
-    'https://www.awhittlewandering.com',
-    'https://awhittlewandering.pages.dev',
-    'https://*.awhittlewandering.pages.dev'
-  ],
+  origin: '*', // Allow all origins for now to debug the issue
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization', 'X-Client-ID'],
 }));
