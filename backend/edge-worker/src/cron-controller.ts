@@ -152,10 +152,6 @@ export class CronDataController {
     try {
       console.log('📚 Starting historical data backfill...');
       
-      // Get last 7 days of data to ensure completeness
-      const sevenDaysAgo = Math.floor((Date.now() - (7 * 24 * 60 * 60 * 1000)) / 1000);
-      const now = Math.floor(Date.now() / 1000);
-      
       const drivesResult = await this.ingestion.ingestHistoricalDrives();
       const chargesResult = await this.ingestion.ingestHistoricalCharges();
       
