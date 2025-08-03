@@ -96,7 +96,7 @@ const PublicApp: React.FC = () => {
     outside_temp: unifiedData.currentStatus.vehicle.temperature.outside,
     odometer: unifiedData.currentStatus.vehicle.odometer,
     speed: unifiedData.currentStatus.vehicle.speed,
-    timestamp: unifiedData.currentStatus.location.lastUpdate
+    timestamp: unifiedData.currentStatus.location.lastUpdate || new Date().toISOString()
   } : null;
 
   // Convert timeline drives to route points format with proper coordinates
@@ -213,7 +213,7 @@ const PublicApp: React.FC = () => {
                 </div>
               </div>
               <div className="text-xs text-slate-500 font-mono">
-                LAST_UPDATE: {safeTimeString(currentLocation.timestamp)}
+                LAST_UPDATE: {currentLocation?.timestamp ? safeTimeString(currentLocation.timestamp) : 'Unknown'}
               </div>
             </div>
           </div>

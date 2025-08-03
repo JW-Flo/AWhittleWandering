@@ -177,13 +177,13 @@ class FrontendSimulation {
 
   async runSimulation() {
     this.log("🚀 Starting Frontend Simulation", "info");
-    this.log("=" * 50, "info");
+    this.log("=".repeat(50), "info");
 
     await this.testAPIConnectivity();
     await this.testFrontendAssets();
     await this.testCORSConfiguration();
 
-    this.log("=" * 50, "info");
+    this.log("=".repeat(50), "info");
     this.log("📊 SIMULATION RESULTS", "info");
     this.log(
       `Total Errors: ${this.errors.length}`,
