@@ -182,7 +182,24 @@ SELECT
     (SELECT COUNT(*) FROM charges WHERE journey_id = j.id AND started_at > datetime('now', '-1 day')) as charges_today,
     
     -- Current status
-    (SELECT vs.* FROM vehicle_states vs WHERE vs.vin = (
+    (SELECT json_object(
+        'id', vs.id,
+        'vin', vs.vin,
+        'timestamp', vs.timestamp,
+        'battery_level', vs.battery_level,
+        'battery_range', vs.battery_range,
+        'charging_state', vs.charging_state,
+        'latitude', vs.latitude,
+        'longitude', vs.longitude,
+        'heading', vs.heading,
+        'speed', vs.speed,
+        'odometer', vs.odometer,
+        'inside_temp', vs.inside_temp,
+        'outside_temp', vs.outside_temp,
+        'locked', vs.locked,
+        'climate_on', vs.climate_on,
+        'created_at', vs.created_at
+    ) FROM vehicle_states vs WHERE vs.vin = (
         SELECT DISTINCT vin FROM drives WHERE journey_id = j.id LIMIT 1
     ) ORDER BY vs.timestamp DESC LIMIT 1) as current_state
     

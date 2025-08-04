@@ -11,6 +11,14 @@ interface D1Database {
   batch(statements: D1PreparedStatement[]): Promise<D1Result[]>;
 }
 
+/**
+ * Helper to extract error message from unknown error types
+ */
+function extractErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
 interface D1PreparedStatement {
   bind(...values: any[]): D1PreparedStatement;
   first<T = any>(colName?: string): Promise<T | null>;
@@ -106,7 +114,7 @@ export class TeslaDataIngestion {
       return {
         success: false,
         recordsProcessed: totalRecords,
-        errors: [error.message],
+        errors: [extractErrorMessage(error)],
         timestamp: new Date().toISOString()
       };
     }
@@ -220,7 +228,7 @@ export class TeslaDataIngestion {
 
           recordsProcessed++;
         } catch (driveError) {
-          errors.push(`Drive ${drive.id}: ${driveError.message}`);
+          errors.push(`Drive ${drive.id}: ${extractErrorMessage(driveError)}`);
         }
       }
 
@@ -293,7 +301,7 @@ export class TeslaDataIngestion {
           ).run();
           recordsProcessed++;
         } catch (chargeError) {
-          errors.push(`Charge ${charge.id}: ${chargeError instanceof Error ? chargeError.message : String(chargeError)}`);
+          errors.push(`Charge ${charge.id}: ${extractErrorMessage(chargeError)}`);
         }
       }
 
@@ -310,7 +318,7 @@ export class TeslaDataIngestion {
       return { 
         success: false, 
         recordsProcessed: 0, 
-        errors: [error instanceof Error ? error.message : String(error)], 
+        errors: [this.extractErrorMessage(error)], 
         timestamp: new Date().toISOString() 
       };
     }
