@@ -256,7 +256,7 @@ const PublicApp: React.FC = () => {
                 </div>
               </div>
               <div className="text-xs text-slate-500 font-mono">
-                LAST_UPDATE: {safeTimeString(currentLocation.timestamp)}
+                LAST_UPDATE: {currentLocation?.timestamp ? safeTimeString(currentLocation.timestamp) : 'Unknown'}
               </div>
             </div>
           </div>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Structure Validation</title>
+</head>
+<body>
+    <h1>Testing API Structure for Frontend Compatibility</h1>
+    <div id="results"></div>
+
+    <script>
+        async function testApiStructure() {
+            const resultsDiv = document.getElementById('results');
+            
+            try {
+                console.log('🔄 Fetching unified data...');
+                const response = await fetch('https://awhittlewandering-api.kd8jc7v8cd.workers.dev/unified-data');
+                const unifiedData = await response.json();
+                
+                console.log('✅ API Response received:', unifiedData);
+                
+                // Test the exact patterns that the frontend uses
+                const tests = [
+                    {
+                        name: 'Timeline object exists',
+                        test: () => !!unifiedData.timeline,
+                        value: () => typeof unifiedData.timeline
+                    },
+                    {
+                        name: 'Timeline.drives array exists',
+                        test: () => Array.isArray(unifiedData.timeline?.drives),
+                        value: () => unifiedData.timeline?.drives?.length || 0
+                    },
+                    {
+                        name: 'Timeline.charges array exists',
+                        test: () => Array.isArray(unifiedData.timeline?.charges),
+                        value: () => unifiedData.timeline?.charges?.length || 0
+                    },
+                    {
+                        name: 'Can access drives[0].startLocation',
+                        test: () => !!unifiedData.timeline?.drives?.[0]?.startLocation,
+                        value: () => unifiedData.timeline?.drives?.[0]?.startLocation || 'N/A'
+                    },
+                    {
+                        name: 'Can map over drives without error',
+                        test: () => {
+                            try {
+                                const states = unifiedData.timeline.drives.map(drive => drive.startLocation);
+                                return states.length > 0;
+                            } catch (e) {
+                                return false;
+                            }
+                        },
+                        value: () => unifiedData.timeline.drives.map(drive => drive.startLocation).join(', ')
+                    },
+                    {
+                        name: 'Overview data exists',
+                        test: () => !!unifiedData.overview,
+                        value: () => `${unifiedData.overview?.totalMiles} miles, ${unifiedData.overview?.statesVisited} states`
+                    },
+                    {
+                        name: 'Current status exists',
+                        test: () => !!unifiedData.currentStatus,
+                        value: () => `${unifiedData.currentStatus?.battery?.level}% battery`
+                    },
+                    {
+                        name: 'Tessie status exists',
+                        test: () => !!unifiedData.tessieStatus,
+                        value: () => `Connected: ${unifiedData.tessieStatus?.connected}`
+                    }
+                ];
+                
+                let html = '<h2>API Structure Tests</h2><ul>';
+                
+                tests.forEach(test => {
+                    const passed = test.test();
+                    const value = test.value();
+                    const status = passed ? '✅' : '❌';
+                    const color = passed ? 'green' : 'red';
+                    
+                    html += `<li style="color: ${color}">
+                        ${status} <strong>${test.name}</strong>: ${value}
+                    </li>`;
+                });
+                
+                html += '</ul>';
+                
+                // Test the specific error that was reported
+                try {
+                    const statesFromDrives = unifiedData.timeline.drives.map(drive => drive.startLocation);
+                    html += `<h2 style="color: green;">✅ SUCCESS: TypeError "Cannot read properties of undefined (reading 'drives')" is FIXED!</h2>`;
+                    html += `<p>Successfully extracted states: ${statesFromDrives.join(', ')}</p>`;
+                } catch (error) {
+                    html += `<h2 style="color: red;">❌ ERROR: ${error.message}</h2>`;
+                }
+                
+                resultsDiv.innerHTML = html;
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `<h2 style="color: red;">❌ Fetch Error: ${error.message}</h2>`;
+            }
+        }
+        
+        testApiStructure();
+    </script>
+</body>
+</html>
