@@ -21,16 +21,59 @@ const PublicApp: React.FC = () => {
     dataFreshness
   } = useUnifiedApiData(30000); // Poll every 30 seconds
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-400 mx-auto"></div>
+          <h2 className="text-2xl font-semibold">Loading Tesla Journey Data...</h2>
+          <p className="text-gray-400">Connecting to real-time tracking systems</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <h2 className="text-2xl font-semibold text-red-400">Connection Error</h2>
+          <p className="text-gray-400">Unable to load journey data: {error}</p>
+          <button 
+            className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
+            onClick={() => window.location.reload()}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show data unavailable state
+  if (!unifiedData) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <h2 className="text-2xl font-semibold text-yellow-400">Data Unavailable</h2>
+          <p className="text-gray-400">Journey data is currently unavailable</p>
+        </div>
+      </div>
+    );
+  }
+
   // Get Mapbox token from environment - gracefully handle missing token
   const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN || process.env.REACT_APP_MAPBOX_TOKEN || '';
 
   // Create compatibility layer for backward compatibility with existing components
-  const insights = unifiedData && unifiedData.overview ? {
-    totalStatesVisited: unifiedData.overview.statesVisited || 0,
-    totalDrivingDays: unifiedData.overview.daysElapsed || 0,
-    accurateStateCount: unifiedData.overview.statesVisited || 0,
-    stateCrossings: Math.max((unifiedData.overview.statesVisited || 0) - 1, 0),
-    currentLocation: unifiedData.currentStatus?.location ? `${unifiedData.currentStatus.location.city}, ${unifiedData.currentStatus.location.state}` : 'Unknown Location',
+  const insights = {
+    totalStatesVisited: unifiedData.overview?.statesVisited || 0,
+    totalDrivingDays: unifiedData.overview?.daysElapsed || 0,
+    accurateStateCount: unifiedData.overview?.statesVisited || 0,
+    stateCrossings: Math.max((unifiedData.overview?.statesVisited || 0) - 1, 0),
+    currentLocation: unifiedData.currentStatus?.location ? `${unifiedData.currentStatus.location.city || 'Unknown'}, ${unifiedData.currentStatus.location.state || 'Unknown'}` : 'Unknown Location',
     uniqueRegions: ["Southwest", "West Coast", "Mountain West"], // Fallback
     weatherSeasons: ["Summer"], // Fallback
     terrainTypes: ["Desert", "Mountains", "Coastal"], // Fallback
@@ -41,10 +84,10 @@ const PublicApp: React.FC = () => {
       coordinates: unifiedData.currentStatus?.location?.coordinates || [0, 0],
       lastUpdate: unifiedData.currentStatus?.location?.lastUpdate || new Date().toISOString()
     },
-    uniqueStates: Array.from({ length: unifiedData.overview.statesVisited || 0 }, (_, i) => `State ${i + 1}`), // Simplified
-    totalMiles: unifiedData.overview.totalMiles || 0,
-    averageDailyMiles: Math.round((unifiedData.overview.totalMiles || 0) / Math.max(unifiedData.overview.daysElapsed || 1, 1))
-  } : null;
+    uniqueStates: Array.from({ length: unifiedData.overview?.statesVisited || 0 }, (_, i) => `State ${i + 1}`), // Simplified
+    totalMiles: unifiedData.overview?.totalMiles || 0,
+    averageDailyMiles: Math.round((unifiedData.overview?.totalMiles || 0) / Math.max(unifiedData.overview?.daysElapsed || 1, 1))
+  };
 
     // Extract actual states visited from drive data
   const getStatesFromDrives = (drives: any[]): string[] => {
