@@ -25,25 +25,25 @@ const PublicApp: React.FC = () => {
   const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN || process.env.REACT_APP_MAPBOX_TOKEN || '';
 
   // Create compatibility layer for backward compatibility with existing components
-  const insights = unifiedData ? {
-    totalStatesVisited: unifiedData.overview.statesVisited,
-    totalDrivingDays: unifiedData.overview.daysElapsed,
-    accurateStateCount: unifiedData.overview.statesVisited,
-    stateCrossings: unifiedData.overview.statesVisited - 1,
-    currentLocation: `${unifiedData.currentStatus.location.city}, ${unifiedData.currentStatus.location.state}`,
+  const insights = unifiedData && unifiedData.overview ? {
+    totalStatesVisited: unifiedData.overview.statesVisited || 0,
+    totalDrivingDays: unifiedData.overview.daysElapsed || 0,
+    accurateStateCount: unifiedData.overview.statesVisited || 0,
+    stateCrossings: Math.max((unifiedData.overview.statesVisited || 0) - 1, 0),
+    currentLocation: unifiedData.currentStatus?.location ? `${unifiedData.currentStatus.location.city}, ${unifiedData.currentStatus.location.state}` : 'Unknown Location',
     uniqueRegions: ["Southwest", "West Coast", "Mountain West"], // Fallback
     weatherSeasons: ["Summer"], // Fallback
     terrainTypes: ["Desert", "Mountains", "Coastal"], // Fallback
     routeComplexity: "complex" as const,
     journeyScore: 750, // Fallback
     currentPosition: {
-      state: unifiedData.currentStatus.location.state,
-      coordinates: unifiedData.currentStatus.location.coordinates,
-      lastUpdate: unifiedData.currentStatus.location.lastUpdate
+      state: unifiedData.currentStatus?.location?.state || 'Unknown',
+      coordinates: unifiedData.currentStatus?.location?.coordinates || [0, 0],
+      lastUpdate: unifiedData.currentStatus?.location?.lastUpdate || new Date().toISOString()
     },
-    uniqueStates: Array.from({ length: unifiedData.overview.statesVisited }, (_, i) => `State ${i + 1}`), // Simplified
-    totalMiles: unifiedData.overview.totalMiles,
-    averageDailyMiles: Math.round(unifiedData.overview.totalMiles / Math.max(unifiedData.overview.daysElapsed, 1))
+    uniqueStates: Array.from({ length: unifiedData.overview.statesVisited || 0 }, (_, i) => `State ${i + 1}`), // Simplified
+    totalMiles: unifiedData.overview.totalMiles || 0,
+    averageDailyMiles: Math.round((unifiedData.overview.totalMiles || 0) / Math.max(unifiedData.overview.daysElapsed || 1, 1))
   } : null;
 
     // Extract actual states visited from drive data
@@ -79,24 +79,24 @@ const PublicApp: React.FC = () => {
     averageDailyMiles: Math.round(unifiedData.overview.totalMiles / Math.max(unifiedData.overview.daysElapsed, 1))
   } : null;
 
-  const journeyInsights = unifiedData ? {
-    totalMiles: unifiedData.overview.totalMiles,
-    statesVisited: getStatesFromDrives(unifiedData.timeline.drives),
-    daysElapsed: unifiedData.overview.daysElapsed,
-    currentState: unifiedData.currentStatus.location.state || 'Location Unavailable'
+  const journeyInsights = unifiedData && unifiedData.overview && unifiedData.timeline ? {
+    totalMiles: unifiedData.overview.totalMiles || 0,
+    statesVisited: getStatesFromDrives(unifiedData.timeline.drives || []),
+    daysElapsed: unifiedData.overview.daysElapsed || 0,
+    currentState: unifiedData.currentStatus?.location?.state || 'Location Unavailable'
   } : null;
 
-  const currentLocation = unifiedData ? {
-    latitude: unifiedData.currentStatus.location.coordinates.lat,
-    longitude: unifiedData.currentStatus.location.coordinates.lng,
-    battery_level: unifiedData.currentStatus.battery.level,
-    battery_range: unifiedData.currentStatus.battery.range,
-    charging_state: unifiedData.currentStatus.battery.charging,
-    inside_temp: unifiedData.currentStatus.vehicle.temperature.inside,
-    outside_temp: unifiedData.currentStatus.vehicle.temperature.outside,
-    odometer: unifiedData.currentStatus.vehicle.odometer,
-    speed: unifiedData.currentStatus.vehicle.speed,
-    timestamp: unifiedData.currentStatus.location.lastUpdate
+  const currentLocation = unifiedData && unifiedData.currentStatus ? {
+    latitude: unifiedData.currentStatus.location?.coordinates?.lat || 0,
+    longitude: unifiedData.currentStatus.location?.coordinates?.lng || 0,
+    battery_level: unifiedData.currentStatus.battery?.level || 0,
+    battery_range: unifiedData.currentStatus.battery?.range || 0,
+    charging_state: unifiedData.currentStatus.battery?.charging || false,
+    inside_temp: unifiedData.currentStatus.vehicle?.temperature?.inside || 0,
+    outside_temp: unifiedData.currentStatus.vehicle?.temperature?.outside || 0,
+    odometer: unifiedData.currentStatus.vehicle?.odometer || 0,
+    speed: unifiedData.currentStatus.vehicle?.speed || 0,
+    timestamp: unifiedData.currentStatus.location?.lastUpdate || new Date().toISOString()
   } : null;
 
   // Convert timeline drives to route points format with proper coordinates
@@ -409,7 +409,7 @@ const PublicApp: React.FC = () => {
           <SmartVehicleStats 
             batteryLevel={currentLocation?.battery_level}
             range={currentLocation?.battery_range}
-            chargingState={currentLocation?.charging_state}
+            chargingState={currentLocation?.charging_state ? 'charging' : 'not_charging'}
             temperature={currentLocation?.inside_temp}
             odometer={currentLocation?.odometer}
             speed={currentLocation?.speed}

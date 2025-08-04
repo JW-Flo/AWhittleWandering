@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "node-fetch": "^3.3.2",
+    "puppeteer": "^24.15.0",
     "zod": "^3.22.0"
   }
 }
