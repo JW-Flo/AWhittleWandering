@@ -34,14 +34,27 @@ const MinimalTeslaApp: React.FC = () => {
   const parseLocation = (locationString: string) => {
     if (!locationString) return { city: 'Unknown', state: 'Unknown' };
     
-    // Format: "Address, City, State ZIP, Country"
-    const parts = locationString.split(', ');
-    if (parts.length >= 3) {
-      const city = parts[1];
-      const stateWithZip = parts[2];
-      const state = stateWithZip.split(' ')[0]; // Remove ZIP code
+    // Handle different location formats:
+    // "Bar Harbor, Cadillac Mountain (sunrise hike), Maine"
+    // "Stratford stay with Deanna, Connecticut"
+    // "Start: Corpus Christi, Texas"
+    
+    // Remove prefix if exists (Start:, End:, etc.)
+    let cleanLocation = locationString.replace(/^(Start:|End:)\s*/, '');
+    
+    // Split by comma and get the last part as state
+    const parts = cleanLocation.split(', ');
+    if (parts.length >= 2) {
+      // Last part should contain the state
+      const lastPart = parts[parts.length - 1].trim();
+      const state = lastPart.split(' ')[0]; // Get first word (state name)
+      
+      // Second to last part is usually city/region
+      const city = parts[parts.length - 2].trim();
+      
       return { city, state };
     }
+    
     return { city: 'Unknown', state: 'Unknown' };
   };
 
@@ -58,13 +71,13 @@ const MinimalTeslaApp: React.FC = () => {
     }
 
     // Sort drives by date to find earliest and latest
-    const sortedDrives = [...data.timeline.drives].sort((a, b) => a.date - b.date);
+    const sortedDrives = [...data.timeline.drives].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     const earliestDrive = sortedDrives[0];
     const latestDrive = sortedDrives[sortedDrives.length - 1];
 
     // Calculate days elapsed from actual drive data
-    const startTimestamp = earliestDrive.date * 1000;
-    const endTimestamp = latestDrive.date * 1000;
+    const startTimestamp = new Date(earliestDrive.date).getTime();
+    const endTimestamp = new Date(latestDrive.date).getTime();
     const daysElapsed = Math.ceil((endTimestamp - startTimestamp) / (1000 * 60 * 60 * 24));
 
     // Extract unique states from all drives
@@ -85,17 +98,25 @@ const MinimalTeslaApp: React.FC = () => {
     };
   };
 
-  // Get current location from most recent drive
+  // Function to get current location from API data
   const getCurrentLocation = () => {
-    if (data?.timeline?.drives?.length > 0) {
-      // Sort by date to get the most recent drive
-      const sortedDrives = [...data.timeline.drives].sort((a, b) => b.date - a.date);
-      const latestDrive = sortedDrives[0];
+    if (!data?.currentStatus) {
+      return { city: 'Unknown', state: 'Unknown' };
+    }
+
+    // Use currentStatus.location if available
+    if (data.currentStatus.location) {
+      return parseLocation(data.currentStatus.location);
+    }
+
+    // Fallback to latest drive endpoint if no currentStatus.location
+    if (data.timeline?.drives && data.timeline.drives.length > 0) {
+      const latestDrive = data.timeline.drives[data.timeline.drives.length - 1];
       return parseLocation(latestDrive.endLocation);
     }
+
     return { city: 'Unknown', state: 'Unknown' };
   };
-
   // Calculate total miles from actual drives (more accurate than API overview)
   const calculateTotalMiles = () => {
     if (!data?.timeline?.drives) return data?.overview?.totalMiles || 0;
@@ -294,7 +315,7 @@ const MinimalTeslaApp: React.FC = () => {
                           {startLoc.city}, {startLoc.state} → {endLoc.city}, {endLoc.state}
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
-                          {new Date(drive.date * 1000).toLocaleDateString()}
+                          {new Date(drive.date).toLocaleDateString()}
                         </div>
                       </div>
                       <div className="text-right">

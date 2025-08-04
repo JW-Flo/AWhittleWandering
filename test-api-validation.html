@@ -89,8 +89,8 @@
                 // Test the specific error that was reported
                 try {
                     const statesFromDrives = unifiedData.timeline.drives.map(drive => drive.startLocation);
-                    html += `<h2 style="color: green;">✅ SUCCESS: TypeError "Cannot read properties of undefined (reading 'drives')" is FIXED!</h2>`;
-                    html += `<p>Successfully extracted states: ${statesFromDrives.join(', ')}</p>`;
+                    html += `<h2 style="color: green;">✅ SUCCESS: Successfully extracted drive start locations.</h2>`;
+                    html += `<p>States extracted: ${statesFromDrives.join(', ')}</p>`;
                 } catch (error) {
                     html += `<h2 style="color: red;">❌ ERROR: ${error.message}</h2>`;
                 }

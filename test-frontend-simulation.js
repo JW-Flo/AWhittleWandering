@@ -11,6 +11,9 @@ class FrontendSimulation {
   constructor() {
     this.errors = [];
     this.logs = [];
+    // Use a realistic, complete User-Agent string (Chrome on macOS)
+    this.userAgent =
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
   }
 
   log(message, type = "info") {
@@ -31,8 +34,7 @@ class FrontendSimulation {
           method: "GET",
           headers: {
             Origin: "https://182679ee.awhittlewandering-site.pages.dev",
-            "User-Agent":
-              "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+            "User-Agent": this.userAgent,
             Accept: "application/json",
             "Accept-Language": "en-US,en;q=0.9",
             "Cache-Control": "no-cache",
