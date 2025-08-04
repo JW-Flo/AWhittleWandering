@@ -38,6 +38,7 @@ const MinimalTeslaApp: React.FC = () => {
     // "Bar Harbor, Cadillac Mountain (sunrise hike), Maine"
     // "Stratford stay with Deanna, Connecticut"
     // "Start: Corpus Christi, Texas"
+    // "Watch Hill Point (coastal visit), Rhode Island"
     
     // Remove prefix if exists (Start:, End:, etc.)
     let cleanLocation = locationString.replace(/^(Start:|End:)\s*/, '');
@@ -46,8 +47,27 @@ const MinimalTeslaApp: React.FC = () => {
     const parts = cleanLocation.split(', ');
     if (parts.length >= 2) {
       // Last part should contain the state
-      const lastPart = parts[parts.length - 1].trim();
-      const state = lastPart.split(' ')[0]; // Get first word (state name)
+      const statePart = parts[parts.length - 1].trim();
+      
+      // Handle multi-word states like "Rhode Island", "New York", etc.
+      const knownStates = new Set([
+        'Rhode Island', 'New York', 'New Hampshire', 'New Jersey', 'New Mexico',
+        'North Carolina', 'North Dakota', 'South Carolina', 'South Dakota', 
+        'West Virginia', 'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California',
+        'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii',
+        'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana',
+        'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi',
+        'Missouri', 'Montana', 'Nebraska', 'Nevada', 'Ohio', 'Oklahoma', 'Oregon',
+        'Pennsylvania', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia',
+        'Washington', 'Wisconsin', 'Wyoming'
+      ]);
+      
+      // Check if the full last part is a known state
+      let state = statePart;
+      if (!knownStates.has(statePart)) {
+        // Try first word if full part isn't a known state
+        state = statePart.split(' ')[0];
+      }
       
       // Second to last part is usually city/region
       const city = parts[parts.length - 2].trim();
@@ -58,72 +78,80 @@ const MinimalTeslaApp: React.FC = () => {
     return { city: 'Unknown', state: 'Unknown' };
   };
 
-  // Calculate actual journey stats from drive data
+  // Calculate actual journey stats - use API overview data when available
   const calculateJourneyStats = () => {
-    if (!data?.timeline?.drives || data.timeline.drives.length === 0) {
-      return {
-        startDate: null,
-        daysElapsed: 0,
-        statesVisited: [],
-        earliestDrive: null,
-        latestDrive: null
-      };
+    // Use API overview data first (most reliable)
+    const daysElapsed = data?.overview?.daysElapsed || 0;
+    
+    // Calculate states from drives if timeline data exists
+    const states = new Set<string>();
+    if (data?.timeline?.drives) {
+      data.timeline.drives.forEach(drive => {
+        const startLoc = parseLocation(drive.startLocation);
+        const endLoc = parseLocation(drive.endLocation);
+        if (startLoc.state !== 'Unknown') states.add(startLoc.state);
+        if (endLoc.state !== 'Unknown') states.add(endLoc.state);
+      });
     }
 
-    // Sort drives by date to find earliest and latest
-    const sortedDrives = [...data.timeline.drives].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    const earliestDrive = sortedDrives[0];
-    const latestDrive = sortedDrives[sortedDrives.length - 1];
-
-    // Calculate days elapsed from actual drive data
-    const startTimestamp = new Date(earliestDrive.date).getTime();
-    const endTimestamp = new Date(latestDrive.date).getTime();
-    const daysElapsed = Math.ceil((endTimestamp - startTimestamp) / (1000 * 60 * 60 * 24));
-
-    // Extract unique states from all drives
-    const states = new Set<string>();
-    data.timeline.drives.forEach(drive => {
-      const startLoc = parseLocation(drive.startLocation);
-      const endLoc = parseLocation(drive.endLocation);
-      if (startLoc.state !== 'Unknown') states.add(startLoc.state);
-      if (endLoc.state !== 'Unknown') states.add(endLoc.state);
-    });
+    // Calculate date range from drives if available
+    let earliestDrive = null;
+    let latestDrive = null;
+    if (data?.timeline?.drives && data.timeline.drives.length > 0) {
+      const sortedDrives = [...data.timeline.drives].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      earliestDrive = new Date(sortedDrives[0].date);
+      latestDrive = new Date(sortedDrives[sortedDrives.length - 1].date);
+    } else if (data?.overview?.startDate) {
+      // Fallback to overview start date
+      earliestDrive = new Date(data.overview.startDate);
+      latestDrive = new Date(); // Current date
+    }
 
     return {
-      startDate: new Date(startTimestamp),
-      daysElapsed: Math.max(daysElapsed, 1), // At least 1 day
+      startDate: earliestDrive,
+      daysElapsed: daysElapsed,
       statesVisited: Array.from(states),
-      earliestDrive: new Date(startTimestamp),
-      latestDrive: new Date(endTimestamp)
+      earliestDrive: earliestDrive,
+      latestDrive: latestDrive
     };
   };
 
   // Function to get current location from API data
   const getCurrentLocation = () => {
-    if (!data?.currentStatus) {
-      return { city: 'Unknown', state: 'Unknown' };
+    // Try currentStatus location first
+    if (data?.currentStatus?.location) {
+      // If API has location text, use it
+      if (data.currentStatus.location.city && data.currentStatus.location.state) {
+        return {
+          city: data.currentStatus.location.city,
+          state: data.currentStatus.location.state
+        };
+      }
     }
 
-    // Use currentStatus.location if available
-    if (data.currentStatus.location) {
-      return parseLocation(data.currentStatus.location);
-    }
-
-    // Fallback to latest drive endpoint if no currentStatus.location
-    if (data.timeline?.drives && data.timeline.drives.length > 0) {
-      const latestDrive = data.timeline.drives[data.timeline.drives.length - 1];
+    // Fallback to latest drive endpoint if available
+    if (data?.timeline?.drives && data.timeline.drives.length > 0) {
+      // Ensure drives are sorted by date descending (newest first)
+      const sortedDrives = [...data.timeline.drives].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const latestDrive = sortedDrives[0];
       return parseLocation(latestDrive.endLocation);
-    }
-
+    // No reliable fallback for coordinates; return unknown if location is not found
+    return { city: 'Unknown', state: 'Unknown' };
+  };
     return { city: 'Unknown', state: 'Unknown' };
   };
   // Calculate total miles from actual drives (more accurate than API overview)
   const calculateTotalMiles = () => {
-    if (!data?.timeline?.drives) return data?.overview?.totalMiles || 0;
+    // Use API overview total miles as primary source
+    if (data?.overview?.totalMiles) {
+      return data.overview.totalMiles;
+    }
+    
+    // Fallback to calculating from drives
+    if (!data?.timeline?.drives) return 0;
     
     const driveMiles = data.timeline.drives.reduce((total, drive) => total + (drive.distance || 0), 0);
-    // Use the higher of API overview or calculated drive miles
-    return Math.max(driveMiles, data.overview?.totalMiles || 0);
+    return driveMiles;
   };
 
   // Format timestamp
