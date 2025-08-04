@@ -643,6 +643,57 @@ app.get('/api/v1/debug/states-count', async (c) => {
   }
 });
 
+// Debug endpoint for odometer calculation
+app.get('/api/v1/debug/odometer-calc', async (c) => {
+  try {
+    const tessieApiKey = c.env.TESSIE_API_KEY;
+    if (!tessieApiKey) {
+      return c.json({ error: 'TESSIE_API_KEY not configured' }, 500);
+    }
+
+    // Get current odometer from Tessie
+    const tessieData = await fetchTessieData(tessieApiKey);
+    const currentOdometer = tessieData?.state?.vehicle_state?.odometer || 0;
+    
+    // Check what's in vehicle_state table
+    const dbOdometer = await c.env.TESLA_DB.prepare(`
+      SELECT odometer, updated_at 
+      FROM vehicle_state 
+      ORDER BY updated_at DESC 
+      LIMIT 5
+    `).all();
+    
+    // Check earliest odometer since journey start
+    const journeyStartDate = new Date('2025-06-01');
+    const earliestReading = await c.env.TESLA_DB.prepare(`
+      SELECT MIN(odometer) as start_odometer, MAX(odometer) as max_odometer
+      FROM vehicle_state 
+      WHERE date(updated_at) >= date(?) 
+      AND odometer > 0
+    `).bind(journeyStartDate.toISOString().split('T')[0]).first();
+    
+    // Calculate trip miles
+    const startOdometer = earliestReading?.start_odometer || 65000;
+    const tripMiles = Math.max(0, currentOdometer - startOdometer);
+
+    return c.json({
+      message: 'Odometer calculation debug',
+      currentOdometer: currentOdometer,
+      startOdometer: startOdometer,
+      calculatedTripMiles: tripMiles,
+      dbRecords: dbOdometer.results?.length || 0,
+      recentOdometers: dbOdometer.results,
+      earliestReading: earliestReading,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    return c.json({
+      error: 'Debug query failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
 // Debug endpoint for component data
 app.get('/api/v1/debug/component-data', async (c) => {
   try {
@@ -927,8 +978,8 @@ async function handleUnifiedData(c: any) {
 
       // Enhance unified data with component data if available
       if (componentOverview) {
-        unifiedData.overview.totalMiles = componentOverview.total_miles;
-        // IMPORTANT: Don't override states count - use the accurate count from states_visited table
+        // IMPORTANT: Don't override miles or states - use accurate real-time calculations
+        // unifiedData.overview.totalMiles = componentOverview.total_miles;
         // unifiedData.overview.statesVisited = componentOverview.states_visited_count;
         unifiedData.overview.daysElapsed = componentOverview.days_elapsed;
       }
@@ -1426,28 +1477,13 @@ async function processAndStoreInD1(db: D1Database, tessieData: any) {
     LIMIT 20
   `).all();
 
-  // Calculate live trip progress - DYNAMIC calculation based on journey start
+  // Calculate live trip progress - SIMPLE calculation based on known journey start
   const currentOdometer = currentState?.vehicle_state?.odometer || 0;
-  const journeyStartDate = new Date('2025-06-01');
   
-  // Get the earliest odometer reading on or after journey start date
-  let tripStartOdometer = 65000; // Fallback if no data found
-  try {
-    const earliestReading = await db.prepare(`
-      SELECT MIN(odometer) as start_odometer 
-      FROM vehicle_state 
-      WHERE date(updated_at) >= date(?) 
-      AND odometer > 0
-    `).bind(journeyStartDate.toISOString().split('T')[0]).first();
-    
-    if (earliestReading?.start_odometer) {
-      tripStartOdometer = earliestReading.start_odometer;
-    }
-  } catch (error) {
-    console.warn('Could not determine journey start odometer, using fallback:', error);
-  }
-  
-  const tripMiles = Math.max(0, currentOdometer - tripStartOdometer);
+  // Use known journey start odometer (calculated from component data: 71259 - 6251 = 65008)
+  // This is the most accurate approach since we don't have complete historical odometer data
+  const JOURNEY_START_ODOMETER = 65008; // Odometer reading on 6/1/2025
+  const tripMiles = Math.max(0, currentOdometer - JOURNEY_START_ODOMETER);
 
   // Build unified response - Use LIVE Tessie data for all components
   return {
