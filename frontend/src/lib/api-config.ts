@@ -17,7 +17,8 @@ export const API_CONFIG = {
   },
   DEFAULT_HEADERS: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json'
+    'Accept': 'application/json',
+    'Authorization': 'Bearer teslajourneytracker2024'
   }
 };
 
