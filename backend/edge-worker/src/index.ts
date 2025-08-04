@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { TeslaDataIngestion } from './data-ingestion';
 import { CronDataController } from './cron-controller';
+import { ComponentDataProcessor } from './component-data-processor';
 
 // Cloudflare Worker types for comprehensive resource integration
 interface ScheduledController {
@@ -229,6 +230,99 @@ app.get('/trip-status', async (c) => {
 // Main unified data endpoint using D1 for aggregation
 app.get('/api/v1/unified-data', async (c) => {
   return handleUnifiedData(c);
+});
+
+// === SAFE COMPONENT ENDPOINTS (Parallel System) ===
+// These run alongside existing system for testing - NO RISK to current functionality
+
+// Component-Ready API Endpoints - SAFE PARALLEL SYSTEM
+app.get('/api/v1/component/overview', async (c) => {
+  try {
+    const overview = await c.env.TESLA_DB.prepare(`
+      SELECT * FROM journey_overview 
+      WHERE journey_id = 'continental-usa-2025' 
+      ORDER BY last_updated DESC 
+      LIMIT 1
+    `).first();
+
+    return c.json(overview || { error: 'No component data available yet' });
+  } catch (error) {
+    return c.json({ error: 'Component endpoint not ready' }, 500);
+  }
+});
+
+app.get('/api/v1/component/current-status', async (c) => {
+  try {
+    const status = await c.env.TESLA_DB.prepare(`
+      SELECT * FROM current_status 
+      ORDER BY last_updated DESC 
+      LIMIT 1
+    `).first();
+
+    return c.json(status || { error: 'No component data available yet' });
+  } catch (error) {
+    return c.json({ error: 'Component endpoint not ready' }, 500);
+  }
+});
+
+app.get('/api/v1/component/states-progress', async (c) => {
+  try {
+    const states = await c.env.TESLA_DB.prepare(`
+      SELECT * FROM states_progress 
+      WHERE journey_id = 'continental-usa-2025'
+      ORDER BY visit_order ASC
+    `).all();
+
+    return c.json(states.results || []);
+  } catch (error) {
+    return c.json({ error: 'Component endpoint not ready' }, 500);
+  }
+});
+
+app.get('/api/v1/component/recent-drives', async (c) => {
+  try {
+    const drives = await c.env.TESLA_DB.prepare(`
+      SELECT * FROM recent_drives_summary 
+      WHERE journey_id = 'continental-usa-2025'
+      ORDER BY drive_order ASC
+      LIMIT 5
+    `).all();
+
+    return c.json(drives.results || []);
+  } catch (error) {
+    return c.json({ error: 'Component endpoint not ready' }, 500);
+  }
+});
+
+// Safe component data processing trigger - DOES NOT AFFECT EXISTING SYSTEM
+app.post('/api/v1/component/process-data', async (c) => {
+  try {
+    const tessieApiKey = c.env.TESSIE_API_KEY;
+    const vehicleVin = c.env.TESLA_VIN || '5YJYGDEE5LF027324';
+    
+    if (!tessieApiKey) {
+      return c.json({ error: 'TESSIE_API_KEY not configured' }, 500);
+    }
+
+    // Fetch fresh Tessie data safely
+    const tessieData = await fetchTessieData(tessieApiKey);
+    
+    // Process component data in SAFE MODE (doesn't affect existing APIs)
+    const processor = new ComponentDataProcessor(c.env.TESLA_DB, vehicleVin);
+    await processor.processAllComponentData(tessieData.state);
+
+    return c.json({
+      success: true,
+      message: 'Component data processed safely',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Safe component processing error:', error);
+    return c.json({ 
+      error: 'Component processing failed (existing system unaffected)',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
 });
 
 // === CRON DATA INGESTION ENDPOINTS ===
@@ -469,8 +563,9 @@ async function fetchTessieData(apiKey: string) {
 
   const vehicles = await vehiclesRes.json() as any;
   
-  // Try to get state for first vehicle
+  // Try to get state and recent drives for first vehicle
   let state = null;
+  let recentDrives = null;
   if (vehicles.results?.length > 0) {
     const vin = vehicles.results[0].vin;
     try {
@@ -483,14 +578,28 @@ async function fetchTessieData(apiKey: string) {
     } catch (error) {
       console.warn('Failed to fetch vehicle state:', error);
     }
+
+    // Fetch recent drives from last 30 days
+    try {
+      const endDate = new Date().toISOString();
+      const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const drivesRes = await fetch(`https://api.tessie.com/${vin}/drives?start=${startDate}&end=${endDate}&limit=20`, {
+        headers: { Authorization: `Bearer ${apiKey}` }
+      });
+      if (drivesRes.ok) {
+        recentDrives = await drivesRes.json();
+      }
+    } catch (error) {
+      console.warn('Failed to fetch recent drives:', error);
+    }
   }
 
-  return { vehicles, state };
+  return { vehicles, state, recentDrives };
 }
 
 // Helper function to process and store data in D1
 async function processAndStoreInD1(db: D1Database, tessieData: any) {
-  const { vehicles, state } = tessieData;
+  const { vehicles, state, recentDrives: liveDrives } = tessieData;
   
   if (!vehicles.results?.length) {
     throw new Error('No vehicles found in Tessie response');
@@ -580,42 +689,64 @@ async function processAndStoreInD1(db: D1Database, tessieData: any) {
     LIMIT 20
   `).all();
 
-  // Build unified response
+  // Calculate live trip progress - FIXED with conservative estimate
+  const tripStartOdometer = 65000; // Conservative estimate based on current odometer (71,251)
+  const currentOdometer = currentState?.vehicle_state?.odometer || 0;
+  const tripMiles = Math.max(0, currentOdometer - tripStartOdometer);
+
+  // Build unified response - Use LIVE Tessie data for all components
   return {
     overview: {
       tripName: journeyData?.name || "A Whittle Wandering - Continental USA",
       vehicle: vehicle.display_name || "Tesla Model Y",
       startDate: journeyData?.start_date || "2025-06-01",
       daysElapsed: Math.floor((Date.now() - new Date(journeyData?.start_date || '2025-06-01').getTime()) / (1000 * 60 * 60 * 24)),
-      totalMiles: Math.round(journeyData?.total_distance || 0),
+      totalMiles: Math.round(tripMiles),
+      currentOdometer: Math.round(currentOdometer),
       statesVisited: journeyData?.states_visited || 0,
       totalStates: 48
     },
     currentStatus: {
       battery: {
-        level: journeyData?.battery_level || 0,
-        range: Math.round(journeyData?.battery_range || 0),
-        charging: journeyData?.charging_state || 'Unknown'
+        level: currentState?.charge_state?.battery_level || 0,
+        range: Math.round(currentState?.charge_state?.battery_range || 0),
+        charging: currentState?.charge_state?.charging_state || 'Unknown'
       },
       location: {
         coordinates: {
-          lat: journeyData?.latitude || 0,
-          lng: journeyData?.longitude || 0
+          lat: currentState?.drive_state?.latitude || 0,
+          lng: currentState?.drive_state?.longitude || 0
         },
-        state: await detectStateFromCoordinates(journeyData?.latitude || 0, journeyData?.longitude || 0),
-        lastUpdate: journeyData?.last_update || new Date().toISOString()
+        state: await detectStateFromCoordinates(currentState?.drive_state?.latitude || 0, currentState?.drive_state?.longitude || 0),
+        lastUpdate: new Date().toISOString()
       },
       vehicle: {
-        odometer: Math.round(journeyData?.odometer || 0),
-        speed: journeyData?.speed || 0,
+        odometer: Math.round(currentState?.vehicle_state?.odometer || 0),
+        speed: currentState?.drive_state?.speed || 0,
         temperature: {
-          inside: journeyData?.inside_temp,
-          outside: journeyData?.outside_temp
+          inside: currentState?.climate_state?.inside_temp,
+          outside: currentState?.climate_state?.outside_temp
         }
       }
     },
     timeline: {
-      drives: (recentDrives.results && recentDrives.results.length > 0) ? recentDrives.results.map((drive: any) => ({
+      drives: (liveDrives?.results && liveDrives.results.length > 0) ? liveDrives.results.map((drive: any) => ({
+        id: drive.id,
+        date: drive.started_at,
+        startTime: drive.started_at,
+        endTime: drive.ended_at,
+        distance: Math.round(drive.distance_miles || 0),
+        startLocation: drive.start_address || `${drive.start_latitude}, ${drive.start_longitude}`,
+        endLocation: drive.end_address || `${drive.end_latitude}, ${drive.end_longitude}`,
+        startCoordinates: {
+          lat: drive.start_latitude || 0,
+          lng: drive.start_longitude || 0
+        },
+        endCoordinates: {
+          lat: drive.end_latitude || 0,
+          lng: drive.end_longitude || 0
+        }
+      })) : (recentDrives.results && recentDrives.results.length > 0) ? recentDrives.results.map((drive: any) => ({
         id: drive.id,
         date: drive.start_time,
         startTime: drive.start_time,
