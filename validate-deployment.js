@@ -25,10 +25,10 @@ async function validateWebsite() {
             console.log('REQUEST FAILED:', request.url(), request.failure().errorText);
         });
         
-        console.log('🔍 Testing https://3fb0c039.awhittlewandering-site.pages.dev...');
+        console.log('🔍 Testing https://26d2ee84.awhittlewandering-site.pages.dev...');
         
         // Navigate to the website
-        await page.goto('https://3fb0c039.awhittlewandering-site.pages.dev', { 
+        await page.goto('https://26d2ee84.awhittlewandering-site.pages.dev', { 
             waitUntil: 'networkidle2',
             timeout: 30000 
         });
