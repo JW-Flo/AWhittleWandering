@@ -23,9 +23,9 @@ export async function ingestVehicleState(env: Env): Promise<void> {
   
   try {
     // Fetch current state from Tessie
-    const tessieResponse = await fetch(`https://api.tessie.com/state`, {
+    const tessieResponse = await fetch(`https://api.tessie.com/${env.VEHICLE_ID}/state`, {
       headers: {
-        'Authorization': `Bearer ${env.TESSIE_API_TOKEN}`,
+        'Authorization': `Bearer ${env.TESSIE_API_KEY}`,
         'Content-Type': 'application/json'
       }
     });
@@ -118,9 +118,9 @@ export async function ingestDrives(env: Env): Promise<void> {
     const since = lastDrive?.last_timestamp || '2025-06-01T00:00:00Z';
 
     // Fetch drives from Tessie
-    const tessieResponse = await fetch(`https://api.tessie.com/drives?since=${since}`, {
+    const tessieResponse = await fetch(`https://api.tessie.com/${env.VEHICLE_ID}/drives?since=${since}&per_page=100`, {
       headers: {
-        'Authorization': `Bearer ${env.TESSIE_API_TOKEN}`,
+        'Authorization': `Bearer ${env.TESSIE_API_KEY}`,
         'Content-Type': 'application/json'
       }
     });
@@ -244,9 +244,9 @@ export async function ingestCharges(env: Env): Promise<void> {
     const since = lastCharge?.last_timestamp || '2025-06-01T00:00:00Z';
 
     // Fetch charges from Tessie
-    const tessieResponse = await fetch(`https://api.tessie.com/charges?since=${since}`, {
+    const tessieResponse = await fetch(`https://api.tessie.com/${env.VEHICLE_ID}/charges?since=${since}&per_page=100`, {
       headers: {
-        'Authorization': `Bearer ${env.TESSIE_API_TOKEN}`,
+        'Authorization': `Bearer ${env.TESSIE_API_KEY}`,
         'Content-Type': 'application/json'
       }
     });
