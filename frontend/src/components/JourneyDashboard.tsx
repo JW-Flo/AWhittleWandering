@@ -4,7 +4,6 @@
 import React, { useEffect, useState } from 'react';
 import { useUnifiedTessieApi } from '@/hooks/useUnifiedTessieApi';
 import { TrackingEvent } from '@/hooks/useSmartTracking';
-import { formatTemperature } from '@/utils/temperature';
 
 interface JourneyDashboardProps {
   vehicleId: string;
@@ -226,7 +225,7 @@ const JourneyDashboard: React.FC<JourneyDashboardProps> = ({
           ].map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as 'overview' | 'drives' | 'charges' | 'stays')}
               className={`flex items-center py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === tab.id
                   ? 'border-blue-500 text-blue-600'

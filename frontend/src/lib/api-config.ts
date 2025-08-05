@@ -52,7 +52,7 @@ export const api = {
   getTimeline: () => apiRequest(API_CONFIG.ENDPOINTS.TIMELINE),
   getLiveStatus: () => apiRequest(API_CONFIG.ENDPOINTS.LIVE_STATUS),
   getHealth: () => apiRequest(API_CONFIG.ENDPOINTS.HEALTH),
-  submitTelemetry: (data: any) => apiRequest(API_CONFIG.ENDPOINTS.TELEMETRY, {
+  submitTelemetry: (data: unknown) => apiRequest(API_CONFIG.ENDPOINTS.TELEMETRY, {
     method: 'POST',
     body: JSON.stringify(data)
   })

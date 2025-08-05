@@ -2,7 +2,7 @@
 // Provides filtering, searching, and organization of photos and videos
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -11,18 +11,15 @@ import {
   Grid, 
   List, 
   Search, 
-  Filter, 
   Image, 
   Video, 
   MapPin, 
   Calendar, 
-  Tag,
   Eye,
   Download,
   Trash2,
   Share2,
-  Star,
-  MoreVertical
+  Star
 } from 'lucide-react';
 
 interface MediaItem {
@@ -101,7 +98,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
 
     // Sort
     filtered.sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: string | number, bValue: string | number;
       
       switch (sortBy) {
         case 'date':
@@ -356,7 +353,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
               </SelectContent>
             </Select>
             
-            <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+            <Select value={sortBy} onValueChange={(value: 'date' | 'name' | 'size' | 'state') => setSortBy(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>

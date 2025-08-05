@@ -102,7 +102,6 @@ export const useRobustData = () => {
       try {
         // Check if we have real drive data
         if (drives && drives.length > 0) {
-          console.log('🚀 Starting sophisticated drive analysis...', { driveCount: drives.length });
           
           setProcessingStage('Analyzing drive patterns...');
           
@@ -135,18 +134,6 @@ export const useRobustData = () => {
             routePoints: routePoints.filter(point => point.latitude !== 0 && point.longitude !== 0)
           };
 
-          console.log('✅ Sophisticated analysis complete:', {
-            states: processedInsights.totalStatesVisited,
-            accurateStates: processedInsights.accurateStateCount,
-            regions: processedInsights.uniqueRegions.length,
-            phases: processedInsights.journeyPhases.length,
-            milestones: processedInsights.milestones.length,
-            complexity: processedInsights.routeComplexity,
-            score: processedInsights.journeyScore,
-            timelineEntries: processedInsights.timelineEntries.length,
-            routePoints: processedInsights.routePoints.length
-          });
-
           setInsights(processedInsights);
           setDataSource('api');
         } else if (apiError) {
@@ -155,7 +142,6 @@ export const useRobustData = () => {
           setDataSource('fallback');
           setError(apiError);
         } else {
-          console.log('📊 Using fallback data (no drives available)');
           setInsights(FALLBACK_DATA);
           setDataSource('fallback');
         }

@@ -45,3 +45,11 @@ pnpm-lock.yaml
 .venv/
 venv/
 __pycache__/
+
+# Local development tools (keep on local system only)
+DYAD_INSTRUCTIONS.md
+dyad-orchestrator.sh
+dyad-comprehensive-briefing.json
+ollama-assistant.sh
+ollama-context.md
+monitor_progress.sh

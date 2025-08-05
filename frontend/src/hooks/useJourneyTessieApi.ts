@@ -2,7 +2,15 @@
 // This is now a wrapper around useUnifiedTessieApi for backward compatibility
 
 import { useUnifiedTessieApi } from './useUnifiedTessieApi';
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
+
+interface ChargeSessionData {
+  id: string;
+  start_date: string;
+  end_date: string;
+  energy_added: number;
+  cost: number;
+}
 
 interface ExtendedStay {
   id: string;
@@ -15,7 +23,7 @@ interface ExtendedStay {
   durationHours: number;
   durationDays: number;
   reason: 'charging' | 'overnight' | 'extended_visit' | 'multi_day_stay';
-  chargingSessions?: any[];
+  chargingSessions?: ChargeSessionData[];
 }
 
 interface DriveSession {
