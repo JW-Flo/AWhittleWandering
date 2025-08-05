@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Calendar, Clock, Trophy, Camera, PenTool, Target, Route, Zap, Upload, Map as MapIcon, CheckCircle, Thermometer, Cloud } from 'lucide-react';
+import { MapPin, Calendar, Clock, Trophy, Camera, PenTool, Target, Route, Zap, Upload, Map as MapIcon, Cloud } from 'lucide-react';
 // SecureDataImport removed for production security
 import { journeyTimeline, journeyStats, routeLocations as staticRouteLocations } from '@/data/journeyData';
 import { useJourneyTracker } from '@/hooks/useJourneyTracker';

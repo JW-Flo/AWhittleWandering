@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Upload, FileText, CheckCircle, AlertCircle, Zap, TrendingUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { calculateTripStatistics } from '@/utils/stateDetection';
