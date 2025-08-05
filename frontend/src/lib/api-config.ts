@@ -9,8 +9,8 @@ const getApiBaseUrl = () => {
 export const API_CONFIG = {
   BASE_URL: getApiBaseUrl(),
   ENDPOINTS: {
-    UNIFIED_DATA: '/api/v1/unified-data',
-    TIMELINE: '/api/v1/unified-data', // Use unified data for timeline
+    UNIFIED_DATA: '/unified-data',
+    TIMELINE: '/unified-data', // Use unified data for timeline
     LIVE_STATUS: '/trip-status', // Use trip status for live status
     TELEMETRY: '/api/v1/telemetry',
     HEALTH: '/health'
