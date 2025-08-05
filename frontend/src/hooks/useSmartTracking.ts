@@ -105,7 +105,7 @@ class SmartJourneyTracker {
     const nearSupercharger = this.isNearSupercharger(location.latitude, location.longitude);
 
     let eventType: TrackingEvent['type'];
-    let metadata: TrackingEvent['metadata'] = {};
+    const metadata: TrackingEvent['metadata'] = {};
 
     if (duration >= 360 && isNighttime) { // 6+ hours at night
       eventType = 'overnight';
@@ -165,7 +165,7 @@ class SmartJourneyTracker {
     return 'Quick stop';
   }
 
-  private async getStateFromCoordinates(lat: number, lng: number): Promise<string | null> {
+  private async getStateFromCoordinates(_lat: number, _lng: number): Promise<string | null> {
     // In production, use reverse geocoding API
     // For now, return null - would implement with Google Maps or similar
     return null;

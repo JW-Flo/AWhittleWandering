@@ -75,7 +75,7 @@ export const useUnifiedJourneyData = () => {
     fetchUnifiedData();
 
     // Set up polling for real-time updates (every 30 seconds)
-    interval = setInterval(fetchUnifiedData, 30000);
+    const interval = setInterval(fetchUnifiedData, 30000);
 
     return () => {
       if (interval) {
