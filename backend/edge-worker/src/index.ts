@@ -379,10 +379,8 @@ app.post('/api/v1/backfill-historical-drives', async (c) => {
           INSERT INTO drives (
             tessie_id, vehicle_id, journey_id, started_at, ended_at,
             start_address, end_address, start_latitude, start_longitude,
-            end_latitude, end_longitude, distance_miles, duration_minutes,
-            energy_used_kwh, average_speed, max_speed, outside_temp_avg,
-            start_battery_level, end_battery_level, start_range, end_range
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            end_latitude, end_longitude, distance_miles, duration_minutes
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(
           drive.id,
           'midnight-shadow',
@@ -396,15 +394,7 @@ app.post('/api/v1/backfill-historical-drives', async (c) => {
           drive.ending_latitude || 0,
           drive.ending_longitude || 0,
           drive.distance_miles || 0,
-          drive.duration_minutes || 0,
-          drive.energy_used_kwh || 0,
-          drive.average_speed || 0,
-          drive.max_speed || 0,
-          drive.outside_temp_avg || 0,
-          drive.start_battery_level || 0,
-          drive.end_battery_level || 0,
-          drive.start_range || 0,
-          drive.end_range || 0
+          drive.duration_minutes || 0
         ).run();
         
         inserted++;
@@ -965,6 +955,252 @@ app.get('/api/v1/debug/states-count', async (c) => {
   } catch (error) {
     return c.json({
       error: 'Debug failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+// Debug endpoint to check actual historical data range
+app.get('/api/v1/debug/data-range', async (c) => {
+  try {
+    const db = c.env.TESLA_DB;
+    
+    const dateRange = await db.prepare(`
+      SELECT 
+        MIN(started_at) as earliest_drive,
+        MAX(started_at) as latest_drive,
+        COUNT(*) as total_drives,
+        COUNT(CASE WHEN started_at >= '2025-06-01' THEN 1 END) as drives_since_june,
+        COUNT(CASE WHEN started_at < '2025-06-01' THEN 1 END) as drives_before_june
+      FROM drives
+    `).first();
+    
+    const sampleEarly = await db.prepare(`
+      SELECT id, started_at, start_address, distance_miles
+      FROM drives
+      ORDER BY started_at ASC
+      LIMIT 5
+    `).all();
+    
+    const sampleRecent = await db.prepare(`
+      SELECT id, started_at, start_address, distance_miles
+      FROM drives
+      ORDER BY started_at DESC
+      LIMIT 5
+    `).all();
+    
+    return c.json({
+      message: 'Historical data range analysis',
+      dateRange: dateRange,
+      sampleEarlyDrives: sampleEarly?.results || [],
+      sampleRecentDrives: sampleRecent?.results || [],
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    return c.json({
+      error: 'Debug failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+// Data repair endpoint to fix mixed timestamp formats
+app.post('/api/v1/admin/repair-timestamps', async (c) => {
+  try {
+    const db = c.env.TESLA_DB;
+    
+    // Find drives with UNIX timestamp format (numeric values)
+    const timestampDrives = await db.prepare(`
+      SELECT id, started_at, ended_at
+      FROM drives 
+      WHERE typeof(started_at) = 'integer'
+      LIMIT 100
+    `).all();
+    
+    let repaired = 0;
+    
+    if (timestampDrives?.results) {
+      for (const drive of timestampDrives.results) {
+        const startedAtISO = new Date((drive.started_at as number) * 1000).toISOString();
+        const endedAtISO = drive.ended_at ? new Date((drive.ended_at as number) * 1000).toISOString() : null;
+        
+        await db.prepare(`
+          UPDATE drives 
+          SET 
+            started_at = ?,
+            ended_at = ?
+          WHERE id = ?
+        `).bind(startedAtISO, endedAtISO, drive.id).run();
+        
+        repaired++;
+      }
+    }
+    
+    return c.json({
+      message: 'Timestamp repair completed',
+      repairedRecords: repaired,
+      totalChecked: timestampDrives?.results?.length || 0,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    return c.json({
+      error: 'Repair failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+// Cache management endpoint
+app.post('/api/v1/admin/clear-cache', async (c) => {
+  try {
+    const db = c.env.TESLA_DB;
+    
+    // Clear all cache entries
+    const result = await db.prepare(`
+      DELETE FROM cache_entries WHERE type = 'unified_data'
+    `).run();
+    
+    return c.json({
+      message: 'Cache cleared successfully',
+      deletedEntries: result.meta?.changes || 0,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    return c.json({
+      error: 'Cache clear failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+// Historical data backfill endpoint to recover missing June 1-16 data
+app.post('/api/v1/admin/backfill-historical-data', async (c) => {
+  try {
+    const db = c.env.TESLA_DB;
+    const tessieApiKey = c.env.TESSIE_API_KEY;
+    
+    if (!tessieApiKey) {
+      return c.json({ error: 'TESSIE_API_KEY not configured' }, 500);
+    }
+
+    // Get vehicle VIN first
+    const vehiclesRes = await fetch('https://api.tessie.com/vehicles', {
+      headers: { Authorization: `Bearer ${tessieApiKey}` }
+    });
+    if (!vehiclesRes.ok) {
+      throw new Error(`Failed to get vehicles: ${vehiclesRes.status}`);
+    }
+    const vehicles = await vehiclesRes.json() as any;
+    const vin = vehicles.results[0].vin;
+
+    // Force fetch ALL drives since June 1st, but use pagination to avoid rate limits
+    const forceStartDate = '2025-06-01T00:00:00Z';
+    console.log(`🔄 Starting historical backfill from ${forceStartDate} for vehicle ${vin}`);
+    
+    // First, try a single batch of recent drives to test the approach
+    const tessieResponse = await fetch(`https://api.tessie.com/${vin}/drives?since=${forceStartDate}&limit=500`, {
+      headers: {
+        'Authorization': `Bearer ${tessieApiKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!tessieResponse.ok) {
+      throw new Error(`Tessie API error: ${tessieResponse.status} - ${await tessieResponse.text()}`);
+    }
+
+    const drivesData = await tessieResponse.json();
+    console.log(`📊 Tessie returned ${drivesData.results?.length || 0} drives`);
+    
+    let newDrives = 0;
+    let updatedDrives = 0;
+
+    // Process each drive from Tessie
+    for (const drive of drivesData.results || []) {
+      try {
+        const driveRecord = {
+          tessie_id: drive.id,
+          vehicle_id: 'midnight-shadow',
+          journey_id: 'continental-usa-2025',
+          started_at: new Date(drive.started_at * 1000).toISOString(),
+          ended_at: new Date(drive.ended_at * 1000).toISOString(),
+          start_address: drive.starting_location || drive.start_address,
+          end_address: drive.ending_location || drive.end_address,
+          start_latitude: drive.start_latitude,
+          start_longitude: drive.start_longitude,
+          end_latitude: drive.end_latitude,
+          end_longitude: drive.end_longitude,
+          distance_miles: drive.distance_miles,
+          duration_minutes: drive.ended_at && drive.started_at ? 
+            Math.round((drive.ended_at - drive.started_at) / 60) : 0
+        };
+
+        // Check if drive already exists
+        const existingDrive = await db.prepare(`
+          SELECT id FROM drives WHERE tessie_id = ?
+        `).bind(drive.id).first();
+
+        if (existingDrive) {
+          // Update existing drive with any missing data (only existing columns)
+          await db.prepare(`
+            UPDATE drives SET
+              started_at = ?, ended_at = ?, start_address = ?, end_address = ?,
+              start_latitude = ?, start_longitude = ?, end_latitude = ?, end_longitude = ?,
+              distance_miles = ?, duration_minutes = ?
+            WHERE tessie_id = ?
+          `).bind(
+            driveRecord.started_at, driveRecord.ended_at,
+            driveRecord.start_address, driveRecord.end_address,
+            driveRecord.start_latitude, driveRecord.start_longitude,
+            driveRecord.end_latitude, driveRecord.end_longitude,
+            driveRecord.distance_miles, driveRecord.duration_minutes,
+            drive.id
+          ).run();
+          updatedDrives++;
+        } else {
+          // Insert new drive
+          await db.prepare(`
+            INSERT INTO drives (
+              tessie_id, vehicle_id, journey_id, started_at, ended_at,
+              start_address, end_address, start_latitude, start_longitude,
+              end_latitude, end_longitude, distance_miles, duration_minutes,
+              created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+          `).bind(
+            driveRecord.tessie_id, driveRecord.vehicle_id, driveRecord.journey_id,
+            driveRecord.started_at, driveRecord.ended_at,
+            driveRecord.start_address, driveRecord.end_address,
+            driveRecord.start_latitude, driveRecord.start_longitude,
+            driveRecord.end_latitude, driveRecord.end_longitude,
+            driveRecord.distance_miles, driveRecord.duration_minutes
+          ).run();
+          newDrives++;
+        }
+      } catch (driveError) {
+        console.error(`Failed to process drive ${drive.id}:`, driveError);
+      }
+    }
+
+    // Clear cache after successful backfill
+    await db.prepare(`DELETE FROM api_cache WHERE cache_key LIKE 'unified_data%'`).run();
+
+    return c.json({
+      success: true,
+      message: 'Historical data backfill completed',
+      newDrives,
+      updatedDrives,
+      totalProcessed: newDrives + updatedDrives,
+      tessieApiResponse: {
+        totalReturned: drivesData.results?.length || 0,
+        meta: drivesData.meta || null
+      },
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Historical backfill failed:', error);
+    return c.json({
+      error: 'Historical backfill failed',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, 500);
   }
@@ -1955,7 +2191,7 @@ async function processAndStoreInD1(db: D1Database, tessieData: any) {
     ).run();
   }
 
-  // Get aggregated journey data from D1 - USE HISTORICAL ANALYSIS
+  // Get aggregated journey data from D1 - USE ALL HISTORICAL DATA
   const journeyData = await db.prepare(`
     SELECT 
       j.*,
@@ -1975,24 +2211,37 @@ async function processAndStoreInD1(db: D1Database, tessieData: any) {
     FROM journeys j
     LEFT JOIN vehicle_state vs ON j.vehicle_id = vs.vehicle_id
     LEFT JOIN states_visited sv ON j.id = sv.journey_id
-    LEFT JOIN drives d ON j.id = d.journey_id AND d.started_at >= '2025-06-01'
+    LEFT JOIN drives d ON j.id = d.journey_id
     WHERE j.id = 'continental-usa-2025'
     GROUP BY j.id
   `).first();
 
-  // Get recent drives for timeline - IMPROVED with proper formatting
+  // Get ALL drives for timeline with smart timestamp handling
   const recentDrives = await db.prepare(`
     SELECT 
-      id, started_at as start_time, ended_at as end_time, distance_miles, 
-      start_address as start_location, end_address as end_location,
+      id, 
+      CASE 
+        WHEN typeof(started_at) = 'integer' THEN datetime(started_at, 'unixepoch')
+        ELSE started_at 
+      END as start_time,
+      CASE 
+        WHEN typeof(ended_at) = 'integer' THEN datetime(ended_at, 'unixepoch')
+        ELSE ended_at 
+      END as end_time,
+      distance_miles, 
+      start_address as start_location, 
+      end_address as end_location,
       start_latitude, start_longitude, end_latitude, end_longitude
     FROM drives 
     WHERE journey_id = 'continental-usa-2025'
-      AND started_at >= '2025-06-01'
       AND start_address IS NOT NULL 
       AND end_address IS NOT NULL
-    ORDER BY started_at DESC 
-    LIMIT 10
+    ORDER BY 
+      CASE 
+        WHEN typeof(started_at) = 'integer' THEN started_at
+        ELSE strftime('%s', started_at) 
+      END DESC 
+    LIMIT 50
   `).all();
 
   // Get recent charges for timeline
@@ -2005,20 +2254,32 @@ async function processAndStoreInD1(db: D1Database, tessieData: any) {
     LIMIT 20
   `).all();
 
-  // Calculate live trip progress - SIMPLE calculation based on known journey start
+  // Calculate live trip progress based on actual data range
   const currentOdometer = currentState?.vehicle_state?.odometer || 0;
   
-  // Use actual odometer reading from June 1, 2025 start date
-  const JOURNEY_START_ODOMETER = 58046; // Actual reading from 2025-06-01 08:00:00
-  const tripMiles = Math.max(0, currentOdometer - JOURNEY_START_ODOMETER);
+  // Get the earliest drive to determine actual journey start
+  const earliestDrive = await db.prepare(`
+    SELECT 
+      MIN(CASE 
+        WHEN typeof(started_at) = 'integer' THEN datetime(started_at, 'unixepoch')
+        ELSE started_at 
+      END) as earliest_date
+    FROM drives 
+    WHERE journey_id = 'continental-usa-2025'
+  `).first();
+  
+  // Use fixed journey start date (June 1st) and fallback odometer calculation
+  const journeyStartDate = '2025-06-01'; // FIXED: Trip officially started June 1st from Austin
+  const journeyStartOdometer = 58046; // Known odometer reading from June 1st, 2025
+  const tripMiles = Math.max(0, currentOdometer - journeyStartOdometer);
 
   // Build unified response - Use LIVE Tessie data for all components
   return {
     overview: {
       tripName: journeyData?.name || "A Whittle Wandering - Continental USA",
       vehicle: vehicle.display_name || "Tesla Model Y",
-      startDate: "2025-06-01", // HARDCODED as requested
-      daysElapsed: Math.floor((Date.now() - new Date('2025-06-01').getTime()) / (1000 * 60 * 60 * 24)),
+      startDate: journeyStartDate.split('T')[0], // Use actual journey start date
+      daysElapsed: Math.floor((Date.now() - new Date(journeyStartDate).getTime()) / (1000 * 60 * 60 * 24)),
       totalMiles: Math.round(tripMiles),
       currentOdometer: Math.round(currentOdometer),
       statesVisited: journeyData?.states_visited_from_historical || 0,
