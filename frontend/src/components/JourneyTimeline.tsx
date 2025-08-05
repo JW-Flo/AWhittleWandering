@@ -1,9 +1,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Calendar, Camera, Star, Mountain, Sunset, Cloud, Sun, CloudRain, Thermometer, Zap, Navigation } from 'lucide-react';
+import { MapPin, Calendar, Camera, Star, Mountain, Sunset, Cloud, Thermometer, Zap, Navigation } from 'lucide-react';
 import { useJourneyTracker } from '@/hooks/useJourneyTracker';
-import { type TimelineEvent } from '@/data/journeyData';
 
 const getTypeIcon = (type: string) => {
   switch (type) {
@@ -31,7 +30,7 @@ const JourneyTimeline: React.FC = () => {
   // Use live timeline data with better fallback handling
   const timelineEvents = timeline && timeline.length > 0 ? timeline : [];
   
-  console.log('JourneyTimeline render:', { 
+  console.warn('JourneyTimeline render:', { 
     timelineLength: timeline?.length || 0, 
     isLoading, 
     hasCurrentWeather: !!currentWeather,

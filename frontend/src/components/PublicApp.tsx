@@ -2,7 +2,7 @@ import React from 'react';
 import { useUnifiedApiData } from '@/hooks/useUnifiedApiData';
 import { safeTimeString } from '@/utils/dateHelpers';
 import AdventureHero from './AdventureHero';
-import TeslaMap from './TeslaMap';
+import LazyTeslaMap from './LazyTeslaMap';
 import TimelineDataDisplay from './TimelineDataDisplay';
 import SmartVehicleStats from './SmartVehicleStats';
 import { Badge } from './ui/badge';
@@ -281,7 +281,7 @@ const PublicApp: React.FC = () => {
           <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
             <div className="p-6">
               <div className="h-[600px] relative bg-slate-900 rounded-xl overflow-hidden">
-                <TeslaMap
+                <LazyTeslaMap
                   vehicleLocation={currentLocation || undefined}
                   routePoints={routePoints}
                   mapboxToken={mapboxToken}

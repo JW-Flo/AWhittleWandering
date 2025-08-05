@@ -30,7 +30,6 @@ const EnhancedTeslaMap: React.FC<EnhancedTeslaMapProps> = ({
   const {
     historicalDrives: driveHistory,
     historicalCharges: chargeHistory,
-    vehicleData,
     isLoading,
     error,
     refreshHistoricalData: loadJourneyData,

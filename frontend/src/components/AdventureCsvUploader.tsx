@@ -26,7 +26,7 @@ const AdventureCsvUploader: React.FC<CsvUploaderProps> = ({ onDataImported, onMa
       const lines = csvText.trim().split('\n');
       const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
       
-      console.log('CSV Headers found:', headers);
+      console.warn('CSV Headers found:', headers);
       
       const data = lines.slice(1).map(line => {
         const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
@@ -37,7 +37,7 @@ const AdventureCsvUploader: React.FC<CsvUploaderProps> = ({ onDataImported, onMa
         return record;
       });
 
-      console.log('Sample data record:', data[0]);
+      console.warn('Sample data record:', data[0]);
 
       // Use comprehensive state detection system
       const insights = calculateTripStatistics(data);
@@ -66,7 +66,7 @@ const AdventureCsvUploader: React.FC<CsvUploaderProps> = ({ onDataImported, onMa
         } : null
       };
 
-      console.log('Import stats:', stats);
+      console.warn('Import stats:', stats);
       setImportStats(stats);
       onDataImported(data);
       

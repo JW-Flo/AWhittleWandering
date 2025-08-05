@@ -104,7 +104,7 @@ export function useSmartJourney(tessieApiKey?: string): UseSmartJourneyReturn {
     
     const processData = async () => {
       setIsProcessing(true);
-      console.log('🧠 Starting intelligent data processing...');
+      console.warn('🧠 Starting intelligent data processing...');
       
       try {
         // Process drive data with intelligence
@@ -119,7 +119,7 @@ export function useSmartJourney(tessieApiKey?: string): UseSmartJourneyReturn {
         const journeyInsights = intelligenceEngine.generateInsights();
         setInsights(journeyInsights);
         
-        console.log('✅ Intelligent processing complete:', {
+        console.warn('✅ Intelligent processing complete:', {
           driveSegments: smartDriveSegments.length,
           chargeSessions: smartChargeSessions.length,
           insights: journeyInsights
@@ -151,7 +151,7 @@ export function useSmartJourney(tessieApiKey?: string): UseSmartJourneyReturn {
     try {
       const weather = await weatherService.getCurrentWeather(driveState.latitude, driveState.longitude);
       setCurrentWeather(weather);
-      console.log('🌤️ Current weather fetched:', weather.temperature + '°F');
+      console.warn('🌤️ Current weather fetched:', weather.temperature + '°F');
     } catch (error) {
       console.error('❌ Failed to fetch weather:', error);
     }
@@ -167,7 +167,7 @@ export function useSmartJourney(tessieApiKey?: string): UseSmartJourneyReturn {
     // Cast to any to access real Tessie API structure
     const tessieData = vehicleData as any;
     
-    console.log('📊 Calculating smart stats from vehicle data:', {
+    console.warn('📊 Calculating smart stats from vehicle data:', {
       hasVehicleData: !!vehicleData,
       hasLastState: !!tessieData?.last_state,
       hasDriveState: !!tessieData?.last_state?.drive_state,
@@ -230,13 +230,13 @@ export function useSmartJourney(tessieApiKey?: string): UseSmartJourneyReturn {
       weatherCallsRemaining: weatherService?.getDailyCallsRemaining() || 0
     };
     
-    console.log('✅ Smart stats calculated:', stats);
+    console.warn('✅ Smart stats calculated:', stats);
     return stats;
   }, [vehicleData, insights, intelligenceEngine, weatherService]);
 
   // Refresh all data intelligently
   const refreshData = useCallback(async () => {
-    console.log('🔄 Refreshing all journey data...');
+    console.warn('🔄 Refreshing all journey data...');
     await refreshVehicleData();
     await fetchCurrentWeather();
   }, [refreshVehicleData, fetchCurrentWeather]);

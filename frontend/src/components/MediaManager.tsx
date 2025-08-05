@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Upload, 
   Image, 
   Settings, 
   Archive, 
@@ -14,8 +13,7 @@ import {
   Trash2,
   Plus,
   FolderOpen,
-  Camera,
-  Video
+  Camera
 } from 'lucide-react';
 import { useAdminAuth } from '@/lib/auth';
 import { apiRequest } from '@/lib/api-config';

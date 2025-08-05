@@ -51,7 +51,7 @@ const JourneyDashboard: React.FC<JourneyDashboardProps> = ({
   // Use tracking events as fallback when API data isn't available
   useEffect(() => {
     if (!apiKey && trackingEvents.length > 0) {
-      console.log('Using tracking events as data source:', trackingEvents.length, 'events');
+      console.warn('Using tracking events as data source:', trackingEvents.length, 'events');
       
       // Convert tracking events to journey data format - filter out undefined events and validate timestamp
       const drives = trackingEvents
