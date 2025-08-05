@@ -83,7 +83,7 @@ const AdventureCsvUploader: React.FC<CsvUploaderProps> = ({ onDataImported, onMa
         variant: "destructive"
       });
     }
-  }, [onDataImported, toast]);
+  }, [onDataImported, onMapDataAvailable, toast]);
 
 
   const handleFile = useCallback((file: File) => {
