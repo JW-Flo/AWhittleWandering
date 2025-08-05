@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { TeslaDataIngestion } from './data-ingestion';
 import { CronDataController } from './cron-controller';
 import { ComponentDataProcessor } from './component-data-processor';
+import { EnhancedDataProcessor } from './enhanced-data-processor';
 
 // Configurable constants
 const MAX_HISTORICAL_DRIVES = 1000;
@@ -329,8 +330,141 @@ app.post('/api/v1/component/process-data', async (c) => {
   }
 });
 
-// === CRON DATA INGESTION ENDPOINTS ===
-// These endpoints are called by Cloudflare Cron Triggers to populate the database
+// === ENHANCED ANALYTICS ENDPOINTS ===
+// New comprehensive analytics with enhanced data processing
+
+app.get('/api/v1/analytics/comprehensive', async (c) => {
+  const startDate = c.req.query('start_date') || '2025-06-01';
+  const endDate = c.req.query('end_date') || new Date().toISOString().split('T')[0];
+  
+  try {
+    const processor = new EnhancedDataProcessor(c.env.TESLA_DB);
+    const analytics = await processor.generateAnalytics(startDate, endDate);
+    
+    return c.json({
+      success: true,
+      period: { startDate, endDate },
+      analytics
+    });
+  } catch (error) {
+    console.error('Analytics generation failed:', error);
+    return c.json({ 
+      error: 'Failed to generate analytics',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+app.get('/api/v1/analytics/efficiency', async (c) => {
+  const days = parseInt(c.req.query('days') || '30');
+  const endDate = new Date();
+  const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
+  
+  try {
+    const efficiencyData = await c.env.TESLA_DB.prepare(`
+      SELECT 
+        date,
+        miles_driven,
+        energy_consumed_kwh,
+        efficiency_miles_per_kwh,
+        avg_outside_temp_f,
+        avg_speed_mph,
+        highway_miles_percent,
+        city_miles_percent
+      FROM efficiency_metrics 
+      WHERE journey_id = 'continental-usa-2025' 
+        AND date BETWEEN ? AND ?
+      ORDER BY date ASC
+    `).bind(
+      startDate.toISOString().split('T')[0],
+      endDate.toISOString().split('T')[0]
+    ).all();
+    
+    return c.json({
+      success: true,
+      period: { days, startDate: startDate.toISOString().split('T')[0], endDate: endDate.toISOString().split('T')[0] },
+      efficiency: efficiencyData.results || []
+    });
+  } catch (error) {
+    console.error('Efficiency data fetch failed:', error);
+    return c.json({ 
+      error: 'Failed to fetch efficiency data',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+app.get('/api/v1/analytics/charging', async (c) => {
+  const days = parseInt(c.req.query('days') || '30');
+  const endDate = new Date();
+  const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
+  
+  try {
+    const chargingData = await c.env.TESLA_DB.prepare(`
+      SELECT 
+        date,
+        total_charges,
+        total_energy_added_kwh,
+        total_cost_usd,
+        avg_charge_rate_kw,
+        supercharger_sessions,
+        destination_charges,
+        total_charge_time_minutes
+      FROM charge_analytics 
+      WHERE journey_id = 'continental-usa-2025' 
+        AND date BETWEEN ? AND ?
+      ORDER BY date ASC
+    `).bind(
+      startDate.toISOString().split('T')[0],
+      endDate.toISOString().split('T')[0]
+    ).all();
+    
+    return c.json({
+      success: true,
+      period: { days, startDate: startDate.toISOString().split('T')[0], endDate: endDate.toISOString().split('T')[0] },
+      charging: chargingData.results || []
+    });
+  } catch (error) {
+    console.error('Charging data fetch failed:', error);
+    return c.json({ 
+      error: 'Failed to fetch charging data',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+app.get('/api/v1/vehicle/state/enhanced', async (c) => {
+  try {
+    // Get latest enhanced vehicle state
+    const currentState = await c.env.TESLA_DB.prepare(`
+      SELECT * FROM vehicle_state 
+      WHERE vehicle_id = 'midnight-shadow' 
+      ORDER BY updated_at DESC 
+      LIMIT 1
+    `).first();
+    
+    // Get state history for trends
+    const stateHistory = await c.env.TESLA_DB.prepare(`
+      SELECT * FROM vehicle_state_history 
+      WHERE vehicle_id = 'midnight-shadow' 
+      ORDER BY recorded_at DESC 
+      LIMIT 100
+    `).all();
+    
+    return c.json({
+      success: true,
+      currentState: currentState || null,
+      history: stateHistory.results || [],
+      lastUpdated: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Enhanced state fetch failed:', error);
+    return c.json({ 
+      error: 'Failed to fetch enhanced vehicle state',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
 
 // Full data sync - runs every 30 minutes
 app.get('/api/v1/cron/full-sync', async (c) => {
@@ -657,8 +791,8 @@ app.post('/api/v1/admin/update-journey-data', async (c) => {
     const tessieData = await fetchTessieData(tessieApiKey);
     const currentOdometer = tessieData?.state?.vehicle_state?.odometer || 71259;
     
-    // Calculate correct trip miles (current - start odometer)
-    const JOURNEY_START_ODOMETER = 65008;
+    // Calculate correct trip miles (current - start odometer from June 1, 2025)
+    const JOURNEY_START_ODOMETER = 58046;  // Actual odometer reading on 2025-06-01 08:00:00
     const totalMiles = Math.round(currentOdometer - JOURNEY_START_ODOMETER);
     
     // Get states count from states_visited table
@@ -718,9 +852,9 @@ app.post('/api/v1/admin/fix-d1-overview', async (c) => {
     `).bind(
       'continental-usa-2025-overview',
       'continental-usa-2025',
-      6251,    // total_miles (calculated correctly)
+      13213,   // total_miles (71259 - 58046 = actual journey miles from 6/1/2025)
       71259,   // current_odometer (live from Tessie)
-      6251,    // trip_miles (current - start)
+      13213,   // trip_miles (current - start from 6/1/2025)
       64,      // days_elapsed (from 6/1/2025)
       30,      // states_visited_count (actual journey states)
       '2025-06-01T00:00:00.000Z',
@@ -738,7 +872,7 @@ app.post('/api/v1/admin/fix-d1-overview', async (c) => {
       'midnight-shadow',
       '2025-06-01',
       'active',
-      6251,  // Correct total miles
+      13213, // Correct total miles from 6/1/2025 start (71259 - 58046)
       30     // Correct states visited
     ).run();
     
@@ -748,7 +882,7 @@ app.post('/api/v1/admin/fix-d1-overview', async (c) => {
       success: true,
       message: 'D1 database overview data fixed successfully',
       updates: {
-        total_miles: 6251,
+        total_miles: 13213,  // Actual miles from 6/1/2025 start
         states_visited_count: 30,
         current_odometer: 71259,
         days_elapsed: 64
@@ -1080,8 +1214,8 @@ async function handleUnifiedData(c: any) {
     // Fetch fresh data from Tessie API
     const tessieData = await fetchTessieData(c.env.TESSIE_API_KEY);
     
-    // Process and store in D1 using transactions for consistency
-    const unifiedData = await processAndStoreInD1(c.env.TESLA_DB, tessieData);
+    // Process and store in D1 using enhanced analytics
+    const unifiedData = await processAndStoreInD1Enhanced(c.env.TESLA_DB, tessieData);
     
     // SAFE ENHANCEMENT: Try to get better data from component tables if available
     try {
@@ -1503,6 +1637,85 @@ async function fetchTessieData(apiKey: string) {
   return { vehicles, state, recentDrives };
 }
 
+// Helper function to process and store data in D1 with enhanced analytics
+async function processAndStoreInD1Enhanced(db: D1Database, tessieData: any) {
+  try {
+    console.log('Processing data with enhanced processor...');
+    
+    // Initialize enhanced processor
+    const processor = new EnhancedDataProcessor(db);
+    
+    const { vehicles, state, recentDrives: liveDrives } = tessieData;
+    
+    if (!vehicles.results?.length) {
+      throw new Error('No vehicles found in Tessie response');
+    }
+
+    const vehicle = vehicles.results[0];
+    const currentState = state || vehicle.last_state;
+
+    // Process vehicle state with enhanced fields
+    if (currentState) {
+      await processor.processVehicleState({
+        vehicle_id: vehicle.vin || 'midnight-shadow',
+        battery_level: currentState.charge_state?.battery_level || 0,
+        battery_range: currentState.charge_state?.battery_range || 0,
+        charging_state: currentState.charge_state?.charging_state || 'Unknown',
+        shift_state: currentState.drive_state?.shift_state,
+        power: currentState.charge_state?.charger_power || 0,
+        locked: currentState.vehicle_state?.locked,
+        climate_on: currentState.climate_state?.is_climate_on,
+        latitude: currentState.drive_state?.latitude || 0,
+        longitude: currentState.drive_state?.longitude || 0,
+        heading: currentState.drive_state?.heading || 0,
+        speed: currentState.drive_state?.speed || 0,
+        odometer: currentState.vehicle_state?.odometer || 0,
+        inside_temp: currentState.climate_state?.inside_temp,
+        outside_temp: currentState.climate_state?.outside_temp,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // Process recent drives with enhanced analytics
+    if (liveDrives?.results) {
+      for (const drive of liveDrives.results) {
+        await processor.processDriveData({
+          id: drive.id,
+          vehicle_id: vehicle.vin || 'midnight-shadow',
+          journey_id: 'continental-usa-2025',
+          started_at: drive.started_at,
+          ended_at: drive.ended_at,
+          distance_miles: drive.distance_miles,
+          duration_minutes: drive.duration_minutes,
+          start_address: drive.start_address,
+          end_address: drive.end_address,
+          start_latitude: drive.start_latitude,
+          start_longitude: drive.start_longitude,
+          end_latitude: drive.end_latitude,
+          end_longitude: drive.end_longitude,
+          max_speed: drive.max_speed,
+          energy_used_kwh: drive.energy_used || 0,
+          start_battery_level: drive.start_battery_level,
+          end_battery_level: drive.end_battery_level,
+          start_odometer: drive.start_odometer,
+          end_odometer: drive.end_odometer
+        });
+      }
+    }
+    
+    // Continue with existing logic for backward compatibility
+    const result = await processAndStoreInD1(db, tessieData);
+    
+    console.log('Enhanced processing complete');
+    return { ...result, enhancedProcessing: true };
+    
+  } catch (error) {
+    console.error('Enhanced data processing failed:', error);
+    // Fallback to regular processing
+    return await processAndStoreInD1(db, tessieData);
+  }
+}
+
 // Helper function to process and store data in D1
 async function processAndStoreInD1(db: D1Database, tessieData: any) {
   const { vehicles, state, recentDrives: liveDrives } = tessieData;
@@ -1602,9 +1815,8 @@ async function processAndStoreInD1(db: D1Database, tessieData: any) {
   // Calculate live trip progress - SIMPLE calculation based on known journey start
   const currentOdometer = currentState?.vehicle_state?.odometer || 0;
   
-  // Use known journey start odometer (calculated from component data: 71259 - 6251 = 65008)
-  // This is the most accurate approach since we don't have complete historical odometer data
-  const JOURNEY_START_ODOMETER = 65008; // Odometer reading on 6/1/2025
+  // Use actual odometer reading from June 1, 2025 start date
+  const JOURNEY_START_ODOMETER = 58046; // Actual reading from 2025-06-01 08:00:00
   const tripMiles = Math.max(0, currentOdometer - JOURNEY_START_ODOMETER);
 
   // Build unified response - Use LIVE Tessie data for all components

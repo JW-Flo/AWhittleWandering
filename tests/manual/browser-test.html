@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Website Test</title>
+</head>
+<body>
+    <h1>Testing Website Loading</h1>
+    <div id="test-results"></div>
+    
+    <script>
+        async function testWebsite() {
+            const results = document.getElementById('test-results');
+            
+            try {
+                results.innerHTML += '<p>🔍 Testing https://awhittlewandering.com...</p>';
+                
+                // Test main domain
+                const response = await fetch('https://awhittlewandering.com');
+                const html = await response.text();
+                
+                results.innerHTML += `<p>✅ Page loads (${html.length} bytes)</p>`;
+                results.innerHTML += `<p>Has root div: ${html.includes('<div id="root">') ? '✅' : '❌'}</p>`;
+                results.innerHTML += `<p>Has main script: ${html.includes('index-D3FBxirc.js') ? '✅' : '❌'}</p>`;
+                
+                // Test JavaScript loading
+                const jsMatch = html.match(/src="([^"]*index-[^"]*\.js)"/);
+                if (jsMatch) {
+                    const jsUrl = 'https://awhittlewandering.com' + jsMatch[1];
+                    try {
+                        const jsResponse = await fetch(jsUrl);
+                        const jsContent = await jsResponse.text();
+                        results.innerHTML += `<p>✅ JavaScript loads (${jsContent.length} bytes)</p>`;
+                        results.innerHTML += `<p>Has React content: ${jsContent.includes('createRoot') ? '✅' : '❌'}</p>`;
+                    } catch (e) {
+                        results.innerHTML += `<p>❌ JavaScript failed: ${e.message}</p>`;
+                    }
+                }
+                
+                // Create iframe to test actual rendering
+                const iframe = document.createElement('iframe');
+                iframe.src = 'https://awhittlewandering.com';
+                iframe.style.width = '600px';
+                iframe.style.height = '400px';
+                iframe.style.border = '2px solid #ccc';
+                
+                iframe.onload = () => {
+                    setTimeout(() => {
+                        try {
+                            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                            const rootContent = iframeDoc.getElementById('root');
+                            if (rootContent && rootContent.innerHTML.length > 0) {
+                                results.innerHTML += '<p>✅ Content is rendering in iframe</p>';
+                                results.innerHTML += `<p>Root content length: ${rootContent.innerHTML.length}</p>`;
+                            } else {
+                                results.innerHTML += '<p>❌ Root div is empty in iframe</p>';
+                            }
+                        } catch (e) {
+                            results.innerHTML += `<p>⚠️ Cannot access iframe content (CORS): ${e.message}</p>`;
+                        }
+                    }, 3000);
+                };
+                
+                results.innerHTML += '<h3>Live Site Preview:</h3>';
+                results.appendChild(iframe);
+                
+            } catch (error) {
+                results.innerHTML += `<p>❌ Test failed: ${error.message}</p>`;
+            }
+        }
+        
+        testWebsite();
+    </script>
+</body>
+</html>
