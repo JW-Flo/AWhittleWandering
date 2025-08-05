@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 
 export interface WeatherCondition {
   temperature: number; // Fahrenheit
@@ -44,27 +44,22 @@ export const useWeatherApi = () => {
 
   // Get weather office and grid coordinates for a given lat/lng
   const getWeatherOffice = useCallback(async (lat: number, lng: number) => {
-    try {
-      const response = await fetch(`https://api.weather.gov/points/${lat.toFixed(4)},${lng.toFixed(4)}`);
-      
-      if (!response.ok) {
-        throw new Error(`Weather service unavailable: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      return {
-        office: data.properties.cwa,
-        gridX: data.properties.gridX,
-        gridY: data.properties.gridY,
-        forecastUrl: data.properties.forecast,
-        forecastHourlyUrl: data.properties.forecastHourly,
-        observationStationsUrl: data.properties.observationStations
-      };
-    } catch (err) {
-      console.error('❌ Error getting weather office:', err);
-      throw err;
+    const response = await fetch(`https://api.weather.gov/points/${lat.toFixed(4)},${lng.toFixed(4)}`);
+    
+    if (!response.ok) {
+      throw new Error(`Weather service unavailable: ${response.status}`);
     }
+    
+    const data = await response.json();
+    
+    return {
+      office: data.properties.cwa,
+      gridX: data.properties.gridX,
+      gridY: data.properties.gridY,
+      forecastUrl: data.properties.forecast,
+      forecastHourlyUrl: data.properties.forecastHourly,
+      observationStationsUrl: data.properties.observationStations
+    };
   }, []);
 
   // Get current weather conditions
@@ -73,11 +68,8 @@ export const useWeatherApi = () => {
     setError(null);
 
     try {
-      console.log('🌤️ Fetching current weather for:', { lat, lng });
-      
       // Get weather office info first
       const officeInfo = await getWeatherOffice(lat, lng);
-      console.log('🏢 Weather office info:', officeInfo);
       
       // Get observation stations
       const stationsResponse = await fetch(officeInfo.observationStationsUrl);
@@ -92,7 +84,8 @@ export const useWeatherApi = () => {
         throw new Error('No weather stations found in area');
       }
       
-      console.log('📡 Using weather station:', nearestStation);
+      
+      // Get current weather observations
       
       // Get latest observation
       const observationResponse = await fetch(`https://api.weather.gov/stations/${nearestStation}/observations/latest`);
@@ -103,7 +96,6 @@ export const useWeatherApi = () => {
       const observationData = await observationResponse.json();
       const props = observationData.properties;
       
-      console.log('🌡️ Raw weather data:', props);
       
       // Convert celsius to fahrenheit if needed
       const tempC = props.temperature?.value;
@@ -123,7 +115,6 @@ export const useWeatherApi = () => {
         lastUpdated: props.timestamp || new Date().toISOString()
       };
       
-      console.log('✅ Processed weather:', weather);
       setCurrentWeather(weather);
       
     } catch (err) {
@@ -138,7 +129,6 @@ export const useWeatherApi = () => {
   // Get weather alerts for an area
   const getWeatherAlerts = useCallback(async (lat: number, lng: number) => {
     try {
-      console.log('🚨 Fetching weather alerts for:', { lat, lng });
       
       const response = await fetch(`https://api.weather.gov/alerts/active?point=${lat.toFixed(4)},${lng.toFixed(4)}`);
       
@@ -148,7 +138,18 @@ export const useWeatherApi = () => {
       
       const data = await response.json();
       
-      const alerts: WeatherAlert[] = data.features?.map((alert: any) => ({
+      const alerts: WeatherAlert[] = data.features?.map((alert: {
+        id: string;
+        properties: {
+          headline: string;
+          description: string;
+          severity: 'Minor' | 'Moderate' | 'Severe' | 'Extreme';
+          urgency: 'Expected' | 'Future' | 'Immediate' | 'Past';
+          areaDesc?: string;
+          onset: string;
+          expires: string;
+        };
+      }) => ({
         id: alert.id,
         title: alert.properties.headline,
         description: alert.properties.description,
@@ -159,7 +160,6 @@ export const useWeatherApi = () => {
         expires: alert.properties.expires
       })) || [];
       
-      console.log('🚨 Weather alerts:', alerts.length);
       setAlerts(alerts);
       
     } catch (err) {
@@ -170,7 +170,6 @@ export const useWeatherApi = () => {
   // Get weather forecast
   const getWeatherForecast = useCallback(async (lat: number, lng: number) => {
     try {
-      console.log('📅 Fetching weather forecast for:', { lat, lng });
       
       const officeInfo = await getWeatherOffice(lat, lng);
       
@@ -181,7 +180,14 @@ export const useWeatherApi = () => {
       
       const data = await response.json();
       
-      const forecast: WeatherForecast[] = data.properties.periods?.slice(0, 7).map((period: any) => ({
+      const forecast: WeatherForecast[] = data.properties.periods?.slice(0, 7).map((period: {
+        startTime: string;
+        temperature: number;
+        shortForecast: string;
+        detailedForecast: string;
+        probabilityOfPrecipitation?: { value: number };
+        icon: string;
+      }) => ({
         date: period.startTime,
         high: period.temperature,
         low: period.temperature, // NWS doesn't provide separate high/low in this endpoint
@@ -191,7 +197,6 @@ export const useWeatherApi = () => {
         icon: period.icon
       })) || [];
       
-      console.log('📅 Weather forecast:', forecast.length, 'periods');
       setForecast(forecast);
       
     } catch (err) {
@@ -208,7 +213,6 @@ export const useWeatherApi = () => {
 
   // Fetch all weather data for a location
   const fetchWeatherData = useCallback(async (lat: number, lng: number) => {
-    console.log('🌍 Fetching all weather data for location:', { lat, lng });
     
     // Fetch current weather, alerts, and forecast in parallel
     await Promise.allSettled([
