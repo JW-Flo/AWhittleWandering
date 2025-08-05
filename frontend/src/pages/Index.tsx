@@ -6,11 +6,10 @@ import RoadTripTracker from '@/components/RoadTripTracker';
 import ProductionBanner from '@/components/ProductionBanner';
 import { useJourneyTracker } from '@/hooks/useJourneyTracker';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RefreshCw, Car, Zap, Map, Route } from 'lucide-react';
+import { RefreshCw, Car, Zap, Route } from 'lucide-react';
 // Real Tessie API integration - no more mock data needed
 
 const Index = () => {
