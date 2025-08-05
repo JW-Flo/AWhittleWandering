@@ -27,16 +27,11 @@ function SimpleDebugApp() {
   )
 }
 
-console.log('=== DEBUG MODE ===')
-console.log('React is loading...')
-console.log('DOM state:', document.readyState)
-console.log('Root element:', document.getElementById('root'))
 
 const rootElement = document.getElementById('root')
 if (rootElement) {
   const root = createRoot(rootElement)
   root.render(<SimpleDebugApp />)
-  console.log('Debug app rendered successfully!')
 } else {
-  console.error('Root element not found!')
+  console.error('Root element not found')
 }
