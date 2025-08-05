@@ -65,7 +65,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
       const file = files[i];
       
       if (!supportedFormats.includes(file.type)) {
-        console.warn(`Unsupported file type: ${file.type}`);
+        // Skip unsupported file types
         continue;
       }
 
@@ -163,16 +163,20 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
             let timestamp = new Date(file.lastModified);
             if (dateTime) {
               try {
+                try {
                 timestamp = new Date(dateTime.replace(/:/g, '-').replace(' ', 'T'));
-              } catch (error) {
-                console.warn('Could not parse EXIF date:', dateTime, error);
+              } catch {
+                console.warn('Could not parse EXIF date:', dateTime);
+              }
+              } catch {
+                // EXIF date parsing failed, using file modification date
               }
             }
 
             resolve({ location, timestamp });
           });
-        } catch (error) {
-          console.warn('EXIF extraction failed:', error);
+        } catch {
+          // EXIF extraction failed, using default timestamp
           resolve({ timestamp: new Date(file.lastModified) });
         }
       };

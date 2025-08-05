@@ -11,8 +11,6 @@ import {
   calculateRouteStatistics,
   generateRouteAnimation,
   type RoutePoint,
-  type RouteSegment,
-  type ClusteredWaypoint,
   type RouteStatistics
 } from '@/utils/routeVisualization';
 
@@ -36,8 +34,8 @@ const AdvancedTeslaMap: React.FC<AdvancedTeslaMapProps> = ({
   mapboxToken,
   routePoints,
   currentLocation,
-  showElevationProfile = false,
-  showRouteAnimation = false,
+  showElevationProfile: _showElevationProfile = false,
+  showRouteAnimation: _showRouteAnimation = false,
   showClusters = true,
   onRouteStatsChange,
   onLocationClick
@@ -61,7 +59,7 @@ const AdvancedTeslaMap: React.FC<AdvancedTeslaMapProps> = ({
       style: 'mapbox://styles/mapbox/satellite-streets-v12', // Enhanced satellite view
       center: [-98.5795, 39.8283], // Center of USA
       zoom: 4,
-      projection: 'mercator' as any,
+      projection: 'mercator',
       pitch: 0,
       bearing: 0,
       maxPitch: 60, // Allow some 3D tilt for better route visualization
