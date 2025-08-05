@@ -9,14 +9,11 @@
 const nodeMajorVersion = parseInt(process.version.slice(1).split(".")[0]);
 let fetchImpl;
 
-if (nodeMajorVersion < 18) {
-  if (typeof fetch === "undefined") {
-    global.fetch = require("node-fetch");
-  }
-  fetchImpl = global.fetch;
+if (typeof globalThis.fetch === "function") {
+  fetchImpl = globalThis.fetch;
 } else {
-  // fetch should be available natively in Node 18+
-  fetchImpl = fetch;
+  globalThis.fetch = require("node-fetch");
+  fetchImpl = globalThis.fetch;
 }
 
 class FrontendSimulation {

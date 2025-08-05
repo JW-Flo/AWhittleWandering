@@ -6,63 +6,88 @@
 const TESSIE_API_TOKEN = process.env.TESSIE_API_TOKEN;
 
 if (!TESSIE_API_TOKEN) {
-  console.error("❌ Missing TESSIE_API_TOKEN. Please set it in environment or .env file");
+  console.error(
+    "❌ Missing TESSIE_API_TOKEN. Please set it in environment or .env file"
+  );
   process.exit(1);
 }
 
 console.log("🔍 TESSIE DATA VALIDATION - DETAILED ANALYSIS");
 console.log("=".repeat(60));
-
+console.log("=".repeat(60));
 async function validateTessieData() {
   try {
     // 1. Get vehicle list first (no vehicle ID needed)
     console.log("\n🚗 STEP 1: Get Vehicle List");
     console.log("-".repeat(40));
 
-    const vehiclesResponse = await fetch('https://api.tessie.com/vehicles', {
-      headers: { 'Authorization': `Bearer ${TESSIE_API_TOKEN}` }
+    const vehiclesResponse = await fetch("https://api.tessie.com/vehicles", {
+      headers: { Authorization: `Bearer ${TESSIE_API_TOKEN}` },
     });
 
     if (!vehiclesResponse.ok) {
-      throw new Error(`Vehicles API failed: ${vehiclesResponse.status} - ${await vehiclesResponse.text()}`);
+      throw new Error(
+        `Vehicles API failed: ${
+          vehiclesResponse.status
+        } - ${await vehiclesResponse.text()}`
+      );
     }
 
     const vehicles = await vehiclesResponse.json();
     console.log("Found vehicles:", vehicles.length);
-    
+
     if (!vehicles || vehicles.length === 0) {
       throw new Error("No vehicles found in account");
     }
 
     const vehicle = vehicles[0]; // Use first vehicle
     const vehicleId = vehicle.id;
-    console.log("Using vehicle:", vehicle.display_name || vehicle.vin, "ID:", vehicleId);
+    console.log(
+      "Using vehicle:",
+      vehicle.display_name || vehicle.vin,
+      "ID:",
+      vehicleId
+    );
 
     // 2. Get current state for verification
     console.log("\n📊 STEP 2: Current Vehicle State");
     console.log("-".repeat(40));
 
-    const stateResponse = await fetch(`https://api.tessie.com/${vehicleId}/state`, {
-      headers: { 'Authorization': `Bearer ${TESSIE_API_TOKEN}` }
-    });
+    const stateResponse = await fetch(
+      `https://api.tessie.com/${vehicleId}/state`,
+      {
+        headers: { Authorization: `Bearer ${TESSIE_API_TOKEN}` },
+      }
+    );
 
     if (!stateResponse.ok) {
-      throw new Error(`State API failed: ${stateResponse.status} - ${await stateResponse.text()}`);
+      throw new Error(
+        `State API failed: ${
+          stateResponse.status
+        } - ${await stateResponse.text()}`
+      );
     }
 
     const state = await stateResponse.json();
     console.log("Battery Level:", state.charge_state?.battery_level);
     console.log("Charging State:", state.charge_state?.charging_state);
-    console.log("Current Location:", state.drive_state?.latitude, state.drive_state?.longitude);
+    console.log(
+      "Current Location:",
+      state.drive_state?.latitude,
+      state.drive_state?.longitude
+    );
     console.log("Odometer:", state.vehicle_state?.odometer);
 
     // 3. Get SINGLE drive to check data structure
     console.log("\n🛣️ STEP 3: Single Drive Data Structure");
     console.log("-".repeat(40));
 
-    const singleDriveResponse = await fetch(`https://api.tessie.com/${vehicleId}/drives?limit=1`, {
-      headers: { 'Authorization': `Bearer ${TESSIE_API_TOKEN}` }
-    });
+    const singleDriveResponse = await fetch(
+      `https://api.tessie.com/${vehicleId}/drives?limit=1`,
+      {
+        headers: { Authorization: `Bearer ${TESSIE_API_TOKEN}` },
+      }
+    );
 
     const singleDriveData = await singleDriveResponse.json();
     const sampleDrive = singleDriveData.results?.[0];
@@ -85,9 +110,12 @@ async function validateTessieData() {
     console.log("\n⚡ STEP 4: Single Charge Data Structure");
     console.log("-".repeat(40));
 
-    const singleChargeResponse = await fetch(`https://api.tessie.com/${vehicleId}/charges?limit=1`, {
-      headers: { 'Authorization': `Bearer ${TESSIE_API_TOKEN}` }
-    });
+    const singleChargeResponse = await fetch(
+      `https://api.tessie.com/${vehicleId}/charges?limit=1`,
+      {
+        headers: { Authorization: `Bearer ${TESSIE_API_TOKEN}` },
+      }
+    );
 
     const singleChargeData = await singleChargeResponse.json();
     const sampleCharge = singleChargeData.results?.[0];
@@ -117,10 +145,11 @@ async function validateTessieData() {
 
     console.log("Calculating totals in batches of", limit, "...");
 
-    while (page <= 3) { // Only check first 3 pages for validation
+    while (page <= 3) {
+      // Only check first 3 pages for validation
       const drivesResponse = await fetch(
         `https://api.tessie.com/${vehicleId}/drives?since=${since}&limit=${limit}&page=${page}`,
-        { headers: { 'Authorization': `Bearer ${TESSIE_API_TOKEN}` } }
+        { headers: { Authorization: `Bearer ${TESSIE_API_TOKEN}` } }
       );
 
       const drivesData = await drivesResponse.json();
@@ -143,7 +172,7 @@ async function validateTessieData() {
 
         if (driveCount <= 5) {
           console.log(
-            `  Drive ${driveCount}: ${distance} miles, ${energy} kWh`
+    console.log("=".repeat(40));
           );
         }
       }
@@ -166,7 +195,7 @@ async function validateTessieData() {
 
     const statsResponse = await fetch(
       `https://api.tessie.com/${vehicleId}/stats?since=${since}`,
-      { headers: { 'Authorization': `Bearer ${TESSIE_API_TOKEN}` } }
+      { headers: { Authorization: `Bearer ${TESSIE_API_TOKEN}` } }
     );
 
     const stats = await statsResponse.json();

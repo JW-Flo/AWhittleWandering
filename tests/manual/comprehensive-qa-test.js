@@ -470,7 +470,7 @@ class QATestSuite {
 }
 
 // Global fetch polyfill for Node.js
-if (typeof fetch === "undefined") {
+if (typeof fetch !== "function") {
   global.fetch = require("node-fetch");
 }
 
