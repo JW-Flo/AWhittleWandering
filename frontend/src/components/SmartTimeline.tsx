@@ -7,17 +7,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   MapPin, 
-  Calendar, 
   Clock, 
   Route, 
   Zap, 
   Camera, 
   Star, 
   Navigation,
-  Battery,
   Thermometer,
-  Fuel,
-  Play,
   Pause,
   ChevronRight,
   ChevronDown,
@@ -122,9 +118,9 @@ const generateSampleEvents = (): TimelineEvent[] => {
 
 const SmartTimeline: React.FC<SmartTimelineProps> = ({
   events,
-  currentLocation,
+  currentLocation: _currentLocation,
   isLoading = false,
-  onEventClick,
+  onEventClick: _onEventClick,
   filterOptions = {
     showDrives: true,
     showCharges: true,

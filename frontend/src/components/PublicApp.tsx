@@ -1,14 +1,11 @@
 import React from 'react';
 import { useUnifiedApiData } from '@/hooks/useUnifiedApiData';
-import { formatTemperature } from '@/utils/temperature';
 import { safeTimeString } from '@/utils/dateHelpers';
 import AdventureHero from './AdventureHero';
 import TeslaMap from './TeslaMap';
 import TimelineDataDisplay from './TimelineDataDisplay';
 import SmartVehicleStats from './SmartVehicleStats';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { Button } from './ui/button';
 import { MapPin, Zap, Car, Calendar, TrendingUp, Route, Clock } from 'lucide-react';
 
 const PublicApp: React.FC = () => {
