@@ -79,7 +79,7 @@ const EnhancedTeslaMap: React.FC<EnhancedTeslaMapProps> = ({
     if (locationHistory.length > 0 && onLocationData) {
       onLocationData(locationHistory);
     }
-  }, [locationHistory, onLocationData]);
+  }, [onLocationData]); // locationHistory removed - it's mutated, not a dependency
 
   // Add drive routes to map
   useEffect(() => {
