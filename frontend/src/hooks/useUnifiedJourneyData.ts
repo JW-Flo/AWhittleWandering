@@ -56,8 +56,6 @@ export const useUnifiedJourneyData = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-
     const fetchUnifiedData = async () => {
       try {
         setError(null);
