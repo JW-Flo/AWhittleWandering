@@ -1,11 +1,11 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
-import MinimalTeslaApp from './components/MinimalTeslaApp.tsx'
+import App from './App.tsx'
 import './index.css'
 
 try {
   const root = createRoot(document.getElementById("root")!);
-  root.render(<MinimalTeslaApp />);
+  root.render(<App />);
 } catch (error) {
   console.error('Failed to render app:', error);
   document.getElementById("root")!.innerHTML = `
