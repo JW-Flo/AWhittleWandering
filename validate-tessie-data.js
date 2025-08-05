@@ -170,11 +170,8 @@ async function validateTessieData() {
         totalMiles += distance;
         totalEnergyUsed += energy;
 
-        if (driveCount <= 5) {
-          console.log(
-    console.log("=".repeat(40));
-          );
-        }
+      if (driveCount <= 5) {
+        console.log(`  Drive ${driveCount}: ${distance} miles, ${energy} kWh`);
       }
 
       page++;

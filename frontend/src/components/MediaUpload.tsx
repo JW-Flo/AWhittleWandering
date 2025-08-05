@@ -39,12 +39,6 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
   // Admin authentication
   const { isAuthenticated, canUploadMedia } = useAdminAuth();
 
-  // Supported iPhone formats
-  const supportedFormats = [
-    'image/jpeg', 'image/png', 'image/heic', 'image/heif',
-    'video/mp4', 'video/mov', 'video/quicktime'
-  ];
-
   // Handle drag and drop - MOVED TO TOP LEVEL
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -58,6 +52,12 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
 
   // Process uploaded files
   const processFiles = useCallback(async (files: FileList) => {
+    // Supported iPhone formats - moved inside callback to avoid dependency issues
+    const supportedFormats = [
+      'image/jpeg', 'image/png', 'image/heic', 'image/heif',
+      'video/mp4', 'video/mov', 'video/quicktime'
+    ];
+
     setIsProcessing(true);
     const newMedia: MediaFile[] = [];
 
@@ -90,7 +90,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
     setUploadedMedia(prev => [...prev, ...newMedia]);
     setIsProcessing(false);
     onMediaUploaded(newMedia);
-  }, [currentLocation, onMediaUploaded, supportedFormats]);
+  }, [currentLocation, onMediaUploaded]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -164,8 +164,8 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
             if (dateTime) {
               try {
                 timestamp = new Date(dateTime.replace(/:/g, '-').replace(' ', 'T'));
-              } catch (e) {
-                console.warn('Could not parse EXIF date:', dateTime);
+              } catch (error) {
+                console.warn('Could not parse EXIF date:', dateTime, error);
               }
             }
 
