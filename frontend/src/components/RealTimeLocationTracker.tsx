@@ -9,7 +9,6 @@ import {
   Navigation, 
   Compass, 
   Route, 
-  Clock, 
   Battery, 
   Thermometer,
   Wifi,
@@ -20,7 +19,6 @@ import {
   Zap,
   Car,
   Gauge,
-  Calendar,
   AlertTriangle,
   CheckCircle,
   Signal

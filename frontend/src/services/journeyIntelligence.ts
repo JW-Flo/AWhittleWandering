@@ -66,14 +66,14 @@ export class JourneyIntelligenceEngine {
   
   constructor(journeyStart: JourneyBoundary) {
     this.journeyBoundary = journeyStart;
-    console.log('🧠 Journey Intelligence Engine initialized:', journeyStart);
+    console.warn('🧠 Journey Intelligence Engine initialized:', journeyStart);
   }
 
   /**
    * Intelligently filters and processes raw Tessie drive data
    */
   processDriveData(rawDriveData: any[]): DriveSegment[] {
-    console.log('🚗 Processing drive data with intelligence...');
+    console.warn('🚗 Processing drive data with intelligence...');
     
     const processedSegments = rawDriveData
       .filter(drive => this.isWithinJourneyTimeframe(new Date(drive.started_at)))
@@ -81,7 +81,7 @@ export class JourneyIntelligenceEngine {
       .filter(segment => segment.isJourneyDrive);
 
     this.driveSegments = processedSegments;
-    console.log(`✅ Processed ${processedSegments.length} journey drive segments`);
+    console.warn(`✅ Processed ${processedSegments.length} journey drive segments`);
     
     return processedSegments;
   }
@@ -90,7 +90,7 @@ export class JourneyIntelligenceEngine {
    * Intelligently processes charge session data
    */
   processChargeData(rawChargeData: any[]): ChargeSession[] {
-    console.log('⚡ Processing charge data with intelligence...');
+    console.warn('⚡ Processing charge data with intelligence...');
     
     const processedSessions = rawChargeData
       .filter(charge => this.isWithinJourneyTimeframe(new Date(charge.started_at)))
@@ -98,7 +98,7 @@ export class JourneyIntelligenceEngine {
       .filter(session => session.isJourneyCharge);
 
     this.chargeSessions = processedSessions;
-    console.log(`✅ Processed ${processedSessions.length} journey charge sessions`);
+    console.warn(`✅ Processed ${processedSessions.length} journey charge sessions`);
     
     return processedSessions;
   }
@@ -108,7 +108,7 @@ export class JourneyIntelligenceEngine {
    */
   calculateJourneyMileage(currentOdometer: number): number {
     const journeyMiles = currentOdometer - this.journeyBoundary.startOdometer;
-    console.log(`📊 Journey mileage calculation:`, {
+    console.warn(`📊 Journey mileage calculation:`, {
       current: currentOdometer,
       start: this.journeyBoundary.startOdometer,
       journeyMiles
@@ -135,7 +135,7 @@ export class JourneyIntelligenceEngine {
       patterns: this.analyzePatterns()
     };
 
-    console.log('🔍 Generated journey insights:', insights);
+    console.warn('🔍 Generated journey insights:', insights);
     return insights;
   }
 

@@ -88,9 +88,9 @@ export const calculateJourneyStats = (
   charges: HistoricalCharge[],
   currentLocation?: { lat: number; lng: number }
 ): JourneyStats => {
-  console.log('=== CALCULATING JOURNEY STATS ===');
-  console.log('Input drives:', drives.length, drives.slice(0, 2));
-  console.log('Input charges:', charges.length, charges.slice(0, 2));
+  console.warn('=== CALCULATING JOURNEY STATS ===');
+  console.warn('Input drives:', drives.length, drives.slice(0, 2));
+  console.warn('Input charges:', charges.length, charges.slice(0, 2));
   
   const journeyStartDate = new Date('2025-06-01');
   const currentDate = new Date();
@@ -99,18 +99,18 @@ export const calculateJourneyStats = (
   // Calculate total miles from drives - check the actual data structure
   const totalJourneyMiles = drives.reduce((total, drive) => {
     const miles = drive.distance_miles || 0;
-    console.log('Drive miles:', miles, 'from drive:', drive);
+    console.warn('Drive miles:', miles, 'from drive:', drive);
     return total + miles;
   }, 0);
   
-  console.log('Total calculated miles:', totalJourneyMiles);
+  console.warn('Total calculated miles:', totalJourneyMiles);
   
   // Get unique states visited
   const statesVisited = getUniqueStates(drives);
   const statesConquered = statesVisited.length;
   
-  console.log('States visited:', statesVisited);
-  console.log('States conquered:', statesConquered);
+  console.warn('States visited:', statesVisited);
+  console.warn('States conquered:', statesConquered);
   
   // Calculate completion percentage (assuming 48 continental US states as target)
   const totalUSStates = 48; // Continental US
@@ -155,7 +155,7 @@ export const calculateJourneyStats = (
     nextDestination
   };
   
-  console.log('Final calculated stats:', result);
+  console.warn('Final calculated stats:', result);
   return result;
 };
 

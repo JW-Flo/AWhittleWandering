@@ -1,12 +1,11 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Calendar, Clock, Compass } from 'lucide-react';
+import { MapPin, Calendar, Compass } from 'lucide-react';
 
 interface AdventureHeroProps {
   currentLocation: string;
   daysElapsed: number;
-  totalDays: number;
   statesVisited: number;
   totalStates: number;
 }
@@ -14,7 +13,6 @@ interface AdventureHeroProps {
 const AdventureHero: React.FC<AdventureHeroProps> = ({
   currentLocation,
   daysElapsed,
-  totalDays,
   statesVisited,
   totalStates
 }) => {

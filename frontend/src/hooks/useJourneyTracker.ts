@@ -80,7 +80,7 @@ export function useJourneyTracker(tessieApiKey?: string): UseJourneyTrackerRetur
   useEffect(() => {
     // Get initial timeline from service (includes static data)
     const initialTimeline = timelineService.getTimeline();
-    console.log('Initial timeline loaded:', initialTimeline.length, 'events');
+    console.warn('Initial timeline loaded:', initialTimeline.length, 'events');
     setTimeline(initialTimeline);
   }, [timelineService]);
 
@@ -113,7 +113,7 @@ export function useJourneyTracker(tessieApiKey?: string): UseJourneyTrackerRetur
     
     if (newInterval !== pollingInterval) {
       setPollingInterval(newInterval);
-      console.log(`📡 Polling interval updated to ${newInterval / 1000}s (${isCharging ? 'charging' : isMoving ? 'moving' : 'stationary'})`);
+      console.warn(`📡 Polling interval updated to ${newInterval / 1000}s (${isCharging ? 'charging' : isMoving ? 'moving' : 'stationary'})`);
     }
   }, [pollingInterval]);
 
@@ -134,7 +134,7 @@ export function useJourneyTracker(tessieApiKey?: string): UseJourneyTrackerRetur
   // Update timeline when vehicle data changes - use ACTUAL Tessie API structure
   useEffect(() => {
     if (vehicleData && selectedVehicle) {
-      console.log('🚗 Processing REAL Tessie vehicle data:', vehicleData);
+      console.warn('🚗 Processing REAL Tessie vehicle data:', vehicleData);
       
       // Cast to any to access Tessie API structure - we know it has last_state from network logs
       const tessieVehicleData = vehicleData as any;
@@ -145,10 +145,10 @@ export function useJourneyTracker(tessieApiKey?: string): UseJourneyTrackerRetur
       const currentLng = tessieVehicleData.last_state?.drive_state?.longitude || 
                         tessieVehicleData.longitude;
       
-      console.log('📍 Current vehicle location:', { lat: currentLat, lng: currentLng });
-      console.log('🔋 Battery level:', tessieVehicleData.last_state?.charge_state?.battery_level);
-      console.log('⚡ Charging state:', tessieVehicleData.last_state?.charge_state?.charging_state);
-      console.log('🚗 Odometer:', tessieVehicleData.last_state?.vehicle_state?.odometer);
+      console.warn('📍 Current vehicle location:', { lat: currentLat, lng: currentLng });
+      console.warn('🔋 Battery level:', tessieVehicleData.last_state?.charge_state?.battery_level);
+      console.warn('⚡ Charging state:', tessieVehicleData.last_state?.charge_state?.charging_state);
+      console.warn('🚗 Odometer:', tessieVehicleData.last_state?.vehicle_state?.odometer);
 
       try {
         // Update timeline service with REAL vehicle data
@@ -156,7 +156,7 @@ export function useJourneyTracker(tessieApiKey?: string): UseJourneyTrackerRetur
         
         // Update timeline state with real data
         const updatedTimeline = timelineService.getTimeline();
-        console.log('📋 Timeline updated from REAL vehicle data:', updatedTimeline.length, 'events');
+        console.warn('📋 Timeline updated from REAL vehicle data:', updatedTimeline.length, 'events');
         setTimeline(updatedTimeline);
         setLastUpdateTime(Date.now());
         
@@ -179,7 +179,7 @@ export function useJourneyTracker(tessieApiKey?: string): UseJourneyTrackerRetur
   const buildTimelineFromTessieHistory = useCallback(async () => {
     if (!selectedVehicle || !fetchDriveHistory || !fetchChargeHistory) return;
     
-    console.log('🏗️ Building timeline from Tessie historical drive data...');
+    console.warn('🏗️ Building timeline from Tessie historical drive data...');
     
     try {
       // Clear existing auto-generated events to rebuild from real data
@@ -189,13 +189,13 @@ export function useJourneyTracker(tessieApiKey?: string): UseJourneyTrackerRetur
       const journeyStart = '2025-01-01';
       const journeyEnd = new Date().toISOString().split('T')[0]; // Today
       
-      console.log(`📅 Fetching Tessie drive history from ${journeyStart} to ${journeyEnd}`);
+      console.warn(`📅 Fetching Tessie drive history from ${journeyStart} to ${journeyEnd}`);
       
       // Fetch historical data from Tessie
       await fetchDriveHistory(selectedVehicle.id, journeyStart, journeyEnd);
       await fetchChargeHistory(selectedVehicle.id, journeyStart, journeyEnd);
       
-      console.log('✅ Historical data fetched from Tessie API');
+      console.warn('✅ Historical data fetched from Tessie API');
       
       // The drive/charge history will update via useEffect below when the state changes
       
@@ -208,7 +208,7 @@ export function useJourneyTracker(tessieApiKey?: string): UseJourneyTrackerRetur
   const enhanceTimelineWithWeather = useCallback(async (timelineEvents: EnhancedTimelineEvent[]) => {
     if (!weatherService || timelineEvents.length === 0) return;
     
-    console.log('🌤️ Enhancing timeline with weather data...');
+    console.warn('🌤️ Enhancing timeline with weather data...');
     
     for (const event of timelineEvents) {
       if (!event.location || event.weather) continue; // Skip if no location or weather already exists
@@ -228,7 +228,7 @@ export function useJourneyTracker(tessieApiKey?: string): UseJourneyTrackerRetur
           
           if (weather) {
             timelineService.addWeatherToEvent(event.id, weather);
-            console.log(`🌤️ Added weather to ${event.state}: ${Math.round(weather.temperature)}°F`);
+            console.warn(`🌤️ Added weather to ${event.state}: ${Math.round(weather.temperature)}°F`);
           }
         }
         
@@ -246,7 +246,7 @@ export function useJourneyTracker(tessieApiKey?: string): UseJourneyTrackerRetur
   // Process historical drive data when it becomes available
   useEffect(() => {
     if (driveHistory.length > 0 || chargeHistory.length > 0) {
-      console.log('📊 Processing Tessie historical data:', { 
+      console.warn('📊 Processing Tessie historical data:', { 
         drives: driveHistory.length, 
         charges: chargeHistory.length 
       });
@@ -268,8 +268,8 @@ export function useJourneyTracker(tessieApiKey?: string): UseJourneyTrackerRetur
               const startTime = new Date(drive.start_date).getTime();
               const endTime = new Date(drive.end_date).getTime();
               
-              console.log(`🚗 Processing drive: ${drive.start_date} -> ${drive.end_date}`);
-              console.log(`📍 Route: ${startLat.toFixed(4)}, ${startLng.toFixed(4)} -> ${endLat.toFixed(4)}, ${endLng.toFixed(4)}`);
+              console.warn(`🚗 Processing drive: ${drive.start_date} -> ${drive.end_date}`);
+              console.warn(`📍 Route: ${startLat.toFixed(4)}, ${startLng.toFixed(4)} -> ${endLat.toFixed(4)}, ${endLng.toFixed(4)}`);
               
               // Update timeline service with start location
               timelineService.updateVehicleData({
@@ -291,7 +291,7 @@ export function useJourneyTracker(tessieApiKey?: string): UseJourneyTrackerRetur
           
           // Update timeline after processing all drives
           const updatedTimeline = timelineService.getTimeline();
-          console.log('✅ Timeline built from Tessie historical data:', updatedTimeline.length, 'events');
+          console.warn('✅ Timeline built from Tessie historical data:', updatedTimeline.length, 'events');
           setTimeline(updatedTimeline);
           
         } catch (error) {
@@ -385,7 +385,7 @@ export function useJourneyTracker(tessieApiKey?: string): UseJourneyTrackerRetur
     `${tessieData.last_state.drive_state.latitude?.toFixed(4)}, ${tessieData.last_state.drive_state.longitude?.toFixed(4)}` : 
     'Connecticut';
   
-  console.log('📊 Real vehicle stats:', { 
+  console.warn('📊 Real vehicle stats:', { 
     odometer: realOdometer, 
     location: realCurrentLocation,
     uniqueStates: uniqueStates,

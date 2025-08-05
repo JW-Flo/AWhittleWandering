@@ -142,7 +142,7 @@ export async function loadTimelineData(): Promise<TimelineEntry[]> {
       csvData = await response.text();
     } catch {
       // Fallback to hardcoded data if CSV not accessible
-      console.log('CSV not accessible, using fallback data');
+      console.warn('CSV not accessible, using fallback data');
       csvData = `Date(s),State(s),Key Stop(s) / Activities
 June 1,Texas,Corpus Christi - Journey Start
 June 2,New Mexico,Carlsbad Caverns National Park

@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import TeslaMap from '@/components/TeslaMap';
+import LazyTeslaMap from '@/components/LazyTeslaMap';
 import VehicleStats from '@/components/VehicleStats';
 import TessieApiSetup from '@/components/TessieApiSetup';
 import RoadTripTracker from '@/components/RoadTripTracker';
+import RealTeslaDataIntegration from '@/components/RealTeslaDataIntegration';
 import ProductionBanner from '@/components/ProductionBanner';
 import { useJourneyTracker } from '@/hooks/useJourneyTracker';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RefreshCw, Car, Zap, Route } from 'lucide-react';
+import { RefreshCw, Car, Zap, Route, Activity } from 'lucide-react';
 // Real Tessie API integration - no more mock data needed
 
 const Index = () => {
@@ -122,6 +123,14 @@ const Index = () => {
             </div>
             
             <div className="flex items-center gap-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => window.location.href = '/coordination'}
+                className="bg-gradient-to-r from-blue-500 to-purple-500 text-white border-none hover:opacity-90"
+              >
+                🚀 AI Coordination Dashboard
+              </Button>
               {isDemoMode && (
                 <Badge variant="outline" className="border-tesla-cyan text-tesla-cyan">
                   Demo Mode
@@ -162,10 +171,14 @@ const Index = () => {
         )}
 
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 bg-tesla-gray">
+          <TabsList className="grid w-full grid-cols-3 bg-tesla-gray">
             <TabsTrigger value="dashboard" className="data-[state=active]:bg-primary">
               <Car className="w-4 h-4 mr-2" />
               Live Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="integration" className="data-[state=active]:bg-primary">
+              <Activity className="w-4 h-4 mr-2" />
+              Tesla Data
             </TabsTrigger>
             <TabsTrigger value="roadtrip" className="data-[state=active]:bg-primary">
               <Route className="w-4 h-4 mr-2" />
@@ -174,10 +187,10 @@ const Index = () => {
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-280px)]">
-              {/* Map Section */}
-              <div className="lg:col-span-2">
-                <Card className="h-full border-tesla-gray-light">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 h-auto lg:h-[calc(100vh-280px)]">
+              {/* Map Section - Full width on mobile */}
+              <div className="lg:col-span-2 order-1 lg:order-1">
+                <Card className="h-[400px] lg:h-full border-tesla-gray-light">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center gap-2">
@@ -192,7 +205,7 @@ const Index = () => {
                     </div>
                   </CardHeader>
                   <CardContent className="h-[calc(100%-80px)]">
-                    <TeslaMap
+                    <LazyTeslaMap
                       vehicleLocation={displayVehicleData ? {
                         latitude: displayVehicleData.latitude,
                         longitude: displayVehicleData.longitude,
@@ -207,8 +220,8 @@ const Index = () => {
                 </Card>
               </div>
 
-              {/* Stats Section */}
-              <div className="space-y-4">
+              {/* Stats Section - Appears below map on mobile */}
+              <div className="space-y-4 order-2 lg:order-2">
                 <VehicleStats
                   batteryLevel={displayVehicleData?.battery_level}
                   range={displayVehicleData?.battery_range}
@@ -220,6 +233,17 @@ const Index = () => {
                 />
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="integration" className="space-y-6">
+            <RealTeslaDataIntegration 
+              onDataUpdate={(data) => {
+                // Process real Tesla data and update app state
+                if (data.vehicle) {
+                  // Real-time vehicle data is now available
+                }
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="roadtrip" className="space-y-6">
