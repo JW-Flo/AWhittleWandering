@@ -64,6 +64,12 @@ zone_name = "awhittlewandering.com"
 [env.production]
 name = "awhittlewandering-api"
 
+# Production environment variables
+[env.production.vars]
+# Tesla Vehicle VIN should be set as a secret or environment variable, not hardcoded here.
+# Example: Use `npx wrangler secret put TESLA_VEHICLE_VIN` to set it securely.
+# TESLA_VEHICLE_VIN will be provided via secrets
+
 # Production D1 Database (same as development - using single database)
 [[env.production.d1_databases]]
 binding = "TESLA_DB"
