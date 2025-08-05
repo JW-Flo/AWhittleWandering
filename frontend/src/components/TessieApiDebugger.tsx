@@ -42,7 +42,7 @@ const TessieApiDebugger: React.FC<TessieApiDebuggerProps> = ({ apiKey }) => {
     }
 
     try {
-      console.log(`Testing: ${description} - ${endpoint}`);
+      console.warn(`Testing: ${description} - ${endpoint}`);
       
       const response = await fetch(`https://api.tessie.com/${endpoint}`, {
         method: 'GET',
@@ -87,7 +87,7 @@ const TessieApiDebugger: React.FC<TessieApiDebuggerProps> = ({ apiKey }) => {
     setIsRunning(true);
     setTestResults([]);
 
-    console.log('Starting Tessie API debugging...');
+    console.warn('Starting Tessie API debugging...');
 
     // Test 1: Basic connectivity
     await testApiCall('', 'Basic API connectivity');

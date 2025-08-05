@@ -140,7 +140,7 @@ export class DriveAnalysisService {
     statistics: JourneyStatistics;
     timeline: TimelineEntry[];
   } {
-    console.log('🔍 Starting comprehensive drive analysis...', {
+    console.warn('🔍 Starting comprehensive drive analysis...', {
       totalDrives: drives.length,
       dateRange: drives.length > 0 ? {
         start: drives[0]?.start_time,
@@ -334,7 +334,7 @@ export class DriveAnalysisService {
       majorCitiesVisited: Array.from(majorCitiesVisited)
     };
 
-    console.log('✅ Drive analysis complete:', {
+    console.warn('✅ Drive analysis complete:', {
       statesFound: statistics.totalStatesVisited,
       totalMiles: statistics.totalMilesDriven,
       journeyDays: statistics.journeyDuration,

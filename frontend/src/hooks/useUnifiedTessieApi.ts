@@ -70,7 +70,7 @@ export const useUnifiedTessieApi = (apiKey?: string) => {
       throw new Error('API key not provided');
     }
 
-    console.log('🔌 Tessie API Call:', { endpoint, hasApiKey: !!apiKey });
+    console.warn('🔌 Tessie API Call:', { endpoint, hasApiKey: !!apiKey });
 
     const response = await fetch(`https://api.tessie.com/${endpoint}`, {
       headers: {
@@ -79,7 +79,7 @@ export const useUnifiedTessieApi = (apiKey?: string) => {
       },
     });
 
-    console.log('📡 Tessie API Response:', { 
+    console.warn('📡 Tessie API Response:', { 
       status: response.status, 
       statusText: response.statusText,
       url: response.url
@@ -92,13 +92,13 @@ export const useUnifiedTessieApi = (apiKey?: string) => {
     }
 
     const data = await response.json();
-    console.log('✅ Tessie API Data:', { endpoint, dataKeys: Object.keys(data) });
+    console.warn('✅ Tessie API Data:', { endpoint, dataKeys: Object.keys(data) });
     return data;
   }, [apiKey]);
 
   const fetchVehicles = useCallback(async () => {
     if (!apiKey) {
-      console.log('⚠️ No API key provided, skipping vehicle fetch');
+      console.warn('⚠️ No API key provided, skipping vehicle fetch');
       return;
     }
 
@@ -106,9 +106,9 @@ export const useUnifiedTessieApi = (apiKey?: string) => {
     setError(null);
 
     try {
-      console.log('🚗 Fetching vehicles from Tessie API...');
+      console.warn('🚗 Fetching vehicles from Tessie API...');
       const data = await makeApiCall('vehicles');
-      console.log('📊 Raw vehicle data:', data);
+      console.warn('📊 Raw vehicle data:', data);
       
       const transformedVehicles = data.results?.map((vehicle: any) => ({
         id: vehicle.last_state?.id_s || vehicle.vin,
@@ -117,12 +117,12 @@ export const useUnifiedTessieApi = (apiKey?: string) => {
         vin: vehicle.vin
       })) || [];
       
-      console.log('🔄 Transformed vehicles:', transformedVehicles);
+      console.warn('🔄 Transformed vehicles:', transformedVehicles);
       setVehicles(transformedVehicles);
       
       if (transformedVehicles.length > 0 && !selectedVehicle) {
         const firstVehicle = transformedVehicles[0];
-        console.log('🎯 Auto-selecting first vehicle:', firstVehicle);
+        console.warn('🎯 Auto-selecting first vehicle:', firstVehicle);
         setSelectedVehicle(firstVehicle.id);
         setSelectedVehicleVin(firstVehicle.vin);
       }
@@ -143,14 +143,14 @@ export const useUnifiedTessieApi = (apiKey?: string) => {
 
   const fetchVehicleData = useCallback(async (vehicleVin: string) => {
     if (!apiKey || !vehicleVin) {
-      console.log('⚠️ Missing API key or vehicle VIN:', { hasApiKey: !!apiKey, vehicleVin });
+      console.warn('⚠️ Missing API key or vehicle VIN:', { hasApiKey: !!apiKey, vehicleVin });
       return;
     }
 
     try {
-      console.log('📍 Fetching vehicle data for VIN:', vehicleVin);
+      console.warn('📍 Fetching vehicle data for VIN:', vehicleVin);
       const state = await makeApiCall(`${vehicleVin}/state`);
-      console.log('📊 Raw vehicle state:', state);
+      console.warn('📊 Raw vehicle state:', state);
       
       const combinedData: VehicleData = {
         battery_level: state.charge_state?.battery_level || 0,
@@ -166,7 +166,7 @@ export const useUnifiedTessieApi = (apiKey?: string) => {
         timestamp: state.timestamp || Date.now(),
       };
 
-      console.log('✅ Processed vehicle data:', combinedData);
+      console.warn('✅ Processed vehicle data:', combinedData);
       setVehicleData(combinedData);
       setError(null);
     } catch (err) {
@@ -178,22 +178,22 @@ export const useUnifiedTessieApi = (apiKey?: string) => {
 
   const fetchHistoricalDrives = useCallback(async (vehicleVin: string, startDate: string, endDate: string) => {
     if (!apiKey || !vehicleVin) {
-      console.log('⚠️ Missing API key or vehicle VIN for historical drives');
+      console.warn('⚠️ Missing API key or vehicle VIN for historical drives');
       return;
     }
 
     try {
-      console.log('🛣️ Fetching historical drives...', { vehicleVin, startDate, endDate });
+      console.warn('🛣️ Fetching historical drives...', { vehicleVin, startDate, endDate });
       
       // CRITICAL FIX: Use correct Tessie API endpoints with Unix timestamps
       const fromTimestamp = Math.floor(new Date(startDate).getTime() / 1000);
       const toTimestamp = Math.floor(new Date(endDate).getTime() / 1000);
       
-      console.log('📅 Date conversion:', { startDate, endDate, fromTimestamp, toTimestamp });
+      console.warn('📅 Date conversion:', { startDate, endDate, fromTimestamp, toTimestamp });
       
       const data = await makeApiCall(`${vehicleVin}/drives?from=${fromTimestamp}&to=${toTimestamp}`);
       
-      console.log('📊 Raw historical drives data:', data);
+      console.warn('📊 Raw historical drives data:', data);
       
       const drives: HistoricalDrive[] = data.results?.map((drive: any, index: number) => {
         // CRITICAL FIX: Map correct Tessie API field names
@@ -218,13 +218,13 @@ export const useUnifiedTessieApi = (apiKey?: string) => {
         };
         
         if (index < 3) {
-          console.log(`🔍 Drive ${index} mapping:`, { raw: drive, mapped: driveData });
+          console.warn(`🔍 Drive ${index} mapping:`, { raw: drive, mapped: driveData });
         }
         
         return driveData;
       }) || [];
 
-      console.log('✅ Processed historical drives:', drives.length, 'drives');
+      console.warn('✅ Processed historical drives:', drives.length, 'drives');
       setHistoricalDrives(drives);
     } catch (err) {
       console.error('❌ Error fetching historical drives:', err);
@@ -234,19 +234,19 @@ export const useUnifiedTessieApi = (apiKey?: string) => {
 
   const fetchHistoricalCharges = useCallback(async (vehicleVin: string, startDate: string, endDate: string) => {
     if (!apiKey || !vehicleVin) {
-      console.log('⚠️ Missing API key or vehicle VIN for historical charges');
+      console.warn('⚠️ Missing API key or vehicle VIN for historical charges');
       return;
     }
 
     try {
-      console.log('⚡ Fetching historical charges...', { vehicleVin, startDate, endDate });
+      console.warn('⚡ Fetching historical charges...', { vehicleVin, startDate, endDate });
       
       const fromTimestamp = Math.floor(new Date(startDate).getTime() / 1000);
       const toTimestamp = Math.floor(new Date(endDate).getTime() / 1000);
       
       const data = await makeApiCall(`${vehicleVin}/charges?from=${fromTimestamp}&to=${toTimestamp}`);
       
-      console.log('📊 Raw historical charges data:', data);
+      console.warn('📊 Raw historical charges data:', data);
       
       const charges: HistoricalCharge[] = data.results?.map((charge: any, index: number) => {
         const chargeData = {
@@ -265,13 +265,13 @@ export const useUnifiedTessieApi = (apiKey?: string) => {
         };
         
         if (index < 3) {
-          console.log(`🔍 Charge ${index} mapping:`, { raw: charge, mapped: chargeData });
+          console.warn(`🔍 Charge ${index} mapping:`, { raw: charge, mapped: chargeData });
         }
         
         return chargeData;
       }) || [];
 
-      console.log('✅ Processed historical charges:', charges.length, 'charges');
+      console.warn('✅ Processed historical charges:', charges.length, 'charges');
       setHistoricalCharges(charges);
     } catch (err) {
       console.error('❌ Error fetching historical charges:', err);
@@ -306,7 +306,7 @@ export const useUnifiedTessieApi = (apiKey?: string) => {
     const journeyStartDate = '2025-06-01';
     const currentDate = '2025-07-30'; // Fixed to actual journey end date
     
-    console.log('📊 Fetching ALL REAL historical data from', journeyStartDate, 'to', currentDate);
+    console.warn('📊 Fetching ALL REAL historical data from', journeyStartDate, 'to', currentDate);
     fetchHistoricalDrives(selectedVehicleVin, journeyStartDate, currentDate);
     fetchHistoricalCharges(selectedVehicleVin, journeyStartDate, currentDate);
   }, [selectedVehicleVin, apiKey, fetchHistoricalDrives, fetchHistoricalCharges]);
@@ -345,7 +345,7 @@ export const useUnifiedTessieApi = (apiKey?: string) => {
       const journeyStartDate = '2025-06-01';
       const currentDate = '2025-07-30'; // Fixed journey end date
       
-      console.log('🔄 Refreshing ALL REAL historical data:', journeyStartDate, 'to', currentDate);
+      console.warn('🔄 Refreshing ALL REAL historical data:', journeyStartDate, 'to', currentDate);
       fetchHistoricalDrives(selectedVehicleVin, journeyStartDate, currentDate);
       fetchHistoricalCharges(selectedVehicleVin, journeyStartDate, currentDate);
     }

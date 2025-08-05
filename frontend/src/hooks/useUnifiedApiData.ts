@@ -104,10 +104,10 @@ export const useUnifiedApiData = (pollInterval: number = 30000) => {
 
   const fetchData = useCallback(async () => {
     try {
-      console.log('🔄 Fetching unified data from worker API...');
+      console.warn('🔄 Fetching unified data from worker API...');
       
       const unifiedData = await api.getUnifiedData() as UnifiedApiData;
-      console.log('✅ Unified data received:', {
+      console.warn('✅ Unified data received:', {
         connected: unifiedData.tessieStatus?.connected,
         statesVisited: unifiedData.overview?.statesVisited,
         totalMiles: unifiedData.overview?.totalMiles,

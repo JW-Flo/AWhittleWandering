@@ -13,6 +13,8 @@ interface VehicleStatsProps {
   speed?: number;
   location?: string;
   lastUpdate?: string;
+  isLoading?: boolean;
+  error?: string | null;
 }
 
 const VehicleStats = ({
@@ -23,7 +25,9 @@ const VehicleStats = ({
   odometer,
   speed = 0,
   location,
-  lastUpdate
+  lastUpdate,
+  isLoading = false,
+  error = null
 }: VehicleStatsProps) => {
   const getChargingBadge = () => {
     switch (chargingState) {
@@ -41,6 +45,46 @@ const VehicleStats = ({
     if (batteryLevel > 20) return 'bg-yellow-500';
     return 'bg-destructive';
   };
+
+  // Loading state component
+  const LoadingSkeleton = () => (
+    <div className="space-y-4">
+      {[1, 2, 3].map((i) => (
+        <Card key={i} className="border-tesla-gray-light">
+          <CardHeader className="pb-3">
+            <div className="h-5 bg-gray-200 rounded animate-pulse" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="h-4 bg-gray-200 rounded animate-pulse" />
+              <div className="h-3 bg-gray-200 rounded animate-pulse" />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
+  // Error state component
+  const ErrorState = () => (
+    <Card className="border-destructive/20 bg-destructive/5">
+      <CardContent className="p-4">
+        <p className="text-destructive text-sm font-medium">
+          ⚠️ Error loading vehicle data: {error}
+        </p>
+      </CardContent>
+    </Card>
+  );
+
+  // Show loading state
+  if (isLoading) {
+    return <LoadingSkeleton />;
+  }
+
+  // Show error state
+  if (error) {
+    return <ErrorState />;
+  }
 
   return (
     <div className="space-y-4">

@@ -10,7 +10,6 @@ interface ApiTestProps {
 export const ApiTest: React.FC<ApiTestProps> = ({ apiKey }) => {
   const {
     vehicles,
-    selectedVehicle,
     vehicleData,
     historicalDrives,
     historicalCharges,

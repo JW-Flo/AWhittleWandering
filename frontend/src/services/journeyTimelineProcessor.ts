@@ -76,7 +76,7 @@ export class JourneyTimelineProcessor {
    * Process raw drive data into sophisticated journey insights using pattern analysis
    */
   public async processJourneyTimeline(drives: HistoricalDrive[]): Promise<AdvancedJourneyInsights> {
-    console.log('🚀 Processing advanced journey timeline...', { totalDrives: drives.length });
+    console.warn('🚀 Processing advanced journey timeline...', { totalDrives: drives.length });
 
     // First get basic analysis from drive service
     const { segments, statistics, timeline } = driveAnalysisService.analyzeJourneyFromDrives(drives);
@@ -126,7 +126,7 @@ export class JourneyTimelineProcessor {
       journeyScore
     };
 
-    console.log('✅ Advanced journey processing complete:', {
+    console.warn('✅ Advanced journey processing complete:', {
       statesAnalyzed: insights.totalStatesVisited,
       phases: insights.journeyPhases.length,
       milestones: insights.milestones.length,

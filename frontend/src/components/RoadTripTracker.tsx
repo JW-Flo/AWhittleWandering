@@ -11,7 +11,7 @@ import { useJourneyTracker } from '@/hooks/useJourneyTracker';
 import AdventureHero from './AdventureHero';
 import JourneyTimeline from './JourneyTimeline';
 import AdventureMilestones from './AdventureMilestones';
-import TeslaMap from './TeslaMap';
+import LazyTeslaMap from './LazyTeslaMap';
 import { calculateTripStatistics } from '@/utils/stateDetection';
 
 const RoadTripTracker = () => {
@@ -369,7 +369,7 @@ const RoadTripTracker = () => {
             </CardHeader>
             <CardContent>
               <div className="h-96 w-full">
-            <TeslaMap 
+            <LazyTeslaMap 
               mapboxToken={mapboxToken}
               onTokenChange={handleTokenChange}
               routeLocations={routeLocations}
