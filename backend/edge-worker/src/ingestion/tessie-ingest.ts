@@ -335,9 +335,81 @@ export async function ingestCharges(env: Env): Promise<void> {
 async function getStateFromCoordinates(lat: number, lng: number): Promise<string | null> {
   if (!lat || !lng) return null;
   
-  // Simple state lookup - you may want to use a reverse geocoding service
-  // For now, return null and let the frontend handle state detection
-  return null;
+  // Comprehensive US state boundaries for accurate detection
+  const US_STATES = [
+    // Southeast (where recent drives are happening)
+    { name: 'North Carolina', minLat: 33.7514, maxLat: 36.5881, minLng: -84.3219, maxLng: -75.3603 },
+    { name: 'South Carolina', minLat: 32.0346, maxLat: 35.2155, minLng: -83.3532, maxLng: -78.5408 },
+    { name: 'Virginia', minLat: 36.5407, maxLat: 39.4660, minLng: -83.6754, maxLng: -75.1663 },
+    { name: 'Georgia', minLat: 30.3552, maxLat: 35.0008, minLng: -85.6051, maxLng: -80.7514 },
+    { name: 'Tennessee', minLat: 34.9829, maxLat: 36.6781, minLng: -90.3103, maxLng: -81.6469 },
+    { name: 'Kentucky', minLat: 36.4970, maxLat: 39.1472, minLng: -89.5715, maxLng: -81.9645 },
+    
+    // Northeast
+    { name: 'Connecticut', minLat: 40.9959, maxLat: 42.0508, minLng: -73.7277, maxLng: -71.7869 },
+    { name: 'Maine', minLat: 42.9633, maxLat: 47.4596, minLng: -71.0826, maxLng: -66.8847 },
+    { name: 'Massachusetts', minLat: 41.2376, maxLat: 42.8868, minLng: -73.5081, maxLng: -69.9286 },
+    { name: 'New Hampshire', minLat: 42.6970, maxLat: 45.3058, minLng: -72.5570, maxLng: -70.6104 },
+    { name: 'New Jersey', minLat: 38.9281, maxLat: 41.3574, minLng: -75.5597, maxLng: -73.8937 },
+    { name: 'New York', minLat: 40.4774, maxLat: 45.0158, minLng: -79.7624, maxLng: -71.7774 },
+    { name: 'Pennsylvania', minLat: 39.7198, maxLat: 42.2694, minLng: -80.5194, maxLng: -74.6895 },
+    { name: 'Rhode Island', minLat: 41.1460, maxLat: 42.0187, minLng: -71.8620, maxLng: -71.1208 },
+    { name: 'Vermont', minLat: 42.7269, maxLat: 45.0167, minLng: -73.4370, maxLng: -71.4653 },
+    
+    // Southwest  
+    { name: 'Texas', minLat: 25.8371, maxLat: 36.5007, minLng: -106.6456, maxLng: -93.5083 },
+    { name: 'New Mexico', minLat: 31.3323, maxLat: 37.0000, minLng: -109.0501, maxLng: -103.0020 },
+    { name: 'Arizona', minLat: 31.3322, maxLat: 37.0042, minLng: -114.8165, maxLng: -109.0452 },
+    { name: 'Utah', minLat: 36.9979, maxLat: 42.0013, minLng: -114.0524, maxLng: -109.0414 },
+    { name: 'Nevada', minLat: 35.0018, maxLat: 42.0020, minLng: -120.0064, maxLng: -114.0396 },
+    { name: 'California', minLat: 32.5343, maxLat: 42.0095, minLng: -124.4820, maxLng: -114.1312 },
+    { name: 'Colorado', minLat: 36.9924, maxLat: 41.0032, minLng: -109.0603, maxLng: -102.0424 },
+    
+    // West
+    { name: 'Oregon', minLat: 41.9918, maxLat: 46.2991, minLng: -124.7034, maxLng: -116.4635 },
+    { name: 'Washington', minLat: 45.5435, maxLat: 49.0025, minLng: -124.8489, maxLng: -116.9155 },
+    { name: 'Idaho', minLat: 41.9880, maxLat: 49.0011, minLng: -117.2434, maxLng: -111.0435 },
+    { name: 'Montana', minLat: 44.3584, maxLat: 49.0011, minLng: -116.0489, maxLng: -104.0395 },
+    { name: 'Wyoming', minLat: 40.9979, maxLat: 45.0058, minLng: -111.0570, maxLng: -104.0205 },
+    
+    // Midwest
+    { name: 'Illinois', minLat: 36.9540, maxLat: 42.5083, minLng: -91.5130, maxLng: -87.0199 },
+    { name: 'Indiana', minLat: 37.7554, maxLat: 41.7606, minLng: -88.0978, maxLng: -84.7845 },
+    { name: 'Iowa', minLat: 40.3755, maxLat: 43.5012, minLng: -96.6397, maxLng: -90.1401 },
+    { name: 'Kansas', minLat: 36.9930, maxLat: 40.0031, minLng: -102.0517, maxLng: -94.5882 },
+    { name: 'Michigan', minLat: 41.6960, maxLat: 48.3060, minLng: -90.4186, maxLng: -82.1220 },
+    { name: 'Minnesota', minLat: 43.4999, maxLat: 49.3841, minLng: -97.2394, maxLng: -89.4835 },
+    { name: 'Missouri', minLat: 35.9957, maxLat: 40.6136, minLng: -95.7742, maxLng: -89.0989 },
+    { name: 'Nebraska', minLat: 39.9999, maxLat: 43.0017, minLng: -104.0531, maxLng: -95.3080 },
+    { name: 'North Dakota', minLat: 45.9350, maxLat: 49.0008, minLng: -104.0489, maxLng: -96.5544 },
+    { name: 'Ohio', minLat: 38.4030, maxLat: 41.9773, minLng: -84.8203, maxLng: -80.5180 },
+    { name: 'South Dakota', minLat: 42.4799, maxLat: 45.9454, minLng: -104.0579, maxLng: -96.4364 },
+    { name: 'Wisconsin', minLat: 42.4919, maxLat: 47.3085, minLng: -92.8894, maxLng: -86.2490 },
+    
+    // Additional southeastern states
+    { name: 'Florida', minLat: 24.3963, maxLat: 31.0014, minLng: -87.6349, maxLng: -79.9743 },
+    { name: 'Alabama', minLat: 30.2307, maxLat: 35.0080, minLng: -88.4734, maxLng: -84.8890 },
+    { name: 'Mississippi', minLat: 30.1734, maxLat: 35.0041, minLng: -91.6554, maxLng: -88.0977 },
+    { name: 'Louisiana', minLat: 28.9259, maxLat: 33.0197, minLng: -94.0431, maxLng: -88.8177 },
+    { name: 'Arkansas', minLat: 33.0041, maxLat: 36.4996, minLng: -94.6178, maxLng: -89.6439 },
+    { name: 'Oklahoma', minLat: 33.6160, maxLat: 37.0020, minLng: -103.0025, maxLng: -94.4312 },
+    
+    // Mid-Atlantic
+    { name: 'Delaware', minLat: 38.4513, maxLat: 39.8390, minLng: -75.7887, maxLng: -74.9848 },
+    { name: 'Maryland', minLat: 37.9113, maxLat: 39.7231, minLng: -79.4877, maxLng: -75.0490 },
+    { name: 'West Virginia', minLat: 37.2014, maxLat: 40.6381, minLng: -82.6447, maxLng: -77.7190 },
+    { name: 'District of Columbia', minLat: 38.7916, maxLat: 38.9958, minLng: -77.1195, maxLng: -76.9093 }
+  ];
+
+  // Find matching state
+  for (const state of US_STATES) {
+    if (lat >= state.minLat && lat <= state.maxLat && 
+        lng >= state.minLng && lng <= state.maxLng) {
+      return state.name;
+    }
+  }
+
+  return null; // Unknown location
 }
 
 async function updateStateVisited(
