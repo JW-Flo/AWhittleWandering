@@ -41,7 +41,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onAuthChange }) => {
       } else {
         setError('Invalid admin password. Access denied.');
       }
-    } catch (err) {
+    } catch {
       setError('Authentication failed. Please try again.');
     } finally {
       setIsLoading(false);

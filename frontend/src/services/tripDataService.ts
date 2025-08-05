@@ -1,10 +1,39 @@
 // CSV Data Service for loading and analyzing real trip data
 import { analyzeRealTripData } from '@/utils/tripDataAnalyzer';
 
+export interface TripDataPoint {
+  timestamp: string;
+  latitude: number;
+  longitude: number;
+  shiftState: string;
+  odometer: number;
+  speed: number;
+}
+
+export interface DailyDataPoint {
+  date: string;
+  miles: number;
+  statesVisited: string[];
+}
+
+export interface TripAnalysisResults {
+  tripData: TripDataPoint[];
+  statesVisited: string[];
+  totalStates: number;
+  totalMiles: number;
+  totalDays: number;
+  averageMilesPerDay: number;
+  startDate: string;
+  endDate: string;
+  startOdometer: number;
+  endOdometer: number;
+  dailyData: DailyDataPoint[];
+}
+
 export class TripDataService {
   private static instance: TripDataService;
-  private tripData: any[] = [];
-  private analysisResults: any = null;
+  private tripData: TripDataPoint[] = [];
+  private analysisResults: TripAnalysisResults | null = null;
 
   static getInstance(): TripDataService {
     if (!TripDataService.instance) {
@@ -13,7 +42,7 @@ export class TripDataService {
     return TripDataService.instance;
   }
 
-  async loadFromFile(file: File): Promise<any> {
+  async loadFromFile(file: File): Promise<TripAnalysisResults> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = async (e) => {
@@ -32,7 +61,7 @@ export class TripDataService {
     });
   }
 
-  async loadFromURL(url: string): Promise<any> {
+  async loadFromURL(url: string): Promise<TripAnalysisResults> {
     try {
       const response = await fetch(url);
       if (!response.ok) {
