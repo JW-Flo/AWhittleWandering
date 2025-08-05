@@ -14,7 +14,8 @@
         src="https://6797e30b.awhittlewandering-site.pages.dev/" 
         width="100%" 
         height="600"
-        style="border: 1px solid #ccc;">
+        style="border: 1px solid #ccc;"
+        title="A Whittle Wandering Deployment Debug View">
     </iframe>
     
     <script>
@@ -37,7 +38,8 @@
                     });
                 }
             } catch (e) {
-                console.log('Cannot access iframe due to CORS policy');
+                console.warn('Cannot access iframe due to CORS policy:', e instanceof Error ? e.message : 'Cross-origin restrictions');
+                // This is expected behavior for cross-origin iframes
             }
         });
         

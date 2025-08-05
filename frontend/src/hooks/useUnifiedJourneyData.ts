@@ -4,6 +4,39 @@
 import { useState, useEffect } from 'react';
 import { apiRequest } from '@/lib/api-config';
 
+// Timeline data structure - individual entry from journey timeline
+interface TimelineEntry {
+  date: string;
+  state: string;
+  stateCode: string;
+  location: string;
+  description: string;
+  category: 'arrival' | 'departure' | 'overnight' | 'milestone' | 'activity';
+  coordinates: { lat: number; lng: number };
+  durationHours?: number;
+  significance: 'low' | 'medium' | 'high' | 'epic';
+}
+
+// Live data from Tessie API
+interface LiveData {
+  batteryLevel?: number;
+  batteryRange?: number;
+  chargingState?: string;
+  location?: {
+    lat: number;
+    lng: number;
+    address?: string;
+  };
+  odometer?: number;
+  timestamp?: string;
+  vehicleState?: string;
+  climateState?: {
+    insideTemp?: number;
+    outsideTemp?: number;
+    isClimateOn?: boolean;
+  };
+}
+
 interface JourneyOverview {
   name: string;
   startDate: string;
@@ -40,8 +73,8 @@ interface UnifiedJourneyData {
   journey: {
     overview: JourneyOverview;
     currentStatus: CurrentStatus;
-    timeline: any;
-    liveData: any;
+    timeline: TimelineEntry[] | null;
+    liveData: LiveData | null;
     tessieStatus: {
       connected: boolean;
       lastSync: string;
