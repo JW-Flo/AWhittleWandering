@@ -232,6 +232,199 @@ app.get('/trip-status', async (c) => {
   });
 });
 
+// Emergency reprocessing endpoint to fix state detection
+app.post('/api/v1/reprocess-states', async (c) => {
+  try {
+    // Get all drives that need state detection
+    const drives = await c.env.TESLA_DB.prepare(`
+      SELECT id, start_latitude, start_longitude, end_latitude, end_longitude 
+      FROM drives 
+      WHERE (start_state IS NULL OR end_state IS NULL)
+      AND start_latitude IS NOT NULL 
+      AND start_longitude IS NOT NULL
+      LIMIT 50
+    `).all();
+
+    if (!drives.results) {
+      return c.json({ success: false, error: 'No drives found' }, 404);
+    }
+
+    let updated = 0;
+    for (const drive of drives.results) {
+      const startState = await detectStateFromCoordinates(drive.start_latitude as number, drive.start_longitude as number);
+      const endState = await detectStateFromCoordinates(drive.end_latitude as number, drive.end_longitude as number);
+      
+      if (startState || endState) {
+        await c.env.TESLA_DB.prepare(`
+          UPDATE drives 
+          SET start_state = ?, end_state = ?
+          WHERE id = ?
+        `).bind(startState || null, endState || null, drive.id).run();
+        updated++;
+      }
+    }
+
+    return c.json({
+      success: true,
+      processed: drives.results.length,
+      updated: updated,
+      message: `Reprocessed ${drives.results.length} drives, updated ${updated} with state data`
+    });
+  } catch (error) {
+    return c.json({ 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+// Test Tessie API endpoint
+app.get('/api/v1/test-tessie', async (c) => {
+  try {
+    // Just test basic connectivity to Tessie
+    const tessieResponse = await fetch(`https://api.tessie.com/${c.env.TESLA_VIN}/drives?since=2025-07-15T00:00:00Z&per_page=5`, {
+      headers: {
+        'Authorization': `Bearer ${c.env.TESSIE_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!tessieResponse.ok) {
+      return c.json({ 
+        success: false, 
+        status: tessieResponse.status,
+        error: await tessieResponse.text()
+      });
+    }
+
+    const data = await tessieResponse.json();
+    return c.json({
+      success: true,
+      data: data,
+      message: 'Tessie API connection successful'
+    });
+  } catch (error) {
+    return c.json({ 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+// Historical data backfill endpoint
+app.post('/api/v1/backfill-historical-drives', async (c) => {
+  try {
+    // Import the corrected ingestion function
+    const { ingestDrives } = await import('./ingestion/tessie-ingest');
+    
+    // Force fetch from specific start date, ignoring corrupted timestamps
+    const since = '2025-07-15T00:00:00Z'; // Start with recent data to test
+    
+    // Fetch drives from Tessie with explicit since parameter
+    const tessieResponse = await fetch(`https://api.tessie.com/${c.env.TESLA_VIN}/drives?since=${since}&per_page=50`, {
+      headers: {
+        'Authorization': `Bearer ${c.env.TESSIE_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!tessieResponse.ok) {
+      return c.json({ 
+        success: false, 
+        error: `Tessie API error: ${tessieResponse.status} - ${await tessieResponse.text()}`
+      }, 500);
+    }
+
+    const drivesData = await tessieResponse.json() as {
+      results?: Array<{
+        id: number;
+        started_at: number;
+        ended_at: number;
+        starting_location?: string;
+        ending_location?: string;
+        starting_latitude?: number;
+        starting_longitude?: number;
+        ending_latitude?: number;
+        ending_longitude?: number;
+        distance_miles?: number;
+        duration_minutes?: number;
+        energy_used_kwh?: number;
+        average_speed?: number;
+        max_speed?: number;
+        outside_temp_avg?: number;
+        start_battery_level?: number;
+        end_battery_level?: number;
+        start_range?: number;
+        end_range?: number;
+      }>
+    };
+    let processed = 0;
+    let inserted = 0;
+
+    // Process each drive from Tessie
+    for (const drive of drivesData.results || []) {
+      processed++;
+      
+      // Check if drive already exists
+      const existing = await c.env.TESLA_DB.prepare(`
+        SELECT id FROM drives WHERE tessie_id = ?
+      `).bind(drive.id).first();
+      
+      if (!existing) {
+        // Insert new drive with corrected timestamp handling
+        const startedAt = new Date(drive.started_at * 1000).toISOString();
+        const endedAt = new Date(drive.ended_at * 1000).toISOString();
+        
+        await c.env.TESLA_DB.prepare(`
+          INSERT INTO drives (
+            tessie_id, vehicle_id, journey_id, started_at, ended_at,
+            start_address, end_address, start_latitude, start_longitude,
+            end_latitude, end_longitude, distance_miles, duration_minutes,
+            energy_used_kwh, average_speed, max_speed, outside_temp_avg,
+            start_battery_level, end_battery_level, start_range, end_range
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          drive.id,
+          'midnight-shadow',
+          'continental-usa-2025',
+          startedAt,
+          endedAt,
+          drive.starting_location || '',
+          drive.ending_location || '',
+          drive.starting_latitude || 0,
+          drive.starting_longitude || 0,
+          drive.ending_latitude || 0,
+          drive.ending_longitude || 0,
+          drive.distance_miles || 0,
+          drive.duration_minutes || 0,
+          drive.energy_used_kwh || 0,
+          drive.average_speed || 0,
+          drive.max_speed || 0,
+          drive.outside_temp_avg || 0,
+          drive.start_battery_level || 0,
+          drive.end_battery_level || 0,
+          drive.start_range || 0,
+          drive.end_range || 0
+        ).run();
+        
+        inserted++;
+      }
+    }
+
+    return c.json({
+      success: true,
+      processed: processed,
+      inserted: inserted,
+      message: `Backfilled ${processed} drives from Tessie, inserted ${inserted} new records`
+    });
+  } catch (error) {
+    return c.json({ 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
 // Main unified data endpoint using D1 for aggregation
 app.get('/api/v1/unified-data', async (c) => {
   return handleUnifiedData(c);
