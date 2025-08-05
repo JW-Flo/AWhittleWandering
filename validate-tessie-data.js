@@ -4,10 +4,9 @@
  */
 
 const TESSIE_API_TOKEN = process.env.TESSIE_API_TOKEN;
-const VEHICLE_ID = process.env.VEHICLE_ID;
 
-if (!TESSIE_API_TOKEN || !VEHICLE_ID) {
-  console.error("❌ Missing credentials. Run: source setup-real-tessie.sh");
+if (!TESSIE_API_TOKEN) {
+  console.error("❌ Missing TESSIE_API_TOKEN. Please set it in environment or .env file");
   process.exit(1);
 }
 
@@ -16,41 +15,54 @@ console.log("=".repeat(60));
 
 async function validateTessieData() {
   try {
-    // 1. Get current state for verification
-    console.log("\n📊 STEP 1: Current Vehicle State");
+    // 1. Get vehicle list first (no vehicle ID needed)
+    console.log("\n🚗 STEP 1: Get Vehicle List");
     console.log("-".repeat(40));
 
-    const stateResponse = await fetch(
-      `https://api.tessie.com/${VEHICLE_ID}/state`,
-      {
-        headers: { Authorization: `Bearer ${TESSIE_API_TOKEN}` },
-      }
-    );
+    const vehiclesResponse = await fetch('https://api.tessie.com/vehicles', {
+      headers: { 'Authorization': `Bearer ${TESSIE_API_TOKEN}` }
+    });
+
+    if (!vehiclesResponse.ok) {
+      throw new Error(`Vehicles API failed: ${vehiclesResponse.status} - ${await vehiclesResponse.text()}`);
+    }
+
+    const vehicles = await vehiclesResponse.json();
+    console.log("Found vehicles:", vehicles.length);
+    
+    if (!vehicles || vehicles.length === 0) {
+      throw new Error("No vehicles found in account");
+    }
+
+    const vehicle = vehicles[0]; // Use first vehicle
+    const vehicleId = vehicle.id;
+    console.log("Using vehicle:", vehicle.display_name || vehicle.vin, "ID:", vehicleId);
+
+    // 2. Get current state for verification
+    console.log("\n📊 STEP 2: Current Vehicle State");
+    console.log("-".repeat(40));
+
+    const stateResponse = await fetch(`https://api.tessie.com/${vehicleId}/state`, {
+      headers: { 'Authorization': `Bearer ${TESSIE_API_TOKEN}` }
+    });
 
     if (!stateResponse.ok) {
-      throw new Error(`State API failed: ${stateResponse.status}`);
+      throw new Error(`State API failed: ${stateResponse.status} - ${await stateResponse.text()}`);
     }
 
     const state = await stateResponse.json();
     console.log("Battery Level:", state.charge_state?.battery_level);
     console.log("Charging State:", state.charge_state?.charging_state);
-    console.log(
-      "Current Location:",
-      state.drive_state?.latitude,
-      state.drive_state?.longitude
-    );
+    console.log("Current Location:", state.drive_state?.latitude, state.drive_state?.longitude);
     console.log("Odometer:", state.vehicle_state?.odometer);
 
-    // 2. Get SINGLE drive to check data structure
-    console.log("\n🛣️ STEP 2: Single Drive Data Structure");
+    // 3. Get SINGLE drive to check data structure
+    console.log("\n🛣️ STEP 3: Single Drive Data Structure");
     console.log("-".repeat(40));
 
-    const singleDriveResponse = await fetch(
-      `https://api.tessie.com/${VEHICLE_ID}/drives?limit=1`,
-      {
-        headers: { Authorization: `Bearer ${TESSIE_API_TOKEN}` },
-      }
-    );
+    const singleDriveResponse = await fetch(`https://api.tessie.com/${vehicleId}/drives?limit=1`, {
+      headers: { 'Authorization': `Bearer ${TESSIE_API_TOKEN}` }
+    });
 
     const singleDriveData = await singleDriveResponse.json();
     const sampleDrive = singleDriveData.results?.[0];
@@ -69,16 +81,13 @@ async function validateTessieData() {
       console.log("  - ALL FIELDS:", Object.keys(sampleDrive));
     }
 
-    // 3. Get SINGLE charge to check data structure
-    console.log("\n⚡ STEP 3: Single Charge Data Structure");
+    // 4. Get SINGLE charge to check data structure
+    console.log("\n⚡ STEP 4: Single Charge Data Structure");
     console.log("-".repeat(40));
 
-    const singleChargeResponse = await fetch(
-      `https://api.tessie.com/${VEHICLE_ID}/charges?limit=1`,
-      {
-        headers: { Authorization: `Bearer ${TESSIE_API_TOKEN}` },
-      }
-    );
+    const singleChargeResponse = await fetch(`https://api.tessie.com/${vehicleId}/charges?limit=1`, {
+      headers: { 'Authorization': `Bearer ${TESSIE_API_TOKEN}` }
+    });
 
     const singleChargeData = await singleChargeResponse.json();
     const sampleCharge = singleChargeData.results?.[0];
@@ -95,8 +104,8 @@ async function validateTessieData() {
       console.log("  - ALL FIELDS:", Object.keys(sampleCharge));
     }
 
-    // 4. Get drives since June 1 with SMALL batches to verify totals
-    console.log("\n🔢 STEP 4: Manual Total Calculation (Small Batch)");
+    // 5. Get drives since June 1 with SMALL batches to verify totals
+    console.log("\n🔢 STEP 5: Manual Total Calculation (Small Batch)");
     console.log("-".repeat(40));
 
     const since = "2025-06-01T00:00:00Z";
@@ -108,11 +117,10 @@ async function validateTessieData() {
 
     console.log("Calculating totals in batches of", limit, "...");
 
-    while (page <= 3) {
-      // Only check first 3 pages for validation
+    while (page <= 3) { // Only check first 3 pages for validation
       const drivesResponse = await fetch(
-        `https://api.tessie.com/${VEHICLE_ID}/drives?since=${since}&limit=${limit}&page=${page}`,
-        { headers: { Authorization: `Bearer ${TESSIE_API_TOKEN}` } }
+        `https://api.tessie.com/${vehicleId}/drives?since=${since}&limit=${limit}&page=${page}`,
+        { headers: { 'Authorization': `Bearer ${TESSIE_API_TOKEN}` } }
       );
 
       const drivesData = await drivesResponse.json();
@@ -152,15 +160,13 @@ async function validateTessieData() {
       (totalMiles / driveCount).toFixed(2)
     );
 
-    // 5. Compare with API stats
-    console.log("\n⚖️ STEP 5: Compare with API Stats");
+    // 6. Compare with API stats
+    console.log("\n⚖️ STEP 6: Compare with API Stats");
     console.log("-".repeat(40));
 
     const statsResponse = await fetch(
-      `https://api.tessie.com/${VEHICLE_ID}/stats?since=${since}`,
-      {
-        headers: { Authorization: `Bearer ${TESSIE_API_TOKEN}` },
-      }
+      `https://api.tessie.com/${vehicleId}/stats?since=${since}`,
+      { headers: { 'Authorization': `Bearer ${TESSIE_API_TOKEN}` } }
     );
 
     const stats = await statsResponse.json();
@@ -170,9 +176,9 @@ async function validateTessieData() {
     console.log("  - total_energy_used_kwh:", stats.total_energy_used_kwh);
     console.log("  - avg_miles_per_day:", stats.average_miles_per_day);
 
-    // 6. VERDICT
+    // 7. VERDICT
     console.log("\n🎯 ANALYSIS VERDICT:");
-    console.log("=" * 40);
+    console.log("=".repeat(40));
 
     if (stats.total_miles > 50000) {
       console.log("❌ TOTAL MILES SEEMS TOO HIGH!");
