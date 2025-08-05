@@ -1,11 +1,9 @@
 import React, { useCallback, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Camera, Upload, MapPin, Clock, FileImage, Video, X, Shield, Lock } from 'lucide-react';
+import { Camera, Upload, MapPin, Clock, FileImage, Video, X, Shield, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAdminAuth } from '@/lib/auth';
 import AdminLogin from './AdminLogin';
@@ -47,6 +45,63 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
     'video/mp4', 'video/mov', 'video/quicktime'
   ];
 
+  // Handle drag and drop - MOVED TO TOP LEVEL
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  }, []);
+
+  // Process uploaded files
+  const processFiles = useCallback(async (files: FileList) => {
+    setIsProcessing(true);
+    const newMedia: MediaFile[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      
+      if (!supportedFormats.includes(file.type)) {
+        console.warn(`Unsupported file type: ${file.type}`);
+        continue;
+      }
+
+      const preview = URL.createObjectURL(file);
+      const isVideo = file.type.startsWith('video/');
+      const metadata = await extractEXIFData(file);
+      
+      const mediaFile: MediaFile = {
+        id: `${Date.now()}-${i}`,
+        file,
+        preview,
+        type: isVideo ? 'video' : 'image',
+        location: metadata.location || (currentLocation ? currentLocation.coordinates : undefined),
+        timestamp: metadata.timestamp,
+        state: currentLocation?.state,
+        waypoint: `${currentLocation?.state} - ${new Date().toLocaleDateString()}`
+      };
+
+      newMedia.push(mediaFile);
+    }
+
+    setUploadedMedia(prev => [...prev, ...newMedia]);
+    setIsProcessing(false);
+    onMediaUploaded(newMedia);
+  }, [currentLocation, onMediaUploaded, supportedFormats]);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processFiles(e.dataTransfer.files);
+    }
+  }, [processFiles]);
+
   // If not authenticated, show admin login
   if (!isAuthenticated || !canUploadMedia) {
     return (
@@ -62,7 +117,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert className="border-yellow-200 bg-yellow-50">
-            <Lock className="w-4 h-4" />
+            <AlertTriangle className="w-4 h-4" />
             <AlertDescription className="text-yellow-800">
               <strong>Security Notice:</strong> Media uploads can affect the journey tracking experience. 
               Only authorized administrators can upload photos and videos to maintain content integrity.
@@ -85,17 +140,17 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
       const img = new Image();
       img.onload = () => {
         try {
-          // @ts-ignore - EXIF library types may not be available
+          // @ts-expect-error - EXIF library types may not be available
           window.EXIF?.getData(img, function() {
-            // @ts-ignore
+            // @ts-expect-error - EXIF library global types
             const lat = window.EXIF.getTag(this, "GPSLatitude");
-            // @ts-ignore
+            // @ts-expect-error - EXIF library global types
             const lon = window.EXIF.getTag(this, "GPSLongitude");
-            // @ts-ignore
+            // @ts-expect-error - EXIF library global types
             const latRef = window.EXIF.getTag(this, "GPSLatitudeRef");
-            // @ts-ignore
+            // @ts-expect-error - EXIF library global types
             const lonRef = window.EXIF.getTag(this, "GPSLongitudeRef");
-            // @ts-ignore
+            // @ts-expect-error - EXIF library global types
             const dateTime = window.EXIF.getTag(this, "DateTime");
 
             let location;
@@ -130,63 +185,6 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
     });
   };
 
-  const processFiles = async (files: FileList) => {
-    setIsProcessing(true);
-    const newMedia: MediaFile[] = [];
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      
-      if (!supportedFormats.includes(file.type)) {
-        console.warn(`Unsupported file type: ${file.type}`);
-        continue;
-      }
-
-      const isVideo = file.type.startsWith('video/');
-      const preview = URL.createObjectURL(file);
-      
-      // Extract metadata
-      const metadata = await extractEXIFData(file);
-      
-      const mediaFile: MediaFile = {
-        id: `${Date.now()}-${i}`,
-        file,
-        preview,
-        type: isVideo ? 'video' : 'image',
-        location: metadata.location || (currentLocation ? currentLocation.coordinates : undefined),
-        timestamp: metadata.timestamp,
-        state: currentLocation?.state,
-        waypoint: `${currentLocation?.state} - ${new Date().toLocaleDateString()}`
-      };
-
-      newMedia.push(mediaFile);
-    }
-
-    setUploadedMedia(prev => [...prev, ...newMedia]);
-    setIsProcessing(false);
-    onMediaUploaded(newMedia);
-  };
-
-  const handleDrag = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      processFiles(e.dataTransfer.files);
-    }
-  }, [currentLocation]);
-
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       processFiles(e.target.files);
@@ -202,14 +200,6 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
       }
       return updated;
     });
-  };
-
-  const tagToWaypoint = (mediaId: string, waypoint: string) => {
-    setUploadedMedia(prev => 
-      prev.map(media => 
-        media.id === mediaId ? { ...media, waypoint } : media
-      )
-    );
   };
 
   return (
