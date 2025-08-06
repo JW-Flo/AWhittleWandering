@@ -112,6 +112,7 @@ interface Env {
   OPENWEATHER_API_KEY: string;
   JWT_SECRET: string;
   ADMIN_PASSWORD: string;
+  MAPBOX_ACCESS_TOKEN: string;
 }
 
 const app = new Hono<{ Bindings: Env }>();
@@ -237,6 +238,15 @@ app.get('/health', async (c) => {
     status: 'ok',
     timestamp: Date.now(),
     service: 'A Whittle Wandering API'
+  });
+});
+
+// Secure endpoint to provide frontend configuration (non-sensitive data only)
+app.get('/api/v1/config', async (c) => {
+  return c.json({
+    mapboxAccessToken: c.env.MAPBOX_ACCESS_TOKEN,
+    appName: 'A Whittle Wandering',
+    apiVersion: '3.0.0'
   });
 });
 
