@@ -1,7 +1,7 @@
 // Environment types for Cloudflare Workers
 export interface Env {
   DB: D1Database;
-  TESSIE_API_TOKEN: string;
+  TESSIE_API_KEY: string;
   VEHICLE_ID: string;
 }
 
