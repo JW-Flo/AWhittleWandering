@@ -1,0 +1,222 @@
+{
+  "timestamp": "2025-08-06T18:05:44.222Z",
+  "iteration": 1,
+  "phases": {
+    "preflight": {
+      "status": "passed",
+      "duration": 1342,
+      "results": [
+        {
+          "name": "Git Status",
+          "status": "passed",
+          "result": {
+            "uncommittedFiles": [
+              " M backend/edge-worker/src/index.ts",
+              " M frontend/src/pages/Index.tsx",
+              "?? frontend/src/__tests__/",
+              "?? frontend/src/pages/Index.tsx.backup",
+              "?? qa/"
+            ]
+          }
+        },
+        {
+          "name": "Dependencies",
+          "status": "passed",
+          "result": {
+            "frontend": true,
+            "backend": true
+          }
+        },
+        {
+          "name": "Environment",
+          "status": "passed",
+          "result": {
+            "node": "v20.19.2",
+            "npm": "10.8.2",
+            "git": "git version 2.49.0"
+          }
+        },
+        {
+          "name": "Network",
+          "status": "passed",
+          "result": {
+            "backend": true
+          }
+        }
+      ],
+      "timestamp": "2025-08-06T18:05:45.572Z"
+    },
+    "unit": {
+      "status": "passed",
+      "duration": 1947,
+      "timestamp": "2025-08-06T18:05:47.519Z"
+    },
+    "integration": {
+      "status": "passed",
+      "duration": 0,
+      "results": [
+        {
+          "name": "API Integration",
+          "status": "passed"
+        },
+        {
+          "name": "Database Integration",
+          "status": "passed"
+        },
+        {
+          "name": "External Services",
+          "status": "passed"
+        }
+      ],
+      "timestamp": "2025-08-06T18:05:47.519Z"
+    },
+    "api": {
+      "status": "passed",
+      "duration": 886,
+      "results": [
+        {
+          "name": "Health Check",
+          "status": "passed",
+          "response": {
+            "status": 200,
+            "headers": {
+              "access-control-allow-credentials": "true",
+              "alt-svc": "h3=\":443\"; ma=86400",
+              "cf-ray": "96b076e67c4079b4-LHR",
+              "connection": "keep-alive",
+              "content-encoding": "br",
+              "content-type": "application/json",
+              "date": "Wed, 06 Aug 2025 18:05:48 GMT",
+              "nel": "{\"success_fraction\":0,\"report_to\":\"cf-nel\",\"max_age\":604800}",
+              "permissions-policy": "geolocation=(), microphone=(), camera=()",
+              "referrer-policy": "strict-origin-when-cross-origin",
+              "report-to": "{\"endpoints\":[{\"url\":\"https:\\/\\/a.nel.cloudflare.com\\/report\\/v4?s=yhOnxo2AqKIkZZjCdgjspVR%2BIGQPFhkc8cuX%2BkEI23XTkhxLTw9B%2BL1tzQfG3plOVAOfgpPiIfesHYNqVum2PR9JnAtvkvg23NNcqcLLBkG%2FvpDRkXSPPP52CQuH1WZbweR9cbmmvdDL5D9Qp%2ByLe7f1UibI2NMFDrlqpvOKiYlKZDxp3cIaeJvhNw%3D%3D\"}],\"group\":\"cf-nel\",\"max_age\":604800}",
+              "server": "cloudflare",
+              "server-timing": "cfL4;desc=\"?proto=TCP&rtt=124660&min_rtt=118388&rtt_var=48876&sent=7&recv=7&lost=0&retrans=0&sent_bytes=3961&recv_bytes=2242&delivery_rate=34158&cwnd=38&unsent_bytes=0&cid=2ad55b760ba7a185&ts=275&x=0\"",
+              "transfer-encoding": "chunked",
+              "vary": "Origin, Accept-Encoding",
+              "x-content-type-options": "nosniff",
+              "x-frame-options": "DENY",
+              "x-xss-protection": "1; mode=block"
+            },
+            "validation": {
+              "valid": true,
+              "schema": "passed"
+            }
+          }
+        },
+        {
+          "name": "Tesla Data",
+          "status": "failed",
+          "error": "API request failed: 404 Not Found"
+        },
+        {
+          "name": "Config",
+          "status": "failed",
+          "error": "API request failed: 404 Not Found"
+        }
+      ],
+      "timestamp": "2025-08-06T18:05:48.406Z"
+    },
+    "frontend": {
+      "status": "passed",
+      "duration": 1,
+      "results": [
+        {
+          "name": "Build Validation",
+          "status": "passed"
+        },
+        {
+          "name": "Asset Loading",
+          "status": "passed"
+        },
+        {
+          "name": "Component Rendering",
+          "status": "passed"
+        },
+        {
+          "name": "User Interactions",
+          "status": "passed"
+        }
+      ],
+      "timestamp": "2025-08-06T18:05:48.407Z"
+    },
+    "e2e": {
+      "status": "failed",
+      "duration": 8,
+      "error": "Cannot find package '/Users/joe/Projects/Personal/ContinentalUSA/qa/node_modules/puppeteer/index.js' imported from /Users/joe/Projects/Personal/ContinentalUSA/qa/recursive-qa-pipeline.js\nDid you mean to import \"puppeteer/lib/cjs/puppeteer/puppeteer.js\"?",
+      "timestamp": "2025-08-06T18:05:48.415Z",
+      "retryStatus": "failed",
+      "retryError": "Cannot find package '/Users/joe/Projects/Personal/ContinentalUSA/qa/node_modules/puppeteer/index.js' imported from /Users/joe/Projects/Personal/ContinentalUSA/qa/recursive-qa-pipeline.js\nDid you mean to import \"puppeteer/lib/cjs/puppeteer/puppeteer.js\"?"
+    },
+    "performance": {
+      "status": "failed",
+      "duration": 1,
+      "error": "Cannot read properties of undefined (reading 'responseTime')",
+      "timestamp": "2025-08-06T18:05:53.425Z"
+    },
+    "security": {
+      "status": "passed",
+      "duration": 0,
+      "results": [
+        {
+          "name": "API Keys Exposure",
+          "status": "passed"
+        },
+        {
+          "name": "CORS Configuration",
+          "status": "passed"
+        },
+        {
+          "name": "Input Validation",
+          "status": "passed"
+        },
+        {
+          "name": "SSL/TLS",
+          "status": "passed"
+        }
+      ],
+      "timestamp": "2025-08-06T18:05:53.425Z"
+    },
+    "deployment": {
+      "status": "failed",
+      "duration": 1,
+      "error": "Cannot read properties of undefined (reading 'healthy')",
+      "timestamp": "2025-08-06T18:05:53.426Z"
+    },
+    "monitoring": {
+      "status": "passed",
+      "duration": 0,
+      "results": {},
+      "timestamp": "2025-08-06T18:05:53.426Z"
+    }
+  },
+  "summary": {
+    "total": 10,
+    "passed": 7,
+    "failed": 3,
+    "skipped": 0
+  },
+  "recommendations": [
+    {
+      "phase": "e2e",
+      "issue": "Cannot find package '/Users/joe/Projects/Personal/ContinentalUSA/qa/node_modules/puppeteer/index.js' imported from /Users/joe/Projects/Personal/ContinentalUSA/qa/recursive-qa-pipeline.js\nDid you mean to import \"puppeteer/lib/cjs/puppeteer/puppeteer.js\"?",
+      "recommendation": "Review user journey flows and browser compatibility"
+    },
+    {
+      "phase": "performance",
+      "issue": "Cannot read properties of undefined (reading 'responseTime')",
+      "recommendation": "Optimize resource loading and database queries"
+    },
+    {
+      "phase": "deployment",
+      "issue": "Cannot read properties of undefined (reading 'healthy')",
+      "recommendation": "Check deployment configuration and environment variables"
+    }
+  ],
+  "nextActions": [
+    "Fix issues in: e2e, performance, deployment",
+    "Re-run QA pipeline after fixes",
+    "Consider feature flags for gradual rollout"
+  ]
+}

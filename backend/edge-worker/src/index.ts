@@ -260,7 +260,6 @@ app.get('/api/v1/config', async (c) => {
 
   return c.json(config);
 });
-});
 
 app.get('/unified-data', async (c) => {
   // Forward to the main unified data logic

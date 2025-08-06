@@ -1,64 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Frontend Debug Test</title>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Frontend Debug Test</h1>
     <div id="api-test"></div>
     <div id="error-log"></div>
 
     <script>
-        // Test API connectivity
-        async function testAPI() {
-            const apiTest = document.getElementById('api-test');
-            const errorLog = document.getElementById('error-log');
-            
-            try {
-                apiTest.innerHTML = '<p>Testing API...</p>';
-                
-                const response = await fetch('https://awhittlewandering-api.kd8jc7v8cd.workers.dev/api/v1/unified-data');
-                
-                if (!response.ok) {
-                    throw new Error(`API Error: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                apiTest.innerHTML = `
+      // Test API connectivity
+      async function testAPI() {
+        const apiTest = document.getElementById("api-test");
+        const errorLog = document.getElementById("error-log");
+
+        try {
+          apiTest.innerHTML = "<p>Testing API...</p>";
+
+          const response = await fetch(
+            "https://awhittlewandering-api.kd8jc7v8cd.workers.dev/api/v1/unified-data"
+          );
+
+          if (!response.ok) {
+            throw new Error(`API Error: ${response.status}`);
+          }
+
+          const data = await response.json();
+          apiTest.innerHTML = `
                     <h2>API Test Success!</h2>
                     <p>Trip Name: ${data.overview?.tripName}</p>
                     <p>Vehicle: ${data.overview?.vehicle}</p>
                     <p>Battery: ${data.currentStatus?.battery?.level}%</p>
                     <p>Location: ${data.currentStatus?.location?.state}</p>
                 `;
-            } catch (error) {
-                apiTest.innerHTML = `<p style="color: red;">API Test Failed: ${error.message}</p>`;
-                errorLog.innerHTML = `<pre>${error.stack}</pre>`;
-            }
+        } catch (error) {
+          apiTest.innerHTML = `<p style="color: red;">API Test Failed: ${error.message}</p>`;
+          errorLog.innerHTML = `<pre>${error.stack}</pre>`;
         }
+      }
 
-        // Test frontend URL
-        async function testFrontend() {
-            try {
-                const response = await fetch('https://24d93aa8.awhittlewandering-frontend.pages.dev');
-                console.log('Frontend status:', response.status);
-                console.log('Frontend headers:', Object.fromEntries(response.headers.entries()));
-            } catch (error) {
-                console.error('Frontend test failed:', error);
-            }
+      // Test frontend URL
+      async function testFrontend() {
+        try {
+          const response = await fetch(
+            "https://24d93aa8.awhittlewandering-frontend.pages.dev"
+          );
+          console.log("Frontend status:", response.status);
+          console.log(
+            "Frontend headers:",
+            Object.fromEntries(response.headers.entries())
+          );
+        } catch (error) {
+          console.error("Frontend test failed:", error);
         }
+      }
 
-        // Run tests
-        testAPI();
-        testFrontend();
+      // Run tests
+      testAPI();
+      testFrontend();
 
-        // Log any console errors
-        window.onerror = function(msg, url, line, col, error) {
-            const errorLog = document.getElementById('error-log');
-            errorLog.innerHTML += `<p style="color: red;">Error: ${msg} at ${url}:${line}:${col}</p>`;
-        };
+      // Log any console errors
+      window.onerror = function (msg, url, line, col, error) {
+        const errorLog = document.getElementById("error-log");
+        errorLog.innerHTML += `<p style="color: red;">Error: ${msg} at ${url}:${line}:${col}</p>`;
+      };
     </script>
-</body>
+  </body>
 </html>

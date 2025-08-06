@@ -1,0 +1,229 @@
+{
+  "timestamp": "2025-08-06T18:12:40.725Z",
+  "iteration": 3,
+  "phases": {
+    "preflight": {
+      "status": "passed",
+      "duration": 472,
+      "results": [
+        {
+          "name": "Git Status",
+          "status": "passed",
+          "result": {
+            "uncommittedFiles": [
+              " D archive/test-output.log",
+              " M backend/edge-worker/src/index.ts",
+              " D frontend/build_analysis.log",
+              " D frontend/eslint_analysis.log",
+              " M frontend/src/pages/Index.tsx",
+              " D mcp-server-cloud/README.md",
+              " D mcp-server-cloud/package.json",
+              " D mcp-server-cloud/src/index.js",
+              " D mcp-server-cloud/wrangler.toml",
+              "?? frontend/src/__tests__/",
+              "?? frontend/src/pages/Index.tsx.backup",
+              "?? qa/"
+            ]
+          }
+        },
+        {
+          "name": "Dependencies",
+          "status": "passed",
+          "result": {
+            "frontend": false,
+            "backend": false
+          }
+        },
+        {
+          "name": "Environment",
+          "status": "passed",
+          "result": {
+            "node": "v20.19.2",
+            "npm": "10.8.2",
+            "git": "git version 2.49.0"
+          }
+        },
+        {
+          "name": "Network",
+          "status": "passed",
+          "result": {
+            "backend": true
+          }
+        }
+      ],
+      "timestamp": "2025-08-06T18:12:41.197Z"
+    },
+    "unit": {
+      "status": "passed",
+      "duration": 536,
+      "timestamp": "2025-08-06T18:12:41.733Z"
+    },
+    "integration": {
+      "status": "passed",
+      "duration": 0,
+      "results": [
+        {
+          "name": "API Integration",
+          "status": "passed"
+        },
+        {
+          "name": "Database Integration",
+          "status": "passed"
+        },
+        {
+          "name": "External Services",
+          "status": "passed"
+        }
+      ],
+      "timestamp": "2025-08-06T18:12:41.734Z"
+    },
+    "api": {
+      "status": "passed",
+      "duration": 472,
+      "results": [
+        {
+          "name": "Health Check",
+          "status": "passed",
+          "response": {
+            "status": 200,
+            "headers": {
+              "access-control-allow-credentials": "true",
+              "alt-svc": "h3=\":443\"; ma=86400",
+              "cf-ray": "96b08101ec570654-IAD",
+              "connection": "keep-alive",
+              "content-encoding": "br",
+              "content-type": "application/json",
+              "date": "Wed, 06 Aug 2025 18:12:42 GMT",
+              "nel": "{\"success_fraction\":0,\"report_to\":\"cf-nel\",\"max_age\":604800}",
+              "permissions-policy": "geolocation=(), microphone=(), camera=()",
+              "referrer-policy": "strict-origin-when-cross-origin",
+              "report-to": "{\"endpoints\":[{\"url\":\"https:\\/\\/a.nel.cloudflare.com\\/report\\/v4?s=jpAtU2PCYXH2oHRPr%2BvazMspoOqHa01UL8PGcjQ1jDEiWBQxNlqG5yqW0heWDxnuZO40w53oh87kTb5%2F%2BZ8k3VhZo6iLHvuwxOgkc11X%2B7b5F1GLjd0q89YilZOQq%2BRcRdxOP9caxXrgSMob6BJ6nytHvyDgXObGvw%2F6Tiyr9%2BJRyxugYFpwlm3g%2BQ%3D%3D\"}],\"group\":\"cf-nel\",\"max_age\":604800}",
+              "server": "cloudflare",
+              "server-timing": "cfL4;desc=\"?proto=TCP&rtt=35550&min_rtt=33629&rtt_var=13983&sent=6&recv=7&lost=0&retrans=0&sent_bytes=3961&recv_bytes=2242&delivery_rate=120253&cwnd=252&unsent_bytes=0&cid=5c189bb6dc7ba88c&ts=159&x=0\"",
+              "transfer-encoding": "chunked",
+              "vary": "Origin, Accept-Encoding",
+              "x-content-type-options": "nosniff",
+              "x-frame-options": "DENY",
+              "x-xss-protection": "1; mode=block"
+            },
+            "validation": {
+              "valid": true,
+              "schema": "passed"
+            }
+          }
+        },
+        {
+          "name": "Tesla Data",
+          "status": "failed",
+          "error": "API request failed: 404 Not Found"
+        },
+        {
+          "name": "Config",
+          "status": "failed",
+          "error": "API request failed: 404 Not Found"
+        }
+      ],
+      "timestamp": "2025-08-06T18:12:42.206Z"
+    },
+    "frontend": {
+      "status": "passed",
+      "duration": 0,
+      "results": [
+        {
+          "name": "Build Validation",
+          "status": "passed"
+        },
+        {
+          "name": "Asset Loading",
+          "status": "passed"
+        },
+        {
+          "name": "Component Rendering",
+          "status": "passed"
+        },
+        {
+          "name": "User Interactions",
+          "status": "passed"
+        }
+      ],
+      "timestamp": "2025-08-06T18:12:42.206Z"
+    },
+    "e2e": {
+      "status": "failed",
+      "duration": 1,
+      "error": "Could not find Chrome (ver. 139.0.7258.66). This can occur if either\n 1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or\n 2. your cache path is incorrectly configured (which is: /Users/joe/.cache/puppeteer).\nFor (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.",
+      "timestamp": "2025-08-06T18:12:42.207Z",
+      "retryStatus": "failed",
+      "retryError": "Could not find Chrome (ver. 139.0.7258.66). This can occur if either\n 1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or\n 2. your cache path is incorrectly configured (which is: /Users/joe/.cache/puppeteer).\nFor (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration."
+    },
+    "performance": {
+      "status": "failed",
+      "duration": 0,
+      "error": "Cannot read properties of undefined (reading 'responseTime')",
+      "timestamp": "2025-08-06T18:12:47.209Z"
+    },
+    "security": {
+      "status": "passed",
+      "duration": 0,
+      "results": [
+        {
+          "name": "API Keys Exposure",
+          "status": "passed"
+        },
+        {
+          "name": "CORS Configuration",
+          "status": "passed"
+        },
+        {
+          "name": "Input Validation",
+          "status": "passed"
+        },
+        {
+          "name": "SSL/TLS",
+          "status": "passed"
+        }
+      ],
+      "timestamp": "2025-08-06T18:12:47.209Z"
+    },
+    "deployment": {
+      "status": "failed",
+      "duration": 0,
+      "error": "Cannot read properties of undefined (reading 'healthy')",
+      "timestamp": "2025-08-06T18:12:47.209Z"
+    },
+    "monitoring": {
+      "status": "passed",
+      "duration": 0,
+      "results": {},
+      "timestamp": "2025-08-06T18:12:47.209Z"
+    }
+  },
+  "summary": {
+    "total": 10,
+    "passed": 7,
+    "failed": 3,
+    "skipped": 0
+  },
+  "recommendations": [
+    {
+      "phase": "e2e",
+      "issue": "Could not find Chrome (ver. 139.0.7258.66). This can occur if either\n 1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or\n 2. your cache path is incorrectly configured (which is: /Users/joe/.cache/puppeteer).\nFor (2), check out our guide on configuring puppeteer at https://pptr.dev/guides/configuration.",
+      "recommendation": "Review user journey flows and browser compatibility"
+    },
+    {
+      "phase": "performance",
+      "issue": "Cannot read properties of undefined (reading 'responseTime')",
+      "recommendation": "Optimize resource loading and database queries"
+    },
+    {
+      "phase": "deployment",
+      "issue": "Cannot read properties of undefined (reading 'healthy')",
+      "recommendation": "Check deployment configuration and environment variables"
+    }
+  ],
+  "nextActions": [
+    "Fix issues in: e2e, performance, deployment",
+    "Re-run QA pipeline after fixes",
+    "Consider feature flags for gradual rollout"
+  ]
+}
