@@ -1,92 +1,121 @@
 import React, { useState, useEffect } from 'react';
 import LazyTeslaMap from '@/components/LazyTeslaMap';
 import VehicleStats from '@/components/VehicleStats';
-import TessieApiSetup from '@/components/TessieApiSetup';
 import RoadTripTracker from '@/components/RoadTripTracker';
 import RealTeslaDataIntegration from '@/components/RealTeslaDataIntegration';
 import ProductionBanner from '@/components/ProductionBanner';
-import { useJourneyTracker } from '@/hooks/useJourneyTracker';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RefreshCw, Car, Zap, Route, Activity } from 'lucide-react';
-// Real Tessie API integration - no more mock data needed
+
+interface TeslaData {
+  overview: {
+    tripName: string;
+    vehicle: string;
+    startDate: string;
+    daysElapsed: number;
+    totalMiles: number;
+    currentOdometer: number;
+    statesVisited: number;
+    totalStates: number;
+  };
+  currentStatus: {
+    battery: {
+      level: number;
+      range: number;
+      charging: string;
+    };
+    location: {
+      coordinates: {
+        lat: number;
+        lng: number;
+      };
+      state: string;
+      lastUpdate: string;
+    };
+    vehicle: {
+      odometer: number;
+      speed: number;
+      temperature: {
+        inside: number;
+        outside: number;
+      };
+    };
+  };
+  timeline: {
+    drives: Array<{
+      id: number;
+      date: string;
+      startTime: string;
+      endTime: string;
+      distance: number;
+      startLocation: string;
+      endLocation: string;
+      startCoordinates: { lat: number; lng: number };
+      endCoordinates: { lat: number; lng: number };
+    }>;
+  };
+  tessieStatus: {
+    connected: boolean;
+    lastUpdate: string;
+    dataFreshness: string;
+  };
+}
 
 const Index = () => {
-  const [tessieApiKey, setTessieApiKey] = useState<string | null>(null);
+  const [teslaData, setTeslaData] = useState<TeslaData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
-  const [weatherApiKey, setWeatherApiKey] = useState<string>('');
-  const [isDemoMode, setIsDemoMode] = useState(false);
 
-  // Load saved API keys from localStorage and default to demo mode
-  useEffect(() => {
-    const savedTessieKey = localStorage.getItem('tessie_api_key');
-    const savedMapboxToken = localStorage.getItem('mapbox_token');
-    const savedWeatherKey = localStorage.getItem('weather_api_key');
-    const savedDemoMode = localStorage.getItem('demo_mode');
-    
-    if (savedTessieKey) setTessieApiKey(savedTessieKey);
-    if (savedMapboxToken) setMapboxToken(savedMapboxToken);
-    if (savedWeatherKey) setWeatherApiKey(savedWeatherKey);
-    
-    // Always default to demo mode unless user explicitly disabled it
-    if (savedDemoMode !== 'false') {
-      setIsDemoMode(true);
-      localStorage.setItem('demo_mode', 'true');
+  // Fetch live Tesla data from our backend API
+  const fetchTeslaData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const response = await fetch('https://awhittlewandering-api.kd8jc7v8cd.workers.dev/api/v1/unified-data');
+      
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setTeslaData(data);
+      
+      // Try to get mapbox token from backend if available
+      try {
+        const configResponse = await fetch('https://awhittlewandering-api.kd8jc7v8cd.workers.dev/api/v1/config');
+        if (configResponse.ok) {
+          const config = await configResponse.json();
+          if (config.mapboxToken) {
+            setMapboxToken(config.mapboxToken);
+          }
+        }
+      } catch (configError) {
+        console.log('Could not fetch mapbox token from backend');
+      }
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch Tesla data');
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  // Load data on component mount and set up auto-refresh
+  useEffect(() => {
+    fetchTeslaData();
+    
+    // Auto-refresh every 30 seconds for live data
+    const interval = setInterval(fetchTeslaData, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
 
-  const { 
-    vehicles, 
-    selectedVehicle, 
-    setSelectedVehicle, 
-    vehicleData,
-    timeline,
-    currentEvent,
-    currentWeather,
-    journeyStats,
-    isLoading, 
-    error,
-    refreshData,
-    setWeatherApiKey: updateWeatherApiKey
-  } = useJourneyTracker(isDemoMode ? undefined : tessieApiKey || undefined);
-
-  // Set weather API key on load
-  useEffect(() => {
-    if (weatherApiKey) {
-      updateWeatherApiKey(weatherApiKey);
-    }
-  }, [weatherApiKey, updateWeatherApiKey]);
-
-  // Display data - enhanced with journey tracking
-  const displayVehicles = vehicles;
-  const displayVehicleData = vehicleData;
-
-  const handleTessieApiSubmit = (apiKey: string) => {
-    localStorage.setItem('tessie_api_key', apiKey);
-    localStorage.removeItem('demo_mode');
-    setTessieApiKey(apiKey);
-    setIsDemoMode(false);
-  };
-
-  const handleDemoMode = () => {
-    localStorage.setItem('demo_mode', 'true');
-    setIsDemoMode(true);
-  };
-
-  const handleMapboxTokenChange = (token: string) => {
-    localStorage.setItem('mapbox_token', token);
-    setMapboxToken(token);
-  };
-
-  const handleWeatherKeyChange = (key: string) => {
-    localStorage.setItem('weather_api_key', key);
-    setWeatherApiKey(key);
-    updateWeatherApiKey(key);
-  };
-
-  const formatLastUpdate = (timestamp?: number) => {
+  const formatLastUpdate = (timestamp?: string) => {
     if (!timestamp) return 'Never';
     return new Date(timestamp).toLocaleTimeString();
   };
@@ -99,9 +128,16 @@ const Index = () => {
     }
   };
 
-  // Show API setup if no TESSIE key and not in demo mode
-  if (!tessieApiKey && !isDemoMode) {
-    return <TessieApiSetup onApiKeySubmit={handleTessieApiSubmit} onDemoMode={handleDemoMode} isLoading={isLoading} />;
+  // Loading state
+  if (isLoading && !teslaData) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p className="text-lg">Loading live Tesla data...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -115,9 +151,9 @@ const Index = () => {
                 <Car className="w-6 h-6 text-background" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">A Whittle Wandering</h1>
+                <h1 className="text-2xl font-bold">{teslaData?.overview.tripName || 'A Whittle Wandering'}</h1>
                 <p className="text-sm text-muted-foreground">
-                  {isDemoMode ? 'Demo Mode - Sample Data' : 'Powered by TESSIE'}
+                  Live Tesla Data - {teslaData?.overview.vehicle || 'Tesla Model Y'}
                 </p>
               </div>
             </div>
@@ -131,27 +167,22 @@ const Index = () => {
               >
                 🚀 AI Coordination Dashboard
               </Button>
-              {isDemoMode && (
+              
+              {teslaData?.tessieStatus.connected && (
                 <Badge variant="outline" className="border-tesla-cyan text-tesla-cyan">
-                  Demo Mode
-                </Badge>
-              )}
-              {/* Only show if Midnight Shadow is not available */}
-              {displayVehicles.length > 0 && !displayVehicles.some(v => v.display_name === 'Midnight Shadow') && (
-                <Badge variant="outline" className="border-destructive text-destructive">
-                  Vehicle must be named "Midnight Shadow"
+                  Live Data • {teslaData.tessieStatus.dataFreshness}
                 </Badge>
               )}
               
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => refreshData?.()}
-                disabled={isLoading || isDemoMode}
+                onClick={fetchTeslaData}
+                disabled={isLoading}
                 className="gap-2"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                {isDemoMode ? 'Demo' : 'Refresh'}
+                Refresh
               </Button>
             </div>
           </div>
@@ -195,26 +226,30 @@ const Index = () => {
                     <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center gap-2">
                         <Zap className="w-5 h-5 text-primary" />
-                        Live Location
+                        Live Location - {teslaData?.currentStatus.location.state || 'Unknown'}
                       </CardTitle>
-                      {displayVehicleData && (
+                      {teslaData && (
                         <Badge variant="secondary" className="bg-tesla-cyan/20 text-tesla-cyan">
-                          {isDemoMode ? 'Demo' : 'Live'}
+                          Live Data
                         </Badge>
                       )}
                     </div>
                   </CardHeader>
                   <CardContent className="h-[calc(100%-80px)]">
                     <LazyTeslaMap
-                      vehicleLocation={displayVehicleData ? {
-                        latitude: displayVehicleData.latitude,
-                        longitude: displayVehicleData.longitude,
-                        heading: displayVehicleData.heading,
-                        speed: displayVehicleData.speed
+                      vehicleLocation={teslaData ? {
+                        latitude: teslaData.currentStatus.location.coordinates.lat,
+                        longitude: teslaData.currentStatus.location.coordinates.lng,
+                        heading: 0,
+                        speed: teslaData.currentStatus.vehicle.speed
                       } : undefined}
                       mapboxToken={mapboxToken || undefined}
-                      onTokenChange={handleMapboxTokenChange}
-                      routeLocations={[]}
+                      onTokenChange={(token) => setMapboxToken(token)}
+                      routeLocations={teslaData?.timeline.drives.map(drive => ({
+                        lat: drive.endCoordinates.lat,
+                        lng: drive.endCoordinates.lng,
+                        timestamp: drive.endTime
+                      })) || []}
                     />
                   </CardContent>
                 </Card>
@@ -223,14 +258,37 @@ const Index = () => {
               {/* Stats Section - Appears below map on mobile */}
               <div className="space-y-4 order-2 lg:order-2">
                 <VehicleStats
-                  batteryLevel={displayVehicleData?.battery_level}
-                  range={displayVehicleData?.battery_range}
-                  chargingState={getChargingState(displayVehicleData?.charging_state)}
-                  temperature={displayVehicleData?.outside_temp}
-                  odometer={displayVehicleData?.odometer}
-                  speed={displayVehicleData?.speed}
-                  lastUpdate={formatLastUpdate(displayVehicleData?.timestamp)}
+                  batteryLevel={teslaData?.currentStatus.battery.level}
+                  range={teslaData?.currentStatus.battery.range}
+                  chargingState={getChargingState(teslaData?.currentStatus.battery.charging)}
+                  temperature={teslaData?.currentStatus.vehicle.temperature.outside}
+                  odometer={teslaData?.currentStatus.vehicle.odometer}
+                  speed={teslaData?.currentStatus.vehicle.speed}
+                  lastUpdate={formatLastUpdate(teslaData?.currentStatus.location.lastUpdate)}
                 />
+                
+                {/* Trip Stats */}
+                {teslaData && (
+                  <Card className="border-tesla-gray-light">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm">Trip Progress</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Days Elapsed:</span>
+                        <span className="font-mono">{teslaData.overview.daysElapsed}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Total Miles:</span>
+                        <span className="font-mono">{teslaData.overview.totalMiles.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>States Visited:</span>
+                        <span className="font-mono">{teslaData.overview.statesVisited} / {teslaData.overview.totalStates}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </div>
           </TabsContent>
@@ -238,10 +296,8 @@ const Index = () => {
           <TabsContent value="integration" className="space-y-6">
             <RealTeslaDataIntegration 
               onDataUpdate={(data) => {
-                // Process real Tesla data and update app state
-                if (data.vehicle) {
-                  // Real-time vehicle data is now available
-                }
+                // Handle real-time data updates if needed
+                console.warn('Data update received:', data);
               }}
             />
           </TabsContent>

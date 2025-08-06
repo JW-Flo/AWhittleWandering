@@ -217,6 +217,23 @@ app.get('/health', async (c) => {
   });
 });
 
+// Configuration endpoint for frontend
+app.get('/api/v1/config', async (c) => {
+  const config = {
+    // Mapbox token would be set in environment variables if available
+    mapboxToken: null, // c.env.MAPBOX_TOKEN || null,
+    apiBaseUrl: 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev',
+    features: {
+      liveTeslaData: !!c.env.TESSIE_API_KEY,
+      mapIntegration: false, // !!c.env.MAPBOX_TOKEN,
+      realtimeUpdates: true
+    },
+    updateInterval: 30000 // 30 seconds
+  };
+
+  return c.json(config);
+});
+
 app.get('/unified-data', async (c) => {
   // Forward to the main unified data logic
   return handleUnifiedData(c);
