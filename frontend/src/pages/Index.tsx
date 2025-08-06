@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import LazyTeslaMap from '@/components/LazyTeslaMap';
 import VehicleStats from '@/components/VehicleStats';
-import TessieApiSetup from '@/components/TessieApiSetup';
-import RoadTripTracker from '@/components/RoadTripTracker';
+import EnhancedRoadTripTracker from '@/components/EnhancedRoadTripTracker';
 import RealTeslaDataIntegration from '@/components/RealTeslaDataIntegration';
 import ProductionBanner from '@/components/ProductionBanner';
+import ConnectedVehicle from '@/components/ConnectedVehicle';
 import { useJourneyTracker } from '@/hooks/useJourneyTracker';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -99,10 +99,11 @@ const Index = () => {
     }
   };
 
-  // Show API setup if no TESSIE key and not in demo mode
-  if (!tessieApiKey && !isDemoMode) {
-    return <TessieApiSetup onApiKeySubmit={handleTessieApiSubmit} onDemoMode={handleDemoMode} isLoading={isLoading} />;
-  }
+  // Show API setup if no TESSIE key and not in demo mode - DISABLED for public website
+  // Public users should not need to enter API tokens
+  // if (!tessieApiKey && !isDemoMode) {
+  //   return <TessieApiSetup onApiKeySubmit={handleTessieApiSubmit} onDemoMode={handleDemoMode} isLoading={isLoading} />;
+  // }
 
   return (
     <div className="min-h-screen bg-background">
@@ -161,6 +162,7 @@ const Index = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
         <ProductionBanner />
+        <ConnectedVehicle />
         
         {error && (
           <Card className="mb-6 border-destructive/20 bg-destructive/5">
@@ -247,7 +249,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="roadtrip" className="space-y-6">
-            <RoadTripTracker />
+            <EnhancedRoadTripTracker />
           </TabsContent>
         </Tabs>
       </main>
