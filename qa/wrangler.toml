@@ -1,0 +1,25 @@
+name = "qa-pipeline"
+main = "src/index.js"
+compatibility_date = "2024-12-18"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "QA_DB"
+database_name = "qa-pipeline-db"
+database_id = "c1257a05-a3ba-47b4-a34b-240077f78acf"
+
+[env.production]
+name = "qa-pipeline-prod"
+
+[[env.production.d1_databases]]
+binding = "QA_DB"
+database_name = "qa-pipeline-db"
+database_id = "c1257a05-a3ba-47b4-a34b-240077f78acf"
+
+[env.staging]
+name = "qa-pipeline-staging"
+
+[[env.staging.d1_databases]]
+binding = "QA_DB"
+database_name = "qa-pipeline-db"
+database_id = "c1257a05-a3ba-47b4-a34b-240077f78acf"

@@ -14,6 +14,7 @@ import { execSync, spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { QADataManager } from './qa-data-manager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,6 +24,8 @@ class RecursiveQARunner {
     constructor(options = {}) {
         this.iteration = options.iteration || 1;
         this.maxIterations = options.maxIterations || 5;
+        this.qaDataManager = options.qaDataManager || null;
+        this.runId = null;
         this.config = {
             backend: {
                 url: 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev',

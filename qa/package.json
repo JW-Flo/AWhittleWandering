@@ -7,22 +7,26 @@
     "qa": "node recursive-qa-pipeline.js",
     "qa:full": "node recursive-qa-pipeline.js 5",
     "qa:quick": "node recursive-qa-pipeline.js 1",
+    "qa:cloud": "node diagnose-website-issue.js",
+    "qa:dashboard": "curl -s https://qa-pipeline.kd8jc7v8cd.workers.dev/qa/dashboard | jq .",
+    "qa:troubleshoot": "curl -X POST https://qa-pipeline.kd8jc7v8cd.workers.dev/qa/troubleshoot -H 'Content-Type: application/json' -d '{\"url\": \"https://ab99ceea.awhittlewandering-frontend.pages.dev\", \"issue\": \"Website issue\"}'",
     "test:unit": "cd ../frontend && npm run test",
     "test:api": "vitest tests/api-integration.test.js",
     "test:e2e": "vitest tests/e2e.test.js",
     "monitor": "./recursive-qa-monitor.sh",
     "deploy:qa": "./continuous-deployment-qa.sh",
+    "deploy:cloud": "npx wrangler deploy --env=\"\"",
     "report": "node generate-qa-report.js",
     "setup": "npm install && mkdir -p logs reports screenshots alerts"
   },
   "dependencies": {
-    "puppeteer": "^24.15.0",
-    "vitest": "^3.2.4",
-    "node-fetch": "^3.3.2",
     "@testing-library/jest-dom": "^6.6.4",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
-    "jsdom": "^26.1.0"
+    "jsdom": "^26.1.0",
+    "node-fetch": "^3.3.2",
+    "puppeteer": "^24.15.0",
+    "vitest": "^3.2.4"
   },
   "devDependencies": {
     "@types/node": "^22.5.5"
