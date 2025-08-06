@@ -246,7 +246,7 @@ app.get('/health', async (c) => {
 app.get('/api/v1/config', async (c) => {
   return c.json({
     mapboxAccessToken: c.env.MAPBOX_ACCESS_TOKEN,
-    appName: 'A Whittle Wandering',
+    appName: 'Tesla Road Trip Tracker',
     apiVersion: '3.0.0'
   });
 });
@@ -260,7 +260,7 @@ app.get('/trip-status', async (c) => {
   // Forward to the main trip status logic - just return basic status for now
   return c.json({
     tripId: "continental-usa-2025",
-    tripName: "A Whittle Wandering - Continental USA",
+    tripName: `Tesla Road Trip - ${new Date().getFullYear()}`,
     status: "active",
     timestamp: Date.now()
   });
@@ -934,7 +934,7 @@ app.post('/api/v1/admin/populate-actual-states', async (c) => {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
     `).bind(
       'continental-usa-2025',
-      'A Whittle Wandering - Continental USA',
+      `Tesla Road Trip - ${new Date().getFullYear()}`,
       'midnight-shadow',
       '2025-06-01',
       'active',
@@ -1331,7 +1331,7 @@ app.post('/api/v1/admin/fix-d1-overview', async (c) => {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
     `).bind(
       'continental-usa-2025',
-      'A Whittle Wandering - Continental USA',
+      `Tesla Road Trip - ${new Date().getFullYear()}`,
       'midnight-shadow',
       '2025-06-01',
       'active',
@@ -1710,10 +1710,13 @@ async function handleUnifiedData(c: any) {
           (tessieData?.state as any)?.drive_state?.longitude || 0
         );
         
-        unifiedData.currentStatus.location.state = realTimeState !== 'Unknown' ? realTimeState : (componentStatus.current_state || unifiedData.currentStatus.location.state);
-        // Add city information to location object (extend the type)
-        (unifiedData.currentStatus.location as any).city = componentStatus.current_city;
-        (unifiedData.currentStatus.location as any).description = componentStatus.location_description;
+        unifiedData.currentStatus.location.state = realTimeState !== 'Unknown' ? realTimeState : (componentStatus?.current_state || unifiedData.currentStatus.location.state);
+        // Use real-time location data only - don't inject stale static data
+        if (currentState?.drive_state?.latitude && currentState?.drive_state?.longitude) {
+          // Use reverse geocoding for real city name (if available)
+          // For now, just use state info to avoid stale data
+          (unifiedData.currentStatus.location as any).city = realTimeState !== 'Unknown' ? realTimeState : 'Unknown';
+        }
       }
     } catch (componentError) {
       console.warn('Component data enhancement failed, using base data:', componentError);
@@ -2035,7 +2038,7 @@ async function processHistoricalJourneyData(db: D1Database, drives: any[], charg
     ) VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
   `).bind(
     'continental-usa-2025',
-    'A Whittle Wandering - Continental USA',
+    `Tesla Road Trip - ${new Date().getFullYear()}`,
     vehicleId,
     '2025-06-01',
     'active',
@@ -2372,7 +2375,7 @@ async function processAndStoreInD1(db: D1Database, tessieData: any) {
   // Build unified response - Use LIVE Tessie data for all components
   return {
     overview: {
-      tripName: journeyData?.name || "A Whittle Wandering - Continental USA",
+      tripName: `Tesla Road Trip - ${new Date().getFullYear()}`, // Always use dynamic name
       vehicle: vehicle.display_name || "Tesla Model Y",
       startDate: journeyStartDate.split('T')[0], // Use actual journey start date
       daysElapsed: Math.floor((Date.now() - new Date(journeyStartDate).getTime()) / (1000 * 60 * 60 * 24)),

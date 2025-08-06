@@ -1,251 +1,116 @@
 import React, { useState, useEffect } from 'react';
-import LazyTeslaMap from '@/components/LazyTeslaMap';
-import VehicleStats from '@/components/VehicleStats';
-import EnhancedRoadTripTracker from '@/components/EnhancedRoadTripTracker';
-import ConnectedTeslaData from '@/components/ConnectedTeslaData';
-import ProductionBanner from '@/components/ProductionBanner';
-import ConnectedVehicle from '@/components/ConnectedVehicle';
 import { TeslaDataProvider } from '@/contexts/TeslaDataContext';
-import { useTeslaData } from '@/hooks/useTeslaData';
-import { useJourneyTracker } from '@/hooks/useJourneyTracker';
-import { dynamicConfig } from '@/lib/dynamic-config';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RefreshCw, Car, Zap, Route, Activity } from 'lucide-react';
-// Real Tesla API integration via backend - secure and production ready
+import { api } from '@/lib/api-config';
+
+interface TeslaData {
+  overview: {
+    tripName: string;
+    vehicle: string;
+    startDate: string;
+    daysElapsed: number;
+    totalMiles: number;
+    currentOdometer: number;
+    statesVisited: number;
+    totalStates: number;
+  };
+  currentStatus: {
+    battery: {
+      level: number;
+      range: number;
+      charging: string;
+    };
+    location: {
+      coordinates: {
+        lat: number;
+        lng: number;
+      };
+      state: string;
+      lastUpdate: string;
+      city: string;
+    };
+    vehicle: {
+      odometer: number;
+      speed: number;
+      temperature: {
+        inside: number;
+        outside: number;
+      };
+    };
+  };
+  timeline: {
+    drives: Array<{
+      id: number;
+      date: string;
+      startTime: string;
+      endTime: string;
+      distance: number;
+      startLocation: string;
+      endLocation: string;
+      startCoordinates: { lat: number; lng: number };
+      endCoordinates: { lat: number; lng: number };
+    }>;
+    charges: Array<{
+      id: string;
+      date: string;
+      startTime: string;
+      endTime: string;
+      location: string;
+      energyAdded: number;
+      cost: number;
+    }>;
+  };
+  tessieStatus: {
+    connected: boolean;
+    lastUpdate: string;
+    dataFreshness: string;
+  };
+}
 
 const IndexContent = () => {
-  const { data: teslaData, isLoading: teslaLoading, error: teslaError, isConnected } = useTeslaData();
-  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
-  const [configLoading, setConfigLoading] = useState(true);
-  const [tessieApiKey, setTessieApiKey] = useState<string | null>(null);
-  const [isDemoMode, setIsDemoMode] = useState(true);
-  const [weatherApiKey, setWeatherApiKey] = useState<string | null>(null);
+  const [realTeslaData, setRealTeslaData] = useState<TeslaData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load configuration from backend and localStorage
+  // Load real Tesla data on component mount
   useEffect(() => {
-    const loadConfiguration = async () => {
+    const loadTeslaData = async () => {
       try {
-        // Get secure tokens from backend
-        const backendMapboxToken = await dynamicConfig.getMapboxToken();
-        setMapboxToken(backendMapboxToken);
-        
-        // Load user-specific settings from localStorage
-        const savedTessieKey = localStorage.getItem('tessie_api_key');
-        const savedWeatherKey = localStorage.getItem('weather_api_key');
-        const savedDemoMode = localStorage.getItem('demo_mode');
-        
-        if (savedTessieKey) setTessieApiKey(savedTessieKey);
-        if (savedWeatherKey) setWeatherApiKey(savedWeatherKey);
-        
-        // Always default to demo mode unless user explicitly disabled it
-        if (savedDemoMode !== 'false') {
-          setIsDemoMode(true);
-          localStorage.setItem('demo_mode', 'true');
-        }
-      } catch (error) {
-        console.error('Failed to load configuration:', error);
-        // Fallback to environment variable if backend fails
-        const fallbackToken = import.meta.env.VITE_MAPBOX_TOKEN;
-        if (fallbackToken) {
-          setMapboxToken(fallbackToken);
-        }
-      } finally {
-        setConfigLoading(false);
+        const data = await api.getUnifiedData();
+        setRealTeslaData(data as TeslaData);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to load Tesla data:', err);
+        setError('Failed to load Tesla data');
       }
     };
 
-    loadConfiguration();
+    loadTeslaData();
   }, []);
 
-  const { 
-    vehicles, 
-    vehicleData,
-    isLoading, 
-    error,
-    refreshData,
-    setWeatherApiKey: updateWeatherApiKey
-  } = useJourneyTracker(isDemoMode ? undefined : tessieApiKey || undefined);
-
-  // Set weather API key on load
-  useEffect(() => {
-    if (weatherApiKey) {
-      updateWeatherApiKey(weatherApiKey);
-    }
-  }, [weatherApiKey, updateWeatherApiKey]);
-
-  // Display data - enhanced with journey tracking
-  const displayVehicles = vehicles;
-  const displayVehicleData = vehicleData;
-
-  const formatLastUpdate = (timestamp?: number) => {
-    if (!timestamp) return 'Never';
-    return new Date(timestamp).toLocaleTimeString();
-  };
-
-  const getChargingState = (state?: string) => {
-    switch (state?.toLowerCase()) {
-      case 'charging': return 'charging';
-      case 'complete': return 'complete';
-      default: return 'disconnected';
-    }
-  };
-
-  // Show API setup if no TESSIE key and not in demo mode - DISABLED for public website
-  // Public users should not need to enter API tokens
-  // if (!tessieApiKey && !isDemoMode) {
-  //   return <TessieApiSetup onApiKeySubmit={handleTessieApiSubmit} onDemoMode={handleDemoMode} isLoading={isLoading} />;
-  // }
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-tesla-gray-light bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-tesla-cyan rounded-lg flex items-center justify-center">
-                <Car className="w-6 h-6 text-background" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold">A Whittle Wandering</h1>
-                <p className="text-sm text-muted-foreground">
-                  {isDemoMode ? 'Demo Mode - Sample Data' : 'Powered by TESSIE'}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => window.location.href = '/coordination'}
-                className="bg-gradient-to-r from-blue-500 to-purple-500 text-white border-none hover:opacity-90"
-              >
-                🚀 AI Coordination Dashboard
-              </Button>
-              {isDemoMode && (
-                <Badge variant="outline" className="border-tesla-cyan text-tesla-cyan">
-                  Demo Mode
-                </Badge>
-              )}
-              {/* Only show if Midnight Shadow is not available */}
-              {displayVehicles.length > 0 && !displayVehicles.some(v => v.display_name === 'Midnight Shadow') && (
-                <Badge variant="outline" className="border-destructive text-destructive">
-                  Vehicle must be named "Midnight Shadow"
-                </Badge>
-              )}
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => refreshData?.()}
-                disabled={isLoading || isDemoMode}
-                className="gap-2"
-              >
-                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                {isDemoMode ? 'Demo' : 'Refresh'}
-              </Button>
-            </div>
-          </div>
+    <div className="min-h-screen bg-background" style={{ padding: '20px', backgroundColor: realTeslaData ? 'green' : (error ? 'red' : 'blue'), color: 'white' }}>
+      <h1>Tesla Road Trip Tracker - Minimal Test</h1>
+      
+      {error && (
+        <div style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: '10px', margin: '10px 0' }}>
+          <p>Error: {error}</p>
         </div>
-      </header>
+      )}
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-6">
-        <ProductionBanner />
-        <ConnectedVehicle />
-        
-        {error && (
-          <Card className="mb-6 border-destructive/20 bg-destructive/5">
-            <CardContent className="p-4">
-              <p className="text-destructive text-sm">{error}</p>
-            </CardContent>
-          </Card>
-        )}
+      {realTeslaData && (
+        <div style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: '10px', margin: '10px 0' }}>
+          <h2>Trip: {realTeslaData.overview?.tripName}</h2>
+          <p>Vehicle: {realTeslaData.overview?.vehicle}</p>
+          <p>Battery: {realTeslaData.currentStatus?.battery?.level}%</p>
+          <p>State: {realTeslaData.currentStatus?.location?.state}</p>
+          <p>Connected: {realTeslaData.tessieStatus?.connected ? 'Yes' : 'No'}</p>
+        </div>
+      )}
 
-        <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-tesla-gray">
-            <TabsTrigger value="dashboard" className="data-[state=active]:bg-primary">
-              <Car className="w-4 h-4 mr-2" />
-              Live Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="integration" className="data-[state=active]:bg-primary">
-              <Activity className="w-4 h-4 mr-2" />
-              Tesla Data
-            </TabsTrigger>
-            <TabsTrigger value="roadtrip" className="data-[state=active]:bg-primary">
-              <Route className="w-4 h-4 mr-2" />
-              Road Trip Tracker
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="dashboard" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 h-auto lg:h-[calc(100vh-280px)]">
-              {/* Map Section - Full width on mobile */}
-              <div className="lg:col-span-2 order-1 lg:order-1">
-                <Card className="h-[400px] lg:h-full border-tesla-gray-light">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center gap-2">
-                        <Zap className="w-5 h-5 text-primary" />
-                        Live Location
-                      </CardTitle>
-                      {displayVehicleData && (
-                        <Badge variant="secondary" className="bg-tesla-cyan/20 text-tesla-cyan">
-                          {isDemoMode ? 'Demo' : 'Live'}
-                        </Badge>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="h-[calc(100%-80px)]">
-                    <LazyTeslaMap
-                      vehicleLocation={displayVehicleData ? {
-                        latitude: displayVehicleData.latitude,
-                        longitude: displayVehicleData.longitude,
-                        heading: displayVehicleData.heading,
-                        speed: displayVehicleData.speed
-                      } : undefined}
-                      mapboxToken={mapboxToken || undefined}
-                      routeLocations={[]}
-                    />
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Stats Section - Appears below map on mobile */}
-              <div className="space-y-4 order-2 lg:order-2">
-                <VehicleStats
-                  batteryLevel={displayVehicleData?.battery_level}
-                  range={displayVehicleData?.battery_range}
-                  chargingState={getChargingState(displayVehicleData?.charging_state)}
-                  temperature={displayVehicleData?.outside_temp}
-                  odometer={displayVehicleData?.odometer}
-                  speed={displayVehicleData?.speed}
-                  lastUpdate={formatLastUpdate(displayVehicleData?.timestamp)}
-                />
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="integration" className="space-y-6">
-            <ConnectedTeslaData 
-              onDataUpdate={(data) => {
-                // Process real Tesla data and update app state
-                if (data.vehicle) {
-                  // Real-time vehicle data is now available
-                }
-              }}
-            />
-          </TabsContent>
-
-          <TabsContent value="roadtrip" className="space-y-6">
-            <EnhancedRoadTripTracker />
-          </TabsContent>
-        </Tabs>
-      </main>
+      {!realTeslaData && !error && (
+        <div style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: '10px', margin: '10px 0' }}>
+          <p>Loading Tesla data...</p>
+        </div>
+      )}
     </div>
   );
 };

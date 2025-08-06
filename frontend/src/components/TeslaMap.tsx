@@ -4,7 +4,6 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Navigation, Loader2 } from 'lucide-react';
-import { journeyTimeline } from '@/data/journeyData';
 import { dynamicConfig } from '@/lib/dynamic-config';
 
 interface VehicleLocation {
@@ -80,7 +79,7 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
     return () => {
       map.current?.remove();
     };
-  }, [mapboxToken, addJourneyRoute]); // Include addJourneyRoute in dependencies
+  }, [mapboxToken, addJourneyRoute, addJourneyWaypoints]); // Include all dependencies
 
   useEffect(() => {
     if (!map.current || !vehicleLocation) return;
@@ -114,115 +113,47 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
     }
   }, [vehicleLocation]);
 
-  const addJourneyWaypoints = () => {
-    if (!map.current) return;
+  const addJourneyWaypoints = useCallback(() => {
+    if (!map.current || !routeLocations || routeLocations.length === 0) return;
 
-    // Add waypoint markers for each state
-    journeyTimeline.forEach((event, index) => {
-      if (!event.location) return;
-
+    // Add waypoint markers for actual drive locations from real data
+    routeLocations.forEach((location, _index) => {
       const el = document.createElement('div');
       el.className = 'journey-waypoint';
       
-      const isCompleted = !event.current && index < journeyTimeline.length - 1;
-      const isCurrent = event.current;
-      
       el.innerHTML = `
-        <div class="w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-300 hover:scale-110 ${
-          isCurrent 
-            ? 'bg-[hsl(var(--adventure-orange))] border-[hsl(var(--adventure-gold))] shadow-[0_0_20px_hsl(var(--adventure-orange)/0.6)] animate-pulse' 
-            : isCompleted 
-              ? 'bg-[hsl(var(--tesla-blue))] border-[hsl(var(--tesla-cyan))] shadow-[0_0_15px_hsl(var(--tesla-blue)/0.4)]' 
-              : 'bg-[hsl(var(--tesla-gray))] border-[hsl(var(--tesla-gray-light))]'
-        }">
-          ${isCurrent ? '<div class="w-3 h-3 bg-white rounded-full"></div>' : 
-            isCompleted ? '<div class="w-2 h-2 bg-white rounded-full"></div>' : 
-            '<div class="w-2 h-2 bg-[hsl(var(--muted-foreground))] rounded-full"></div>'}
+        <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 hover:scale-110 bg-[hsl(var(--tesla-blue))] border-[hsl(var(--tesla-cyan))] shadow-[0_0_15px_hsl(var(--tesla-blue)/0.4)]">
+          <div class="w-2 h-2 bg-white rounded-full"></div>
         </div>
       `;
 
       const marker = new mapboxgl.Marker(el)
-        .setLngLat([event.location.lng, event.location.lat])
+        .setLngLat([location.lng, location.lat])
         .addTo(map.current!);
 
-      // Calculate correct state number - count unique states up to this index
-      const uniqueStatesUpToIndex = journeyTimeline
-        .slice(0, index + 1)
-        .filter((e, i, arr) => arr.findIndex(state => state.state === e.state) === i)
-        .length;
-      
-      const daysSinceStart = Math.floor((new Date(event.date).getTime() - new Date('2025-01-01').getTime()) / (1000 * 60 * 60 * 24)) + 1;
-      const typeEmoji = {
-        'milestone': '🏆',
-        'scenic': '🏞️', 
-        'adventure': '⛰️',
-        'cultural': '🏛️'
-      }[event.type] || '📍';
-      
       const popup = new mapboxgl.Popup({ 
         offset: 25,
         closeButton: true,
         className: 'journey-popup'
       }).setHTML(`
-        <div class="bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden min-w-72">
+        <div class="bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden min-w-48">
           <div class="bg-gradient-to-r from-blue-500 to-cyan-500 p-3">
-            <div class="flex items-center justify-between">
-              <h3 class="font-bold text-white text-lg flex items-center gap-2">
-                ${typeEmoji} ${event.state}
-              </h3>
-              <span class="text-xs bg-white/20 text-white px-2 py-1 rounded-full font-medium">
-                State #${uniqueStatesUpToIndex}
-              </span>
-            </div>
+            <h3 class="font-bold text-white text-lg">Drive Location</h3>
           </div>
-          
           <div class="p-4">
-            <div class="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400 mb-3">
-              <span class="flex items-center gap-1">📅 ${event.date}</span>
-              <span class="flex items-center gap-1">🗓️ Day ${daysSinceStart}</span>
+            <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">
+              📅 ${new Date(location.timestamp).toLocaleDateString()}
             </div>
-            
-            <div class="mb-3">
-              <span class="inline-block capitalize px-3 py-1 rounded-full text-xs font-semibold ${
-                event.type === 'milestone' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                event.type === 'scenic' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                event.type === 'adventure' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' :
-                'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-              }">
-                ${event.type}
-              </span>
+            <div class="text-sm text-gray-700 dark:text-gray-300">
+              📍 ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}
             </div>
-            
-            <div class="space-y-2">
-              ${event.highlights.map(h => `
-                <div class="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2">
-                  <span class="text-blue-500 mt-1 font-bold">•</span>
-                  <span>${h}</span>
-                </div>
-              `).join('')}
-            </div>
-            
-            ${isCurrent ? `
-              <div class="mt-3 p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
-                <div class="text-sm font-semibold text-orange-600 dark:text-orange-400 flex items-center gap-2">
-                  📍 Current Location 
-                  <span class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
-                </div>
-              </div>
-            ` : ''}
-            
-            ${isCompleted ? `
-              <div class="mt-3 text-sm text-green-600 dark:text-green-400 font-medium flex items-center gap-2">
-                ✓ Conquered
-              </div>
-            ` : ''}
           </div>
         </div>
       `);
 
       marker.setPopup(popup);
     });
-  };
+  }, [routeLocations]); // Dependencies for useCallback
 
   const addJourneyRoute = useCallback(() => {
     if (!map.current || !routeLocations || routeLocations.length === 0) return;
