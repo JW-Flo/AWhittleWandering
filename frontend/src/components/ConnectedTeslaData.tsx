@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,7 +33,7 @@ const ConnectedTeslaData: React.FC<ConnectedTeslaDataProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
-  const fetchTeslaData = async () => {
+  const fetchTeslaData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
@@ -53,17 +53,28 @@ const ConnectedTeslaData: React.FC<ConnectedTeslaDataProps> = ({
       }
     } catch (err) {
       console.error('Failed to fetch Tesla data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to connect to Tesla data');
+      
+      // Provide more specific error messaging
+      let errorMessage = 'Failed to connect to Tesla data';
+      if (err instanceof Error) {
+        if (err.message.includes('fetch')) {
+          errorMessage = 'Network error: Unable to reach backend API. Please check your connection.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
+      setError(errorMessage);
       setIsConnected(false);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [onDataUpdate]);
 
   useEffect(() => {
     // Auto-connect when component mounts
     fetchTeslaData();
-  }, []);
+  }, [fetchTeslaData]);
 
   if (error) {
     return (

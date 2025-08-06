@@ -122,6 +122,7 @@ app.use('*', cors({
   origin: [
     'https://awhittlewandering.com',
     'https://*.awhittlewandering.com',
+    'https://*.awhittlewandering-frontend.pages.dev', // Cloudflare Pages deployment domains
     'http://localhost:8080', // Development only
     'http://localhost:3000'  // Development only
   ],
