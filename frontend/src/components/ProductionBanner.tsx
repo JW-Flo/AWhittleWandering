@@ -14,7 +14,7 @@ const ProductionBanner = () => {
                 Live Journey
               </Badge>
               <Badge variant="outline" className="border-tesla-cyan text-tesla-cyan">
-                Day 45 of 90
+                Day 67 of 90
               </Badge>
             </div>
             <h2 className="text-xl font-bold mb-1">
@@ -28,11 +28,11 @@ const ProductionBanner = () => {
           <div className="flex flex-col md:flex-row gap-4 text-sm">
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-primary" />
-              <span>Currently in Demo Mode</span>
+              <span>Currently in Kansas</span>
             </div>
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-primary" />
-              <span>Started July 1, 2024</span>
+              <span>Started June 1, 2025</span>
             </div>
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-primary" />

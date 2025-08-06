@@ -29,18 +29,23 @@ crons = [
 binding = "TESLA_DB"
 database_name = "tesla-journey-tracker"
 database_id = "09a6ba85-bd36-4ad3-b5a8-92e230943dcb"
+preview_database_id = "09a6ba85-bd36-4ad3-b5a8-92e230943dcb"
+experimental_remote = true
 migrations_dir = "migrations"
 
 # R2 Object Storage for media files
 [[r2_buckets]]
 binding = "MEDIA_BUCKET"
 bucket_name = "awhittlewandering-media"
+preview_bucket_name = "awhittlewandering-media"
+experimental_remote = true
 
 # KV for session/auth tokens only (lightweight use)
 [[kv_namespaces]]
 binding = "AUTH_TOKENS"
 id = "7838e32d8ad04855b13eb2d9aa4f9811"
 preview_id = "8063c164a211473498118c9beb57a9b7"
+experimental_remote = true
 
 # Analytics Engine for telemetry and performance tracking
 [[analytics_engine_datasets]]
@@ -56,10 +61,10 @@ binding = "TELEMETRY_ANALYTICS"
 # max_batch_size = 10
 # max_batch_timeout = 5
 
-# Custom domain configuration
-[[routes]]
-pattern = "api.awhittlewandering.com/*"
-zone_name = "awhittlewandering.com"
+# Custom domain configuration (disabled for development)
+# [[routes]]
+# pattern = "api.awhittlewandering.com/*"
+# zone_name = "awhittlewandering.com"
 
 [env.production]
 name = "awhittlewandering-api"
