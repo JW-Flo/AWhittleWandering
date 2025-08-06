@@ -52,14 +52,14 @@ const DebugInfo: React.FC<DebugInfoProps> = ({
   };
 
   const envVars = {
-    tessieKey: import.meta.env.VITE_TESSIE_API_KEY,
-    mapboxToken: import.meta.env.VITE_MAPBOX_TOKEN,
+    tessieKey: 'MOVED_TO_BACKEND', // Security: Tessie API key now handled by backend
+    mapboxToken: 'MOVED_TO_BACKEND', // Security: Mapbox token now served by backend /api/v1/config
     apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
   };
 
   const storageKeys = {
-    tessieKey: localStorage.getItem('tessie_api_key'),
-    mapboxToken: localStorage.getItem('mapbox_token'),
+    tessieKey: 'BACKEND_MANAGED', // Security: No longer stored in localStorage
+    mapboxToken: 'BACKEND_MANAGED', // Security: Fetched from backend config endpoint
     demoMode: localStorage.getItem('demo_mode'),
   };
 
@@ -128,9 +128,9 @@ const DebugInfo: React.FC<DebugInfoProps> = ({
               <h4 className="font-medium text-xs text-muted-foreground">Environment Variables</h4>
               <div className="grid grid-cols-1 gap-1 text-xs">
                 <div className="flex justify-between">
-                  <span>VITE_TESSIE_API_KEY:</span>
-                  <Badge variant={envVars.tessieKey ? "default" : "destructive"} className="text-xs">
-                    {envVars.tessieKey ? "Set" : "Missing"}
+                  <span>TESSIE_API_KEY:</span>
+                  <Badge variant="default" className="text-xs">
+                    Backend Managed
                   </Badge>
                 </div>
                 <div className="flex justify-between">
