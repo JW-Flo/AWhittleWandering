@@ -1843,13 +1843,13 @@ async function processHistoricalJourneyData(db: D1Database, drives: any[], charg
 
   // Process each drive to extract states and waypoints
   for (const drive of drives) {
-    if (!drive.starting_latitude || !drive.starting_longitude || !drive.ending_latitude || !drive.ending_longitude) {
+    if (!drive.start_latitude || !drive.start_longitude || !drive.end_latitude || !drive.end_longitude) {
       continue; // Skip drives without coordinates
     }
     
     // Analyze start location
-    const startState = await detectStateFromCoordinates(drive.starting_latitude, drive.starting_longitude);
-    const endState = await detectStateFromCoordinates(drive.ending_latitude, drive.ending_longitude);
+    const startState = await detectStateFromCoordinates(drive.start_latitude, drive.start_longitude);
+    const endState = await detectStateFromCoordinates(drive.end_latitude, drive.end_longitude);
     
     if (startState !== 'Unknown') {
       statesVisited.add(startState);
@@ -1863,27 +1863,27 @@ async function processHistoricalJourneyData(db: D1Database, drives: any[], charg
       id: `${drive.id}-start`,
       journey_id: 'continental-usa-2025',
       drive_id: drive.id,
-      latitude: drive.starting_latitude,
-      longitude: drive.starting_longitude,
+      latitude: drive.start_latitude,
+      longitude: drive.start_longitude,
       state_name: startState,
-      address: drive.starting_location || null,
+      address: drive.start_address || null,
       waypoint_type: 'start',
-      timestamp: new Date(drive.started_at * 1000).toISOString() // Convert timestamp
+      timestamp: drive.started_at // Use proper timestamp format
     });
     
     waypoints.push({
       id: `${drive.id}-end`,
       journey_id: 'continental-usa-2025',
       drive_id: drive.id,
-      latitude: drive.ending_latitude,
-      longitude: drive.ending_longitude,
+      latitude: drive.end_latitude,
+      longitude: drive.end_longitude,
       state_name: endState,
-      address: drive.ending_location || null,
+      address: drive.end_address || null,
       waypoint_type: 'end',
-      timestamp: new Date(drive.ended_at * 1000).toISOString() // Convert timestamp
+      timestamp: drive.ended_at // Use proper timestamp format
     });
     
-    totalMiles += drive.odometer_distance || 0;
+    totalMiles += drive.distance_miles || 0;
     
     // Store drive data with correct field mapping
     await db.prepare(`
@@ -2205,16 +2205,78 @@ async function processAndStoreInD1(db: D1Database, tessieData: any) {
       vs.inside_temp,
       vs.outside_temp,
       vs.timestamp as last_update,
-      COUNT(DISTINCT sv.state_name) as states_visited_from_historical,
       COALESCE(SUM(d.distance_miles), 0) as total_distance,
       COUNT(DISTINCT d.id) as total_drives
     FROM journeys j
     LEFT JOIN vehicle_state vs ON j.vehicle_id = vs.vehicle_id
-    LEFT JOIN states_visited sv ON j.id = sv.journey_id
     LEFT JOIN drives d ON j.id = d.journey_id
     WHERE j.id = 'continental-usa-2025'
     GROUP BY j.id
   `).first();
+
+  // Calculate states visited from actual drive data in database
+  const statesVisitedCount = await db.prepare(`
+    SELECT COUNT(DISTINCT 
+      CASE 
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Alabama%' THEN 'Alabama'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Alaska%' THEN 'Alaska'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Arizona%' THEN 'Arizona'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Arkansas%' THEN 'Arkansas'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%California%' THEN 'California'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Colorado%' THEN 'Colorado'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Connecticut%' THEN 'Connecticut'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Delaware%' THEN 'Delaware'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Florida%' THEN 'Florida'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Georgia%' THEN 'Georgia'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Hawaii%' THEN 'Hawaii'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Idaho%' THEN 'Idaho'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Illinois%' THEN 'Illinois'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Indiana%' THEN 'Indiana'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Iowa%' THEN 'Iowa'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Kansas%' THEN 'Kansas'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Kentucky%' THEN 'Kentucky'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Louisiana%' THEN 'Louisiana'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Maine%' THEN 'Maine'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Maryland%' THEN 'Maryland'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Massachusetts%' THEN 'Massachusetts'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Michigan%' THEN 'Michigan'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Minnesota%' THEN 'Minnesota'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Mississippi%' THEN 'Mississippi'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Missouri%' THEN 'Missouri'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Montana%' THEN 'Montana'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Nebraska%' THEN 'Nebraska'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Nevada%' THEN 'Nevada'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%New Hampshire%' THEN 'New Hampshire'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%New Jersey%' THEN 'New Jersey'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%New Mexico%' THEN 'New Mexico'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%New York%' THEN 'New York'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%North Carolina%' THEN 'North Carolina'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%North Dakota%' THEN 'North Dakota'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Ohio%' THEN 'Ohio'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Oklahoma%' THEN 'Oklahoma'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Oregon%' THEN 'Oregon'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Pennsylvania%' THEN 'Pennsylvania'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Rhode Island%' THEN 'Rhode Island'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%South Carolina%' THEN 'South Carolina'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%South Dakota%' THEN 'South Dakota'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Tennessee%' THEN 'Tennessee'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Texas%' THEN 'Texas'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Utah%' THEN 'Utah'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Vermont%' THEN 'Vermont'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Virginia%' THEN 'Virginia'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Washington%' THEN 'Washington'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%West Virginia%' THEN 'West Virginia'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Wisconsin%' THEN 'Wisconsin'
+        WHEN start_address IS NOT NULL AND start_address LIKE '%Wyoming%' THEN 'Wyoming'
+        ELSE NULL
+      END
+    ) as states_count
+    FROM drives 
+    WHERE journey_id = 'continental-usa-2025'
+      AND start_address IS NOT NULL
+  `).first();
+
+  console.log(`📍 Found ${statesVisitedCount?.states_count || 0} states from drive addresses`);
 
   // Get ALL drives for timeline with smart timestamp handling
   const recentDrives = await db.prepare(`
@@ -2282,7 +2344,7 @@ async function processAndStoreInD1(db: D1Database, tessieData: any) {
       daysElapsed: Math.floor((Date.now() - new Date(journeyStartDate).getTime()) / (1000 * 60 * 60 * 24)),
       totalMiles: Math.round(tripMiles),
       currentOdometer: Math.round(currentOdometer),
-      statesVisited: journeyData?.states_visited_from_historical || 0,
+      statesVisited: statesVisitedCount?.states_count || 0,
       totalStates: 48
     },
     currentStatus: {
