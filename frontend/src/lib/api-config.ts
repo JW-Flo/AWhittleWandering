@@ -2,6 +2,10 @@
 // Handles all API endpoints and provides consistent error handling
 
 const getApiBaseUrl = () => {
+  // Development mode: use local backend with real database access
+  if (process.env.NODE_ENV === 'development') {
+    return 'https://localhost:8787';
+  }
   // Use the correct production worker URL
   return 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
 };
@@ -9,11 +13,12 @@ const getApiBaseUrl = () => {
 export const API_CONFIG = {
   BASE_URL: getApiBaseUrl(),
   ENDPOINTS: {
-    UNIFIED_DATA: '/unified-data',
-    TIMELINE: '/unified-data', // Use unified data for timeline
-    LIVE_STATUS: '/trip-status', // Use trip status for live status
+    UNIFIED_DATA: '/api/v1/unified-data',
+    TIMELINE: '/api/v1/unified-data', // Use unified data for timeline
+    LIVE_STATUS: '/api/v1/trip/status', // Use trip status for live status
     TELEMETRY: '/api/v1/telemetry',
-    HEALTH: '/health'
+    HEALTH: '/api/v1/health',
+    CONFIG: '/api/v1/config' // Configuration endpoint for secure tokens
   },
   DEFAULT_HEADERS: {
     'Content-Type': 'application/json',
@@ -52,6 +57,7 @@ export const api = {
   getTimeline: () => apiRequest(API_CONFIG.ENDPOINTS.TIMELINE),
   getLiveStatus: () => apiRequest(API_CONFIG.ENDPOINTS.LIVE_STATUS),
   getHealth: () => apiRequest(API_CONFIG.ENDPOINTS.HEALTH),
+  getConfig: () => apiRequest(API_CONFIG.ENDPOINTS.CONFIG),
   submitTelemetry: (data: unknown) => apiRequest(API_CONFIG.ENDPOINTS.TELEMETRY, {
     method: 'POST',
     body: JSON.stringify(data)
