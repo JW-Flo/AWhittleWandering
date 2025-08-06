@@ -6,29 +6,32 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { MasterCoordinationDashboard } from "./components/MasterCoordinationDashboard";
+import { TeslaDataProvider } from "./contexts/TeslaDataContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/coordination" element={
-            <MasterCoordinationDashboard 
-              currentLocation={[37.7749, -122.4194]} 
-              destination={[34.0522, -118.2437]}
-              journeyData={[]}
-            />
-          } />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <TeslaDataProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/coordination" element={
+              <MasterCoordinationDashboard 
+                currentLocation={[37.7749, -122.4194]} 
+                destination={[34.0522, -118.2437]}
+                journeyData={[]}
+              />
+            } />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </TeslaDataProvider>
   </QueryClientProvider>
 );
 
