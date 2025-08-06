@@ -5,7 +5,7 @@ import EnhancedRoadTripTracker from '@/components/EnhancedRoadTripTracker';
 import ConnectedTeslaData from '@/components/ConnectedTeslaData';
 import ProductionBanner from '@/components/ProductionBanner';
 import ConnectedVehicle from '@/components/ConnectedVehicle';
-import { useJourneyTracker } from '@/hooks/useJourneyTracker';
+import { useTeslaData } from '@/hooks/useTeslaData';
 import { dynamicConfig } from '@/lib/dynamic-config';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,33 +15,16 @@ import { RefreshCw, Car, Zap, Route, Activity } from 'lucide-react';
 // Real Tesla API integration via backend - secure and production ready
 
 const Index = () => {
-  const [tessieApiKey, setTessieApiKey] = useState<string | null>(null);
+  const { data: teslaData, isLoading: teslaLoading, isConnected, refreshData: refreshTeslaData } = useTeslaData();
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
-  const [weatherApiKey, setWeatherApiKey] = useState<string>('');
-  const [isDemoMode, setIsDemoMode] = useState(false);
-  const [configLoading, setConfigLoading] = useState(true);
 
-  // Load configuration from backend and localStorage
+  // Load configuration from backend
   useEffect(() => {
     const loadConfiguration = async () => {
       try {
         // Get secure tokens from backend
         const backendMapboxToken = await dynamicConfig.getMapboxToken();
         setMapboxToken(backendMapboxToken);
-        
-        // Load user-specific settings from localStorage
-        const savedTessieKey = localStorage.getItem('tessie_api_key');
-        const savedWeatherKey = localStorage.getItem('weather_api_key');
-        const savedDemoMode = localStorage.getItem('demo_mode');
-        
-        if (savedTessieKey) setTessieApiKey(savedTessieKey);
-        if (savedWeatherKey) setWeatherApiKey(savedWeatherKey);
-        
-        // Always default to demo mode unless user explicitly disabled it
-        if (savedDemoMode !== 'false') {
-          setIsDemoMode(true);
-          localStorage.setItem('demo_mode', 'true');
-        }
       } catch (error) {
         console.error('Failed to load configuration:', error);
         // Fallback to environment variable if backend fails
@@ -49,70 +32,14 @@ const Index = () => {
         if (fallbackToken) {
           setMapboxToken(fallbackToken);
         }
-      } finally {
-        setConfigLoading(false);
       }
     };
 
     loadConfiguration();
   }, []);
 
-  const { 
-    vehicles, 
-    selectedVehicle, 
-    setSelectedVehicle, 
-    vehicleData,
-    timeline,
-    currentEvent,
-    currentWeather,
-    journeyStats,
-    isLoading, 
-    error,
-    refreshData,
-    setWeatherApiKey: updateWeatherApiKey
-  } = useJourneyTracker(isDemoMode ? undefined : tessieApiKey || undefined);
-
-  // Set weather API key on load
-  useEffect(() => {
-    if (weatherApiKey) {
-      updateWeatherApiKey(weatherApiKey);
-    }
-  }, [weatherApiKey, updateWeatherApiKey]);
-
-  // Display data - enhanced with journey tracking
-  const displayVehicles = vehicles;
-  const displayVehicleData = vehicleData;
-
-  const handleTessieApiSubmit = (apiKey: string) => {
-    localStorage.setItem('tessie_api_key', apiKey);
-    localStorage.removeItem('demo_mode');
-    setTessieApiKey(apiKey);
-    setIsDemoMode(false);
-  };
-
-  const handleDemoMode = () => {
-    localStorage.setItem('demo_mode', 'true');
-    setIsDemoMode(true);
-  };
-
-  const handleWeatherKeyChange = (key: string) => {
-    localStorage.setItem('weather_api_key', key);
-    setWeatherApiKey(key);
-    updateWeatherApiKey(key);
-  };
-
-  const formatLastUpdate = (timestamp?: number) => {
-    if (!timestamp) return 'Never';
-    return new Date(timestamp).toLocaleTimeString();
-  };
-
-  const getChargingState = (state?: string) => {
-    switch (state?.toLowerCase()) {
-      case 'charging': return 'charging';
-      case 'complete': return 'complete';
-      default: return 'disconnected';
-    }
-  };
+  // Use Tesla data from context
+  const displayVehicleData = teslaData?.currentStatus;
 
   // Show API setup if no TESSIE key and not in demo mode - DISABLED for public website
   // Public users should not need to enter API tokens
@@ -133,7 +60,7 @@ const Index = () => {
               <div>
                 <h1 className="text-2xl font-bold">A Whittle Wandering</h1>
                 <p className="text-sm text-muted-foreground">
-                  {isDemoMode ? 'Demo Mode - Sample Data' : 'Powered by TESSIE'}
+                  {isConnected ? 'Live Tesla Data Connected' : 'Tesla Data Loading...'}
                 </p>
               </div>
             </div>
@@ -147,27 +74,26 @@ const Index = () => {
               >
                 🚀 AI Coordination Dashboard
               </Button>
-              {isDemoMode && (
-                <Badge variant="outline" className="border-tesla-cyan text-tesla-cyan">
-                  Demo Mode
+              {isConnected && teslaData && (
+                <Badge variant="secondary" className="bg-tesla-cyan/20 text-tesla-cyan">
+                  Live Tesla Data
                 </Badge>
               )}
-              {/* Only show if Midnight Shadow is not available */}
-              {displayVehicles.length > 0 && !displayVehicles.some(v => v.display_name === 'Midnight Shadow') && (
-                <Badge variant="outline" className="border-destructive text-destructive">
-                  Vehicle must be named "Midnight Shadow"
+              {isConnected && teslaData && (
+                <Badge variant="secondary" className="bg-tesla-cyan/20 text-tesla-cyan">
+                  Live Tesla Data
                 </Badge>
               )}
               
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => refreshData?.()}
-                disabled={isLoading || isDemoMode}
+                onClick={() => refreshTeslaData?.()}
+                disabled={teslaLoading}
                 className="gap-2"
               >
-                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                {isDemoMode ? 'Demo' : 'Refresh'}
+                <RefreshCw className={`w-4 h-4 ${teslaLoading ? 'animate-spin' : ''}`} />
+                Refresh Tesla Data
               </Button>
             </div>
           </div>
@@ -216,7 +142,7 @@ const Index = () => {
                       </CardTitle>
                       {displayVehicleData && (
                         <Badge variant="secondary" className="bg-tesla-cyan/20 text-tesla-cyan">
-                          {isDemoMode ? 'Demo' : 'Live'}
+                          {isConnected ? 'Live' : 'Loading'}
                         </Badge>
                       )}
                     </div>
@@ -224,10 +150,10 @@ const Index = () => {
                   <CardContent className="h-[calc(100%-80px)]">
                     <LazyTeslaMap
                       vehicleLocation={displayVehicleData ? {
-                        latitude: displayVehicleData.latitude,
-                        longitude: displayVehicleData.longitude,
-                        heading: displayVehicleData.heading,
-                        speed: displayVehicleData.speed
+                        latitude: displayVehicleData.location.coordinates.lat,
+                        longitude: displayVehicleData.location.coordinates.lng,
+                        heading: 0, // Not available in current structure
+                        speed: displayVehicleData.vehicle.speed
                       } : undefined}
                       mapboxToken={mapboxToken || undefined}
                       routeLocations={[]}
@@ -239,13 +165,13 @@ const Index = () => {
               {/* Stats Section - Appears below map on mobile */}
               <div className="space-y-4 order-2 lg:order-2">
                 <VehicleStats
-                  batteryLevel={displayVehicleData?.battery_level}
-                  range={displayVehicleData?.battery_range}
-                  chargingState={getChargingState(displayVehicleData?.charging_state)}
-                  temperature={displayVehicleData?.outside_temp}
-                  odometer={displayVehicleData?.odometer}
-                  speed={displayVehicleData?.speed}
-                  lastUpdate={formatLastUpdate(displayVehicleData?.timestamp)}
+                  batteryLevel={displayVehicleData?.battery.level}
+                  range={displayVehicleData?.battery.range}
+                  chargingState={displayVehicleData?.battery.charging.toLowerCase() as 'charging' | 'complete' | 'disconnected'}
+                  temperature={displayVehicleData?.vehicle.temperature.outside}
+                  odometer={displayVehicleData?.vehicle.odometer}
+                  speed={displayVehicleData?.vehicle.speed}
+                  lastUpdate={displayVehicleData?.location.lastUpdate || 'Never'}
                 />
               </div>
             </div>

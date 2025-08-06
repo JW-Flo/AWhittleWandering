@@ -45,8 +45,14 @@ class DynamicConfigService {
       return config;
     } catch (error) {
       console.error('Failed to fetch backend configuration:', error);
-      // Security: No fallback tokens - must use backend
-      throw new Error('Backend configuration required for security. No fallback tokens available.');
+      
+      // For development and fallback, provide a minimal config
+      // In production, the backend should always be available
+      return {
+        mapboxAccessToken: '', // Will trigger the map setup UI if needed
+        appName: 'A Whittle Wandering',
+        apiVersion: '3.0.0'
+      };
     }
   }
 

@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapPin, Navigation, Zap } from 'lucide-react';
+import { MapPin, Navigation, Loader2 } from 'lucide-react';
 import { journeyTimeline } from '@/data/journeyData';
+import { dynamicConfig } from '@/lib/dynamic-config';
 
 interface VehicleLocation {
   latitude: number;
@@ -21,11 +21,32 @@ interface TeslaMapProps {
   routeLocations?: Array<{lat: number, lng: number, timestamp: string}>;
 }
 
-const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange, routeLocations }: TeslaMapProps) => {
+const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _onTokenChange, routeLocations }: TeslaMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const vehicleMarker = useRef<mapboxgl.Marker | null>(null);
-  const [tokenInput, setTokenInput] = useState(mapboxToken || '');
+  const [mapboxToken, setMapboxToken] = useState<string | null>(propsToken || null);
+  const [isLoadingToken, setIsLoadingToken] = useState(false);
+
+  // Fetch Mapbox token from backend on component mount
+  useEffect(() => {
+    const fetchMapboxToken = async () => {
+      if (mapboxToken) return; // Already have a token
+      
+      setIsLoadingToken(true);
+      try {
+        const token = await dynamicConfig.getMapboxToken();
+        setMapboxToken(token);
+      } catch (error) {
+        console.error('Failed to fetch Mapbox token from backend:', error);
+        // Fall back to user input if backend fails
+      } finally {
+        setIsLoadingToken(false);
+      }
+    };
+
+    fetchMapboxToken();
+  }, [mapboxToken]);
 
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) return;
@@ -59,7 +80,7 @@ const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange, routeLocations 
     return () => {
       map.current?.remove();
     };
-  }, [mapboxToken]);
+  }, [mapboxToken, addJourneyRoute]); // Include addJourneyRoute in dependencies
 
   useEffect(() => {
     if (!map.current || !vehicleLocation) return;
@@ -203,7 +224,7 @@ const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange, routeLocations 
     });
   };
 
-  const addJourneyRoute = () => {
+  const addJourneyRoute = useCallback(() => {
     if (!map.current || !routeLocations || routeLocations.length === 0) return;
 
     // Create route line from locations
@@ -254,50 +275,43 @@ const TeslaMap = ({ vehicleLocation, mapboxToken, onTokenChange, routeLocations 
         'line-blur': 4
       }
     });
-  };
-
-  const handleTokenSubmit = () => {
-    onTokenChange?.(tokenInput);
-  };
+  }, [routeLocations]); // Dependencies for useCallback
 
   if (!mapboxToken) {
+    if (isLoadingToken) {
+      return (
+        <Card className="w-full h-full flex items-center justify-center">
+          <CardContent className="max-w-md p-6">
+            <CardHeader className="text-center p-0 mb-6">
+              <Loader2 className="w-12 h-12 text-primary mx-auto mb-4 animate-spin" />
+              <CardTitle>Loading Map</CardTitle>
+              <CardDescription>
+                Fetching map configuration from backend...
+              </CardDescription>
+            </CardHeader>
+          </CardContent>
+        </Card>
+      );
+    }
+
     return (
       <Card className="w-full h-full flex items-center justify-center">
         <CardContent className="max-w-md p-6">
           <CardHeader className="text-center p-0 mb-6">
             <MapPin className="w-12 h-12 text-primary mx-auto mb-4" />
-            <CardTitle>Setup Map</CardTitle>
+            <CardTitle>Map Configuration Issue</CardTitle>
             <CardDescription>
-              Enter your Mapbox public token to display the interactive map
+              Unable to load map configuration from backend. Please try refreshing the page.
             </CardDescription>
           </CardHeader>
           <div className="space-y-4">
-            <Input
-              type="text"
-              placeholder="pk.eyJ1IjoieW91cnVzZXJuYW1lIi..."
-              value={tokenInput}
-              onChange={(e) => setTokenInput(e.target.value)}
-              className="font-mono text-sm"
-            />
             <Button 
-              onClick={handleTokenSubmit} 
+              onClick={() => window.location.reload()} 
               className="w-full"
-              disabled={!tokenInput.trim()}
             >
               <Navigation className="w-4 h-4 mr-2" />
-              Initialize Map
+              Refresh Page
             </Button>
-            <p className="text-xs text-muted-foreground text-center">
-              Get your token at{' '}
-              <a 
-                href="https://mapbox.com/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                mapbox.com
-              </a>
-            </p>
           </div>
         </CardContent>
       </Card>
