@@ -2,6 +2,10 @@
 // Handles all API endpoints and provides consistent error handling
 
 const getApiBaseUrl = () => {
+  // Development mode: use local backend with real database access
+  if (process.env.NODE_ENV === 'development') {
+    return 'https://localhost:8787';
+  }
   // Use the correct production worker URL
   return 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
 };

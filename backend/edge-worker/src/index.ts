@@ -116,12 +116,35 @@ interface Env {
 
 const app = new Hono<{ Bindings: Env }>();
 
-// CORS configuration for all Cloudflare resources
+// CORS configuration with proper security restrictions
 app.use('*', cors({
-  origin: '*', // Allow all origins for now to debug the issue
+  origin: [
+    'https://awhittlewandering.com',
+    'https://*.awhittlewandering.com',
+    'http://localhost:8080', // Development only
+    'http://localhost:3000'  // Development only
+  ],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization', 'X-Client-ID'],
+  credentials: true
 }));
+
+// Security headers middleware
+app.use('*', async (c, next) => {
+  await next();
+  
+  // Add security headers
+  c.res.headers.set('X-Content-Type-Options', 'nosniff');
+  c.res.headers.set('X-Frame-Options', 'DENY');
+  c.res.headers.set('X-XSS-Protection', '1; mode=block');
+  c.res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  c.res.headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  
+  // Add Content Security Policy for API responses
+  if (c.req.path.startsWith('/api/')) {
+    c.res.headers.set('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
+  }
+});
 
 // Analytics middleware - track all API usage
 app.use('*', async (c, next) => {
