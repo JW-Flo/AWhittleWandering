@@ -13,11 +13,12 @@ const getApiBaseUrl = () => {
 export const API_CONFIG = {
   BASE_URL: getApiBaseUrl(),
   ENDPOINTS: {
-    UNIFIED_DATA: '/unified-data',
-    TIMELINE: '/unified-data', // Use unified data for timeline
-    LIVE_STATUS: '/trip-status', // Use trip status for live status
+    UNIFIED_DATA: '/api/v1/unified-data',
+    TIMELINE: '/api/v1/unified-data', // Use unified data for timeline
+    LIVE_STATUS: '/api/v1/trip/status', // Use trip status for live status
     TELEMETRY: '/api/v1/telemetry',
-    HEALTH: '/health'
+    HEALTH: '/api/v1/health',
+    CONFIG: '/api/v1/config' // Configuration endpoint for secure tokens
   },
   DEFAULT_HEADERS: {
     'Content-Type': 'application/json',
@@ -56,6 +57,7 @@ export const api = {
   getTimeline: () => apiRequest(API_CONFIG.ENDPOINTS.TIMELINE),
   getLiveStatus: () => apiRequest(API_CONFIG.ENDPOINTS.LIVE_STATUS),
   getHealth: () => apiRequest(API_CONFIG.ENDPOINTS.HEALTH),
+  getConfig: () => apiRequest(API_CONFIG.ENDPOINTS.CONFIG),
   submitTelemetry: (data: unknown) => apiRequest(API_CONFIG.ENDPOINTS.TELEMETRY, {
     method: 'POST',
     body: JSON.stringify(data)

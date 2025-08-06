@@ -2,7 +2,8 @@
 // This is now a wrapper around useUnifiedTessieApi for backward compatibility
 
 import { useUnifiedTessieApi } from './useUnifiedTessieApi';
-import { useMemo, useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { dynamicConfig } from '@/lib/dynamic-config';
 
 interface ChargeSessionData {
   id: string;
@@ -116,8 +117,8 @@ export const useJourneyTessieApi = (apiKey?: string, vehicleId?: string) => {
   // Reverse geocoding to get city/state from coordinates
   const reverseGeocode = useCallback(async (lat: number, lng: number): Promise<{ city?: string; state?: string; address?: string }> => {
     try {
-      // Use Mapbox reverse geocoding (could also use Google Maps or other service)
-      const mapboxToken = 'pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA';
+      // Get Mapbox token from backend configuration
+      const mapboxToken = await dynamicConfig.getMapboxToken();
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}&types=place,region`
       );

@@ -2,39 +2,59 @@ import React, { useState, useEffect } from 'react';
 import LazyTeslaMap from '@/components/LazyTeslaMap';
 import VehicleStats from '@/components/VehicleStats';
 import EnhancedRoadTripTracker from '@/components/EnhancedRoadTripTracker';
-import RealTeslaDataIntegration from '@/components/RealTeslaDataIntegration';
+import ConnectedTeslaData from '@/components/ConnectedTeslaData';
 import ProductionBanner from '@/components/ProductionBanner';
 import ConnectedVehicle from '@/components/ConnectedVehicle';
 import { useJourneyTracker } from '@/hooks/useJourneyTracker';
+import { dynamicConfig } from '@/lib/dynamic-config';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RefreshCw, Car, Zap, Route, Activity } from 'lucide-react';
-// Real Tessie API integration - no more mock data needed
+// Real Tesla API integration via backend - secure and production ready
 
 const Index = () => {
   const [tessieApiKey, setTessieApiKey] = useState<string | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [weatherApiKey, setWeatherApiKey] = useState<string>('');
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [configLoading, setConfigLoading] = useState(true);
 
-  // Load saved API keys from localStorage and default to demo mode
+  // Load configuration from backend and localStorage
   useEffect(() => {
-    const savedTessieKey = localStorage.getItem('tessie_api_key');
-    const savedMapboxToken = localStorage.getItem('mapbox_token');
-    const savedWeatherKey = localStorage.getItem('weather_api_key');
-    const savedDemoMode = localStorage.getItem('demo_mode');
-    
-    if (savedTessieKey) setTessieApiKey(savedTessieKey);
-    if (savedMapboxToken) setMapboxToken(savedMapboxToken);
-    if (savedWeatherKey) setWeatherApiKey(savedWeatherKey);
-    
-    // Always default to demo mode unless user explicitly disabled it
-    if (savedDemoMode !== 'false') {
-      setIsDemoMode(true);
-      localStorage.setItem('demo_mode', 'true');
-    }
+    const loadConfiguration = async () => {
+      try {
+        // Get secure tokens from backend
+        const backendMapboxToken = await dynamicConfig.getMapboxToken();
+        setMapboxToken(backendMapboxToken);
+        
+        // Load user-specific settings from localStorage
+        const savedTessieKey = localStorage.getItem('tessie_api_key');
+        const savedWeatherKey = localStorage.getItem('weather_api_key');
+        const savedDemoMode = localStorage.getItem('demo_mode');
+        
+        if (savedTessieKey) setTessieApiKey(savedTessieKey);
+        if (savedWeatherKey) setWeatherApiKey(savedWeatherKey);
+        
+        // Always default to demo mode unless user explicitly disabled it
+        if (savedDemoMode !== 'false') {
+          setIsDemoMode(true);
+          localStorage.setItem('demo_mode', 'true');
+        }
+      } catch (error) {
+        console.error('Failed to load configuration:', error);
+        // Fallback to environment variable if backend fails
+        const fallbackToken = import.meta.env.VITE_MAPBOX_TOKEN;
+        if (fallbackToken) {
+          setMapboxToken(fallbackToken);
+        }
+      } finally {
+        setConfigLoading(false);
+      }
+    };
+
+    loadConfiguration();
   }, []);
 
   const { 
@@ -73,11 +93,6 @@ const Index = () => {
   const handleDemoMode = () => {
     localStorage.setItem('demo_mode', 'true');
     setIsDemoMode(true);
-  };
-
-  const handleMapboxTokenChange = (token: string) => {
-    localStorage.setItem('mapbox_token', token);
-    setMapboxToken(token);
   };
 
   const handleWeatherKeyChange = (key: string) => {
@@ -215,7 +230,6 @@ const Index = () => {
                         speed: displayVehicleData.speed
                       } : undefined}
                       mapboxToken={mapboxToken || undefined}
-                      onTokenChange={handleMapboxTokenChange}
                       routeLocations={[]}
                     />
                   </CardContent>
@@ -238,7 +252,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="integration" className="space-y-6">
-            <RealTeslaDataIntegration 
+            <ConnectedTeslaData 
               onDataUpdate={(data) => {
                 // Process real Tesla data and update app state
                 if (data.vehicle) {
