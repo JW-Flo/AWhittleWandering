@@ -1,0 +1,164 @@
+{
+  "qa": {
+    "version": "1.0.0",
+    "enabled": true,
+    "recursive": {
+      "enabled": true,
+      "maxIterations": 5,
+      "retryThreshold": 3,
+      "backoffMultiplier": 1.5
+    },
+    "monitoring": {
+      "enabled": true,
+      "interval": 300,
+      "errorThreshold": 5,
+      "performanceThreshold": {
+        "backend": 5000,
+        "frontend": 10000,
+        "api": 3000
+      }
+    },
+    "endpoints": {
+      "backend": "https://awhittlewandering-api.kd8jc7v8cd.workers.dev",
+      "frontend": "https://ab99ceea.awhittlewandering-frontend.pages.dev",
+      "api": {
+        "health": "/health",
+        "teslaData": "/api/tesla-data",
+        "config": "/api/config"
+      }
+    },
+    "phases": {
+      "preflight": {
+        "enabled": true,
+        "timeout": 30000,
+        "critical": true
+      },
+      "unit": {
+        "enabled": true,
+        "timeout": 120000,
+        "critical": false,
+        "parallel": true
+      },
+      "integration": {
+        "enabled": true,
+        "timeout": 180000,
+        "critical": true,
+        "retryCount": 3
+      },
+      "api": {
+        "enabled": true,
+        "timeout": 60000,
+        "critical": true,
+        "retryCount": 3
+      },
+      "frontend": {
+        "enabled": true,
+        "timeout": 120000,
+        "critical": true,
+        "browser": "chrome"
+      },
+      "e2e": {
+        "enabled": true,
+        "timeout": 300000,
+        "critical": true,
+        "browser": "chrome",
+        "headless": true,
+        "screenshots": true
+      },
+      "performance": {
+        "enabled": true,
+        "timeout": 180000,
+        "critical": false,
+        "thresholds": {
+          "loadTime": 10000,
+          "fcp": 2500,
+          "lcp": 4000,
+          "cls": 0.1
+        }
+      },
+      "security": {
+        "enabled": true,
+        "timeout": 120000,
+        "critical": true,
+        "checks": [
+          "apiKeyExposure",
+          "corsConfig",
+          "inputValidation",
+          "sslTls"
+        ]
+      },
+      "deployment": {
+        "enabled": true,
+        "timeout": 120000,
+        "critical": true,
+        "propagationDelay": 30000
+      },
+      "monitoring": {
+        "enabled": true,
+        "timeout": 60000,
+        "critical": false,
+        "setupAlerts": true
+      }
+    },
+    "notifications": {
+      "slack": {
+        "enabled": false,
+        "webhookUrl": "",
+        "channel": "#qa-alerts",
+        "onFailure": true,
+        "onSuccess": false,
+        "onCritical": true
+      },
+      "email": {
+        "enabled": false,
+        "recipients": [],
+        "onFailure": true,
+        "onSuccess": false,
+        "onCritical": true
+      }
+    },
+    "reporting": {
+      "enabled": true,
+      "formats": ["json", "html"],
+      "retention": {
+        "days": 30,
+        "maxReports": 100
+      },
+      "includeScreenshots": true,
+      "includePerformanceMetrics": true
+    },
+    "automation": {
+      "gitHooks": {
+        "prePush": true,
+        "postMerge": true,
+        "preCommit": false
+      },
+      "continuousDeployment": {
+        "enabled": true,
+        "triggerOnDeploy": true,
+        "autoFix": true,
+        "rollbackOnFailure": false
+      },
+      "scheduling": {
+        "enabled": false,
+        "cron": "0 */6 * * *",
+        "timezone": "America/New_York"
+      }
+    },
+    "environment": {
+      "node": ">=18.0.0",
+      "browsers": ["chrome", "firefox"],
+      "dependencies": {
+        "puppeteer": "^24.15.0",
+        "vitest": "^3.2.4",
+        "node-fetch": "^3.3.2"
+      }
+    },
+    "debugging": {
+      "verbose": false,
+      "saveFailureArtifacts": true,
+      "keepBrowserOpen": false,
+      "logLevel": "info"
+    }
+  }
+}

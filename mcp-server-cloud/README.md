@@ -23,33 +23,39 @@ This MCP server is deployed on Cloudflare Workers for global low-latency access:
 ## 📡 API Endpoints
 
 ### MCP Protocol
+
 - `POST /mcp` - Standard MCP JSON-RPC 2.0 protocol endpoint
 - `GET /tools` - List all available tools
 - `POST /call` - Execute tool with simplified HTTP API
 
 ### Health & Info
+
 - `GET /` - Server information and capabilities
 - `GET /health` - System health and API status
 
 ## 🛠️ Available Tools
 
 ### Core Tesla Data
+
 - `get_current_tesla_status` - Live vehicle status
 - `get_trip_overview` - Overall trip statistics  
 - `get_live_location` - Detailed GPS positioning
 
 ### Historical Analysis
+
 - `search_drives` - Filter drives by date, state, distance
 - `get_charging_history` - Charging sessions and costs
 - `analyze_trip_efficiency` - Performance by group
 
 ### Predictions & Health
+
 - `calculate_trip_predictions` - Completion forecasts
 - `get_system_health` - API connectivity status
 
 ## 🔧 Usage Examples
 
 ### HTTP API (Simplified)
+
 ```bash
 # Get current Tesla status
 curl -X POST https://mcp.awhittlewandering.com/call \
@@ -63,6 +69,7 @@ curl -X POST https://mcp.awhittlewandering.com/call \
 ```
 
 ### MCP Protocol (JSON-RPC 2.0)
+
 ```bash
 # List available tools
 curl -X POST https://mcp.awhittlewandering.com/mcp \
@@ -108,6 +115,7 @@ To use with ChatGPT Desktop, add the following to your MCP configuration:
 ```
 
 Or use the direct HTTP API mode:
+
 ```json
 {
   "mcpServers": {
@@ -125,12 +133,14 @@ Or use the direct HTTP API mode:
 ## 🏗️ Development
 
 ### Local Development
+
 ```bash
 npm install
 npm run dev
 ```
 
 ### Deployment
+
 ```bash
 # Deploy to staging
 wrangler deploy
@@ -140,6 +150,7 @@ npm run deploy:production
 ```
 
 ### Environment Variables
+
 - `TESLA_API_BASE` - Backend API URL
 - `MCP_SERVER_VERSION` - Server version
 - `CORS_ORIGINS` - Allowed CORS origins
@@ -168,6 +179,7 @@ npm run deploy:production
 ## 📞 Support
 
 For issues or questions:
+
 - Check system health: `/health` endpoint
 - Backend API status: Backend worker health checks
 - Repository: [GitHub Issues](https://github.com/awhittlewandering/tesla-roadtrip-tracker)
