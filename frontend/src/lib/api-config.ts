@@ -2,9 +2,9 @@
 // Handles all API endpoints and provides consistent error handling
 
 const getApiBaseUrl = () => {
-  // Development mode: use local backend with real database access
+  // Development mode: use local backend worker (wrangler dev typically runs on 8787)
   if (process.env.NODE_ENV === 'development') {
-    return 'https://localhost:8787';
+    return 'http://localhost:8787';
   }
   // Use the correct production worker URL
   return 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
@@ -51,8 +51,8 @@ export async function apiRequest<T>(endpoint: string, options: RequestInit = {})
   }
 }
 
-// Specific API methods
 export const api = {
+  baseUrl: getApiBaseUrl(),
   getUnifiedData: () => apiRequest(API_CONFIG.ENDPOINTS.UNIFIED_DATA),
   getTimeline: () => apiRequest(API_CONFIG.ENDPOINTS.TIMELINE),
   getLiveStatus: () => apiRequest(API_CONFIG.ENDPOINTS.LIVE_STATUS),
