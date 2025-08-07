@@ -107,49 +107,35 @@ interface Env {
   AUTH_TOKENS: KVNamespace;
   TELEMETRY_ANALYTICS: AnalyticsEngine;
   DATA_PROCESSOR: Queue;
+  AI: Ai; // Cloudflare AI binding
   TESSIE_API_KEY: string;
   TESLA_VIN: string;
   OPENWEATHER_API_KEY: string;
   JWT_SECRET: string;
   ADMIN_PASSWORD: string;
   MAPBOX_ACCESS_TOKEN: string;
-  OPENAI_API_KEY: string;
+  AI_GATEWAY_ID: string;
+  AI_MODEL_NAME: string;
 }
 
-// OpenAI API integration for AI features
-async function callOpenAI(env: Env, prompt: string, systemMessage?: string): Promise<string> {
-  const openaiKey = env.OPENAI_API_KEY;
-  if (!openaiKey) {
-    throw new Error('OpenAI API key not configured');
-  }
-
+// Cloudflare AI integration for intelligent features
+async function callCloudflareAI(env: Env, prompt: string, systemMessage?: string): Promise<string> {
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo', // Free tier model
-        messages: [
-          ...(systemMessage ? [{ role: 'system', content: systemMessage }] : []),
-          { role: 'user', content: prompt }
-        ],
-        max_tokens: 1000,
-        temperature: 0.7,
-      }),
+    const messages = [
+      { role: 'system', content: systemMessage || 'You are a helpful AI assistant for Tesla road trip planning and optimization.' },
+      { role: 'user', content: prompt }
+    ];
+
+    const response = await env.AI.run(env.AI_MODEL_NAME, {
+      messages,
+      max_tokens: 1000,
+      temperature: 0.7
     });
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.choices[0]?.message?.content || 'No response generated';
+    return response.response || 'AI response unavailable';
   } catch (error) {
-    console.error('OpenAI API call failed:', error);
-    throw error;
+    console.error('Cloudflare AI error:', error);
+    return 'AI service temporarily unavailable. Please try again later.';
   }
 }
 
@@ -2968,8 +2954,8 @@ Please provide:
 Format as JSON with structured data.
     `;
 
-    // Call OpenAI for route optimization
-    const aiResponse = await callOpenAI(c.env, prompt, systemMessage);
+    // Call Cloudflare AI for route optimization
+    const aiResponse = await callCloudflareAI(c.env, prompt, systemMessage);
     
     // Try to parse AI response as JSON, fallback to text
     let optimizedRoute;
@@ -3066,8 +3052,8 @@ Write a 200-300 word journal entry that captures:
 Make it personal, engaging, and authentic to a real road trip experience.
     `;
 
-    // Call OpenAI for journal generation
-    const aiResponse = await callOpenAI(c.env, prompt, systemMessage);
+    // Call Cloudflare AI for journal generation
+    const aiResponse = await callCloudflareAI(c.env, prompt, systemMessage);
     
     return c.json({
       success: true,
