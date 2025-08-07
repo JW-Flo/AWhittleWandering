@@ -17,6 +17,8 @@ export interface BackendApiClient {
   getAnalyticsEfficiency: () => Promise<any>;
   getAnalyticsCharging: () => Promise<any>;
   getVehicleStateEnhanced: () => Promise<any>;
+  optimizeRoute: (routeData: any) => Promise<any>;
+  generateJournal: (journalData: any) => Promise<any>;
 }
 
 class BackendApiService implements BackendApiClient {
@@ -96,6 +98,22 @@ class BackendApiService implements BackendApiClient {
   // Vehicle State
   async getVehicleStateEnhanced() {
     return this.request('/api/v1/vehicle/state/enhanced');
+  }
+
+  // Route Optimization
+  async optimizeRoute(routeData: any) {
+    return this.request('/api/v1/route/optimize', {
+      method: 'POST',
+      body: JSON.stringify(routeData),
+    });
+  }
+
+  // Journal Generation
+  async generateJournal(journalData: any) {
+    return this.request('/api/v1/journal/generate', {
+      method: 'POST',
+      body: JSON.stringify(journalData),
+    });
   }
 
   // Debug Endpoints (Development Only)
