@@ -3,7 +3,9 @@
 # 🤖 DIRECT OLLAMA MODEL COORDINATION FOR TESLA APP CLEANUP
 # Uses available models: phi3:latest, gemma3:4b, codellama:7b, mistral:latest
 
-WORK_DIR="/Users/joe/Projects/Personal/ContinentalUSA/frontend"
+# Get script directory dynamically
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORK_DIR="$SCRIPT_DIR/frontend"
 
 echo "🚀 HUMAN-OLLAMA COORDINATED CODE CLEANUP"
 echo "Target: 240 → <50 ESLint warnings"

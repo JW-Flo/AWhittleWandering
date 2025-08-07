@@ -1,6 +1,10 @@
 #!/bin/bash
 # Autonomous unused import cleaner
-cd /Users/joe/Projects/Personal/ContinentalUSA/frontend
+
+# Get script directory dynamically
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+cd "$SCRIPT_DIR/frontend"
 
 echo "🧹 Autonomous unused import cleanup..."
 

@@ -7,12 +7,14 @@ This comprehensive QA system provides recursive and repetitive testing throughou
 ## Features
 
 ### 🔄 Recursive Testing
+
 - **Self-Healing**: Tests that trigger additional tests when failures are detected
 - **Automatic Retries**: Failed phases are automatically retried with exponential backoff
 - **Iterative Improvement**: Multiple QA iterations until success or maximum attempts reached
 - **Intelligent Analysis**: AI-driven failure analysis and automatic remediation
 
 ### 🧪 Comprehensive Test Coverage
+
 1. **Pre-flight Checks**: Git status, dependencies, environment validation
 2. **Unit Tests**: React components, utilities, business logic
 3. **Integration Tests**: API endpoints, database connectivity, external services
@@ -25,6 +27,7 @@ This comprehensive QA system provides recursive and repetitive testing throughou
 10. **Continuous Monitoring**: Uptime, error rates, performance metrics
 
 ### 📊 Advanced Reporting
+
 - **JSON Reports**: Machine-readable test results with detailed metrics
 - **HTML Dashboards**: Visual reports with charts, trends, and recommendations
 - **Failure Analysis**: Pattern detection and root cause analysis
@@ -33,6 +36,7 @@ This comprehensive QA system provides recursive and repetitive testing throughou
 - **Trend Analysis**: Historical data and performance trending
 
 ### 🤖 Automation & Integration
+
 - **Git Hooks**: Pre-push and post-merge QA automation
 - **Continuous Deployment**: Automatic QA on every deployment
 - **Monitoring Service**: 24/7 application health monitoring
@@ -43,6 +47,7 @@ This comprehensive QA system provides recursive and repetitive testing throughou
 ## Quick Start
 
 ### Installation
+
 ```bash
 # Navigate to project root
 cd /Users/joe/Projects/Personal/ContinentalUSA
@@ -52,6 +57,7 @@ cd /Users/joe/Projects/Personal/ContinentalUSA
 ```
 
 ### Basic Usage
+
 ```bash
 # Quick QA check (1 iteration)
 npm run qa:quick
@@ -69,6 +75,7 @@ npm run qa:monitor
 ## Architecture
 
 ### Directory Structure
+
 ```
 qa/
 ├── recursive-qa-pipeline.js     # Main QA orchestrator
@@ -91,28 +98,36 @@ qa/
 ### Core Components
 
 #### 1. Recursive QA Pipeline (`recursive-qa-pipeline.js`)
+
 The main orchestrator that runs all test phases recursively:
+
 - Executes 10 test phases sequentially
 - Retries failed phases with intelligent backoff
 - Triggers new iterations when issues are detected
 - Generates comprehensive results and recommendations
 
 #### 2. Continuous Monitoring (`recursive-qa-monitor.sh`)
+
 Background service that monitors application health:
+
 - Checks service health every 5 minutes
 - Monitors performance metrics
 - Detects error patterns in logs
 - Triggers full QA pipeline when thresholds are exceeded
 
 #### 3. Deployment Integration (`continuous-deployment-qa.sh`)
+
 Complete deployment pipeline with integrated QA:
+
 - Pre-deployment validation
 - Build and deployment automation
 - Post-deployment verification
 - Automatic rollback on critical failures
 
 #### 4. Report Generation (`generate-qa-report.js`)
+
 Advanced reporting with trend analysis:
+
 - Comprehensive JSON and HTML reports
 - Performance trend analysis
 - Failure pattern detection
@@ -121,6 +136,7 @@ Advanced reporting with trend analysis:
 ## Configuration
 
 ### Main Configuration (`config.json`)
+
 ```json
 {
   "qa": {
@@ -151,6 +167,7 @@ Advanced reporting with trend analysis:
 ```
 
 ### Environment Variables
+
 ```bash
 # Optional Slack notifications
 export SLACK_WEBHOOK_URL="https://hooks.slack.com/..."
@@ -165,7 +182,9 @@ export QA_PERFORMANCE_THRESHOLD=5000
 ## Advanced Features
 
 ### 1. Recursive Test Execution
+
 Tests can trigger additional tests based on results:
+
 ```javascript
 // Example: API failure triggers network diagnostics
 if (apiTest.failed) {
@@ -176,21 +195,27 @@ if (apiTest.failed) {
 ```
 
 ### 2. Intelligent Failure Analysis
+
 AI-powered analysis of failure patterns:
+
 - Categorizes errors by type (network, code, infrastructure)
 - Suggests specific remediation actions
 - Tracks failure trends over time
 - Predicts potential issues
 
 ### 3. Performance Monitoring
+
 Continuous performance tracking:
+
 - Core Web Vitals monitoring
 - API response time trends
 - Resource usage analysis
 - Performance regression detection
 
 ### 4. Automatic Remediation
+
 Self-healing capabilities:
+
 - Cache clearing on build failures
 - Dependency reinstallation on package changes
 - Service restart on performance degradation
@@ -199,6 +224,7 @@ Self-healing capabilities:
 ## Integration Points
 
 ### Git Workflow
+
 ```bash
 # Pre-push hook runs quick QA
 git push origin main  # Automatically runs QA before push
@@ -208,6 +234,7 @@ git merge feature-branch  # Triggers background QA validation
 ```
 
 ### Deployment Pipeline
+
 ```bash
 # Full deployment with QA
 ./qa/continuous-deployment-qa.sh
@@ -222,6 +249,7 @@ git merge feature-branch  # Triggers background QA validation
 ```
 
 ### Continuous Monitoring
+
 ```bash
 # Start background monitoring
 ./qa/services/start-monitor.sh
@@ -238,6 +266,7 @@ git merge feature-branch  # Triggers background QA validation
 ### Common Issues
 
 #### 1. Tests Failing Due to Network Issues
+
 ```bash
 # Check external service connectivity
 curl -I https://api.tessie.com/health
@@ -248,6 +277,7 @@ npm run qa:network-test
 ```
 
 #### 2. Performance Tests Timing Out
+
 ```bash
 # Increase timeout thresholds in config.json
 "performance": {
@@ -259,6 +289,7 @@ npm run qa:network-test
 ```
 
 #### 3. E2E Tests Browser Issues
+
 ```bash
 # Install/update Puppeteer
 npm install puppeteer@latest
@@ -268,6 +299,7 @@ node -e "import('puppeteer').then(p => p.default.launch().then(b => b.close()))"
 ```
 
 #### 4. Monitoring Service Not Starting
+
 ```bash
 # Check service logs
 tail -f qa/logs/monitor.out
@@ -278,6 +310,7 @@ tail -f qa/logs/monitor.out
 ```
 
 ### Debug Mode
+
 ```bash
 # Run QA in verbose debug mode
 QA_DEBUG=true npm run qa:full
@@ -289,24 +322,28 @@ QA_BROWSER_DEBUG=true npm run qa:e2e
 ## Best Practices
 
 ### 1. Regular Maintenance
+
 - Review QA reports weekly
 - Update performance thresholds based on trends
 - Clean up old logs and reports monthly
 - Update dependencies regularly
 
 ### 2. Customization
+
 - Adjust phase timeouts based on your infrastructure
 - Configure notification preferences
 - Set appropriate error thresholds
 - Customize retry counts for flaky tests
 
 ### 3. Monitoring
+
 - Keep continuous monitoring enabled in production
 - Set up proper alert notifications
 - Review performance trends regularly
 - Investigate failure patterns promptly
 
 ### 4. Development Workflow
+
 - Run quick QA before pushing changes
 - Use full QA pipeline for releases
 - Generate reports after major changes
@@ -315,6 +352,7 @@ QA_BROWSER_DEBUG=true npm run qa:e2e
 ## API Reference
 
 ### QA Pipeline Methods
+
 ```javascript
 import RecursiveQARunner from './recursive-qa-pipeline.js';
 
@@ -327,6 +365,7 @@ await runner.runRecursivePipeline();
 ```
 
 ### Test Utilities
+
 ```javascript
 import { apiTestUtils } from './tests/api-integration.test.js';
 import { e2eTestUtils } from './tests/e2e.test.js';
@@ -342,6 +381,7 @@ const screenshot = await e2eTestUtils.captureScreenshot('debug');
 ```
 
 ### Report Generation
+
 ```javascript
 import QAReportGenerator from './generate-qa-report.js';
 
@@ -352,6 +392,7 @@ const reports = await generator.generateComprehensiveReport();
 ## Support
 
 For issues, questions, or contributions:
+
 1. Check the troubleshooting section above
 2. Review logs in `qa/logs/`
 3. Generate a comprehensive report for analysis

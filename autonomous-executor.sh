@@ -1,12 +1,14 @@
 #!/bin/bash
-# 🚀 AUTONOMOUS EXECUTION SCRIPT FOR DYAD
+# 🚀 AUTONOMOUS EXECUTION SCRIPT FOR AI AUTOMATION
 # This script guides the autonomous Tesla app optimization
 
-WORKSPACE="/Users/joe/Projects/Personal/ContinentalUSA"
+# Get script directory dynamically
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKSPACE="$SCRIPT_DIR"
 FRONTEND="$WORKSPACE/frontend"
 
-echo "🤖 DYAD AUTONOMOUS EXECUTION - TESLA APP OPTIMIZATION"
-echo "======================================================"
+echo "🤖 TESLA APP AUTONOMOUS OPTIMIZATION"
+echo "======================================"
 
 # Phase 1: Build Error Assessment and Resolution
 echo "📊 Phase 1: Build Error Assessment"
@@ -137,7 +139,7 @@ echo "📊 Phase 4: Progress Monitoring Setup"
 
 cat > "$WORKSPACE/monitor_progress.sh" << 'EOF'
 #!/bin/bash
-cd /Users/joe/Projects/Personal/ContinentalUSA/frontend
+cd "$SCRIPT_DIR/frontend"
 
 echo "🔍 Current ESLint Status:"
 npm run lint 2>&1 | grep -E "(warning|error)" | wc -l | xargs echo "Total warnings/errors:"

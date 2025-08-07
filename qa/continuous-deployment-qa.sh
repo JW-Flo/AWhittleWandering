@@ -5,8 +5,16 @@
 
 set -e
 
-# Configuration
-PROJECT_ROOT="/Users/joe/Projects/Personal/ContinentalUSA"
+#!/bin/bash
+
+# 📊 Continuous Deployment QA Pipeline
+# Automated testing and monitoring for production deployments
+
+set -e
+
+# Get project root dynamically
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 QA_DIR="$PROJECT_ROOT/qa"
 LOG_FILE="$QA_DIR/logs/cd-qa-$(date +%Y%m%d-%H%M%S).log"
 WEBHOOK_URL=${SLACK_WEBHOOK_URL:-""}  # Optional Slack webhook for notifications

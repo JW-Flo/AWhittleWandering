@@ -14,30 +14,40 @@ export class QADataManager {
   async startQARun(options = {}) {
     const runId = this.generateRunId();
     const {
-      triggerType = 'manual',
+      triggerType = "manual",
       gitCommit = null,
-      branch = 'main',
-      environment = 'production',
-      pipelineVersion = '1.0.0',
-      totalIterations = 3
+      branch = "main",
+      environment = "production",
+      pipelineVersion = "1.0.0",
+      totalIterations = 3,
     } = options;
 
     try {
-      const result = await this.db.prepare(`
+      const result = await this.db
+        .prepare(
+          `
         INSERT INTO qa_runs (
           run_id, pipeline_version, total_iterations, status, 
           trigger_type, git_commit, branch, environment,
           total_phases, passed_phases, failed_phases
         ) VALUES (?, ?, ?, 'running', ?, ?, ?, ?, 10, 0, 0)
-      `).bind(
-        runId, pipelineVersion, totalIterations, 
-        triggerType, gitCommit, branch, environment
-      ).run();
+      `
+        )
+        .bind(
+          runId,
+          pipelineVersion,
+          totalIterations,
+          triggerType,
+          gitCommit,
+          branch,
+          environment
+        )
+        .run();
 
       console.log(`📊 QA Run ${runId} started in D1 database`);
       return runId;
     } catch (error) {
-      console.error('Failed to start QA run:', error);
+      console.error("Failed to start QA run:", error);
       throw error;
     }
   }
@@ -45,23 +55,39 @@ export class QADataManager {
   /**
    * Record a phase execution
    */
-  async recordPhase(runId, iteration, phaseName, phaseOrder, status, details = {}) {
+  async recordPhase(
+    runId,
+    iteration,
+    phaseName,
+    phaseOrder,
+    status,
+    details = {}
+  ) {
     try {
-      const result = await this.db.prepare(`
+      const result = await this.db
+        .prepare(
+          `
         INSERT INTO qa_phases (
           run_id, iteration, phase_name, phase_order, status, 
           start_time, end_time, duration_ms, retry_count, 
           error_message, details
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).bind(
-        runId, iteration, phaseName, phaseOrder, status,
-        details.startTime || new Date().toISOString(),
-        details.endTime || new Date().toISOString(),
-        details.durationMs || 0,
-        details.retryCount || 0,
-        details.errorMessage || null,
-        JSON.stringify(details)
-      ).run();
+      `
+        )
+        .bind(
+          runId,
+          iteration,
+          phaseName,
+          phaseOrder,
+          status,
+          details.startTime || new Date().toISOString(),
+          details.endTime || new Date().toISOString(),
+          details.durationMs || 0,
+          details.retryCount || 0,
+          details.errorMessage || null,
+          JSON.stringify(details)
+        )
+        .run();
 
       return result.meta.last_row_id;
     } catch (error) {
@@ -73,26 +99,42 @@ export class QADataManager {
   /**
    * Record test results
    */
-  async recordTestResult(runId, phaseId, testName, testType, status, details = {}) {
+  async recordTestResult(
+    runId,
+    phaseId,
+    testName,
+    testType,
+    status,
+    details = {}
+  ) {
     try {
-      const result = await this.db.prepare(`
+      const result = await this.db
+        .prepare(
+          `
         INSERT INTO qa_test_results (
           run_id, phase_id, test_name, test_type, status,
           execution_time_ms, assertion_count, passed_assertions, 
           failed_assertions, error_message, stack_trace, 
           screenshot_url, test_data
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).bind(
-        runId, phaseId, testName, testType, status,
-        details.executionTimeMs || 0,
-        details.assertionCount || 0,
-        details.passedAssertions || 0,
-        details.failedAssertions || 0,
-        details.errorMessage || null,
-        details.stackTrace || null,
-        details.screenshotUrl || null,
-        JSON.stringify(details.testData || {})
-      ).run();
+      `
+        )
+        .bind(
+          runId,
+          phaseId,
+          testName,
+          testType,
+          status,
+          details.executionTimeMs || 0,
+          details.assertionCount || 0,
+          details.passedAssertions || 0,
+          details.failedAssertions || 0,
+          details.errorMessage || null,
+          details.stackTrace || null,
+          details.screenshotUrl || null,
+          JSON.stringify(details.testData || {})
+        )
+        .run();
 
       return result.meta.last_row_id;
     } catch (error) {
@@ -104,21 +146,42 @@ export class QADataManager {
   /**
    * Record performance metrics
    */
-  async recordPerformanceMetric(runId, metricName, metricValue, metricUnit, endpointUrl = null, responseTimeMs = null, statusCode = null) {
+  async recordPerformanceMetric(
+    runId,
+    metricName,
+    metricValue,
+    metricUnit,
+    endpointUrl = null,
+    responseTimeMs = null,
+    statusCode = null
+  ) {
     try {
-      const result = await this.db.prepare(`
+      const result = await this.db
+        .prepare(
+          `
         INSERT INTO qa_performance_metrics (
           run_id, metric_name, metric_value, metric_unit,
           endpoint_url, response_time_ms, status_code
         ) VALUES (?, ?, ?, ?, ?, ?, ?)
-      `).bind(
-        runId, metricName, metricValue, metricUnit,
-        endpointUrl, responseTimeMs, statusCode
-      ).run();
+      `
+        )
+        .bind(
+          runId,
+          metricName,
+          metricValue,
+          metricUnit,
+          endpointUrl,
+          responseTimeMs,
+          statusCode
+        )
+        .run();
 
       return result.meta.last_row_id;
     } catch (error) {
-      console.error(`Failed to record performance metric ${metricName}:`, error);
+      console.error(
+        `Failed to record performance metric ${metricName}:`,
+        error
+      );
       throw error;
     }
   }
@@ -126,17 +189,33 @@ export class QADataManager {
   /**
    * Record security scan results
    */
-  async recordSecurityScan(runId, scanType, vulnerabilityLevel, description, affectedComponent, recommendation) {
+  async recordSecurityScan(
+    runId,
+    scanType,
+    vulnerabilityLevel,
+    description,
+    affectedComponent,
+    recommendation
+  ) {
     try {
-      const result = await this.db.prepare(`
+      const result = await this.db
+        .prepare(
+          `
         INSERT INTO qa_security_scans (
           run_id, scan_type, vulnerability_level, description,
           affected_component, recommendation, status
         ) VALUES (?, ?, ?, ?, ?, ?, 'open')
-      `).bind(
-        runId, scanType, vulnerabilityLevel, description,
-        affectedComponent, recommendation
-      ).run();
+      `
+        )
+        .bind(
+          runId,
+          scanType,
+          vulnerabilityLevel,
+          description,
+          affectedComponent,
+          recommendation
+        )
+        .run();
 
       return result.meta.last_row_id;
     } catch (error) {
@@ -148,17 +227,35 @@ export class QADataManager {
   /**
    * Record deployment validation
    */
-  async recordDeploymentValidation(runId, deploymentId, environment, deploymentStatus, healthCheckUrl, healthCheckStatus, responseTimeMs) {
+  async recordDeploymentValidation(
+    runId,
+    deploymentId,
+    environment,
+    deploymentStatus,
+    healthCheckUrl,
+    healthCheckStatus,
+    responseTimeMs
+  ) {
     try {
-      const result = await this.db.prepare(`
+      const result = await this.db
+        .prepare(
+          `
         INSERT INTO qa_deployment_validations (
           run_id, deployment_id, environment, deployment_status,
           health_check_url, health_check_status, response_time_ms
         ) VALUES (?, ?, ?, ?, ?, ?, ?)
-      `).bind(
-        runId, deploymentId, environment, deploymentStatus,
-        healthCheckUrl, healthCheckStatus, responseTimeMs
-      ).run();
+      `
+        )
+        .bind(
+          runId,
+          deploymentId,
+          environment,
+          deploymentStatus,
+          healthCheckUrl,
+          healthCheckStatus,
+          responseTimeMs
+        )
+        .run();
 
       return result.meta.last_row_id;
     } catch (error) {
@@ -170,19 +267,40 @@ export class QADataManager {
   /**
    * Create monitoring alert
    */
-  async createMonitoringAlert(runId, alertType, severity, title, description, affectedService, metricValue = null, thresholdValue = null) {
+  async createMonitoringAlert(
+    runId,
+    alertType,
+    severity,
+    title,
+    description,
+    affectedService,
+    metricValue = null,
+    thresholdValue = null
+  ) {
     const alertId = this.generateAlertId();
-    
+
     try {
-      const result = await this.db.prepare(`
+      const result = await this.db
+        .prepare(
+          `
         INSERT INTO qa_monitoring_alerts (
           alert_id, run_id, alert_type, severity, title, description,
           affected_service, metric_value, threshold_value, status
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
-      `).bind(
-        alertId, runId, alertType, severity, title, description,
-        affectedService, metricValue, thresholdValue
-      ).run();
+      `
+        )
+        .bind(
+          alertId,
+          runId,
+          alertType,
+          severity,
+          title,
+          description,
+          affectedService,
+          metricValue,
+          thresholdValue
+        )
+        .run();
 
       console.log(`🚨 Alert ${alertId} created: ${title}`);
       return alertId;
@@ -195,16 +313,31 @@ export class QADataManager {
   /**
    * Update QA run status
    */
-  async updateQARunStatus(runId, status, passedPhases, failedPhases, durationMs) {
+  async updateQARunStatus(
+    runId,
+    status,
+    passedPhases,
+    failedPhases,
+    durationMs
+  ) {
     try {
-      const result = await this.db.prepare(`
+      const result = await this.db
+        .prepare(
+          `
         UPDATE qa_runs 
         SET status = ?, passed_phases = ?, failed_phases = ?, 
             duration_ms = ?, updated_at = CURRENT_TIMESTAMP
         WHERE run_id = ?
-      `).bind(status, passedPhases, failedPhases, durationMs, runId).run();
+      `
+        )
+        .bind(status, passedPhases, failedPhases, durationMs, runId)
+        .run();
 
-      console.log(`📊 QA Run ${runId} updated: ${status} (${passedPhases}/${passedPhases + failedPhases} phases passed)`);
+      console.log(
+        `📊 QA Run ${runId} updated: ${status} (${passedPhases}/${
+          passedPhases + failedPhases
+        } phases passed)`
+      );
       return result.success;
     } catch (error) {
       console.error(`Failed to update QA run status:`, error);
@@ -219,17 +352,20 @@ export class QADataManager {
     try {
       let query = `
         SELECT * FROM qa_runs 
-        ${environment ? 'WHERE environment = ?' : ''}
+        ${environment ? "WHERE environment = ?" : ""}
         ORDER BY timestamp DESC 
         LIMIT ?
       `;
-      
+
       const params = environment ? [environment, limit] : [limit];
-      const result = await this.db.prepare(query).bind(...params).all();
-      
+      const result = await this.db
+        .prepare(query)
+        .bind(...params)
+        .all();
+
       return result.results || [];
     } catch (error) {
-      console.error('Failed to get QA run history:', error);
+      console.error("Failed to get QA run history:", error);
       throw error;
     }
   }
@@ -240,38 +376,68 @@ export class QADataManager {
   async getQARunReport(runId) {
     try {
       // Get main run info
-      const runResult = await this.db.prepare(`
+      const runResult = await this.db
+        .prepare(
+          `
         SELECT * FROM qa_runs WHERE run_id = ?
-      `).bind(runId).first();
+      `
+        )
+        .bind(runId)
+        .first();
 
       if (!runResult) {
         throw new Error(`QA run ${runId} not found`);
       }
 
       // Get phases
-      const phasesResult = await this.db.prepare(`
+      const phasesResult = await this.db
+        .prepare(
+          `
         SELECT * FROM qa_phases WHERE run_id = ? ORDER BY iteration, phase_order
-      `).bind(runId).all();
+      `
+        )
+        .bind(runId)
+        .all();
 
       // Get test results
-      const testsResult = await this.db.prepare(`
+      const testsResult = await this.db
+        .prepare(
+          `
         SELECT * FROM qa_test_results WHERE run_id = ? ORDER BY created_at
-      `).bind(runId).all();
+      `
+        )
+        .bind(runId)
+        .all();
 
       // Get performance metrics
-      const metricsResult = await this.db.prepare(`
+      const metricsResult = await this.db
+        .prepare(
+          `
         SELECT * FROM qa_performance_metrics WHERE run_id = ? ORDER BY timestamp
-      `).bind(runId).all();
+      `
+        )
+        .bind(runId)
+        .all();
 
       // Get security scans
-      const securityResult = await this.db.prepare(`
+      const securityResult = await this.db
+        .prepare(
+          `
         SELECT * FROM qa_security_scans WHERE run_id = ? ORDER BY created_at
-      `).bind(runId).all();
+      `
+        )
+        .bind(runId)
+        .all();
 
       // Get deployment validations
-      const deploymentResult = await this.db.prepare(`
+      const deploymentResult = await this.db
+        .prepare(
+          `
         SELECT * FROM qa_deployment_validations WHERE run_id = ? ORDER BY validation_timestamp
-      `).bind(runId).all();
+      `
+        )
+        .bind(runId)
+        .all();
 
       return {
         run: runResult,
@@ -279,7 +445,7 @@ export class QADataManager {
         tests: testsResult.results || [],
         metrics: metricsResult.results || [],
         security: securityResult.results || [],
-        deployments: deploymentResult.results || []
+        deployments: deploymentResult.results || [],
       };
     } catch (error) {
       console.error(`Failed to get QA run report for ${runId}:`, error);
@@ -296,25 +462,35 @@ export class QADataManager {
       const recentRuns = await this.getQARunHistory(10);
 
       // Success rate over last 30 days
-      const successRateResult = await this.db.prepare(`
+      const successRateResult = await this.db
+        .prepare(
+          `
         SELECT 
           COUNT(*) as total_runs,
           SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as successful_runs,
           AVG(passed_phases * 100.0 / total_phases) as avg_pass_rate
         FROM qa_runs 
         WHERE timestamp >= datetime('now', '-30 days')
-      `).first();
+      `
+        )
+        .first();
 
       // Active alerts
-      const activeAlertsResult = await this.db.prepare(`
+      const activeAlertsResult = await this.db
+        .prepare(
+          `
         SELECT * FROM qa_monitoring_alerts 
         WHERE status = 'active' 
         ORDER BY created_at DESC 
         LIMIT 20
-      `).all();
+      `
+        )
+        .all();
 
       // Top failing tests
-      const failingTestsResult = await this.db.prepare(`
+      const failingTestsResult = await this.db
+        .prepare(
+          `
         SELECT 
           test_name, 
           test_type,
@@ -326,16 +502,18 @@ export class QADataManager {
         GROUP BY test_name, test_type
         ORDER BY failure_count DESC
         LIMIT 10
-      `).all();
+      `
+        )
+        .all();
 
       return {
         recentRuns,
         successRate: successRateResult,
         activeAlerts: activeAlertsResult.results || [],
-        failingTests: failingTestsResult.results || []
+        failingTests: failingTestsResult.results || [],
       };
     } catch (error) {
-      console.error('Failed to get QA dashboard data:', error);
+      console.error("Failed to get QA dashboard data:", error);
       throw error;
     }
   }
@@ -363,19 +541,24 @@ export class QADataManager {
    */
   async getConfig(key, defaultValue = null) {
     try {
-      const result = await this.db.prepare(`
+      const result = await this.db
+        .prepare(
+          `
         SELECT config_value, config_type FROM qa_config WHERE config_key = ?
-      `).bind(key).first();
+      `
+        )
+        .bind(key)
+        .first();
 
       if (!result) return defaultValue;
 
       // Type conversion
       switch (result.config_type) {
-        case 'number':
+        case "number":
           return parseFloat(result.config_value);
-        case 'boolean':
-          return result.config_value === 'true';
-        case 'json':
+        case "boolean":
+          return result.config_value === "true";
+        case "json":
           return JSON.parse(result.config_value);
         default:
           return result.config_value;
@@ -389,14 +572,20 @@ export class QADataManager {
   /**
    * Update configuration value
    */
-  async updateConfig(key, value, type = 'string') {
+  async updateConfig(key, value, type = "string") {
     try {
-      const stringValue = type === 'json' ? JSON.stringify(value) : String(value);
-      
-      const result = await this.db.prepare(`
+      const stringValue =
+        type === "json" ? JSON.stringify(value) : String(value);
+
+      const result = await this.db
+        .prepare(
+          `
         INSERT OR REPLACE INTO qa_config (config_key, config_value, config_type, updated_at)
         VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-      `).bind(key, stringValue, type).run();
+      `
+        )
+        .bind(key, stringValue, type)
+        .run();
 
       return result.success;
     } catch (error) {
