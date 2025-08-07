@@ -8,7 +8,7 @@
  * Tessie API → Ingestion Layer → D1 Database → Component APIs → Frontend
  */
 
-import { Env } from '../types/env';
+import { Env, D1Database } from '../types/env';
 
 // =====================================================
 // SCHEDULED INGESTION WORKERS
@@ -115,7 +115,7 @@ export async function ingestDrives(env: Env): Promise<void> {
       WHERE journey_id = ?
     `).bind('continental-usa-2025').first();
 
-    const since = lastDrive?.last_timestamp || '2025-06-01T00:00:00Z';
+    const since = (lastDrive as any)?.last_timestamp || '2025-06-01T00:00:00Z';
 
     // Fetch drives from Tessie
     const tessieResponse = await fetch(`https://api.tessie.com/${env.VEHICLE_ID}/drives?since=${since}&per_page=100`, {
@@ -241,7 +241,7 @@ export async function ingestCharges(env: Env): Promise<void> {
       WHERE journey_id = ?
     `).bind('continental-usa-2025').first();
 
-    const since = lastCharge?.last_timestamp || '2025-06-01T00:00:00Z';
+    const since = (lastCharge as any)?.last_timestamp || '2025-06-01T00:00:00Z';
 
     // Fetch charges from Tessie
     const tessieResponse = await fetch(`https://api.tessie.com/${env.VEHICLE_ID}/charges?since=${since}&per_page=100`, {

@@ -101,12 +101,16 @@ interface Queue {
   sendBatch(messages: any[]): Promise<void>;
 }
 
+interface Ai {
+  run(model: string, opts: { messages: { role: string; content: string }[], max_tokens: number, temperature: number }): Promise<{ response: string }>;
+}
+
 interface Env {
   TESLA_DB: D1Database;
   MEDIA_BUCKET: R2Bucket;
   AUTH_TOKENS: KVNamespace;
   TELEMETRY_ANALYTICS: AnalyticsEngine;
-  DATA_PROCESSOR: Queue;
+  DATA_PROCESSOR?: Queue; // Optional queue
   AI: Ai; // Cloudflare AI binding
   TESSIE_API_KEY: string;
   TESLA_VIN: string;
@@ -1470,20 +1474,48 @@ app.post('/api/v1/admin/backfill-historical-data', async (c) => {
     // Process each drive from Tessie
     for (const drive of drivesData.results || []) {
       try {
+        // Enhance addresses with geocoding if missing or limited
+        let startAddress = drive.starting_location || drive.start_address;
+        let endAddress = drive.ending_location || drive.end_address;
+        
+        // Geocode start address if missing or too generic and we have coordinates
+        if ((!startAddress || startAddress.length < 10) && drive.start_latitude && drive.start_longitude) {
+          try {
+            const geocodedStart = await geocodeCoordinates(drive.start_latitude, drive.start_longitude);
+            if (geocodedStart && geocodedStart.length > 5 && !geocodedStart.match(/^\d+\.\d+,\s*\d+\.\d+$/)) {
+              startAddress = geocodedStart;
+            }
+          } catch (error) {
+            console.warn('Start address geocoding failed:', error);
+          }
+        }
+        
+        // Geocode end address if missing or too generic and we have coordinates
+        if ((!endAddress || endAddress.length < 10) && drive.end_latitude && drive.end_longitude) {
+          try {
+            const geocodedEnd = await geocodeCoordinates(drive.end_latitude, drive.end_longitude);
+            if (geocodedEnd && geocodedEnd.length > 5 && !geocodedEnd.match(/^\d+\.\d+,\s*\d+\.\d+$/)) {
+              endAddress = geocodedEnd;
+            }
+          } catch (error) {
+            console.warn('End address geocoding failed:', error);
+          }
+        }
+        
         const driveRecord = {
           tessie_id: drive.id,
           vehicle_id: 'midnight-shadow',
           journey_id: 'continental-usa-2025',
           started_at: new Date(drive.started_at * 1000).toISOString(),
           ended_at: new Date(drive.ended_at * 1000).toISOString(),
-          start_address: drive.starting_location || drive.start_address,
-          end_address: drive.ending_location || drive.end_address,
-          start_latitude: drive.start_latitude,
-          start_longitude: drive.start_longitude,
-          end_latitude: drive.end_latitude,
-          end_longitude: drive.end_longitude,
-          distance_miles: drive.distance_miles,
-          duration_minutes: drive.ended_at && drive.started_at ? 
+          start_address: startAddress || null,
+          end_address: endAddress || null,
+          start_latitude: drive.start_latitude || 0,
+          start_longitude: drive.start_longitude || 0,
+          end_latitude: drive.end_latitude || 0,
+          end_longitude: drive.end_longitude || 0,
+          distance_miles: drive.distance_miles || 0,
+          duration_minutes: (drive.ended_at && drive.started_at) ? 
             Math.round((drive.ended_at - drive.started_at) / 60) : 0
         };
 
@@ -1492,7 +1524,35 @@ app.post('/api/v1/admin/backfill-historical-data', async (c) => {
           SELECT id FROM drives WHERE tessie_id = ?
         `).bind(drive.id).first();
 
-        if (existingDrive) {
+        if (!existingDrive) {
+          // Insert new drive with corrected timestamp handling
+          const startedAt = new Date(drive.started_at * 1000).toISOString();
+          const endedAt = new Date(drive.ended_at * 1000).toISOString();
+          
+          await db.prepare(`
+            INSERT INTO drives (
+              tessie_id, vehicle_id, journey_id, started_at, ended_at,
+              start_address, end_address, start_latitude, start_longitude,
+              end_latitude, end_longitude, distance_miles, duration_minutes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).bind(
+            drive.id,
+            'midnight-shadow',
+            'continental-usa-2025',
+            startedAt,
+            endedAt,
+            drive.starting_location || '',
+            drive.ending_location || '',
+            drive.starting_latitude || 0,
+            drive.starting_longitude || 0,
+            drive.ending_latitude || 0,
+            drive.ending_longitude || 0,
+            drive.distance_miles || 0,
+            drive.duration_minutes || 0
+          ).run();
+          
+          newDrives++;
+        } else {
           // Update existing drive with any missing data (only existing columns)
           await db.prepare(`
             UPDATE drives SET
@@ -1501,32 +1561,20 @@ app.post('/api/v1/admin/backfill-historical-data', async (c) => {
               distance_miles = ?, duration_minutes = ?
             WHERE tessie_id = ?
           `).bind(
-            driveRecord.started_at, driveRecord.ended_at,
-            driveRecord.start_address, driveRecord.end_address,
-            driveRecord.start_latitude, driveRecord.start_longitude,
-            driveRecord.end_latitude, driveRecord.end_longitude,
-            driveRecord.distance_miles, driveRecord.duration_minutes,
+            driveRecord.started_at,
+            driveRecord.ended_at,
+            driveRecord.start_address || null,
+            driveRecord.end_address || null,
+            driveRecord.start_latitude || 0,
+            driveRecord.start_longitude || 0,
+            driveRecord.end_latitude || 0,
+            driveRecord.end_longitude || 0,
+            driveRecord.distance_miles || 0,
+            driveRecord.duration_minutes || 0,
             drive.id
           ).run();
+          
           updatedDrives++;
-        } else {
-          // Insert new drive
-          await db.prepare(`
-            INSERT INTO drives (
-              tessie_id, vehicle_id, journey_id, started_at, ended_at,
-              start_address, end_address, start_latitude, start_longitude,
-              end_latitude, end_longitude, distance_miles, duration_minutes,
-              created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-          `).bind(
-            driveRecord.tessie_id, driveRecord.vehicle_id, driveRecord.journey_id,
-            driveRecord.started_at, driveRecord.ended_at,
-            driveRecord.start_address, driveRecord.end_address,
-            driveRecord.start_latitude, driveRecord.start_longitude,
-            driveRecord.end_latitude, driveRecord.end_longitude,
-            driveRecord.distance_miles, driveRecord.duration_minutes
-          ).run();
-          newDrives++;
         }
       } catch (driveError) {
         console.error(`Failed to process drive ${drive.id}:`, driveError);
@@ -1570,26 +1618,6 @@ app.post('/api/v1/admin/update-journey-data', async (c) => {
     }
 
     const tessieData = await fetchTessieData(tessieApiKey);
-    const currentOdometer = (tessieData?.state as any)?.vehicle_state?.odometer || 71259;
-    
-    // Calculate correct trip miles (current - start odometer from June 1, 2025)
-    const JOURNEY_START_ODOMETER = 58046;  // Actual odometer reading on 2025-06-01 08:00:00
-    const totalMiles = Math.round(currentOdometer - JOURNEY_START_ODOMETER);
-    
-    // Get states count from states_visited table
-    const statesResult = await db.prepare(`
-      SELECT COUNT(DISTINCT state_name) as count
-      FROM states_visited 
-      WHERE journey_id = 'continental-usa-2025'
-    `).first();
-    
-    const statesCount = statesResult?.count || 30;
-    
-    // Update journey table with correct values
-    await db.prepare(`
-      UPDATE journeys 
-      SET total_miles = ?, 
-          states_visited = ?,
           updated_at = datetime('now')
       WHERE id = 'continental-usa-2025'
     `).bind(totalMiles, statesCount).run();
@@ -1992,8 +2020,8 @@ async function handleUnifiedData(c: any) {
 
     console.log('🔄 Fetching fresh data from Tessie API and aggregating in D1...');
 
-    // Fetch fresh data from Tessie API
-    const tessieData = await fetchTessieData(c.env.TESSIE_API_KEY);
+    // Fetch fresh data from Tessie API with rate limiting
+    const tessieData = await fetchTessieData(c.env.TESSIE_API_KEY, c.env.TESLA_DB);
     
     // Process and store in D1 using enhanced analytics
     const unifiedData = await processAndStoreInD1Enhanced(c.env.TESLA_DB, tessieData);
@@ -2046,15 +2074,20 @@ async function handleUnifiedData(c: any) {
       VALUES (?, ?, datetime('now', '+30 seconds'), 'unified_data')
     `).bind(cacheKey, JSON.stringify(unifiedData)).run();
     
-    // Queue background processing for data enrichment
+    // Queue background processing for data enrichment (only in production)
     try {
-      await c.env.DATA_PROCESSOR.send({
-        type: 'enrich_drive_data',
-        timestamp: Date.now(),
-        data: { lastSync: new Date().toISOString() }
-      });
+      if (c.env.DATA_PROCESSOR && c.env.DATA_PROCESSOR.send) {
+        await c.env.DATA_PROCESSOR.send({
+          type: 'enrich_drive_data',
+          timestamp: Date.now(),
+          data: { lastSync: new Date().toISOString() }
+        });
+      } else {
+        console.log('🔄 Queue not available in development - skipping background processing');
+      }
     } catch (error) {
-      console.error('Queue send failed:', error);
+      console.log('⚠️ Queue processing failed:', error);
+      // Continue execution - queue is not critical
     }
 
     return c.json(unifiedData);
@@ -2179,6 +2212,16 @@ async function processHistoricalJourneyData(db: D1Database, drives: any[], charg
       waypoint_type TEXT, -- 'start', 'end', 'charging', 'overnight'
       timestamp TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+  
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS api_rate_limits (
+      endpoint TEXT PRIMARY KEY,
+      last_call_time TEXT,
+      call_count INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
   
@@ -2376,7 +2419,59 @@ async function processHistoricalJourneyData(db: D1Database, drives: any[], charg
 }
 
 // Helper function to fetch data from Tessie API
-async function fetchTessieData(apiKey: string) {
+// Rate limiting for Tessie API calls (5-10 seconds for development, 120-180 for production)
+const isDevelopment = globalThis.location?.hostname === 'localhost' || !globalThis.location;
+const TESSIE_RATE_LIMIT_MIN = isDevelopment ? 5 * 1000 : 120 * 1000; // 5s dev / 120s prod
+const TESSIE_RATE_LIMIT_MAX = isDevelopment ? 10 * 1000 : 180 * 1000; // 10s dev / 180s prod
+
+async function checkAndUpdateRateLimit(db: D1Database, apiEndpoint: string): Promise<boolean> {
+  try {
+    // Check last API call time for this endpoint
+    const lastCall = await db.prepare(`
+      SELECT last_call_time, call_count 
+      FROM api_rate_limits 
+      WHERE endpoint = ? AND DATE(last_call_time) = DATE('now')
+    `).bind(apiEndpoint).first();
+    
+    const now = Date.now();
+    const randomInterval = TESSIE_RATE_LIMIT_MIN + Math.random() * (TESSIE_RATE_LIMIT_MAX - TESSIE_RATE_LIMIT_MIN);
+    
+    if (lastCall?.last_call_time) {
+      const timeSinceLastCall = now - new Date(lastCall.last_call_time).getTime();
+      if (timeSinceLastCall < randomInterval) {
+        console.log(`⏳ Rate limit: ${Math.ceil((randomInterval - timeSinceLastCall) / 1000)}s remaining for ${apiEndpoint}`);
+        return false; // Rate limited
+      }
+    }
+    
+    // Update rate limit record
+    await db.prepare(`
+      INSERT OR REPLACE INTO api_rate_limits (endpoint, last_call_time, call_count)
+      VALUES (?, datetime('now'), COALESCE((SELECT call_count FROM api_rate_limits WHERE endpoint = ? AND DATE(last_call_time) = DATE('now')), 0) + 1)
+    `).bind(apiEndpoint, apiEndpoint).run();
+    
+    return true; // Allowed to proceed
+  } catch (error) {
+    console.warn('Rate limit check failed:', error);
+    return true; // Default to allowing the call if rate limit check fails
+  }
+}
+
+async function fetchTessieData(apiKey: string, db?: D1Database) {
+  console.log('API Key provided:', apiKey ? 'YES (length: ' + apiKey.length + ')' : 'NO/UNDEFINED');
+  
+  if (!apiKey) {
+    throw new Error('Tessie API key not configured');
+  }
+
+  // Check rate limits if database is available
+  if (db) {
+    const vehiclesAllowed = await checkAndUpdateRateLimit(db, 'tessie-vehicles');
+    if (!vehiclesAllowed) {
+      throw new Error('Rate limited: please wait before making another request');
+    }
+  }
+  
   const vehiclesRes = await fetch('https://api.tessie.com/vehicles', {
     headers: { Authorization: `Bearer ${apiKey}` }
   });
@@ -2392,29 +2487,45 @@ async function fetchTessieData(apiKey: string) {
   let recentDrives = null;
   if (vehicles.results?.length > 0) {
     const vin = vehicles.results[0].vin;
-    try {
-      const stateRes = await fetch(`https://api.tessie.com/${vin}/state`, {
-        headers: { Authorization: `Bearer ${apiKey}` }
-      });
-      if (stateRes.ok) {
-        state = await stateRes.json();
+    
+    // Rate limit state API call
+    if (db) {
+      const stateAllowed = await checkAndUpdateRateLimit(db, 'tessie-state');
+      if (stateAllowed) {
+        try {
+          const stateRes = await fetch(`https://api.tessie.com/${vin}/state`, {
+            headers: { Authorization: `Bearer ${apiKey}` }
+          });
+          if (stateRes.ok) {
+            state = await stateRes.json();
+          }
+        } catch (error) {
+          console.warn('Failed to fetch vehicle state:', error);
+        }
+      } else {
+        console.log('⏳ State API rate limited, using cached data');
       }
-    } catch (error) {
-      console.warn('Failed to fetch vehicle state:', error);
     }
 
-    // Fetch recent drives from last 30 days
-    try {
-      const endDate = new Date().toISOString();
-      const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const drivesRes = await fetch(`https://api.tessie.com/${vin}/drives?start=${startDate}&end=${endDate}&limit=20`, {
-        headers: { Authorization: `Bearer ${apiKey}` }
-      });
-      if (drivesRes.ok) {
-        recentDrives = await drivesRes.json();
+    // Rate limit drives API call
+    if (db) {
+      const drivesAllowed = await checkAndUpdateRateLimit(db, 'tessie-drives');
+      if (drivesAllowed) {
+        try {
+          const endDate = new Date().toISOString();
+          const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+          const drivesRes = await fetch(`https://api.tessie.com/${vin}/drives?start=${startDate}&end=${endDate}&limit=20`, {
+            headers: { Authorization: `Bearer ${apiKey}` }
+          });
+          if (drivesRes.ok) {
+            recentDrives = await drivesRes.json();
+          }
+        } catch (error) {
+          console.warn('Failed to fetch recent drives:', error);
+        }
+      } else {
+        console.log('⏳ Drives API rate limited, using cached data');
       }
-    } catch (error) {
-      console.warn('Failed to fetch recent drives:', error);
     }
   }
 
@@ -2462,33 +2573,110 @@ async function processAndStoreInD1Enhanced(db: D1Database, tessieData: any) {
       */
     }
     
-    // Process recent drives with enhanced analytics - temporarily disabled
+    // Process recent drives with direct D1 insertion (enhanced processor disabled)
     if (liveDrives?.results) {
-      /*
+      console.log(`🚗 Processing ${liveDrives.results.length} drives from Tessie API`);
+      
       for (const drive of liveDrives.results) {
-        await processor.processDriveData({
-          id: drive.id,
-          vehicle_id: vehicle.vin || 'midnight-shadow',
-          journey_id: 'continental-usa-2025',
-          started_at: drive.started_at,
-          ended_at: drive.ended_at,
-          distance_miles: drive.distance_miles,
-          duration_minutes: drive.duration_minutes,
-          start_address: drive.start_address,
-          end_address: drive.end_address,
-          start_latitude: drive.start_latitude,
-          start_longitude: drive.start_longitude,
-          end_latitude: drive.end_latitude,
-          end_longitude: drive.end_longitude,
-          max_speed: drive.max_speed,
-          energy_used_kwh: drive.energy_used || 0,
-          start_battery_level: drive.start_battery_level,
-          end_battery_level: drive.end_battery_level,
-          start_odometer: drive.start_odometer,
-          end_odometer: drive.end_odometer
-        });
+        try {
+          // Enhance addresses with geocoding if missing or limited
+          let startAddress = drive.starting_location || drive.start_address;
+          let endAddress = drive.ending_location || drive.end_address;
+          
+          // Geocode start address if missing or too generic and we have coordinates
+          if ((!startAddress || startAddress.length < 10) && drive.start_latitude && drive.start_longitude) {
+            try {
+              const geocodedStart = await geocodeCoordinates(drive.start_latitude, drive.start_longitude);
+              if (geocodedStart) {
+                startAddress = geocodedStart;
+              }
+            } catch (error) {
+              console.warn('Start address geocoding failed:', error);
+            }
+          }
+          
+          // Geocode end address if missing or too generic and we have coordinates
+          if ((!endAddress || endAddress.length < 10) && drive.end_latitude && drive.end_longitude) {
+            try {
+              const geocodedEnd = await geocodeCoordinates(drive.end_latitude, drive.end_longitude);
+              if (geocodedEnd) {
+                endAddress = geocodedEnd;
+              }
+            } catch (error) {
+              console.warn('End address geocoding failed:', error);
+            }
+          }
+          
+          const driveRecord = {
+            tessie_id: drive.id,
+            vehicle_id: vehicle.vin || 'midnight-shadow',
+            journey_id: 'continental-usa-2025',
+            started_at: drive.started_at ? new Date(drive.started_at * 1000).toISOString() : new Date().toISOString(),
+            ended_at: drive.ended_at ? new Date(drive.ended_at * 1000).toISOString() : new Date().toISOString(),
+            start_address: startAddress || null,
+            end_address: endAddress || null,
+            start_latitude: drive.start_latitude || 0,
+            start_longitude: drive.start_longitude || 0,
+            end_latitude: drive.end_latitude || 0,
+            end_longitude: drive.end_longitude || 0,
+            distance_miles: drive.distance_miles || 0,
+            duration_minutes: (drive.ended_at && drive.started_at) ? 
+              Math.round((drive.ended_at - drive.started_at) / 60) : 0
+          };
+
+          // Check if drive already exists
+          const existingDrive = await db.prepare(`
+            SELECT id FROM drives WHERE tessie_id = ?
+          `).bind(drive.id).first();
+
+          if (!existingDrive) {
+            // Insert new drive with validated data
+            await db.prepare(`
+              INSERT INTO drives (
+                tessie_id, vehicle_id, journey_id, started_at, ended_at,
+                start_address, end_address, distance_miles, duration_minutes,
+                start_latitude, start_longitude, end_latitude, end_longitude,
+                created_at, updated_at
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+            `).bind(
+              driveRecord.tessie_id || null,
+              driveRecord.vehicle_id || null,
+              driveRecord.journey_id || null,
+              driveRecord.started_at || null,
+              driveRecord.ended_at || null,
+              driveRecord.start_address || null,
+              driveRecord.end_address || null,
+              driveRecord.distance_miles || 0,
+              driveRecord.duration_minutes || 0,
+              driveRecord.start_latitude || 0,
+              driveRecord.start_longitude || 0,
+              driveRecord.end_latitude || 0,
+              driveRecord.end_longitude || 0
+            ).run();
+            
+            console.log(`✅ Inserted drive: ${driveRecord.start_address || 'Unknown'} → ${driveRecord.end_address || 'Unknown'}`);
+          } else {
+            // Update existing drive with potentially new geocoded addresses
+            await db.prepare(`
+              UPDATE drives SET 
+                start_address = ?, end_address = ?,
+                distance_miles = ?, duration_minutes = ?,
+                updated_at = datetime('now')
+              WHERE tessie_id = ?
+            `).bind(
+              driveRecord.start_address || null,
+              driveRecord.end_address || null,
+              driveRecord.distance_miles || 0,
+              driveRecord.duration_minutes || 0,
+              drive.id
+            ).run();
+            
+            console.log(`🔄 Updated drive: ${driveRecord.start_address || 'Unknown'} → ${driveRecord.end_address || 'Unknown'}`);
+          }
+        } catch (error) {
+          console.error(`❌ Failed to process drive ${drive.id}:`, error);
+        }
       }
-      */
     }
     
     // Continue with existing logic for backward compatibility
@@ -2530,12 +2718,13 @@ async function processAndStoreInD1(db: D1Database, tessieData: any) {
   if (currentState) {
     await db.prepare(`
       INSERT OR REPLACE INTO vehicle_state (
-        vehicle_id, battery_level, battery_range, charging_state,
+        vehicle_id, vin, battery_level, battery_range, charging_state,
         latitude, longitude, heading, speed, odometer,
         inside_temp, outside_temp, timestamp, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
     `).bind(
       vehicle.vin || 'midnight-shadow',
+      vehicle.vin || 'UNKNOWN_VIN',
       currentState.charge_state?.battery_level || 0,
       currentState.charge_state?.battery_range || 0,
       currentState.charge_state?.charging_state || 'Unknown',
@@ -2827,6 +3016,70 @@ async function processAndStoreInD1(db: D1Database, tessieData: any) {
   };
 }
 
+// Helper function for reverse geocoding (coordinates to address)
+async function geocodeCoordinates(lat: number, lng: number): Promise<string> {
+  try {
+    // Use Nominatim (OpenStreetMap) free geocoding service
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
+      {
+        headers: {
+          'User-Agent': 'ContinentalUSA-Tesla-Tracker/1.0 (contact@example.com)'
+        }
+      }
+    );
+    
+    if (!response.ok) {
+      console.warn(`Geocoding failed: ${response.status}`);
+      return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    }
+    
+    const data = await response.json();
+    
+    if (data.display_name) {
+      // Parse the address to get a clean, readable format
+      const address = data.address;
+      if (address) {
+        const parts = [];
+        
+        if (address.house_number && address.road) {
+          parts.push(`${address.house_number} ${address.road}`);
+        } else if (address.road) {
+          parts.push(address.road);
+        } else if (address.amenity) {
+          parts.push(address.amenity);
+        } else if (address.shop) {
+          parts.push(address.shop);
+        }
+        
+        if (address.city) {
+          parts.push(address.city);
+        } else if (address.town) {
+          parts.push(address.town);
+        } else if (address.village) {
+          parts.push(address.village);
+        }
+        
+        if (address.state) {
+          parts.push(address.state);
+        }
+        
+        if (parts.length > 0) {
+          return parts.join(', ');
+        }
+      }
+      
+      // Fallback to display_name but clean it up
+      return data.display_name.split(',').slice(0, 3).join(', ');
+    }
+    
+    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  } catch (error) {
+    console.warn('Geocoding error:', error);
+    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  }
+}
+
 // Helper function for state detection
 async function detectStateFromCoordinates(lat: number, lng: number): Promise<string> {
   // More comprehensive state boundaries for all continental US states
@@ -3089,9 +3342,9 @@ app.get('/api/v1/config', async (c) => {
         liveTeslaData: !!c.env.TESSIE_API_KEY,
         mapIntegration: !!c.env.MAPBOX_ACCESS_TOKEN,
         realtimeUpdates: true,
-        aiFeatures: !!c.env.OPENAI_API_KEY,
-        routeOptimization: !!c.env.OPENAI_API_KEY,
-        journalGeneration: !!c.env.OPENAI_API_KEY
+        aiFeatures: !!c.env.AI,
+        routeOptimization: !!c.env.AI,
+        journalGeneration: !!c.env.AI
       },
       updateInterval: 30000,
       mapboxToken: c.env.MAPBOX_ACCESS_TOKEN || null
@@ -3122,6 +3375,188 @@ app.all('*', (c) => {
       'GET /api/docs'
     ]
   }, 404);
+});
+
+// Historical data import endpoint - Import data from June 1st, 2025 onwards
+app.post('/api/v1/data/historical-import', async (c) => {
+  try {
+    const { startDate, endDate, vehicleVin, force = false } = await c.req.json();
+    
+    const tessieApiKey = c.env.TESSIE_API_KEY;
+    if (!tessieApiKey) {
+      return c.json({ error: 'TESSIE_API_KEY not configured' }, 500);
+    }
+    
+    // Default to June 1st, 2025 if no start date provided
+    const importStartDate = startDate || '2025-06-01T00:00:00Z';
+    const importEndDate = endDate || new Date().toISOString();
+    
+    console.log(`📅 Starting historical import from ${importStartDate} to ${importEndDate}`);
+    
+    // Check if historical import has already been run
+    const importCheck = await c.env.TESLA_DB.prepare(`
+      SELECT * FROM historical_imports 
+      WHERE start_date = ? AND status = 'completed'
+    `).bind(importStartDate).first();
+    
+    if (importCheck && !force) {
+      return c.json({
+        message: 'Historical import already completed for this date range',
+        existingImport: importCheck,
+        useForce: 'Add "force": true to re-run import'
+      });
+    }
+    
+    // Create historical imports tracking table
+    await c.env.TESLA_DB.prepare(`
+      CREATE TABLE IF NOT EXISTS historical_imports (
+        id TEXT PRIMARY KEY DEFAULT (hex(randomblob(16))),
+        start_date TEXT,
+        end_date TEXT,
+        vehicle_vin TEXT,
+        status TEXT DEFAULT 'running',
+        drives_imported INTEGER DEFAULT 0,
+        charges_imported INTEGER DEFAULT 0,
+        error_message TEXT,
+        started_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        completed_at TEXT
+      )
+    `).run();
+    
+    // Start import record
+    const importId = crypto.randomUUID();
+    await c.env.TESLA_DB.prepare(`
+      INSERT INTO historical_imports (id, start_date, end_date, vehicle_vin, status)
+      VALUES (?, ?, ?, ?, 'running')
+    `).bind(importId, importStartDate, importEndDate, vehicleVin || c.env.TESLA_VIN).run();
+    
+    let totalDrives = 0;
+    let totalCharges = 0;
+    let page = 1;
+    const perPage = 50;
+    let hasMoreData = true;
+    
+    try {
+      while (hasMoreData) {
+        console.log(`📦 Importing page ${page}, total drives so far: ${totalDrives}`);
+        
+        // Rate limit check
+        const drivesAllowed = await checkAndUpdateRateLimit(c.env.TESLA_DB, 'tessie-historical-drives');
+        if (!drivesAllowed) {
+          await new Promise(resolve => setTimeout(resolve, 180000)); // Wait 3 minutes
+          continue;
+        }
+        
+        // Fetch historical drives
+        const drivesUrl = `https://api.tessie.com/${vehicleVin || c.env.TESLA_VIN}/drives?start=${importStartDate}&end=${importEndDate}&page=${page}&per_page=${perPage}`;
+        const drivesResponse = await fetch(drivesUrl, {
+          headers: { 'Authorization': `Bearer ${tessieApiKey}` }
+        });
+        
+        if (!drivesResponse.ok) {
+          throw new Error(`Historical drives API error: ${drivesResponse.status}`);
+        }
+        
+        const drivesData = await drivesResponse.json();
+        const drives = drivesData.results || [];
+        
+        if (drives.length === 0) {
+          hasMoreData = false;
+          break;
+        }
+        
+        // Process drives with geocoding
+        for (const drive of drives) {
+          try {
+            // Enhanced address geocoding
+            let startAddress = drive.starting_location || drive.start_address;
+            let endAddress = drive.ending_location || drive.end_address;
+            
+            if ((!startAddress || startAddress.length < 10) && drive.start_latitude && drive.start_longitude) {
+              startAddress = await geocodeCoordinates(drive.start_latitude, drive.start_longitude);
+            }
+            
+            if ((!endAddress || endAddress.length < 10) && drive.end_latitude && drive.end_longitude) {
+              endAddress = await geocodeCoordinates(drive.end_latitude, drive.end_longitude);
+            }
+            
+            // Insert or update drive
+            await c.env.TESLA_DB.prepare(`
+              INSERT OR REPLACE INTO drives (
+                tessie_id, vehicle_id, journey_id, started_at, ended_at,
+                start_address, end_address, start_latitude, start_longitude,
+                end_latitude, end_longitude, distance_miles, duration_minutes,
+                created_at
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            `).bind(
+              drive.id, 'midnight-shadow', 'continental-usa-2025',
+              new Date(drive.started_at * 1000).toISOString(),
+              new Date(drive.ended_at * 1000).toISOString(),
+              startAddress, endAddress,
+              drive.start_latitude, drive.start_longitude,
+              drive.end_latitude, drive.end_longitude,
+              drive.distance_miles,
+              Math.round((drive.ended_at - drive.started_at) / 60)
+            ).run();
+            
+            totalDrives++;
+          } catch (driveError) {
+            console.warn(`Failed to process drive ${drive.id}:`, driveError);
+          }
+        }
+        
+        // Update progress
+        await c.env.TESLA_DB.prepare(`
+          UPDATE historical_imports 
+          SET drives_imported = ?, status = 'running'
+          WHERE id = ?
+        `).bind(totalDrives, importId).run();
+        
+        page++;
+        
+        // Safety check - don't run forever
+        if (page > 1000) {
+          throw new Error('Import exceeded maximum page limit (1000)');
+        }
+      }
+      
+      // Mark import as completed
+      await c.env.TESLA_DB.prepare(`
+        UPDATE historical_imports 
+        SET status = 'completed', drives_imported = ?, charges_imported = ?, completed_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).bind(totalDrives, totalCharges, importId).run();
+      
+      return c.json({
+        success: true,
+        importId: importId,
+        summary: {
+          drivesImported: totalDrives,
+          chargesImported: totalCharges,
+          dateRange: { start: importStartDate, end: importEndDate },
+          pagesProcessed: page - 1
+        },
+        message: `Historical import completed: ${totalDrives} drives imported`
+      });
+      
+    } catch (importError) {
+      // Mark import as failed
+      await c.env.TESLA_DB.prepare(`
+        UPDATE historical_imports 
+        SET status = 'failed', error_message = ?, completed_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).bind(importError.message, importId).run();
+      
+      throw importError;
+    }
+    
+  } catch (error) {
+    console.error('Historical import failed:', error);
+    return c.json({ 
+      error: 'Historical import failed', 
+      details: error.message 
+    }, 500);
+  }
 });
 
 // Scheduled function for Cloudflare Cron Triggers
