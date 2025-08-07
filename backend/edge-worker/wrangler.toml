@@ -96,6 +96,10 @@ name = "awhittlewandering-api-dev"
 # All API credentials are stored as SECRETS for security in development
 # Run ./setup-tessie-secrets.sh to configure all required APIs
 
+# AI Configuration - Using Cloudflare AI Gateway
+AI_GATEWAY_ID = "awhittlewandering-ai"
+AI_MODEL_NAME = "@cf/meta/llama-3.1-8b-instruct"
+
 # Development D1 Database (same as production for simplicity)
 [[env.development.d1_databases]]
 binding = "TESLA_DB"
@@ -115,6 +119,10 @@ id = "7838e32d8ad04855b13eb2d9aa4f9811"
 # Development Analytics Engine
 [[env.development.analytics_engine_datasets]]
 binding = "TELEMETRY_ANALYTICS"
+
+# Cloudflare AI for development
+[env.development.ai]
+binding = "AI"
 
 [env.production]
 name = "awhittlewandering-api"
