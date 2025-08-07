@@ -3,6 +3,8 @@
  * Comprehensive data processing for all Tessie API fields with scalable architecture
  */
 
+import { D1Database } from './types/env';
+
 interface EnhancedVehicleState {
   // Core vehicle data
   battery_level: number;
