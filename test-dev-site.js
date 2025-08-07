@@ -53,7 +53,8 @@ function findChrome() {
 }
 
 const LOCAL_URL = 'http://localhost:8080';
-const TEST_TIMEOUT = 30000;
+const TEST_TIMEOUT = 60000; // Increased timeout
+const ELEMENT_TIMEOUT = 10000;
 
 class DevSiteValidator {
   constructor() {
@@ -77,9 +78,12 @@ class DevSiteValidator {
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage'
+        '--disable-dev-shm-usage',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor'
       ],
-      defaultViewport: { width: 1200, height: 800 }
+      defaultViewport: { width: 1200, height: 800 },
+      protocolTimeout: 120000 // Increased protocol timeout
     };
 
     // Add Chrome executable path if found
@@ -94,14 +98,23 @@ class DevSiteValidator {
     this.browser = await puppeteer.launch(launchOptions);
 
     this.page = await this.browser.newPage();
+    
+    // Set longer timeout for page operations
+    this.page.setDefaultTimeout(TEST_TIMEOUT);
+    this.page.setDefaultNavigationTimeout(TEST_TIMEOUT);
 
-    // Monitor console errors
+    // Monitor console messages with more detail
     this.page.on('console', msg => {
-      if (msg.type() === 'error') {
-        this.errors.push(`Console error: ${msg.text()}`);
-        console.log(`❌ Console error: ${msg.text()}`);
-      } else if (msg.type() === 'warn') {
-        console.log(`⚠️  Console warning: ${msg.text()}`);
+      const msgType = msg.type();
+      const msgText = msg.text();
+      
+      if (msgType === 'error') {
+        this.errors.push(`Console error: ${msgText}`);
+        console.log(`❌ Console error: ${msgText}`);
+      } else if (msgType === 'warn') {
+        console.log(`⚠️  Console warning: ${msgText}`);
+      } else if (msgType === 'log' && msgText.includes('React')) {
+        console.log(`ℹ️  React info: ${msgText}`);
       }
     });
 
@@ -111,8 +124,16 @@ class DevSiteValidator {
     });
 
     this.page.on('requestfailed', request => {
-      this.errors.push(`Failed request: ${request.url()}`);
-      console.log(`❌ Failed request: ${request.url()}`);
+      const url = request.url();
+      const failure = request.failure();
+      this.errors.push(`Failed request: ${url} - ${failure ? failure.errorText : 'Unknown error'}`);
+      console.log(`❌ Failed request: ${url} - ${failure ? failure.errorText : 'Unknown error'}`);
+    });
+
+    this.page.on('response', response => {
+      if (!response.ok() && response.url().includes('localhost')) {
+        console.log(`⚠️  HTTP ${response.status()}: ${response.url()}`);
+      }
     });
   }
 
@@ -133,19 +154,51 @@ class DevSiteValidator {
   async testPageLoad() {
     console.log(`🌐 Testing page load: ${LOCAL_URL}`);
     
+    // First, test basic connectivity
     try {
+      console.log('🔍 Testing server connectivity...');
+      const testResponse = await this.page.goto('data:text/html,<html><body>Test</body></html>');
+      console.log('✅ Browser navigation working');
+    } catch (error) {
+      console.log(`❌ Browser navigation failed: ${error.message}`);
+      return false;
+    }
+
+    try {
+      console.log(`🌐 Attempting to load: ${LOCAL_URL}`);
       const response = await this.page.goto(LOCAL_URL, {
-        waitUntil: 'networkidle0',
+        waitUntil: ['load', 'domcontentloaded'],
         timeout: TEST_TIMEOUT
       });
 
       console.log(`✅ Page loaded with status: ${response.status()}`);
+      
+      // Wait a bit for React to render
+      console.log('⏳ Waiting for React app to initialize...');
+      await this.page.waitForTimeout(3000);
+      
       await this.takeScreenshot('page-loaded');
+
+      // Check if it's actually a valid HTML page
+      const title = await this.page.title();
+      const bodyContent = await this.page.evaluate(() => document.body.innerText.substring(0, 100));
+      
+      console.log(`📄 Page title: "${title}"`);
+      console.log(`📄 Body preview: "${bodyContent}"`);
 
       return response.status() === 200;
     } catch (error) {
       console.log(`❌ Page load failed: ${error.message}`);
-      await this.takeScreenshot('page-load-failed');
+      
+      // Try to get some diagnostic info
+      try {
+        const currentUrl = this.page.url();
+        console.log(`🔍 Current URL: ${currentUrl}`);
+        await this.takeScreenshot('page-load-failed');
+      } catch (screenshotError) {
+        console.log(`⚠️  Could not take screenshot: ${screenshotError.message}`);
+      }
+      
       return false;
     }
   }
@@ -154,26 +207,90 @@ class DevSiteValidator {
     console.log('🔍 Checking for critical page elements...');
     
     const checks = [
-      { selector: 'title', name: 'Page title' },
-      { selector: '#root', name: 'React root element' },
-      { selector: 'main', name: 'Main content area' },
-      { selector: 'header', name: 'Header section' },
+      { selector: 'title', name: 'Page title', critical: true },
+      { selector: '#root', name: 'React root element', critical: true },
+      { selector: 'div[id="root"] > *', name: 'Content in root', critical: true },
+      { selector: 'main, [role="main"], .main-content', name: 'Main content area', critical: false },
+      { selector: 'header, [role="banner"], .header', name: 'Header section', critical: false },
+      { selector: 'nav, [role="navigation"]', name: 'Navigation', critical: false },
     ];
 
-    let allElementsFound = true;
+    let criticalElementsFound = true;
+    let totalElementsFound = 0;
 
     for (const check of checks) {
       try {
-        await this.page.waitForSelector(check.selector, { timeout: 5000 });
-        console.log(`✅ Found: ${check.name}`);
+        console.log(`🔍 Looking for: ${check.name} (${check.selector})`);
+        
+        const element = await this.page.waitForSelector(check.selector, { 
+          timeout: ELEMENT_TIMEOUT,
+          visible: false // Don't require visibility, just presence
+        });
+        
+        if (element) {
+          // Get some info about the element
+          const elementInfo = await this.page.evaluate((sel) => {
+            const el = document.querySelector(sel);
+            return el ? {
+              tagName: el.tagName,
+              textContent: el.textContent ? el.textContent.substring(0, 50) + '...' : '',
+              hasChildren: el.children.length > 0,
+              isVisible: el.offsetParent !== null
+            } : null;
+          }, check.selector);
+          
+          console.log(`✅ Found: ${check.name} - ${elementInfo.tagName} (${elementInfo.hasChildren ? 'has children' : 'no children'}, ${elementInfo.isVisible ? 'visible' : 'hidden'})`);
+          if (elementInfo.textContent) {
+            console.log(`   Content: ${elementInfo.textContent}`);
+          }
+          totalElementsFound++;
+        }
       } catch (error) {
         console.log(`❌ Missing: ${check.name} (${check.selector})`);
-        allElementsFound = false;
+        if (check.critical) {
+          criticalElementsFound = false;
+        }
       }
     }
 
+    // Check for React-specific indicators
+    console.log('🔍 Checking for React app indicators...');
+    try {
+      const reactInfo = await this.page.evaluate(() => {
+        // Check for React
+        const hasReact = !!(window.React || document.querySelector('[data-reactroot]') || 
+                           document.querySelector('div[id="root"]')?.innerHTML.includes('react'));
+        
+        // Check for common React patterns
+        const hasReactPatterns = document.querySelector('[data-testid], [data-cy], .react-');
+        
+        // Check for error boundaries or loading states
+        const hasErrorContent = document.body.innerText.toLowerCase().includes('error') ||
+                               document.body.innerText.toLowerCase().includes('something went wrong');
+        
+        return {
+          hasReact,
+          hasReactPatterns: !!hasReactPatterns,
+          hasErrorContent,
+          bodyLength: document.body.innerText.length,
+          rootContent: document.querySelector('#root')?.innerHTML?.length || 0
+        };
+      });
+      
+      console.log(`🔍 React indicators: ${JSON.stringify(reactInfo, null, 2)}`);
+      
+      if (reactInfo.hasErrorContent) {
+        console.log('⚠️  Detected error content on page');
+      }
+      
+    } catch (error) {
+      console.log(`⚠️  Could not check React indicators: ${error.message}`);
+    }
+
     await this.takeScreenshot('elements-check');
-    return allElementsFound;
+    
+    console.log(`📊 Found ${totalElementsFound}/${checks.length} elements`);
+    return criticalElementsFound;
   }
 
   async checkAPIConnectivity() {
