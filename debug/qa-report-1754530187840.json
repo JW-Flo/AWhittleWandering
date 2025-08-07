@@ -1,0 +1,146 @@
+{
+  "summary": {
+    "startTime": "2025-08-07T01:28:59.589Z",
+    "endTime": "2025-08-07T01:29:47.840Z",
+    "duration": "48s",
+    "totalTests": 4,
+    "passedTests": 2,
+    "failedTests": 2,
+    "totalScreenshots": 5
+  },
+  "results": [
+    {
+      "name": "Frontend Development Server",
+      "url": "http://localhost:8080",
+      "timestamp": "2025-08-07T01:29:00.823Z",
+      "steps": [],
+      "screenshots": [],
+      "success": false,
+      "duration": 30256,
+      "errors": [
+        "Navigation timeout of 30000 ms exceeded"
+      ]
+    },
+    {
+      "name": "Backend Development Server",
+      "url": "http://localhost:3000",
+      "timestamp": "2025-08-07T01:29:33.206Z",
+      "steps": [],
+      "screenshots": [],
+      "success": false,
+      "duration": 275,
+      "errors": [
+        "net::ERR_CONNECTION_REFUSED at http://localhost:3000"
+      ]
+    },
+    {
+      "name": "Production Frontend",
+      "url": "https://81e929d7.awhittlewandering-frontend.pages.dev",
+      "timestamp": "2025-08-07T01:29:35.493Z",
+      "steps": [
+        {
+          "step": "Page Load",
+          "status": "passed",
+          "details": "HTTP 200",
+          "timestamp": "2025-08-07T01:29:38.126Z"
+        },
+        {
+          "step": "Page Title",
+          "status": "passed",
+          "details": "A Whittle Wandering",
+          "timestamp": "2025-08-07T01:29:40.268Z"
+        },
+        {
+          "step": "React Root",
+          "status": "passed",
+          "details": "Found #root element",
+          "timestamp": "2025-08-07T01:29:40.278Z"
+        },
+        {
+          "step": "Tesla Elements",
+          "status": "info",
+          "details": "Found 0 potential Tesla/UI elements",
+          "timestamp": "2025-08-07T01:29:40.283Z"
+        },
+        {
+          "step": "JavaScript Execution",
+          "status": "passed",
+          "details": "Ready State: complete, URL: https://81e929d7.awhittlewandering-frontend.pages.dev/",
+          "timestamp": "2025-08-07T01:29:40.284Z"
+        }
+      ],
+      "screenshots": [],
+      "success": true,
+      "duration": 4883,
+      "errors": []
+    },
+    {
+      "name": "API Health Check",
+      "url": "https://awhittlewandering-api-dev.kd8jc7v8cd.workers.dev/api/v1/health",
+      "timestamp": "2025-08-07T01:29:42.388Z",
+      "steps": [
+        {
+          "step": "Page Load",
+          "status": "passed",
+          "details": "HTTP 200",
+          "timestamp": "2025-08-07T01:29:43.579Z"
+        },
+        {
+          "step": "Page Title",
+          "status": "failed",
+          "details": "No title found",
+          "timestamp": "2025-08-07T01:29:45.728Z"
+        },
+        {
+          "step": "React Root",
+          "status": "failed",
+          "details": "Missing #root element",
+          "timestamp": "2025-08-07T01:29:45.737Z"
+        },
+        {
+          "step": "Tesla Elements",
+          "status": "info",
+          "details": "Found 0 potential Tesla/UI elements",
+          "timestamp": "2025-08-07T01:29:45.740Z"
+        },
+        {
+          "step": "JavaScript Execution",
+          "status": "passed",
+          "details": "Ready State: complete, URL: https://awhittlewandering-api-dev.kd8jc7v8cd.workers.dev/api/v1/health",
+          "timestamp": "2025-08-07T01:29:45.741Z"
+        }
+      ],
+      "screenshots": [],
+      "success": true,
+      "duration": 3441,
+      "errors": []
+    }
+  ],
+  "screenshots": [
+    {
+      "name": "Frontend Development Server - Error State",
+      "path": "debug/qa-1754530171081-frontend-development-server---error-state.png",
+      "timestamp": "2025-08-07T01:29:31.186Z"
+    },
+    {
+      "name": "Production Frontend - Initial Load",
+      "path": "debug/qa-1754530180127-production-frontend---initial-load.png",
+      "timestamp": "2025-08-07T01:29:40.266Z"
+    },
+    {
+      "name": "Production Frontend - Final State",
+      "path": "debug/qa-1754530180285-production-frontend---final-state.png",
+      "timestamp": "2025-08-07T01:29:40.375Z"
+    },
+    {
+      "name": "API Health Check - Initial Load",
+      "path": "debug/qa-1754530185581-api-health-check---initial-load.png",
+      "timestamp": "2025-08-07T01:29:45.726Z"
+    },
+    {
+      "name": "API Health Check - Final State",
+      "path": "debug/qa-1754530185742-api-health-check---final-state.png",
+      "timestamp": "2025-08-07T01:29:45.829Z"
+    }
+  ]
+}

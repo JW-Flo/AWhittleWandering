@@ -1,0 +1,46 @@
+# Development Server Docker Container
+# Ensures consistent dev environment with all dependencies
+
+FROM node:18-alpine AS base
+
+# Install system dependencies
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    git \
+    curl
+
+# Tell Puppeteer to use installed Chromium
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY frontend/package*.json ./frontend/
+COPY qa/package*.json ./qa/
+
+# Install dependencies
+RUN npm install
+RUN cd frontend && npm install
+RUN cd qa && npm install
+
+# Copy source code
+COPY . .
+
+# Expose ports
+EXPOSE 3000 8080 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
+
+# Start development server with all services
+CMD ["npm", "run", "docker:dev"]

@@ -1,11 +1,15 @@
 #!/bin/bash
 
-# QA System Setup Script
-# Sets up the complete recursive QA pipeline
+#!/bin/bash
+
+# 🔧 QA Environment Setup and Configuration
+# Automated setup for quality assurance infrastructure
 
 set -e
 
-PROJECT_ROOT="/Users/joe/Projects/Personal/ContinentalUSA"
+# Get project root dynamically
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 QA_DIR="$PROJECT_ROOT/qa"
 
 # Colors

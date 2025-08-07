@@ -3,6 +3,9 @@
 # Tesla Journey Tracker - Comprehensive Full-Stack Validation & QA
 # Validates database changes against frontend components, backend APIs, and deployment
 
+# Get script directory dynamically
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 echo "🔍 TESLA JOURNEY TRACKER - FULL-STACK VALIDATION & QA"
 echo "======================================================"
 echo "📅 $(date)"
@@ -17,7 +20,7 @@ echo "📊 PHASE 1: DATABASE SCHEMA VALIDATION"
 echo "--------------------------------------"
 
 echo "🔍 1.1: Checking D1 database schema consistency..."
-cd /Users/joe/Projects/Personal/ContinentalUSA/backend/edge-worker
+cd "$SCRIPT_DIR/backend/edge-worker"
 
 # Check migration files
 echo "✅ Migration files:"
@@ -55,7 +58,7 @@ echo "🔧 PHASE 2: BACKEND API VALIDATION"
 echo "----------------------------------"
 
 echo "🔍 2.1: Checking TypeScript compilation..."
-cd /Users/joe/Projects/Personal/ContinentalUSA/backend/edge-worker
+cd "$SCRIPT_DIR/backend/edge-worker"
 if npm run build 2>/dev/null; then
     echo "✅ Backend TypeScript compiles successfully"
 else
@@ -89,7 +92,7 @@ echo ""
 echo "🎨 PHASE 3: FRONTEND COMPONENT VALIDATION"
 echo "-----------------------------------------"
 
-cd /Users/joe/Projects/Personal/ContinentalUSA/frontend
+cd "$SCRIPT_DIR/frontend"
 
 echo "🔍 3.1: Checking frontend TypeScript compilation..."
 if npm run type-check 2>/dev/null || npm run build 2>/dev/null; then
@@ -121,7 +124,7 @@ echo "🔗 PHASE 4: API CONTRACT VALIDATION"
 echo "-----------------------------------"
 
 echo "🔍 4.1: Validating API response interfaces..."
-cd /Users/joe/Projects/Personal/ContinentalUSA
+cd "$SCRIPT_DIR"
 
 # Check if frontend types match backend API responses
 echo "✅ API contract files:"
@@ -196,7 +199,7 @@ echo "🚀 PHASE 6: DEPLOYMENT READINESS CHECK"
 echo "--------------------------------------"
 
 echo "🔍 6.1: Environment configuration validation..."
-cd /Users/joe/Projects/Personal/ContinentalUSA
+cd "$SCRIPT_DIR"
 
 # Check environment files
 echo "✅ Environment files:"

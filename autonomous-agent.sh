@@ -2,7 +2,9 @@
 # 🤖 AUTONOMOUS AI CODING AGENT
 # Fully automated ESLint warning cleanup with no human intervention
 
-WORKSPACE="/Users/joe/Projects/Personal/ContinentalUSA"
+# Get script directory dynamically
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKSPACE="$SCRIPT_DIR"
 MODEL="phi3:latest"  # Fast and efficient for autonomous operations
 AGENT_LOG="$WORKSPACE/agent-log.txt"
 MAX_ITERATIONS=50

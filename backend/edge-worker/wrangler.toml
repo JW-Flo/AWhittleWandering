@@ -13,11 +13,24 @@ crons = [
   "0 */6 * * *"       # AI/ML processing every 6 hours
 ]
 
-# Environment Variables
+# Environment Variables - ZERO FAILURE API MANAGEMENT
 [vars]
-# Tesla Vehicle VIN should be set as a secret or environment variable, not hardcoded here.
-# Example: Use `npx wrangler secret put TESLA_VEHICLE_VIN` to set it securely.
-# TESLA_VEHICLE_VIN will be provided via secrets
+# All API credentials are stored as SECRETS for security
+# Run ./setup-tessie-secrets.sh to configure all required APIs
+
+# CRITICAL API CONFIGURATION REQUIREMENTS:
+# 1. TESSIE_API_KEY - Tesla data integration (HIGHEST PRIORITY)
+# 2. MAPBOX_ACCESS_TOKEN - Map services and geocoding
+# 3. OPENWEATHER_API_KEY - Weather data integration  
+# 4. JWT_SECRET - Authentication security (min 32 chars)
+# 5. TESLA_VIN - Tesla Vehicle Identification Number
+
+# ⚠️  ALL SECRETS MUST BE CONFIGURED FOR ZERO-FAILURE OPERATION ⚠️
+# Use: npx wrangler secret put TESSIE_API_KEY
+# Use: npx wrangler secret put MAPBOX_ACCESS_TOKEN  
+# Use: npx wrangler secret put OPENWEATHER_API_KEY
+# Use: npx wrangler secret put JWT_SECRET
+# Use: npx wrangler secret put TESLA_VIN
 
 # Durable Object migrations (disabled for now)
 # [[migrations]]
@@ -66,14 +79,56 @@ binding = "TELEMETRY_ANALYTICS"
 # pattern = "api.awhittlewandering.com/*"
 # zone_name = "awhittlewandering.com"
 
+# Development Environment Configuration
+[env.development]
+name = "awhittlewandering-api-dev"
+
+# Development environment variables
+[env.development.vars]
+# All API credentials are stored as SECRETS for security in development
+# Run ./setup-tessie-secrets.sh to configure all required APIs
+
+# Development D1 Database (same as production for simplicity)
+[[env.development.d1_databases]]
+binding = "TESLA_DB"
+database_name = "tesla-journey-tracker"
+database_id = "09a6ba85-bd36-4ad3-b5a8-92e230943dcb"
+
+# Development R2 bucket (same as production)
+[[env.development.r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "awhittlewandering-media"
+
+# Development KV for auth tokens
+[[env.development.kv_namespaces]]
+binding = "AUTH_TOKENS"
+id = "7838e32d8ad04855b13eb2d9aa4f9811"
+
+# Development Analytics Engine
+[[env.development.analytics_engine_datasets]]
+binding = "TELEMETRY_ANALYTICS"
+
 [env.production]
 name = "awhittlewandering-api"
 
-# Production environment variables
+# Production environment variables - ZERO FAILURE API MANAGEMENT
 [env.production.vars]
-# Tesla Vehicle VIN should be set as a secret or environment variable, not hardcoded here.
-# Example: Use `npx wrangler secret put TESLA_VEHICLE_VIN` to set it securely.
-# TESLA_VEHICLE_VIN will be provided via secrets
+# All API credentials are stored as SECRETS for security
+# Run ./setup-tessie-secrets.sh to configure all required APIs
+
+# CRITICAL API CONFIGURATION REQUIREMENTS:
+# 1. TESSIE_API_KEY - Tesla data integration (HIGHEST PRIORITY)  
+# 2. MAPBOX_ACCESS_TOKEN - Map services and geocoding
+# 3. OPENWEATHER_API_KEY - Weather data integration
+# 4. JWT_SECRET - Authentication security (min 32 chars)
+# 5. TESLA_VIN - Tesla Vehicle Identification Number
+
+# ⚠️  ALL SECRETS MUST BE CONFIGURED FOR ZERO-FAILURE OPERATION ⚠️
+# Use: npx wrangler secret put TESSIE_API_KEY --env production
+# Use: npx wrangler secret put MAPBOX_ACCESS_TOKEN --env production
+# Use: npx wrangler secret put OPENWEATHER_API_KEY --env production  
+# Use: npx wrangler secret put JWT_SECRET --env production
+# Use: npx wrangler secret put TESLA_VIN --env production
 
 # Production D1 Database (same as development - using single database)
 [[env.production.d1_databases]]
