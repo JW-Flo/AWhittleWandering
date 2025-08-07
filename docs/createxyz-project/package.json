@@ -1,0 +1,10 @@
+{
+  "name": "create-user-app-monorepo",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "scripts": {
+    "dev": "bun --filter=web dev"
+  }
+}
