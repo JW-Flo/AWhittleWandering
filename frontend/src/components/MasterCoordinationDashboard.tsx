@@ -10,7 +10,8 @@ import {
   Brain, 
   Smartphone,
   Activity,
-  Zap
+  Zap,
+  Bug
 } from 'lucide-react';
 
 // Import all our new components
@@ -18,6 +19,7 @@ import { SmartMapFeatures } from './SmartMapFeatures';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { SmartAssistant } from './SmartAssistant';
 import { UXEnhancementSuite } from './UXEnhancementSuite';
+import { PuppeteerTestingComponent } from './PuppeteerTestingComponent';
 
 import { 
   RouteOptimization, 
@@ -27,7 +29,7 @@ import {
 } from '@/types/advancedFeatures';
 
 interface MasterCoordinationDashboardProps {
-  journeyData?: any[];
+  journeyData?: unknown[];
   currentLocation: [number, number];
   destination?: [number, number];
 }
@@ -62,31 +64,16 @@ export const MasterCoordinationDashboard: React.FC<MasterCoordinationDashboardPr
     urgency: 'medium'
   };
 
-  const handleRouteOptimized = (route: RouteOptimization) => {
-    console.log('Route optimized:', route);
-    // Update coordination status
-    setCoordinationStatus(prev => ({
-      ...prev,
-      phi3: { ...prev.phi3, progress: 98 }
-    }));
+    const handleRouteOptimized = (_route: RouteOptimization) => {
+    // Route optimized successfully - could update state here
   };
 
-  const handleSuggestionSelected = (suggestion: AISuggestion) => {
-    console.log('AI suggestion selected:', suggestion);
-    // Update coordination status
-    setCoordinationStatus(prev => ({
-      ...prev,
-      codellama: { ...prev.codellama, progress: 95 }
-    }));
+  const handleSuggestionSelected = (_suggestion: AISuggestion) => {
+    // AI suggestion selected - could update state here
   };
 
-  const handleUXSettingsChanged = (settings: UXEnhancement) => {
-    console.log('UX settings updated:', settings);
-    // Update coordination status
-    setCoordinationStatus(prev => ({
-      ...prev,
-      mistral: { ...prev.mistral, progress: 99 }
-    }));
+  const handleUXSettingsChanged = (_settings: UXEnhancement) => {
+    // UX settings updated - could update state here
   };
 
   // Simulate coordination updates
@@ -117,7 +104,7 @@ export const MasterCoordinationDashboard: React.FC<MasterCoordinationDashboardPr
             🚀 MASTER COORDINATION DASHBOARD
           </CardTitle>
           <p className="text-blue-100">
-            All 4 development tracks running simultaneously with Human-Dyad AI coordination
+            All development tracks running with intelligent AI automation coordination
           </p>
         </CardHeader>
         <CardContent>
@@ -141,7 +128,7 @@ export const MasterCoordinationDashboard: React.FC<MasterCoordinationDashboardPr
 
       {/* Main Dashboard Tabs */}
       <Tabs value={activeTrack} onValueChange={setActiveTrack}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <Activity className="h-4 w-4" />
             Overview
@@ -161,6 +148,10 @@ export const MasterCoordinationDashboard: React.FC<MasterCoordinationDashboardPr
           <TabsTrigger value="track4" className="flex items-center gap-2">
             <Smartphone className="h-4 w-4" />
             Track 4: UX
+          </TabsTrigger>
+          <TabsTrigger value="testing" className="flex items-center gap-2">
+            <Bug className="h-4 w-4" />
+            Testing
           </TabsTrigger>
         </TabsList>
 
@@ -202,6 +193,10 @@ export const MasterCoordinationDashboard: React.FC<MasterCoordinationDashboardPr
         <TabsContent value="track4">
           <UXEnhancementSuite onSettingsChanged={handleUXSettingsChanged} />
         </TabsContent>
+
+        <TabsContent value="testing">
+          <PuppeteerTestingComponent />
+        </TabsContent>
       </Tabs>
 
       {/* Live Coordination Status */}
@@ -209,7 +204,7 @@ export const MasterCoordinationDashboard: React.FC<MasterCoordinationDashboardPr
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Zap className="h-5 w-5" />
-            Live Human-Dyad Coordination Status
+            Live AI Automation Status
           </CardTitle>
         </CardHeader>
         <CardContent>

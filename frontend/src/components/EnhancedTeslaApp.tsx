@@ -107,7 +107,7 @@ export const EnhancedTeslaApp: React.FC<EnhancedTeslaAppProps> = ({
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Enhanced Tesla Road Trip App</h1>
               <p className="text-gray-600 mt-1">
-                Complete AI-powered journey management with Human-Dyad coordination
+                Complete AI-powered journey management and automation
               </p>
             </div>
             <div className="flex items-center gap-4">
@@ -252,37 +252,6 @@ export const EnhancedTeslaApp: React.FC<EnhancedTeslaAppProps> = ({
                   </CardContent>
                 </Card>
               </div>
-
-              {/* Human-Dyad Coordination Status */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>🤖 Human-Dyad AI Coordination Status</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="text-center p-4 border rounded-lg">
-                      <h4 className="font-medium">phi3:latest</h4>
-                      <p className="text-sm text-gray-600">Map Features & Route Optimization</p>
-                      <Badge className="mt-2">Ready</Badge>
-                    </div>
-                    <div className="text-center p-4 border rounded-lg">
-                      <h4 className="font-medium">gemma3:4b</h4>
-                      <p className="text-sm text-gray-600">Analytics & Data Processing</p>
-                      <Badge className="mt-2">Ready</Badge>
-                    </div>
-                    <div className="text-center p-4 border rounded-lg">
-                      <h4 className="font-medium">codellama:7b</h4>
-                      <p className="text-sm text-gray-600">AI Assistant & NLP</p>
-                      <Badge className="mt-2">Ready</Badge>
-                    </div>
-                    <div className="text-center p-4 border rounded-lg">
-                      <h4 className="font-medium">mistral:latest</h4>
-                      <p className="text-sm text-gray-600">UX & Real-time Features</p>
-                      <Badge className="mt-2">Ready</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </TabsContent>
 

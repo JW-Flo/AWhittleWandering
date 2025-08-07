@@ -1,0 +1,93 @@
+{
+  "timestamp": "2025-08-07T00:21:31.957Z",
+  "environments": {
+    "development": {
+      "TESSIE_API_KEY": {
+        "configured": true,
+        "environment": "development",
+        "priority": 1,
+        "description": "Tesla data via Tessie API - MOST CRITICAL"
+      },
+      "MAPBOX_ACCESS_TOKEN": {
+        "configured": true,
+        "environment": "development",
+        "priority": 2,
+        "description": "Map integration and geocoding"
+      },
+      "OPENWEATHER_API_KEY": {
+        "configured": true,
+        "environment": "development",
+        "priority": 3,
+        "description": "Weather data integration"
+      },
+      "JWT_SECRET": {
+        "configured": true,
+        "environment": "development",
+        "priority": 4,
+        "description": "Authentication security"
+      },
+      "TESLA_VIN": {
+        "configured": true,
+        "environment": "development",
+        "priority": 5,
+        "description": "Tesla Vehicle Identification Number"
+      }
+    },
+    "production": {
+      "TESSIE_API_KEY": {
+        "configured": true,
+        "environment": "production",
+        "priority": 1,
+        "description": "Tesla data via Tessie API - MOST CRITICAL"
+      },
+      "MAPBOX_ACCESS_TOKEN": {
+        "configured": true,
+        "environment": "production",
+        "priority": 2,
+        "description": "Map integration and geocoding"
+      },
+      "OPENWEATHER_API_KEY": {
+        "configured": true,
+        "environment": "production",
+        "priority": 3,
+        "description": "Weather data integration"
+      },
+      "JWT_SECRET": {
+        "configured": true,
+        "environment": "production",
+        "priority": 4,
+        "description": "Authentication security"
+      },
+      "TESLA_VIN": {
+        "configured": true,
+        "environment": "production",
+        "priority": 5,
+        "description": "Tesla Vehicle Identification Number"
+      }
+    }
+  },
+  "healthChecks": {
+    "TESSIE_API_KEY": {
+      "status": "needs_testing",
+      "message": "Health check requires secret access"
+    },
+    "MAPBOX_ACCESS_TOKEN": {
+      "status": "needs_testing",
+      "message": "Health check requires secret access"
+    },
+    "OPENWEATHER_API_KEY": {
+      "status": "needs_testing",
+      "message": "Health check requires secret access"
+    },
+    "JWT_SECRET": {
+      "status": "no_test",
+      "message": "No test endpoint defined"
+    },
+    "TESLA_VIN": {
+      "status": "no_test",
+      "message": "No test endpoint defined"
+    }
+  },
+  "criticalIssues": [],
+  "recommendations": []
+}

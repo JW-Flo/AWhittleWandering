@@ -171,7 +171,7 @@ export const UXEnhancementSuite: React.FC<UXEnhancementSuiteProps> = ({
           <div className="text-center">
             <div className="text-lg font-bold text-blue-600">🎯 ALL 4 TRACKS ACTIVE!</div>
             <div className="text-sm text-gray-600 mt-1">
-              Human-Dyad coordination running across phi3, gemma3, codellama, and mistral
+              Tesla automation running across all system components
             </div>
           </div>
         </CardContent>

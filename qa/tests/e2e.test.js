@@ -5,6 +5,20 @@
 
 import puppeteer from 'puppeteer';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+
+// Get project root dynamically
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const PROJECT_ROOT = path.resolve(__dirname, '../..');
+const SCREENSHOT_DIR = path.join(PROJECT_ROOT, 'debug');
+
+// Ensure screenshot directory exists
+if (!fs.existsSync(SCREENSHOT_DIR)) {
+  fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
+}
 
 const FRONTEND_URL = 'https://ab99ceea.awhittlewandering-frontend.pages.dev';
 const API_URL = 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
@@ -107,7 +121,7 @@ class E2ETestRunner {
 
   async takeScreenshot(name) {
     const timestamp = Date.now();
-    const fileName = `/Users/joe/Projects/Personal/ContinentalUSA/qa/screenshots/${name}-${timestamp}.png`;
+    const fileName = path.join(SCREENSHOT_DIR, `${name}-${timestamp}.png`);
     
     await this.page.screenshot({ 
       path: fileName, 

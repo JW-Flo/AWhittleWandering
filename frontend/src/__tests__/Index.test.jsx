@@ -47,7 +47,7 @@ describe('Tesla Dashboard', () => {
     });
 
     it('should display loading state initially', () => {
-      fetch.mockImplementation(() => new Promise(() => {})); // Never resolves
+      fetch.mockImplementation(() => new Promise(() => { })); // Never resolves
 
       renderWithProviders(<Index />);
       expect(screen.getByText(/loading/i)).toBeInTheDocument();
@@ -57,7 +57,7 @@ describe('Tesla Dashboard', () => {
       fetch.mockRejectedValueOnce(new Error('API Error'));
 
       renderWithProviders(<Index />);
-      
+
       await waitFor(() => {
         expect(screen.getByText(/error/i)).toBeInTheDocument();
       });
@@ -93,7 +93,7 @@ describe('Tesla Dashboard', () => {
 
     it('should auto-refresh data every 30 seconds', async () => {
       vi.useFakeTimers();
-      
+
       fetch.mockResolvedValue({
         ok: true,
         json: async () => ({ battery_level: 85 }),
@@ -175,10 +175,10 @@ describe('Tesla Dashboard', () => {
   describe('Performance', () => {
     it('should not cause memory leaks', async () => {
       const { unmount } = renderWithProviders(<Index />);
-      
+
       // Simulate component lifecycle
       unmount();
-      
+
       // Check that timers are cleaned up
       expect(vi.getTimerCount()).toBe(0);
     });
@@ -193,7 +193,7 @@ describe('Tesla Dashboard', () => {
 
       // Simulate rapid refresh clicks
       const refreshButton = screen.getByRole('button', { name: /refresh/i });
-      
+
       for (let i = 0; i < 10; i++) {
         fireEvent.click(refreshButton);
       }
@@ -252,7 +252,7 @@ describe('Tesla Dashboard', () => {
 
       const refreshButton = screen.getByRole('button', { name: /refresh/i });
       refreshButton.focus();
-      
+
       expect(document.activeElement).toBe(refreshButton);
     });
 

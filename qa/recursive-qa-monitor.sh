@@ -1,11 +1,15 @@
 #!/bin/bash
 
-# Recursive QA Monitor
-# Continuously monitors the application and triggers QA when issues are detected
+#!/bin/bash
+
+# 🔄 Recursive QA Monitoring System
+# Continuously monitors and validates application health
 
 set -e
 
-PROJECT_ROOT="/Users/joe/Projects/Personal/ContinentalUSA"
+# Get project root dynamically
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 QA_DIR="$PROJECT_ROOT/qa"
 MONITOR_LOG="$QA_DIR/logs/monitor-$(date +%Y%m%d).log"
 

@@ -27,7 +27,6 @@ export default defineConfig({
           // App chunks  
           'components': [
             './src/components/AdminPortal.tsx',
-            './src/components/PublicApp.tsx',
             './src/components/TeslaMap.tsx',
             './src/components/TimelineDataDisplay.tsx'
           ],

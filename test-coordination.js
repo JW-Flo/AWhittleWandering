@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-// Human-Dyad AI Coordination Script
+// AI Automation Coordination Script
+// Enhanced Tesla automation system coordination
 // Tests all 4 Ollama models working together
 
 const http = require("http");
@@ -78,7 +79,7 @@ async function testModel(modelName, prompt, task) {
 }
 
 async function coordinateAllModels() {
-  console.log("🚀 INITIATING HUMAN-DYAD COORDINATION");
+  console.log("🚀 INITIATING AI AUTOMATION COORDINATION");
   console.log("=".repeat(50));
 
   const prompts = {
@@ -128,7 +129,7 @@ async function coordinateAllModels() {
     if (successRate === 100) {
       console.log("\n🚀 ALL SYSTEMS GO!");
       console.log("Ready for multi-track Tesla app development!");
-      console.log("Human-Dyad coordination established successfully.");
+      console.log("AI automation coordination established successfully.");
     }
   } catch (error) {
     console.error("❌ Coordination failed:", error.message);

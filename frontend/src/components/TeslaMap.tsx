@@ -27,6 +27,102 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
   const [mapboxToken, setMapboxToken] = useState<string | null>(propsToken || null);
   const [isLoadingToken, setIsLoadingToken] = useState(false);
 
+  // Define map helper functions before they're used in effects
+  const addJourneyWaypoints = useCallback(() => {
+    if (!map.current || !routeLocations || routeLocations.length === 0) return;
+
+    // Add waypoint markers for actual drive locations from real data
+    routeLocations.forEach((location, _index) => {
+      const el = document.createElement('div');
+      el.className = 'journey-waypoint';
+      
+      el.innerHTML = `
+        <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 hover:scale-110 bg-[hsl(var(--tesla-blue))] border-[hsl(var(--tesla-cyan))] shadow-[0_0_15px_hsl(var(--tesla-blue)/0.4)]">
+          <div class="w-2 h-2 bg-white rounded-full"></div>
+        </div>
+      `;
+
+      const marker = new mapboxgl.Marker(el)
+        .setLngLat([location.lng, location.lat])
+        .addTo(map.current!);
+
+      const popup = new mapboxgl.Popup({ 
+        offset: 25,
+        closeButton: true,
+        className: 'journey-popup'
+      }).setHTML(`
+        <div class="bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden min-w-48">
+          <div class="bg-gradient-to-r from-blue-500 to-cyan-500 p-3">
+            <div class="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-white" />
+              <span class="text-white font-medium text-sm">Journey Point</span>
+            </div>
+          </div>
+          <div class="p-3 space-y-1">
+            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">Location</div>
+            <div class="text-xs text-gray-600 dark:text-gray-400">${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}</div>
+            <div class="text-xs text-gray-600 dark:text-gray-400">${new Date(location.timestamp).toLocaleDateString()}</div>
+          </div>
+        </div>
+      `);
+
+      marker.setPopup(popup);
+    });
+  }, [routeLocations]); // Dependencies for useCallback
+
+  const addJourneyRoute = useCallback(() => {
+    if (!map.current || !routeLocations || routeLocations.length === 0) return;
+
+    // Create route line from locations
+    const coordinates = routeLocations.map(loc => [loc.lng, loc.lat]);
+
+    // Add route source
+    map.current.addSource('journey-route', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: coordinates
+        }
+      }
+    });
+
+    // Add route layer
+    map.current.addLayer({
+      id: 'journey-route',
+      type: 'line',
+      source: 'journey-route',
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round'
+      },
+      paint: {
+        'line-color': 'hsl(var(--tesla-blue))',
+        'line-width': 4,
+        'line-opacity': 0.8
+      }
+    });
+
+    // Add animated route layer
+    map.current.addLayer({
+      id: 'journey-route-glow',
+      type: 'line', 
+      source: 'journey-route',
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round'
+      },
+      paint: {
+        'line-color': 'hsl(var(--tesla-cyan))',
+        'line-width': 8,
+        'line-opacity': 0.3,
+        'line-blur': 4
+      }
+    });
+  }, [routeLocations]); // Dependencies for useCallback
+
   // Fetch Mapbox token from backend on component mount
   useEffect(() => {
     const fetchMapboxToken = async () => {
@@ -112,101 +208,6 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
       });
     }
   }, [vehicleLocation]);
-
-  const addJourneyWaypoints = useCallback(() => {
-    if (!map.current || !routeLocations || routeLocations.length === 0) return;
-
-    // Add waypoint markers for actual drive locations from real data
-    routeLocations.forEach((location, _index) => {
-      const el = document.createElement('div');
-      el.className = 'journey-waypoint';
-      
-      el.innerHTML = `
-        <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 hover:scale-110 bg-[hsl(var(--tesla-blue))] border-[hsl(var(--tesla-cyan))] shadow-[0_0_15px_hsl(var(--tesla-blue)/0.4)]">
-          <div class="w-2 h-2 bg-white rounded-full"></div>
-        </div>
-      `;
-
-      const marker = new mapboxgl.Marker(el)
-        .setLngLat([location.lng, location.lat])
-        .addTo(map.current!);
-
-      const popup = new mapboxgl.Popup({ 
-        offset: 25,
-        closeButton: true,
-        className: 'journey-popup'
-      }).setHTML(`
-        <div class="bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden min-w-48">
-          <div class="bg-gradient-to-r from-blue-500 to-cyan-500 p-3">
-            <h3 class="font-bold text-white text-lg">Drive Location</h3>
-          </div>
-          <div class="p-4">
-            <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">
-              📅 ${new Date(location.timestamp).toLocaleDateString()}
-            </div>
-            <div class="text-sm text-gray-700 dark:text-gray-300">
-              📍 ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}
-            </div>
-          </div>
-        </div>
-      `);
-
-      marker.setPopup(popup);
-    });
-  }, [routeLocations]); // Dependencies for useCallback
-
-  const addJourneyRoute = useCallback(() => {
-    if (!map.current || !routeLocations || routeLocations.length === 0) return;
-
-    // Create route line from locations
-    const coordinates = routeLocations.map(loc => [loc.lng, loc.lat]);
-
-    // Add route source
-    map.current.addSource('journey-route', {
-      type: 'geojson',
-      data: {
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates: coordinates
-        }
-      }
-    });
-
-    // Add route layer
-    map.current.addLayer({
-      id: 'journey-route',
-      type: 'line',
-      source: 'journey-route',
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round'
-      },
-      paint: {
-        'line-color': 'hsl(var(--tesla-blue))',
-        'line-width': 4,
-        'line-opacity': 0.8
-      }
-    });
-
-    // Add animated route layer
-    map.current.addLayer({
-      id: 'journey-route-glow',
-      type: 'line', 
-      source: 'journey-route',
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round'
-      },
-      paint: {
-        'line-color': 'hsl(var(--tesla-cyan))',
-        'line-width': 8,
-        'line-opacity': 0.3,
-        'line-blur': 4
-      }
-    });
-  }, [routeLocations]); // Dependencies for useCallback
 
   if (!mapboxToken) {
     if (isLoadingToken) {

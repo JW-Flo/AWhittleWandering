@@ -2,7 +2,9 @@
 # 🧠 INTELLIGENT MODEL LOAD BALANCER FOR TESLA APP
 # Automatically selects optimal Ollama model based on task complexity
 
-WORKSPACE="/Users/joe/Projects/Personal/ContinentalUSA"
+# Get script directory dynamically
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKSPACE="$SCRIPT_DIR"
 
 # Task Classification Function
 classify_task() {
