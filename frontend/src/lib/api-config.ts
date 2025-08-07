@@ -18,7 +18,9 @@ export const API_CONFIG = {
     LIVE_STATUS: '/api/v1/trip/status', // Use trip status for live status
     TELEMETRY: '/api/v1/telemetry',
     HEALTH: '/api/v1/health',
-    CONFIG: '/api/v1/config' // Configuration endpoint for secure tokens
+    CONFIG: '/api/v1/config', // Configuration endpoint for secure tokens
+    ROUTE_OPTIMIZE: '/api/v1/route/optimize', // AI route optimization
+    JOURNAL_GENERATE: '/api/v1/journal/generate' // AI journal generation
   },
   DEFAULT_HEADERS: {
     'Content-Type': 'application/json',
@@ -58,6 +60,14 @@ export const api = {
   getLiveStatus: () => apiRequest(API_CONFIG.ENDPOINTS.LIVE_STATUS),
   getHealth: () => apiRequest(API_CONFIG.ENDPOINTS.HEALTH),
   getConfig: () => apiRequest(API_CONFIG.ENDPOINTS.CONFIG),
+  optimizeRoute: (data: any) => apiRequest(API_CONFIG.ENDPOINTS.ROUTE_OPTIMIZE, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  generateJournal: (data: any) => apiRequest(API_CONFIG.ENDPOINTS.JOURNAL_GENERATE, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
   submitTelemetry: (data: unknown) => apiRequest(API_CONFIG.ENDPOINTS.TELEMETRY, {
     method: 'POST',
     body: JSON.stringify(data)
