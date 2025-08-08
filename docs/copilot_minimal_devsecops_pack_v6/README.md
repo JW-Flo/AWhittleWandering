@@ -1,11 +1,18 @@
 # Minimal DevSecOps Copilot Pack (lean + shell integration)
 
 Files:
+
 - `prompts/devsecops_coding.prompt.md` — lean prompt (mode: coding).
 - `DevSecOps_Minimal_Agent.toolsets.jsonc` — slim toolset.
-- `.vscode/tasks.json` — `Lint+Test`, `Security Scan` tasks.
-- `scripts/agentOps.sh` — runs tests/scans if tools exist.
+- (Deprecated duplicates removed) Use root `docs/scripts/agentOps.sh` for all lint/test/scan tasks.
 - `scripts/install_shell_integration.sh` — installs VS Code Terminal Shell Integration line for your shell.
+
+Note: The minimal pack previously bundled its own `agentOps.sh` and `.vscode/tasks.json`. These were removed to eliminate duplication—invoke unified commands via root tasks or call:
+
+```bash
+bash docs/scripts/agentOps.sh lint_test
+bash docs/scripts/agentOps.sh scan
+```
 
 ## Install
 1) Unzip into your repo or `~/Library/Application Support/Code - Insiders/User/prompts/` for the prompt.
