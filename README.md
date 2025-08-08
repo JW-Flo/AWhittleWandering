@@ -193,6 +193,69 @@ The application is deployed and live at:
 - **Frontend:** [awhittlewandering.com](https://awhittlewandering.com) (Cloudflare Pages)
 - **API:** [awhittlewandering-api.kd8jc7v8cd.workers.dev](https://awhittlewandering-api.kd8jc7v8cd.workers.dev) (Cloudflare Workers)
 
+### Automated Deployment & CI/CD
+
+| Component | Workflow / Script | Purpose |
+|-----------|-------------------|---------|
+| Frontend (Pages) | `.github/workflows/frontend-pages-deploy.yml` | Auto build & deploy React app to Cloudflare Pages on `main` changes under `frontend/**` |
+| Backend Worker | (manual `bun run deploy` for now) | Deploy Hono/Workers API (future workflow may automate) |
+| DevSecOps CI (scaffold) | `docs/.github/workflows/ci.yml` | Example build + security scans (Semgrep/Bandit/Trivy) |
+| Infra Deploy (example) | `docs/.github/workflows/deploy.yml` | Example Terraform + Worker pattern (reference only) |
+| Web App QA | `bun run webapp:qa` (`scripts/webapp-qa.sh`) | End‑to‑end local build + optional health probe |
+| Backend Smoke QA | `scripts/backend-smoke-qa.sh` | Remote API status verification (health, unified-data, config, components) |
+| Unified Data Schema | `backend/edge-worker/src/qa/unified-data.schema.json` + `validate-unified.ts` | Contract/schema validation for aggregated journey endpoint |
+
+### Frontend (Cloudflare Pages) Deployment
+1. Build locally (optional): `bun run build:frontend`
+2. Push to `main` with changes in `frontend/**` → GitHub Action runs.
+3. Required GitHub Secrets:
+  - `CF_ACCOUNT_ID` – Cloudflare Account ID
+  - `CF_PAGES_TOKEN` – API token with Pages write permission
+4. Action runs: install Bun → workspace install → build → `wrangler pages deploy dist`.
+
+Manual (fallback) deploy:
+```bash
+cd frontend && bun run build && wrangler pages deploy dist --project-name=awhittlewandering-frontend
+```
+
+### Backend (Cloudflare Worker) Deployment
+Current pattern uses manual / local deploy:
+```bash
+cd backend/edge-worker
+bun run build
+bun run deploy   # wrangler dev/prod deploy (configured in worker package.json)
+```
+Planned improvement: dedicated GitHub Action mirroring Pages pipeline (add caching + D1 migrations check).
+
+### QA & Validation Scripts
+| Command | Description |
+|---------|-------------|
+| `bun run webapp:qa` | Builds shared, backend, frontend; runs contract/schema QA if present; optional remote health probe. |
+| `scripts/backend-smoke-qa.sh` | CURL-based smoke tests of production/dev API endpoints. |
+| `backend/edge-worker/src/qa/validate-unified.ts` | Lightweight runtime validation for unified-data response shape. |
+
+### Unified Data Contract / Caching
+The unified aggregation endpoint (`/api/v1/unified-data`) now has:
+* D1 short‑TTL cache row (`api_cache` table key `unified_data_latest_v2`) to reduce recomputation.
+* JSON schema (`unified-data.schema.json`) + validator script for CI / manual QA.
+* Diagnostic/admin tooling (temporary) used during recent 500 resolution — remove or restrict before major release.
+
+### Required / Notable Secrets & Env Vars
+| Usage | Name | Where |
+|-------|------|-------|
+| Cloudflare Pages Deploy | `CF_ACCOUNT_ID` | GitHub Secrets |
+| Cloudflare Pages Deploy | `CF_PAGES_TOKEN` | GitHub Secrets |
+| Worker Deploy / API (existing) | `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` | Local env / future workflow |
+| Tessie Integration | `TESSIE_API_KEY` | Worker binding / env |
+| Mapbox Maps | `VITE_MAPBOX_TOKEN` | Frontend `.env` |
+
+### Operational Notes
+* Large map vendor bundle (~1.5MB) already isolated; further splitting possible via additional dynamic imports if performance becomes a concern.
+* Add new aggregator endpoints following cache pattern to avoid per-request D1 heavy scans.
+* When extending health checks, only append fields (maintain backward compatibility for consumers).
+
+---
+
 ## 🔄 Recent Enhancements
 
 ### v2.0 - Intelligence Integration
@@ -299,6 +362,16 @@ bun run deploy:api
 
 # Deploy only the frontend
 bun run deploy:frontend
+
+### Additional Deployment Utilities
+
+| Script / Task | Description |
+|---------------|-------------|
+| `bun run shell:integrate` | Installs VS Code terminal shell integration for enriched agent context |
+| `bun run webapp:qa` | Composite build & QA pass (see above) |
+| `bun run build:all` | Shared → backend → frontend build chain |
+| `scripts/install-shell-integration.sh` | Idempotent shell integration script |
+
 ```
 
 ## 🔌 Tesla Integration
