@@ -180,16 +180,16 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
           <img 
             src={mediaItem.url} 
             alt={mediaItem.title} 
-            className="w-full h-full object-cover"
+            className="object-cover w-full h-full"
           />
         ) : (
           <div className="relative w-full h-full">
             <video 
               src={mediaItem.url} 
-              className="w-full h-full object-cover"
+              className="object-cover w-full h-full"
               poster={mediaItem.thumbnailUrl}
             />
-            <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
               <Video className="w-8 h-8 text-white" />
             </div>
           </div>
@@ -197,21 +197,21 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
         
         {/* Overlay badges */}
         <div className="absolute top-2 left-2">
-          <Badge variant="secondary" className="bg-black/60 text-white text-xs">
+          <Badge variant="secondary" className="text-xs text-white bg-black/60">
             {mediaItem.type === 'photo' ? 'Photo' : 'Video'}
           </Badge>
         </div>
         
-        <div className="absolute top-2 right-2 flex gap-1">
+        <div className="absolute flex gap-1 top-2 right-2">
           {mediaItem.isFavorite && (
-            <Badge variant="secondary" className="bg-yellow-500/80 text-white text-xs">
+            <Badge variant="secondary" className="text-xs text-white bg-yellow-500/80">
               <Star className="w-3 h-3" />
             </Badge>
           )}
           <Button
             size="sm"
             variant="ghost"
-            className="h-6 w-6 p-0 bg-black/40 hover:bg-black/60 text-white"
+            className="w-6 h-6 p-0 text-white bg-black/40 hover:bg-black/60"
             onClick={(e) => {
               e.stopPropagation();
               handleToggleFavorite(mediaItem.id);
@@ -224,7 +224,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
       
       {!isCompact && (
         <CardContent className="p-3 space-y-2">
-          <h4 className="font-medium text-sm line-clamp-1">{mediaItem.title}</h4>
+          <h4 className="text-sm font-medium line-clamp-1">{mediaItem.title}</h4>
           <p className="text-xs text-muted-foreground line-clamp-2">
             {mediaItem.description}
           </p>
@@ -259,20 +259,20 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
               {formatFileSize(mediaItem.fileSize)}
             </span>
             <div className="flex gap-1">
-              <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+              <Button size="sm" variant="ghost" className="w-6 h-6 p-0">
                 <Eye className="w-3 h-3" />
               </Button>
-              <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+              <Button size="sm" variant="ghost" className="w-6 h-6 p-0">
                 <Share2 className="w-3 h-3" />
               </Button>
-              <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+              <Button size="sm" variant="ghost" className="w-6 h-6 p-0">
                 <Download className="w-3 h-3" />
               </Button>
               {onMediaDelete && (
                 <Button 
                   size="sm" 
                   variant="ghost" 
-                  className="h-6 w-6 p-0 text-destructive"
+                  className="w-6 h-6 p-0 text-destructive"
                   onClick={(e) => {
                     e.stopPropagation();
                     onMediaDelete(mediaItem.id);
@@ -319,9 +319,9 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
             <div className="relative">
-              <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute w-4 h-4 left-3 top-3 text-muted-foreground" />
               <Input
                 placeholder="Search media..."
                 value={searchTerm}
@@ -380,8 +380,8 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
       {filteredMedia.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center">
-            <Image className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">No media found</h3>
+            <Image className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="mb-2 text-lg font-medium">No media found</h3>
             <p className="text-muted-foreground">
               {media.length === 0 
                 ? "Upload some photos and videos to get started!"
@@ -409,7 +409,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
       {/* Stats Footer */}
       <Card>
         <CardContent className="p-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+          <div className="grid grid-cols-2 gap-4 text-center md:grid-cols-4">
             <div>
               <div className="text-2xl font-bold text-adventure-orange">
                 {media.filter(m => m.type === 'photo').length}

@@ -1,0 +1,22 @@
+{
+  "DevSecOps Minimal Agent": {
+    "tools": [
+      "changes",
+      "codebase",
+      "editFiles",
+      "search",
+      "runCommands",
+      "runTasks",
+      "runTests",
+      "problems",
+      "terminalLastCommand",
+      "terminalSelection",
+      "extension:GitHub Pull Requests",
+      "extension:Python",
+      "mcp:console-ninja",
+      "mcp:github"
+    ],
+    "description": "Lean toolset for coding + terminal control. No fluff.",
+    "icon": "tools"
+  }
+}

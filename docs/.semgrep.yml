@@ -1,0 +1,6 @@
+rules:
+  - id: generic
+    patterns:
+      - pattern: $X
+    message: Generic pattern placeholder
+    severity: INFO
