@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --format=esm --outfile=dist/worker.js",
+  "build": "esbuild src/index.ts src/qa/unified-contract-check.ts src/qa/validate-unified.ts --bundle --format=esm --outdir=dist",
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "qa:contract": "node dist/qa/unified-contract-check.js",
+    "qa:schema": "node dist/qa/validate-unified.js"
   },
   "dependencies": {
     "hono": "^4.1.2"
@@ -14,6 +16,6 @@
     "@cloudflare/workers-types": "^4.20240320.1",
     "esbuild": "^0.25.5",
     "typescript": "^5.4.2",
-    "wrangler": "^4.20.0"
+  "wrangler": "^4.28.1"
   }
 }

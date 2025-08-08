@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UnifiedData",
+  "type": "object",
+  "required": ["overview", "currentStatus", "timeline", "tessieStatus"],
+  "properties": {
+    "overview": {
+      "type": "object",
+      "required": ["tripName", "vehicle", "startDate", "daysElapsed", "totalMiles", "currentOdometer", "statesVisited", "totalStates"],
+      "properties": {
+        "tripName": {"type": "string"},
+        "vehicle": {"type": "string"},
+        "startDate": {"type": "string"},
+        "daysElapsed": {"type": "number"},
+        "totalMiles": {"type": "number"},
+        "currentOdometer": {"type": "number"},
+        "statesVisited": {"type": "number"},
+        "totalStates": {"type": "number"}
+      }
+    },
+    "currentStatus": {
+      "type": "object",
+      "required": ["vehicle", "battery", "location"],
+      "properties": {
+        "vehicle": {"type": "object"},
+        "battery": {"type": "object"},
+        "location": {"type": "object"}
+      }
+    },
+    "timeline": {
+      "type": "object",
+      "required": ["drives", "charges"],
+      "properties": {
+        "drives": {"type": "array"},
+        "charges": {"type": "array"}
+      }
+    },
+    "tessieStatus": {"type": "object"}
+  }
+}

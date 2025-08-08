@@ -1,6 +1,15 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+// Dynamic mapbox-gl loading to shrink initial bundle. Only loads when token present & component mounted.
+let mapboxModulePromise: Promise<any> | null = null;
+async function getMapbox() {
+  if (!mapboxModulePromise) {
+    mapboxModulePromise = import('mapbox-gl').then(m => {
+      import('mapbox-gl/dist/mapbox-gl.css'); // side-effect CSS load
+      return m.default || m;
+    });
+  }
+  return mapboxModulePromise;
+}
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Navigation, Loader2 } from 'lucide-react';
@@ -22,8 +31,8 @@ interface TeslaMapProps {
 
 const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _onTokenChange, routeLocations }: TeslaMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const vehicleMarker = useRef<mapboxgl.Marker | null>(null);
+  const map = useRef<any>(null);
+  const vehicleMarker = useRef<any>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(propsToken || null);
   const [isLoadingToken, setIsLoadingToken] = useState(false);
 
@@ -144,46 +153,33 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
   }, [mapboxToken]);
 
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken) return;
-
-    // Initialize map
-    mapboxgl.accessToken = mapboxToken;
-    
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/dark-v11',
-      center: [-98.5795, 39.8283], // Center of continental US
-      zoom: 3.5, // Show full continental US
-      pitch: 0,
-    });
-
-    // Add navigation controls
-    map.current.addControl(
-      new mapboxgl.NavigationControl({
-        visualizePitch: true,
-      }),
-      'top-right'
-    );
-
-    // Wait for style to load before adding sources and layers
-    map.current.on('load', () => {
-      addJourneyWaypoints();
-      addJourneyRoute();
-    });
-
-    // Cleanup
-    return () => {
-      map.current?.remove();
-    };
+    let cancelled = false;
+    (async () => {
+      if (!mapContainer.current || !mapboxToken) return;
+      const mapboxgl = await getMapbox();
+      if (cancelled) return;
+      mapboxgl.accessToken = mapboxToken;
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/dark-v11',
+        center: [-98.5795, 39.8283],
+        zoom: 3.5,
+        pitch: 0
+      });
+      map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
+      map.current.on('load', () => {
+        addJourneyWaypoints();
+        addJourneyRoute();
+      });
+    })();
+    return () => { cancelled = true; if (map.current) map.current.remove(); };
   }, [mapboxToken, addJourneyRoute, addJourneyWaypoints]); // Include all dependencies
 
   useEffect(() => {
     if (!map.current || !vehicleLocation) return;
 
     // Remove existing marker
-    if (vehicleMarker.current) {
-      vehicleMarker.current.remove();
-    }
+  if (vehicleMarker.current) { vehicleMarker.current.remove(); }
 
     // Create Tesla vehicle marker
     const el = document.createElement('div');
@@ -194,8 +190,8 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
       </div>
     `;
 
-    // Add new marker
-    vehicleMarker.current = new mapboxgl.Marker(el)
+  // Add new marker (mapbox already loaded when map created)
+  vehicleMarker.current = new (map.current as any).Marker(el)
       .setLngLat([vehicleLocation.longitude, vehicleLocation.latitude])
       .addTo(map.current);
 

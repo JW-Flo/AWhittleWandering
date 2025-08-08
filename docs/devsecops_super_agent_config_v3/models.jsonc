@@ -1,0 +1,14 @@
+{
+  "Full DevSecOps Agent Models": {
+    "models": [
+      "gpt-5",
+      "gpt-5-large",
+      "o3",
+      "o3-mini",
+      "gpt-5-mini",
+      "gpt-5-nano"
+    ],
+    "description": "Optimized model set for high-security, full-stack DevSecOps agent — includes deep reasoning, rapid prototyping, and lightweight modes.",
+    "icon": "layers"
+  }
+}

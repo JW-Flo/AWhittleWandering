@@ -18,6 +18,9 @@ crons = [
 # All API credentials are stored as SECRETS for security
 # Run ./setup-tessie-secrets.sh to configure all required APIs
 
+# Default log level (debug, info, warn, error)
+LOG_LEVEL = "info"
+
 # AI Configuration - Using Cloudflare AI Gateway
 AI_GATEWAY_ID = "awhittlewandering-ai"
 AI_MODEL_NAME = "@cf/meta/llama-3.1-8b-instruct"
@@ -131,6 +134,9 @@ name = "awhittlewandering-api"
 [env.production.vars]
 # All API credentials are stored as SECRETS for security
 # Run ./setup-tessie-secrets.sh to configure all required APIs
+
+# Production log level can be overridden here
+LOG_LEVEL = "info"
 
 # CRITICAL API CONFIGURATION REQUIREMENTS:
 # 1. TESSIE_API_KEY - Tesla data integration (HIGHEST PRIORITY)  
