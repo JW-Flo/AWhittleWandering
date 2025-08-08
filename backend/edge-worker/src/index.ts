@@ -5,126 +5,9 @@ import { CronDataController } from './cron-controller';
 import { ComponentDataProcessor } from './component-data-processor';
 import { EnhancedDataProcessor } from './enhanced-data-processor';
 import { ingestDrives, ingestCharges, ingestVehicleState } from './ingestion/tessie-ingest';
-import { log } from './utils/log';
+import { log, setCorrelationId, setLogLevel } from './utils/log';
 import { reverseGeocode } from './utils/geocode';
 import { canProceed, recordCall } from './utils/rateLimit';
-
-// Configurable constants
-const MAX_HISTORICAL_DRIVES = 1000;
-const SAMPLE_DRIVES_RATE_LIMIT_MS = 100;
-
-// Cloudflare Worker types for comprehensive resource integration
-interface ScheduledController {
-  readonly scheduledTime: number;
-  readonly cron: string;
-  noRetry(): void;
-}
-
-interface ExecutionContext {
-  waitUntil(promise: Promise<any>): void;
-  passThroughOnException(): void;
-}
-
-interface D1Database {
-  prepare(query: string): D1PreparedStatement;
-  exec(query: string): Promise<D1ExecResult>;
-  batch(statements: D1PreparedStatement[]): Promise<D1Result[]>;
-}
-
-interface D1PreparedStatement {
-  bind(...values: any[]): D1PreparedStatement;
-  first<T = any>(colName?: string): Promise<T | null>;
-  run(): Promise<D1Result>;
-  all<T = any>(): Promise<D1Result<T>>;
-}
-
-interface D1Result<T = any> {
-  results?: T[];
-  success: boolean;
-  error?: string;
-  meta: {
-    duration: number;
-    size_after: number;
-    rows_read: number;
-    rows_written: number;
-  };
-}
-
-interface D1ExecResult {
-  count: number;
-  duration: number;
-}
-
-interface R2Bucket {
-  get(key: string): Promise<R2Object | null>;
-  put(key: string, value: ReadableStream | ArrayBuffer | string, options?: {
-    httpMetadata?: {
-      contentType?: string;
-      cacheControl?: string;
-    };
-    customMetadata?: Record<string, string>;
-  }): Promise<void>;
-  delete(key: string): Promise<void>;
-  list(options?: { prefix?: string; limit?: number }): Promise<R2Objects>;
-}
-
-interface R2Object {
-  body: ReadableStream;
-  httpMetadata: {
-    contentType?: string;
-    cacheControl?: string;
-  };
-  customMetadata: Record<string, string>;
-  size: number;
-  etag: string;
-  uploaded: Date;
-}
-
-interface R2Objects {
-  objects: R2Object[];
-  truncated: boolean;
-  cursor?: string;
-}
-
-interface KVNamespace {
-  get(key: string): Promise<string | null>;
-  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
-  delete(key: string): Promise<void>;
-}
-
-interface AnalyticsEngine {
-  writeDataPoint(data: {
-    blobs?: string[];
-    doubles?: number[];
-    indexes?: string[];
-  }): void;
-}
-
-interface Queue {
-  send(message: any, options?: { delaySeconds?: number }): Promise<void>;
-  sendBatch(messages: any[]): Promise<void>;
-}
-
-interface Ai {
-  run(model: string, opts: { messages: { role: string; content: string }[], max_tokens: number, temperature: number }): Promise<{ response: string }>;
-}
-
-interface Env {
-  TESLA_DB: D1Database;
-  MEDIA_BUCKET: R2Bucket;
-  AUTH_TOKENS: KVNamespace;
-  TELEMETRY_ANALYTICS: AnalyticsEngine;
-  DATA_PROCESSOR?: Queue; // Optional queue
-  AI: Ai; // Cloudflare AI binding
-  TESSIE_API_KEY: string;
-  TESLA_VIN: string;
-  OPENWEATHER_API_KEY: string;
-  JWT_SECRET: string;
-  ADMIN_PASSWORD: string;
-  MAPBOX_ACCESS_TOKEN: string;
-  AI_GATEWAY_ID: string;
-  AI_MODEL_NAME: string;
-}
 
 // Cloudflare AI integration for intelligent features
 async function callCloudflareAI(env: Env, prompt: string, systemMessage?: string): Promise<string> {
@@ -180,6 +63,27 @@ app.use('*', async (c, next) => {
   }
 });
 
+// Correlation + request logging middleware
+app.use('*', async (c, next) => {
+  // Apply log level from environment if provided
+  if ((c.env as any).LOG_LEVEL) {
+    try { setLogLevel((c.env as any).LOG_LEVEL); } catch {}
+  }
+  const cid = crypto.randomUUID();
+  setCorrelationId(cid);
+  const start = Date.now();
+  log('info', 'request.start', { cid, method: c.req.method, path: c.req.path });
+  try {
+    await next();
+    log('info', 'request.end', { cid, status: c.res.status, durationMs: Date.now() - start });
+  } catch (err) {
+    log('error', 'request.error', { cid, error: (err as any)?.message });
+    throw err;
+  } finally {
+    setCorrelationId(undefined);
+  }
+});
+
 // Analytics middleware - track all API usage
 app.use('*', async (c, next) => {
   const start = Date.now();
@@ -232,37 +136,90 @@ app.use('*', async (c, next) => {
 
 // Health check with comprehensive status
 app.get('/api/v1/health', async (c) => {
-  const health = {
+  const start = Date.now();
+  const db = c.env.TESLA_DB;
+  const health: any = {
     status: 'ok',
-    timestamp: Date.now(),
+    timestamp: new Date().toISOString(),
     version: '3.0.0',
     service: 'A Whittle Wandering - Unified Cloudflare Stack',
     resources: {
-      d1_database: 'connected',
-      r2_storage: 'connected',
-      analytics_engine: 'connected',
-      queue_system: 'connected'
-    }
+      d1_database: 'unknown',
+      r2_storage: 'unknown',
+      analytics_engine: 'assumed',
+      queue_system: c.env.DATA_PROCESSOR ? 'configured' : 'not_configured'
+    },
+    ingestion: {},
+    performance: {},
+    warnings: [] as string[]
   };
 
+  // Core resource checks
   try {
-    // Test D1 connection
-    await c.env.TESLA_DB.prepare('SELECT 1').first();
+    await db.prepare('SELECT 1').first();
     health.resources.d1_database = 'operational';
-  } catch (error) {
-    health.status = 'degraded';
+  } catch (e) {
     health.resources.d1_database = 'error';
+    health.status = 'degraded';
+    health.warnings.push('D1 database not reachable');
   }
 
   try {
-    // Test R2 connection  
     await c.env.MEDIA_BUCKET.list({ limit: 1 });
     health.resources.r2_storage = 'operational';
-  } catch (error) {
+  } catch (e) {
     health.resources.r2_storage = 'error';
+    health.status = 'degraded';
+    health.warnings.push('R2 storage not reachable');
   }
 
-  return c.json(health);
+  // Ingestion / data freshness metrics
+  try {
+    const lastVehicleState = await db.prepare(`SELECT timestamp FROM vehicle_state ORDER BY timestamp DESC LIMIT 1`).first();
+    const lastDrive = await db.prepare(`SELECT COALESCE(ended_at, started_at) AS ts FROM drives ORDER BY ts DESC LIMIT 1`).first();
+    const lastCharge = await db.prepare(`SELECT COALESCE(ended_at, started_at) AS ts FROM charges ORDER BY ts DESC LIMIT 1`).first();
+    const statesVisited = await db.prepare(`SELECT COUNT(DISTINCT start_state) as cnt FROM drives WHERE start_state IS NOT NULL`).first();
+    const driveCount = await db.prepare(`SELECT COUNT(1) as cnt FROM drives`).first();
+    const chargeCount = await db.prepare(`SELECT COUNT(1) as cnt FROM charges`).first();
+
+    const nowMs = Date.now();
+    function ageSec(ts?: string) { return ts ? Math.round((nowMs - new Date(ts).getTime()) / 1000) : null; }
+
+    const vsTs = (lastVehicleState as any)?.timestamp as string | undefined;
+    const driveTs = (lastDrive as any)?.ts as string | undefined;
+    const chargeTs = (lastCharge as any)?.ts as string | undefined;
+
+    const vehicleStateAge = ageSec(vsTs);
+    const driveDataAge = ageSec(driveTs);
+    const chargeDataAge = ageSec(chargeTs);
+
+    health.ingestion = {
+      vehicleState: { lastUpdate: vsTs || null, ageSeconds: vehicleStateAge },
+      drives: { lastUpdate: driveTs || null, ageSeconds: driveDataAge, total: (driveCount as any)?.cnt || 0 },
+      charges: { lastUpdate: chargeTs || null, ageSeconds: chargeDataAge, total: (chargeCount as any)?.cnt || 0 },
+      statesVisited: (statesVisited as any)?.cnt || 0
+    };
+
+    // Freshness evaluation
+    if (vehicleStateAge != null) {
+      if (vehicleStateAge > 6 * 3600) { // >6h
+        health.status = 'degraded';
+        health.warnings.push('Vehicle state older than 6h');
+      } else if (vehicleStateAge > 24 * 3600) {
+        health.status = 'unhealthy';
+        health.warnings.push('Vehicle state older than 24h');
+      }
+    } else {
+      health.status = 'degraded';
+      health.warnings.push('No vehicle state data');
+    }
+  } catch (e) {
+    health.status = 'degraded';
+    health.warnings.push('Failed to compute ingestion metrics');
+  }
+
+  health.performance.responseTimeMs = Date.now() - start;
+  return c.json(health, health.status === 'unhealthy' ? 503 : 200);
 });
 
 // Ingestion status endpoint
@@ -1294,12 +1251,20 @@ app.post('/api/v1/admin/repair-timestamps', async (c) => {
 app.post('/api/v1/admin/clear-cache', async (c) => {
   try {
     const db = c.env.TESLA_DB;
-    
-    // Clear all cache entries
+
+    // Ensure api_cache table exists (defensive in case migrations not yet applied)
+    await db.prepare(`CREATE TABLE IF NOT EXISTS api_cache (
+      cache_key TEXT PRIMARY KEY,
+      cache_data TEXT,
+      cache_type TEXT,
+      expires_at DATETIME
+    );`).run();
+
+    // Clear unified-data cache entries
     const result = await db.prepare(`
-      DELETE FROM cache_entries WHERE type = 'unified_data'
+      DELETE FROM api_cache WHERE cache_key LIKE 'unified_data%'
     `).run();
-    
+
     return c.json({
       message: 'Cache cleared successfully',
       deletedEntries: result.meta?.rows_written || 0,
@@ -1893,132 +1858,190 @@ app.post('/api/v1/admin/ingest-data', async (c) => {
   });
 });
 
+// Diagnostic: identify which unified-data query is failing
+app.get('/api/v1/admin/diagnose-unified', async (c) => {
+  const db = c.env.TESLA_DB;
+  const results: any[] = [];
+  async function test(label: string, sql: string) {
+    const entry: any = { label };
+    try {
+      const stmt = db.prepare(sql);
+      if (/^select/i.test(sql.trim())) {
+        entry.row = await stmt.first();
+      } else {
+        await stmt.run();
+        entry.ok = true;
+      }
+      entry.ok = true;
+    } catch (e: any) {
+      entry.ok = false;
+      entry.error = e?.message;
+    }
+    results.push(entry);
+  }
+  await test('vehicleRow', `SELECT v.vin, v.display_name, vs.* FROM vehicle_state vs JOIN vehicles v ON v.vin = vs.vin ORDER BY vs.timestamp DESC LIMIT 1`);
+  await test('journey', `SELECT * FROM journeys WHERE id = 'continental-usa-2025' LIMIT 1`);
+  await test('aggregates', `SELECT COALESCE(SUM(distance_miles),0) as total_miles, COUNT(1) as drive_count, COALESCE(MAX(ended_at), MAX(started_at)) as last_drive_end FROM drives`);
+  await test('chargeAgg', `SELECT COUNT(1) as charge_count, COALESCE(MAX(ended_at), MAX(started_at)) as last_charge_end FROM charges`);
+  await test('statesRow', `SELECT COUNT(DISTINCT start_state) as states_visited FROM drives WHERE start_state IS NOT NULL`);
+  await test('recentDrives', `SELECT id, started_at, ended_at, distance_miles, start_state, end_state, average_speed AS average_speed_mph FROM drives ORDER BY (ended_at IS NULL) ASC, ended_at DESC, started_at DESC LIMIT 25`);
+  await test('recentCharges', `SELECT id, started_at, ended_at, start_battery_level AS charge_level_start, end_battery_level AS charge_level_end, miles_added AS added_range_miles FROM charges ORDER BY (ended_at IS NULL) ASC, ended_at DESC, started_at DESC LIMIT 15`);
+  return c.json({ results, generatedAt: new Date().toISOString() });
+});
+
 async function handleUnifiedData(c: any) {
   try {
-    const cacheKey = 'unified_data_latest';
-    
-    // Check D1 cache first (much faster than KV for structured queries)
+    const cacheKey = 'unified_data_latest_v2';
+
+    // Defensive: ensure cache table exists so we don't 500 if migration not applied yet
+    try {
+      await c.env.TESLA_DB.prepare(`CREATE TABLE IF NOT EXISTS api_cache (
+        cache_key TEXT PRIMARY KEY,
+        cache_data TEXT,
+        cache_type TEXT,
+        expires_at DATETIME
+      );`).run();
+    } catch (e) {
+      log('warn', 'unified.cache.ensure_failed', { error: (e as any)?.message });
+    }
+
+    // Prefer D1 cache for recent unified aggregation
     const cached = await c.env.TESLA_DB.prepare(`
-      SELECT cache_data, expires_at 
-      FROM api_cache 
+      SELECT cache_data, expires_at FROM api_cache
       WHERE cache_key = ? AND expires_at > datetime('now')
     `).bind(cacheKey).first();
-
-    if (cached) {
-  log('info', 'cache.hit.unified_data', { component: 'unified-data', cache: 'd1', key: cacheKey });
+    if (cached?.cache_data) {
+      log('debug', 'unified.cache.hit', { key: cacheKey });
       return c.json(JSON.parse(cached.cache_data as string));
     }
 
-  log('info', 'unified.refresh.start', { action: 'fetch_and_aggregate' });
+    log('info', 'unified.build.start');
 
-    // Fetch fresh data from Tessie API with rate limiting
-    const tessieData = await fetchTessieData(c.env.TESSIE_API_KEY, c.env.TESLA_DB);
-    
-    // Process and store in D1 using enhanced analytics
-    const unifiedData = await processAndStoreInD1Enhanced(c.env.TESLA_DB, tessieData);
-    
-    // SAFE ENHANCEMENT: Try to get better data from component tables if available
+    // Latest vehicle + state
+    const vehicleRow = await c.env.TESLA_DB.prepare(`
+      SELECT v.vin, v.display_name, vs.* FROM vehicle_state vs
+      JOIN vehicles v ON v.vin = vs.vin
+      ORDER BY vs.timestamp DESC
+      LIMIT 1
+    `).first();
+
+    // Journey basics
+    const journey = await c.env.TESLA_DB.prepare(`
+      SELECT * FROM journeys WHERE id = 'continental-usa-2025' LIMIT 1
+    `).first();
+
+    // Aggregate distances & counts
+    const aggregates = await c.env.TESLA_DB.prepare(`
+      SELECT 
+        COALESCE(SUM(distance_miles),0) as total_miles,
+        COUNT(1) as drive_count,
+        COALESCE(MAX(ended_at), MAX(started_at)) as last_drive_end
+      FROM drives
+    `).first();
+
+    const chargeAgg = await c.env.TESLA_DB.prepare(`
+      SELECT COUNT(1) as charge_count, COALESCE(MAX(ended_at), MAX(started_at)) as last_charge_end
+      FROM charges
+    `).first();
+
+    const statesRow = await c.env.TESLA_DB.prepare(`
+      SELECT COUNT(DISTINCT start_state) as states_visited FROM drives WHERE start_state IS NOT NULL
+    `).first();
+
+    // Timeline (recent items)
+    // NOTE: Cloudflare D1 (SQLite) does not support NULLS LAST syntax; emulate by ordering on whether ended_at IS NULL
+    const recentDrives = await c.env.TESLA_DB.prepare(`
+      SELECT id, started_at, ended_at, distance_miles, start_state, end_state,
+             average_speed AS average_speed_mph
+      FROM drives
+      ORDER BY (ended_at IS NULL) ASC, ended_at DESC, started_at DESC
+      LIMIT 25
+    `).all();
+    const recentCharges = await c.env.TESLA_DB.prepare(`
+      SELECT id, started_at, ended_at,
+             start_battery_level AS charge_level_start,
+             end_battery_level AS charge_level_end,
+             miles_added AS added_range_miles
+      FROM charges
+      ORDER BY (ended_at IS NULL) ASC, ended_at DESC, started_at DESC
+      LIMIT 15
+    `).all();
+
+    const startDate = journey?.start_date || '2025-06-01';
+    const daysElapsed = Math.max(1, Math.floor((Date.now() - new Date(startDate).getTime()) / 86400000));
+    const totalMiles = (aggregates as any)?.total_miles || 0;
+    const statesVisited = (statesRow as any)?.states_visited || 0;
+
+    const overview = {
+      tripName: 'Continental USA 2025',
+      vehicle: vehicleRow?.display_name || 'Midnight Shadow',
+      startDate,
+      daysElapsed,
+      totalMiles: Math.round(totalMiles),
+      currentOdometer: vehicleRow?.odometer || 0,
+      statesVisited,
+      totalStates: 48
+    };
+
+    const currentStatus = {
+      vehicle: {
+        vin: vehicleRow?.vin || null,
+        name: vehicleRow?.display_name || null
+      },
+      battery: {
+        level: vehicleRow?.battery_level ?? null,
+        range: vehicleRow?.battery_range ?? null,
+        chargingState: vehicleRow?.charging_state || 'Unknown'
+      },
+      location: {
+        latitude: vehicleRow?.latitude || null,
+        longitude: vehicleRow?.longitude || null,
+        state: 'Unknown'
+      },
+      environment: {
+        insideTemp: vehicleRow?.inside_temp ?? null,
+        outsideTemp: vehicleRow?.outside_temp ?? null
+      },
+      telemetryTimestamp: vehicleRow?.timestamp || null
+    };
+
+    // Attempt reverse geocode state if coords present
     try {
-      const componentOverview = await c.env.TESLA_DB.prepare(`
-        SELECT * FROM journey_overview 
-        WHERE journey_id = 'continental-usa-2025' 
-        ORDER BY last_updated DESC 
-        LIMIT 1
-      `).first();
-
-      const componentStatus = await c.env.TESLA_DB.prepare(`
-        SELECT * FROM current_status 
-        ORDER BY last_updated DESC 
-        LIMIT 1
-      `).first();
-
-      // Enhance unified data with component data if available
-      if (componentOverview) {
-        // IMPORTANT: Don't override miles or states - use accurate real-time calculations
-        // unifiedData.overview.totalMiles = componentOverview.total_miles;
-        // unifiedData.overview.statesVisited = componentOverview.states_visited_count;
-        unifiedData.overview.daysElapsed = componentOverview.days_elapsed;
+      if (currentStatus.location.latitude && currentStatus.location.longitude) {
+        const geo = await reverseGeocode(currentStatus.location.latitude, currentStatus.location.longitude, c.env.MAPBOX_ACCESS_TOKEN);
+        if (geo?.region) currentStatus.location.state = geo.region;
       }
-
-      if (componentStatus) {
-        // Use real-time GPS coordinates to determine current location
-        const realTimeState = await detectStateFromCoordinates(
-          (tessieData?.state as any)?.drive_state?.latitude || 0, 
-          (tessieData?.state as any)?.drive_state?.longitude || 0
-        );
-        
-        unifiedData.currentStatus.location.state = realTimeState !== 'Unknown' ? realTimeState : (componentStatus?.current_state || unifiedData.currentStatus.location.state);
-        // Use real-time location data only - don't inject stale static data
-        if ((tessieData?.state as any)?.drive_state?.latitude && (tessieData?.state as any)?.drive_state?.longitude) {
-          // Use reverse geocoding for real city name (if available)
-          // For now, just use state info to avoid stale data
-          (unifiedData.currentStatus.location as any).city = realTimeState !== 'Unknown' ? realTimeState : 'Unknown';
-        }
-      }
-    } catch (componentError) {
-  log('warn', 'unified.enhancement.failed', { error: (componentError as any)?.message || String(componentError) });
+    } catch (gErr) {
+      log('debug', 'unified.reverseGeocode.skip', { error: (gErr as any)?.message });
     }
-    
-    // Cache the aggregated result in D1
+
+    const timeline = {
+      drives: recentDrives.results || [],
+      charges: recentCharges.results || []
+    };
+
+    const lastUpdateTs = vehicleRow?.timestamp ? new Date(vehicleRow.timestamp).getTime() : 0;
+    const freshnessMs = Date.now() - lastUpdateTs;
+    const tessieStatus = {
+      connected: freshnessMs < 15 * 60 * 1000, // <15m considered fresh
+      lastUpdate: vehicleRow?.timestamp || null,
+      dataFreshness: freshnessMs < 15 * 60 * 1000 ? 'fresh' : (freshnessMs < 6 * 60 * 60 * 1000 ? 'stale' : 'old')
+    };
+
+    const unified = { overview, currentStatus, timeline, tessieStatus, meta: { generatedAt: new Date().toISOString() } };
+
+    // Cache for 30s
     await c.env.TESLA_DB.prepare(`
       INSERT OR REPLACE INTO api_cache (cache_key, cache_data, expires_at, cache_type)
       VALUES (?, ?, datetime('now', '+30 seconds'), 'unified_data')
-    `).bind(cacheKey, JSON.stringify(unifiedData)).run();
-    
-    // Queue background processing for data enrichment (only in production)
-    try {
-      if (c.env.DATA_PROCESSOR && c.env.DATA_PROCESSOR.send) {
-        await c.env.DATA_PROCESSOR.send({
-          type: 'enrich_drive_data',
-          timestamp: Date.now(),
-          data: { lastSync: new Date().toISOString() }
-        });
-      } else {
-    log('debug', 'queue.skip.dev', { queue: 'DATA_PROCESSOR' });
-      }
-    } catch (error) {
-  log('warn', 'queue.enqueue.failed', { error: (error as any)?.message || String(error) });
-      // Continue execution - queue is not critical
-    }
+    `).bind(cacheKey, JSON.stringify(unified)).run();
 
-    return c.json(unifiedData);
-
+    log('info', 'unified.build.success', { drives: timeline.drives.length, charges: timeline.charges.length });
+    return c.json(unified);
   } catch (error) {
-  log('error', 'unified.endpoint.error', { error: (error as any)?.message || String(error) });
-    
-    // Fallback to last known good data from D1
-    try {
-      const fallback = await c.env.TESLA_DB.prepare(`
-        SELECT cache_data 
-        FROM api_cache 
-        WHERE cache_key = 'unified_data_latest'
-        ORDER BY created_at DESC 
-        LIMIT 1
-      `).first();
-
-      if (fallback) {
-        const data = JSON.parse(fallback.cache_data as string);
-        data.tessieStatus = {
-          connected: false,
-          lastUpdate: new Date().toISOString(),
-          dataFreshness: 'fallback',
-          error: error instanceof Error ? error.message : 'Unknown error'
-        };
-        return c.json(data);
-      }
-    } catch (fallbackError) {
-  log('error', 'unified.fallback.error', { error: (fallbackError as any)?.message || String(fallbackError) });
-    }
-
-    return c.json({
-      error: 'Failed to fetch data and no fallback available',
-      tessieStatus: {
-        connected: false,
-        lastUpdate: new Date().toISOString(),
-        dataFreshness: 'unavailable',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      }
-    }, 500);
+  const err = error as any;
+  log('error', 'unified.build.error', { message: err?.message, stack: err?.stack });
+    return c.json({ error: 'unified data unavailable' }, 500);
   }
 }
 

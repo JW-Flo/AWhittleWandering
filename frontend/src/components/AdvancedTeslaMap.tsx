@@ -2,8 +2,9 @@
 // Includes route smoothing, elevation profiles, and animated path display
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+// Dynamic load mapbox to reduce initial bundle
+import { loadMapbox } from '@/lib/mapbox-loader';
+let mapboxgl: any; // loaded at runtime
 import { 
   smoothRoute, 
   createRouteSegments, 
@@ -213,45 +214,49 @@ const AdvancedTeslaMap: React.FC<AdvancedTeslaMapProps> = ({
     if (segments.length > 0) {
       const segmentFeatures = segments.map(segment => ({
         type: 'Feature' as const,
-        properties: {
-          speed: segment.averageSpeed,
-          type: segment.type,
-          distance: segment.distance
-        },
-        geometry: {
-          type: 'LineString' as const,
-          coordinates: [
-            [segment.startPoint.lng, segment.startPoint.lat],
-            [segment.endPoint.lng, segment.endPoint.lat]
-          ]
-        }
-      }));
-
-      map.current.addSource('route-segments-data', {
+        useEffect(() => {
+          if (!mapContainer.current || !mapboxToken) return;
+          let cancelled = false;
+          (async () => {
+            if (!mapboxgl) {
+              mapboxgl = await loadMapbox();
+            }
+            if (cancelled) return;
+            mapboxgl.accessToken = mapboxToken;
+      
+            map.current = new mapboxgl.Map({
+              container: mapContainer.current,
+              style: 'mapbox://styles/mapbox/satellite-streets-v12', // Enhanced satellite view
+              center: [-98.5795, 39.8283], // Center of USA
+              zoom: 4,
+              projection: 'mercator',
+              pitch: 0,
+              bearing: 0,
+              maxPitch: 60, // Allow some 3D tilt for better route visualization
+            });
         type: 'geojson',
-        data: {
-          type: 'FeatureCollection',
-          features: segmentFeatures
-        }
-      });
+            // Add enhanced navigation controls
+            map.current.addControl(new mapboxgl.NavigationControl({
+              visualizePitch: true,
+              showCompass: true
+            }), 'top-right');
 
-      map.current.addLayer({
-        id: 'route-segments',
+            // Add fullscreen control
+            map.current.addControl(new mapboxgl.FullscreenControl(), 'top-right');
         type: 'line',
-        source: 'route-segments-data',
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
+            // Add scale control
+            map.current.addControl(new mapboxgl.ScaleControl({
+              maxWidth: 80,
+              unit: 'imperial'
+            }), 'bottom-left');
         paint: {
-          'line-color': [
-            'interpolate',
-            ['linear'],
+            map.current.on('load', () => {
+              setIsMapLoaded(true);
+            });
             ['get', 'speed'],
-            0, '#FF4444', // Red for slow/stopped
-            25, '#FFAA00', // Orange for city speeds
-            45, '#00FF00', // Green for rural speeds
-            70, '#0080FF' // Blue for highway speeds
+          })();
+          return () => { cancelled = true; map.current?.remove(); };
+        }, [mapboxToken]);
           ],
           'line-width': 2,
           'line-opacity': 0.6
