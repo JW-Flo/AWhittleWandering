@@ -5,38 +5,41 @@
  * Real-time browser testing with web interface
  */
 
-import express from 'express';
-import { WebSocketServer } from 'ws';
-import puppeteer from 'puppeteer';
-import http from 'http';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
+import express from "express";
+import { WebSocketServer } from "ws";
+import puppeteer from "puppeteer";
+import http from "http";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 
 // Get project root dynamically
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const PROJECT_ROOT = path.resolve(__dirname, '..');
+const PROJECT_ROOT = path.resolve(__dirname, "..");
 
 // Cross-platform Chrome detection
 function findChrome() {
   const chromePaths = {
     win32: [
-      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-      path.join(process.env.LOCALAPPDATA || '', 'Google\\Chrome\\Application\\chrome.exe')
+      "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+      path.join(
+        process.env.LOCALAPPDATA || "",
+        "Google\\Chrome\\Application\\chrome.exe"
+      ),
     ],
     darwin: [
-      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-      '/Applications/Chromium.app/Contents/MacOS/Chromium'
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "/Applications/Chromium.app/Contents/MacOS/Chromium",
     ],
     linux: [
-      '/usr/bin/google-chrome',
-      '/usr/bin/google-chrome-stable',
-      '/usr/bin/chromium',
-      '/usr/bin/chromium-browser',
-      '/snap/bin/chromium'
-    ]
+      "/usr/bin/google-chrome",
+      "/usr/bin/google-chrome-stable",
+      "/usr/bin/chromium",
+      "/usr/bin/chromium-browser",
+      "/snap/bin/chromium",
+    ],
   };
 
   const platform = process.platform;
@@ -66,8 +69,8 @@ class PuppeteerWebUI {
     this.isRunning = false;
     this.results = [];
     this.screenshots = [];
-    this.screenshotDir = path.join(PROJECT_ROOT, 'debug');
-    
+    this.screenshotDir = path.join(PROJECT_ROOT, "debug");
+
     // Ensure screenshot directory exists
     if (!fs.existsSync(this.screenshotDir)) {
       fs.mkdirSync(this.screenshotDir, { recursive: true });
@@ -76,38 +79,41 @@ class PuppeteerWebUI {
 
   async init() {
     // Setup Express middleware
-    this.app.use(express.static('public'));
+    this.app.use(express.static("public"));
     this.app.use(express.json());
 
     // API Routes
-    this.app.get('/api/status', (req, res) => {
+    this.app.get("/api/status", (req, res) => {
       res.json({
         isRunning: this.isRunning,
         resultsCount: this.results.length,
         screenshotsCount: this.screenshots.length,
-        browserOpen: !!this.browser
+        browserOpen: !!this.browser,
       });
     });
 
-    this.app.get('/api/results', (req, res) => {
+    this.app.get("/api/results", (req, res) => {
       res.json(this.results);
     });
 
-    this.app.get('/api/screenshots', (req, res) => {
+    this.app.get("/api/screenshots", (req, res) => {
       res.json(this.screenshots);
     });
 
-    this.app.post('/api/run-test', async (req, res) => {
+    this.app.post("/api/run-test", async (req, res) => {
       const { url, testName } = req.body;
       try {
-        await this.runTest(url || 'http://localhost:8080', testName || 'Manual Test');
+        await this.runTest(
+          url || "http://localhost:8080",
+          testName || "Manual Test"
+        );
         res.json({ success: true });
       } catch (error) {
         res.status(500).json({ error: error.message });
       }
     });
 
-    this.app.post('/api/browser-compat-test', async (req, res) => {
+    this.app.post("/api/browser-compat-test", async (req, res) => {
       try {
         const result = await this.runBrowserCompatibilityTest();
         res.json({ success: true, result });
@@ -117,41 +123,42 @@ class PuppeteerWebUI {
     });
 
     // Serve main UI
-    this.app.get('/', (req, res) => {
+    this.app.get("/", (req, res) => {
       res.send(this.generateHTML());
     });
 
     // WebSocket handling
-    this.wss.on('connection', (ws) => {
+    this.wss.on("connection", (ws) => {
       this.clients.add(ws);
-      console.log('🔌 Client connected to Puppeteer UI');
-      
-      ws.on('close', () => {
+      console.log("🔌 Client connected to Puppeteer UI");
+
+      ws.on("close", () => {
         this.clients.delete(ws);
       });
 
-      ws.on('message', async (message) => {
+      ws.on("message", async (message) => {
         try {
           const data = JSON.parse(message);
-          if (data.type === 'run-test') {
+          if (data.type === "run-test") {
             await this.runTest(data.url, data.testName);
           }
         } catch (error) {
-          this.broadcast({ type: 'error', message: error.message });
+          this.broadcast({ type: "error", message: error.message });
         }
       });
     });
 
     // Start server
     this.server.listen(3001, () => {
-      console.log('🚀 Puppeteer Web UI running on http://localhost:3001');
+      console.log("🚀 Puppeteer Web UI running on http://localhost:3001");
     });
   }
 
   broadcast(data) {
     const message = JSON.stringify(data);
-    this.clients.forEach(client => {
-      if (client.readyState === 1) { // WebSocket.OPEN
+    this.clients.forEach((client) => {
+      if (client.readyState === 1) {
+        // WebSocket.OPEN
         client.send(message);
       }
     });
@@ -167,21 +174,21 @@ class PuppeteerWebUI {
         devtools: true,
         defaultViewport: null, // Use full viewport
         args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-web-security',
-          '--disable-features=VizDisplayCompositor',
-          '--remote-debugging-port=9222',
-          '--window-size=1200,800',
-          '--start-maximized',
-          '--no-first-run',
-          '--no-default-browser-check',
-          '--disable-infobars',
-          '--disable-background-timer-throttling',
-          '--disable-backgrounding-occluded-windows',
-          '--disable-renderer-backgrounding'
-        ]
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-dev-shm-usage",
+          "--disable-web-security",
+          "--disable-features=VizDisplayCompositor",
+          "--remote-debugging-port=9222",
+          "--window-size=1200,800",
+          "--start-maximized",
+          "--no-first-run",
+          "--no-default-browser-check",
+          "--disable-infobars",
+          "--disable-background-timer-throttling",
+          "--disable-backgrounding-occluded-windows",
+          "--disable-renderer-backgrounding",
+        ],
       };
 
       // Use cross-platform Chrome detection
@@ -190,7 +197,7 @@ class PuppeteerWebUI {
         launchOptions.executablePath = chromePath;
         console.log(`🔧 Using Chrome at: ${chromePath}`);
       } else {
-        console.log('🔧 Using default Puppeteer Chromium');
+        console.log("🔧 Using default Puppeteer Chromium");
       }
 
       this.browser = await puppeteer.launch(launchOptions);
@@ -199,34 +206,34 @@ class PuppeteerWebUI {
       await this.page.setViewport({ width: 1200, height: 800 });
 
       // Monitor page events
-      this.page.on('console', msg => {
+      this.page.on("console", (msg) => {
         this.broadcast({
-          type: 'console',
+          type: "console",
           level: msg.type(),
           text: msg.text(),
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       });
 
-      this.page.on('pageerror', error => {
+      this.page.on("pageerror", (error) => {
         this.broadcast({
-          type: 'page-error',
+          type: "page-error",
           message: error.message,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       });
 
-      console.log('🌐 Browser started with DevTools');
-      this.broadcast({ type: 'browser-ready' });
+      console.log("🌐 Browser started with DevTools");
+      this.broadcast({ type: "browser-ready" });
     } catch (error) {
-      console.error('Failed to start browser:', error);
+      console.error("Failed to start browser:", error);
       throw error;
     }
   }
 
-  async runTest(url = 'http://localhost:8080', testName = 'Dev Site Test') {
+  async runTest(url = "http://localhost:8080", testName = "Dev Site Test") {
     this.isRunning = true;
-    this.broadcast({ type: 'test-started', testName, url });
+    this.broadcast({ type: "test-started", testName, url });
 
     let testPage = null;
 
@@ -238,14 +245,14 @@ class PuppeteerWebUI {
       await testPage.setViewport({ width: 1200, height: 800 });
 
       // Set up page error handlers
-      testPage.on('console', msg => {
-        if (msg.type() === 'error') {
-          this.broadcast({ type: 'console', level: 'error', text: msg.text() });
+      testPage.on("console", (msg) => {
+        if (msg.type() === "error") {
+          this.broadcast({ type: "console", level: "error", text: msg.text() });
         }
       });
 
-      testPage.on('pageerror', error => {
-        this.broadcast({ type: 'page-error', message: error.message });
+      testPage.on("pageerror", (error) => {
+        this.broadcast({ type: "page-error", message: error.message });
       });
 
       const testResult = {
@@ -255,99 +262,108 @@ class PuppeteerWebUI {
         steps: [],
         screenshots: [],
         errors: [],
-        success: false
+        success: false,
       };
 
       // Step 1: Navigate to URL with enhanced error handling
-      this.broadcast({ type: 'step', message: `Loading ${url}...` });
-      
-      const response = await testPage.goto(url, { 
-        waitUntil: 'networkidle0', 
-        timeout: 30000 
-      }).catch(error => {
-        throw new Error(`Navigation failed: ${error.message}`);
-      });
-      
+      this.broadcast({ type: "step", message: `Loading ${url}...` });
+
+      const response = await testPage
+        .goto(url, {
+          waitUntil: "networkidle0",
+          timeout: 30000,
+        })
+        .catch((error) => {
+          throw new Error(`Navigation failed: ${error.message}`);
+        });
+
       testResult.steps.push({
-        step: 'Page Load',
-        status: response.ok() ? 'passed' : 'failed',
+        step: "Page Load",
+        status: response.ok() ? "passed" : "failed",
         details: `HTTP ${response.status()}`,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
       // Step 2: Take initial screenshot
-      const screenshotPath = path.join(this.screenshotDir, `puppeteer-${Date.now()}.png`);
+      const screenshotPath = path.join(
+        this.screenshotDir,
+        `puppeteer-${Date.now()}.png`
+      );
       await testPage.screenshot({ path: screenshotPath, fullPage: true });
       testResult.screenshots.push(screenshotPath);
       this.screenshots.push({
         path: screenshotPath,
         name: `${testName} - Page Load`,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
-      this.broadcast({ 
-        type: 'screenshot', 
+      this.broadcast({
+        type: "screenshot",
         path: screenshotPath,
-        name: `${testName} - Initial Load`
+        name: `${testName} - Initial Load`,
       });
 
       // Step 3: Check for React root
-      this.broadcast({ type: 'step', message: 'Checking React app...' });
-      const hasReactRoot = await testPage.$('#root');
+      this.broadcast({ type: "step", message: "Checking React app..." });
+      const hasReactRoot = await testPage.$("#root");
       testResult.steps.push({
-        step: 'React Root',
-        status: hasReactRoot ? 'passed' : 'failed',
-        details: hasReactRoot ? 'Found #root element' : 'Missing #root element',
-        timestamp: new Date().toISOString()
+        step: "React Root",
+        status: hasReactRoot ? "passed" : "failed",
+        details: hasReactRoot ? "Found #root element" : "Missing #root element",
+        timestamp: new Date().toISOString(),
       });
 
       // Step 4: Check page title
       const title = await testPage.title();
       testResult.steps.push({
-        step: 'Page Title',
-        status: title ? 'passed' : 'failed',
-        details: title || 'No title found',
-        timestamp: new Date().toISOString()
+        step: "Page Title",
+        status: title ? "passed" : "failed",
+        details: title || "No title found",
+        timestamp: new Date().toISOString(),
       });
 
       // Step 5: Check for Tesla data (if present)
-      this.broadcast({ type: 'step', message: 'Looking for Tesla data...' });
-      const teslaElements = await testPage.$$('[data-testid*="tesla"], [class*="tesla"], [class*="Tesla"]');
+      this.broadcast({ type: "step", message: "Looking for Tesla data..." });
+      const teslaElements = await testPage.$$(
+        '[data-testid*="tesla"], [class*="tesla"], [class*="Tesla"]'
+      );
       testResult.steps.push({
-        step: 'Tesla Elements',
-        status: teslaElements.length > 0 ? 'passed' : 'info',
+        step: "Tesla Elements",
+        status: teslaElements.length > 0 ? "passed" : "info",
         details: `Found ${teslaElements.length} Tesla-related elements`,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
       // Step 6: Performance metrics
       const metrics = await testPage.metrics();
       testResult.steps.push({
-        step: 'Performance',
-        status: 'info',
-        details: `JS Heap: ${Math.round(metrics.JSHeapUsedSize / 1024 / 1024)}MB`,
-        timestamp: new Date().toISOString()
+        step: "Performance",
+        status: "info",
+        details: `JS Heap: ${Math.round(
+          metrics.JSHeapUsedSize / 1024 / 1024
+        )}MB`,
+        timestamp: new Date().toISOString(),
       });
 
       // Final screenshot
       const finalScreenshot = `debug/puppeteer-final-${Date.now()}.png`;
       await testPage.screenshot({ path: finalScreenshot, fullPage: true });
       testResult.screenshots.push(finalScreenshot);
-      
-      testResult.success = testResult.steps.filter(s => s.status === 'failed').length === 0;
+
+      testResult.success =
+        testResult.steps.filter((s) => s.status === "failed").length === 0;
       this.results.push(testResult);
 
       this.broadcast({
-        type: 'test-completed',
-        result: testResult
+        type: "test-completed",
+        result: testResult,
       });
 
       console.log(`✅ Test completed: ${testName}`);
       return testResult;
-
     } catch (error) {
-      console.error('Test failed:', error);
-      
+      console.error("Test failed:", error);
+
       const errorResult = {
         name: testName,
         url,
@@ -355,14 +371,14 @@ class PuppeteerWebUI {
         steps: [],
         screenshots: [],
         errors: [error.message],
-        success: false
+        success: false,
       };
 
       this.results.push(errorResult);
       this.broadcast({
-        type: 'test-failed',
+        type: "test-failed",
         error: error.message,
-        result: errorResult
+        result: errorResult,
       });
 
       throw error;
@@ -372,92 +388,107 @@ class PuppeteerWebUI {
         try {
           await testPage.close();
         } catch (closeError) {
-          console.log(`⚠️ Warning: Failed to close test page: ${closeError.message}`);
+          console.log(
+            `⚠️ Warning: Failed to close test page: ${closeError.message}`
+          );
         }
       }
-      
+
       this.isRunning = false;
-      this.broadcast({ type: 'test-finished' });
+      this.broadcast({ type: "test-finished" });
     }
   }
 
   async runBrowserCompatibilityTest() {
     this.isRunning = true;
-    this.broadcast({ type: 'test-started', testName: 'Browser Compatibility Test', url: 'Chrome/Chromium Detection' });
+    this.broadcast({
+      type: "test-started",
+      testName: "Browser Compatibility Test",
+      url: "Chrome/Chromium Detection",
+    });
 
     try {
       await this.startBrowser();
 
       const testResult = {
-        name: 'Browser Compatibility Test',
-        url: 'Chrome/Chromium Detection',
+        name: "Browser Compatibility Test",
+        url: "Chrome/Chromium Detection",
         timestamp: new Date().toISOString(),
         steps: [],
         screenshots: [],
         errors: [],
-        success: false
+        success: false,
       };
 
       // Step 1: Check browser version
-      this.broadcast({ type: 'step', message: 'Checking browser version...' });
+      this.broadcast({ type: "step", message: "Checking browser version..." });
       const userAgent = await this.page.evaluate(() => navigator.userAgent);
       const browserVersion = await this.browser.version();
-      
+
       testResult.steps.push({
-        step: 'Browser Detection',
-        status: 'passed',
+        step: "Browser Detection",
+        status: "passed",
         details: `User Agent: ${userAgent}\nBrowser Version: ${browserVersion}`,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
       // Step 2: Check Chrome DevTools Protocol
-      this.broadcast({ type: 'step', message: 'Testing Chrome DevTools Protocol...' });
+      this.broadcast({
+        type: "step",
+        message: "Testing Chrome DevTools Protocol...",
+      });
       try {
         const client = await this.page.target().createCDPSession();
-        await client.send('Runtime.enable');
-        const result = await client.send('Runtime.evaluate', {
-          expression: 'navigator.userAgent'
+        await client.send("Runtime.enable");
+        const result = await client.send("Runtime.evaluate", {
+          expression: "navigator.userAgent",
         });
-        
+
         testResult.steps.push({
-          step: 'DevTools Protocol',
-          status: 'passed',
+          step: "DevTools Protocol",
+          status: "passed",
           details: `CDP Session: Active\nResult: ${result.result.value}`,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
-        
+
         await client.detach();
       } catch (cdpError) {
         testResult.steps.push({
-          step: 'DevTools Protocol',
-          status: 'failed',
+          step: "DevTools Protocol",
+          status: "failed",
           details: `CDP Error: ${cdpError.message}`,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }
 
       // Step 3: Test JavaScript execution
-      this.broadcast({ type: 'step', message: 'Testing JavaScript execution...' });
+      this.broadcast({
+        type: "step",
+        message: "Testing JavaScript execution...",
+      });
       const jsResult = await this.page.evaluate(() => {
         return {
-          chrome: typeof window.chrome !== 'undefined',
+          chrome: typeof window.chrome !== "undefined",
           webdriver: navigator.webdriver,
           languages: navigator.languages,
           platform: navigator.platform,
           cookieEnabled: navigator.cookieEnabled,
-          onLine: navigator.onLine
+          onLine: navigator.onLine,
         };
       });
 
       testResult.steps.push({
-        step: 'JavaScript Execution',
-        status: 'passed',
+        step: "JavaScript Execution",
+        status: "passed",
         details: `Chrome API: ${jsResult.chrome}\nWebDriver: ${jsResult.webdriver}\nPlatform: ${jsResult.platform}\nOnline: ${jsResult.onLine}`,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
       // Step 4: Test screenshot capability
-      this.broadcast({ type: 'step', message: 'Testing screenshot capability...' });
+      this.broadcast({
+        type: "step",
+        message: "Testing screenshot capability...",
+      });
       const screenshotPath = `debug/browser-compat-${Date.now()}.png`;
       await this.page.setContent(`
         <html>
@@ -468,50 +499,54 @@ class PuppeteerWebUI {
               <p><strong>User Agent:</strong> ${userAgent}</p>
               <p><strong>Browser Version:</strong> ${browserVersion}</p>
               <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
-              <p><strong>Chrome API Available:</strong> ${jsResult.chrome ? '✅ Yes' : '❌ No'}</p>
+              <p><strong>Chrome API Available:</strong> ${
+                jsResult.chrome ? "✅ Yes" : "❌ No"
+              }</p>
               <p><strong>Platform:</strong> ${jsResult.platform}</p>
             </div>
           </body>
         </html>
       `);
-      
+
       await this.page.screenshot({ path: screenshotPath, fullPage: true });
       testResult.screenshots.push(screenshotPath);
       this.screenshots.push({
         path: screenshotPath,
-        name: 'Browser Compatibility Test',
-        timestamp: new Date().toISOString()
+        name: "Browser Compatibility Test",
+        timestamp: new Date().toISOString(),
       });
 
-      this.broadcast({ 
-        type: 'screenshot', 
+      this.broadcast({
+        type: "screenshot",
         path: screenshotPath,
-        name: 'Browser Compatibility Test'
+        name: "Browser Compatibility Test",
       });
 
       testResult.steps.push({
-        step: 'Screenshot Test',
-        status: 'passed',
+        step: "Screenshot Test",
+        status: "passed",
         details: `Screenshot saved: ${screenshotPath}`,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
 
       // Final result
       testResult.success = true;
       this.results.push(testResult);
-      this.broadcast({ type: 'result', result: testResult });
-      this.broadcast({ type: 'success', message: '✅ Browser compatibility test completed successfully!' });
+      this.broadcast({ type: "result", result: testResult });
+      this.broadcast({
+        type: "success",
+        message: "✅ Browser compatibility test completed successfully!",
+      });
 
       return testResult;
-
     } catch (error) {
       const errorMsg = `Browser compatibility test failed: ${error.message}`;
-      this.broadcast({ type: 'error', message: errorMsg });
-      console.error('Browser compatibility test error:', error);
+      this.broadcast({ type: "error", message: errorMsg });
+      console.error("Browser compatibility test error:", error);
       throw error;
     } finally {
       this.isRunning = false;
-      this.broadcast({ type: 'test-finished' });
+      this.broadcast({ type: "test-finished" });
     }
   }
 
@@ -867,9 +902,9 @@ class PuppeteerWebUI {
 // Auto-start if run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const ui = new PuppeteerWebUI();
-  
-  process.on('SIGINT', async () => {
-    console.log('\n🛑 Shutting down Puppeteer UI...');
+
+  process.on("SIGINT", async () => {
+    console.log("\n🛑 Shutting down Puppeteer UI...");
     await ui.stop();
     process.exit(0);
   });

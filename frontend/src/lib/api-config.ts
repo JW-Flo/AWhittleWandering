@@ -2,12 +2,12 @@
 // Handles all API endpoints and provides consistent error handling
 
 const getApiBaseUrl = () => {
-  // Development mode: use local backend worker (wrangler dev typically runs on 8787)
-  if (process.env.NODE_ENV === 'development') {
-    return 'http://localhost:8787';
-  }
-  // Use the correct production worker URL
-  return 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
+  // Highest precedence: explicit env override (Vite exposes import.meta.env)
+  // Support both Vite style and fallback process.env for tests
+  const override = (import.meta as any).env?.VITE_API_BASE_URL || (process.env as any).VITE_API_BASE_URL;
+  if (override) return override;
+  if (process.env.NODE_ENV === 'development') return 'http://localhost:8787';
+  return 'https://api.awhittlewandering.com';
 };
 
 export const API_CONFIG = {

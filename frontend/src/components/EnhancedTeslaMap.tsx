@@ -2,8 +2,9 @@
 // Displays actual driven paths, charging stops, and extended stays
 
 import React, { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+// Dynamic load to reduce initial bundle size
+import { loadMapbox } from '@/lib/mapbox-loader';
+let mapboxgl: any; // loaded at runtime
 import { useUnifiedTessieApi } from '@/hooks/useUnifiedTessieApi';
 
 interface EnhancedTeslaMapProps {
@@ -38,30 +39,37 @@ const EnhancedTeslaMap: React.FC<EnhancedTeslaMapProps> = ({
   // Initialize map
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken) return;
+    let cancelled = false;
+    (async () => {
+      if (!mapboxgl) {
+        mapboxgl = await loadMapbox();
+      }
+      if (cancelled) return;
+      mapboxgl.accessToken = mapboxToken;
 
-    mapboxgl.accessToken = mapboxToken;
-    
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/dark-v11',
-      center: [-98.5795, 39.8283], // Center of USA
-      zoom: 4,
-      projection: 'mercator' as any,
-      pitch: 0,
-      bearing: 0,
-      maxPitch: 0,
-    });
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/dark-v11',
+        center: [-98.5795, 39.8283], // Center of USA
+        zoom: 4,
+        projection: 'mercator' as any,
+        pitch: 0,
+        bearing: 0,
+        maxPitch: 0,
+      });
 
-    map.current.addControl(new mapboxgl.NavigationControl({
-      visualizePitch: false,
-      showCompass: false
-    }), 'top-right');
+      map.current.addControl(new mapboxgl.NavigationControl({
+        visualizePitch: false,
+        showCompass: false
+      }), 'top-right');
 
-    map.current.on('load', () => {
-      setIsMapLoaded(true);
-    });
+      map.current.on('load', () => {
+        setIsMapLoaded(true);
+      });
+    })();
 
     return () => {
+      cancelled = true;
       map.current?.remove();
     };
   }, [mapboxToken]);
@@ -73,12 +81,7 @@ const EnhancedTeslaMap: React.FC<EnhancedTeslaMapProps> = ({
     }
   }, [vehicleId, apiKey, startDate, endDate, loadJourneyData]);
 
-  // Update parent with location data
-  useEffect(() => {
-    if (locationHistory.length > 0 && onLocationData) {
-      onLocationData(locationHistory);
-    }
-  }, [onLocationData]); // locationHistory removed - it's mutated, not a dependency
+  // Removed locationHistory effect (no real-time location streaming implemented yet)
 
   // Add drive routes to map
   useEffect(() => {
@@ -98,17 +101,17 @@ const EnhancedTeslaMap: React.FC<EnhancedTeslaMapProps> = ({
       properties: {
         id: drive.id,
         distance: drive.distance_miles,
-        duration: drive.duration_minutes,
-        date: drive.start_date,
-        startLocation: drive.start_location_name,
-        endLocation: drive.end_location_name,
+        duration: drive.duration_hours * 60, // minutes
+        date: drive.start_time,
+        startLocation: drive.start_address,
+        endLocation: drive.end_address,
         routeIndex: index
       },
       geometry: {
         type: 'LineString' as const,
         coordinates: [
-          [drive.start_longitude, drive.start_latitude],
-          [drive.end_longitude, drive.end_latitude]
+          [drive.start_coordinates.lng, drive.start_coordinates.lat],
+          [drive.end_coordinates.lng, drive.end_coordinates.lat]
         ]
       }
     }));
@@ -182,23 +185,21 @@ const EnhancedTeslaMap: React.FC<EnhancedTeslaMapProps> = ({
     }
 
     // Create charging station points
-    const chargeFeatures = chargeHistory.map(charge => ({
+  const chargeFeatures = chargeHistory.map(charge => ({
       type: 'Feature' as const,
       properties: {
         id: charge.id,
-        location: charge.location_name,
-        city: charge.city,
-        state: charge.state,
-        energyAdded: charge.energy_added,
+    location: charge.location,
+    energyAdded: charge.energy_added_kwh,
         cost: charge.cost,
-        duration: charge.duration_minutes,
-        date: charge.start_date,
+    duration: (new Date(charge.end_time).getTime() - new Date(charge.start_time).getTime()) / 60000,
+    date: charge.start_time,
         batteryStart: charge.start_battery_level,
         batteryEnd: charge.end_battery_level
       },
       geometry: {
         type: 'Point' as const,
-        coordinates: [charge.longitude, charge.latitude]
+    coordinates: [charge.coordinates.lng, charge.coordinates.lat]
       }
     }));
 
@@ -236,7 +237,7 @@ const EnhancedTeslaMap: React.FC<EnhancedTeslaMapProps> = ({
           <div class="p-3">
             <h3 class="font-bold text-sm mb-2">⚡ Charging Station</h3>
             <p class="text-xs mb-1"><strong>Location:</strong> ${props?.location}</p>
-            ${props?.city && props?.state ? `<p class="text-xs mb-1"><strong>City:</strong> ${props.city}, ${props.state}</p>` : ''}
+            
             <p class="text-xs mb-1"><strong>Energy Added:</strong> ${props?.energyAdded?.toFixed(1)} kWh</p>
             <p class="text-xs mb-1"><strong>Cost:</strong> $${props?.cost?.toFixed(2)}</p>
             <p class="text-xs mb-1"><strong>Duration:</strong> ${Math.floor((props?.duration || 0) / 60)}h ${(props?.duration || 0) % 60}m</p>
@@ -259,112 +260,7 @@ const EnhancedTeslaMap: React.FC<EnhancedTeslaMapProps> = ({
   }, [isMapLoaded, chargeHistory]);
 
   // Add extended stays to map
-  useEffect(() => {
-    if (!isMapLoaded || !map.current || extendedStays.length === 0) return;
-
-    // Remove existing stay layers
-    if (map.current.getLayer('extended-stays')) {
-      map.current.removeLayer('extended-stays');
-    }
-    if (map.current.getSource('extended-stays')) {
-      map.current.removeSource('extended-stays');
-    }
-
-    // Create extended stay points
-    const stayFeatures = extendedStays.map(stay => ({
-      type: 'Feature' as const,
-      properties: {
-        id: stay.id,
-        location: stay.location,
-        city: stay.city,
-        state: stay.state,
-        duration: stay.durationHours,
-        days: stay.durationDays,
-        reason: stay.reason,
-        startDate: stay.startDate,
-        endDate: stay.endDate,
-        chargingSessions: stay.chargingSessions?.length || 0
-      },
-      geometry: {
-        type: 'Point' as const,
-        coordinates: [stay.coordinates.lng, stay.coordinates.lat]
-      }
-    }));
-
-    map.current.addSource('extended-stays', {
-      type: 'geojson',
-      data: {
-        type: 'FeatureCollection',
-        features: stayFeatures
-      }
-    });
-
-    map.current.addLayer({
-      id: 'extended-stays',
-      type: 'circle',
-      source: 'extended-stays',
-      paint: {
-        'circle-radius': [
-          'interpolate',
-          ['linear'],
-          ['get', 'days'],
-          1, 6,
-          7, 12
-        ],
-        'circle-color': [
-          'case',
-          ['==', ['get', 'reason'], 'multi_day_stay'], '#8B5CF6', // Purple
-          ['==', ['get', 'reason'], 'extended_visit'], '#3B82F6', // Blue
-          ['==', ['get', 'reason'], 'charging'], '#F59E0B', // Yellow
-          '#6B7280' // Gray default
-        ],
-        'circle-stroke-width': 2,
-        'circle-stroke-color': '#ffffff',
-        'circle-opacity': 0.8
-      }
-    });
-
-    // Add extended stay popup on click
-    map.current.on('click', 'extended-stays', (e) => {
-      if (!e.features?.[0]) return;
-
-      const feature = e.features[0];
-      const props = feature.properties;
-      
-      const reasonEmoji = {
-        'multi_day_stay': '🏨',
-        'extended_visit': '🏛️',
-        'charging': '⚡',
-        'overnight': '🌙'
-      }[props?.reason as string] || '📍';
-      
-      new mapboxgl.Popup()
-        .setLngLat(e.lngLat)
-        .setHTML(`
-          <div class="p-3">
-            <h3 class="font-bold text-sm mb-2">${reasonEmoji} Extended Stay</h3>
-            <p class="text-xs mb-1"><strong>Location:</strong> ${props?.location}</p>
-            <p class="text-xs mb-1"><strong>City:</strong> ${props?.city}, ${props?.state}</p>
-            <p class="text-xs mb-1"><strong>Duration:</strong> ${props?.days?.toFixed(1)} days (${props?.duration?.toFixed(1)} hours)</p>
-            <p class="text-xs mb-1"><strong>Reason:</strong> ${props?.reason?.replace('_', ' ')}</p>
-            <p class="text-xs mb-1"><strong>Start:</strong> ${new Date(props?.startDate).toLocaleDateString()}</p>
-            <p class="text-xs mb-1"><strong>End:</strong> ${new Date(props?.endDate).toLocaleDateString()}</p>
-            ${props?.chargingSessions > 0 ? `<p class="text-xs"><strong>Charging Sessions:</strong> ${props.chargingSessions}</p>` : ''}
-          </div>
-        `)
-        .addTo(map.current!);
-    });
-
-    // Change cursor on hover
-    map.current.on('mouseenter', 'extended-stays', () => {
-      if (map.current) map.current.getCanvas().style.cursor = 'pointer';
-    });
-
-    map.current.on('mouseleave', 'extended-stays', () => {
-      if (map.current) map.current.getCanvas().style.cursor = '';
-    });
-
-  }, [isMapLoaded, extendedStays]);
+  // Extended stays visualization removed (no data model yet)
 
   // Fit map to show all data points
   useEffect(() => {
@@ -372,11 +268,10 @@ const EnhancedTeslaMap: React.FC<EnhancedTeslaMapProps> = ({
     
     const allCoordinates = [
       ...driveHistory.flatMap(drive => [
-        [drive.start_longitude, drive.start_latitude],
-        [drive.end_longitude, drive.end_latitude]
+        [drive.start_coordinates.lng, drive.start_coordinates.lat],
+        [drive.end_coordinates.lng, drive.end_coordinates.lat]
       ]),
-      ...chargeHistory.map(charge => [charge.longitude, charge.latitude]),
-      ...extendedStays.map(stay => [stay.coordinates.lng, stay.coordinates.lat])
+      ...chargeHistory.map(charge => [charge.coordinates.lng, charge.coordinates.lat])
     ];
 
     if (allCoordinates.length > 0) {
@@ -389,7 +284,7 @@ const EnhancedTeslaMap: React.FC<EnhancedTeslaMapProps> = ({
         maxZoom: 10
       });
     }
-  }, [isMapLoaded, driveHistory, chargeHistory, extendedStays]);
+  }, [isMapLoaded, driveHistory, chargeHistory]);
 
   if (error) {
     return (
@@ -417,7 +312,7 @@ const EnhancedTeslaMap: React.FC<EnhancedTeslaMapProps> = ({
       )}
 
       {/* Map Legend */}
-      <div className="absolute bottom-4 left-4 bg-white bg-opacity-90 p-3 rounded-lg shadow-lg text-xs">
+    <div className="absolute bottom-4 left-4 bg-white bg-opacity-90 p-3 rounded-lg shadow-lg text-xs">
         <h4 className="font-bold mb-2">Legend</h4>
         <div className="space-y-1">
           <div className="flex items-center">
@@ -428,14 +323,7 @@ const EnhancedTeslaMap: React.FC<EnhancedTeslaMapProps> = ({
             <div className="w-3 h-3 bg-teal-500 rounded-full mr-2"></div>
             <span>Charging Stations</span>
           </div>
-          <div className="flex items-center">
-            <div className="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
-            <span>Multi-day Stays</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-            <span>Extended Visits</span>
-          </div>
+      {/* Future: extended stays / visits */}
         </div>
       </div>
 
@@ -450,9 +338,7 @@ const EnhancedTeslaMap: React.FC<EnhancedTeslaMapProps> = ({
             {chargeHistory.length > 0 && (
               <div>⚡ {chargeHistory.length} charges</div>
             )}
-            {extendedStays.length > 0 && (
-              <div>🏨 {extendedStays.length} extended stays</div>
-            )}
+            {/* Extended stays summary omitted */}
           </div>
         </div>
       )}
