@@ -4,6 +4,10 @@ import { TeslaDataIngestion } from './data-ingestion';
 import { CronDataController } from './cron-controller';
 import { ComponentDataProcessor } from './component-data-processor';
 import { EnhancedDataProcessor } from './enhanced-data-processor';
+import { ingestDrives, ingestCharges, ingestVehicleState } from './ingestion/tessie-ingest';
+import { log } from './utils/log';
+import { reverseGeocode } from './utils/geocode';
+import { canProceed, recordCall } from './utils/rateLimit';
 
 // Configurable constants
 const MAX_HISTORICAL_DRIVES = 1000;
@@ -261,6 +265,30 @@ app.get('/api/v1/health', async (c) => {
   return c.json(health);
 });
 
+// Ingestion status endpoint
+app.get('/api/v1/ingestion-status', async (c) => {
+  try {
+    const db = c.env.TESLA_DB;
+    const drives = await db.prepare(`SELECT COUNT(*) as cnt FROM drives`).first();
+    const charges = await db.prepare(`SELECT COUNT(*) as cnt FROM charges`).first();
+    const states = await db.prepare(`SELECT COUNT(DISTINCT start_state) as s FROM drives WHERE start_state IS NOT NULL`).first();
+    const lastDrive = await db.prepare(`SELECT MAX(ended_at) as last_ended FROM drives`).first();
+    const lastCharge = await db.prepare(`SELECT MAX(ended_at) as last_ended FROM charges`).first();
+    return c.json({
+      success: true,
+      drives: (drives as any)?.cnt || 0,
+      charges: (charges as any)?.cnt || 0,
+      statesVisited: (states as any)?.s || 0,
+      lastDriveAt: (lastDrive as any)?.last_ended || null,
+      lastChargeAt: (lastCharge as any)?.last_ended || null,
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) {
+    log('error', 'ingestion-status failed', { error: (e as any)?.message });
+    return c.json({ success: false, error: 'status unavailable' }, 500);
+  }
+});
+
 // Simple aliases for easier frontend integration
 app.get('/health', async (c) => {
   return c.json({
@@ -304,151 +332,7 @@ app.get('/trip-status', async (c) => {
   });
 });
 
-// Emergency reprocessing endpoint to fix state detection
-app.post('/api/v1/reprocess-states', async (c) => {
-  try {
-    // Get all drives that need state detection
-    const drives = await c.env.TESLA_DB.prepare(`
-      SELECT id, start_latitude, start_longitude, end_latitude, end_longitude 
-      FROM drives 
-      WHERE (start_state IS NULL OR end_state IS NULL)
-      AND start_latitude IS NOT NULL 
-      AND start_longitude IS NOT NULL
-      LIMIT 50
-    `).all();
-
-    if (!drives.results) {
-      return c.json({ success: false, error: 'No drives found' }, 404);
-    }
-
-    let updated = 0;
-    for (const drive of drives.results) {
-      const startState = await detectStateFromCoordinates(drive.start_latitude as number, drive.start_longitude as number);
-      const endState = await detectStateFromCoordinates(drive.end_latitude as number, drive.end_longitude as number);
-      
-      if (startState || endState) {
-        await c.env.TESLA_DB.prepare(`
-          UPDATE drives 
-          SET start_state = ?, end_state = ?
-          WHERE id = ?
-        `).bind(startState || null, endState || null, drive.id).run();
-        updated++;
-      }
-    }
-
-    return c.json({
-      success: true,
-      processed: drives.results.length,
-      updated: updated,
-      message: `Reprocessed ${drives.results.length} drives, updated ${updated} with state data`
-    });
-  } catch (error) {
-    return c.json({ 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }, 500);
-  }
-});
-
-// Test Tessie API endpoint
-app.get('/api/v1/test-tessie', async (c) => {
-  try {
-    // Just test basic connectivity to Tessie
-    const tessieResponse = await fetch(`https://api.tessie.com/${c.env.TESLA_VIN}/drives?since=2025-07-15T00:00:00Z&per_page=5`, {
-      headers: {
-        'Authorization': `Bearer ${c.env.TESSIE_API_KEY}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!tessieResponse.ok) {
-      return c.json({ 
-        success: false, 
-        status: tessieResponse.status,
-        error: await tessieResponse.text()
-      });
-    }
-
-    const data = await tessieResponse.json();
-    return c.json({
-      success: true,
-      data: data,
-      message: 'Tessie API connection successful'
-    });
-  } catch (error) {
-    return c.json({ 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }, 500);
-  }
-});
-
-// Route optimization endpoint with Tesla charging integration
-app.post('/api/v1/route/optimize', async (c) => {
-  try {
-    const body = await c.req.json();
-    const { startLocation, endLocation, preferences } = body;
-
-    if (!startLocation || !endLocation) {
-      return c.json({ 
-        success: false, 
-        error: 'Start and end locations are required' 
-      }, 400);
-    }
-
-    // Get current vehicle state for range estimation
-    const tessieData = await fetchTessieData(c.env.TESSIE_API_KEY);
-    const currentBattery = (tessieData?.state as any)?.charge_state?.battery_level || 80;
-    const currentRange = (tessieData?.state as any)?.charge_state?.battery_range || 300;
-
-    // Mock route optimization algorithm (in production, integrate with Google Maps/Tesla API)
-    const routeData = {
-      distance: calculateDistance(startLocation, endLocation),
-      estimatedTime: calculateTime(startLocation, endLocation),
-      energyRequired: calculateEnergyRequired(startLocation, endLocation),
-      currentBattery,
-      currentRange
-    };
-
-    // Find charging stops along the route
-    const chargingStops = await findOptimalChargingStops(
-      startLocation, 
-      endLocation, 
-      routeData,
-      c.env.TESLA_DB
-    );
-
-    // Calculate environmental impact
-    const environmentalMetrics = calculateEnvironmentalImpact(routeData.distance);
-
-    return c.json({
-      success: true,
-      route: {
-        id: `route_${Date.now()}`,
-        startLocation,
-        endLocation,
-        distance: routeData.distance,
-        estimatedTime: routeData.estimatedTime,
-        energyRequired: routeData.energyRequired,
-        chargingStops,
-        environmentalMetrics,
-        vehicle: {
-          currentBattery,
-          currentRange,
-          estimatedRangeAfterTrip: Math.max(0, currentRange - routeData.energyRequired)
-        },
-        preferences,
-        optimizedAt: new Date().toISOString()
-      }
-    });
-  } catch (error) {
-    console.error('Route optimization failed:', error);
-    return c.json({ 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Route optimization failed'
-    }, 500);
-  }
-});
+// Route optimization endpoint remains above (function restored correctly)
 
 // Helper functions for route optimization
 function calculateDistance(start: any, end: any): number {
@@ -1451,7 +1335,7 @@ app.post('/api/v1/admin/backfill-historical-data', async (c) => {
 
     // Force fetch ALL drives since June 1st, but use pagination to avoid rate limits
     const forceStartDate = '2025-06-01T00:00:00Z';
-    console.log(`🔄 Starting historical backfill from ${forceStartDate} for vehicle ${vin}`);
+  log('info', 'backfill.start', { startDate: forceStartDate, vin });
     
     // First, try a single batch of recent drives to test the approach
     const tessieResponse = await fetch(`https://api.tessie.com/${vin}/drives?since=${forceStartDate}&limit=500`, {
@@ -1466,7 +1350,7 @@ app.post('/api/v1/admin/backfill-historical-data', async (c) => {
     }
 
     const drivesData = await tessieResponse.json() as any;
-    console.log(`📊 Tessie returned ${drivesData.results?.length || 0} drives`);
+  log('debug', 'backfill.batch.returned', { drives: drivesData.results?.length || 0 });
     
     let newDrives = 0;
     let updatedDrives = 0;
@@ -1481,7 +1365,7 @@ app.post('/api/v1/admin/backfill-historical-data', async (c) => {
         // Geocode start address if missing or too generic and we have coordinates
         if ((!startAddress || startAddress.length < 10) && drive.start_latitude && drive.start_longitude) {
           try {
-            const geocodedStart = await geocodeCoordinates(drive.start_latitude, drive.start_longitude);
+            const geocodedStart = (await reverseGeocode(drive.start_latitude, drive.start_longitude)).address;
             if (geocodedStart && geocodedStart.length > 5 && !geocodedStart.match(/^\d+\.\d+,\s*\d+\.\d+$/)) {
               startAddress = geocodedStart;
             }
@@ -1493,7 +1377,7 @@ app.post('/api/v1/admin/backfill-historical-data', async (c) => {
         // Geocode end address if missing or too generic and we have coordinates
         if ((!endAddress || endAddress.length < 10) && drive.end_latitude && drive.end_longitude) {
           try {
-            const geocodedEnd = await geocodeCoordinates(drive.end_latitude, drive.end_longitude);
+            const geocodedEnd = (await reverseGeocode(drive.end_latitude, drive.end_longitude)).address;
             if (geocodedEnd && geocodedEnd.length > 5 && !geocodedEnd.match(/^\d+\.\d+,\s*\d+\.\d+$/)) {
               endAddress = geocodedEnd;
             }
@@ -1618,11 +1502,18 @@ app.post('/api/v1/admin/update-journey-data', async (c) => {
     }
 
     const tessieData = await fetchTessieData(tessieApiKey);
-          updated_at = datetime('now')
-      WHERE id = 'continental-usa-2025'
+    // Derive current odometer & stats (placeholder logic; refine with real data shape)
+    const currentOdometer = (tessieData?.state as any)?.vehicle_state?.odometer || 0;
+    // Aggregate drives for journey metrics
+    const drivesAgg = await db.prepare(`SELECT COUNT(*) as drive_count, SUM(distance_miles) as total_miles FROM drives WHERE journey_id = 'continental-usa-2025'`).first();
+    const totalMiles = Math.round((drivesAgg as any)?.total_miles || 0);
+    const statesAgg = await db.prepare(`SELECT COUNT(DISTINCT start_state) as states_count FROM drives WHERE journey_id = 'continental-usa-2025' AND start_state IS NOT NULL`).first();
+    const statesCount = (statesAgg as any)?.states_count || 0;
+    await db.prepare(`
+      UPDATE journeys SET total_miles = ?, total_states = ?, updated_at = datetime('now') WHERE id = 'continental-usa-2025'
     `).bind(totalMiles, statesCount).run();
     
-    console.log(`✅ Updated journey: ${totalMiles} miles, ${statesCount} states`);
+  log('info', 'journey.update', { totalMiles, statesCount });
     
     return c.json({
       success: true,
@@ -1649,7 +1540,7 @@ app.post('/api/v1/admin/fix-d1-overview', async (c) => {
   try {
     const db = c.env.TESLA_DB;
     
-    console.log('🔧 Fixing D1 database overview data...');
+  log('info', 'maintenance.overview.fix.start', {});
     
     // Update the journey_overview table with correct data
     await db.prepare(`
@@ -1685,7 +1576,7 @@ app.post('/api/v1/admin/fix-d1-overview', async (c) => {
       30     // Correct states visited
     ).run();
     
-    console.log('✅ D1 database overview data fixed');
+  log('info', 'maintenance.overview.fix.done', {});
     
     return c.json({
       success: true,
@@ -1849,7 +1740,7 @@ app.get('/api/v1/debug/unified-query', async (c) => {
 // Clear historical data for fresh analysis
 app.post('/api/v1/admin/clear-historical-data', async (c) => {
   try {
-    console.log('🧹 Clearing historical data...');
+  log('warn', 'maintenance.clear.start', {});
     
     const db = c.env.TESLA_DB;
     
@@ -1865,7 +1756,7 @@ app.post('/api/v1/admin/clear-historical-data', async (c) => {
     await db.prepare('DELETE FROM states_visited_historical WHERE journey_id = ?')
       .bind('continental-usa-2025').run();
     
-    console.log('✅ Historical data cleared');
+  log('info', 'maintenance.clear.done', {});
     
     return c.json({
       success: true,
@@ -1889,7 +1780,7 @@ app.post('/api/v1/admin/analyze-historical-journey', async (c) => {
       return c.json({ error: 'TESSIE_API_KEY not configured' }, 500);
     }
 
-    console.log('🔍 Starting comprehensive historical journey analysis...');
+  log('info', 'analysis.historical.start', {});
     
     // Fetch vehicles to get VIN
     const vehiclesRes = await fetch('https://api.tessie.com/vehicles', {
@@ -1906,14 +1797,14 @@ app.post('/api/v1/admin/analyze-historical-journey', async (c) => {
     }
     
     const vin = vehicles.results[0].vin;
-    console.log(`📱 Analyzing vehicle: ${vin}`);
+  log('debug', 'analysis.vehicle', { vin });
     
     // Fetch ALL drives since journey start (6/1/2025)
     const journeyStart = '2025-06-01T00:00:00Z';
     const now = new Date().toISOString();
     
     // Fetch drives in smaller batches to avoid rate limits
-    console.log(`📅 Fetching drives from ${journeyStart} to ${now}`);
+  log('debug', 'analysis.fetch.range', { journeyStart, now });
     
     const allDrives: any[] = [];
     const batchSize = 50; // Larger batch size for comprehensive analysis
@@ -2014,11 +1905,11 @@ async function handleUnifiedData(c: any) {
     `).bind(cacheKey).first();
 
     if (cached) {
-      console.log('🎯 Returning D1 cached unified data');
+  log('info', 'cache.hit.unified_data', { component: 'unified-data', cache: 'd1', key: cacheKey });
       return c.json(JSON.parse(cached.cache_data as string));
     }
 
-    console.log('🔄 Fetching fresh data from Tessie API and aggregating in D1...');
+  log('info', 'unified.refresh.start', { action: 'fetch_and_aggregate' });
 
     // Fetch fresh data from Tessie API with rate limiting
     const tessieData = await fetchTessieData(c.env.TESSIE_API_KEY, c.env.TESLA_DB);
@@ -2065,7 +1956,7 @@ async function handleUnifiedData(c: any) {
         }
       }
     } catch (componentError) {
-      console.warn('Component data enhancement failed, using base data:', componentError);
+  log('warn', 'unified.enhancement.failed', { error: (componentError as any)?.message || String(componentError) });
     }
     
     // Cache the aggregated result in D1
@@ -2083,17 +1974,17 @@ async function handleUnifiedData(c: any) {
           data: { lastSync: new Date().toISOString() }
         });
       } else {
-        console.log('🔄 Queue not available in development - skipping background processing');
+    log('debug', 'queue.skip.dev', { queue: 'DATA_PROCESSOR' });
       }
     } catch (error) {
-      console.log('⚠️ Queue processing failed:', error);
+  log('warn', 'queue.enqueue.failed', { error: (error as any)?.message || String(error) });
       // Continue execution - queue is not critical
     }
 
     return c.json(unifiedData);
 
   } catch (error) {
-    console.error('❌ Error in unified data endpoint:', error);
+  log('error', 'unified.endpoint.error', { error: (error as any)?.message || String(error) });
     
     // Fallback to last known good data from D1
     try {
@@ -2116,7 +2007,7 @@ async function handleUnifiedData(c: any) {
         return c.json(data);
       }
     } catch (fallbackError) {
-      console.error('Fallback failed:', fallbackError);
+  log('error', 'unified.fallback.error', { error: (fallbackError as any)?.message || String(fallbackError) });
     }
 
     return c.json({
@@ -2425,36 +2316,15 @@ const TESSIE_RATE_LIMIT_MIN = isDevelopment ? 5 * 1000 : 120 * 1000; // 5s dev /
 const TESSIE_RATE_LIMIT_MAX = isDevelopment ? 10 * 1000 : 180 * 1000; // 10s dev / 180s prod
 
 async function checkAndUpdateRateLimit(db: D1Database, apiEndpoint: string): Promise<boolean> {
-  try {
-    // Check last API call time for this endpoint
-    const lastCall = await db.prepare(`
-      SELECT last_call_time, call_count 
-      FROM api_rate_limits 
-      WHERE endpoint = ? AND DATE(last_call_time) = DATE('now')
-    `).bind(apiEndpoint).first();
-    
-    const now = Date.now();
-    const randomInterval = TESSIE_RATE_LIMIT_MIN + Math.random() * (TESSIE_RATE_LIMIT_MAX - TESSIE_RATE_LIMIT_MIN);
-    
-    if (lastCall?.last_call_time) {
-      const timeSinceLastCall = now - new Date(lastCall.last_call_time).getTime();
-      if (timeSinceLastCall < randomInterval) {
-        console.log(`⏳ Rate limit: ${Math.ceil((randomInterval - timeSinceLastCall) / 1000)}s remaining for ${apiEndpoint}`);
-        return false; // Rate limited
-      }
-    }
-    
-    // Update rate limit record
-    await db.prepare(`
-      INSERT OR REPLACE INTO api_rate_limits (endpoint, last_call_time, call_count)
-      VALUES (?, datetime('now'), COALESCE((SELECT call_count FROM api_rate_limits WHERE endpoint = ? AND DATE(last_call_time) = DATE('now')), 0) + 1)
-    `).bind(apiEndpoint, apiEndpoint).run();
-    
-    return true; // Allowed to proceed
-  } catch (error) {
-    console.warn('Rate limit check failed:', error);
-    return true; // Default to allowing the call if rate limit check fails
+  // Use new utility. Randomized interval between min/max; key is apiEndpoint.
+  const interval = TESSIE_RATE_LIMIT_MIN + Math.random() * (TESSIE_RATE_LIMIT_MAX - TESSIE_RATE_LIMIT_MIN);
+  const { allowed, waitMs } = await canProceed(db, { key: apiEndpoint, minIntervalMs: interval });
+  if (allowed) {
+    await recordCall(db, apiEndpoint);
+    return true;
   }
+  console.log(`⏳ Rate limit: ${Math.ceil(waitMs/1000)}s remaining for ${apiEndpoint}`);
+  return false;
 }
 
 async function fetchTessieData(apiKey: string, db?: D1Database) {
@@ -2532,164 +2402,9 @@ async function fetchTessieData(apiKey: string, db?: D1Database) {
   return { vehicles, state, recentDrives };
 }
 
-// Helper function to process and store data in D1 with enhanced analytics
+// Legacy enhanced processing removed; unified data now built from DB state populated by scheduled ingesters.
 async function processAndStoreInD1Enhanced(db: D1Database, tessieData: any) {
-  try {
-    console.log('Processing data with enhanced processor...');
-    
-    // Initialize enhanced processor - temporarily disabled due to dependency issues
-    // const processor = new EnhancedDataProcessor(db);
-    
-    const { vehicles, state, recentDrives: liveDrives } = tessieData;
-    
-    if (!vehicles.results?.length) {
-      throw new Error('No vehicles found in Tessie response');
-    }
-
-    const vehicle = vehicles.results[0];
-    const currentState = state || vehicle.last_state;
-
-    // Process vehicle state with enhanced fields - temporarily disabled
-    if (currentState) {
-      /*
-      await processor.processVehicleState({
-        vehicle_id: vehicle.vin || 'midnight-shadow',
-        battery_level: currentState.charge_state?.battery_level || 0,
-        battery_range: currentState.charge_state?.battery_range || 0,
-        charging_state: currentState.charge_state?.charging_state || 'Unknown',
-        shift_state: currentState.drive_state?.shift_state,
-        power: currentState.charge_state?.charger_power || 0,
-        locked: currentState.vehicle_state?.locked,
-        climate_on: currentState.climate_state?.is_climate_on,
-        latitude: currentState.drive_state?.latitude || 0,
-        longitude: currentState.drive_state?.longitude || 0,
-        heading: currentState.drive_state?.heading || 0,
-        speed: currentState.drive_state?.speed || 0,
-        odometer: currentState.vehicle_state?.odometer || 0,
-        inside_temp: currentState.climate_state?.inside_temp,
-        outside_temp: currentState.climate_state?.outside_temp,
-        timestamp: new Date().toISOString()
-      });
-      */
-    }
-    
-    // Process recent drives with direct D1 insertion (enhanced processor disabled)
-    if (liveDrives?.results) {
-      console.log(`🚗 Processing ${liveDrives.results.length} drives from Tessie API`);
-      
-      for (const drive of liveDrives.results) {
-        try {
-          // Enhance addresses with geocoding if missing or limited
-          let startAddress = drive.starting_location || drive.start_address;
-          let endAddress = drive.ending_location || drive.end_address;
-          
-          // Geocode start address if missing or too generic and we have coordinates
-          if ((!startAddress || startAddress.length < 10) && drive.start_latitude && drive.start_longitude) {
-            try {
-              const geocodedStart = await geocodeCoordinates(drive.start_latitude, drive.start_longitude);
-              if (geocodedStart) {
-                startAddress = geocodedStart;
-              }
-            } catch (error) {
-              console.warn('Start address geocoding failed:', error);
-            }
-          }
-          
-          // Geocode end address if missing or too generic and we have coordinates
-          if ((!endAddress || endAddress.length < 10) && drive.end_latitude && drive.end_longitude) {
-            try {
-              const geocodedEnd = await geocodeCoordinates(drive.end_latitude, drive.end_longitude);
-              if (geocodedEnd) {
-                endAddress = geocodedEnd;
-              }
-            } catch (error) {
-              console.warn('End address geocoding failed:', error);
-            }
-          }
-          
-          const driveRecord = {
-            tessie_id: drive.id,
-            vehicle_id: vehicle.vin || 'midnight-shadow',
-            journey_id: 'continental-usa-2025',
-            started_at: drive.started_at ? new Date(drive.started_at * 1000).toISOString() : new Date().toISOString(),
-            ended_at: drive.ended_at ? new Date(drive.ended_at * 1000).toISOString() : new Date().toISOString(),
-            start_address: startAddress || null,
-            end_address: endAddress || null,
-            start_latitude: drive.start_latitude || 0,
-            start_longitude: drive.start_longitude || 0,
-            end_latitude: drive.end_latitude || 0,
-            end_longitude: drive.end_longitude || 0,
-            distance_miles: drive.distance_miles || 0,
-            duration_minutes: (drive.ended_at && drive.started_at) ? 
-              Math.round((drive.ended_at - drive.started_at) / 60) : 0
-          };
-
-          // Check if drive already exists
-          const existingDrive = await db.prepare(`
-            SELECT id FROM drives WHERE tessie_id = ?
-          `).bind(drive.id).first();
-
-          if (!existingDrive) {
-            // Insert new drive with validated data
-            await db.prepare(`
-              INSERT INTO drives (
-                tessie_id, vehicle_id, journey_id, started_at, ended_at,
-                start_address, end_address, distance_miles, duration_minutes,
-                start_latitude, start_longitude, end_latitude, end_longitude,
-                created_at, updated_at
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-            `).bind(
-              driveRecord.tessie_id || null,
-              driveRecord.vehicle_id || null,
-              driveRecord.journey_id || null,
-              driveRecord.started_at || null,
-              driveRecord.ended_at || null,
-              driveRecord.start_address || null,
-              driveRecord.end_address || null,
-              driveRecord.distance_miles || 0,
-              driveRecord.duration_minutes || 0,
-              driveRecord.start_latitude || 0,
-              driveRecord.start_longitude || 0,
-              driveRecord.end_latitude || 0,
-              driveRecord.end_longitude || 0
-            ).run();
-            
-            console.log(`✅ Inserted drive: ${driveRecord.start_address || 'Unknown'} → ${driveRecord.end_address || 'Unknown'}`);
-          } else {
-            // Update existing drive with potentially new geocoded addresses
-            await db.prepare(`
-              UPDATE drives SET 
-                start_address = ?, end_address = ?,
-                distance_miles = ?, duration_minutes = ?,
-                updated_at = datetime('now')
-              WHERE tessie_id = ?
-            `).bind(
-              driveRecord.start_address || null,
-              driveRecord.end_address || null,
-              driveRecord.distance_miles || 0,
-              driveRecord.duration_minutes || 0,
-              drive.id
-            ).run();
-            
-            console.log(`🔄 Updated drive: ${driveRecord.start_address || 'Unknown'} → ${driveRecord.end_address || 'Unknown'}`);
-          }
-        } catch (error) {
-          console.error(`❌ Failed to process drive ${drive.id}:`, error);
-        }
-      }
-    }
-    
-    // Continue with existing logic for backward compatibility
-    const result = await processAndStoreInD1(db, tessieData);
-    
-    console.log('Enhanced processing complete');
-    return { ...result, enhancedProcessing: true };
-    
-  } catch (error) {
-    console.error('Enhanced data processing failed:', error);
-    // Fallback to regular processing
-    return await processAndStoreInD1(db, tessieData);
-  }
+  return await processAndStoreInD1(db, tessieData);
 }
 
 // Helper function to process and store data in D1
@@ -2953,31 +2668,7 @@ async function processAndStoreInD1(db: D1Database, tessieData: any) {
           lat: drive.end_latitude || 0,
           lng: drive.end_longitude || 0
         }
-      })) : [
-        // Fallback sample drive data when database is empty
-        {
-          id: 'sample-drive-1',
-          date: '2025-06-01',
-          startTime: '2025-06-01T08:00:00Z',
-          endTime: '2025-06-01T12:00:00Z',
-          distance: 250,
-          startLocation: 'Hartford, CT 06101',
-          endLocation: 'Boston, MA 02101',
-          startCoordinates: { lat: 41.7658, lng: -72.6734 },
-          endCoordinates: { lat: 42.3601, lng: -71.0589 }
-        },
-        {
-          id: 'sample-drive-2',
-          date: '2025-06-02',
-          startTime: '2025-06-02T09:00:00Z',
-          endTime: '2025-06-02T14:30:00Z',
-          distance: 315,
-          startLocation: 'Boston, MA 02101',
-          endLocation: 'New York, NY 10001',
-          startCoordinates: { lat: 42.3601, lng: -71.0589 },
-          endCoordinates: { lat: 40.7589, lng: -73.9851 }
-        }
-      ],
+  })) : [],
       charges: (recentCharges.results && recentCharges.results.length > 0) ? recentCharges.results.map((charge: any) => ({
         id: charge.id,
         date: charge.start_time,
@@ -2986,27 +2677,7 @@ async function processAndStoreInD1(db: D1Database, tessieData: any) {
         location: charge.location,
         energyAdded: charge.energy_added,
         cost: charge.cost
-      })) : [
-        // Fallback sample charge data when database is empty
-        {
-          id: 'sample-charge-1',
-          date: '2025-06-01',
-          startTime: '2025-06-01T12:30:00Z',
-          endTime: '2025-06-01T13:30:00Z',
-          location: 'Supercharger - Boston, MA',
-          energyAdded: 45,
-          cost: 15.50
-        },
-        {
-          id: 'sample-charge-2',
-          date: '2025-06-02',
-          startTime: '2025-06-02T15:00:00Z',
-          endTime: '2025-06-02T16:15:00Z',
-          location: 'Supercharger - New York, NY',
-          energyAdded: 38,
-          cost: 13.20
-        }
-      ]
+  })) : []
     },
     tessieStatus: {
       connected: true,
@@ -3016,69 +2687,7 @@ async function processAndStoreInD1(db: D1Database, tessieData: any) {
   };
 }
 
-// Helper function for reverse geocoding (coordinates to address)
-async function geocodeCoordinates(lat: number, lng: number): Promise<string> {
-  try {
-    // Use Nominatim (OpenStreetMap) free geocoding service
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
-      {
-        headers: {
-          'User-Agent': 'ContinentalUSA-Tesla-Tracker/1.0 (contact@example.com)'
-        }
-      }
-    );
-    
-    if (!response.ok) {
-      console.warn(`Geocoding failed: ${response.status}`);
-      return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-    }
-    
-    const data = await response.json();
-    
-    if (data.display_name) {
-      // Parse the address to get a clean, readable format
-      const address = data.address;
-      if (address) {
-        const parts = [];
-        
-        if (address.house_number && address.road) {
-          parts.push(`${address.house_number} ${address.road}`);
-        } else if (address.road) {
-          parts.push(address.road);
-        } else if (address.amenity) {
-          parts.push(address.amenity);
-        } else if (address.shop) {
-          parts.push(address.shop);
-        }
-        
-        if (address.city) {
-          parts.push(address.city);
-        } else if (address.town) {
-          parts.push(address.town);
-        } else if (address.village) {
-          parts.push(address.village);
-        }
-        
-        if (address.state) {
-          parts.push(address.state);
-        }
-        
-        if (parts.length > 0) {
-          return parts.join(', ');
-        }
-      }
-      
-      // Fallback to display_name but clean it up
-      return data.display_name.split(',').slice(0, 3).join(', ');
-    }
-    
-    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-  } catch (error) {
-    console.warn('Geocoding error:', error);
-    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-  }
-}
+// (Local geocodeCoordinates removed; using reverseGeocode util)
 
 // Helper function for state detection
 async function detectStateFromCoordinates(lat: number, lng: number): Promise<string> {
@@ -3473,11 +3082,11 @@ app.post('/api/v1/data/historical-import', async (c) => {
             let endAddress = drive.ending_location || drive.end_address;
             
             if ((!startAddress || startAddress.length < 10) && drive.start_latitude && drive.start_longitude) {
-              startAddress = await geocodeCoordinates(drive.start_latitude, drive.start_longitude);
+              startAddress = (await reverseGeocode(drive.start_latitude, drive.start_longitude)).address;
             }
-            
+
             if ((!endAddress || endAddress.length < 10) && drive.end_latitude && drive.end_longitude) {
-              endAddress = await geocodeCoordinates(drive.end_latitude, drive.end_longitude);
+              endAddress = (await reverseGeocode(drive.end_latitude, drive.end_longitude)).address;
             }
             
             // Insert or update drive
