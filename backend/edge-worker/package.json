@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-  "build": "npx esbuild src/index.ts --bundle --format=esm --outfile=dist/index.js",
+  "build": "npx esbuild src/index.ts --bundle --format=esm --outfile=dist/index.js --external:hono --external:zod",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "test": "vitest",
