@@ -1,8 +1,74 @@
 // Environment types for Cloudflare Workers
 export interface Env {
-  DB: D1Database;
-  TESSIE_API_KEY: string;
-  VEHICLE_ID: string;
+  // D1 Database
+  TESLA_DB: D1Database;
+  
+  // API Keys
+  TESSIE_API_KEY?: string;
+  MAPBOX_ACCESS_TOKEN?: string;
+  OPENWEATHER_API_KEY?: string;
+  
+  // Vehicle Configuration
+  VEHICLE_ID?: string;
+  TESLA_VIN?: string;
+  
+  // Admin Configuration
+  ADMIN_TOKEN?: string;
+  
+  // Environment
+  ENVIRONMENT?: string;
+  LOG_LEVEL?: string;
+  
+  // Cloudflare Services
+  TELEMETRY_ANALYTICS?: AnalyticsEngineDataset;
+  MEDIA_BUCKET?: R2Bucket;
+  DATA_PROCESSOR?: Queue;
+  
+  // AI/ML (Future)
+  AI?: any;
+  AI_MODEL_NAME?: string;
+}
+
+// Analytics Engine types
+export interface AnalyticsEngineDataset {
+  writeDataPoint(data: {
+    blobs?: string[];
+    doubles?: number[];
+    indexes?: string[];
+  }): void;
+}
+
+// R2 Storage types
+export interface R2Bucket {
+  list(options?: { limit?: number; prefix?: string }): Promise<R2Objects>;
+  get(key: string): Promise<R2Object | null>;
+  put(key: string, value: ArrayBuffer | string, options?: R2PutOptions): Promise<R2Object>;
+  delete(key: string): Promise<void>;
+}
+
+export interface R2Objects {
+  objects: R2Object[];
+  truncated: boolean;
+}
+
+export interface R2Object {
+  key: string;
+  version: string;
+  size: number;
+  etag: string;
+  httpEtag: string;
+  uploaded: Date;
+  checksums: Record<string, string>;
+}
+
+export interface R2PutOptions {
+  httpMetadata?: Record<string, string>;
+  customMetadata?: Record<string, string>;
+}
+
+// Queue types
+export interface Queue {
+  send(message: any, options?: { delay?: number }): Promise<void>;
 }
 
 // D1 Database types
