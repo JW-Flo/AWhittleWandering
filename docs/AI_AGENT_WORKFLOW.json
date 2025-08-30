@@ -1,0 +1,260 @@
+{
+  "name": "Fullstack Refactor AI Workflow - Advanced v2",
+  "meta": { "version": 2, "description": "Expanded workflow with tooling, governance, fallback, auditing, cost tracking, and evaluation harness." },
+  "nodes": [
+    {
+      "id": "2d63c7eb-8d4e-4124-951a-bf67e6bd8523",
+      "name": "Chat Message Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [200, 200],
+      "parameters": {
+        "public": true,
+        "mode": "webhook",
+        "options": { "responseMode": "responseNode" },
+        "webhookId": "dfbed3e0-4409-4316-9f44-d608394d04f9"
+      }
+    },
+    {
+      "id": "eval-trigger-manual",
+      "name": "Evaluation Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [200, 20],
+      "parameters": {}
+    },
+    {
+      "id": "d41730fd-4dea-4914-aaf5-ad9f3af33994",
+      "name": "Memory Buffer Window",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.2,
+      "position": [400, 400],
+      "parameters": { "description": "Stores recent chat messages for context." }
+    },
+    {
+      "id": "memory-summarizer",
+      "name": "Memory Summarizer",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.0,
+      "position": [600, 460],
+      "parameters": {
+        "toolDescription": "Summarizes provided conversation text (last lines, truncated). Pass concatenated dialogue as query.",
+        "language": "JavaScript",
+        "code": "const text=String(query||''); if(!text) return 'No input'; const lines=text.split(/\\n/); const last=lines.slice(-40); let joined=last.join('\\n'); if(joined.length>800) joined=joined.slice(joined.length-800); return 'Summary:'+joined;"
+      }
+    },
+    {
+      "id": "intent-classifier",
+      "name": "Intent Classifier",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.0,
+  "position": [600, 140],
+      "parameters": {
+        "toolDescription": "Heuristic classification of user intent (refactor|schema|test|explain).",
+        "language": "JavaScript",
+        "code": "const q=String(query||'').toLowerCase(); if(/schema|field|odometer/.test(q)) return 'schema'; if(/test|unit|spec/.test(q)) return 'test'; if(/explain|help|describe/.test(q)) return 'explain'; if(/diff|patch|refactor|clean/.test(q)) return 'refactor'; return 'general';"
+      }
+    },
+    {
+      "id": "d70f192e-4248-46e5-8149-5044017ee647",
+      "name": "AI Refactor Brain (Primary)",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.5,
+      "position": [820, 200],
+      "parameters": {
+        "model": "gpt-4",
+        "temperature": 0.3,
+        "messages": { "messageValues": [ { "message": "You are an AI assistant specialized as a Fullstack Refactor AI for Telemetry + UI. Maintain JSON-first actionable diffs when possible. If producing patches, use unified diff." } ] }
+      }
+    },
+    {
+      "id": "fallback-openai",
+      "name": "AI Refactor Brain (Fallback)",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.5,
+      "position": [820, 60],
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "temperature": 0.2,
+        "messages": { "messageValues": [ { "message": "You are a lightweight fallback model. Produce concise output." } ] }
+      }
+    },
+    {
+      "id": "dae5b22b-a388-466b-a743-13b8bc81fb25",
+      "name": "Code Fetcher",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [1040, 420],
+      "parameters": { "toolDescription": "Fetches file content from the repository given a URL or path.", "url": "{{{file_url}}}", "method": "GET", "description": "Retrieves code files for analysis." }
+    },
+    {
+      "id": "file-manifest-search",
+      "name": "File Manifest Search",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.0,
+      "position": [1040, 540],
+      "parameters": {
+        "toolDescription": "Fuzzy search against a static manifest of repo files (update manifest manually).",
+        "language": "JavaScript",
+        "code": "const manifest=['backend/edge-worker/src/index.ts','frontend/src/main.tsx','shared/schemas/telemetry.ts']; const q=String(query||'').toLowerCase(); return manifest.filter(f=>f.toLowerCase().includes(q)).slice(0,10);"
+      }
+    },
+    {
+      "id": "ba3e9377-eb46-41f4-b33e-15b76192d0b1",
+      "name": "Schema Validation Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.0,
+      "position": [1060, 200],
+      "parameters": { "toolDescription": "Validates if API data fields match schema expectations.", "language": "JavaScript", "code": "if (typeof query === 'string') {\n let msg='';\n if (query.includes('distance_miles') && !query.includes('odometer_distance')) msg+='Uses distance_miles instead of odometer_distance. ';\n if (/historicalDrives: drives/.test(query)) msg+='Legacy alias historicalDrives: drives detected. ';\n if(!msg) msg='Schema fields match expected usage.';\n return msg; } return 'No valid input provided';", "description": "Ensures API data adheres to expected schema." }
+    },
+    {
+      "id": "schema-drift-checker",
+      "name": "Schema Drift Checker",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.0,
+      "position": [1220, 200],
+      "parameters": {
+        "toolDescription": "Checks payload JSON for unexpected or missing fields vs canonical list.",
+        "language": "JavaScript",
+        "code": "let expected=['odometer_distance','battery_level','speed','outside_temp']; try{ const obj=JSON.parse(query); const keys=Object.keys(obj||{}); const missing=expected.filter(k=>!keys.includes(k)); const extra=keys.filter(k=>!expected.includes(k)); return {missing,extra}; }catch(e){ return {error:'Invalid JSON'} }"
+      }
+    },
+    {
+      "id": "c9f102a5-415f-4a61-920e-d52112b4698b",
+      "name": "Hook Logic Validator",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.0,
+      "position": [1220, 420],
+      "parameters": { "toolDescription": "Checks React hooks for outdated patterns.", "language": "JavaScript", "code": "if (typeof query === 'string') { let issues=[]; if (query.includes('historicalDrives: drives')) issues.push('Found historicalDrives aliased as drives; use historicalDrives directly.'); if (query.match(/20\d{2}-\d{2}-\d{2}/)) issues.push('Found hardcoded date; use dynamic current date instead.'); return issues.length?issues.join(' '):'No obvious legacy patterns found.';} return 'No valid input provided';", "description": "Validates React hook logic for modern patterns." }
+    },
+    {
+      "id": "patch-diff-generator",
+      "name": "Patch Diff Generator",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.0,
+      "position": [1380, 420],
+      "parameters": { "toolDescription": "Generates a simple unified diff from original and modified content separated by ===NEW=== delimiter.", "language": "JavaScript", "code": "if(typeof query!=='string') return 'No input'; const parts=query.split('===NEW===' ); if(parts.length!==2) return 'Provide original then ===NEW=== then modified'; const [orig,mod]=parts; const o=orig.split(/\r?\n/); const m=mod.split(/\r?\n/); let diff=['--- original','+++ modified']; const len=Math.max(o.length,m.length); for(let i=0;i<len;i++){ if(o[i]!==m[i]){ if(o[i]!==undefined) diff.push('-'+o[i]); if(m[i]!==undefined) diff.push('+'+m[i]); }} return diff.join('\n');" }
+    },
+    {
+      "id": "test-executor",
+      "name": "Test Executor (Stub)",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.0,
+      "position": [1540, 420],
+      "parameters": { "toolDescription": "Stub for running focused tests (extend to call CI endpoint).", "language": "JavaScript", "code": "return {status:'not_implemented_in_workflow_only_mode', hint:'Invoke external CI pipeline with file list.'};" }
+    },
+    {
+      "id": "vector-search",
+      "name": "Vector Search (Stub)",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.0,
+      "position": [1700, 420],
+      "parameters": { "toolDescription": "Stub vector search returning top pseudo-similar files.", "language": "JavaScript", "code": "const corpus=['telemetry battery optimization','frontend map component','api unified data cache']; const q=String(query||'').toLowerCase(); return corpus.filter(c=>c.includes(q.split(' ')[0]||''));" }
+    },
+    {
+      "id": "62ced3fb-64e6-4032-8dae-ccdc1fc460f6",
+      "name": "Unified Data Mock",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.0,
+      "position": [1380, 200],
+      "parameters": { "toolDescription": "Generates a safe mock of the unified journey data.", "language": "JavaScript", "code": "return { journey: { overview: { name: 'A Whittle Wandering Trip', startDate: '2025-06-01', currentDate: new Date().toISOString().split('T')[0], daysElapsed: 60, statesVisited: 29, statesRemaining: 19, progressPercentage: 60, totalMiles: 10000, averageMilesPerDay: 166.7 }, currentStatus: { location: { state: 'Washington', city: 'Seattle', coordinates: { lat: 47.6062, lng: -122.3321 } }, vehicle: { batteryLevel: 80, batteryRange: 250, chargingState: 'Disconnected', odometer: 15000, speed: 0, outsideTemp: 75 }, lastUpdate: new Date().toISOString() }, timeline: [ { date: '2025-06-01', state: 'Texas', location: 'Austin, TX', description: 'Journey began in Texas', category: 'departure', coordinates: { lat: 30.2672, lng: -97.7431 } }, { date: '2025-07-20', state: 'Washington', location: 'Seattle, WA', description: 'Reached Pacific Northwest', category: 'arrival', coordinates: { lat: 47.6062, lng: -122.3321 } } ], liveData: null, tessieStatus: { connected: false, lastSync: new Date().toISOString(), refreshInterval: 30 } } };", "description": "Creates mock data for testing when live data is unavailable." }
+    },
+    {
+      "id": "safety-filter",
+      "name": "Safety Filter",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.0,
+      "position": [1540, 200],
+      "parameters": { "toolDescription": "Blocks secret leakage patterns.", "language": "JavaScript", "code": "if(typeof query!=='string') return 'ok'; if(/sk-[a-zA-Z0-9]{20,}/.test(query)) return 'secret-detected'; return 'ok';" }
+    },
+    {
+      "id": "response-formatter",
+      "name": "Response Formatter",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1040, 60],
+      "parameters": {
+        "functionCode": "return items.map(i=>{ let text=i.json.data||i.json.output||i.json.body||JSON.stringify(i.json); try{ const parsed=JSON.parse(text); return {json:{ok:true,mode:'primary',data:parsed}};}catch(e){ return {json:{ok:true,mode:'primary',data:text}}; }});"
+      }
+    },
+    {
+      "id": "output-safety-scan",
+      "name": "Output Safety Scan",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1140, 60],
+      "parameters": {
+        "functionCode": "const secretRe=/sk-[a-zA-Z0-9]{20,}/; return items.map(i=>{ const data=i.json.data; let text=typeof data==='string'?data:JSON.stringify(data); if(secretRe.test(text)){ i.json.redacted=true; i.json.data='[REDACTED: secret-like pattern removed]'; } return i; });"
+      }
+    },
+    {
+      "id": "cost-tracker",
+      "name": "Cost & Token Tracker",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1240, 60],
+      "parameters": {
+        "functionCode": "const store=getWorkflowStaticData('global'); store.tokens=store.tokens||0; return items.map(i=>{ const content=JSON.stringify(i.json.data||''); const est=Math.ceil(content.length/4); store.tokens+=est; i.json.tokenEstimate=est; i.json.totalTokens=store.tokens; if(store.tokens>80000){ i.json.warning='token budget exceeded'; } return i; });"
+      }
+    },
+    {
+      "id": "audit-logger",
+      "name": "Audit Logger",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1440, 60],
+      "parameters": {
+        "functionCode": "const store=getWorkflowStaticData('global'); store.audit=store.audit||[]; return items.map(i=>{ const entry={ts:new Date().toISOString(), tokens:i.json.totalTokens||0, intent:i.json.intent||null}; store.audit.push(entry); i.json.auditCount=store.audit.length; return i; });"
+      }
+    },
+    {
+      "id": "086ed5fb-55b5-4104-b2ca-8699d77f1c7f",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1640, 60],
+      "parameters": { "options": {}, "description": "Sends the final response back to the webhook." }
+    },
+    {
+      "id": "error-trigger",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [200, 600],
+      "parameters": {}
+    },
+    {
+      "id": "error-notifier",
+      "name": "Error Notifier",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [400, 600],
+      "parameters": { "functionCode": "return items.map(i=>({json:{error:true,message:i.json.message||'Workflow error',ts:new Date().toISOString()}}));" }
+    }
+  ],
+  "connections": {
+    "Memory Buffer Window": { "ai_memory": [ [ { "node": "AI Refactor Brain (Primary)", "type": "ai_memory", "index": 0 } ] ] },
+  "Chat Message Trigger": { "main": [ [ { "node": "AI Refactor Brain (Primary)", "type": "main", "index": 0 }, { "node": "fallback-openai", "type": "main", "index": 1 } ] ] },
+  "AI Refactor Brain (Primary)": { "main": [ [ { "node": "response-formatter", "type": "main", "index": 0 } ] ] },
+  "fallback-openai": { "main": [ [ { "node": "response-formatter", "type": "main", "index": 0 } ] ] },
+  "response-formatter": { "main": [ [ { "node": "output-safety-scan", "type": "main", "index": 0 } ] ] },
+  "output-safety-scan": { "main": [ [ { "node": "cost-tracker", "type": "main", "index": 0 } ] ] },
+    "cost-tracker": { "main": [ [ { "node": "audit-logger", "type": "main", "index": 0 } ] ] },
+    "audit-logger": { "main": [ [ { "node": "Webhook Response", "type": "main", "index": 0 } ] ] },
+    "Code Fetcher": { "ai_tools": [ [ { "node": "AI Refactor Brain (Primary)", "type": "ai_tools", "index": 0 } ] ] },
+    "file-manifest-search": { "ai_tools": [ [ { "node": "AI Refactor Brain (Primary)", "type": "ai_tools", "index": 1 } ] ] },
+  "Schema Validation Tool": { "ai_tools": [ [ { "node": "AI Refactor Brain (Primary)", "type": "ai_tools", "index": 2 } ] ] },
+  "schema-drift-checker": { "ai_tools": [ [ { "node": "AI Refactor Brain (Primary)", "type": "ai_tools", "index": 3 } ] ] },
+  "Hook Logic Validator": { "ai_tools": [ [ { "node": "AI Refactor Brain (Primary)", "type": "ai_tools", "index": 4 } ] ] },
+  "patch-diff-generator": { "ai_tools": [ [ { "node": "AI Refactor Brain (Primary)", "type": "ai_tools", "index": 5 } ] ] },
+  "test-executor": { "ai_tools": [ [ { "node": "AI Refactor Brain (Primary)", "type": "ai_tools", "index": 6 } ] ] },
+  "vector-search": { "ai_tools": [ [ { "node": "AI Refactor Brain (Primary)", "type": "ai_tools", "index": 7 } ] ] },
+  "Unified Data Mock": { "ai_tools": [ [ { "node": "AI Refactor Brain (Primary)", "type": "ai_tools", "index": 8 } ] ] },
+  "safety-filter": { "ai_tools": [ [ { "node": "AI Refactor Brain (Primary)", "type": "ai_tools", "index": 9 } ] ] },
+  "memory-summarizer": { "ai_tools": [ [ { "node": "AI Refactor Brain (Primary)", "type": "ai_tools", "index": 10 } ] ] },
+  "intent-classifier": { "ai_tools": [ [ { "node": "AI Refactor Brain (Primary)", "type": "ai_tools", "index": 11 } ] ] },
+    "Error Trigger": { "main": [ [ { "node": "error-notifier", "type": "main", "index": 0 } ] ] },
+    "error-notifier": { "main": [ [ { "node": "Webhook Response", "type": "main", "index": 0 } ] ] },
+    "Evaluation Manual Trigger": { "main": [ [ { "node": "AI Refactor Brain (Primary)", "type": "main", "index": 0 } ] ] }
+  }
+}
