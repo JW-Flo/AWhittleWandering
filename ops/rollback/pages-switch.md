@@ -2,7 +2,7 @@
 
 ## Overview
 
-If the atlas-it Pages project fails to deploy or has issues, follow these steps to revert to the previous project name (atlasit-platform).
+If the atlas-it Pages project (new name) fails to deploy or has issues, follow these steps to revert to the previous stable project name (atlasit-platform). The two names differ only by the hyphen; be consistent across wrangler.toml, workflows, and check scripts.
 
 ## Rollback Steps
 
