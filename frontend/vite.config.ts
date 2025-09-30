@@ -30,12 +30,14 @@ export default defineConfig({
           // Vendor chunks
           'react-vendor': ['react', 'react-dom'],
           'ui-vendor': ['lucide-react', '@radix-ui/react-slot', 'class-variance-authority', 'clsx', 'tailwind-merge'],
-          'map-vendor': ['mapbox-gl'],
+          'map-vendor': ['mapbox-gl', 'leaflet', 'react-leaflet'],
           // App chunks  
           'components': [
             './src/components/AdminPortal.tsx',
-            './src/components/TeslaMap.tsx',
             './src/components/TimelineDataDisplay.tsx'
+          ],
+          'map-component': [
+            './src/components/TeslaMap.tsx'
           ],
           'hooks-utils': [
             './src/hooks/useUnifiedApiData.ts',

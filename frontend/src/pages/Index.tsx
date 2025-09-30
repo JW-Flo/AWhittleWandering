@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import LazyTeslaMap from '@/components/LazyTeslaMap';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
+// Dynamically import the map bundle only when dashboard tab rendered
+const LazyTeslaMap = lazy(() => import('@/components/LazyTeslaMap'));
 import VehicleStats from '@/components/VehicleStats';
 import ProductionBanner from '@/components/ProductionBanner';
 import ConnectedVehicle from '@/components/ConnectedVehicle';
@@ -352,21 +353,23 @@ const Index = () => {
                       </div>
                     </CardHeader>
                     <CardContent className="h-[calc(100%-80px)]">
-                      <LazyTeslaMap
-                        vehicleLocation={teslaData ? {
-                          latitude: teslaData.currentStatus.location.coordinates.lat,
-                          longitude: teslaData.currentStatus.location.coordinates.lng,
-                          heading: 0,
-                          speed: teslaData.currentStatus.vehicle.speed
-                        } : undefined}
-                        mapboxToken={appConfig?.mapboxToken || undefined}
-                        onTokenChange={() => {}} // Token managed by backend now
-                        routeLocations={teslaData?.timeline.drives.map(drive => ({
-                          lat: drive.endCoordinates.lat,
-                          lng: drive.endCoordinates.lng,
-                          timestamp: drive.endTime
-                        })) || []}
-                      />
+                      <Suspense fallback={<div className="flex items-center justify-center h-full text-sm">Loading map...</div>}>
+                        <LazyTeslaMap
+                          vehicleLocation={teslaData ? {
+                            latitude: teslaData.currentStatus.location.coordinates.lat,
+                            longitude: teslaData.currentStatus.location.coordinates.lng,
+                            heading: 0,
+                            speed: teslaData.currentStatus.vehicle.speed
+                          } : undefined}
+                          mapboxToken={appConfig?.mapboxToken || undefined}
+                          onTokenChange={() => {}} // Token managed by backend now
+                          routeLocations={teslaData?.timeline.drives.map(drive => ({
+                            lat: drive.endCoordinates.lat,
+                            lng: drive.endCoordinates.lng,
+                            timestamp: drive.endTime
+                          })) || []}
+                        />
+                      </Suspense>
                     </CardContent>
                   </Card>
                 </div>
