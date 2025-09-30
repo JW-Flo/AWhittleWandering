@@ -23,6 +23,11 @@ export const Dashboard: React.FC = () => {
 
   const { currentStatus, overview } = data;
 
+  // NOTE: This dashboard intentionally only renders a subset of fields required for
+  // the MVP demo. Additional panels (charging sessions, climate, route map) will be
+  // mounted via lazy-loaded feature components to keep initial bundle small.
+  // See contexts/TeslaDataContext for the unified data contract.
+
   return (
     <div className="dashboard-container">
       <h1>{overview.vehicle}</h1>
