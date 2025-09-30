@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RefreshCw, Car, Zap, Route, Activity, MapPin, LogIn, UserPlus } from 'lucide-react';
+import { RefreshCw, Car, Zap, Route, Activity, MapPin } from 'lucide-react';
 
 interface TeslaData {
   overview: {
@@ -79,29 +79,6 @@ interface AppConfig {
 }
 
 const Index = () => {
-  // Login/Register feedback state
-  const [authMessage, setAuthMessage] = useState<string | null>(null);
-  const [authLoading, setAuthLoading] = useState(false);
-
-  // Background function for Login/Register
-  const handleAuth = async (action: 'login' | 'register') => {
-    setAuthLoading(true);
-    setAuthMessage(null);
-    try {
-      const response = await fetch(`${api.baseUrl}/drop`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action })
-      });
-      if (!response.ok) throw new Error(`/${action} failed: ${response.status}`);
-      const data = await response.json();
-      setAuthMessage(data.message || `${action.charAt(0).toUpperCase() + action.slice(1)} successful!`);
-    } catch (err) {
-      setAuthMessage(err instanceof Error ? err.message : 'Auth error');
-    } finally {
-      setAuthLoading(false);
-    }
-  };
   const [teslaData, setTeslaData] = useState<TeslaData | null>(null);
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -196,10 +173,10 @@ const Index = () => {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div data-testid="loading-container" className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4" />
-          <p className="text-lg">Loading live Tesla data...</p>
+          <p className="text-lg" data-testid="loading-message">Loading...</p>
           <p className="text-sm text-muted-foreground mt-2">
             {appConfig?.appName || 'Tesla Road Trip Tracker'}
           </p>
@@ -210,11 +187,19 @@ const Index = () => {
 
   return (
     <TeslaDataProvider>
-      <div className="min-h-screen bg-background">
+      <div 
+        data-testid="dashboard-container" 
+        className={`min-h-screen bg-background ${window.innerWidth <= 768 ? 'mobile-layout' : 'desktop-layout'}`}
+      >
+        {/* Header */}
+              <div 
+        data-testid="dashboard-container" 
+        className={`min-h-screen bg-background ${window.innerWidth <= 768 ? 'mobile-layout' : 'desktop-layout'}`}
+      >
         {/* Header */}
         <header className="border-b border-tesla-gray-light bg-card/50 backdrop-blur-sm">
           <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between">>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-primary to-tesla-cyan rounded-lg flex items-center justify-center">
                   <Car className="w-6 h-6 text-background" />
@@ -230,31 +215,6 @@ const Index = () => {
               </div>
               
               <div className="flex items-center gap-4">
-                {/* Login/Register buttons */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleAuth('login')}
-                  disabled={authLoading}
-                  className="gap-2"
-                >
-                  <LogIn className="w-4 h-4" /> Login
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleAuth('register')}
-                  disabled={authLoading}
-                  className="gap-2"
-                >
-                  <UserPlus className="w-4 h-4" /> Register
-                </Button>
-        {/* Auth feedback message */}
-        {authMessage && (
-          <div className="fixed top-20 right-4 z-50 bg-card border border-primary rounded-lg shadow-lg px-4 py-2 text-primary text-sm">
-            {authMessage}
-          </div>
-        )}
                 <Button 
                   variant="outline" 
                   size="sm" 
@@ -335,7 +295,7 @@ const Index = () => {
                 <div className="lg:col-span-2 order-1 lg:order-1">
                   <Card className="h-[400px] lg:h-full border-tesla-gray-light">
                     <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between">>
                         <CardTitle className="flex items-center gap-2">
                           <Zap className="w-5 h-5 text-primary" />
                           Live Location - {teslaData?.currentStatus.location.state || 'Unknown'}

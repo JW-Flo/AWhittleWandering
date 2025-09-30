@@ -1,0 +1,20 @@
+name: release-notes
+on:
+  pull_request:
+    types: [closed]
+jobs:
+  draft:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compose draft release notes
+        run: |
+          echo "# Draft Release Notes" > release_notes.md
+          echo "PR: ${{ github.event.pull_request.title }}" >> release_notes.md
+          echo "Merged by: ${{ github.event.pull_request.merged_by.login }}" >> release_notes.md
+      - name: Upload artifact (notes)
+        uses: actions/upload-artifact@v4
+        with:
+          name: draft-release-notes
+          path: release_notes.md
