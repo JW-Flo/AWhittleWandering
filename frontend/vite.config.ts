@@ -30,15 +30,13 @@ export default defineConfig({
           // Vendor chunks
           'react-vendor': ['react', 'react-dom'],
           'ui-vendor': ['lucide-react', '@radix-ui/react-slot', 'class-variance-authority', 'clsx', 'tailwind-merge'],
-          'map-vendor': ['mapbox-gl', 'leaflet', 'react-leaflet'],
+          // Removed monolithic 'map-vendor' to allow Rollup to tree-shake and split mapbox submodules further
           // App chunks  
           'components': [
             './src/components/AdminPortal.tsx',
             './src/components/TimelineDataDisplay.tsx'
           ],
-          'map-component': [
-            './src/components/TeslaMap.tsx'
-          ],
+          'map-component': ['./src/components/TeslaMap.tsx'],
           'hooks-utils': [
             './src/hooks/useUnifiedApiData.ts',
             './src/utils/temperature.ts',
