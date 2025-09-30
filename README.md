@@ -92,6 +92,7 @@ See [FUTURE_QUALITY.md](FUTURE_QUALITY.md) for roadmap.
 ## Archived Workers
 
 Legacy workers consolidated and moved to `archive/workers/`:
+
 - `docs-workers` (example worker)
 - `mcp-server-cloud` (MCP server)
 
@@ -102,7 +103,7 @@ Fork → feature branch → tests → PR
 ## Support
 
 - **Issues:** [GitHub Issues](https://github.com/JW-Flo/AWhittleWandering/issues)
-- **Email:** joe@awhittlewandering.com
+- **Email:** <joe@awhittlewandering.com>
 
 ## License
 
@@ -111,3 +112,7 @@ MIT - see [LICENSE](LICENSE)
 ---
 
 **Live Journey:** 48 states, real-time Tesla tracking! ⚡🗺️
+
+## AtlasIT Cross-Project Context
+
+This project is **independent** of AtlasIT production Workers; it should not be conflated with the AtlasIT compliance/policy roadmap. For AtlasIT status and planned phases, see: [Project-AtlasIT/ROADMAP.md](https://github.com/JW-Flo/Project-AtlasIT/blob/main/ROADMAP.md). Any experimentation here (mapping, ingestion patterns, telemetry aggregation) can inform AtlasIT later but is not part of its active deliverables.
