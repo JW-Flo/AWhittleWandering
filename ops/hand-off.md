@@ -195,7 +195,10 @@ git push -u origin docs/roadmap-ops-alignment
 ## Commit & Push (to be executed by Copilot when ready)
 
 ```zsh
-git switch -c feat/sveltekit-baseline-workers || git switch feat/sveltekit-baseline-workers
+# Prefer modern 'git switch'; fall back to 'git checkout' if switch is unsupported
+git switch -c feat/sveltekit-baseline-workers 2>/dev/null || \
+  git switch feat/sveltekit-baseline-workers 2>/dev/null || \
+  git checkout -b feat/sveltekit-baseline-workers || git checkout feat/sveltekit-baseline-workers
 git add -A
 git commit -m "feat: SvelteKit baseline for Cloudflare Workers (+health, CSP/HSTS/XFO, CI, node-guard)"
 git push -u origin feat/sveltekit-baseline-workers
@@ -203,7 +206,9 @@ gh pr create --title "feat: SvelteKit baseline (Workers)" \
   --body-file ops/pr-bodies/PR2_sveltekit-bootstrap.md --draft
 
 # Docs alignment
-git switch -c docs/roadmap-ops-alignment || git switch docs/roadmap-ops-alignment
+git switch -c docs/roadmap-ops-alignment 2>/dev/null || \
+  git switch docs/roadmap-ops-alignment 2>/dev/null || \
+  git checkout -b docs/roadmap-ops-alignment || git checkout docs/roadmap-ops-alignment
 git add -A
 git commit -m "docs: align roadmap, context, and operations"
 git push -u origin docs/roadmap-ops-alignment
