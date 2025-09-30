@@ -75,7 +75,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
-    "@rollup/rollup-darwin-x64": "^4.46.2",
+    
     "@tailwindcss/typography": "^0.5.15",
     "@testing-library/jest-dom": "^6.6.4",
     "@testing-library/react": "^16.3.0",

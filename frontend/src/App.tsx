@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import SimpleTest from "./pages/SimpleTest";
 import NotFound from "./pages/NotFound";
+import Demo from "./pages/Demo";
 import { MasterCoordinationDashboard } from "./components/MasterCoordinationDashboard";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
             />
           } />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/demo" element={<Demo />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
