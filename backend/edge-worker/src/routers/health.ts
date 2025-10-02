@@ -1,6 +1,23 @@
 import { Hono } from 'hono';
 
-export const healthRouter = new Hono();
+// Latency snapshot accessor injected via index.ts (module augmentation pattern avoided for simplicity)
+// We attempt dynamic access from globalThis where we may attach metrics if needed; fallback noop.
+function getLatencySnapshot(): { count: number; p50: number; p95: number } | null {
+  try {
+    // @ts-ignore
+    if (globalThis.__LAT_SNAPSHOT__) return globalThis.__LAT_SNAPSHOT__();
+  } catch {}
+  return null;
+}
+
+// Minimal Env typing for this router (mirrors bindings in wrangler.toml we actually use here)
+interface HealthEnv {
+  TESLA_DB?: D1Database;
+  MEDIA_BUCKET?: R2Bucket;
+  DATA_PROCESSOR?: any; // queue binding optional
+}
+
+export const healthRouter = new Hono<{ Bindings: HealthEnv }>();
 
 healthRouter.get('/', async (c) => {
   const start = Date.now();
@@ -97,6 +114,10 @@ healthRouter.get('/', async (c) => {
   }
 
   health.performance.responseTimeMs = Date.now() - start;
+  const lat = getLatencySnapshot();
+  if (lat) {
+    health.performance.latency = lat; // Append-only: does not remove existing keys
+  }
   return c.json(health, health.status === 'unhealthy' ? 503 : 200);
 });
 
