@@ -1,5 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { buildJobs } from './jobs';
+import { recordRun } from './utils/cronMetrics';
 
 // Middleware
 import { corsMiddleware, securityHeaders } from './middleware/cors';
@@ -192,38 +194,34 @@ export default app;
 
 // Cron handler (required by wrangler [triggers].crons). Performs lightweight housekeeping.
 export const scheduled: ExportedHandlerScheduledHandler = async (event, env, ctx) => {
-  // Map specific cron expressions to tasks (keep extremely light to avoid overruns)
+  // Consolidated cron strategy:
+  // 1) Every 15 minutes (active hours) → quick_state_update
+  // 2) Every 30 minutes → full_sync (already covers state but ensures deeper ingestion)
+  // 3) 02:00 daily → historical_backfill
+  // 4) Hourly at minute 5 → data_quality_check (offset to avoid overlap with top-of-hour full_sync)
+  // 5) Every 6 hours at minute 10 → ai_data_processing (offset further)
   const cron = event.cron;
-  const jobs: Record<string, (() => Promise<void>)[]> = {
-    // Every 5 minutes 6-23 local (UTC hour range) quick state updates
-    '*/5 6-23 * * *': [async () => {
-      // Placeholder: future quick state refresh / warm caches
-    }],
-    // Full sync every 30 minutes
-    '*/30 * * * *': [async () => {/* placeholder full sync trigger */}],
-    // Historical backfill daily 02:00
-    '0 2 * * *': [async () => {/* placeholder backfill job */}],
-    // Hourly data quality check
-    '0 * * * *': [async () => {/* placeholder data quality */}],
-    // AI/ML processing every 6 hours
-    '0 */6 * * *': [async () => {/* placeholder ai/ml aggregation */}]
+  const jobs = buildJobs(env);
+
+  const mapping: Record<string, { name: keyof ReturnType<typeof buildJobs>; description: string }[]> = {
+    '*/15 6-23 * * *': [ { name: 'quick_state_update', description: 'Quick vehicle state update' } ],
+    '*/30 * * * *': [ { name: 'full_sync', description: 'Comprehensive data sync' } ],
+    '0 2 * * *': [ { name: 'historical_backfill', description: 'Historical data backfill' } ],
+    '5 * * * *': [ { name: 'data_quality_check', description: 'Data quality validation' } ],
+    '10 */6 * * *': [ { name: 'ai_data_processing', description: 'AI/ML aggregation processing' } ]
   };
 
-  const matched = jobs[cron] || [];
-  if (!matched.length) {
+  const selected = mapping[cron];
+  if (!selected) {
     console.log(JSON.stringify({ level: 'debug', event: 'cron.noop', cron }));
     return;
   }
-  console.log(JSON.stringify({ level: 'info', event: 'cron.start', cron, jobCount: matched.length }));
+  console.log(JSON.stringify({ level: 'info', event: 'cron.start', cron, jobCount: selected.length }));
   ctx.waitUntil((async () => {
-    for (const fn of matched) {
-      const t0 = Date.now();
-      try {
-        await fn();
-        console.log(JSON.stringify({ level: 'info', event: 'cron.job.ok', cron, ms: Date.now() - t0 }));
-      } catch (err: any) {
-        console.log(JSON.stringify({ level: 'error', event: 'cron.job.fail', cron, error: err?.message }));
-      }
+    for (const item of selected) {
+      await recordRun(env, cron, item.name, async () => {
+        await jobs[item.name]();
+      });
     }
     console.log(JSON.stringify({ level: 'info', event: 'cron.end', cron }));
   })());
