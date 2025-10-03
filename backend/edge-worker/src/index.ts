@@ -189,3 +189,42 @@ app.post('/drop', async (c) => {
 
 // Export for Cloudflare Workers
 export default app;
+
+// Cron handler (required by wrangler [triggers].crons). Performs lightweight housekeeping.
+export const scheduled: ExportedHandlerScheduledHandler = async (event, env, ctx) => {
+  // Map specific cron expressions to tasks (keep extremely light to avoid overruns)
+  const cron = event.cron;
+  const jobs: Record<string, (() => Promise<void>)[]> = {
+    // Every 5 minutes 6-23 local (UTC hour range) quick state updates
+    '*/5 6-23 * * *': [async () => {
+      // Placeholder: future quick state refresh / warm caches
+    }],
+    // Full sync every 30 minutes
+    '*/30 * * * *': [async () => {/* placeholder full sync trigger */}],
+    // Historical backfill daily 02:00
+    '0 2 * * *': [async () => {/* placeholder backfill job */}],
+    // Hourly data quality check
+    '0 * * * *': [async () => {/* placeholder data quality */}],
+    // AI/ML processing every 6 hours
+    '0 */6 * * *': [async () => {/* placeholder ai/ml aggregation */}]
+  };
+
+  const matched = jobs[cron] || [];
+  if (!matched.length) {
+    console.log(JSON.stringify({ level: 'debug', event: 'cron.noop', cron }));
+    return;
+  }
+  console.log(JSON.stringify({ level: 'info', event: 'cron.start', cron, jobCount: matched.length }));
+  ctx.waitUntil((async () => {
+    for (const fn of matched) {
+      const t0 = Date.now();
+      try {
+        await fn();
+        console.log(JSON.stringify({ level: 'info', event: 'cron.job.ok', cron, ms: Date.now() - t0 }));
+      } catch (err: any) {
+        console.log(JSON.stringify({ level: 'error', event: 'cron.job.fail', cron, error: err?.message }));
+      }
+    }
+    console.log(JSON.stringify({ level: 'info', event: 'cron.end', cron }));
+  })());
+};
