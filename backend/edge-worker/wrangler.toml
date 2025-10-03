@@ -6,11 +6,11 @@ workers_dev = true
 # Cron Triggers for Automated Data Ingestion
 [triggers]
 crons = [
-  "*/5 6-23 * * *",   # Quick state updates during active hours
+  "*/15 6-23 * * *",  # Quick state updates (reduced from every 5m to 15m)
   "*/30 * * * *",     # Full sync every 30 minutes
   "0 2 * * *",        # Historical backfill at 2 AM daily
-  "0 * * * *",        # Data quality check hourly
-  "0 */6 * * *"       # AI/ML processing every 6 hours
+  "5 * * * *",        # Data quality check hourly (offset minute 5)
+  "10 */6 * * *"      # AI/ML processing every 6 hours (offset minute 10)
 ]
 
 # Environment Variables - ZERO FAILURE API MANAGEMENT
