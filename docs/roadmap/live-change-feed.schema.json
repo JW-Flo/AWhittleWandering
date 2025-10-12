@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LiveChangeFeedEntry",
+  "type": "object",
+  "required": [
+    "timestamp",
+    "version",
+    "area",
+    "type",
+    "summary",
+    "files",
+    "tags"
+  ],
+  "properties": {
+    "timestamp": { "type": "string", "format": "date-time" },
+    "seq": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Monotonic append-only sequence (optional for legacy lines, required for new)."
+    },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "area": { "type": "string", "minLength": 2 },
+    "type": {
+      "type": "string",
+      "enum": [
+        "init",
+        "feature",
+        "fix",
+        "refactor",
+        "docs",
+        "policy",
+        "deprecation",
+        "removal"
+      ]
+    },
+    "summary": { "type": "string", "maxLength": 140 },
+    "details": { "type": "string" },
+    "files": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "invariantsDelta": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "followUp": { "type": "string" },
+    "breaking": { "type": "boolean", "default": false },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 2 },
+      "minItems": 1
+    }
+  },
+  "additionalProperties": false
+}
