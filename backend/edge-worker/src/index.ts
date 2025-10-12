@@ -16,6 +16,11 @@ import { unifiedDataRouter } from './routers/unifiedData';
 import { tripStatusRouter } from './routers/tripStatus';
 import { adminRouter } from './routers/admin';
 
+// Augment Env typing (local) for new PLATFORM_MODE variable
+declare global {
+  interface Env { PLATFORM_MODE?: string }
+}
+
 // Create the main Hono app
 const app = new Hono<{ Bindings: Env }>();
 
@@ -81,18 +86,22 @@ app.get('/health', async (c) => c.json({ ok: true, status: 'healthy', timestamp:
 app.get('/unified-data', async (c) => c.redirect('/api/v1/unified-data', 308));
 app.get('/trip-status', async (c) => c.redirect('/api/v1/trip-status', 308));
 // Provide a config endpoint directly for demo
-app.get('/api/v1/config', async (c) => c.json({
-  appName: 'Tesla Road Trip Tracker',
-  apiVersion: '3.0.0',
-  features: {
-    liveTeslaData: true,
-    mapIntegration: false,
-    realtimeUpdates: true
-  },
-  updateInterval: 30000,
-  mapboxToken: null,
-  apiBaseUrl: '',
-}));
+app.get('/api/v1/config', async (c) => {
+  const mode = c.env?.PLATFORM_MODE || 'live';
+  return c.json({
+    appName: 'Tesla Road Trip Tracker',
+    apiVersion: '3.0.0',
+    mode,
+    features: {
+      liveTeslaData: true,
+      mapIntegration: false,
+      realtimeUpdates: true
+    },
+    updateInterval: mode === 'live' ? 30000 : 45000,
+    mapboxToken: null,
+    apiBaseUrl: '',
+  });
+});
 // Optional: minimal connectors endpoint for demo (moved after app declaration)
 app.get('/api/connectors', async (c) => {
   return c.json({
@@ -109,6 +118,7 @@ app.get('/', async (c) => {
   return c.json({
     service: 'A Whittle Wandering - Tesla Road Trip Tracker',
     version: '3.0.0',
+    platformMode: c.env?.PLATFORM_MODE || 'live',
     timestamp: new Date().toISOString(),
     endpoints: {
       health: '/api/v1/health',
