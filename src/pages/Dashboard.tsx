@@ -150,9 +150,15 @@ export default function Dashboard() {
               <p className="text-sm text-muted-foreground">Adventure Tracker</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             {/* Compact Live Status */}
             <LiveVehicleStatus compact className="hidden lg:flex" />
+            
+            {/* Quick Links */}
+            <Button variant="ghost" size="sm" onClick={() => navigate('/leaderboard')} className="hidden md:flex">
+              <TrendingUp className="w-4 h-4 mr-1" />
+              Leaderboard
+            </Button>
             
             {/* Show explore button if not viewed flagship */}
             {!hasViewedFlagship && (
@@ -170,6 +176,9 @@ export default function Dashboard() {
             )}
             <Button variant="ghost" size="icon" onClick={() => navigate('/settings')}>
               <Settings className="w-4 h-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => navigate('/admin')} title="Admin Portal">
+              <Car className="w-4 h-4" />
             </Button>
             <Button variant="ghost" size="icon" onClick={handleSignOut}>
               <LogOut className="w-4 h-4" />

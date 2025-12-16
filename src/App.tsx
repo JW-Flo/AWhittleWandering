@@ -10,6 +10,8 @@ import Dashboard from "./pages/Dashboard";
 import Explore from "./pages/Explore";
 import NewJourney from "./pages/NewJourney";
 import Settings from "./pages/Settings";
+import Leaderboard from "./pages/Leaderboard";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +30,8 @@ const App = () => (
             <Route path="/explore" element={<Explore />} />
             <Route path="/journey/new" element={<NewJourney />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/admin" element={<Admin />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
