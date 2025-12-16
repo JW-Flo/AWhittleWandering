@@ -74,10 +74,15 @@ export default function Dashboard() {
   };
 
   const fetchMapboxToken = async () => {
-    // For now, we'll use the token from secrets - in production this would be fetched securely
-    // The Mapbox token is a public token and can be exposed to the frontend
-    const token = import.meta.env.VITE_MAPBOX_TOKEN || '';
-    setMapboxToken(token);
+    try {
+      const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+      if (error) throw error;
+      if (data?.token) {
+        setMapboxToken(data.token);
+      }
+    } catch (error) {
+      console.error('Error fetching Mapbox token:', error);
+    }
   };
 
   const handleSignOut = async () => {
