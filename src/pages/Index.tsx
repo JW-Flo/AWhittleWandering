@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import ImmersiveJourneyMap from '@/components/ImmersiveJourneyMap';
+import SignInDialog from '@/components/SignInDialog';
 import {
   Navigation, 
   MapPin, 
@@ -20,6 +21,7 @@ export default function Index() {
   const navigate = useNavigate();
   const [scrollY, setScrollY] = useState(0);
   const [mapboxToken, setMapboxToken] = useState('');
+  const [signInOpen, setSignInOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -52,6 +54,10 @@ export default function Index() {
     navigate('/dashboard');
     return null;
   }
+
+  const handleSignInClick = () => {
+    setSignInOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
@@ -119,7 +125,7 @@ export default function Index() {
               <Button 
                 size="lg" 
                 className="text-lg px-10 py-6 rounded-full shadow-glow hover:shadow-elevated transition-all duration-300"
-                onClick={() => navigate('/auth')}
+                onClick={handleSignInClick}
               >
                 Follow the Journey
                 <ArrowRight className="ml-2 w-5 h-5" />
@@ -277,7 +283,7 @@ export default function Index() {
             <Button 
               size="lg" 
               className="text-lg px-10 py-6 rounded-full shadow-glow"
-              onClick={() => navigate('/auth')}
+              onClick={handleSignInClick}
             >
               Start Exploring
               <ArrowRight className="ml-2 w-5 h-5" />
@@ -291,6 +297,9 @@ export default function Index() {
               View Public Journey
             </Button>
           </div>
+
+          {/* Inline Sign-In Dialog */}
+          <SignInDialog open={signInOpen} onOpenChange={setSignInOpen} />
         </div>
       </section>
 
