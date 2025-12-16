@@ -23,7 +23,7 @@ interface LiveVehicleStatusProps {
 }
 
 export default function LiveVehicleStatus({ compact = false, className = '' }: LiveVehicleStatusProps) {
-  const { vehicleState, isLoading, error, lastFetch, refresh } = useTessieData(true, 30000);
+  const { vehicleState, isLoading, error, lastFetch, refresh } = useTessieData(undefined, true, 30000);
 
   const getBatteryColor = (level: number) => {
     if (level > 50) return 'text-green-500';

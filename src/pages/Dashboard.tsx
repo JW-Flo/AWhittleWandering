@@ -63,7 +63,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [driveDataCount, setDriveDataCount] = useState(0);
   
-  const { vehicleState } = useTessieData(true, 60000);
+  const { vehicleState } = useTessieData(undefined, true, 60000);
 
   useEffect(() => {
     if (!user) {
