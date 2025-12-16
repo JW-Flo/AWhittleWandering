@@ -10,7 +10,9 @@ import {
   Wind, 
   Droplets,
   Thermometer,
-  RefreshCw
+  RefreshCw,
+  CloudLightning,
+  CloudFog
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -19,6 +21,7 @@ interface WeatherOverlayProps {
   lng: number;
   locationName?: string;
   compact?: boolean;
+  showAnimation?: boolean;
   className?: string;
 }
 
@@ -27,6 +30,7 @@ export function WeatherOverlay({
   lng, 
   locationName, 
   compact = false,
+  showAnimation = true,
   className = '' 
 }: WeatherOverlayProps) {
   const { data, isLoading, error, fetchCurrentWeather } = useWeather();
@@ -39,19 +43,47 @@ export function WeatherOverlay({
     }
   }, [lat, lng, fetchCurrentWeather]);
 
-  const getWeatherIcon = (conditions: string) => {
+  const getWeatherIcon = (conditions: string, size: 'sm' | 'lg' = 'sm') => {
+    const sizeClass = size === 'lg' ? 'w-8 h-8' : 'w-5 h-5';
+    const animationClass = showAnimation ? 'transition-transform hover:scale-110' : '';
+    
     switch (conditions?.toLowerCase()) {
       case 'clear':
-        return <Sun className="w-5 h-5 text-yellow-400" />;
+        return <Sun className={`${sizeClass} text-yellow-400 ${showAnimation ? 'animate-pulse' : ''} ${animationClass}`} />;
       case 'clouds':
-        return <Cloud className="w-5 h-5 text-gray-400" />;
+        return <Cloud className={`${sizeClass} text-gray-400 ${animationClass}`} />;
       case 'rain':
       case 'drizzle':
-        return <CloudRain className="w-5 h-5 text-blue-400" />;
+        return <CloudRain className={`${sizeClass} text-blue-400 ${animationClass}`} />;
       case 'snow':
-        return <CloudSnow className="w-5 h-5 text-blue-200" />;
+        return <CloudSnow className={`${sizeClass} text-blue-200 ${animationClass}`} />;
+      case 'thunderstorm':
+        return <CloudLightning className={`${sizeClass} text-purple-400 ${showAnimation ? 'animate-pulse' : ''} ${animationClass}`} />;
+      case 'mist':
+      case 'fog':
+      case 'haze':
+        return <CloudFog className={`${sizeClass} text-gray-300 ${animationClass}`} />;
       default:
-        return <Sun className="w-5 h-5 text-yellow-400" />;
+        return <Sun className={`${sizeClass} text-yellow-400 ${animationClass}`} />;
+    }
+  };
+
+  // Dynamic background based on weather
+  const getWeatherBackground = (conditions: string) => {
+    switch (conditions?.toLowerCase()) {
+      case 'clear':
+        return 'bg-gradient-to-br from-yellow-500/5 to-orange-500/5';
+      case 'clouds':
+        return 'bg-gradient-to-br from-gray-500/5 to-slate-500/5';
+      case 'rain':
+      case 'drizzle':
+        return 'bg-gradient-to-br from-blue-500/10 to-indigo-500/5';
+      case 'snow':
+        return 'bg-gradient-to-br from-blue-200/10 to-white/5';
+      case 'thunderstorm':
+        return 'bg-gradient-to-br from-purple-500/10 to-gray-500/5';
+      default:
+        return 'bg-gradient-to-br from-primary/5 to-muted/5';
     }
   };
 
@@ -73,7 +105,23 @@ export function WeatherOverlay({
     if (error || !data) return null;
 
     return (
-      <div className={`flex items-center gap-3 px-3 py-2 bg-card/80 backdrop-blur rounded-lg border border-border/50 ${className}`}>
+      <div className={`relative overflow-hidden flex items-center gap-3 px-3 py-2 backdrop-blur rounded-lg border border-border/50 ${getWeatherBackground(data.conditions)} ${className}`}>
+        {/* Subtle animated particles for rain/snow */}
+        {showAnimation && (data.conditions === 'Rain' || data.conditions === 'Snow') && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-20">
+            {[...Array(5)].map((_, i) => (
+              <div 
+                key={i}
+                className={`absolute w-0.5 ${data.conditions === 'Snow' ? 'h-0.5 rounded-full bg-white' : 'h-2 bg-blue-400'}`}
+                style={{
+                  left: `${20 + i * 15}%`,
+                  animation: `fall ${1.5 + i * 0.2}s linear infinite`,
+                  animationDelay: `${i * 0.3}s`
+                }}
+              />
+            ))}
+          </div>
+        )}
         {getWeatherIcon(data.conditions)}
         <span className="font-medium">{data.temp}°F</span>
         <span className="text-sm text-muted-foreground capitalize">{data.description}</span>
@@ -85,7 +133,7 @@ export function WeatherOverlay({
   }
 
   return (
-    <Card className={`bg-card/90 backdrop-blur border-border/50 ${className}`}>
+    <Card className={`relative overflow-hidden bg-card/90 backdrop-blur border-border/50 ${getWeatherBackground(data?.conditions || '')} ${className}`}>
       <CardContent className="p-4">
         {isLoading && !data ? (
           <div className="flex items-center justify-center py-4">
@@ -103,7 +151,7 @@ export function WeatherOverlay({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-primary/10">
-                  {getWeatherIcon(data.conditions)}
+                  {getWeatherIcon(data.conditions, 'lg')}
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{data.temp}°F</p>
