@@ -57,7 +57,7 @@ const PROVIDER_GUIDES: Record<string, {
       },
       {
         title: '3. Generate Access Token',
-        description: 'Click "Generate new token" button. Give it a memorable name like "A Whittle Wandering".',
+        description: 'Click "Generate new token" button. Give it a memorable name like "AWW Tracker".',
       },
       {
         title: '4. Copy Your Token',

@@ -145,7 +145,7 @@ export default function Dashboard() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-foreground">AWW Dashboard</h1>
-              <p className="text-sm text-muted-foreground">A Whittle Wandering Tracker</p>
+              <p className="text-sm text-muted-foreground">Adventure Tracker</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
