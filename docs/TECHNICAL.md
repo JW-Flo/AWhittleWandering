@@ -43,6 +43,17 @@ AWW is a multi-tenant platform for tracking EV road trips with compartmentalized
 
 ---
 
+## Platform Limits
+
+| Resource | Limit | Rationale |
+|----------|-------|-----------|
+| **Journeys per user** | 5 | Controls Cloudflare D1 provisioning costs |
+| **Media storage** | Unlimited | RLS-protected shared bucket |
+
+The journey limit is enforced in `JourneyCreationWizard.tsx` via the `MAX_JOURNEYS_PER_USER` constant (currently set to 5). Users see their current usage and are blocked from creating new journeys when at capacity.
+
+---
+
 ## Data Compartmentalization Strategy
 
 ### Why Cloudflare D1 Per Journey?
