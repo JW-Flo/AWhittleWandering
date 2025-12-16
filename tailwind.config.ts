@@ -52,34 +52,32 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Nature palette
-        nature: {
-          forest: "hsl(var(--nature-forest))",
-          "forest-light": "hsl(var(--nature-forest-light))",
-          moss: "hsl(var(--nature-moss))",
-          earth: "hsl(var(--nature-earth))",
-          bark: "hsl(var(--nature-bark))",
-          stone: "hsl(var(--nature-stone))",
+        // Ancient Forest palette
+        forest: {
+          floor: "hsl(var(--forest-floor))",
+          DEFAULT: "hsl(var(--forest))",
         },
-        // Warm tones
-        warm: {
-          amber: "hsl(var(--warm-amber))",
-          sunset: "hsl(var(--warm-sunset))",
-          gold: "hsl(var(--warm-gold))",
-          ember: "hsl(var(--warm-ember))",
+        redwood: {
+          bark: "hsl(var(--redwood-bark))",
+          deep: "hsl(var(--redwood-deep))",
         },
-        // Sky & water
-        sky: {
-          twilight: "hsl(var(--sky-twilight))",
-          dusk: "hsl(var(--sky-dusk))",
+        moss: {
+          DEFAULT: "hsl(var(--moss))",
+          bright: "hsl(var(--moss-bright))",
         },
-        water: {
-          deep: "hsl(var(--water-deep))",
-          teal: "hsl(var(--water-teal))",
-        },
+        fern: "hsl(var(--fern))",
+        lichen: "hsl(var(--lichen))",
+        // Canopy light
+        sunbeam: "hsl(var(--sunbeam))",
+        "golden-hour": "hsl(var(--golden-hour))",
+        "dappled-light": "hsl(var(--dappled-light))",
+        mist: "hsl(var(--mist))",
+        // Forest depths
+        "twilight-green": "hsl(var(--twilight-green))",
+        "ancient-teal": "hsl(var(--ancient-teal))",
+        "river-stone": "hsl(var(--river-stone))",
         // Legacy semantic colors
         road: "hsl(var(--road))",
-        forest: "hsl(var(--forest))",
         sand: "hsl(var(--sand))",
         sunset: "hsl(var(--sunset))",
         charging: "hsl(var(--charging))",
@@ -126,8 +124,8 @@ export default {
           to: { opacity: "1", transform: "translateY(0)" },
         },
         "pulse-glow": {
-          "0%, 100%": { boxShadow: "0 0 20px hsl(152 45% 35% / 0.3)" },
-          "50%": { boxShadow: "0 0 40px hsl(152 45% 35% / 0.5)" },
+          "0%, 100%": { boxShadow: "0 0 20px hsl(135 50% 32% / 0.3)" },
+          "50%": { boxShadow: "0 0 40px hsl(135 50% 32% / 0.5)" },
         },
         "story-enter": {
           from: { opacity: "0", transform: "translateY(30px) scale(0.95)" },
