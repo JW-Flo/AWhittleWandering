@@ -52,7 +52,7 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Ancient Forest palette
+        // Pacific Northwest palette
         forest: {
           floor: "hsl(var(--forest-floor))",
           DEFAULT: "hsl(var(--forest))",
@@ -67,7 +67,7 @@ export default {
         },
         fern: "hsl(var(--fern))",
         lichen: "hsl(var(--lichen))",
-        // Canopy light
+        // Mist & Light
         sunbeam: "hsl(var(--sunbeam))",
         "golden-hour": "hsl(var(--golden-hour))",
         "dappled-light": "hsl(var(--dappled-light))",
@@ -76,6 +76,9 @@ export default {
         "twilight-green": "hsl(var(--twilight-green))",
         "ancient-teal": "hsl(var(--ancient-teal))",
         "river-stone": "hsl(var(--river-stone))",
+        "rain-mist": "hsl(var(--rain-mist))",
+        "cedar-bark": "hsl(var(--cedar-bark))",
+        "lichen-gray": "hsl(var(--lichen-gray))",
         // Legacy semantic colors
         road: "hsl(var(--road))",
         sand: "hsl(var(--sand))",
@@ -87,10 +90,10 @@ export default {
         warning: "hsl(var(--warning))",
         info: "hsl(var(--info))",
         // AWW brand colors
-        "aww-gold": "hsl(38 75% 50%)",
-        "aww-amber": "hsl(42 85% 58%)",
-        "aww-forest": "hsl(145 45% 35%)",
-        "aww-moss": "hsl(140 40% 28%)",
+        "aww-teal": "hsl(170 50% 45%)",
+        "aww-moss": "hsl(130 40% 38%)",
+        "aww-mist": "hsl(170 15% 70%)",
+        "aww-forest": "hsl(160 15% 6%)",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
