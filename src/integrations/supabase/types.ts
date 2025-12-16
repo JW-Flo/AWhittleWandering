@@ -488,8 +488,11 @@ export type Database = {
       }
       journeys: {
         Row: {
+          cloudflare_d1_id: string | null
+          cloudflare_d1_name: string | null
           cover_image_url: string | null
           created_at: string
+          data_storage_type: string | null
           description: string | null
           end_date: string | null
           id: string
@@ -504,8 +507,11 @@ export type Database = {
           vehicle_id: string | null
         }
         Insert: {
+          cloudflare_d1_id?: string | null
+          cloudflare_d1_name?: string | null
           cover_image_url?: string | null
           created_at?: string
+          data_storage_type?: string | null
           description?: string | null
           end_date?: string | null
           id?: string
@@ -520,8 +526,11 @@ export type Database = {
           vehicle_id?: string | null
         }
         Update: {
+          cloudflare_d1_id?: string | null
+          cloudflare_d1_name?: string | null
           cover_image_url?: string | null
           created_at?: string
+          data_storage_type?: string | null
           description?: string | null
           end_date?: string | null
           id?: string
