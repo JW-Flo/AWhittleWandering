@@ -14,16 +14,418 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      charging_sessions: {
+        Row: {
+          charger_type: string | null
+          cost_usd: number | null
+          created_at: string
+          duration_minutes: number | null
+          end_battery_level: number | null
+          ended_at: string | null
+          energy_added_kwh: number | null
+          id: string
+          journey_id: string
+          latitude: number | null
+          location_name: string | null
+          longitude: number | null
+          max_charge_rate_kw: number | null
+          start_battery_level: number | null
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          charger_type?: string | null
+          cost_usd?: number | null
+          created_at?: string
+          duration_minutes?: number | null
+          end_battery_level?: number | null
+          ended_at?: string | null
+          energy_added_kwh?: number | null
+          id?: string
+          journey_id: string
+          latitude?: number | null
+          location_name?: string | null
+          longitude?: number | null
+          max_charge_rate_kw?: number | null
+          start_battery_level?: number | null
+          started_at: string
+          user_id: string
+        }
+        Update: {
+          charger_type?: string | null
+          cost_usd?: number | null
+          created_at?: string
+          duration_minutes?: number | null
+          end_battery_level?: number | null
+          ended_at?: string | null
+          energy_added_kwh?: number | null
+          id?: string
+          journey_id?: string
+          latitude?: number | null
+          location_name?: string | null
+          longitude?: number | null
+          max_charge_rate_kw?: number | null
+          start_battery_level?: number | null
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "charging_sessions_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drive_data: {
+        Row: {
+          battery_level: number | null
+          battery_range: number | null
+          created_at: string
+          elevation_ft: number | null
+          energy_used_kwh: number | null
+          heading: number | null
+          id: string
+          inside_temp_f: number | null
+          is_charging: boolean | null
+          journey_id: string
+          latitude: number
+          longitude: number
+          odometer: number | null
+          outside_temp_f: number | null
+          power_kw: number | null
+          recorded_at: string
+          speed_mph: number | null
+          user_id: string
+        }
+        Insert: {
+          battery_level?: number | null
+          battery_range?: number | null
+          created_at?: string
+          elevation_ft?: number | null
+          energy_used_kwh?: number | null
+          heading?: number | null
+          id?: string
+          inside_temp_f?: number | null
+          is_charging?: boolean | null
+          journey_id: string
+          latitude: number
+          longitude: number
+          odometer?: number | null
+          outside_temp_f?: number | null
+          power_kw?: number | null
+          recorded_at: string
+          speed_mph?: number | null
+          user_id: string
+        }
+        Update: {
+          battery_level?: number | null
+          battery_range?: number | null
+          created_at?: string
+          elevation_ft?: number | null
+          energy_used_kwh?: number | null
+          heading?: number | null
+          id?: string
+          inside_temp_f?: number | null
+          is_charging?: boolean | null
+          journey_id?: string
+          latitude?: number
+          longitude?: number
+          odometer?: number | null
+          outside_temp_f?: number | null
+          power_kw?: number | null
+          recorded_at?: string
+          speed_mph?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drive_data_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_entries: {
+        Row: {
+          content: string | null
+          created_at: string
+          entry_date: string
+          id: string
+          is_highlight: boolean | null
+          journey_id: string
+          latitude: number | null
+          location_name: string | null
+          longitude: number | null
+          mood: string | null
+          people_met: string[] | null
+          photo_urls: string[] | null
+          state_code: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          entry_date: string
+          id?: string
+          is_highlight?: boolean | null
+          journey_id: string
+          latitude?: number | null
+          location_name?: string | null
+          longitude?: number | null
+          mood?: string | null
+          people_met?: string[] | null
+          photo_urls?: string[] | null
+          state_code?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          entry_date?: string
+          id?: string
+          is_highlight?: boolean | null
+          journey_id?: string
+          latitude?: number | null
+          location_name?: string | null
+          longitude?: number | null
+          mood?: string | null
+          people_met?: string[] | null
+          photo_urls?: string[] | null
+          state_code?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entries_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journeys: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          end_date: string | null
+          id: string
+          is_public: boolean | null
+          name: string
+          start_date: string
+          states_count: number | null
+          total_kwh: number | null
+          total_miles: number | null
+          updated_at: string
+          user_id: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          start_date: string
+          states_count?: number | null
+          total_kwh?: number | null
+          total_miles?: number | null
+          updated_at?: string
+          user_id: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          start_date?: string
+          states_count?: number | null
+          total_kwh?: number | null
+          total_miles?: number | null
+          updated_at?: string
+          user_id?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journeys_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      states_visited: {
+        Row: {
+          created_at: string
+          first_entered_at: string | null
+          id: string
+          is_gps_verified: boolean | null
+          journey_id: string
+          notes: string | null
+          state_code: string
+          state_name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          first_entered_at?: string | null
+          id?: string
+          is_gps_verified?: boolean | null
+          journey_id: string
+          notes?: string | null
+          state_code: string
+          state_name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          first_entered_at?: string | null
+          id?: string
+          is_gps_verified?: boolean | null
+          journey_id?: string
+          notes?: string | null
+          state_code?: string
+          state_name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "states_visited_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vehicles: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          model: string | null
+          nickname: string
+          tessie_vehicle_id: string | null
+          updated_at: string
+          user_id: string
+          vin: string | null
+          year: number | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          model?: string | null
+          nickname: string
+          tessie_vehicle_id?: string | null
+          updated_at?: string
+          user_id: string
+          vin?: string | null
+          year?: number | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          model?: string | null
+          nickname?: string
+          tessie_vehicle_id?: string | null
+          updated_at?: string
+          user_id?: string
+          vin?: string | null
+          year?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user" | "premium"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +552,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user", "premium"],
+    },
   },
 } as const
