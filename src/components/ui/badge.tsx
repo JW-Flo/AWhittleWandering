@@ -8,10 +8,14 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
-        secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
-        outline: "text-foreground",
+        default: "border-transparent bg-primary text-primary-foreground hover:bg-primary/90",
+        secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/90",
+        destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline: "text-foreground border-border hover:bg-secondary/50",
+        // Status badges with proper contrast on hover
+        success: "border-transparent bg-adventure-green/20 text-adventure-green hover:bg-adventure-green/30",
+        warning: "border-transparent bg-adventure-gold/20 text-adventure-gold hover:bg-adventure-gold/30",
+        info: "border-transparent bg-tesla-blue/20 text-tesla-blue hover:bg-tesla-blue/30",
       },
     },
     defaultVariants: {
