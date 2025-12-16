@@ -8,22 +8,22 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Ancient Forest - Redwoods & Hoh Rainforest inspired */
-    --background: 150 20% 5%;
-    --foreground: 40 25% 92%;
+    /* Evergreen Forest - warmer, more varied palette */
+    --background: 180 8% 7%;
+    --foreground: 45 30% 93%;
 
-    --card: 150 15% 9%;
-    --card-foreground: 40 25% 92%;
+    --card: 170 10% 11%;
+    --card-foreground: 45 30% 93%;
 
-    --popover: 150 15% 9%;
-    --popover-foreground: 40 25% 92%;
+    --popover: 170 10% 11%;
+    --popover-foreground: 45 30% 93%;
 
-    /* Deep moss green primary - like light filtering through ferns */
-    --primary: 135 50% 32%;
-    --primary-foreground: 40 25% 95%;
+    /* Rich evergreen primary */
+    --primary: 145 40% 38%;
+    --primary-foreground: 45 30% 95%;
 
-    --secondary: 150 12% 12%;
-    --secondary-foreground: 40 20% 88%;
+    --secondary: 170 8% 14%;
+    --secondary-foreground: 45 25% 88%;
 
     --muted: 150 10% 15%;
     --muted-foreground: 40 12% 50%;
