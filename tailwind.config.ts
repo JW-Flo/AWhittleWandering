@@ -82,6 +82,13 @@ export default {
         sunset: "hsl(var(--sunset))",
         charging: "hsl(var(--charging))",
         driving: "hsl(var(--driving))",
+        // Tesla/Adventure colors
+        "tesla-blue": "hsl(200 80% 50%)",
+        "adventure-green": "hsl(145 50% 40%)",
+        "adventure-gold": "hsl(45 85% 55%)",
+        "adventure-orange": "hsl(30 85% 55%)",
+        "adventure-red": "hsl(0 70% 50%)",
+        "adventure-purple": "hsl(270 50% 55%)",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
