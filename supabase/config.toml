@@ -29,3 +29,6 @@ verify_jwt = true
 
 [functions.get-mapbox-token]
 verify_jwt = false
+
+[functions.csv-import]
+verify_jwt = true

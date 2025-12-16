@@ -6,10 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import StatCard from '@/components/StatCard';
-import JourneyMap from '@/components/JourneyMap';
+import ImmersiveJourneyMap from '@/components/ImmersiveJourneyMap';
 import AdvancedAnalyticsDashboard from '@/components/AdvancedAnalyticsDashboard';
 import JourneyTimeline from '@/components/JourneyTimeline';
 import MediaGallery from '@/components/MediaGallery';
+import LiveVehicleStatus from '@/components/LiveVehicleStatus';
+import StatesProgressMap from '@/components/StatesProgressMap';
+import CSVImport from '@/components/CSVImport';
+import { useTessieData } from '@/hooks/useTessieData';
 import { 
   MapPin, 
   Zap, 
@@ -22,7 +26,9 @@ import {
   Car,
   BarChart3,
   Image,
-  Map
+  Map,
+  Database,
+  Activity
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -54,6 +60,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [mapboxToken, setMapboxToken] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
+  const [driveDataCount, setDriveDataCount] = useState(0);
+  
+  const { vehicleState } = useTessieData(true, 60000);
 
   useEffect(() => {
     if (!user) {
@@ -67,13 +76,15 @@ export default function Dashboard() {
 
   const fetchData = async () => {
     try {
-      const [journeysRes, vehiclesRes] = await Promise.all([
+      const [journeysRes, vehiclesRes, driveDataRes] = await Promise.all([
         supabase.from('journeys').select('*').order('start_date', { ascending: false }),
         supabase.from('vehicles').select('*'),
+        supabase.from('drive_data').select('id', { count: 'exact', head: true }),
       ]);
 
       if (journeysRes.data) setJourneys(journeysRes.data);
       if (vehiclesRes.data) setVehicles(vehiclesRes.data);
+      if (driveDataRes.count !== null) setDriveDataCount(driveDataRes.count);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -100,8 +111,11 @@ export default function Dashboard() {
 
   const totalMiles = journeys.reduce((sum, j) => sum + Number(j.total_miles), 0);
   const totalKwh = journeys.reduce((sum, j) => sum + Number(j.total_kwh), 0);
-  const totalStates = journeys.length > 0 ? journeys[0]?.states_count || 48 : 0;
+  const totalStates = journeys.length > 0 ? journeys[0]?.states_count || 48 : 48;
   const efficiency = totalMiles > 0 ? Math.round((totalKwh / totalMiles) * 1000) : 436;
+
+  // Get current journey for CSV import
+  const currentJourney = journeys[0];
 
   if (loading) {
     return (
@@ -129,6 +143,8 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            {/* Compact Live Status */}
+            <LiveVehicleStatus compact className="hidden lg:flex" />
             <Button variant="outline" onClick={() => navigate('/journey/new')} className="border-border">
               <Plus className="w-4 h-4 mr-2" />
               New Journey
@@ -174,19 +190,23 @@ export default function Dashboard() {
             icon={MapPin}
           />
           <StatCard
-            title="Journeys"
-            value={journeys.length > 0 ? journeys.length : 1}
-            subtitle={`${vehicles.length || 1} vehicle${vehicles.length !== 1 ? 's' : ''}`}
-            icon={Car}
+            title="GPS Points"
+            value={driveDataCount > 0 ? driveDataCount.toLocaleString() : '85,000+'}
+            subtitle="Telemetry records"
+            icon={Activity}
           />
         </section>
 
         {/* Main Dashboard Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 bg-secondary">
+          <TabsList className="grid w-full grid-cols-6 bg-secondary">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Map className="w-4 h-4" />
               <span className="hidden md:inline">Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="live" className="flex items-center gap-2">
+              <Activity className="w-4 h-4" />
+              <span className="hidden md:inline">Live</span>
             </TabsTrigger>
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
@@ -200,9 +220,9 @@ export default function Dashboard() {
               <Image className="w-4 h-4" />
               <span className="hidden md:inline">Media</span>
             </TabsTrigger>
-            <TabsTrigger value="journeys" className="flex items-center gap-2">
-              <Car className="w-4 h-4" />
-              <span className="hidden md:inline">Journeys</span>
+            <TabsTrigger value="data" className="flex items-center gap-2">
+              <Database className="w-4 h-4" />
+              <span className="hidden md:inline">Data</span>
             </TabsTrigger>
           </TabsList>
 
@@ -211,16 +231,19 @@ export default function Dashboard() {
             {/* Map Section */}
             <Card className="card-tesla overflow-hidden">
               <CardHeader>
-                <CardTitle className="text-gradient-primary">Your Journey Map</CardTitle>
-                <CardDescription>All your Tesla adventures visualized</CardDescription>
+                <CardTitle className="text-gradient-primary">48-State Journey Map</CardTitle>
+                <CardDescription>Interactive exploration of your complete route</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                <JourneyMap 
+                <ImmersiveJourneyMap 
                   className="h-[500px]"
                   mapboxToken={mapboxToken}
                 />
               </CardContent>
             </Card>
+
+            {/* States Progress */}
+            <StatesProgressMap animate={true} showDetails={true} />
 
             {/* Quick Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -262,6 +285,66 @@ export default function Dashboard() {
             </div>
           </TabsContent>
 
+          {/* Live Tab - Real-time vehicle data */}
+          <TabsContent value="live" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <LiveVehicleStatus />
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-primary" />
+                    Real-Time Tracking
+                  </CardTitle>
+                  <CardDescription>
+                    Live data from your Tesla via Tessie API
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <h4 className="font-medium mb-2">How it works</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• Tessie polls your vehicle every 30 seconds</li>
+                      <li>• Battery, location, and temperature data are updated live</li>
+                      <li>• Drive and charge sessions are automatically logged</li>
+                      <li>• Historical data is available for analysis</li>
+                    </ul>
+                  </div>
+                  
+                  {vehicleState && (
+                    <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                      <p className="text-sm font-medium text-primary mb-1">Current Status</p>
+                      <p className="text-2xl font-bold">
+                        {vehicleState.batteryLevel}% Battery
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        ~{Math.round(vehicleState.batteryRange)} mi range remaining
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Live Map with current location */}
+            {vehicleState && mapboxToken && (
+              <Card className="overflow-hidden">
+                <CardHeader>
+                  <CardTitle>Live Location</CardTitle>
+                  <CardDescription>
+                    {vehicleState.latitude.toFixed(4)}, {vehicleState.longitude.toFixed(4)}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-0 h-[400px]">
+                  <ImmersiveJourneyMap 
+                    className="h-full"
+                    mapboxToken={mapboxToken}
+                  />
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
           {/* Analytics Tab */}
           <TabsContent value="analytics">
             <AdvancedAnalyticsDashboard />
@@ -269,7 +352,11 @@ export default function Dashboard() {
 
           {/* Timeline Tab */}
           <TabsContent value="timeline">
-            <JourneyTimeline />
+            <JourneyTimeline 
+              currentLocation={vehicleState ? { lat: vehicleState.latitude, lng: vehicleState.longitude } : null}
+              batteryLevel={vehicleState?.batteryLevel}
+              isCharging={vehicleState?.isCharging}
+            />
           </TabsContent>
 
           {/* Media Tab */}
@@ -277,76 +364,121 @@ export default function Dashboard() {
             <MediaGallery />
           </TabsContent>
 
-          {/* Journeys Tab */}
-          <TabsContent value="journeys" className="space-y-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-foreground">Your Journeys</h3>
-              <Button onClick={() => navigate('/journey/new')}>
-                <Plus className="w-4 h-4 mr-2" />
-                New Journey
-              </Button>
-            </div>
+          {/* Data Import Tab */}
+          <TabsContent value="data" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* CSV Import */}
+              {currentJourney ? (
+                <CSVImport 
+                  journeyId={currentJourney.id}
+                  onImportComplete={(count) => {
+                    setDriveDataCount(prev => prev + count);
+                    toast({
+                      title: 'Import Complete',
+                      description: `Added ${count.toLocaleString()} GPS points to your journey`
+                    });
+                  }}
+                />
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Import GPS Data</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground mb-4">
+                      Create a journey first to import GPS data.
+                    </p>
+                    <Button onClick={() => navigate('/journey/new')}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Journey
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
 
-            {journeys.length === 0 ? (
-              <Card className="card-tesla">
-                <CardContent className="py-12 text-center">
-                  <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2 text-foreground">No journeys yet</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Start tracking your Tesla adventures by creating your first journey.
-                  </p>
-                  <Button onClick={() => navigate('/journey/new')}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create First Journey
-                  </Button>
+              {/* Data Stats */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Database className="w-5 h-5 text-primary" />
+                    Data Overview
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-muted/50 rounded-lg text-center">
+                      <p className="text-3xl font-bold text-primary">
+                        {driveDataCount.toLocaleString()}
+                      </p>
+                      <p className="text-sm text-muted-foreground">GPS Points</p>
+                    </div>
+                    <div className="p-4 bg-muted/50 rounded-lg text-center">
+                      <p className="text-3xl font-bold text-primary">
+                        {journeys.length}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Journeys</p>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <h4 className="font-medium mb-2">Supported Formats</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• TeslaFi CSV exports</li>
+                      <li>• TeslaMate exports</li>
+                      <li>• Custom GPS CSV (lat, lng, timestamp)</li>
+                    </ul>
+                  </div>
+
+                  <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                    <p className="text-sm">
+                      <strong>Pro tip:</strong> Export weekly data from TeslaFi for best results. 
+                      Large files are processed in batches automatically.
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {journeys.map((journey) => (
-                  <Card 
-                    key={journey.id} 
-                    className="card-tesla cursor-pointer group"
-                    onClick={() => navigate(`/journey/${journey.id}`)}
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div>
-                          <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                            {journey.name}
-                          </h4>
-                          <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                            <Calendar className="w-3 h-3" />
+            </div>
+
+            {/* Journeys List */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Journeys</CardTitle>
+                <CardDescription>Select a journey to import data into</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {journeys.length === 0 ? (
+                  <div className="text-center py-8">
+                    <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-4">No journeys yet</p>
+                    <Button onClick={() => navigate('/journey/new')}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create First Journey
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {journeys.map((journey) => (
+                      <Card 
+                        key={journey.id} 
+                        className="cursor-pointer hover:border-primary transition-colors"
+                        onClick={() => navigate(`/journey/${journey.id}`)}
+                      >
+                        <CardContent className="p-4">
+                          <h4 className="font-semibold">{journey.name}</h4>
+                          <p className="text-sm text-muted-foreground">
                             {new Date(journey.start_date).toLocaleDateString()}
-                            {journey.end_date && ` - ${new Date(journey.end_date).toLocaleDateString()}`}
                           </p>
-                        </div>
-                        {journey.is_public && (
-                          <span className="text-xs bg-adventure-green/20 text-adventure-green px-2 py-1 rounded-full">
-                            Public
-                          </span>
-                        )}
-                      </div>
-                      
-                      <div className="grid grid-cols-3 gap-4 text-center">
-                        <div>
-                          <p className="text-lg font-bold text-foreground">{Number(journey.total_miles).toLocaleString()}</p>
-                          <p className="text-xs text-muted-foreground">miles</p>
-                        </div>
-                        <div>
-                          <p className="text-lg font-bold text-foreground">{journey.states_count}</p>
-                          <p className="text-xs text-muted-foreground">states</p>
-                        </div>
-                        <div>
-                          <p className="text-lg font-bold text-foreground">{Number(journey.total_kwh).toLocaleString()}</p>
-                          <p className="text-xs text-muted-foreground">kWh</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+                          <div className="flex gap-4 mt-2 text-xs">
+                            <span>{Number(journey.total_miles).toLocaleString()} mi</span>
+                            <span>{journey.states_count} states</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>
