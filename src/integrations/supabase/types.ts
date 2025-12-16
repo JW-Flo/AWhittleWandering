@@ -215,6 +215,86 @@ export type Database = {
           },
         ]
       }
+      journey_media: {
+        Row: {
+          caption: string | null
+          created_at: string
+          file_path: string
+          file_size_bytes: number | null
+          file_url: string
+          height: number | null
+          id: string
+          is_favorite: boolean | null
+          journey_id: string
+          latitude: number | null
+          location_name: string | null
+          longitude: number | null
+          people_tagged: string[] | null
+          state_code: string | null
+          tags: string[] | null
+          taken_at: string | null
+          thumbnail_url: string | null
+          type: string
+          updated_at: string
+          user_id: string
+          width: number | null
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          file_path: string
+          file_size_bytes?: number | null
+          file_url: string
+          height?: number | null
+          id?: string
+          is_favorite?: boolean | null
+          journey_id: string
+          latitude?: number | null
+          location_name?: string | null
+          longitude?: number | null
+          people_tagged?: string[] | null
+          state_code?: string | null
+          tags?: string[] | null
+          taken_at?: string | null
+          thumbnail_url?: string | null
+          type?: string
+          updated_at?: string
+          user_id: string
+          width?: number | null
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          file_path?: string
+          file_size_bytes?: number | null
+          file_url?: string
+          height?: number | null
+          id?: string
+          is_favorite?: boolean | null
+          journey_id?: string
+          latitude?: number | null
+          location_name?: string | null
+          longitude?: number | null
+          people_tagged?: string[] | null
+          state_code?: string | null
+          tags?: string[] | null
+          taken_at?: string | null
+          thumbnail_url?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_media_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       journeys: {
         Row: {
           cover_image_url: string | null

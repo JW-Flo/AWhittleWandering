@@ -13,6 +13,7 @@ import MediaGallery from '@/components/MediaGallery';
 import LiveVehicleStatus from '@/components/LiveVehicleStatus';
 import StatesProgressMap from '@/components/StatesProgressMap';
 import CSVImport from '@/components/CSVImport';
+import PhotoUpload from '@/components/PhotoUpload';
 import { useTessieData } from '@/hooks/useTessieData';
 import { 
   MapPin, 
@@ -360,8 +361,25 @@ export default function Dashboard() {
           </TabsContent>
 
           {/* Media Tab */}
-          <TabsContent value="media">
-            <MediaGallery />
+          <TabsContent value="media" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <MediaGallery />
+              </div>
+              <div>
+                {currentJourney && (
+                  <PhotoUpload 
+                    journeyId={currentJourney.id}
+                    onUploadComplete={() => {
+                      toast({
+                        title: 'Photos Uploaded',
+                        description: 'Your media has been saved and synced'
+                      });
+                    }}
+                  />
+                )}
+              </div>
+            </div>
           </TabsContent>
 
           {/* Data Import Tab */}

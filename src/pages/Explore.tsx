@@ -1,32 +1,51 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import RoutePlayback from '@/components/RoutePlayback';
 import LocationMediaGallery from '@/components/LocationMediaGallery';
 import JourneyTimeline from '@/components/JourneyTimeline';
+import PhotoUpload from '@/components/PhotoUpload';
+import LiveVehicleStatus from '@/components/LiveVehicleStatus';
 import { JourneyWaypoint } from '@/data/journeyRoute';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Map, Image, Calendar, Zap } from 'lucide-react';
+import { Map, Image, Calendar, Zap, Activity, Upload } from 'lucide-react';
 
 export default function Explore() {
+  const { user } = useAuth();
   const [mapboxToken, setMapboxToken] = useState<string>('');
   const [currentWaypoint, setCurrentWaypoint] = useState<JourneyWaypoint | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [journeyId, setJourneyId] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchMapboxToken() {
+    async function fetchData() {
       try {
-        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-        if (error) throw error;
-        setMapboxToken(data.token);
+        // Fetch Mapbox token
+        const { data: tokenData, error: tokenError } = await supabase.functions.invoke('get-mapbox-token');
+        if (tokenError) throw tokenError;
+        setMapboxToken(tokenData.token);
+
+        // Fetch first journey for photo uploads
+        if (user) {
+          const { data: journeys } = await supabase
+            .from('journeys')
+            .select('id')
+            .order('start_date', { ascending: false })
+            .limit(1);
+          
+          if (journeys && journeys.length > 0) {
+            setJourneyId(journeys[0].id);
+          }
+        }
       } catch (err) {
-        console.error('Error fetching Mapbox token:', err);
+        console.error('Error fetching data:', err);
       } finally {
         setIsLoading(false);
       }
     }
-    fetchMapboxToken();
-  }, []);
+    fetchData();
+  }, [user]);
 
   const handleWaypointChange = (waypoint: JourneyWaypoint, index: number) => {
     setCurrentWaypoint(waypoint);
@@ -79,10 +98,14 @@ export default function Explore() {
           {/* Sidebar - Takes 1/3 on large screens */}
           <div className="space-y-6">
             <Tabs defaultValue="media" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="media" className="flex items-center gap-1.5">
                   <Image className="w-4 h-4" />
                   <span className="hidden sm:inline">Media</span>
+                </TabsTrigger>
+                <TabsTrigger value="live" className="flex items-center gap-1.5">
+                  <Activity className="w-4 h-4" />
+                  <span className="hidden sm:inline">Live</span>
                 </TabsTrigger>
                 <TabsTrigger value="timeline" className="flex items-center gap-1.5">
                   <Calendar className="w-4 h-4" />
@@ -94,11 +117,21 @@ export default function Explore() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="media" className="mt-4">
+              <TabsContent value="media" className="mt-4 space-y-4">
                 <LocationMediaGallery
                   currentWaypoint={currentWaypoint}
                   currentIndex={currentIndex}
                 />
+                {journeyId && (
+                  <PhotoUpload
+                    journeyId={journeyId}
+                    currentWaypoint={currentWaypoint}
+                  />
+                )}
+              </TabsContent>
+
+              <TabsContent value="live" className="mt-4">
+                <LiveVehicleStatus />
               </TabsContent>
 
               <TabsContent value="timeline" className="mt-4">
