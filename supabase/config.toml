@@ -26,6 +26,9 @@ enable_signup = true
 enable_confirmations = false
 double_confirm_changes = false
 
+[functions.archive-cleanup]
+verify_jwt = false
+
 [functions.csv-import]
 verify_jwt = true
 
@@ -47,6 +50,9 @@ verify_jwt = true
 [functions.route-navigator]
 verify_jwt = true
 
+[functions.send-archive-reminder]
+verify_jwt = false
+
 [functions.send-email-digest]
 verify_jwt = true
 
@@ -66,7 +72,4 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.weather]
-verify_jwt = true
-
-[functions.tessie-sync]
 verify_jwt = true
