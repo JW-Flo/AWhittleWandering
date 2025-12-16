@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_providers: {
+        Row: {
+          auth_type: string
+          created_at: string
+          description: string | null
+          display_name: string
+          id: string
+          is_active: boolean | null
+          name: string
+          setup_url: string | null
+          supported_makes: string[]
+        }
+        Insert: {
+          auth_type?: string
+          created_at?: string
+          description?: string | null
+          display_name: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          setup_url?: string | null
+          supported_makes?: string[]
+        }
+        Update: {
+          auth_type?: string
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          setup_url?: string | null
+          supported_makes?: string[]
+        }
+        Relationships: []
+      }
       charging_sessions: {
         Row: {
           charger_type: string | null
@@ -361,6 +397,7 @@ export type Database = {
           created_at: string
           email: string | null
           full_name: string | null
+          has_viewed_flagship: boolean | null
           id: string
           updated_at: string
           user_id: string
@@ -371,6 +408,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           full_name?: string | null
+          has_viewed_flagship?: boolean | null
           id?: string
           updated_at?: string
           user_id: string
@@ -381,6 +419,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           full_name?: string | null
+          has_viewed_flagship?: boolean | null
           id?: string
           updated_at?: string
           user_id?: string
@@ -431,6 +470,50 @@ export type Database = {
           },
         ]
       }
+      user_api_credentials: {
+        Row: {
+          created_at: string
+          encrypted_token: string
+          error_message: string | null
+          id: string
+          is_valid: boolean | null
+          last_verified_at: string | null
+          provider_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          encrypted_token: string
+          error_message?: string | null
+          id?: string
+          is_valid?: boolean | null
+          last_verified_at?: string | null
+          provider_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          encrypted_token?: string
+          error_message?: string | null
+          id?: string
+          is_valid?: boolean | null
+          last_verified_at?: string | null
+          provider_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_api_credentials_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "api_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -452,11 +535,38 @@ export type Database = {
         }
         Relationships: []
       }
+      vehicle_makes: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
       vehicles: {
         Row: {
+          api_credential_id: string | null
+          api_provider_id: string | null
           color: string | null
           created_at: string
           id: string
+          make: string | null
           model: string | null
           nickname: string
           tessie_vehicle_id: string | null
@@ -466,9 +576,12 @@ export type Database = {
           year: number | null
         }
         Insert: {
+          api_credential_id?: string | null
+          api_provider_id?: string | null
           color?: string | null
           created_at?: string
           id?: string
+          make?: string | null
           model?: string | null
           nickname: string
           tessie_vehicle_id?: string | null
@@ -478,9 +591,12 @@ export type Database = {
           year?: number | null
         }
         Update: {
+          api_credential_id?: string | null
+          api_provider_id?: string | null
           color?: string | null
           created_at?: string
           id?: string
+          make?: string | null
           model?: string | null
           nickname?: string
           tessie_vehicle_id?: string | null
@@ -489,7 +605,22 @@ export type Database = {
           vin?: string | null
           year?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_api_credential_id_fkey"
+            columns: ["api_credential_id"]
+            isOneToOne: false
+            referencedRelation: "user_api_credentials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_api_provider_id_fkey"
+            columns: ["api_provider_id"]
+            isOneToOne: false
+            referencedRelation: "api_providers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

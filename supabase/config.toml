@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.csv-import]
 verify_jwt = true
+
+[functions.vehicle-api]
+verify_jwt = true
