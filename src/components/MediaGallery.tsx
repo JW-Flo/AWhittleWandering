@@ -260,7 +260,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
 
         <div className="absolute flex gap-1 top-2 right-2">
           {mediaItem.isFavorite && (
-            <Badge className="text-xs text-adventure-gold bg-adventure-gold/20 border-0">
+            <Badge className="text-xs text-primary bg-primary/20 border-0">
               <Star className="w-3 h-3 fill-current" />
             </Badge>
           )}
@@ -273,7 +273,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
               handleToggleFavorite(mediaItem.id);
             }}
           >
-            <Star className={`w-3 h-3 ${mediaItem.isFavorite ? 'fill-current text-adventure-gold' : ''}`} />
+            <Star className={`w-3 h-3 ${mediaItem.isFavorite ? 'fill-current text-primary' : ''}`} />
           </Button>
         </div>
       </div>
@@ -469,25 +469,25 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
         <CardContent className="p-4">
           <div className="grid grid-cols-2 gap-4 text-center md:grid-cols-4">
             <div>
-              <div className="text-2xl font-bold text-adventure-orange">
+              <div className="text-2xl font-bold text-primary">
                 {media.filter(m => m.type === 'photo').length}
               </div>
               <div className="text-sm text-muted-foreground">Photos</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-tesla-blue">
+              <div className="text-2xl font-bold text-info">
                 {media.filter(m => m.type === 'video').length}
               </div>
               <div className="text-sm text-muted-foreground">Videos</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-adventure-green">
+              <div className="text-2xl font-bold text-success">
                 {getUniqueStates().length}
               </div>
               <div className="text-sm text-muted-foreground">States</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-adventure-purple">
+              <div className="text-2xl font-bold text-accent">
                 {Math.round(media.reduce((sum, item) => sum + item.fileSize, 0) / 1024 / 1024)}
               </div>
               <div className="text-sm text-muted-foreground">MB Total</div>
