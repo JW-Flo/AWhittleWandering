@@ -280,8 +280,8 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="card-tesla">
                 <CardContent className="p-6 flex items-center gap-4">
-                  <div className="p-3 rounded-lg bg-tesla-blue/10">
-                    <TrendingUp className="w-6 h-6 text-tesla-blue" />
+                  <div className="p-3 rounded-lg bg-primary/10">
+                    <TrendingUp className="w-6 h-6 text-primary" />
                   </div>
                   <div>
                     <h4 className="font-semibold text-foreground">259 Charging Sessions</h4>
@@ -292,8 +292,8 @@ export default function Dashboard() {
 
               <Card className="card-tesla">
                 <CardContent className="p-6 flex items-center gap-4">
-                  <div className="p-3 rounded-lg bg-adventure-green/10">
-                    <Battery className="w-6 h-6 text-adventure-green" />
+                  <div className="p-3 rounded-lg bg-success/10">
+                    <Battery className="w-6 h-6 text-success" />
                   </div>
                   <div>
                     <h4 className="font-semibold text-foreground">2.29 mi/kWh</h4>
@@ -304,8 +304,8 @@ export default function Dashboard() {
 
               <Card className="card-tesla">
                 <CardContent className="p-6 flex items-center gap-4">
-                  <div className="p-3 rounded-lg bg-adventure-orange/10">
-                    <Calendar className="w-6 h-6 text-adventure-orange" />
+                  <div className="p-3 rounded-lg bg-warning/10">
+                    <Calendar className="w-6 h-6 text-warning" />
                   </div>
                   <div>
                     <h4 className="font-semibold text-foreground">89 Days</h4>

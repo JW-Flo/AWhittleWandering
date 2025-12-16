@@ -82,13 +82,15 @@ export default {
         sunset: "hsl(var(--sunset))",
         charging: "hsl(var(--charging))",
         driving: "hsl(var(--driving))",
-        // Tesla/Adventure colors
-        "tesla-blue": "hsl(200 80% 50%)",
-        "adventure-green": "hsl(145 50% 40%)",
-        "adventure-gold": "hsl(45 85% 55%)",
-        "adventure-orange": "hsl(30 85% 55%)",
-        "adventure-red": "hsl(0 70% 50%)",
-        "adventure-purple": "hsl(270 50% 55%)",
+        // Status colors
+        success: "hsl(var(--success))",
+        warning: "hsl(var(--warning))",
+        info: "hsl(var(--info))",
+        // AWW brand colors
+        "aww-gold": "hsl(38 75% 50%)",
+        "aww-amber": "hsl(42 85% 58%)",
+        "aww-forest": "hsl(145 45% 35%)",
+        "aww-moss": "hsl(140 40% 28%)",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
