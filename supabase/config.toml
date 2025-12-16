@@ -68,6 +68,9 @@ verify_jwt = false
 [functions.tessie-cloudflare-sync]
 verify_jwt = false
 
+[functions.track-view]
+verify_jwt = false
+
 [functions.vehicle-api]
 verify_jwt = true
 
