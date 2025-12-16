@@ -8,199 +8,793 @@ export interface JourneyWaypoint {
   date: string;
   state: string;
   type: 'start' | 'stop' | 'highlight' | 'charging' | 'waypoint';
-  description?: string;
+  description: string;
+  miles?: number; // Miles from previous stop
+  elevation?: number; // Elevation in feet
 }
 
 // Key waypoints from the journey with actual GPS coordinates
 export const journeyWaypoints: JourneyWaypoint[] = [
-  // Texas Start
-  { lat: 27.741570, lng: -97.388860, name: "Corpus Christi", date: "Jun 3", state: "TX", type: "start", description: "Journey begins" },
-  { lat: 27.792582, lng: -97.393616, name: "Downtown Corpus Christi", date: "Jun 3", state: "TX", type: "waypoint" },
-  { lat: 28.430847, lng: -97.740300, name: "Beeville", date: "Jun 6", state: "TX", type: "charging" },
-  { lat: 28.811335, lng: -97.856940, name: "Kenedy", date: "Jun 6", state: "TX", type: "waypoint" },
-  { lat: 30.256390, lng: -97.796510, name: "Austin", date: "Jun 6", state: "TX", type: "highlight", description: "Texas capital" },
-  { lat: 30.195950, lng: -97.998085, name: "Dripping Springs", date: "Jun 6", state: "TX", type: "waypoint" },
-  { lat: 30.195574, lng: -98.333610, name: "Johnson City", date: "Jun 6", state: "TX", type: "waypoint" },
-  { lat: 30.509314, lng: -99.774650, name: "Junction", date: "Jun 6", state: "TX", type: "charging" },
-  { lat: 30.706587, lng: -101.202540, name: "Ozona", date: "Jun 6", state: "TX", type: "waypoint" },
-  { lat: 30.881956, lng: -102.301636, name: "Fort Stockton", date: "Jun 7", state: "TX", type: "charging", description: "West Texas overnight" },
-  
-  // New Mexico
-  { lat: 32.346810, lng: -106.764740, name: "Las Cruces", date: "Jun 7", state: "NM", type: "highlight", description: "New Mexico entry" },
-  
-  // Arizona
-  { lat: 32.221740, lng: -110.926480, name: "Tucson", date: "Jun 8", state: "AZ", type: "highlight", description: "Arizona desert" },
-  { lat: 33.448376, lng: -112.074036, name: "Phoenix", date: "Jun 9", state: "AZ", type: "highlight" },
-  
-  // California - LA Area
-  { lat: 33.769150, lng: -118.185440, name: "Long Beach", date: "Jun 15", state: "CA", type: "waypoint" },
-  { lat: 34.081276, lng: -118.372505, name: "West Hollywood", date: "Jun 13-16", state: "CA", type: "highlight", description: "LA base camp" },
-  { lat: 34.101498, lng: -118.334206, name: "Hollywood Boulevard", date: "Jun 14", state: "CA", type: "highlight" },
-  { lat: 34.161324, lng: -118.309690, name: "Burbank", date: "Jun 14", state: "CA", type: "waypoint" },
-  { lat: 34.014736, lng: -118.493730, name: "Santa Monica", date: "Jun 15", state: "CA", type: "highlight", description: "Pacific Ocean" },
-  { lat: 34.123160, lng: -118.299500, name: "Griffith Observatory", date: "Jun 15", state: "CA", type: "highlight" },
-  
-  // California Coast North
-  { lat: 36.974117, lng: -122.030796, name: "Santa Cruz", date: "Jun 17", state: "CA", type: "waypoint" },
-  { lat: 37.774929, lng: -122.419418, name: "San Francisco", date: "Jun 18", state: "CA", type: "highlight", description: "Golden Gate" },
-  
-  // Oregon
-  { lat: 42.326520, lng: -122.875690, name: "Medford", date: "Jun 19", state: "OR", type: "waypoint" },
-  { lat: 44.052071, lng: -123.086754, name: "Eugene", date: "Jun 20", state: "OR", type: "highlight" },
-  { lat: 45.512230, lng: -122.658722, name: "Portland", date: "Jun 21", state: "OR", type: "highlight", description: "Rose City" },
-  
-  // Washington
-  { lat: 47.606209, lng: -122.332069, name: "Seattle", date: "Jun 22", state: "WA", type: "highlight", description: "Pacific Northwest" },
-  { lat: 48.145687, lng: -123.140240, name: "Port Angeles", date: "Jun 23", state: "WA", type: "highlight", description: "Olympic Peninsula" },
-  
-  // Idaho
-  { lat: 43.615017, lng: -116.202316, name: "Boise", date: "Jun 25", state: "ID", type: "highlight" },
-  
-  // Montana
-  { lat: 46.871870, lng: -113.993040, name: "Missoula", date: "Jun 27", state: "MT", type: "highlight", description: "Big Sky Country" },
-  { lat: 45.676998, lng: -111.042930, name: "Bozeman", date: "Jun 28", state: "MT", type: "waypoint" },
-  
-  // Wyoming
-  { lat: 44.427963, lng: -110.588455, name: "Yellowstone", date: "Jun 29", state: "WY", type: "highlight", description: "National Park" },
-  { lat: 43.479946, lng: -110.762478, name: "Jackson Hole", date: "Jun 30", state: "WY", type: "highlight" },
-  
-  // Utah
-  { lat: 40.760780, lng: -111.891045, name: "Salt Lake City", date: "Jun 30", state: "UT", type: "highlight" },
-  
-  // Colorado
-  { lat: 39.667053, lng: -105.207565, name: "Golden", date: "Jul 2", state: "CO", type: "waypoint" },
-  { lat: 39.858105, lng: -104.983710, name: "Denver", date: "Jul 1", state: "CO", type: "highlight", description: "Mile High City" },
-  { lat: 40.501390, lng: -105.083340, name: "Fort Collins", date: "Jul 2", state: "CO", type: "waypoint" },
-  
-  // Nebraska
-  { lat: 41.115475, lng: -102.949660, name: "Sidney", date: "Jul 3", state: "NE", type: "charging" },
-  { lat: 41.120594, lng: -100.762780, name: "North Platte", date: "Jul 3", state: "NE", type: "waypoint" },
-  { lat: 40.829690, lng: -98.379770, name: "Grand Island", date: "Jul 3", state: "NE", type: "waypoint" },
-  { lat: 40.786070, lng: -96.629654, name: "Lincoln", date: "Jul 3-7", state: "NE", type: "highlight", description: "Family visit" },
-  
-  // Iowa
-  { lat: 41.590939, lng: -93.620866, name: "Des Moines", date: "Jul 8", state: "IA", type: "highlight" },
-  
-  // Minnesota
-  { lat: 44.977753, lng: -93.265015, name: "Minneapolis", date: "Jul 9", state: "MN", type: "highlight", description: "Twin Cities" },
-  
-  // Wisconsin
-  { lat: 43.038902, lng: -87.906471, name: "Milwaukee", date: "Jul 10", state: "WI", type: "highlight" },
-  
-  // Illinois
-  { lat: 41.878113, lng: -87.629799, name: "Chicago", date: "Jul 11", state: "IL", type: "highlight", description: "Windy City" },
-  
-  // Indiana
-  { lat: 39.768402, lng: -86.158066, name: "Indianapolis", date: "Jul 12", state: "IN", type: "highlight" },
-  
-  // Michigan
-  { lat: 42.331429, lng: -83.045753, name: "Detroit", date: "Jul 13", state: "MI", type: "highlight", description: "Motor City" },
-  
-  // Ohio
-  { lat: 39.177100, lng: -84.429360, name: "Cincinnati", date: "Jul 17", state: "OH", type: "highlight" },
-  { lat: 41.499320, lng: -81.694359, name: "Cleveland", date: "Jul 15", state: "OH", type: "waypoint" },
-  
-  // Pennsylvania  
-  { lat: 40.440624, lng: -79.995888, name: "Pittsburgh", date: "Jul 18", state: "PA", type: "highlight", description: "Steel City" },
-  { lat: 39.952583, lng: -75.165222, name: "Philadelphia", date: "Jul 20", state: "PA", type: "highlight" },
-  
-  // New York
-  { lat: 42.886447, lng: -78.878369, name: "Buffalo", date: "Jul 16", state: "NY", type: "waypoint" },
-  { lat: 40.712776, lng: -74.005974, name: "New York City", date: "Jul 22", state: "NY", type: "highlight", description: "The Big Apple" },
-  
-  // New Jersey
-  { lat: 40.735657, lng: -74.172367, name: "Newark", date: "Jul 22", state: "NJ", type: "waypoint" },
-  
-  // Connecticut
-  { lat: 41.204910, lng: -73.150215, name: "Bridgeport", date: "Jul 25", state: "CT", type: "highlight" },
-  { lat: 41.308273, lng: -72.927884, name: "New Haven", date: "Jul 24", state: "CT", type: "waypoint" },
-  
-  // Rhode Island
-  { lat: 41.824009, lng: -71.412834, name: "Providence", date: "Jul 24", state: "RI", type: "highlight" },
-  
-  // Massachusetts
-  { lat: 42.360081, lng: -71.058884, name: "Boston", date: "Jul 23", state: "MA", type: "highlight", description: "Historic city" },
-  
-  // Vermont
-  { lat: 44.475883, lng: -73.212074, name: "Burlington", date: "Jul 26", state: "VT", type: "highlight" },
-  
-  // New Hampshire
-  { lat: 43.207106, lng: -71.537992, name: "Concord", date: "Jul 26", state: "NH", type: "waypoint" },
-  
-  // Maine
-  { lat: 43.661471, lng: -70.255326, name: "Portland", date: "Jul 27", state: "ME", type: "highlight", description: "Coastal Maine" },
-  
-  // Delaware
-  { lat: 39.739071, lng: -75.539787, name: "Wilmington", date: "Jul 28", state: "DE", type: "waypoint" },
-  
-  // Maryland
-  { lat: 39.290386, lng: -76.612189, name: "Baltimore", date: "Jul 28", state: "MD", type: "highlight" },
-  
-  // Washington DC
-  { lat: 38.900154, lng: -77.034096, name: "Washington D.C.", date: "Jul 29", state: "DC", type: "highlight", description: "Nation's Capital" },
-  
-  // Virginia
-  { lat: 38.473633, lng: -77.435814, name: "Stafford", date: "Jul 29", state: "VA", type: "waypoint" },
-  { lat: 37.540726, lng: -77.436047, name: "Richmond", date: "Jul 29", state: "VA", type: "waypoint" },
-  
-  // West Virginia
-  { lat: 38.349819, lng: -81.632622, name: "Charleston", date: "Jul 19", state: "WV", type: "waypoint" },
-  
-  // Kentucky
-  { lat: 38.252666, lng: -85.758453, name: "Louisville", date: "Jul 14", state: "KY", type: "highlight", description: "Derby City" },
-  
-  // Tennessee
-  { lat: 36.162663, lng: -86.781601, name: "Nashville", date: "Aug 8", state: "TN", type: "highlight", description: "Music City" },
-  
-  // North Carolina
-  { lat: 36.329130, lng: -78.447840, name: "Henderson", date: "Jul 29", state: "NC", type: "charging" },
-  { lat: 35.856064, lng: -80.072250, name: "Thomasville", date: "Jul 29", state: "NC", type: "waypoint" },
-  { lat: 35.056390, lng: -80.596550, name: "Monroe", date: "Jul 29 - Aug 8", state: "NC", type: "highlight", description: "Extended stay" },
-  { lat: 35.222057, lng: -82.272330, name: "Tryon", date: "Aug 3", state: "NC", type: "waypoint" },
-  
-  // South Carolina
-  { lat: 34.936510, lng: -81.982850, name: "Spartanburg", date: "Aug 3", state: "SC", type: "waypoint" },
-  { lat: 32.776474, lng: -79.931051, name: "Charleston", date: "Aug 10", state: "SC", type: "highlight", description: "Historic port" },
-  
-  // Georgia
-  { lat: 33.748997, lng: -84.387985, name: "Atlanta", date: "Aug 11", state: "GA", type: "highlight" },
-  { lat: 32.080853, lng: -81.091203, name: "Savannah", date: "Aug 12", state: "GA", type: "highlight" },
-  
-  // Alabama
-  { lat: 33.520682, lng: -86.802490, name: "Birmingham", date: "Aug 13", state: "AL", type: "waypoint" },
-  { lat: 32.361538, lng: -86.279118, name: "Montgomery", date: "Aug 13", state: "AL", type: "highlight" },
-  
-  // Mississippi
-  { lat: 32.298757, lng: -90.184810, name: "Jackson", date: "Aug 14", state: "MS", type: "highlight" },
-  
-  // Louisiana
-  { lat: 29.951065, lng: -90.071533, name: "New Orleans", date: "Aug 15", state: "LA", type: "highlight", description: "Big Easy" },
-  
-  // Arkansas
-  { lat: 34.746483, lng: -92.289597, name: "Little Rock", date: "Aug 16", state: "AR", type: "waypoint" },
-  
-  // Missouri
-  { lat: 38.627003, lng: -90.199402, name: "St. Louis", date: "Jul 13", state: "MO", type: "highlight", description: "Gateway Arch" },
-  { lat: 39.099728, lng: -94.578568, name: "Kansas City", date: "Jul 8", state: "MO", type: "waypoint" },
-  
-  // Kansas
-  { lat: 37.687176, lng: -97.330055, name: "Wichita", date: "Aug 17", state: "KS", type: "waypoint" },
-  
-  // Oklahoma
-  { lat: 35.467560, lng: -97.516426, name: "Oklahoma City", date: "Aug 18", state: "OK", type: "highlight" },
-  
-  // South Dakota
-  { lat: 43.969515, lng: -103.460701, name: "Rapid City", date: "Jul 7", state: "SD", type: "highlight", description: "Mt. Rushmore area" },
-  
-  // North Dakota
-  { lat: 46.877186, lng: -96.789803, name: "Fargo", date: "Jul 8", state: "ND", type: "waypoint" },
-  
-  // Nevada
-  { lat: 36.169941, lng: -115.139832, name: "Las Vegas", date: "Jun 11", state: "NV", type: "highlight", description: "Sin City" },
-  { lat: 39.529633, lng: -119.813803, name: "Reno", date: "Jun 18", state: "NV", type: "waypoint" },
-  
-  // Florida - End
-  { lat: 27.848516, lng: -82.815530, name: "St. Petersburg", date: "Aug 17-24", state: "FL", type: "highlight", description: "Journey's end - Florida sunshine" },
+  // === TEXAS START ===
+  { 
+    lat: 27.741570, lng: -97.388860, 
+    name: "Corpus Christi", 
+    date: "Jun 3-5", 
+    state: "TX", 
+    type: "start", 
+    description: "Journey begins in the Sparkling City by the Sea. Three days of prep, final checks on Shadowfax, and saying goodbye before the adventure of a lifetime.",
+    elevation: 7
+  },
+  { 
+    lat: 30.256390, lng: -97.796510, 
+    name: "Austin", 
+    date: "Jun 6", 
+    state: "TX", 
+    type: "highlight", 
+    description: "Texas capital and tech hub. Grabbed breakfast tacos on South Congress before heading west into Hill Country. Keep Austin Weird!",
+    miles: 213,
+    elevation: 489
+  },
+  { 
+    lat: 30.509314, lng: -99.774650, 
+    name: "Junction", 
+    date: "Jun 6", 
+    state: "TX", 
+    type: "charging", 
+    description: "Supercharger stop at the confluence of the North and South Llano Rivers. Heart of Texas Hill Country with stunning limestone canyons.",
+    miles: 132,
+    elevation: 1749
+  },
+  { 
+    lat: 30.881956, lng: -102.301636, 
+    name: "Fort Stockton", 
+    date: "Jun 7", 
+    state: "TX", 
+    type: "charging", 
+    description: "Gateway to Big Bend country. Overnight in vast West Texas desert. Home to Paisano Pete, the world's largest roadrunner statue.",
+    miles: 168,
+    elevation: 3012
+  },
+
+  // === NEW MEXICO ===
+  { 
+    lat: 32.346810, lng: -106.764740, 
+    name: "Las Cruces", 
+    date: "Jun 7", 
+    state: "NM", 
+    type: "highlight", 
+    description: "City of Crosses nestled between the Organ Mountains and Rio Grande. Beautiful desert sunset over the Mesilla Valley.",
+    miles: 246,
+    elevation: 3908
+  },
+
+  // === ARIZONA ===
+  { 
+    lat: 32.221740, lng: -110.926480, 
+    name: "Tucson", 
+    date: "Jun 8", 
+    state: "AZ", 
+    type: "highlight", 
+    description: "Surrounded by five mountain ranges and saguaro cacti. Visited Saguaro National Park and sampled Sonoran hot dogs.",
+    miles: 276,
+    elevation: 2389
+  },
+  { 
+    lat: 33.448376, lng: -112.074036, 
+    name: "Phoenix", 
+    date: "Jun 9", 
+    state: "AZ", 
+    type: "highlight", 
+    description: "Valley of the Sun living up to its name at 108°F. Quick stop before heading to cooler elevations. Desert Botanical Garden was incredible.",
+    miles: 116,
+    elevation: 1086
+  },
+
+  // === NEVADA ===
+  { 
+    lat: 36.169941, lng: -115.139832, 
+    name: "Las Vegas", 
+    date: "Jun 10-11", 
+    state: "NV", 
+    type: "highlight", 
+    description: "Sin City sparkles in the desert. Walked the Strip, saw the fountains at Bellagio, and charged up at the Luxor. What happens in Vegas...",
+    miles: 297,
+    elevation: 2001
+  },
+
+  // === CALIFORNIA - SOUTHERN ===
+  { 
+    lat: 34.081276, lng: -118.372505, 
+    name: "Los Angeles", 
+    date: "Jun 13-16", 
+    state: "CA", 
+    type: "highlight", 
+    description: "Four days exploring the City of Angels. Hollywood, Griffith Observatory, Santa Monica Pier, and the best tacos outside Texas.",
+    miles: 270,
+    elevation: 285
+  },
+  { 
+    lat: 34.014736, lng: -118.493730, 
+    name: "Santa Monica", 
+    date: "Jun 15", 
+    state: "CA", 
+    type: "waypoint", 
+    description: "End of Route 66 at the iconic pier. Toes in the Pacific Ocean for the first time on this trip. Watched surfers catch waves at sunset.",
+    miles: 16,
+    elevation: 105
+  },
+
+  // === CALIFORNIA - COAST ===
+  { 
+    lat: 36.555237, lng: -121.923325, 
+    name: "Monterey", 
+    date: "Jun 17", 
+    state: "CA", 
+    type: "waypoint", 
+    description: "Cannery Row and world-famous aquarium. Spotted sea otters in the bay. PCH driving was absolutely breathtaking.",
+    miles: 339,
+    elevation: 26
+  },
+  { 
+    lat: 37.774929, lng: -122.419418, 
+    name: "San Francisco", 
+    date: "Jun 18", 
+    state: "CA", 
+    type: "highlight", 
+    description: "Golden Gate in the fog, Alcatraz in the distance. Cable cars, Fisherman's Wharf, and the steepest streets Shadowfax has climbed.",
+    miles: 116,
+    elevation: 52
+  },
+
+  // === OREGON ===
+  { 
+    lat: 42.326520, lng: -122.875690, 
+    name: "Medford", 
+    date: "Jun 19", 
+    state: "OR", 
+    type: "charging", 
+    description: "Rogue Valley wine country at the Oregon-California border. Near Crater Lake but saving that for another trip.",
+    miles: 356,
+    elevation: 1382
+  },
+  { 
+    lat: 45.512230, lng: -122.658722, 
+    name: "Portland", 
+    date: "Jun 20-21", 
+    state: "OR", 
+    type: "highlight", 
+    description: "Keep Portland Weird! Food carts, Powell's Books (the world's largest), and stunning views of Mt. Hood. Voodoo Doughnut was worth the hype.",
+    miles: 274,
+    elevation: 50
+  },
+
+  // === WASHINGTON ===
+  { 
+    lat: 47.606209, lng: -122.332069, 
+    name: "Seattle", 
+    date: "Jun 22", 
+    state: "WA", 
+    type: "highlight", 
+    description: "Emerald City living up to its name. Pike Place Market, Space Needle, and the best coffee culture in America. Go Seahawks!",
+    miles: 174,
+    elevation: 175
+  },
+  { 
+    lat: 48.145687, lng: -123.140240, 
+    name: "Port Angeles", 
+    date: "Jun 23", 
+    state: "WA", 
+    type: "waypoint", 
+    description: "Gateway to Olympic National Park. Drove to Hurricane Ridge for panoramic mountain views. Temperate rainforest unlike anywhere else.",
+    miles: 81,
+    elevation: 32
+  },
+
+  // === IDAHO ===
+  { 
+    lat: 43.615017, lng: -116.202316, 
+    name: "Boise", 
+    date: "Jun 25", 
+    state: "ID", 
+    type: "highlight", 
+    description: "City of Trees along the Boise River. Surprising vibrant downtown and the famous blue turf of Boise State. Idaho potatoes are real!",
+    miles: 504,
+    elevation: 2730
+  },
+
+  // === MONTANA ===
+  { 
+    lat: 46.871870, lng: -113.993040, 
+    name: "Missoula", 
+    date: "Jun 27", 
+    state: "MT", 
+    type: "highlight", 
+    description: "Big Sky Country begins. A River Runs Through It was filmed here. University town with incredible mountain backdrop.",
+    miles: 391,
+    elevation: 3209
+  },
+  { 
+    lat: 45.676998, lng: -111.042930, 
+    name: "Bozeman", 
+    date: "Jun 28", 
+    state: "MT", 
+    type: "waypoint", 
+    description: "Gateway to Yellowstone from the north. Stunning Gallatin Valley views. Museum of the Rockies has amazing dinosaur exhibits.",
+    miles: 201,
+    elevation: 4820
+  },
+
+  // === WYOMING ===
+  { 
+    lat: 44.427963, lng: -110.588455, 
+    name: "Yellowstone", 
+    date: "Jun 29", 
+    state: "WY", 
+    type: "highlight", 
+    description: "America's first national park did not disappoint. Old Faithful, Grand Prismatic Spring, and more wildlife than expected. Bucket list checked!",
+    miles: 89,
+    elevation: 7733
+  },
+  { 
+    lat: 43.479946, lng: -110.762478, 
+    name: "Jackson Hole", 
+    date: "Jun 30", 
+    state: "WY", 
+    type: "highlight", 
+    description: "Grand Teton views around every corner. The most dramatic mountain scenery of the entire trip. Million Dollar Cowboy Bar was a must.",
+    miles: 57,
+    elevation: 6237
+  },
+
+  // === UTAH ===
+  { 
+    lat: 40.760780, lng: -111.891045, 
+    name: "Salt Lake City", 
+    date: "Jun 30", 
+    state: "UT", 
+    type: "highlight", 
+    description: "Temple Square, Great Salt Lake, and the Bonneville Salt Flats nearby. Mountains rise dramatically right from the city streets.",
+    miles: 275,
+    elevation: 4226
+  },
+  { 
+    lat: 40.233844, lng: -111.658534, 
+    name: "Provo", 
+    date: "Jul 1", 
+    state: "UT", 
+    type: "waypoint", 
+    description: "BYU campus and stunning Utah Lake views. Gateway to Provo Canyon and the Alpine Loop. Mountains everywhere you look.",
+    miles: 45,
+    elevation: 4549
+  },
+
+  // === COLORADO ===
+  { 
+    lat: 39.063077, lng: -108.550649, 
+    name: "Grand Mesa", 
+    date: "Jul 1", 
+    state: "CO", 
+    type: "highlight", 
+    description: "World's largest flat-topped mountain. Grand Mesa Scenic Byway with 300+ lakes and breathtaking overlooks. Shadowfax handled the elevation like a champ.",
+    miles: 203,
+    elevation: 10839
+  },
+  { 
+    lat: 39.858105, lng: -104.983710, 
+    name: "Denver", 
+    date: "Jul 2", 
+    state: "CO", 
+    type: "highlight", 
+    description: "Mile High City! Red Rocks Amphitheatre, craft beer scene, and Rocky Mountain views. Standing exactly 5,280 feet at the Capitol steps.",
+    miles: 245,
+    elevation: 5280
+  },
+  { 
+    lat: 40.501390, lng: -105.083340, 
+    name: "Fort Collins", 
+    date: "Jul 2", 
+    state: "CO", 
+    type: "waypoint", 
+    description: "New Belgium Brewing birthplace and charming Old Town. Colorado State University campus is beautiful. Gateway to Rocky Mountain NP.",
+    miles: 65,
+    elevation: 5003
+  },
+
+  // === NEBRASKA ===
+  { 
+    lat: 40.829690, lng: -98.379770, 
+    name: "Grand Island", 
+    date: "Jul 3", 
+    state: "NE", 
+    type: "charging", 
+    description: "Heart of Nebraska along the Platte River. Famous for sandhill crane migrations. The Great Plains stretch endlessly in every direction.",
+    miles: 296,
+    elevation: 1864
+  },
+  { 
+    lat: 40.786070, lng: -96.629654, 
+    name: "Lincoln", 
+    date: "Jul 3-7", 
+    state: "NE", 
+    type: "highlight", 
+    description: "State capital and home to the Cornhuskers. Four wonderful days with family. Haymarket District, Memorial Stadium, and Nebraska hospitality.",
+    miles: 98,
+    elevation: 1176
+  },
+
+  // === SOUTH DAKOTA ===
+  { 
+    lat: 43.969515, lng: -103.460701, 
+    name: "Rapid City", 
+    date: "Jul 7", 
+    state: "SD", 
+    type: "highlight", 
+    description: "Gateway to Mt. Rushmore, Crazy Horse, and Badlands. Presidents' faces in granite are even more impressive in person.",
+    miles: 397,
+    elevation: 3202
+  },
+
+  // === NORTH DAKOTA ===
+  { 
+    lat: 46.877186, lng: -96.789803, 
+    name: "Fargo", 
+    date: "Jul 8", 
+    state: "ND", 
+    type: "waypoint", 
+    description: "Ya, you betcha! Famous Fargo wood chipper and friendly Midwest vibes. Surprisingly vibrant downtown scene.",
+    miles: 432,
+    elevation: 902
+  },
+
+  // === MINNESOTA ===
+  { 
+    lat: 44.977753, lng: -93.265015, 
+    name: "Minneapolis", 
+    date: "Jul 9", 
+    state: "MN", 
+    type: "highlight", 
+    description: "Twin Cities deliver! Stunning skyways, lakes everywhere, and Prince's Paisley Park nearby. Land of 10,000 Lakes indeed.",
+    miles: 239,
+    elevation: 830
+  },
+
+  // === IOWA ===
+  { 
+    lat: 41.590939, lng: -93.620866, 
+    name: "Des Moines", 
+    date: "Jul 8", 
+    state: "IA", 
+    type: "waypoint", 
+    description: "Iowa's capital with a gorgeous golden-domed capitol building. Bridges of Madison County country. Surprisingly great food scene.",
+    miles: 244,
+    elevation: 955
+  },
+
+  // === MISSOURI ===
+  { 
+    lat: 38.627003, lng: -90.199402, 
+    name: "St. Louis", 
+    date: "Jul 10", 
+    state: "MO", 
+    type: "highlight", 
+    description: "Gateway to the West! The Arch is incredible up close. Took the tram to the top for views of both Illinois and Missouri.",
+    miles: 350,
+    elevation: 466
+  },
+
+  // === ILLINOIS ===
+  { 
+    lat: 41.878113, lng: -87.629799, 
+    name: "Chicago", 
+    date: "Jul 11", 
+    state: "IL", 
+    type: "highlight", 
+    description: "Windy City did not disappoint. Deep dish pizza, The Bean, magnificent lakefront, and architecture boat tour. Could easily spend weeks here.",
+    miles: 297,
+    elevation: 594
+  },
+
+  // === WISCONSIN ===
+  { 
+    lat: 43.038902, lng: -87.906471, 
+    name: "Milwaukee", 
+    date: "Jul 10", 
+    state: "WI", 
+    type: "waypoint", 
+    description: "Brew City on Lake Michigan. Beautiful art museum shaped like wings. Cheese curds and craft beer did not disappoint.",
+    miles: 92,
+    elevation: 617
+  },
+
+  // === MICHIGAN ===
+  { 
+    lat: 42.331429, lng: -83.045753, 
+    name: "Detroit", 
+    date: "Jul 12", 
+    state: "MI", 
+    type: "highlight", 
+    description: "Motor City making a comeback! Motown Museum was emotional. Belle Isle views and amazing revitalized downtown. Go Lions!",
+    miles: 281,
+    elevation: 600
+  },
+
+  // === INDIANA ===
+  { 
+    lat: 39.768402, lng: -86.158066, 
+    name: "Indianapolis", 
+    date: "Jul 13", 
+    state: "IN", 
+    type: "highlight", 
+    description: "Racing Capital of the World. Indianapolis Motor Speedway is massive - kissed the bricks! Monument Circle is surprisingly beautiful.",
+    miles: 282,
+    elevation: 715
+  },
+
+  // === KENTUCKY ===
+  { 
+    lat: 38.252666, lng: -85.758453, 
+    name: "Louisville", 
+    date: "Jul 14", 
+    state: "KY", 
+    type: "highlight", 
+    description: "Derby City! Churchill Downs, Louisville Slugger factory, and bourbon everywhere. Big Brown Hotel was gorgeous.",
+    miles: 114,
+    elevation: 466
+  },
+
+  // === OHIO ===
+  { 
+    lat: 41.499320, lng: -81.694359, 
+    name: "Cleveland", 
+    date: "Jul 15", 
+    state: "OH", 
+    type: "waypoint", 
+    description: "Rock and Roll Hall of Fame is a must for music lovers. Cleveland rocks! Great Lake Erie waterfront.",
+    miles: 344,
+    elevation: 653
+  },
+  { 
+    lat: 39.177100, lng: -84.429360, 
+    name: "Cincinnati", 
+    date: "Jul 16", 
+    state: "OH", 
+    type: "highlight", 
+    description: "Queen City on the Ohio River. Skyline Chili is... unique. Over-the-Rhine neighborhood is incredible. Go Bengals!",
+    miles: 249,
+    elevation: 483
+  },
+
+  // === NEW YORK ===
+  { 
+    lat: 42.886447, lng: -78.878369, 
+    name: "Buffalo", 
+    date: "Jul 16", 
+    state: "NY", 
+    type: "waypoint", 
+    description: "Niagara Falls was absolutely thundering. Original Buffalo wings at Anchor Bar - they're legit. City has so much character.",
+    miles: 192,
+    elevation: 600
+  },
+
+  // === PENNSYLVANIA ===
+  { 
+    lat: 40.440624, lng: -79.995888, 
+    name: "Pittsburgh", 
+    date: "Jul 18", 
+    state: "PA", 
+    type: "highlight", 
+    description: "Steel City with stunning bridges and three rivers. Inclines up Mt. Washington for the best city views anywhere. Go Steelers!",
+    miles: 219,
+    elevation: 1230
+  },
+  { 
+    lat: 39.952583, lng: -75.165222, 
+    name: "Philadelphia", 
+    date: "Jul 20", 
+    state: "PA", 
+    type: "highlight", 
+    description: "Birthplace of America! Independence Hall, Liberty Bell, and yes - a Philly cheesesteak (Pat's). Rocky steps were mandatory.",
+    miles: 305,
+    elevation: 39
+  },
+
+  // === WEST VIRGINIA ===
+  { 
+    lat: 38.349819, lng: -81.632622, 
+    name: "Charleston", 
+    date: "Jul 19", 
+    state: "WV", 
+    type: "waypoint", 
+    description: "Almost heaven, West Virginia. Gold-domed capitol along the Kanawha River. New River Gorge is stunning.",
+    miles: 258,
+    elevation: 601
+  },
+
+  // === NEW JERSEY ===
+  { 
+    lat: 40.735657, lng: -74.172367, 
+    name: "Newark", 
+    date: "Jul 21", 
+    state: "NJ", 
+    type: "waypoint", 
+    description: "Gateway to NYC with its own character. Branch Brook Park, historic Ironbound district with amazing Portuguese food.",
+    miles: 95,
+    elevation: 43
+  },
+
+  // === NEW YORK CITY ===
+  { 
+    lat: 40.712776, lng: -74.005974, 
+    name: "New York City", 
+    date: "Jul 22", 
+    state: "NY", 
+    type: "highlight", 
+    description: "The Big Apple! Times Square, Central Park, Statue of Liberty, and the best pizza. City that never sleeps didn't let us either.",
+    miles: 9,
+    elevation: 33
+  },
+
+  // === CONNECTICUT ===
+  { 
+    lat: 41.308273, lng: -72.927884, 
+    name: "New Haven", 
+    date: "Jul 23", 
+    state: "CT", 
+    type: "waypoint", 
+    description: "Yale's beautiful campus and birthplace of the hamburger (allegedly). Frank Pepe's pizza rivals New York's best.",
+    miles: 80,
+    elevation: 59
+  },
+
+  // === MASSACHUSETTS ===
+  { 
+    lat: 42.360081, lng: -71.058884, 
+    name: "Boston", 
+    date: "Jul 23-24", 
+    state: "MA", 
+    type: "highlight", 
+    description: "Historic Freedom Trail, Fenway Park, and legendary seafood. Harvard and MIT nearby. So much American history in one city!",
+    miles: 137,
+    elevation: 43
+  },
+
+  // === RHODE ISLAND ===
+  { 
+    lat: 41.824009, lng: -71.412834, 
+    name: "Providence", 
+    date: "Jul 24", 
+    state: "RI", 
+    type: "waypoint", 
+    description: "RISD campus is gorgeous. WaterFire festival is magical. Smallest state packed with charm. Del's Lemonade!",
+    miles: 50,
+    elevation: 75
+  },
+
+  // === NEW HAMPSHIRE ===
+  { 
+    lat: 43.207106, lng: -71.537992, 
+    name: "Concord", 
+    date: "Jul 25", 
+    state: "NH", 
+    type: "waypoint", 
+    description: "Live Free or Die! State house with golden dome. White Mountains visible in the distance. Quintessential New England.",
+    miles: 70,
+    elevation: 288
+  },
+
+  // === VERMONT ===
+  { 
+    lat: 44.475883, lng: -73.212074, 
+    name: "Burlington", 
+    date: "Jul 26", 
+    state: "VT", 
+    type: "highlight", 
+    description: "Lake Champlain views and Church Street marketplace. Ben & Jerry's factory tour was delicious. Fall would be incredible here.",
+    miles: 153,
+    elevation: 200
+  },
+
+  // === MAINE ===
+  { 
+    lat: 43.661471, lng: -70.255326, 
+    name: "Portland", 
+    date: "Jul 27", 
+    state: "ME", 
+    type: "highlight", 
+    description: "Lighthouse spotting, lobster rolls, and Old Port charm. Best seafood of the trip. Acadia was calling but time said no.",
+    miles: 218,
+    elevation: 56
+  },
+
+  // === DELAWARE ===
+  { 
+    lat: 39.739071, lng: -75.539787, 
+    name: "Wilmington", 
+    date: "Jul 28", 
+    state: "DE", 
+    type: "waypoint", 
+    description: "First state energy! Riverfront development is impressive. Tax-free shopping is real. DuPont legacy everywhere.",
+    miles: 382,
+    elevation: 92
+  },
+
+  // === MARYLAND ===
+  { 
+    lat: 39.290386, lng: -76.612189, 
+    name: "Baltimore", 
+    date: "Jul 28", 
+    state: "MD", 
+    type: "highlight", 
+    description: "Inner Harbor charm, amazing crab cakes, and Edgar Allan Poe's grave. National Aquarium is world-class.",
+    miles: 32,
+    elevation: 33
+  },
+
+  // === WASHINGTON DC ===
+  { 
+    lat: 38.900154, lng: -77.034096, 
+    name: "Washington D.C.", 
+    date: "Jul 29", 
+    state: "DC", 
+    type: "highlight", 
+    description: "Nation's Capital at its finest. Lincoln Memorial at night is breathtaking. Smithsonian could take weeks. History everywhere.",
+    miles: 39,
+    elevation: 72
+  },
+
+  // === VIRGINIA ===
+  { 
+    lat: 37.540726, lng: -77.436047, 
+    name: "Richmond", 
+    date: "Jul 29", 
+    state: "VA", 
+    type: "waypoint", 
+    description: "Former Confederate capital with complicated history. James River views, great food scene, and Monument Avenue.",
+    miles: 109,
+    elevation: 166
+  },
+
+  // === NORTH CAROLINA ===
+  { 
+    lat: 35.056390, lng: -80.596550, 
+    name: "Charlotte", 
+    date: "Jul 30 - Aug 8", 
+    state: "NC", 
+    type: "highlight", 
+    description: "Week-long stay in the Queen City. NASCAR Hall of Fame, banking capital, and amazing BBQ. Southern hospitality at its finest.",
+    miles: 292,
+    elevation: 761
+  },
+
+  // === SOUTH CAROLINA ===
+  { 
+    lat: 32.776474, lng: -79.931051, 
+    name: "Charleston", 
+    date: "Aug 9", 
+    state: "SC", 
+    type: "highlight", 
+    description: "Most beautiful city in America? Historic Battery, Rainbow Row, and Lowcountry cuisine. Magnolias everywhere.",
+    miles: 209,
+    elevation: 20
+  },
+
+  // === GEORGIA ===
+  { 
+    lat: 32.080853, lng: -81.091203, 
+    name: "Savannah", 
+    date: "Aug 10", 
+    state: "GA", 
+    type: "highlight", 
+    description: "Spanish moss, historic squares, and Southern charm overload. Midnight in the Garden vibes. River Street was buzzing.",
+    miles: 108,
+    elevation: 42
+  },
+  { 
+    lat: 33.748997, lng: -84.387985, 
+    name: "Atlanta", 
+    date: "Aug 11", 
+    state: "GA", 
+    type: "highlight", 
+    description: "Capital of the New South. World of Coca-Cola, MLK historic site, and incredible food scene. Traffic is legendary.",
+    miles: 248,
+    elevation: 1050
+  },
+
+  // === ALABAMA ===
+  { 
+    lat: 32.361538, lng: -86.279118, 
+    name: "Montgomery", 
+    date: "Aug 12", 
+    state: "AL", 
+    type: "highlight", 
+    description: "Civil Rights history comes alive. Rosa Parks museum, Dexter Avenue Baptist Church. Important and moving.",
+    miles: 162,
+    elevation: 221
+  },
+
+  // === MISSISSIPPI ===
+  { 
+    lat: 32.298757, lng: -90.184810, 
+    name: "Jackson", 
+    date: "Aug 13", 
+    state: "MS", 
+    type: "waypoint", 
+    description: "State capital with rich blues heritage. Civil Rights Museum is essential. Southern food game is strong.",
+    miles: 190,
+    elevation: 298
+  },
+
+  // === LOUISIANA ===
+  { 
+    lat: 29.951065, lng: -90.071533, 
+    name: "New Orleans", 
+    date: "Aug 14-15", 
+    state: "LA", 
+    type: "highlight", 
+    description: "Big Easy magic! French Quarter jazz, beignets at Café Du Monde, and crawfish everything. Laissez les bons temps rouler!",
+    miles: 181,
+    elevation: 3
+  },
+
+  // === ARKANSAS ===
+  { 
+    lat: 34.746483, lng: -92.289597, 
+    name: "Little Rock", 
+    date: "Aug 16", 
+    state: "AR", 
+    type: "waypoint", 
+    description: "Central High School history and Big Dam Bridge. Clinton Presidential Library. Natural State living up to its name.",
+    miles: 350,
+    elevation: 335
+  },
+
+  // === KANSAS ===
+  { 
+    lat: 37.687176, lng: -97.330055, 
+    name: "Wichita", 
+    date: "Aug 17", 
+    state: "KS", 
+    type: "waypoint", 
+    description: "Air Capital of the World. Old Town district surprises with charm. Flat? Yes. Beautiful sunsets? Also yes.",
+    miles: 248,
+    elevation: 1299
+  },
+
+  // === OKLAHOMA ===
+  { 
+    lat: 35.467560, lng: -97.516426, 
+    name: "Oklahoma City", 
+    date: "Aug 18", 
+    state: "OK", 
+    type: "highlight", 
+    description: "OKC Memorial is profoundly moving. Bricktown revival, Route 66 heritage, and Thunder basketball culture everywhere.",
+    miles: 158,
+    elevation: 1201
+  },
+
+  // === TEXAS - RETURN ===
+  { 
+    lat: 32.735687, lng: -97.108066, 
+    name: "Dallas-Fort Worth", 
+    date: "Aug 19", 
+    state: "TX", 
+    type: "waypoint", 
+    description: "Back in Texas! Stockyards, BBQ, and Big Tex vibes. Everything really is bigger. Almost home now.",
+    miles: 206,
+    elevation: 430
+  },
+
+  // === FLORIDA - END ===
+  { 
+    lat: 27.848516, lng: -82.815530, 
+    name: "St. Petersburg", 
+    date: "Aug 20-24", 
+    state: "FL", 
+    type: "stop", 
+    description: "Journey's end in the Sunshine City! Beautiful beaches, Dalí Museum, and time to reflect on 48 states, 15,847 miles, and one incredible summer.",
+    miles: 892,
+    elevation: 7
+  }
 ];
 
 // Generate route line coordinates (simplified for map display)
@@ -209,5 +803,14 @@ export const generateRouteCoordinates = (): [number, number][] => {
 };
 
 // Get waypoints filtered by type
-export const getHighlights = () => journeyWaypoints.filter(wp => wp.type === 'highlight' || wp.type === 'start');
+export const getHighlights = () => journeyWaypoints.filter(wp => wp.type === 'highlight' || wp.type === 'start' || wp.type === 'stop');
 export const getChargingStops = () => journeyWaypoints.filter(wp => wp.type === 'charging');
+export const getAllWaypoints = () => journeyWaypoints;
+
+// Total stats
+export const journeyStats = {
+  totalWaypoints: journeyWaypoints.length,
+  states: [...new Set(journeyWaypoints.map(wp => wp.state))].length,
+  highlights: getHighlights().length,
+  chargingStops: getChargingStops().length,
+};
