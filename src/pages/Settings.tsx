@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PrivacySettings from '@/components/settings/PrivacySettings';
 import NotificationSettings from '@/components/settings/NotificationSettings';
-import { ArrowLeft, Shield, Bell, User } from 'lucide-react';
+import { TwoFactorSettings } from '@/components/settings/TwoFactorSettings';
+import { ArrowLeft, Shield, Bell, Lock } from 'lucide-react';
 import { useEffect } from 'react';
 
 export default function Settings() {
@@ -41,8 +42,12 @@ export default function Settings() {
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-2xl">
-        <Tabs defaultValue="privacy" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+        <Tabs defaultValue="security" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="security" className="flex items-center gap-2">
+              <Lock className="w-4 h-4" />
+              Security
+            </TabsTrigger>
             <TabsTrigger value="privacy" className="flex items-center gap-2">
               <Shield className="w-4 h-4" />
               Privacy
@@ -52,6 +57,10 @@ export default function Settings() {
               Notifications
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="security">
+            <TwoFactorSettings />
+          </TabsContent>
 
           <TabsContent value="privacy">
             <PrivacySettings />
