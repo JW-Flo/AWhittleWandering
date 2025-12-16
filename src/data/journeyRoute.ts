@@ -1,6 +1,6 @@
 // Actual GPS waypoints from the 48-state journey
 // Rebuilt from TeslaFi drive CSV data - June 3 to August 2025
-// Route: TX → NM (north through Albuquerque) → CO → UT → AZ → NV → CA → OR → WA → ID → MT → WY → ND → MN → IA → NE → MO → IL → IN → MI → OH → KY → PA → NY → VT → NH → ME → MA → RI → CT → NJ → DE → MD → DC → VA → WV → NC → SC → GA → AL → MS → LA → AR → KS → OK → TX → FL
+// Route: TX → NM (north to Santa Fe) → AZ (Grand Canyon) → NV (Vegas) → CA (coast) → OR → WA → ID → MT → WY → UT (national parks) → CO → NE → ND → MN → IA → MO → IL → IN → MI → OH → KY → PA → NY → VT → NH → ME → MA → RI → CT → NJ → DE → MD → DC → VA → WV → NC → SC → GA → AL → MS → LA → AR → KS → OK → TX → FL
 
 export interface JourneyWaypoint {
   lat: number;
@@ -129,7 +129,7 @@ export const journeyWaypoints: JourneyWaypoint[] = [
     elevation: 5312
   },
 
-  // === NEW MEXICO NORTH / COLORADO ===
+  // === NEW MEXICO NORTH ===
   { 
     lat: 35.687530, lng: -105.937800, 
     name: "Santa Fe", 
@@ -141,63 +141,29 @@ export const journeyWaypoints: JourneyWaypoint[] = [
     elevation: 7199
   },
 
-  // === COLORADO ===
+  // === ARIZONA - HEADING WEST TO GRAND CANYON ===
   { 
-    lat: 37.174530, lng: -104.499790, 
-    name: "Trinidad", 
-    date: "Jun 11", 
-    state: "CO", 
-    type: "waypoint", 
-    description: "Gateway to Colorado via Raton Pass. Historic town on the Santa Fe Trail. Welcome to the Centennial State!",
-    miles: 178,
-    elevation: 6025
+    lat: 35.198283, lng: -111.651299, 
+    name: "Flagstaff", 
+    date: "Jun 10", 
+    state: "AZ", 
+    type: "charging", 
+    description: "Mountain town along Route 66. Supercharger stop before the Grand Canyon. High elevation pines and cool mountain air.",
+    miles: 260,
+    elevation: 6909
   },
-  { 
-    lat: 39.063077, lng: -108.550649, 
-    name: "Grand Mesa", 
-    date: "Jun 12", 
-    state: "CO", 
-    type: "highlight", 
-    description: "World's largest flat-topped mountain. Grand Mesa Scenic Byway with 300+ lakes and breathtaking overlooks. Shadowfax handled the elevation like a champ.",
-    miles: 280,
-    elevation: 10839
-  },
-
-  // === UTAH ===
-  { 
-    lat: 40.233844, lng: -111.658534, 
-    name: "Provo", 
-    date: "Jun 13-14", 
-    state: "UT", 
-    type: "highlight", 
-    description: "BYU campus and stunning Utah Lake views. Two days visiting Erin Lane, mountain recovery and trip prep. Gateway to Provo Canyon and the Alpine Loop.",
-    miles: 203,
-    elevation: 4549
-  },
-  { 
-    lat: 40.760780, lng: -111.891045, 
-    name: "Salt Lake City", 
-    date: "Jun 14-15", 
-    state: "UT", 
-    type: "highlight", 
-    description: "Temple Square, Great Salt Lake, and visiting Brady Covington. Mountains rise dramatically right from the city streets. Recharge and staging stop.",
-    miles: 45,
-    elevation: 4226
-  },
-
-  // === ARIZONA (via Utah south) ===
   { 
     lat: 36.056198, lng: -112.125198, 
     name: "Grand Canyon", 
-    date: "Jun 10", 
+    date: "Jun 11", 
     state: "AZ", 
     type: "highlight", 
     description: "One of the Seven Natural Wonders. South Rim views are absolutely humbling. No photo does it justice - the scale is incomprehensible. Watched sunset paint the canyon walls.",
-    miles: 230,
+    miles: 80,
     elevation: 6860
   },
 
-  // === NEVADA ===
+  // === NEVADA - CONTINUING WEST ===
   { 
     lat: 36.169941, lng: -115.139832, 
     name: "Las Vegas", 
