@@ -1,5 +1,6 @@
 // Actual GPS waypoints from the 48-state journey
-// Extracted from TeslaFi drive data - June 3 to August 2025
+// Rebuilt from TeslaFi drive CSV data - June 3 to August 2025
+// Route: TX → NM (north through Albuquerque) → CO → UT → AZ → NV → CA → OR → WA → ID → MT → WY → ND → MN → IA → NE → MO → IL → IN → MI → OH → KY → PA → NY → VT → NH → ME → MA → RI → CT → NJ → DE → MD → DC → VA → WV → NC → SC → GA → AL → MS → LA → AR → KS → OK → TX → FL
 
 export interface JourneyWaypoint {
   lat: number;
@@ -31,7 +32,7 @@ export const journeyWaypoints: JourneyWaypoint[] = [
     date: "Jun 6", 
     state: "TX", 
     type: "highlight", 
-    description: "Texas capital and tech hub. Grabbed breakfast tacos on South Congress before heading west into Hill Country. Keep Austin Weird!",
+    description: "Texas capital and tech hub. Quick stop in the Hill Country before heading west. Keep Austin Weird!",
     miles: 213,
     elevation: 489
   },
@@ -48,69 +49,143 @@ export const journeyWaypoints: JourneyWaypoint[] = [
   { 
     lat: 30.881956, lng: -102.301636, 
     name: "Fort Stockton", 
-    date: "Jun 7-8", 
+    date: "Jun 6-7", 
     state: "TX", 
     type: "highlight", 
-    description: "The breakdown. 30 miles east of town, alignment issue forced a tow into Fort Stockton. Spent the night troubleshooting. Home to Paisano Pete, the world's largest roadrunner - an ironic mascot when your car won't move.",
+    description: "The breakdown. Alignment issue forced troubleshooting and multiple short drives around town. Home to Paisano Pete, the world's largest roadrunner - an ironic mascot when your car has issues.",
     miles: 168,
     elevation: 3012
   },
   { 
-    lat: 31.044340, lng: -104.831610, 
-    name: "Van Horn", 
-    date: "Jun 8-9", 
+    lat: 30.989374, lng: -103.628800, 
+    name: "Balmorhea", 
+    date: "Jun 7", 
     state: "TX", 
     type: "waypoint", 
-    description: "Tried pushing through the alignment issue - didn't work. Second tow from Fort Stockton to Van Horn. Another night in the desert, but the stars out here are incredible. Blue Origin's launch site is nearby.",
+    description: "Pushed through despite alignment issues. Famous for its spring-fed pool and desert oasis vibes.",
+    miles: 45,
+    elevation: 3205
+  },
+  { 
+    lat: 31.044340, lng: -104.831610, 
+    name: "Van Horn", 
+    date: "Jun 7-8", 
+    state: "TX", 
+    type: "waypoint", 
+    description: "Another night in West Texas desert dealing with car issues. Blue Origin's launch site is nearby. The stars out here are incredible.",
     miles: 75,
     elevation: 4010
   },
   { 
     lat: 31.761878, lng: -106.485022, 
     name: "El Paso", 
-    date: "Jun 9-10", 
+    date: "Jun 8-9", 
     state: "TX", 
     type: "highlight", 
-    description: "Long tow from Van Horn to El Paso - finally found a Tesla service center. Sun City at the western tip of Texas, overlooking Juarez. Got Shadowfax fixed and back on the road. The journey continues.",
+    description: "Sun City at the western tip of Texas, overlooking Juarez. Tesla service center finally got Shadowfax back in shape. The journey continues north!",
     miles: 120,
     elevation: 3740
   },
 
-  // === NEW MEXICO ===
+  // === NEW MEXICO - ACTUAL ROUTE GOING NORTH ===
   { 
-    lat: 32.346810, lng: -106.764740, 
+    lat: 32.312798, lng: -106.778390, 
     name: "Las Cruces", 
-    date: "Jun 7", 
+    date: "Jun 9", 
     state: "NM", 
     type: "highlight", 
-    description: "City of Crosses nestled between the Organ Mountains and Rio Grande. Beautiful desert sunset over the Mesilla Valley.",
-    miles: 246,
+    description: "City of Crosses nestled between the Organ Mountains and Rio Grande. First stop in New Mexico heading NORTH along I-25.",
+    miles: 46,
     elevation: 3908
   },
-
-  // === ARIZONA ===
   { 
-    lat: 32.221740, lng: -110.926480, 
-    name: "Tucson", 
-    date: "Jun 8", 
-    state: "AZ", 
-    type: "highlight", 
-    description: "Surrounded by five mountain ranges and saguaro cacti. Visited Saguaro National Park and sampled Sonoran hot dogs.",
-    miles: 276,
-    elevation: 2389
-  },
-  { 
-    lat: 33.448376, lng: -112.074036, 
-    name: "Phoenix", 
+    lat: 33.128340, lng: -107.254250, 
+    name: "Truth or Consequences", 
     date: "Jun 9", 
-    state: "AZ", 
+    state: "NM", 
+    type: "waypoint", 
+    description: "Town renamed after a 1950s game show! Hot springs and quirky desert charm. Charged up and continued north along the Rio Grande.",
+    miles: 75,
+    elevation: 4260
+  },
+  { 
+    lat: 34.071690, lng: -106.893060, 
+    name: "Socorro", 
+    date: "Jun 9", 
+    state: "NM", 
+    type: "charging", 
+    description: "Historic mining town and home to New Mexico Tech. Supercharger stop before the push to Albuquerque.",
+    miles: 77,
+    elevation: 4585
+  },
+  { 
+    lat: 35.092167, lng: -106.550160, 
+    name: "Albuquerque", 
+    date: "Jun 10", 
+    state: "NM", 
     type: "highlight", 
-    description: "Valley of the Sun living up to its name at 108°F. Quick stop before heading to cooler elevations. Desert Botanical Garden was incredible.",
-    miles: 116,
-    elevation: 1086
+    description: "Breaking Bad territory! Old Town, Sandia Peak tram views, and green chile everything. Major waypoint heading north through New Mexico.",
+    miles: 82,
+    elevation: 5312
   },
 
-  // === GRAND CANYON ===
+  // === NEW MEXICO NORTH / COLORADO ===
+  { 
+    lat: 35.687530, lng: -105.937800, 
+    name: "Santa Fe", 
+    date: "Jun 10", 
+    state: "NM", 
+    type: "highlight", 
+    description: "America's oldest capital city. Adobe architecture, art galleries, and world-class food. The high desert light is magical.",
+    miles: 65,
+    elevation: 7199
+  },
+
+  // === COLORADO ===
+  { 
+    lat: 37.174530, lng: -104.499790, 
+    name: "Trinidad", 
+    date: "Jun 11", 
+    state: "CO", 
+    type: "waypoint", 
+    description: "Gateway to Colorado via Raton Pass. Historic town on the Santa Fe Trail. Welcome to the Centennial State!",
+    miles: 178,
+    elevation: 6025
+  },
+  { 
+    lat: 39.063077, lng: -108.550649, 
+    name: "Grand Mesa", 
+    date: "Jun 12", 
+    state: "CO", 
+    type: "highlight", 
+    description: "World's largest flat-topped mountain. Grand Mesa Scenic Byway with 300+ lakes and breathtaking overlooks. Shadowfax handled the elevation like a champ.",
+    miles: 280,
+    elevation: 10839
+  },
+
+  // === UTAH ===
+  { 
+    lat: 40.233844, lng: -111.658534, 
+    name: "Provo", 
+    date: "Jun 13-14", 
+    state: "UT", 
+    type: "highlight", 
+    description: "BYU campus and stunning Utah Lake views. Two days visiting Erin Lane, mountain recovery and trip prep. Gateway to Provo Canyon and the Alpine Loop.",
+    miles: 203,
+    elevation: 4549
+  },
+  { 
+    lat: 40.760780, lng: -111.891045, 
+    name: "Salt Lake City", 
+    date: "Jun 14-15", 
+    state: "UT", 
+    type: "highlight", 
+    description: "Temple Square, Great Salt Lake, and visiting Brady Covington. Mountains rise dramatically right from the city streets. Recharge and staging stop.",
+    miles: 45,
+    elevation: 4226
+  },
+
+  // === ARIZONA (via Utah south) ===
   { 
     lat: 36.056198, lng: -112.125198, 
     name: "Grand Canyon", 

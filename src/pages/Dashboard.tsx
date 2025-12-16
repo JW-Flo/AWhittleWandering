@@ -19,6 +19,7 @@ import StatesProgressMap from '@/components/StatesProgressMap';
 import CSVImport from '@/components/CSVImport';
 import PhotoUpload from '@/components/PhotoUpload';
 import FlagshipGate from '@/components/FlagshipGate';
+import RouteNavigator from '@/components/RouteNavigator';
 import { useTessieData } from '@/hooks/useTessieData';
 import { 
   MapPin, 
@@ -275,43 +276,48 @@ export default function Dashboard() {
             {/* States Progress */}
             <StatesProgressMap animate={true} showDetails={true} />
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="card-tesla">
-                <CardContent className="p-6 flex items-center gap-4">
-                  <div className="p-3 rounded-lg bg-primary/10">
-                    <TrendingUp className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-foreground">259 Charging Sessions</h4>
-                    <p className="text-sm text-muted-foreground">$7.13 avg cost</p>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Quick Stats and Route Navigator */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="card-tesla">
+                  <CardContent className="p-6 flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-primary/10">
+                      <TrendingUp className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-foreground">259 Charging Sessions</h4>
+                      <p className="text-sm text-muted-foreground">$7.13 avg cost</p>
+                    </div>
+                  </CardContent>
+                </Card>
 
-              <Card className="card-tesla">
-                <CardContent className="p-6 flex items-center gap-4">
-                  <div className="p-3 rounded-lg bg-success/10">
-                    <Battery className="w-6 h-6 text-success" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-foreground">2.29 mi/kWh</h4>
-                    <p className="text-sm text-muted-foreground">Average efficiency</p>
-                  </div>
-                </CardContent>
-              </Card>
+                <Card className="card-tesla">
+                  <CardContent className="p-6 flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-success/10">
+                      <Battery className="w-6 h-6 text-success" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-foreground">2.29 mi/kWh</h4>
+                      <p className="text-sm text-muted-foreground">Average efficiency</p>
+                    </div>
+                  </CardContent>
+                </Card>
 
-              <Card className="card-tesla">
-                <CardContent className="p-6 flex items-center gap-4">
-                  <div className="p-3 rounded-lg bg-warning/10">
-                    <Calendar className="w-6 h-6 text-warning" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-foreground">89 Days</h4>
-                    <p className="text-sm text-muted-foreground">June 3 - Aug 31, 2025</p>
-                  </div>
-                </CardContent>
-              </Card>
+                <Card className="card-tesla">
+                  <CardContent className="p-6 flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-warning/10">
+                      <Calendar className="w-6 h-6 text-warning" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-foreground">89 Days</h4>
+                      <p className="text-sm text-muted-foreground">June 3 - Aug 31, 2025</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {/* AI Route Navigator POC */}
+              <RouteNavigator className="h-[300px]" />
             </div>
           </TabsContent>
 
