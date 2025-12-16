@@ -835,16 +835,46 @@ export const journeyWaypoints: JourneyWaypoint[] = [
     miles: 206,
     elevation: 430
   },
+  { 
+    lat: 30.267153, lng: -97.743057, 
+    name: "Austin", 
+    date: "Aug 19", 
+    state: "TX", 
+    type: "waypoint", 
+    description: "Quick stop in the capital on the way south. Grabbed tacos on South Congress one last time.",
+    miles: 195,
+    elevation: 489
+  },
+  { 
+    lat: 29.424122, lng: -98.493629, 
+    name: "San Antonio", 
+    date: "Aug 20", 
+    state: "TX", 
+    type: "waypoint", 
+    description: "Remember the Alamo! River Walk at night is magical. Last Texas city before heading to Florida.",
+    miles: 80,
+    elevation: 650
+  },
+  { 
+    lat: 30.332184, lng: -81.655651, 
+    name: "Jacksonville", 
+    date: "Aug 22", 
+    state: "FL", 
+    type: "waypoint", 
+    description: "Gateway to Florida via I-10 across the Gulf coast. Largest city by area in the US. Beach vibes begin.",
+    miles: 850,
+    elevation: 12
+  },
 
   // === FLORIDA - END ===
   { 
     lat: 27.848516, lng: -82.815530, 
     name: "St. Petersburg", 
-    date: "Aug 20-24", 
+    date: "Aug 23-24", 
     state: "FL", 
     type: "stop", 
     description: "Journey's end in the Sunshine City! Beautiful beaches, Dalí Museum, and time to reflect on 48 states, 15,847 miles, and one incredible summer.",
-    miles: 892,
+    miles: 200,
     elevation: 7
   }
 ];
