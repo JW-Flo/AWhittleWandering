@@ -15,6 +15,7 @@ import Admin from "./pages/Admin";
 import SMSTerms from "./pages/SMSTerms";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import DataRequest from "./pages/DataRequest";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/sms-terms" element={<SMSTerms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/data-request" element={<DataRequest />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
