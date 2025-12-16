@@ -179,8 +179,8 @@ export default function RouteNavigator({ className = '' }: RouteNavigatorProps) 
             </div>
           </div>
         ) : (
-          <ScrollArea className="flex-1 min-h-0" ref={scrollRef}>
-            <div className="space-y-3 sm:space-y-4">
+          <div className="flex-1 min-h-0 overflow-auto" ref={scrollRef}>
+            <div className="space-y-3 sm:space-y-4 pr-2">
               {messages.map((msg, i) => (
                 <div
                   key={i}
@@ -205,7 +205,7 @@ export default function RouteNavigator({ className = '' }: RouteNavigatorProps) 
                 </div>
               )}
             </div>
-          </ScrollArea>
+          </div>
         )}
 
         <div className="flex gap-2 shrink-0 pt-2">
