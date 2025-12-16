@@ -243,16 +243,6 @@ export const journeyWaypoints: JourneyWaypoint[] = [
     elevation: 1382
   },
   { 
-    lat: 45.512230, lng: -122.658722, 
-    name: "Portland", 
-    date: "Jun 20-21", 
-    state: "OR", 
-    type: "highlight", 
-    description: "Keep Portland Weird! Food carts, Powell's Books (the world's largest), and stunning views of Mt. Hood. Voodoo Doughnut was worth the hype.",
-    miles: 274,
-    elevation: 50
-  },
-  { 
     lat: 45.889764, lng: -123.961525, 
     name: "Cannon Beach", 
     date: "Jun 21", 
@@ -317,14 +307,14 @@ export const journeyWaypoints: JourneyWaypoint[] = [
 
   // === IDAHO ===
   { 
-    lat: 43.615017, lng: -116.202316, 
-    name: "Boise", 
+    lat: 47.677684, lng: -116.780466, 
+    name: "Coeur d'Alene", 
     date: "Jun 25", 
     state: "ID", 
     type: "highlight", 
-    description: "City of Trees along the Boise River. Surprising vibrant downtown and the famous blue turf of Boise State. Idaho potatoes are real!",
-    miles: 504,
-    elevation: 2730
+    description: "Beautiful lakeside city in northern Idaho. Lake Coeur d'Alene is stunning with crystal clear waters surrounded by mountains. The resort town vibes were perfect after the Olympic Peninsula.",
+    miles: 380,
+    elevation: 2188
   },
 
   // === MONTANA ===
@@ -343,8 +333,8 @@ export const journeyWaypoints: JourneyWaypoint[] = [
     name: "Bozeman", 
     date: "Jun 28", 
     state: "MT", 
-    type: "waypoint", 
-    description: "Gateway to Yellowstone from the north. Stunning Gallatin Valley views. Museum of the Rockies has amazing dinosaur exhibits.",
+    type: "highlight", 
+    description: "Visited Dakota and Jasper Freyear in Bozeman. Stunning Gallatin Valley views with the Bridger Range as a backdrop. Great catching up with friends before heading to Yellowstone.",
     miles: 201,
     elevation: 4820
   },
@@ -359,16 +349,6 @@ export const journeyWaypoints: JourneyWaypoint[] = [
     description: "America's first national park did not disappoint. Old Faithful, Grand Prismatic Spring, and more wildlife than expected. Bucket list checked!",
     miles: 89,
     elevation: 7733
-  },
-  { 
-    lat: 43.479946, lng: -110.762478, 
-    name: "Jackson Hole", 
-    date: "Jun 30", 
-    state: "WY", 
-    type: "highlight", 
-    description: "Grand Teton views around every corner. The most dramatic mountain scenery of the entire trip. Million Dollar Cowboy Bar was a must.",
-    miles: 57,
-    elevation: 6237
   },
 
   // === UTAH - NATIONAL PARKS ===
