@@ -1,3 +1,4 @@
+import React, { forwardRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Logo, LogoMark } from '@/components/Logo';
 import { 
@@ -13,12 +14,13 @@ interface FooterProps {
   variant?: 'full' | 'minimal';
 }
 
-export function Footer({ variant = 'full' }: FooterProps) {
-  const currentYear = new Date().getFullYear();
+export const Footer = forwardRef<HTMLElement, FooterProps>(
+  ({ variant = 'full' }, ref) => {
+    const currentYear = new Date().getFullYear();
 
-  if (variant === 'minimal') {
-    return (
-      <footer className="border-t border-border/50 py-6 bg-card/30">
+    if (variant === 'minimal') {
+      return (
+        <footer ref={ref} className="border-t border-border/50 py-6 bg-card/30">
         <div className="container mx-auto px-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -39,8 +41,8 @@ export function Footer({ variant = 'full' }: FooterProps) {
     );
   }
 
-  return (
-    <footer className="border-t border-border/50 bg-card/50">
+    return (
+      <footer ref={ref} className="border-t border-border/50 bg-card/50">
       {/* Main Footer */}
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -152,4 +154,7 @@ export function Footer({ variant = 'full' }: FooterProps) {
       </div>
     </footer>
   );
-}
+  }
+);
+
+Footer.displayName = 'Footer';

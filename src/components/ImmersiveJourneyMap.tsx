@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo, forwardRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Play, Pause, RotateCcw, MapPin, Crosshair, SkipForward } from 'lucide-react';
@@ -12,21 +12,17 @@ interface ImmersiveJourneyMapProps {
   userLocation?: { lat: number; lng: number } | null;
 }
 
-export default function ImmersiveJourneyMap({ 
-  mapboxToken, 
-  className = '',
-  showCenterButton = false,
-  userLocation = null
-}: ImmersiveJourneyMapProps) {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const animationRef = useRef<number | null>(null);
-  const vehicleMarkerRef = useRef<mapboxgl.Marker | null>(null);
-  const [mapLoaded, setMapLoaded] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentWaypointIndex, setCurrentWaypointIndex] = useState(0);
-  const [activeWaypoint, setActiveWaypoint] = useState<FlagshipWaypoint | null>(null);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
+const ImmersiveJourneyMap = forwardRef<HTMLDivElement, ImmersiveJourneyMapProps>(
+  ({ mapboxToken, className = '', showCenterButton = false, userLocation = null }, ref) => {
+    const mapContainer = useRef<HTMLDivElement>(null);
+    const map = useRef<mapboxgl.Map | null>(null);
+    const animationRef = useRef<number | null>(null);
+    const vehicleMarkerRef = useRef<mapboxgl.Marker | null>(null);
+    const [mapLoaded, setMapLoaded] = useState(false);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [currentWaypointIndex, setCurrentWaypointIndex] = useState(0);
+    const [activeWaypoint, setActiveWaypoint] = useState<FlagshipWaypoint | null>(null);
+    const markersRef = useRef<mapboxgl.Marker[]>([]);
   
   // Fetch waypoints from database
   const { data: waypoints = [], isLoading } = useFlagshipWaypoints();
@@ -480,4 +476,9 @@ export default function ImmersiveJourneyMap({
       </div>
     </div>
   );
-}
+  }
+);
+
+ImmersiveJourneyMap.displayName = 'ImmersiveJourneyMap';
+
+export default ImmersiveJourneyMap;
