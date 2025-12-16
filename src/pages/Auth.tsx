@@ -68,7 +68,7 @@ export default function Auth() {
             <Compass className="w-8 h-8 text-primary-foreground" />
           </div>
           <h1 className="text-3xl font-display font-bold text-foreground">A Whittle Wandering</h1>
-          <p className="text-muted-foreground mt-2">Track your Tesla adventures across America</p>
+          <p className="text-muted-foreground mt-2">Track your adventures across the world</p>
         </div>
 
         <Card className="shadow-elevated">
