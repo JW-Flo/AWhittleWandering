@@ -14,6 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { TwoFactorSettings } from '@/components/settings/TwoFactorSettings';
+import FeatureRequestWidget from '@/components/FeatureRequestWidget';
 import { 
   Shield, 
   Users, 
@@ -660,27 +661,19 @@ export default function Admin() {
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center gap-2">
                         <Zap className="w-5 h-5 text-primary" />
-                        Quick Add Integration
+                        Request New Integration
                       </CardTitle>
+                      <CardDescription>
+                        Users can request support for new vehicle manufacturers or features
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Add support for new vehicle manufacturers or telematics providers
-                      </p>
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>Provider Name</Label>
-                          <Input placeholder="e.g., BMW Connected Drive" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Supported Makes</Label>
-                          <Input placeholder="e.g., BMW, Mini" />
-                        </div>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-muted-foreground">
+                          Enable community-driven feature development
+                        </p>
+                        <FeatureRequestWidget variant="inline" />
                       </div>
-                      <Button className="mt-4">
-                        <Plug className="w-4 h-4 mr-1" />
-                        Add Provider
-                      </Button>
                     </CardContent>
                   </Card>
                 </div>
@@ -697,11 +690,13 @@ export default function Admin() {
                     <h3 className="font-medium">Security Status</h3>
                     {[
                       { status: 'success', icon: CheckCircle2, title: 'Session Timeout', desc: '30-minute inactivity timeout', badge: 'Active' },
-                      { status: 'success', icon: CheckCircle2, title: 'Row Level Security', desc: 'All tables protected', badge: 'Enabled' },
+                      { status: 'success', icon: CheckCircle2, title: 'Row Level Security', desc: 'All tables protected with RLS policies', badge: 'Enabled' },
                       { status: 'success', icon: CheckCircle2, title: 'API Token Encryption', desc: 'Tokens encrypted at rest', badge: 'Secured' },
                       { status: 'success', icon: CheckCircle2, title: 'Incident Automation', desc: 'Auto-notify on account actions', badge: 'Active' },
                       { status: 'success', icon: CheckCircle2, title: 'Password Security', desc: 'Leaked password protection & strength requirements', badge: 'Active' },
                       { status: 'success', icon: CheckCircle2, title: 'Admin 2FA', desc: 'Required for all admin accounts', badge: 'Enforced' },
+                      { status: 'success', icon: CheckCircle2, title: 'Security Headers', desc: 'X-Frame-Options, X-Content-Type-Options, Referrer-Policy', badge: 'Active' },
+                      { status: 'success', icon: CheckCircle2, title: 'XSS Protection', desc: 'React auto-escapes, no raw HTML rendering', badge: 'Active' },
                       { status: 'warning', icon: AlertTriangle, title: 'Rate Limiting', desc: 'Per-endpoint limits in edge functions', badge: 'Edge Functions' },
                     ].map((item, i) => (
                       <Card key={i} className={`border-${item.status === 'success' ? 'success' : item.status === 'warning' ? 'amber-500' : 'blue-500'}/30 bg-${item.status === 'success' ? 'success' : item.status === 'warning' ? 'amber-500' : 'blue-500'}/5`}>
