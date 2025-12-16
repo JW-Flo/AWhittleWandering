@@ -8,67 +8,75 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 220 13% 9%;
-    --foreground: 210 40% 98%;
+    /* Deep nature-immersive dark theme */
+    --background: 160 15% 6%;
+    --foreground: 45 20% 95%;
 
-    --card: 224 27% 11%;
-    --card-foreground: 210 40% 98%;
+    --card: 160 12% 10%;
+    --card-foreground: 45 20% 95%;
 
-    --popover: 224 27% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 160 12% 10%;
+    --popover-foreground: 45 20% 95%;
 
-    --primary: 193 100% 43%;
-    --primary-foreground: 220 13% 9%;
+    /* Deep forest green primary */
+    --primary: 152 45% 35%;
+    --primary-foreground: 45 20% 95%;
 
-    --secondary: 220 13% 15%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 160 10% 14%;
+    --secondary-foreground: 45 20% 90%;
 
-    --muted: 220 13% 15%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 160 8% 16%;
+    --muted-foreground: 45 10% 55%;
 
-    --accent: 193 100% 43%;
-    --accent-foreground: 220 13% 9%;
+    /* Warm amber accent */
+    --accent: 32 90% 50%;
+    --accent-foreground: 160 15% 6%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 70% 45%;
+    --destructive-foreground: 45 20% 95%;
 
-    --border: 220 13% 20%;
-    --input: 220 13% 15%;
-    --ring: 193 100% 43%;
+    --border: 160 10% 18%;
+    --input: 160 10% 14%;
+    --ring: 152 45% 35%;
 
-    /* Tesla-inspired colors */
-    --tesla-blue: 193 100% 43%;
-    --tesla-blue-dark: 193 100% 35%;
-    --tesla-cyan: 180 100% 50%;
-    --tesla-dark: 220 13% 9%;
-    --tesla-darker: 220 20% 6%;
-    --tesla-gray: 220 13% 15%;
-    --tesla-gray-light: 220 13% 20%;
-
-    /* Adventure Colors */
-    --adventure-orange: 25 100% 58%;
-    --adventure-red: 0 84% 60%;
-    --adventure-gold: 43 96% 56%;
-    --adventure-purple: 252 95% 75%;
-    --adventure-green: 120 62% 50%;
-    --adventure-teal: 174 100% 40%;
+    /* Nature Palette - Deep & Rich */
+    --nature-forest: 152 45% 28%;
+    --nature-forest-light: 152 40% 38%;
+    --nature-moss: 95 35% 30%;
+    --nature-earth: 25 35% 25%;
+    --nature-bark: 20 25% 18%;
+    --nature-stone: 200 8% 35%;
+    
+    /* Warm Tones */
+    --warm-amber: 32 90% 50%;
+    --warm-sunset: 18 85% 48%;
+    --warm-gold: 42 85% 55%;
+    --warm-ember: 10 75% 40%;
+    
+    /* Sky & Water */
+    --sky-twilight: 260 30% 35%;
+    --sky-dusk: 280 25% 25%;
+    --water-deep: 195 50% 30%;
+    --water-teal: 175 45% 35%;
 
     /* Story-telling Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--tesla-blue)), hsl(var(--tesla-cyan)));
-    --gradient-adventure: linear-gradient(135deg, hsl(var(--adventure-orange)), hsl(var(--adventure-red)));
-    --gradient-hero: linear-gradient(135deg, hsl(var(--tesla-blue) / 0.9), hsl(var(--adventure-purple) / 0.8));
-    --gradient-sunset: linear-gradient(135deg, hsl(var(--adventure-orange)), hsl(var(--adventure-gold)));
-    --gradient-card: linear-gradient(145deg, hsl(var(--tesla-gray)), hsl(var(--tesla-dark)));
-    --gradient-card-hover: linear-gradient(145deg, hsl(var(--tesla-gray-light)), hsl(var(--tesla-gray)));
-    --gradient-glow: radial-gradient(circle at center, hsl(var(--tesla-blue) / 0.3), transparent 70%);
-    --gradient-milestone: linear-gradient(135deg, hsl(var(--adventure-gold) / 0.2), hsl(var(--adventure-orange) / 0.1));
+    --gradient-primary: linear-gradient(135deg, hsl(var(--nature-forest)), hsl(var(--water-teal)));
+    --gradient-adventure: linear-gradient(135deg, hsl(var(--warm-sunset)), hsl(var(--warm-ember)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--nature-forest) / 0.9), hsl(var(--sky-twilight) / 0.8));
+    --gradient-sunset: linear-gradient(135deg, hsl(var(--warm-amber)), hsl(var(--warm-gold)));
+    --gradient-card: linear-gradient(145deg, hsl(var(--card)), hsl(var(--background)));
+    --gradient-card-hover: linear-gradient(145deg, hsl(160 12% 14%), hsl(var(--card)));
+    --gradient-glow: radial-gradient(circle at center, hsl(var(--nature-forest) / 0.3), transparent 70%);
+    --gradient-milestone: linear-gradient(135deg, hsl(var(--warm-gold) / 0.15), hsl(var(--warm-amber) / 0.08));
+    --gradient-nature: linear-gradient(180deg, hsl(var(--nature-forest) / 0.2), hsl(var(--background)));
 
     /* Immersive Shadows */
-    --shadow-tesla: 0 8px 32px hsl(var(--tesla-blue) / 0.2);
-    --shadow-adventure: 0 12px 40px hsl(var(--adventure-orange) / 0.3);
-    --shadow-card: 0 4px 20px hsl(var(--tesla-darker) / 0.5);
-    --shadow-hero: 0 20px 80px hsl(var(--tesla-blue) / 0.4);
-    --shadow-milestone: 0 8px 30px hsl(var(--adventure-gold) / 0.3);
+    --shadow-forest: 0 8px 32px hsl(var(--nature-forest) / 0.25);
+    --shadow-adventure: 0 12px 40px hsl(var(--warm-amber) / 0.2);
+    --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.4);
+    --shadow-hero: 0 20px 80px hsl(var(--nature-forest) / 0.3);
+    --shadow-milestone: 0 8px 30px hsl(var(--warm-gold) / 0.2);
+    --shadow-elevated: 0 12px 48px hsl(0 0% 0% / 0.5);
 
     /* Story Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -77,23 +85,23 @@ All colors MUST be HSL.
 
     --radius: 0.5rem;
 
-    --sidebar-background: 220 13% 9%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 193 100% 43%;
-    --sidebar-primary-foreground: 220 13% 9%;
-    --sidebar-accent: 220 13% 15%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 13% 20%;
-    --sidebar-ring: 193 100% 43%;
+    --sidebar-background: 160 15% 6%;
+    --sidebar-foreground: 45 20% 95%;
+    --sidebar-primary: 152 45% 35%;
+    --sidebar-primary-foreground: 45 20% 95%;
+    --sidebar-accent: 160 10% 14%;
+    --sidebar-accent-foreground: 45 20% 90%;
+    --sidebar-border: 160 10% 18%;
+    --sidebar-ring: 152 45% 35%;
 
     /* Legacy semantic colors for compatibility */
-    --road: 220 13% 40%;
-    --forest: 174 100% 40%;
-    --sand: 43 50% 40%;
-    --sunset: 25 100% 58%;
-    --sky: 193 100% 43%;
-    --charging: 120 62% 50%;
-    --driving: 25 100% 58%;
+    --road: 200 8% 40%;
+    --forest: 152 45% 35%;
+    --sand: 42 50% 45%;
+    --sunset: 32 90% 50%;
+    --sky: 195 50% 40%;
+    --charging: 152 45% 40%;
+    --driving: 32 90% 50%;
   }
 }
 
@@ -110,22 +118,22 @@ All colors MUST be HSL.
 
 @layer components {
   /* Card Styles */
-  .card-tesla {
+  .card-nature {
     @apply bg-card rounded-lg border border-border;
     background: var(--gradient-card);
     box-shadow: var(--shadow-card);
     transition: var(--transition-smooth);
   }
 
-  .card-tesla:hover {
+  .card-nature:hover {
     background: var(--gradient-card-hover);
-    box-shadow: var(--shadow-tesla);
+    box-shadow: var(--shadow-forest);
     transform: translateY(-2px);
   }
 
   /* Glow Effects */
-  .glow-tesla {
-    box-shadow: var(--shadow-tesla);
+  .glow-forest {
+    box-shadow: var(--shadow-forest);
   }
 
   .glow-adventure {
@@ -134,6 +142,10 @@ All colors MUST be HSL.
 
   .glow-hero {
     box-shadow: var(--shadow-hero);
+  }
+
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
   }
 
   /* Gradient Backgrounds */
@@ -226,10 +238,10 @@ All colors MUST be HSL.
 
   @keyframes pulseGlow {
     0%, 100% {
-      box-shadow: 0 0 20px hsl(var(--tesla-blue) / 0.3);
+      box-shadow: 0 0 20px hsl(var(--nature-forest) / 0.3);
     }
     50% {
-      box-shadow: 0 0 40px hsl(var(--tesla-blue) / 0.6);
+      box-shadow: 0 0 40px hsl(var(--nature-forest) / 0.5);
     }
   }
 
@@ -240,19 +252,19 @@ All colors MUST be HSL.
     box-shadow: var(--shadow-card);
   }
 
-  .stat-card-tesla {
+  .stat-card-nature {
     @apply stat-card;
-    border-color: hsl(var(--tesla-blue) / 0.3);
+    border-color: hsl(var(--nature-forest) / 0.3);
   }
 
   .stat-card-adventure {
     @apply stat-card;
-    border-color: hsl(var(--adventure-orange) / 0.3);
+    border-color: hsl(var(--warm-amber) / 0.3);
   }
 
   .stat-card-success {
     @apply stat-card;
-    border-color: hsl(var(--adventure-green) / 0.3);
+    border-color: hsl(var(--nature-moss) / 0.3);
   }
 }
 
