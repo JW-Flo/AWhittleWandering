@@ -17,10 +17,16 @@ serve(async (req) => {
       throw new Error('TESSIE_API_KEY is not configured');
     }
 
-    const { action, vin } = await req.json();
-    console.log(`Tessie API request: action=${action}, vin=${vin}`);
+    const { action, vin, fromDate, toDate } = await req.json();
+    console.log(`Tessie API request: action=${action}, vin=${vin}, fromDate=${fromDate}, toDate=${toDate}`);
 
     let endpoint = '';
+    const params = new URLSearchParams();
+    
+    // Add date filters if provided (Unix timestamps)
+    if (fromDate) params.append('from', fromDate.toString());
+    if (toDate) params.append('to', toDate.toString());
+
     switch (action) {
       case 'vehicles':
         endpoint = 'https://api.tessie.com/vehicles';
@@ -45,9 +51,22 @@ serve(async (req) => {
         if (!vin) throw new Error('VIN required for charges');
         endpoint = `https://api.tessie.com/${vin}/charges`;
         break;
+      case 'historical':
+        // Get drives within a specific date range with pagination support
+        if (!vin) throw new Error('VIN required for historical');
+        endpoint = `https://api.tessie.com/${vin}/drives`;
+        break;
       default:
         throw new Error(`Unknown action: ${action}`);
     }
+
+    // Append query params if any
+    const queryString = params.toString();
+    if (queryString) {
+      endpoint += `?${queryString}`;
+    }
+
+    console.log(`Calling Tessie: ${endpoint}`);
 
     const response = await fetch(endpoint, {
       method: 'GET',
@@ -64,7 +83,7 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log(`Tessie API success: ${action}`);
+    console.log(`Tessie API success: ${action}, results count: ${data.results?.length || 'N/A'}`);
 
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -5,303 +6,217 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface TelemetryPoint {
-  timestamp: string;
-  lat: number;
-  lng: number;
-  elevation: number;
-  speed: number;
-  odometer: number;
-  batteryLevel: number;
-  chargingState: string;
+interface TessieDrive {
+  id: number;
+  started_at: number;
+  ended_at: number;
+  starting_latitude: number;
+  starting_longitude: number;
+  starting_location: string;
+  starting_odometer: number;
+  ending_latitude: number;
+  ending_longitude: number;
+  ending_location: string;
+  ending_odometer: number;
+  odometer_distance: number;
+  energy_used: number;
+  average_speed: number;
+  max_speed: number;
+  starting_battery: number;
+  ending_battery: number;
 }
 
-interface ExtractedStop {
-  lat: number;
-  lng: number;
-  elevation: number;
-  arrivalTime: string;
-  departureTime: string;
-  dwellMinutes: number;
-  odometer: number;
-  wasCharging: boolean;
-  minBattery: number;
-  maxBattery: number;
+interface Waypoint {
+  id: number;
+  name: string;
+  location: string;
+  latitude: number;
+  longitude: number;
+  arrivedAt: string;
+  departedAt: string;
+  dwellTimeMinutes: number;
+  odometerMiles: number;
+  distanceSinceLastStop: number;
+  batteryOnArrival: number;
 }
 
 // Haversine distance in miles
-function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 3959; // Earth radius in miles
+function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 3959; // Earth's radius in miles
   const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2 +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
 }
 
-function parseCSV(csvText: string): TelemetryPoint[] {
-  const lines = csvText.trim().split('\n');
-  const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
-  
-  const points: TelemetryPoint[] = [];
-  
-  for (let i = 1; i < lines.length; i++) {
-    const values: string[] = [];
-    let current = '';
-    let inQuotes = false;
-    
-    for (const char of lines[i]) {
-      if (char === '"') {
-        inQuotes = !inQuotes;
-      } else if (char === ',' && !inQuotes) {
-        values.push(current.trim());
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-    values.push(current.trim());
-    
-    const row: Record<string, string> = {};
-    headers.forEach((h, idx) => {
-      row[h] = values[idx] || '';
-    });
-    
-    const lat = parseFloat(row['Latitude']);
-    const lng = parseFloat(row['Longitude']);
-    
-    if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
-      points.push({
-        timestamp: row['Timestamp (CST)'],
-        lat,
-        lng,
-        elevation: parseFloat(row['Elevation (m)']) || 0,
-        speed: parseFloat(row['Speed (mph)']) || 0,
-        odometer: parseFloat(row['Odometer (mi)']) || 0,
-        batteryLevel: parseFloat(row['Battery Level (%)']) || 0,
-        chargingState: row['Charging State'] || 'Disconnected',
-      });
-    }
+// Extract city/state from location string
+function extractLocationName(location: string): string {
+  const parts = location.split(', ');
+  if (parts.length >= 3) {
+    const city = parts[parts.length - 3];
+    const stateZip = parts[parts.length - 2];
+    const state = stateZip.split(' ')[0];
+    return `${city}, ${state}`;
   }
-  
-  return points.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-}
-
-function extractSignificantStops(points: TelemetryPoint[], minDwellMinutes: number = 30): ExtractedStop[] {
-  if (points.length === 0) return [];
-  
-  const stops: ExtractedStop[] = [];
-  const LOCATION_THRESHOLD_MILES = 0.5; // Points within 0.5 miles are same location
-  
-  let stopStart: TelemetryPoint | null = null;
-  let stopPoints: TelemetryPoint[] = [];
-  let wasCharging = false;
-  let minBattery = 100;
-  let maxBattery = 0;
-  
-  for (let i = 0; i < points.length; i++) {
-    const point = points[i];
-    
-    if (point.speed === 0) {
-      // Vehicle is stationary
-      if (!stopStart) {
-        stopStart = point;
-        stopPoints = [point];
-        wasCharging = point.chargingState === 'Charging';
-        minBattery = point.batteryLevel;
-        maxBattery = point.batteryLevel;
-      } else {
-        // Check if still at same location
-        const dist = calculateDistance(stopStart.lat, stopStart.lng, point.lat, point.lng);
-        if (dist < LOCATION_THRESHOLD_MILES) {
-          stopPoints.push(point);
-          if (point.chargingState === 'Charging') wasCharging = true;
-          minBattery = Math.min(minBattery, point.batteryLevel);
-          maxBattery = Math.max(maxBattery, point.batteryLevel);
-        } else {
-          // Different location - finalize previous stop
-          if (stopPoints.length > 1) {
-            const firstPoint = stopPoints[0];
-            const lastPoint = stopPoints[stopPoints.length - 1];
-            const dwellMinutes = (new Date(lastPoint.timestamp).getTime() - new Date(firstPoint.timestamp).getTime()) / 60000;
-            
-            if (dwellMinutes >= minDwellMinutes) {
-              // Calculate average position
-              const avgLat = stopPoints.reduce((s, p) => s + p.lat, 0) / stopPoints.length;
-              const avgLng = stopPoints.reduce((s, p) => s + p.lng, 0) / stopPoints.length;
-              const avgElevation = stopPoints.reduce((s, p) => s + p.elevation, 0) / stopPoints.length;
-              
-              stops.push({
-                lat: avgLat,
-                lng: avgLng,
-                elevation: Math.round(avgElevation * 3.281), // meters to feet
-                arrivalTime: firstPoint.timestamp,
-                departureTime: lastPoint.timestamp,
-                dwellMinutes: Math.round(dwellMinutes),
-                odometer: lastPoint.odometer,
-                wasCharging,
-                minBattery,
-                maxBattery,
-              });
-            }
-          }
-          
-          // Start new stop
-          stopStart = point;
-          stopPoints = [point];
-          wasCharging = point.chargingState === 'Charging';
-          minBattery = point.batteryLevel;
-          maxBattery = point.batteryLevel;
-        }
-      }
-    } else {
-      // Vehicle is moving - finalize any current stop
-      if (stopStart && stopPoints.length > 1) {
-        const firstPoint = stopPoints[0];
-        const lastPoint = stopPoints[stopPoints.length - 1];
-        const dwellMinutes = (new Date(lastPoint.timestamp).getTime() - new Date(firstPoint.timestamp).getTime()) / 60000;
-        
-        if (dwellMinutes >= minDwellMinutes) {
-          const avgLat = stopPoints.reduce((s, p) => s + p.lat, 0) / stopPoints.length;
-          const avgLng = stopPoints.reduce((s, p) => s + p.lng, 0) / stopPoints.length;
-          const avgElevation = stopPoints.reduce((s, p) => s + p.elevation, 0) / stopPoints.length;
-          
-          stops.push({
-            lat: avgLat,
-            lng: avgLng,
-            elevation: Math.round(avgElevation * 3.281),
-            arrivalTime: firstPoint.timestamp,
-            departureTime: lastPoint.timestamp,
-            dwellMinutes: Math.round(dwellMinutes),
-            odometer: lastPoint.odometer,
-            wasCharging,
-            minBattery,
-            maxBattery,
-          });
-        }
-      }
-      stopStart = null;
-      stopPoints = [];
-    }
-  }
-  
-  // Don't forget the last stop if vehicle ended stationary
-  if (stopStart && stopPoints.length > 1) {
-    const firstPoint = stopPoints[0];
-    const lastPoint = stopPoints[stopPoints.length - 1];
-    const dwellMinutes = (new Date(lastPoint.timestamp).getTime() - new Date(firstPoint.timestamp).getTime()) / 60000;
-    
-    if (dwellMinutes >= minDwellMinutes) {
-      const avgLat = stopPoints.reduce((s, p) => s + p.lat, 0) / stopPoints.length;
-      const avgLng = stopPoints.reduce((s, p) => s + p.lng, 0) / stopPoints.length;
-      const avgElevation = stopPoints.reduce((s, p) => s + p.elevation, 0) / stopPoints.length;
-      
-      stops.push({
-        lat: avgLat,
-        lng: avgLng,
-        elevation: Math.round(avgElevation * 3.281),
-        arrivalTime: firstPoint.timestamp,
-        departureTime: lastPoint.timestamp,
-        dwellMinutes: Math.round(dwellMinutes),
-        odometer: lastPoint.odometer,
-        wasCharging,
-        minBattery,
-        maxBattery,
-      });
-    }
-  }
-  
-  return stops;
-}
-
-// Merge stops that are very close together (within 1 mile)
-function mergeNearbyStops(stops: ExtractedStop[]): ExtractedStop[] {
-  if (stops.length === 0) return [];
-  
-  const merged: ExtractedStop[] = [];
-  let current = { ...stops[0] };
-  
-  for (let i = 1; i < stops.length; i++) {
-    const next = stops[i];
-    const dist = calculateDistance(current.lat, current.lng, next.lat, next.lng);
-    
-    // If within 1 mile and gap is less than 2 hours, merge
-    const gapHours = (new Date(next.arrivalTime).getTime() - new Date(current.departureTime).getTime()) / 3600000;
-    
-    if (dist < 1.0 && gapHours < 2) {
-      // Merge: keep first arrival, use last departure
-      current.departureTime = next.departureTime;
-      current.dwellMinutes = Math.round((new Date(current.departureTime).getTime() - new Date(current.arrivalTime).getTime()) / 60000);
-      current.wasCharging = current.wasCharging || next.wasCharging;
-      current.minBattery = Math.min(current.minBattery, next.minBattery);
-      current.maxBattery = Math.max(current.maxBattery, next.maxBattery);
-      current.odometer = next.odometer;
-    } else {
-      merged.push(current);
-      current = { ...next };
-    }
-  }
-  merged.push(current);
-  
-  return merged;
+  return location;
 }
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
-  
+
   try {
-    const { csvData, minDwellMinutes = 30 } = await req.json();
-    
-    if (!csvData) {
-      return new Response(
-        JSON.stringify({ error: 'csvData is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    const TESSIE_API_KEY = Deno.env.get('TESSIE_API_KEY');
+    if (!TESSIE_API_KEY) {
+      throw new Error('TESSIE_API_KEY is not configured');
     }
+
+    const { vin, fromDate, toDate, minDwellMinutes = 30, minDistanceMiles = 50 } = await req.json();
     
-    console.log('Parsing CSV data...');
-    const points = parseCSV(csvData);
-    console.log(`Parsed ${points.length} telemetry points`);
+    if (!vin) {
+      throw new Error('VIN is required');
+    }
+
+    console.log(`Extracting waypoints for VIN ${vin} from ${fromDate} to ${toDate}`);
+
+    // Fetch drives from Tessie API
+    const params = new URLSearchParams();
+    if (fromDate) params.append('from', fromDate.toString());
+    if (toDate) params.append('to', toDate.toString());
+
+    const drivesUrl = `https://api.tessie.com/${vin}/drives?${params.toString()}`;
+    console.log(`Fetching drives from: ${drivesUrl}`);
+
+    const response = await fetch(drivesUrl, {
+      headers: {
+        'Authorization': `Bearer ${TESSIE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Tessie API error: ${response.status} ${errorText}`);
+      throw new Error(`Tessie API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const drives: TessieDrive[] = data.results || [];
     
-    console.log('Extracting significant stops...');
-    const stops = extractSignificantStops(points, minDwellMinutes);
-    console.log(`Found ${stops.length} initial stops`);
-    
-    console.log('Merging nearby stops...');
-    const mergedStops = mergeNearbyStops(stops);
-    console.log(`Merged to ${mergedStops.length} stops`);
-    
-    // Calculate journey stats
-    const firstPoint = points[0];
-    const lastPoint = points[points.length - 1];
-    const totalMiles = lastPoint ? lastPoint.odometer - (firstPoint?.odometer || 0) : 0;
-    
-    return new Response(
-      JSON.stringify({
-        success: true,
-        stats: {
-          totalPoints: points.length,
-          dateRange: {
-            start: firstPoint?.timestamp,
-            end: lastPoint?.timestamp,
-          },
-          totalMiles: Math.round(totalMiles),
-          startOdometer: firstPoint?.odometer,
-          endOdometer: lastPoint?.odometer,
-        },
-        stops: mergedStops,
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  } catch (error: unknown) {
-    console.error('Error extracting waypoints:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    console.log(`Retrieved ${drives.length} drives from Tessie`);
+
+    if (drives.length === 0) {
+      return new Response(JSON.stringify({ waypoints: [], totalDrives: 0 }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Sort drives chronologically (oldest first)
+    drives.sort((a, b) => a.started_at - b.started_at);
+
+    // Group stops: identify significant stopping points
+    const waypoints: Waypoint[] = [];
+    let waypointId = 1;
+    let lastLocation = { lat: 0, lon: 0 };
+    let cumulativeDistance = 0;
+
+    for (let i = 0; i < drives.length; i++) {
+      const drive = drives[i];
+      const nextDrive = drives[i + 1];
+
+      // Calculate dwell time at end of this drive
+      let dwellMinutes = 0;
+      if (nextDrive) {
+        dwellMinutes = (nextDrive.started_at - drive.ended_at) / 60;
+      }
+
+      // Calculate distance from last waypoint
+      const distanceFromLast = lastLocation.lat !== 0 
+        ? haversineDistance(lastLocation.lat, lastLocation.lon, drive.ending_latitude, drive.ending_longitude)
+        : 0;
+
+      cumulativeDistance += drive.odometer_distance;
+
+      // A significant stop: either long dwell time OR significant distance from last waypoint
+      const isSignificantStop = dwellMinutes >= minDwellMinutes || 
+        (distanceFromLast >= minDistanceMiles && dwellMinutes >= 15) ||
+        i === drives.length - 1; // Always include final destination
+
+      if (isSignificantStop && drive.ending_latitude && drive.ending_longitude) {
+        // Check if this is too close to the last waypoint (merge if < 2 miles)
+        const lastWaypoint = waypoints[waypoints.length - 1];
+        if (lastWaypoint) {
+          const distToLast = haversineDistance(
+            lastWaypoint.latitude, lastWaypoint.longitude,
+            drive.ending_latitude, drive.ending_longitude
+          );
+          if (distToLast < 2) {
+            // Merge: update departure time and dwell time
+            lastWaypoint.departedAt = nextDrive 
+              ? new Date(nextDrive.started_at * 1000).toISOString()
+              : new Date(drive.ended_at * 1000).toISOString();
+            lastWaypoint.dwellTimeMinutes += dwellMinutes;
+            continue;
+          }
+        }
+
+        const waypoint: Waypoint = {
+          id: waypointId++,
+          name: extractLocationName(drive.ending_location),
+          location: drive.ending_location,
+          latitude: drive.ending_latitude,
+          longitude: drive.ending_longitude,
+          arrivedAt: new Date(drive.ended_at * 1000).toISOString(),
+          departedAt: nextDrive 
+            ? new Date(nextDrive.started_at * 1000).toISOString()
+            : new Date(drive.ended_at * 1000).toISOString(),
+          dwellTimeMinutes: Math.round(dwellMinutes),
+          odometerMiles: Math.round(drive.ending_odometer),
+          distanceSinceLastStop: Math.round(cumulativeDistance),
+          batteryOnArrival: drive.ending_battery,
+        };
+
+        waypoints.push(waypoint);
+        lastLocation = { lat: drive.ending_latitude, lon: drive.ending_longitude };
+        cumulativeDistance = 0;
+      }
+    }
+
+    // Calculate journey statistics
+    const totalMiles = drives.length > 0 
+      ? drives[drives.length - 1].ending_odometer - drives[0].starting_odometer 
+      : 0;
+    const totalEnergy = drives.reduce((sum, d) => sum + (d.energy_used || 0), 0);
+    const journeyStart = new Date(drives[0].started_at * 1000).toISOString();
+    const journeyEnd = new Date(drives[drives.length - 1].ended_at * 1000).toISOString();
+
+    console.log(`Extracted ${waypoints.length} waypoints, ${Math.round(totalMiles)} total miles`);
+
+    return new Response(JSON.stringify({
+      waypoints,
+      statistics: {
+        totalDrives: drives.length,
+        totalWaypoints: waypoints.length,
+        totalMiles: Math.round(totalMiles),
+        totalEnergyKwh: Math.round(totalEnergy * 10) / 10,
+        efficiencyWhMi: totalMiles > 0 ? Math.round((totalEnergy * 1000) / totalMiles) : 0,
+        journeyStart,
+        journeyEnd,
+      }
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    console.error('Extract waypoints error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });
