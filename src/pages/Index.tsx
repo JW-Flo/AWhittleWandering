@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import JourneyMap from '@/components/JourneyMap';
 import { 
   Navigation, 
   MapPin, 
@@ -17,12 +19,26 @@ export default function Index() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [scrollY, setScrollY] = useState(0);
+  const [mapboxToken, setMapboxToken] = useState('');
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
     window.addEventListener('scroll', handleScroll);
+    fetchMapboxToken();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const fetchMapboxToken = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+      if (error) throw error;
+      if (data?.token) {
+        setMapboxToken(data.token);
+      }
+    } catch (error) {
+      console.error('Error fetching Mapbox token:', error);
+    }
+  };
 
   if (loading) {
     return (
@@ -225,11 +241,21 @@ export default function Index() {
             Interactive maps, real-time data, and the complete story of an unforgettable summer.
           </p>
 
-          <div className="max-w-4xl mx-auto aspect-video rounded-2xl bg-background/50 border border-border shadow-elevated flex items-center justify-center">
-            <div className="text-center space-y-4">
-              <Navigation className="w-16 h-16 text-primary mx-auto opacity-50" />
-              <p className="text-muted-foreground">Interactive route map coming soon</p>
-            </div>
+          <div className="max-w-5xl mx-auto aspect-video rounded-2xl overflow-hidden border border-border shadow-elevated">
+            {mapboxToken ? (
+              <JourneyMap 
+                className="h-full w-full"
+                mapboxToken={mapboxToken}
+                interactive={true}
+              />
+            ) : (
+              <div className="h-full w-full bg-background/50 flex items-center justify-center">
+                <div className="text-center space-y-4">
+                  <Navigation className="w-16 h-16 text-primary mx-auto animate-pulse" />
+                  <p className="text-muted-foreground">Loading map...</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
