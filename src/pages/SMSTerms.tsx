@@ -7,12 +7,13 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Logo } from '@/components/Logo';
+import { Footer } from '@/components/layout/Footer';
 
 export default function SMSTerms() {
   const [showConsentPreview, setShowConsentPreview] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 flex flex-col">
       {/* Header */}
       <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -352,26 +353,18 @@ export default function SMSTerms() {
           </CardContent>
         </Card>
 
-        {/* Contact & Legal */}
-        <div className="text-center text-sm text-muted-foreground space-y-4 py-8">
+        {/* Contact Section */}
+        <div className="text-center text-sm text-muted-foreground py-8">
           <p>
             Questions about our SMS service? Contact us at{' '}
             <a href="mailto:support@awhittlewandering.com" className="text-primary hover:underline">
               support@awhittlewandering.com
             </a>
           </p>
-          <div className="flex items-center justify-center gap-4 flex-wrap">
-            <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
-            <span>•</span>
-            <Link to="/settings" className="hover:text-foreground transition-colors">Settings</Link>
-            <span>•</span>
-            <Link to="/explore" className="hover:text-foreground transition-colors">Explore Journeys</Link>
-          </div>
-          <p className="text-xs">
-            © {new Date().getFullYear()} A Whittle Wandering. All rights reserved.
-          </p>
         </div>
       </main>
+      
+      <Footer variant="minimal" />
     </div>
   );
 }
