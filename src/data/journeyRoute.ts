@@ -22,7 +22,7 @@ export const journeyWaypoints: JourneyWaypoint[] = [
     date: "Jun 3-5", 
     state: "TX", 
     type: "start", 
-    description: "Journey begins in the Sparkling City by the Sea. Three days of prep, final checks on Shadowfax, and saying goodbye before the adventure of a lifetime.",
+    description: "Journey begins in the Sparkling City by the Sea. My buddy Matt Lujan, experienced overlander, helped get Shadowfax road-ready with final checks, cargo organization, and packing strategies. Three days of prep before the adventure of a lifetime.",
     elevation: 7
   },
   { 
@@ -48,12 +48,32 @@ export const journeyWaypoints: JourneyWaypoint[] = [
   { 
     lat: 30.881956, lng: -102.301636, 
     name: "Fort Stockton", 
-    date: "Jun 7", 
+    date: "Jun 7-8", 
     state: "TX", 
-    type: "charging", 
-    description: "Gateway to Big Bend country. Overnight in vast West Texas desert. Home to Paisano Pete, the world's largest roadrunner statue.",
+    type: "highlight", 
+    description: "The breakdown. 30 miles east of town, alignment issue forced a tow into Fort Stockton. Spent the night troubleshooting. Home to Paisano Pete, the world's largest roadrunner - an ironic mascot when your car won't move.",
     miles: 168,
     elevation: 3012
+  },
+  { 
+    lat: 31.044340, lng: -104.831610, 
+    name: "Van Horn", 
+    date: "Jun 8-9", 
+    state: "TX", 
+    type: "waypoint", 
+    description: "Tried pushing through the alignment issue - didn't work. Second tow from Fort Stockton to Van Horn. Another night in the desert, but the stars out here are incredible. Blue Origin's launch site is nearby.",
+    miles: 75,
+    elevation: 4010
+  },
+  { 
+    lat: 31.761878, lng: -106.485022, 
+    name: "El Paso", 
+    date: "Jun 9-10", 
+    state: "TX", 
+    type: "highlight", 
+    description: "Long tow from Van Horn to El Paso - finally found a Tesla service center. Sun City at the western tip of Texas, overlooking Juarez. Got Shadowfax fixed and back on the road. The journey continues.",
+    miles: 120,
+    elevation: 3740
   },
 
   // === NEW MEXICO ===
@@ -382,86 +402,118 @@ export const journeyWaypoints: JourneyWaypoint[] = [
     elevation: 466
   },
 
-  // === ILLINOIS ===
+  // === ILLINOIS - MIDWEST LOOP ===
   { 
     lat: 41.878113, lng: -87.629799, 
     name: "Chicago", 
-    date: "Jul 11", 
+    date: "Jul 10", 
     state: "IL", 
     type: "highlight", 
-    description: "Windy City did not disappoint. Deep dish pizza, The Bean, magnificent lakefront, and architecture boat tour. Could easily spend weeks here.",
-    miles: 297,
-    elevation: 594
-  },
-
-  // === WISCONSIN ===
-  { 
-    lat: 43.038902, lng: -87.906471, 
-    name: "Milwaukee", 
-    date: "Jul 10", 
-    state: "WI", 
-    type: "waypoint", 
-    description: "Brew City on Lake Michigan. Beautiful art museum shaped like wings. Cheese curds and craft beer did not disappoint.",
+    description: "Windy City! Deep dish pizza, Lake Michigan skyline, and the Bean. Starting point for the Midwest friend tour. The energy here is electric.",
     miles: 92,
-    elevation: 617
-  },
-
-  // === MICHIGAN ===
-  { 
-    lat: 42.331429, lng: -83.045753, 
-    name: "Detroit", 
-    date: "Jul 12", 
-    state: "MI", 
-    type: "highlight", 
-    description: "Motor City making a comeback! Motown Museum was emotional. Belle Isle views and amazing revitalized downtown. Go Lions!",
-    miles: 281,
-    elevation: 600
+    elevation: 594
   },
 
   // === INDIANA ===
   { 
-    lat: 39.768402, lng: -86.158066, 
-    name: "Indianapolis", 
-    date: "Jul 13", 
+    lat: 39.466702, lng: -87.413909, 
+    name: "Terre Haute", 
+    date: "Jul 10-11", 
     state: "IN", 
     type: "highlight", 
-    description: "Racing Capital of the World. Indianapolis Motor Speedway is massive - kissed the bricks! Monument Circle is surprisingly beautiful.",
-    miles: 282,
-    elevation: 715
+    description: "Stayed with my buddy Jack Lavey. Great catching up over beers and stories. Indiana hospitality at its finest. Jack's been a solid friend - good to see him thriving.",
+    miles: 178,
+    elevation: 499
   },
 
-  // === KENTUCKY ===
+  // === MICHIGAN ===
   { 
-    lat: 38.252666, lng: -85.758453, 
-    name: "Louisville", 
-    date: "Jul 14", 
-    state: "KY", 
+    lat: 43.234206, lng: -86.248394, 
+    name: "Muskegon", 
+    date: "Jul 12", 
+    state: "MI", 
     type: "highlight", 
-    description: "Derby City! Churchill Downs, Louisville Slugger factory, and bourbon everywhere. Big Brown Hotel was gorgeous.",
-    miles: 114,
-    elevation: 466
+    description: "Drove north along Lake Michigan. Met Alyssa here - spent the day exploring the dunes and lakeshore. Beautiful Michigan summer vibes.",
+    miles: 220,
+    elevation: 620
+  },
+  { 
+    lat: 41.886742, lng: -86.614445, 
+    name: "Warren Dunes", 
+    date: "Jul 12-13", 
+    state: "MI", 
+    type: "highlight", 
+    description: "Warren Dunes State Park with Alyssa. Shrooms under the stars until 6AM watching the sunrise over Lake Michigan. One of those magical, unforgettable nights. The dunes were alive.",
+    miles: 90,
+    elevation: 650
   },
 
   // === OHIO ===
   { 
-    lat: 41.499320, lng: -81.694359, 
-    name: "Cleveland", 
-    date: "Jul 15", 
+    lat: 39.634760, lng: -84.651280, 
+    name: "Quiet Creek Valley", 
+    date: "Jul 13", 
     state: "OH", 
     type: "waypoint", 
-    description: "Rock and Roll Hall of Fame is a must for music lovers. Cleveland rocks! Great Lake Erie waterfront.",
-    miles: 344,
-    elevation: 653
+    description: "Peaceful overnight stop just south of Camden, Ohio. Needed to decompress after the Warren Dunes adventure. Rural Ohio calm before Cincinnati.",
+    miles: 210,
+    elevation: 980
   },
   { 
     lat: 39.177100, lng: -84.429360, 
     name: "Cincinnati", 
+    date: "Jul 14-15", 
+    state: "OH", 
+    type: "highlight", 
+    description: "Queen City on the Ohio River. Saw my Cousin Danny and his family - great to reconnect with family on the road. Skyline Chili is definitely unique. Over-the-Rhine neighborhood is incredible.",
+    miles: 35,
+    elevation: 483
+  },
+
+  // === KENTUCKY ===
+  { 
+    lat: 38.040584, lng: -84.503716, 
+    name: "Lexington", 
+    date: "Jul 15", 
+    state: "KY", 
+    type: "waypoint", 
+    description: "Horse Capital of the World. Quick jaunt south from Cincinnati. Beautiful rolling bluegrass country. Bourbon trail temptations everywhere.",
+    miles: 83,
+    elevation: 978
+  },
+
+  // === OHIO - DIAGONAL ROUTE ===
+  { 
+    lat: 39.961178, lng: -82.998795, 
+    name: "Columbus", 
+    date: "Jul 16", 
+    state: "OH", 
+    type: "waypoint", 
+    description: "Ohio's capital. Short Stack donuts were incredible. OSU campus is massive. Starting the diagonal drive through Ohio.",
+    miles: 107,
+    elevation: 902
+  },
+  { 
+    lat: 41.499320, lng: -81.694359, 
+    name: "Cleveland", 
     date: "Jul 16", 
     state: "OH", 
     type: "highlight", 
-    description: "Queen City on the Ohio River. Skyline Chili is... unique. Over-the-Rhine neighborhood is incredible. Go Bengals!",
-    miles: 249,
-    elevation: 483
+    description: "Rock and Roll Hall of Fame is a must for music lovers. Cleveland rocks! Great Lake Erie waterfront. The diagonal through Ohio complete.",
+    miles: 143,
+    elevation: 653
+  },
+
+  // === PENNSYLVANIA ===
+  { 
+    lat: 42.129224, lng: -80.085059, 
+    name: "Erie", 
+    date: "Jul 17", 
+    state: "PA", 
+    type: "waypoint", 
+    description: "Presque Isle State Park on Lake Erie. Pennsylvania's lake gem. Beautiful beaches and trails. Charging up for the push east.",
+    miles: 100,
+    elevation: 728
   },
 
   // === NEW YORK ===

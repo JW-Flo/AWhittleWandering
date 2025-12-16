@@ -35,27 +35,34 @@ export function useTessieData(vinOverride?: string, autoRefresh = true, refreshI
   const [lastFetch, setLastFetch] = useState<Date | null>(null);
   const [vin, setVin] = useState<string | null>(vinOverride || null);
 
-  // Fetch VIN from database if not provided
+  // Flagship VIN for the A Whittle Wandering journey (Shadowfax)
+  const FLAGSHIP_VIN = '5YJYGDEE5LF027324';
+
+  // Fetch VIN from database if not provided, fallback to flagship VIN
   useEffect(() => {
     if (vinOverride) {
       setVin(vinOverride);
       return;
     }
     
-    if (!user) return;
-
     const fetchVin = async () => {
-      const { data: vehicle } = await supabase
-        .from('vehicles')
-        .select('vin')
-        .eq('user_id', user.id)
-        .not('vin', 'is', null)
-        .limit(1)
-        .single();
+      if (user) {
+        const { data: vehicle } = await supabase
+          .from('vehicles')
+          .select('vin')
+          .eq('user_id', user.id)
+          .not('vin', 'is', null)
+          .limit(1)
+          .maybeSingle();
 
-      if (vehicle?.vin) {
-        setVin(vehicle.vin);
+        if (vehicle?.vin) {
+          setVin(vehicle.vin);
+          return;
+        }
       }
+      
+      // Fallback to flagship VIN for demo/showcase
+      setVin(FLAGSHIP_VIN);
     };
 
     fetchVin();
