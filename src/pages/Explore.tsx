@@ -7,14 +7,17 @@ import LocationMediaGallery from '@/components/LocationMediaGallery';
 import JourneyTimeline from '@/components/JourneyTimeline';
 import PhotoUpload from '@/components/PhotoUpload';
 import LiveVehicleStatus from '@/components/LiveVehicleStatus';
+import FollowButton from '@/components/journey/FollowButton';
 import { JourneyWaypoint } from '@/data/journeyRoute';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Map, Image, Calendar, Zap, Activity, CheckCircle, Unlock } from 'lucide-react';
+import { Map, Image, Calendar, Zap, Activity, CheckCircle, Unlock, Settings } from 'lucide-react';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 export default function Explore() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { hasViewedFlagship, markFlagshipViewed } = useFlagshipGating();
   const [mapboxToken, setMapboxToken] = useState<string>('');
   const [currentWaypoint, setCurrentWaypoint] = useState<JourneyWaypoint | null>(null);
@@ -22,6 +25,9 @@ export default function Explore() {
   const [isLoading, setIsLoading] = useState(true);
   const [journeyId, setJourneyId] = useState<string | null>(null);
   const [explorationProgress, setExplorationProgress] = useState(0);
+  
+  // Flagship journey owner ID (your user ID for the AWW journey)
+  const flagshipOwnerId = 'flagship-owner';
 
   useEffect(() => {
     async function fetchData() {
@@ -106,11 +112,21 @@ export default function Explore() {
               )}
             </div>
             {currentWaypoint && (
-              <div className="text-right">
+              <div className="text-right hidden md:block">
                 <p className="font-semibold text-foreground">{currentWaypoint.name}</p>
                 <p className="text-sm text-muted-foreground">{currentWaypoint.state} • {currentWaypoint.date}</p>
               </div>
             )}
+            
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+              {journeyId && (
+                <FollowButton journeyId={journeyId} journeyOwnerId={flagshipOwnerId} />
+              )}
+              <Button variant="ghost" size="icon" onClick={() => navigate('/settings')}>
+                <Settings className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
