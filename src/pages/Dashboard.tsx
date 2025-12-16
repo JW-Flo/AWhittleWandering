@@ -12,6 +12,7 @@ import AdvancedAnalyticsDashboard from '@/components/AdvancedAnalyticsDashboard'
 import JourneyTimeline from '@/components/JourneyTimeline';
 import MediaGallery from '@/components/MediaGallery';
 import LiveVehicleStatus from '@/components/LiveVehicleStatus';
+import WeatherOverlay from '@/components/WeatherOverlay';
 import StatesProgressMap from '@/components/StatesProgressMap';
 import CSVImport from '@/components/CSVImport';
 import PhotoUpload from '@/components/PhotoUpload';
@@ -307,44 +308,55 @@ export default function Dashboard() {
 
           {/* Live Tab - Real-time vehicle data */}
           <TabsContent value="live" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <LiveVehicleStatus />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <LiveVehicleStatus />
+              </div>
               
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Activity className="w-5 h-5 text-primary" />
-                    Real-Time Tracking
-                  </CardTitle>
-                  <CardDescription>
-                    Live data from your Tesla via Tessie API
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <h4 className="font-medium mb-2">How it works</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• Tessie polls your vehicle every 30 seconds</li>
-                      <li>• Battery, location, and temperature data are updated live</li>
-                      <li>• Drive and charge sessions are automatically logged</li>
-                      <li>• Historical data is available for analysis</li>
-                    </ul>
-                  </div>
-                  
-                  {vehicleState && (
-                    <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-                      <p className="text-sm font-medium text-primary mb-1">Current Status</p>
-                      <p className="text-2xl font-bold">
-                        {vehicleState.batteryLevel}% Battery
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        ~{Math.round(vehicleState.batteryRange)} mi range remaining
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              {/* Weather Overlay */}
+              {vehicleState && (
+                <WeatherOverlay 
+                  lat={vehicleState.latitude} 
+                  lng={vehicleState.longitude}
+                  locationName="Current Location"
+                />
+              )}
             </div>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-primary" />
+                  Real-Time Tracking
+                </CardTitle>
+                <CardDescription>
+                  Live data from your Tesla via Tessie API
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <h4 className="font-medium mb-2">How it works</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Tessie polls your vehicle every 30 seconds</li>
+                    <li>• Battery, location, and temperature data are updated live</li>
+                    <li>• Drive and charge sessions are automatically logged</li>
+                    <li>• Historical data is available for analysis</li>
+                  </ul>
+                </div>
+                
+                {vehicleState && (
+                  <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                    <p className="text-sm font-medium text-primary mb-1">Current Status</p>
+                    <p className="text-2xl font-bold">
+                      {vehicleState.batteryLevel}% Battery
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      ~{Math.round(vehicleState.batteryRange)} mi range remaining
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
             
             {/* Live Map with current location */}
             {vehicleState && mapboxToken && (
