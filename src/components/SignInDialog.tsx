@@ -22,10 +22,11 @@ interface SignInDialogProps {
 }
 
 export default function SignInDialog({ open, onOpenChange }: SignInDialogProps) {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, mfaChallenge, completeMFA, cancelMFA } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
   const [passwordWarning, setPasswordWarning] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState('');
 
   // Sign In form state
   const [signInEmail, setSignInEmail] = useState('');
@@ -41,7 +42,13 @@ export default function SignInDialog({ open, onOpenChange }: SignInDialogProps) 
     e.preventDefault();
     setIsLoading(true);
 
-    const { error } = await signIn(signInEmail, signInPassword);
+    const { error, mfaRequired } = await signIn(signInEmail, signInPassword);
+
+    if (mfaRequired) {
+      // MFA is required, the auth context will handle showing MFA challenge
+      setIsLoading(false);
+      return;
+    }
 
     if (error) {
       toast({
@@ -59,6 +66,36 @@ export default function SignInDialog({ open, onOpenChange }: SignInDialogProps) 
     }
 
     setIsLoading(false);
+  };
+
+  const handleMFAVerify = async () => {
+    if (mfaCode.length !== 6) return;
+    
+    setIsLoading(true);
+    const { error } = await completeMFA(mfaCode);
+    
+    if (error) {
+      toast({
+        title: 'Verification failed',
+        description: 'Invalid code. Please try again.',
+        variant: 'destructive',
+      });
+      setMfaCode('');
+    } else {
+      toast({
+        title: 'Welcome back!',
+        description: 'Successfully signed in.',
+      });
+      onOpenChange(false);
+      resetForms();
+    }
+    
+    setIsLoading(false);
+  };
+
+  const handleCancelMFA = () => {
+    cancelMFA();
+    setMfaCode('');
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -136,8 +173,66 @@ export default function SignInDialog({ open, onOpenChange }: SignInDialogProps) 
     setSignUpConfirmPassword('');
     setSignUpName('');
     setPasswordWarning(null);
+    setMfaCode('');
   };
 
+  // Show MFA verification if challenge is active
+  if (mfaChallenge) {
+    return (
+      <Dialog open={open} onOpenChange={(isOpen) => {
+        if (!isOpen) handleCancelMFA();
+        onOpenChange(isOpen);
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+              <Shield className="w-6 h-6 text-primary" />
+            </div>
+            <DialogTitle className="text-2xl font-display">Two-Factor Authentication</DialogTitle>
+            <DialogDescription>
+              Enter the 6-digit code from your authenticator app
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="mfa-code">Verification Code</Label>
+              <Input
+                id="mfa-code"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                placeholder="000000"
+                value={mfaCode}
+                onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
+                onKeyDown={(e) => e.key === 'Enter' && handleMFAVerify()}
+                className="text-center text-2xl tracking-widest font-mono"
+                autoFocus
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handleCancelMFA}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleMFAVerify}
+                disabled={mfaCode.length !== 6 || isLoading}
+                className="flex-1"
+              >
+                {isLoading ? 'Verifying...' : 'Verify'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
