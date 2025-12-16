@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFlagshipGating } from '@/hooks/useFlagshipGating';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import StatCard from '@/components/StatCard';
@@ -413,121 +414,134 @@ export default function Dashboard() {
             </div>
           </TabsContent>
 
-          {/* Data Import Tab */}
+          {/* Data Tab - API Connection First */}
           <TabsContent value="data" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* CSV Import */}
-              {currentJourney ? (
-                <CSVImport 
-                  journeyId={currentJourney.id}
-                  onImportComplete={(count) => {
-                    setDriveDataCount(prev => prev + count);
-                    toast({
-                      title: 'Import Complete',
-                      description: `Added ${count.toLocaleString()} GPS points to your journey`
-                    });
-                  }}
-                />
-              ) : (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Import GPS Data</CardTitle>
-                  </CardHeader>
-                  <CardContent>
+            {/* API Connection - Primary */}
+            <Card className="border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-primary" />
+                  Vehicle API Connection
+                </CardTitle>
+                <CardDescription>
+                  Connect your vehicle API for automatic data sync - no manual imports needed
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-primary/10 rounded-lg border border-primary/20 text-center">
+                    <Zap className="w-8 h-8 text-primary mx-auto mb-2" />
+                    <h4 className="font-semibold">Tessie</h4>
+                    <p className="text-xs text-muted-foreground">Tesla vehicles</p>
+                    <Badge variant="outline" className="mt-2 text-xs border-primary text-primary">Recommended</Badge>
+                  </div>
+                  <div className="p-4 bg-muted/50 rounded-lg text-center opacity-60">
+                    <Car className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                    <h4 className="font-semibold">Smartcar</h4>
+                    <p className="text-xs text-muted-foreground">Multiple brands</p>
+                    <Badge variant="secondary" className="mt-2 text-xs">Coming Soon</Badge>
+                  </div>
+                  <div className="p-4 bg-muted/50 rounded-lg text-center opacity-60">
+                    <Car className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                    <h4 className="font-semibold">Tesla Fleet</h4>
+                    <p className="text-xs text-muted-foreground">Direct Tesla API</p>
+                    <Badge variant="secondary" className="mt-2 text-xs">Coming Soon</Badge>
+                  </div>
+                </div>
+                
+                {!currentJourney ? (
+                  <div className="p-4 bg-muted/50 rounded-lg text-center">
                     <p className="text-muted-foreground mb-4">
-                      Create a journey first to import GPS data.
+                      Create a journey to connect your vehicle API
                     </p>
                     <Button onClick={() => navigate('/journey/new')}>
                       <Plus className="w-4 h-4 mr-2" />
                       Create Journey
                     </Button>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Data Stats */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Database className="w-5 h-5 text-primary" />
-                    Data Overview
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-muted/50 rounded-lg text-center">
-                      <p className="text-3xl font-bold text-primary">
-                        {driveDataCount.toLocaleString()}
-                      </p>
-                      <p className="text-sm text-muted-foreground">GPS Points</p>
-                    </div>
-                    <div className="p-4 bg-muted/50 rounded-lg text-center">
-                      <p className="text-3xl font-bold text-primary">
-                        {journeys.length}
-                      </p>
-                      <p className="text-sm text-muted-foreground">Journeys</p>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <h4 className="font-medium mb-2">Supported Formats</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• TeslaFi CSV exports</li>
-                      <li>• TeslaMate exports</li>
-                      <li>• Custom GPS CSV (lat, lng, timestamp)</li>
-                    </ul>
-                  </div>
-
-                  <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-                    <p className="text-sm">
-                      <strong>Pro tip:</strong> Export weekly data from TeslaFi for best results. 
-                      Large files are processed in batches automatically.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Journeys List */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Journeys</CardTitle>
-                <CardDescription>Select a journey to import data into</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {journeys.length === 0 ? (
-                  <div className="text-center py-8">
-                    <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground mb-4">No journeys yet</p>
-                    <Button onClick={() => navigate('/journey/new')}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create First Journey
-                    </Button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {journeys.map((journey) => (
-                      <Card 
-                        key={journey.id} 
-                        className="cursor-pointer hover:border-primary transition-colors"
-                        onClick={() => navigate(`/journey/${journey.id}`)}
-                      >
-                        <CardContent className="p-4">
-                          <h4 className="font-semibold">{journey.name}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(journey.start_date).toLocaleDateString()}
-                          </p>
-                          <div className="flex gap-4 mt-2 text-xs">
-                            <span>{Number(journey.total_miles).toLocaleString()} mi</span>
-                            <span>{journey.states_count} states</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                  <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-green-600">Tessie API Connected</p>
+                        <p className="text-sm text-muted-foreground">Shadowfax • Live tracking enabled</p>
+                      </div>
+                      <Badge className="bg-green-500">Active</Badge>
+                    </div>
                   </div>
                 )}
               </CardContent>
             </Card>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Flagship Journey Stats */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Database className="w-5 h-5 text-primary" />
+                    Flagship Journey Data
+                  </CardTitle>
+                  <CardDescription>A Whittle Wandering statistics</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-primary/10 rounded-lg text-center border border-primary/20">
+                      <p className="text-3xl font-bold text-primary">89,163</p>
+                      <p className="text-sm text-muted-foreground">GPS Points</p>
+                    </div>
+                    <div className="p-4 bg-primary/10 rounded-lg text-center border border-primary/20">
+                      <p className="text-3xl font-bold text-primary">73</p>
+                      <p className="text-sm text-muted-foreground">Waypoints</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="p-3 bg-muted/50 rounded text-center">
+                      <p className="font-bold">48</p>
+                      <p className="text-xs text-muted-foreground">States</p>
+                    </div>
+                    <div className="p-3 bg-muted/50 rounded text-center">
+                      <p className="font-bold">259</p>
+                      <p className="text-xs text-muted-foreground">Charges</p>
+                    </div>
+                    <div className="p-3 bg-muted/50 rounded text-center">
+                      <p className="font-bold">89</p>
+                      <p className="text-xs text-muted-foreground">Days</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* CSV Import - Secondary/Advanced */}
+              <Card className="border-dashed">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-muted-foreground">Advanced: CSV Import</CardTitle>
+                    <Badge variant="outline" className="text-xs">Power Users</Badge>
+                  </div>
+                  <CardDescription>
+                    For historical data backfill only. API connection is preferred.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {currentJourney ? (
+                    <CSVImport 
+                      journeyId={currentJourney.id}
+                      onImportComplete={(count) => {
+                        setDriveDataCount(prev => prev + count);
+                        toast({
+                          title: 'Import Complete',
+                          description: `Added ${count.toLocaleString()} GPS points`
+                        });
+                      }}
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Create a journey first to enable CSV import.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </main>

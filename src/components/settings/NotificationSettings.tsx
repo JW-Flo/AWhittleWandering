@@ -125,10 +125,10 @@ export default function NotificationSettings() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Bell className="w-5 h-5 text-primary" />
-          Notification Settings
+          Journey Notification Settings
         </CardTitle>
         <CardDescription>
-          Choose how you want to receive updates from journeys you follow
+          Choose how you receive updates for journeys you follow. These apply per-journey.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">

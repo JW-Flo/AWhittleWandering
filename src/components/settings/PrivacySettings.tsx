@@ -100,53 +100,22 @@ export default function PrivacySettings() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Shield className="w-5 h-5 text-primary" />
-          Privacy Settings
+          Privacy & Tracking Settings
         </CardTitle>
         <CardDescription>
-          Control how your location and media are shared with others
+          Control how your location is shared and tracked during journeys
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Anonymize Username */}
-        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <User className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <Label className="text-base">Anonymize Profile</Label>
-              <p className="text-sm text-muted-foreground">
-                Hide your real name, show display name instead
-              </p>
-            </div>
-          </div>
-          <Switch
-            checked={settings.anonymize_username}
-            onCheckedChange={(checked) => setSettings(s => ({ ...s, anonymize_username: checked }))}
-          />
-        </div>
-
-        {settings.anonymize_username && (
-          <div className="pl-4 border-l-2 border-primary/20">
-            <Label>Display Name</Label>
-            <Input
-              value={settings.display_name || ''}
-              onChange={(e) => setSettings(s => ({ ...s, display_name: e.target.value }))}
-              placeholder="Enter a display name..."
-              className="mt-1"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              This name will be shown publicly instead of your real name
-            </p>
-          </div>
-        )}
-
-        {/* Location Privacy */}
+        {/* Location Tracking Privacy */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <MapPin className="w-4 h-4 text-muted-foreground" />
-            <Label>Default Location Privacy</Label>
+            <Label className="text-base font-semibold">Location Tracking Privacy</Label>
           </div>
+          <p className="text-sm text-muted-foreground">
+            Control how precisely your location is shared with followers and on public journeys
+          </p>
           <Select
             value={settings.default_location_privacy}
             onValueChange={(value: LocationPrivacy) => setSettings(s => ({ ...s, default_location_privacy: value }))}
@@ -158,7 +127,7 @@ export default function PrivacySettings() {
               <SelectItem value="exact">
                 <div className="flex items-center gap-2">
                   <span>Exact Location</span>
-                  <Badge variant="outline" className="text-xs">Full GPS</Badge>
+                  <Badge variant="destructive" className="text-xs">Full GPS visible</Badge>
                 </div>
               </SelectItem>
               <SelectItem value="city">
@@ -181,8 +150,21 @@ export default function PrivacySettings() {
               </SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Display Name */}
+        <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
+          <div className="flex items-center gap-2">
+            <User className="w-4 h-4 text-muted-foreground" />
+            <Label>Display Name (Username)</Label>
+          </div>
+          <Input
+            value={settings.display_name || ''}
+            onChange={(e) => setSettings(s => ({ ...s, display_name: e.target.value }))}
+            placeholder="Your public username..."
+          />
           <p className="text-xs text-muted-foreground">
-            You can override this per-post when sharing
+            This name appears on leaderboards and public journeys. Choose something you're comfortable sharing.
           </p>
         </div>
 
