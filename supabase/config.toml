@@ -24,6 +24,9 @@ site_url = "http://localhost:3000"
 [functions.tessie]
 verify_jwt = true
 
+[functions.extract-waypoints]
+verify_jwt = true
+
 [functions.weather]
 verify_jwt = true
 
