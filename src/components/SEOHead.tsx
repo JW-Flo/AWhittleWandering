@@ -11,8 +11,8 @@ interface SEOHeadProps {
 }
 
 export const SEOHead = ({
-  title = "A Whittle Wandering - Track Your Adventures Across the World",
-  description = "Document and share your epic road trips with interactive maps, real-time vehicle tracking, and beautiful analytics. Join the adventure community.",
+  title = "A Whittle Wandering - 48 State Tesla Adventure",
+  description = "Follow the 48-state Tesla road trip. 15,847 miles, 89 days, one electric vehicle named Shadowfax. Track your own journeys too.",
   image = "https://www.awhittlewandering.com/og-image.jpg",
   url = "https://www.awhittlewandering.com",
   type = "website",
