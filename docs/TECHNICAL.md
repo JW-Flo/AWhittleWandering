@@ -191,7 +191,15 @@ Provisions and manages D1 databases for journeys.
 **Actions:**
 - `provision`: Create new D1 database with schema
 - `status`: Get D1 stats for a journey
-- `delete`: Remove D1 database (cleanup)
+- `export`: Export all drive/charge data as JSON for download
+- `archive`: Move journey to cold storage with expiration
+- `unarchive`: Restore archived journey to active
+- `delete`: Permanently delete D1 database and all journey data
+
+**Archive Retention Policy:**
+- Active users (login within 30 days): 1 year retention
+- Inactive users: 90 days retention
+- Users should export data before archiving for permanent backup
 
 **Request:**
 ```json
