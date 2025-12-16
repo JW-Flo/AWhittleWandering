@@ -2,8 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import JourneyMap from '@/components/JourneyMap';
-import { 
+import ImmersiveJourneyMap from '@/components/ImmersiveJourneyMap';
+import {
   Navigation, 
   MapPin, 
   Zap, 
@@ -241,12 +241,11 @@ export default function Index() {
             Interactive maps, real-time data, and the complete story of an unforgettable summer.
           </p>
 
-          <div className="max-w-5xl mx-auto aspect-video rounded-2xl overflow-hidden border border-border shadow-elevated">
+          <div className="max-w-6xl mx-auto aspect-[16/10] rounded-2xl overflow-hidden border border-border shadow-elevated">
             {mapboxToken ? (
-              <JourneyMap 
+              <ImmersiveJourneyMap 
                 className="h-full w-full"
                 mapboxToken={mapboxToken}
-                interactive={true}
               />
             ) : (
               <div className="h-full w-full bg-background/50 flex items-center justify-center">
