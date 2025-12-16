@@ -39,14 +39,22 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!TESSIE_API_KEY) throw new Error('TESSIE_API_KEY not configured');
+    if (!TESSIE_API_KEY) {
+      console.error('TESSIE_API_KEY not configured');
+      throw new Error('TESSIE_API_KEY not configured');
+    }
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('Supabase credentials not configured');
       throw new Error('Supabase credentials not configured');
     }
 
+    console.log('Environment check passed, creating Supabase client');
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const { vin, fromDate, toDate, fullSync = false } = await req.json();
+    const body = await req.json();
+    const { vin, fromDate, toDate, fullSync = false } = body;
+    
+    console.log(`Request body: ${JSON.stringify(body)}`);
 
     if (!vin) throw new Error('VIN is required');
 
