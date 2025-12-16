@@ -32,7 +32,8 @@ import {
   Map,
   Database,
   Activity,
-  Compass
+  Compass,
+  Settings
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -165,6 +166,9 @@ export default function Dashboard() {
                 New Journey
               </Button>
             )}
+            <Button variant="ghost" size="icon" onClick={() => navigate('/settings')}>
+              <Settings className="w-4 h-4" />
+            </Button>
             <Button variant="ghost" size="icon" onClick={handleSignOut}>
               <LogOut className="w-4 h-4" />
             </Button>

@@ -251,6 +251,38 @@ export type Database = {
           },
         ]
       }
+      journey_followers: {
+        Row: {
+          approved: boolean | null
+          created_at: string
+          follower_user_id: string
+          id: string
+          journey_id: string
+        }
+        Insert: {
+          approved?: boolean | null
+          created_at?: string
+          follower_user_id: string
+          id?: string
+          journey_id: string
+        }
+        Update: {
+          approved?: boolean | null
+          created_at?: string
+          follower_user_id?: string
+          id?: string
+          journey_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_followers_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       journey_media: {
         Row: {
           caption: string | null
@@ -264,6 +296,9 @@ export type Database = {
           journey_id: string
           latitude: number | null
           location_name: string | null
+          location_privacy:
+            | Database["public"]["Enums"]["location_privacy_level"]
+            | null
           longitude: number | null
           people_tagged: string[] | null
           state_code: string | null
@@ -273,6 +308,7 @@ export type Database = {
           type: string
           updated_at: string
           user_id: string
+          visibility: Database["public"]["Enums"]["media_visibility"] | null
           width: number | null
         }
         Insert: {
@@ -287,6 +323,9 @@ export type Database = {
           journey_id: string
           latitude?: number | null
           location_name?: string | null
+          location_privacy?:
+            | Database["public"]["Enums"]["location_privacy_level"]
+            | null
           longitude?: number | null
           people_tagged?: string[] | null
           state_code?: string | null
@@ -296,6 +335,7 @@ export type Database = {
           type?: string
           updated_at?: string
           user_id: string
+          visibility?: Database["public"]["Enums"]["media_visibility"] | null
           width?: number | null
         }
         Update: {
@@ -310,6 +350,9 @@ export type Database = {
           journey_id?: string
           latitude?: number | null
           location_name?: string | null
+          location_privacy?:
+            | Database["public"]["Enums"]["location_privacy_level"]
+            | null
           longitude?: number | null
           people_tagged?: string[] | null
           state_code?: string | null
@@ -319,6 +362,7 @@ export type Database = {
           type?: string
           updated_at?: string
           user_id?: string
+          visibility?: Database["public"]["Enums"]["media_visibility"] | null
           width?: number | null
         }
         Relationships: [
@@ -390,11 +434,118 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          email_digest_frequency: string | null
+          email_enabled: boolean | null
+          id: string
+          notify_charging_stop: boolean | null
+          notify_new_waypoint: boolean | null
+          notify_photos: boolean | null
+          notify_state_crossing: boolean | null
+          phone_number: string | null
+          push_enabled: boolean | null
+          sms_enabled: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_digest_frequency?: string | null
+          email_enabled?: boolean | null
+          id?: string
+          notify_charging_stop?: boolean | null
+          notify_new_waypoint?: boolean | null
+          notify_photos?: boolean | null
+          notify_state_crossing?: boolean | null
+          phone_number?: string | null
+          push_enabled?: boolean | null
+          sms_enabled?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_digest_frequency?: string | null
+          email_enabled?: boolean | null
+          id?: string
+          notify_charging_stop?: boolean | null
+          notify_new_waypoint?: boolean | null
+          notify_photos?: boolean | null
+          notify_state_crossing?: boolean | null
+          phone_number?: string | null
+          push_enabled?: boolean | null
+          sms_enabled?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notification_queue: {
+        Row: {
+          body: string
+          channels: Database["public"]["Enums"]["notification_channel"][] | null
+          created_at: string
+          id: string
+          journey_id: string | null
+          notification_type: string
+          recipient_user_id: string
+          sent: boolean | null
+          sent_at: string | null
+          title: string
+        }
+        Insert: {
+          body: string
+          channels?:
+            | Database["public"]["Enums"]["notification_channel"][]
+            | null
+          created_at?: string
+          id?: string
+          journey_id?: string | null
+          notification_type: string
+          recipient_user_id: string
+          sent?: boolean | null
+          sent_at?: string | null
+          title: string
+        }
+        Update: {
+          body?: string
+          channels?:
+            | Database["public"]["Enums"]["notification_channel"][]
+            | null
+          created_at?: string
+          id?: string
+          journey_id?: string | null
+          notification_type?: string
+          recipient_user_id?: string
+          sent?: boolean | null
+          sent_at?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_queue_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
+          anonymize_username: boolean | null
           avatar_url: string | null
           bio: string | null
           created_at: string
+          default_location_privacy:
+            | Database["public"]["Enums"]["location_privacy_level"]
+            | null
+          default_media_visibility:
+            | Database["public"]["Enums"]["media_visibility"]
+            | null
+          display_name: string | null
           email: string | null
           full_name: string | null
           has_viewed_flagship: boolean | null
@@ -403,9 +554,17 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          anonymize_username?: boolean | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          default_location_privacy?:
+            | Database["public"]["Enums"]["location_privacy_level"]
+            | null
+          default_media_visibility?:
+            | Database["public"]["Enums"]["media_visibility"]
+            | null
+          display_name?: string | null
           email?: string | null
           full_name?: string | null
           has_viewed_flagship?: boolean | null
@@ -414,9 +573,17 @@ export type Database = {
           user_id: string
         }
         Update: {
+          anonymize_username?: boolean | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          default_location_privacy?:
+            | Database["public"]["Enums"]["location_privacy_level"]
+            | null
+          default_media_visibility?:
+            | Database["public"]["Enums"]["media_visibility"]
+            | null
+          display_name?: string | null
           email?: string | null
           full_name?: string | null
           has_viewed_flagship?: boolean | null
@@ -637,6 +804,9 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "premium"
+      location_privacy_level: "exact" | "city" | "region" | "state"
+      media_visibility: "public" | "followers" | "private"
+      notification_channel: "email" | "sms" | "push"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -765,6 +935,9 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "premium"],
+      location_privacy_level: ["exact", "city", "region", "state"],
+      media_visibility: ["public", "followers", "private"],
+      notification_channel: ["email", "sms", "push"],
     },
   },
 } as const
