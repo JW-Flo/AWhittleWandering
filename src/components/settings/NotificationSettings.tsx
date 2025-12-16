@@ -7,10 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Bell, Mail, Smartphone, Globe, MapPin, Zap, Camera, Loader2 } from 'lucide-react';
+import { Bell, Mail, Smartphone, Globe, MapPin, Zap, Camera, Loader2, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import SMSConsentDialog from './SMSConsentDialog';
 
 interface NotificationPrefs {
   email_enabled: boolean;
@@ -22,12 +23,16 @@ interface NotificationPrefs {
   notify_charging_stop: boolean;
   notify_state_crossing: boolean;
   notify_photos: boolean;
+  sms_consent_given: boolean;
+  sms_consent_timestamp: string | null;
 }
 
 export default function NotificationSettings() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showConsentDialog, setShowConsentDialog] = useState(false);
+  const [pendingPhoneNumber, setPendingPhoneNumber] = useState('');
   const [prefs, setPrefs] = useState<NotificationPrefs>({
     email_enabled: true,
     sms_enabled: false,
@@ -37,7 +42,9 @@ export default function NotificationSettings() {
     notify_new_waypoint: true,
     notify_charging_stop: false,
     notify_state_crossing: true,
-    notify_photos: true
+    notify_photos: true,
+    sms_consent_given: false,
+    sms_consent_timestamp: null
   });
 
   useEffect(() => {
@@ -55,15 +62,17 @@ export default function NotificationSettings() {
       if (error && error.code !== 'PGRST116') throw error;
       if (data) {
         setPrefs({
-          email_enabled: data.email_enabled,
-          sms_enabled: data.sms_enabled,
-          push_enabled: data.push_enabled,
+          email_enabled: data.email_enabled ?? true,
+          sms_enabled: data.sms_enabled ?? false,
+          push_enabled: data.push_enabled ?? true,
           phone_number: data.phone_number,
-          email_digest_frequency: data.email_digest_frequency as 'realtime' | 'daily' | 'weekly',
-          notify_new_waypoint: data.notify_new_waypoint,
-          notify_charging_stop: data.notify_charging_stop,
-          notify_state_crossing: data.notify_state_crossing,
-          notify_photos: data.notify_photos
+          email_digest_frequency: (data.email_digest_frequency as 'realtime' | 'daily' | 'weekly') ?? 'daily',
+          notify_new_waypoint: data.notify_new_waypoint ?? true,
+          notify_charging_stop: data.notify_charging_stop ?? false,
+          notify_state_crossing: data.notify_state_crossing ?? true,
+          notify_photos: data.notify_photos ?? true,
+          sms_consent_given: data.sms_consent_given ?? false,
+          sms_consent_timestamp: data.sms_consent_timestamp
         });
       }
     } catch (error) {
@@ -108,6 +117,39 @@ export default function NotificationSettings() {
     } else {
       toast.error('Push notification permission denied');
     }
+  };
+
+  const handleSMSConsent = async (consented: boolean, timestamp: string) => {
+    if (!user) return;
+
+    if (consented) {
+      // Log consent for compliance
+      try {
+        await supabase.from('sms_consent_log').insert({
+          user_id: user.id,
+          phone_number: pendingPhoneNumber || prefs.phone_number || '',
+          action: 'opt_in',
+          consent_given: true,
+          consent_timestamp: timestamp,
+          user_agent: navigator.userAgent
+        });
+      } catch (error) {
+        console.error('Error logging SMS consent:', error);
+      }
+
+      // Update preferences with consent
+      setPrefs(p => ({
+        ...p,
+        sms_enabled: true,
+        phone_number: pendingPhoneNumber || p.phone_number,
+        sms_consent_given: true,
+        sms_consent_timestamp: timestamp
+      }));
+      toast.success('SMS notifications enabled');
+    } else {
+      toast.info('SMS notifications not enabled');
+    }
+    setPendingPhoneNumber('');
   };
 
   if (loading) {
@@ -192,22 +234,54 @@ export default function NotificationSettings() {
             </div>
             <Switch
               checked={prefs.sms_enabled}
-              onCheckedChange={(checked) => setPrefs(p => ({ ...p, sms_enabled: checked }))}
+              onCheckedChange={(checked) => {
+                if (checked && !prefs.sms_consent_given) {
+                  // Need consent first - prompt for phone number then show dialog
+                  setPendingPhoneNumber(prefs.phone_number || '');
+                  setShowConsentDialog(true);
+                } else {
+                  setPrefs(p => ({ ...p, sms_enabled: checked }));
+                }
+              }}
             />
           </div>
 
           {prefs.sms_enabled && (
-            <div className="pl-4 border-l-2 border-sunset/20">
-              <Label>Phone Number</Label>
-              <Input
-                type="tel"
-                value={prefs.phone_number || ''}
-                onChange={(e) => setPrefs(p => ({ ...p, phone_number: e.target.value }))}
-                placeholder="+1 (555) 123-4567"
-                className="mt-1"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Standard messaging rates may apply
+            <div className="pl-4 border-l-2 border-sunset/20 space-y-3">
+              {/* Consent Status */}
+              {prefs.sms_consent_given && (
+                <div className="flex items-center gap-2 text-sm text-forest">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>
+                    Consent given {prefs.sms_consent_timestamp && 
+                      `on ${new Date(prefs.sms_consent_timestamp).toLocaleDateString()}`
+                    }
+                  </span>
+                </div>
+              )}
+              
+              <div>
+                <Label>Phone Number</Label>
+                <Input
+                  type="tel"
+                  value={prefs.phone_number || ''}
+                  onChange={(e) => {
+                    const newNumber = e.target.value;
+                    // If phone number changed, require new consent
+                    if (newNumber !== prefs.phone_number && prefs.sms_consent_given) {
+                      setPendingPhoneNumber(newNumber);
+                      setShowConsentDialog(true);
+                    } else {
+                      setPrefs(p => ({ ...p, phone_number: newNumber }));
+                    }
+                  }}
+                  placeholder="+1 (555) 123-4567"
+                  className="mt-1"
+                />
+              </div>
+              
+              <p className="text-xs text-muted-foreground">
+                Standard messaging rates may apply. Reply STOP to opt out at any time.
               </p>
             </div>
           )}
@@ -304,6 +378,14 @@ export default function NotificationSettings() {
           )}
         </Button>
       </CardContent>
+
+      {/* SMS Consent Dialog */}
+      <SMSConsentDialog
+        open={showConsentDialog}
+        onOpenChange={setShowConsentDialog}
+        phoneNumber={pendingPhoneNumber || prefs.phone_number || ''}
+        onConsent={handleSMSConsent}
+      />
     </Card>
   );
 }

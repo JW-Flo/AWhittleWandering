@@ -446,7 +446,11 @@ export type Database = {
           notify_state_crossing: boolean | null
           phone_number: string | null
           push_enabled: boolean | null
+          sms_consent_given: boolean | null
+          sms_consent_ip: string | null
+          sms_consent_timestamp: string | null
           sms_enabled: boolean | null
+          sms_opt_out_timestamp: string | null
           updated_at: string
           user_id: string
         }
@@ -461,7 +465,11 @@ export type Database = {
           notify_state_crossing?: boolean | null
           phone_number?: string | null
           push_enabled?: boolean | null
+          sms_consent_given?: boolean | null
+          sms_consent_ip?: string | null
+          sms_consent_timestamp?: string | null
           sms_enabled?: boolean | null
+          sms_opt_out_timestamp?: string | null
           updated_at?: string
           user_id: string
         }
@@ -476,7 +484,11 @@ export type Database = {
           notify_state_crossing?: boolean | null
           phone_number?: string | null
           push_enabled?: boolean | null
+          sms_consent_given?: boolean | null
+          sms_consent_ip?: string | null
+          sms_consent_timestamp?: string | null
           sms_enabled?: boolean | null
+          sms_opt_out_timestamp?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -589,6 +601,42 @@ export type Database = {
           has_viewed_flagship?: boolean | null
           id?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sms_consent_log: {
+        Row: {
+          action: string
+          consent_given: boolean
+          consent_timestamp: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          phone_number: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          consent_given: boolean
+          consent_timestamp?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          phone_number: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          consent_given?: boolean
+          consent_timestamp?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          phone_number?: string
+          user_agent?: string | null
           user_id?: string
         }
         Relationships: []
