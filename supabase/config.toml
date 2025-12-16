@@ -41,6 +41,9 @@ verify_jwt = false
 [functions.incident-remediation]
 verify_jwt = true
 
+[functions.journey-storage]
+verify_jwt = true
+
 [functions.route-navigator]
 verify_jwt = true
 
