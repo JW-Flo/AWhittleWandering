@@ -7,6 +7,7 @@ import SignInDialog from '@/components/SignInDialog';
 import FeatureRequestWidget from '@/components/FeatureRequestWidget';
 import { Footer } from '@/components/layout/Footer';
 import { Logo } from '@/components/Logo';
+import { SEOHead, flagshipJourneyJsonLd, organizationJsonLd } from '@/components/SEOHead';
 import {
   Navigation, 
   MapPin, 
@@ -22,6 +23,12 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
+// Combined JSON-LD for homepage
+const homepageJsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [organizationJsonLd, flagshipJourneyJsonLd]
+};
 
 export default function Index() {
   const { user, loading } = useAuth();
@@ -68,6 +75,12 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden flex flex-col">
+      <SEOHead 
+        title="A Whittle Wandering - 48 State Tesla Road Trip Adventure"
+        description="Follow the 89-day journey across all 48 contiguous United States in a Tesla Model Y. 15,847 miles, 6,915 kWh, 259 charging sessions. Track your own EV adventures."
+        jsonLd={homepageJsonLd}
+      />
+      
       {/* Floating Header */}
       <header className="fixed top-0 left-0 right-0 z-50 p-4">
         <div className="container mx-auto">
