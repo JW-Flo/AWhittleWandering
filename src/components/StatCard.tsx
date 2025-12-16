@@ -22,16 +22,16 @@ export default function StatCard({
 }: StatCardProps) {
   const variantStyles = {
     default: 'bg-card',
-    primary: 'bg-gradient-sunset text-primary-foreground',
-    secondary: 'bg-gradient-forest text-secondary-foreground',
-    accent: 'bg-accent/20',
+    primary: 'bg-card border-primary/30',
+    secondary: 'bg-card border-accent/30',
+    accent: 'bg-accent/10',
   };
 
   const iconBgStyles = {
-    default: 'bg-primary/10 text-primary',
-    primary: 'bg-primary-foreground/20 text-primary-foreground',
-    secondary: 'bg-secondary-foreground/20 text-secondary-foreground',
-    accent: 'bg-accent text-accent-foreground',
+    default: 'bg-muted text-muted-foreground',
+    primary: 'bg-primary/10 text-primary',
+    secondary: 'bg-accent/10 text-accent',
+    accent: 'bg-accent/20 text-accent',
   };
 
   return (
@@ -39,12 +39,12 @@ export default function StatCard({
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="space-y-2">
-            <p className={`text-sm font-medium ${variant === 'default' ? 'text-muted-foreground' : 'opacity-80'}`}>
+            <p className="text-sm font-medium text-muted-foreground">
               {title}
             </p>
-            <p className="text-3xl font-display font-bold">{value}</p>
+            <p className={`text-3xl font-display font-bold ${variant === 'primary' ? 'text-primary' : variant === 'secondary' ? 'text-accent' : 'text-foreground'}`}>{value}</p>
             {subtitle && (
-              <p className={`text-sm ${variant === 'default' ? 'text-muted-foreground' : 'opacity-70'}`}>
+              <p className="text-sm text-muted-foreground">
                 {subtitle}
               </p>
             )}
