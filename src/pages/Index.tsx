@@ -120,8 +120,8 @@ export default function Index() {
         </div>
 
         {/* Main Content */}
-        <div className="relative z-10 container mx-auto px-4 text-center">
-          <div className="max-w-4xl mx-auto space-y-8">
+        <div className="relative z-10 container mx-auto px-6 md:px-8 text-center">
+          <div className="max-w-5xl mx-auto space-y-8">
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary animate-fade-in">
               <span className="relative flex h-2 w-2">
