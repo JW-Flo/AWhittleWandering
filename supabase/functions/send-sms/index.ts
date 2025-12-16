@@ -21,10 +21,10 @@ serve(async (req: Request): Promise<Response> => {
   try {
     const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
     const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
-    const messagingServiceSid = "MGbc58d90fde75c40523654f555fc6c8c6";
+    const messagingServiceSid = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
 
-    if (!accountSid || !authToken) {
-      throw new Error("Twilio credentials not configured");
+    if (!accountSid || !authToken || !messagingServiceSid) {
+      throw new Error("Twilio credentials not configured. Need TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_MESSAGING_SERVICE_SID");
     }
 
     const supabase = createClient(
