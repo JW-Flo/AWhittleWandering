@@ -8,75 +8,78 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Deep nature-immersive dark theme */
-    --background: 160 15% 6%;
-    --foreground: 45 20% 95%;
+    /* Ancient Forest - Redwoods & Hoh Rainforest inspired */
+    --background: 150 20% 5%;
+    --foreground: 40 25% 92%;
 
-    --card: 160 12% 10%;
-    --card-foreground: 45 20% 95%;
+    --card: 150 15% 9%;
+    --card-foreground: 40 25% 92%;
 
-    --popover: 160 12% 10%;
-    --popover-foreground: 45 20% 95%;
+    --popover: 150 15% 9%;
+    --popover-foreground: 40 25% 92%;
 
-    /* Deep forest green primary */
-    --primary: 152 45% 35%;
-    --primary-foreground: 45 20% 95%;
+    /* Deep moss green primary - like light filtering through ferns */
+    --primary: 135 50% 32%;
+    --primary-foreground: 40 25% 95%;
 
-    --secondary: 160 10% 14%;
-    --secondary-foreground: 45 20% 90%;
+    --secondary: 150 12% 12%;
+    --secondary-foreground: 40 20% 88%;
 
-    --muted: 160 8% 16%;
-    --muted-foreground: 45 10% 55%;
+    --muted: 150 10% 15%;
+    --muted-foreground: 40 12% 50%;
 
-    /* Warm amber accent */
-    --accent: 32 90% 50%;
-    --accent-foreground: 160 15% 6%;
+    /* Warm filtered sunlight accent */
+    --accent: 38 75% 50%;
+    --accent-foreground: 150 20% 5%;
 
-    --destructive: 0 70% 45%;
-    --destructive-foreground: 45 20% 95%;
+    --destructive: 0 60% 40%;
+    --destructive-foreground: 40 25% 92%;
 
-    --border: 160 10% 18%;
-    --input: 160 10% 14%;
-    --ring: 152 45% 35%;
+    --border: 150 12% 16%;
+    --input: 150 12% 12%;
+    --ring: 135 50% 32%;
 
-    /* Nature Palette - Deep & Rich */
-    --nature-forest: 152 45% 28%;
-    --nature-forest-light: 152 40% 38%;
-    --nature-moss: 95 35% 30%;
-    --nature-earth: 25 35% 25%;
-    --nature-bark: 20 25% 18%;
-    --nature-stone: 200 8% 35%;
+    /* Ancient Forest Palette */
+    --forest-floor: 150 20% 5%;
+    --redwood-bark: 15 35% 18%;
+    --redwood-deep: 12 30% 12%;
+    --moss: 120 45% 25%;
+    --moss-bright: 115 55% 35%;
+    --fern: 140 40% 30%;
+    --lichen: 75 25% 45%;
     
-    /* Warm Tones */
-    --warm-amber: 32 90% 50%;
-    --warm-sunset: 18 85% 48%;
-    --warm-gold: 42 85% 55%;
-    --warm-ember: 10 75% 40%;
+    /* Canopy Light */
+    --sunbeam: 45 80% 55%;
+    --golden-hour: 38 75% 50%;
+    --dappled-light: 50 60% 65%;
+    --mist: 150 15% 70%;
     
-    /* Sky & Water */
-    --sky-twilight: 260 30% 35%;
-    --sky-dusk: 280 25% 25%;
-    --water-deep: 195 50% 30%;
-    --water-teal: 175 45% 35%;
+    /* Forest Depths */
+    --shadow-deep: 150 25% 8%;
+    --twilight-green: 160 30% 20%;
+    --ancient-teal: 175 35% 28%;
+    --river-stone: 180 10% 40%;
 
-    /* Story-telling Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--nature-forest)), hsl(var(--water-teal)));
-    --gradient-adventure: linear-gradient(135deg, hsl(var(--warm-sunset)), hsl(var(--warm-ember)));
-    --gradient-hero: linear-gradient(135deg, hsl(var(--nature-forest) / 0.9), hsl(var(--sky-twilight) / 0.8));
-    --gradient-sunset: linear-gradient(135deg, hsl(var(--warm-amber)), hsl(var(--warm-gold)));
-    --gradient-card: linear-gradient(145deg, hsl(var(--card)), hsl(var(--background)));
-    --gradient-card-hover: linear-gradient(145deg, hsl(160 12% 14%), hsl(var(--card)));
-    --gradient-glow: radial-gradient(circle at center, hsl(var(--nature-forest) / 0.3), transparent 70%);
-    --gradient-milestone: linear-gradient(135deg, hsl(var(--warm-gold) / 0.15), hsl(var(--warm-amber) / 0.08));
-    --gradient-nature: linear-gradient(180deg, hsl(var(--nature-forest) / 0.2), hsl(var(--background)));
+    /* Atmospheric Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--moss)), hsl(var(--fern)));
+    --gradient-adventure: linear-gradient(135deg, hsl(var(--golden-hour)), hsl(var(--sunbeam)));
+    --gradient-hero: linear-gradient(180deg, hsl(var(--forest-floor)), hsl(var(--shadow-deep)));
+    --gradient-sunset: linear-gradient(135deg, hsl(var(--golden-hour)), hsl(var(--dappled-light)));
+    --gradient-card: linear-gradient(180deg, hsl(var(--card)), hsl(var(--forest-floor)));
+    --gradient-card-hover: linear-gradient(180deg, hsl(150 15% 12%), hsl(var(--card)));
+    --gradient-glow: radial-gradient(ellipse at center, hsl(var(--moss) / 0.2), transparent 70%);
+    --gradient-milestone: linear-gradient(135deg, hsl(var(--golden-hour) / 0.12), hsl(var(--sunbeam) / 0.06));
+    --gradient-mist: linear-gradient(180deg, hsl(var(--mist) / 0.05), transparent);
+    --gradient-canopy: radial-gradient(ellipse at top, hsl(var(--moss-bright) / 0.15), transparent 60%);
 
-    /* Immersive Shadows */
-    --shadow-forest: 0 8px 32px hsl(var(--nature-forest) / 0.25);
-    --shadow-adventure: 0 12px 40px hsl(var(--warm-amber) / 0.2);
-    --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.4);
-    --shadow-hero: 0 20px 80px hsl(var(--nature-forest) / 0.3);
-    --shadow-milestone: 0 8px 30px hsl(var(--warm-gold) / 0.2);
-    --shadow-elevated: 0 12px 48px hsl(0 0% 0% / 0.5);
+    /* Atmospheric Shadows */
+    --shadow-moss: 0 8px 32px hsl(var(--moss) / 0.25);
+    --shadow-warm: 0 12px 40px hsl(var(--golden-hour) / 0.15);
+    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.5);
+    --shadow-hero: 0 20px 60px hsl(var(--moss) / 0.2);
+    --shadow-milestone: 0 8px 30px hsl(var(--golden-hour) / 0.15);
+    --shadow-elevated: 0 16px 64px hsl(0 0% 0% / 0.6);
+    --shadow-forest: 0 0 100px hsl(var(--moss) / 0.1);
 
     /* Story Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -85,23 +88,23 @@ All colors MUST be HSL.
 
     --radius: 0.5rem;
 
-    --sidebar-background: 160 15% 6%;
-    --sidebar-foreground: 45 20% 95%;
-    --sidebar-primary: 152 45% 35%;
-    --sidebar-primary-foreground: 45 20% 95%;
-    --sidebar-accent: 160 10% 14%;
-    --sidebar-accent-foreground: 45 20% 90%;
-    --sidebar-border: 160 10% 18%;
-    --sidebar-ring: 152 45% 35%;
+    --sidebar-background: 150 20% 5%;
+    --sidebar-foreground: 40 25% 92%;
+    --sidebar-primary: 135 50% 32%;
+    --sidebar-primary-foreground: 40 25% 95%;
+    --sidebar-accent: 150 12% 12%;
+    --sidebar-accent-foreground: 40 20% 88%;
+    --sidebar-border: 150 12% 16%;
+    --sidebar-ring: 135 50% 32%;
 
-    /* Legacy semantic colors for compatibility */
-    --road: 200 8% 40%;
-    --forest: 152 45% 35%;
-    --sand: 42 50% 45%;
-    --sunset: 32 90% 50%;
-    --sky: 195 50% 40%;
-    --charging: 152 45% 40%;
-    --driving: 32 90% 50%;
+    /* Legacy semantic colors */
+    --road: 180 10% 40%;
+    --forest: 135 50% 32%;
+    --sand: 45 50% 50%;
+    --sunset: 38 75% 50%;
+    --sky: 175 35% 35%;
+    --charging: 120 45% 35%;
+    --driving: 38 75% 50%;
   }
 }
 
@@ -238,10 +241,10 @@ All colors MUST be HSL.
 
   @keyframes pulseGlow {
     0%, 100% {
-      box-shadow: 0 0 20px hsl(var(--nature-forest) / 0.3);
+      box-shadow: 0 0 20px hsl(var(--moss) / 0.3);
     }
     50% {
-      box-shadow: 0 0 40px hsl(var(--nature-forest) / 0.5);
+      box-shadow: 0 0 40px hsl(var(--moss) / 0.5);
     }
   }
 
@@ -252,19 +255,19 @@ All colors MUST be HSL.
     box-shadow: var(--shadow-card);
   }
 
-  .stat-card-nature {
+  .stat-card-forest {
     @apply stat-card;
-    border-color: hsl(var(--nature-forest) / 0.3);
+    border-color: hsl(var(--moss) / 0.3);
   }
 
-  .stat-card-adventure {
+  .stat-card-sunbeam {
     @apply stat-card;
-    border-color: hsl(var(--warm-amber) / 0.3);
+    border-color: hsl(var(--golden-hour) / 0.3);
   }
 
   .stat-card-success {
     @apply stat-card;
-    border-color: hsl(var(--nature-moss) / 0.3);
+    border-color: hsl(var(--moss-bright) / 0.3);
   }
 }
 
