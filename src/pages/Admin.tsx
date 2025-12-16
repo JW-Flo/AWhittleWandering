@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { TwoFactorSettings } from '@/components/settings/TwoFactorSettings';
 import FeatureRequestWidget from '@/components/FeatureRequestWidget';
+import { PreLaunchChecklist } from '@/components/admin/PreLaunchChecklist';
 import { 
   Shield, 
   Users, 
@@ -45,7 +46,8 @@ import {
   ShieldAlert,
   Bell,
   Plug,
-  Send
+  Send,
+  Rocket
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -422,9 +424,10 @@ export default function Admin() {
 
         {/* Main Tabs */}
         <Card className="card-nature">
-          <Tabs defaultValue="users">
+          <Tabs defaultValue="launch">
             <CardHeader>
               <TabsList className="bg-secondary flex-wrap h-auto gap-1">
+                <TabsTrigger value="launch"><Rocket className="w-4 h-4 mr-1" />Launch</TabsTrigger>
                 <TabsTrigger value="users"><Users className="w-4 h-4 mr-1" />Users</TabsTrigger>
                 <TabsTrigger value="incidents"><ShieldAlert className="w-4 h-4 mr-1" />Incidents</TabsTrigger>
                 <TabsTrigger value="integrations"><Plug className="w-4 h-4 mr-1" />Integrations</TabsTrigger>
@@ -436,6 +439,11 @@ export default function Admin() {
             </CardHeader>
             
             <CardContent>
+              {/* Launch Checklist Tab */}
+              <TabsContent value="launch" className="mt-0">
+                <PreLaunchChecklist />
+              </TabsContent>
+
               {/* Users Tab */}
               <TabsContent value="users" className="mt-0">
                 <div className="mb-4">
