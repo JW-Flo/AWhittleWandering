@@ -139,8 +139,8 @@ export default function Dashboard() {
               <Navigation className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">A Whittle Wandering</h1>
-              <p className="text-sm text-muted-foreground">Your Tesla Journey Tracker</p>
+              <h1 className="text-xl font-bold text-foreground">AWW Dashboard</h1>
+              <p className="text-sm text-muted-foreground">A Whittle Wandering Tracker</p>
             </div>
           </div>
           <div className="flex items-center gap-4">

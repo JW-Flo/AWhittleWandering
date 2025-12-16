@@ -302,7 +302,7 @@ export default function Index() {
               <div className="w-10 h-10 rounded-full bg-gradient-sunset flex items-center justify-center">
                 <Navigation className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="font-display font-bold text-lg">A Whittle Wandering</span>
+              <span className="font-display font-bold text-lg">AWW</span>
             </div>
             <p className="text-sm text-muted-foreground">
               June 3 – August 31, 2025 • 48 States • 100% Electric
