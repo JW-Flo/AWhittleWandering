@@ -1,5 +1,10 @@
 import { JourneyCreationWizard } from '@/components/journey/JourneyCreationWizard';
+import FlagshipGate from '@/components/FlagshipGate';
 
 export default function NewJourney() {
-  return <JourneyCreationWizard />;
+  return (
+    <FlagshipGate featureName="journey creation">
+      <JourneyCreationWizard />
+    </FlagshipGate>
+  );
 }

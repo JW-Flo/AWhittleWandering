@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useFlagshipGating } from '@/hooks/useFlagshipGating';
 import RoutePlayback from '@/components/RoutePlayback';
 import LocationMediaGallery from '@/components/LocationMediaGallery';
 import JourneyTimeline from '@/components/JourneyTimeline';
@@ -8,15 +9,19 @@ import PhotoUpload from '@/components/PhotoUpload';
 import LiveVehicleStatus from '@/components/LiveVehicleStatus';
 import { JourneyWaypoint } from '@/data/journeyRoute';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Map, Image, Calendar, Zap, Activity, Upload } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Map, Image, Calendar, Zap, Activity, CheckCircle, Unlock } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function Explore() {
   const { user } = useAuth();
+  const { hasViewedFlagship, markFlagshipViewed } = useFlagshipGating();
   const [mapboxToken, setMapboxToken] = useState<string>('');
   const [currentWaypoint, setCurrentWaypoint] = useState<JourneyWaypoint | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [journeyId, setJourneyId] = useState<string | null>(null);
+  const [explorationProgress, setExplorationProgress] = useState(0);
 
   useEffect(() => {
     async function fetchData() {
@@ -50,6 +55,18 @@ export default function Explore() {
   const handleWaypointChange = (waypoint: JourneyWaypoint, index: number) => {
     setCurrentWaypoint(waypoint);
     setCurrentIndex(index);
+    
+    // Track exploration progress
+    const progress = Math.round(((index + 1) / 57) * 100);
+    setExplorationProgress(prev => Math.max(prev, progress));
+    
+    // Mark as viewed after exploring significant portion (25%+)
+    if (progress >= 25 && !hasViewedFlagship) {
+      markFlagshipViewed();
+      toast.success('Consumer features unlocked!', {
+        description: 'You can now create your own journeys and track your vehicle.'
+      });
+    }
   };
 
   if (isLoading) {
@@ -69,9 +86,24 @@ export default function Explore() {
       <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gradient-primary">Explore Journey</h1>
-              <p className="text-sm text-muted-foreground">48-state Tesla road trip • June - August 2025</p>
+            <div className="flex items-center gap-4">
+              <div>
+                <h1 className="text-2xl font-bold text-gradient-primary">Explore AWW Journey</h1>
+                <p className="text-sm text-muted-foreground">48-state Tesla road trip • June - August 2025</p>
+              </div>
+              {/* Unlock indicator */}
+              {!hasViewedFlagship && (
+                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full border border-primary/20">
+                  <Unlock className="w-4 h-4 text-primary" />
+                  <span className="text-xs text-primary font-medium">{explorationProgress}% explored</span>
+                </div>
+              )}
+              {hasViewedFlagship && (
+                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-forest/10 rounded-full border border-forest/20">
+                  <CheckCircle className="w-4 h-4 text-forest" />
+                  <span className="text-xs text-forest font-medium">Features Unlocked</span>
+                </div>
+              )}
             </div>
             {currentWaypoint && (
               <div className="text-right">
