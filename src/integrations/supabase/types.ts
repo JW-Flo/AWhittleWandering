@@ -186,6 +186,69 @@ export type Database = {
           },
         ]
       }
+      flagship_waypoints: {
+        Row: {
+          arrived_at: string
+          battery_on_arrival: number | null
+          created_at: string
+          departed_at: string | null
+          description: string | null
+          dwell_minutes: number | null
+          id: string
+          is_highlight: boolean | null
+          latitude: number
+          location: string
+          longitude: number
+          name: string
+          odometer_miles: number | null
+          people_met: string[] | null
+          state_code: string | null
+          updated_at: string
+          waypoint_number: number
+          waypoint_type: string
+        }
+        Insert: {
+          arrived_at: string
+          battery_on_arrival?: number | null
+          created_at?: string
+          departed_at?: string | null
+          description?: string | null
+          dwell_minutes?: number | null
+          id?: string
+          is_highlight?: boolean | null
+          latitude: number
+          location: string
+          longitude: number
+          name: string
+          odometer_miles?: number | null
+          people_met?: string[] | null
+          state_code?: string | null
+          updated_at?: string
+          waypoint_number: number
+          waypoint_type?: string
+        }
+        Update: {
+          arrived_at?: string
+          battery_on_arrival?: number | null
+          created_at?: string
+          departed_at?: string | null
+          description?: string | null
+          dwell_minutes?: number | null
+          id?: string
+          is_highlight?: boolean | null
+          latitude?: number
+          location?: string
+          longitude?: number
+          name?: string
+          odometer_miles?: number | null
+          people_met?: string[] | null
+          state_code?: string | null
+          updated_at?: string
+          waypoint_number?: number
+          waypoint_type?: string
+        }
+        Relationships: []
+      }
       incident_log: {
         Row: {
           action_taken: string | null
@@ -780,6 +843,84 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tessie_drives: {
+        Row: {
+          average_inside_temp: number | null
+          average_outside_temp: number | null
+          average_speed: number | null
+          created_at: string
+          ended_at: string
+          ending_battery: number | null
+          ending_latitude: number
+          ending_location: string | null
+          ending_longitude: number
+          ending_odometer: number | null
+          energy_used: number | null
+          id: string
+          max_speed: number | null
+          odometer_distance: number | null
+          started_at: string
+          starting_battery: number | null
+          starting_latitude: number
+          starting_location: string | null
+          starting_longitude: number
+          starting_odometer: number | null
+          synced_at: string
+          tessie_drive_id: number
+          vin: string
+        }
+        Insert: {
+          average_inside_temp?: number | null
+          average_outside_temp?: number | null
+          average_speed?: number | null
+          created_at?: string
+          ended_at: string
+          ending_battery?: number | null
+          ending_latitude: number
+          ending_location?: string | null
+          ending_longitude: number
+          ending_odometer?: number | null
+          energy_used?: number | null
+          id?: string
+          max_speed?: number | null
+          odometer_distance?: number | null
+          started_at: string
+          starting_battery?: number | null
+          starting_latitude: number
+          starting_location?: string | null
+          starting_longitude: number
+          starting_odometer?: number | null
+          synced_at?: string
+          tessie_drive_id: number
+          vin: string
+        }
+        Update: {
+          average_inside_temp?: number | null
+          average_outside_temp?: number | null
+          average_speed?: number | null
+          created_at?: string
+          ended_at?: string
+          ending_battery?: number | null
+          ending_latitude?: number
+          ending_location?: string | null
+          ending_longitude?: number
+          ending_odometer?: number | null
+          energy_used?: number | null
+          id?: string
+          max_speed?: number | null
+          odometer_distance?: number | null
+          started_at?: string
+          starting_battery?: number | null
+          starting_latitude?: number
+          starting_location?: string | null
+          starting_longitude?: number
+          starting_odometer?: number | null
+          synced_at?: string
+          tessie_drive_id?: number
+          vin?: string
+        }
+        Relationships: []
       }
       user_api_credentials: {
         Row: {
