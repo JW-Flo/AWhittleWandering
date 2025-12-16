@@ -7,11 +7,32 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Bell, Mail, Smartphone, Globe, MapPin, Zap, Camera, Loader2, CheckCircle2 } from 'lucide-react';
+import { Bell, Mail, Smartphone, Globe, MapPin, Zap, Camera, Loader2, CheckCircle2, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import SMSConsentDialog from './SMSConsentDialog';
+
+// Format phone to E.164 for Twilio
+const formatPhoneE164 = (phone: string): string => {
+  const digits = phone.replace(/\D/g, '');
+  // If 10 digits and no country code, assume US
+  if (digits.length === 10) {
+    return `+1${digits}`;
+  }
+  // If 11 digits starting with 1, add +
+  if (digits.length === 11 && digits.startsWith('1')) {
+    return `+${digits}`;
+  }
+  // Otherwise add + if not present
+  return digits.startsWith('+') ? digits : `+${digits}`;
+};
+
+// Validate phone number (10+ digits)
+const isValidPhone = (phone: string): boolean => {
+  const digits = phone.replace(/\D/g, '');
+  return digits.length >= 10;
+};
 
 interface NotificationPrefs {
   email_enabled: boolean;
@@ -122,12 +143,14 @@ export default function NotificationSettings() {
   const handleSMSConsent = async (consented: boolean, timestamp: string, phoneNumber?: string) => {
     if (!user) return;
 
-    if (consented && phoneNumber) {
+    if (consented && phoneNumber && isValidPhone(phoneNumber)) {
+      const formattedPhone = formatPhoneE164(phoneNumber);
+      
       // Log consent for compliance
       try {
         await supabase.from('sms_consent_log').insert({
           user_id: user.id,
-          phone_number: phoneNumber,
+          phone_number: formattedPhone,
           action: 'opt_in',
           consent_given: true,
           consent_timestamp: timestamp,
@@ -137,19 +160,68 @@ export default function NotificationSettings() {
         console.error('Error logging SMS consent:', error);
       }
 
-      // Update preferences with consent
-      setPrefs(p => ({
-        ...p,
+      // Update preferences with consent and AUTO-SAVE
+      const newPrefs = {
+        ...prefs,
         sms_enabled: true,
-        phone_number: phoneNumber,
+        phone_number: formattedPhone,
         sms_consent_given: true,
         sms_consent_timestamp: timestamp
-      }));
-      toast.success('SMS notifications enabled');
+      };
+      
+      setPrefs(newPrefs);
+      
+      // Auto-save to database immediately
+      try {
+        await supabase
+          .from('notification_preferences')
+          .upsert({
+            user_id: user.id,
+            ...newPrefs
+          }, { onConflict: 'user_id' });
+        toast.success('SMS notifications enabled and saved');
+      } catch (error) {
+        console.error('Error saving SMS preferences:', error);
+        toast.error('SMS enabled but failed to save');
+      }
     } else {
       toast.info('SMS notifications not enabled');
     }
     setPendingPhoneNumber('');
+  };
+
+  const sendTestSMS = async () => {
+    if (!user || !prefs.phone_number || !isValidPhone(prefs.phone_number)) {
+      toast.error('Please enter a valid phone number first');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-sms', {
+        body: {
+          recipientUserId: user.id,
+          notificationType: 'waypoint',
+          journeyName: 'Test',
+          message: 'This is a test notification from AWW. Your SMS is working!'
+        }
+      });
+
+      if (error) throw error;
+      
+      if (data?.skipped) {
+        toast.info(`SMS skipped: ${data.reason}`);
+      } else if (data?.success) {
+        toast.success('Test SMS sent! Check your phone.');
+      } else {
+        toast.error('SMS failed to send');
+      }
+    } catch (error: any) {
+      console.error('Error sending test SMS:', error);
+      toast.error(error.message || 'Failed to send test SMS');
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -262,22 +334,36 @@ export default function NotificationSettings() {
               
               <div>
                 <Label>Phone Number</Label>
-                <Input
-                  type="tel"
-                  value={prefs.phone_number || ''}
-                  onChange={(e) => {
-                    const newNumber = e.target.value;
-                    // If phone number changed, require new consent
-                    if (newNumber !== prefs.phone_number && prefs.sms_consent_given) {
-                      setPendingPhoneNumber(newNumber);
-                      setShowConsentDialog(true);
-                    } else {
-                      setPrefs(p => ({ ...p, phone_number: newNumber }));
-                    }
-                  }}
-                  placeholder="+1 (555) 123-4567"
-                  className="mt-1"
-                />
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    type="tel"
+                    value={prefs.phone_number || ''}
+                    onChange={(e) => {
+                      const newNumber = e.target.value;
+                      // If phone number changed significantly, require new consent
+                      if (prefs.sms_consent_given && isValidPhone(newNumber) && newNumber !== prefs.phone_number) {
+                        setPendingPhoneNumber(newNumber);
+                        setShowConsentDialog(true);
+                      } else {
+                        setPrefs(p => ({ ...p, phone_number: newNumber }));
+                      }
+                    }}
+                    placeholder="+1 (555) 123-4567"
+                    className="flex-1"
+                  />
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={sendTestSMS}
+                    disabled={saving || !prefs.phone_number || !isValidPhone(prefs.phone_number)}
+                  >
+                    <Send className="w-4 h-4 mr-1" />
+                    Test
+                  </Button>
+                </div>
+                {prefs.phone_number && !isValidPhone(prefs.phone_number) && (
+                  <p className="text-xs text-destructive mt-1">Enter a valid phone number (10+ digits)</p>
+                )}
               </div>
               
               <p className="text-xs text-muted-foreground">

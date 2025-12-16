@@ -38,7 +38,9 @@ export default function SMSConsentDialog({
     }
   }, [open, initialPhoneNumber]);
 
-  const isValidPhoneNumber = phoneNumber && phoneNumber.replace(/\D/g, '').length >= 10;
+  // Validate phone number - require at least 10 digits
+  const getDigits = (phone: string) => phone.replace(/\D/g, '');
+  const isValidPhoneNumber = phoneNumber && getDigits(phoneNumber).length >= 10;
   const canSubmit = agreedToTerms && agreedToFrequency && isValidPhoneNumber;
 
   const handleConsent = () => {
