@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { VehicleMakeSelector, VehicleModelSelector } from './VehicleMakeSelector';
 import { ApiProviderSelector } from './ApiProviderSelector';
 import { ApiSetupGuide } from './ApiSetupGuide';
@@ -19,9 +20,14 @@ import {
   Route, 
   Zap, 
   CheckCircle2,
-  MapPin
+  MapPin,
+  AlertTriangle,
+  Database
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Maximum journeys per user to control Cloudflare D1 costs
+const MAX_JOURNEYS_PER_USER = 5;
 
 interface ApiProvider {
   id: string;
@@ -50,6 +56,11 @@ export function JourneyCreationWizard() {
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [apiValid, setApiValid] = useState(false);
+  
+  // Journey limit state
+  const [journeyCount, setJourneyCount] = useState<number>(0);
+  const [limitChecked, setLimitChecked] = useState(false);
+  const [isProvisioningStorage, setIsProvisioningStorage] = useState(false);
 
   // Form state
   const [journeyData, setJourneyData] = useState({
@@ -73,6 +84,27 @@ export function JourneyCreationWizard() {
   const [selectedProvider, setSelectedProvider] = useState<ApiProvider | null>(null);
   const [apiToken, setApiToken] = useState('');
   const [vehicleStatus, setVehicleStatus] = useState<any>(null);
+
+  // Check journey count on mount
+  useEffect(() => {
+    const checkJourneyLimit = async () => {
+      if (!user) return;
+      
+      const { count, error } = await supabase
+        .from('journeys')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+      
+      if (!error && count !== null) {
+        setJourneyCount(count);
+      }
+      setLimitChecked(true);
+    };
+    
+    checkJourneyLimit();
+  }, [user]);
+
+  const hasReachedLimit = journeyCount >= MAX_JOURNEYS_PER_USER;
 
   const progress = ((currentStep + 1) / STEPS.length) * 100;
 
@@ -134,8 +166,48 @@ export function JourneyCreationWizard() {
     }
   };
 
+  const provisionD1Storage = async (journeyId: string, journeyName: string): Promise<boolean> => {
+    setIsProvisioningStorage(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('journey-storage', {
+        body: {
+          action: 'provision',
+          journey_id: journeyId,
+          journey_name: journeyName,
+        },
+      });
+
+      if (error) {
+        console.error('D1 provisioning error:', error);
+        return false;
+      }
+
+      if (data?.success) {
+        console.log('D1 database provisioned:', data.database_id);
+        return true;
+      }
+
+      return false;
+    } catch (err) {
+      console.error('D1 provisioning failed:', err);
+      return false;
+    } finally {
+      setIsProvisioningStorage(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!user) return;
+    
+    // Double-check journey limit
+    if (hasReachedLimit) {
+      toast({
+        title: 'Journey Limit Reached',
+        description: `You can only have ${MAX_JOURNEYS_PER_USER} active journeys. Please archive or delete an existing journey.`,
+        variant: 'destructive',
+      });
+      return;
+    }
     
     setIsLoading(true);
     try {
@@ -178,7 +250,7 @@ export function JourneyCreationWizard() {
 
       if (vehicleError) throw vehicleError;
 
-      // 3. Create journey
+      // 3. Create journey (initially without D1 - will update after provisioning)
       const { data: journeyResult, error: journeyError } = await supabase
         .from('journeys')
         .insert({
@@ -188,16 +260,29 @@ export function JourneyCreationWizard() {
           start_date: journeyData.startDate,
           end_date: journeyData.isOpenEnded ? null : journeyData.endDate || null,
           vehicle_id: vehicleResult.id,
+          data_storage_type: 'cloudflare_d1', // Using D1 for compartmentalized storage
         })
         .select('id')
         .single();
 
       if (journeyError) throw journeyError;
 
-      toast({
-        title: 'Journey Created!',
-        description: `"${journeyData.name}" is ready to track.`,
-      });
+      // 4. Provision D1 database for this journey
+      const d1Success = await provisionD1Storage(journeyResult.id, journeyData.name);
+      
+      if (!d1Success) {
+        // D1 failed but journey created - warn user but continue
+        toast({
+          title: 'Journey Created (Partial)',
+          description: `"${journeyData.name}" created but cloud storage setup failed. Data will sync when storage is available.`,
+          variant: 'default',
+        });
+      } else {
+        toast({
+          title: 'Journey Created!',
+          description: `"${journeyData.name}" is ready with dedicated cloud storage.`,
+        });
+      }
 
       navigate('/dashboard');
     } catch (err: any) {
@@ -535,8 +620,31 @@ export function JourneyCreationWizard() {
           <Progress value={progress} className="h-2" />
         </div>
 
+        {/* Journey Limit Warning */}
+        {limitChecked && hasReachedLimit && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Journey Limit Reached</AlertTitle>
+            <AlertDescription>
+              You have {journeyCount} of {MAX_JOURNEYS_PER_USER} journeys. 
+              Please archive or delete an existing journey before creating a new one.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Journey Count Info */}
+        {limitChecked && !hasReachedLimit && journeyCount > 0 && (
+          <Alert className="mb-6 border-primary/20 bg-primary/5">
+            <Database className="h-4 w-4" />
+            <AlertTitle>Journey Slots</AlertTitle>
+            <AlertDescription>
+              You're using {journeyCount} of {MAX_JOURNEYS_PER_USER} available journey slots.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Step Content */}
-        <Card>
+        <Card className={cn(hasReachedLimit && "opacity-50 pointer-events-none")}>
           <CardHeader>
             <CardTitle>{STEPS[currentStep].title}</CardTitle>
             <CardDescription>
@@ -565,7 +673,7 @@ export function JourneyCreationWizard() {
           {currentStep < STEPS.length - 1 ? (
             <Button
               onClick={() => setCurrentStep(prev => prev + 1)}
-              disabled={!canProceed()}
+              disabled={!canProceed() || hasReachedLimit}
             >
               Next
               <ArrowRight className="w-4 h-4 ml-2" />
@@ -573,12 +681,12 @@ export function JourneyCreationWizard() {
           ) : (
             <Button
               onClick={handleSubmit}
-              disabled={isLoading}
+              disabled={isLoading || isProvisioningStorage || hasReachedLimit}
             >
-              {isLoading ? (
+              {isLoading || isProvisioningStorage ? (
                 <>
                   <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
-                  Creating...
+                  {isProvisioningStorage ? 'Setting up storage...' : 'Creating...'}
                 </>
               ) : (
                 <>
