@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useFlagshipGating } from '@/hooks/useFlagshipGating';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +15,7 @@ import LiveVehicleStatus from '@/components/LiveVehicleStatus';
 import StatesProgressMap from '@/components/StatesProgressMap';
 import CSVImport from '@/components/CSVImport';
 import PhotoUpload from '@/components/PhotoUpload';
+import FlagshipGate from '@/components/FlagshipGate';
 import { useTessieData } from '@/hooks/useTessieData';
 import { 
   MapPin, 
@@ -29,7 +31,8 @@ import {
   Image,
   Map,
   Database,
-  Activity
+  Activity,
+  Compass
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -54,6 +57,7 @@ interface Vehicle {
 
 export default function Dashboard() {
   const { user, signOut } = useAuth();
+  const { hasViewedFlagship } = useFlagshipGating();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [journeys, setJourneys] = useState<Journey[]>([]);
@@ -146,10 +150,21 @@ export default function Dashboard() {
           <div className="flex items-center gap-4">
             {/* Compact Live Status */}
             <LiveVehicleStatus compact className="hidden lg:flex" />
-            <Button variant="outline" onClick={() => navigate('/journey/new')} className="border-border">
-              <Plus className="w-4 h-4 mr-2" />
-              New Journey
-            </Button>
+            
+            {/* Show explore button if not viewed flagship */}
+            {!hasViewedFlagship && (
+              <Button variant="outline" onClick={() => navigate('/explore')} className="border-sunset text-sunset hover:bg-sunset/10">
+                <Compass className="w-4 h-4 mr-2" />
+                Explore AWW
+              </Button>
+            )}
+            
+            {hasViewedFlagship && (
+              <Button variant="outline" onClick={() => navigate('/journey/new')} className="border-border">
+                <Plus className="w-4 h-4 mr-2" />
+                New Journey
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={handleSignOut}>
               <LogOut className="w-4 h-4" />
             </Button>

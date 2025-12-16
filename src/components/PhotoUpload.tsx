@@ -1,15 +1,14 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Upload, 
   Image, 
-  Video, 
   MapPin, 
   Calendar, 
   User, 
@@ -17,12 +16,14 @@ import {
   X, 
   CheckCircle,
   Loader2,
-  Plus
+  Plus,
+  Sparkles
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { JourneyWaypoint, journeyWaypoints } from '@/data/journeyRoute';
+import { findNearestWaypoint } from '@/lib/waypointMatching';
 
 interface PhotoUploadProps {
   journeyId: string;
@@ -37,6 +38,9 @@ interface UploadFile {
   progress: number;
   status: 'pending' | 'uploading' | 'complete' | 'error';
   error?: string;
+  gpsLat?: number;
+  gpsLng?: number;
+  matchedWaypoint?: JourneyWaypoint;
 }
 
 const US_STATES = [
@@ -62,15 +66,42 @@ export default function PhotoUpload({ journeyId, currentWaypoint, onUploadComple
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [isUploading, setIsUploading] = useState(false);
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  // Extract GPS coordinates from EXIF data
+  const extractGPSFromFile = async (file: File): Promise<{ lat: number; lng: number } | null> => {
+    return new Promise((resolve) => {
+      // For now, we'll use a simple approach - in production, use exif-js library
+      // This is a placeholder that could be enhanced with actual EXIF parsing
+      resolve(null);
+    });
+  };
+
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
     
-    const newFiles: UploadFile[] = selectedFiles.map(file => ({
-      file,
-      preview: URL.createObjectURL(file),
-      progress: 0,
-      status: 'pending'
-    }));
+    const newFiles: UploadFile[] = await Promise.all(
+      selectedFiles.map(async (file) => {
+        const gps = await extractGPSFromFile(file);
+        let matchedWaypoint: JourneyWaypoint | undefined;
+        
+        // Try to match to nearest waypoint if GPS available
+        if (gps) {
+          const match = findNearestWaypoint(gps.lat, gps.lng);
+          if (match) {
+            matchedWaypoint = match.waypoint;
+          }
+        }
+        
+        return {
+          file,
+          preview: URL.createObjectURL(file),
+          progress: 0,
+          status: 'pending' as const,
+          gpsLat: gps?.lat,
+          gpsLng: gps?.lng,
+          matchedWaypoint
+        };
+      })
+    );
 
     setFiles(prev => [...prev, ...newFiles]);
     setIsDialogOpen(true);
@@ -251,7 +282,7 @@ export default function PhotoUpload({ journeyId, currentWaypoint, onUploadComple
             </DialogHeader>
 
             <div className="space-y-4">
-              {/* File Previews */}
+              {/* File Previews with auto-match indicators */}
               <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
                 {files.map((f, idx) => (
                   <div key={idx} className="relative aspect-square rounded-lg overflow-hidden bg-muted">
@@ -260,6 +291,12 @@ export default function PhotoUpload({ journeyId, currentWaypoint, onUploadComple
                       alt={`Preview ${idx}`}
                       className="w-full h-full object-cover"
                     />
+                    {f.matchedWaypoint && (
+                      <div className="absolute top-1 left-1 bg-primary/90 rounded px-1.5 py-0.5 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-primary-foreground" />
+                        <span className="text-[10px] text-primary-foreground font-medium">{f.matchedWaypoint.state}</span>
+                      </div>
+                    )}
                     {f.status === 'uploading' && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                         <div className="text-center text-white">
@@ -283,6 +320,34 @@ export default function PhotoUpload({ journeyId, currentWaypoint, onUploadComple
                     )}
                   </div>
                 ))}
+              </div>
+
+              {/* Auto-match waypoint selector */}
+              <div>
+                <label className="text-sm font-medium flex items-center gap-1 mb-1">
+                  <MapPin className="w-3 h-3" /> Match to Waypoint
+                </label>
+                <Select 
+                  value={locationName} 
+                  onValueChange={(value) => {
+                    const waypoint = journeyWaypoints.find(w => w.name === value);
+                    if (waypoint) {
+                      setLocationName(waypoint.name);
+                      setStateCode(waypoint.state);
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a waypoint or enter custom" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[200px]">
+                    {journeyWaypoints.map(waypoint => (
+                      <SelectItem key={waypoint.name} value={waypoint.name}>
+                        {waypoint.name}, {waypoint.state} - {waypoint.date}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Location Info */}
