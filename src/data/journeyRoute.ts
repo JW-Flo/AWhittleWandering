@@ -483,39 +483,47 @@ export const journeyWaypoints: JourneyWaypoint[] = [
     elevation: 830
   },
 
-  // === IOWA ===
+  // === WISCONSIN - DIAGONAL THROUGH FROM FARGO ===
   { 
-    lat: 41.590939, lng: -93.620866, 
-    name: "Des Moines", 
-    date: "Jul 8", 
-    state: "IA", 
+    lat: 44.901350, lng: -91.930855, 
+    name: "Menomonie", 
+    date: "Jul 11-12", 
+    state: "WI", 
     type: "waypoint", 
-    description: "Iowa's capital with a gorgeous golden-domed capitol building. Bridges of Madison County country. Surprisingly great food scene.",
-    miles: 244,
-    elevation: 955
+    description: "First Wisconsin stop after crossing from Minnesota. College town vibes and quick overnight before continuing the diagonal drive to Chicago.",
+    miles: 270,
+    elevation: 860
   },
-
-  // === MISSOURI ===
   { 
-    lat: 38.627003, lng: -90.199402, 
-    name: "St. Louis", 
-    date: "Jul 10", 
-    state: "MO", 
+    lat: 43.073051, lng: -89.401230, 
+    name: "Madison", 
+    date: "Jul 12", 
+    state: "WI", 
+    type: "waypoint", 
+    description: "Wisconsin's capital on the isthmus between two lakes. Quick pass through cheese country heading southeast toward Lake Michigan.",
+    miles: 165,
+    elevation: 873
+  },
+  { 
+    lat: 42.614430, lng: -87.953445, 
+    name: "Kenosha - Mars Cheese Castle", 
+    date: "Jul 12", 
+    state: "WI", 
     type: "highlight", 
-    description: "Gateway to the West! The Arch is incredible up close. Took the tram to the top for views of both Illinois and Missouri.",
-    miles: 350,
-    elevation: 466
+    description: "The legendary Mars Cheese Castle! Had to stop for cheese curds and Wisconsin souvenirs. A must-stop on I-94 between Milwaukee and Chicago. The cheese selection is unreal.",
+    miles: 80,
+    elevation: 610
   },
 
-  // === ILLINOIS - MIDWEST LOOP ===
+  // === ILLINOIS - CHICAGO ===
   { 
     lat: 41.878113, lng: -87.629799, 
     name: "Chicago", 
-    date: "Jul 10", 
+    date: "Jul 12-13", 
     state: "IL", 
     type: "highlight", 
     description: "Windy City! Deep dish pizza, Lake Michigan skyline, and the Bean. Starting point for the Midwest friend tour. The energy here is electric.",
-    miles: 92,
+    miles: 55,
     elevation: 594
   },
 
