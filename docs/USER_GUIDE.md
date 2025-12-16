@@ -1,5 +1,16 @@
 # A Whittle Wandering - User Guide
 
+## Account Limits
+
+| Resource | Limit | Notes |
+|----------|-------|-------|
+| **Active Journeys** | 5 per user | Each journey gets dedicated cloud storage |
+| **Media Storage** | Unlimited | Photos stored in secure cloud bucket |
+
+> **Note**: To create a new journey after reaching the limit, archive or delete an existing one.
+
+---
+
 ## Getting Started
 
 ### Creating Your Account
