@@ -103,6 +103,43 @@ Your journey route appears on an interactive map with:
 
 ---
 
+## Managing Your Journeys
+
+### Exporting Data
+
+Before archiving or deleting a journey, export your data:
+
+1. Go to your journey in the dashboard
+2. Click **Export Data**
+3. Download the JSON file with all drives and charging sessions
+4. Keep this file for your permanent records
+
+### Archiving Journeys
+
+Archive journeys to free up slots while keeping data in cold storage:
+
+1. Click **Archive** on the journey card
+2. Review the retention policy
+3. Confirm archiving
+
+**Retention Policy:**
+| Account Status | Data Retention |
+|----------------|----------------|
+| Active (monthly login) | 1 year |
+| Inactive | 90 days |
+
+Archived journeys can be restored anytime before expiration.
+
+### Deleting Journeys
+
+⚠️ **Warning**: Deletion is permanent and cannot be undone.
+
+1. Click **Delete** on the journey card
+2. Confirm you want to permanently delete
+3. All data including cloud storage is removed
+
+---
+
 ## Adding Waypoints
 
 Waypoints are special stops on your journey. To add one:
