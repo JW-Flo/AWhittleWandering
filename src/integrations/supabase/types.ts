@@ -488,6 +488,8 @@ export type Database = {
       }
       journeys: {
         Row: {
+          archive_expires_at: string | null
+          archived_at: string | null
           cloudflare_d1_id: string | null
           cloudflare_d1_name: string | null
           cover_image_url: string | null
@@ -495,6 +497,8 @@ export type Database = {
           data_storage_type: string | null
           description: string | null
           end_date: string | null
+          export_generated_at: string | null
+          export_url: string | null
           id: string
           is_public: boolean | null
           name: string
@@ -507,6 +511,8 @@ export type Database = {
           vehicle_id: string | null
         }
         Insert: {
+          archive_expires_at?: string | null
+          archived_at?: string | null
           cloudflare_d1_id?: string | null
           cloudflare_d1_name?: string | null
           cover_image_url?: string | null
@@ -514,6 +520,8 @@ export type Database = {
           data_storage_type?: string | null
           description?: string | null
           end_date?: string | null
+          export_generated_at?: string | null
+          export_url?: string | null
           id?: string
           is_public?: boolean | null
           name: string
@@ -526,6 +534,8 @@ export type Database = {
           vehicle_id?: string | null
         }
         Update: {
+          archive_expires_at?: string | null
+          archived_at?: string | null
           cloudflare_d1_id?: string | null
           cloudflare_d1_name?: string | null
           cover_image_url?: string | null
@@ -533,6 +543,8 @@ export type Database = {
           data_storage_type?: string | null
           description?: string | null
           end_date?: string | null
+          export_generated_at?: string | null
+          export_url?: string | null
           id?: string
           is_public?: boolean | null
           name?: string
@@ -683,6 +695,7 @@ export type Database = {
           full_name: string | null
           has_viewed_flagship: boolean | null
           id: string
+          last_active_at: string | null
           locked_at: string | null
           locked_by: string | null
           locked_reason: string | null
@@ -706,6 +719,7 @@ export type Database = {
           full_name?: string | null
           has_viewed_flagship?: boolean | null
           id?: string
+          last_active_at?: string | null
           locked_at?: string | null
           locked_by?: string | null
           locked_reason?: string | null
@@ -729,6 +743,7 @@ export type Database = {
           full_name?: string | null
           has_viewed_flagship?: boolean | null
           id?: string
+          last_active_at?: string | null
           locked_at?: string | null
           locked_by?: string | null
           locked_reason?: string | null
