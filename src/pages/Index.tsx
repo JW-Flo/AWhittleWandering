@@ -96,25 +96,25 @@ export default function Index() {
 
       {/* Immersive Hero - Full Screen */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Animated Background Layers */}
-        <div className="absolute inset-0 bg-gradient-to-b from-road/90 via-background to-background" />
+        {/* PNW Atmospheric Background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-twilight-green/90 via-background to-background" />
         <div 
-          className="absolute inset-0 opacity-30"
+          className="absolute inset-0 opacity-40"
           style={{
-            backgroundImage: `radial-gradient(circle at 20% 50%, hsl(var(--sunset)) 0%, transparent 50%),
-                             radial-gradient(circle at 80% 30%, hsl(var(--forest)) 0%, transparent 40%),
+            backgroundImage: `radial-gradient(circle at 20% 50%, hsl(var(--moss)) 0%, transparent 50%),
+                             radial-gradient(circle at 80% 30%, hsl(var(--ancient-teal)) 0%, transparent 40%),
                              radial-gradient(circle at 50% 80%, hsl(var(--primary)) 0%, transparent 30%)`
           }}
         />
         
-        {/* Floating road lines animation */}
+        {/* Misty rain forest lines */}
         <div className="absolute inset-0 overflow-hidden">
           <div 
-            className="absolute left-1/2 top-0 w-1 h-full bg-gradient-to-b from-sand/0 via-sand/40 to-sand/0"
+            className="absolute left-1/2 top-0 w-0.5 h-full bg-gradient-to-b from-mist/0 via-mist/30 to-mist/0"
             style={{ transform: `translateY(${scrollY * 0.5}px)` }}
           />
           <div 
-            className="absolute left-[calc(50%-4px)] top-0 w-8 border-l-2 border-r-2 border-dashed border-sand/20 h-full"
+            className="absolute left-[calc(50%-4px)] top-0 w-8 border-l border-r border-dashed border-mist/15 h-full"
             style={{ transform: `translateY(${scrollY * 0.3}px)` }}
           />
         </div>
