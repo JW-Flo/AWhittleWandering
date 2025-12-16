@@ -300,7 +300,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                 <div>
                   <h4 className="font-medium text-foreground">Cost Savings</h4>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Compared to a 30 MPG vehicle at $3.50/gallon, you saved over $5,200 
+                    Compared to a 30 MPG vehicle at $3.17/gallon (national average), you saved over $4,800 
                     in fuel costs during this 89-day adventure.
                   </p>
                 </div>
@@ -316,7 +316,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                   <h4 className="font-medium text-foreground">Charging Pattern</h4>
                   <p className="text-sm text-muted-foreground mt-1">
                     You averaged 178 miles between charging stops. The longest single drive 
-                    was 287 miles from Denver to Salt Lake City.
+                    was 274 miles east from Provo through Grand Mesa Skyway into Colorado.
                   </p>
                 </div>
               </div>
