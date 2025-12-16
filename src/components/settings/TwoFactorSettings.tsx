@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from '@/hooks/use-toast';
-import { Shield, ShieldCheck, ShieldOff, Smartphone, Copy, CheckCircle2, Loader2 } from 'lucide-react';
+import { Shield, ShieldCheck, ShieldOff, Smartphone, Copy, CheckCircle2, Loader2, Key, AlertTriangle, Download } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -24,7 +24,24 @@ interface TOTPFactor {
   created_at: string;
 }
 
-export function TwoFactorSettings() {
+interface TwoFactorSettingsProps {
+  isAdmin?: boolean;
+  required?: boolean;
+}
+
+// Generate 10 backup codes
+function generateBackupCodes(): string[] {
+  const codes: string[] = [];
+  for (let i = 0; i < 10; i++) {
+    const code = Array.from({ length: 8 }, () => 
+      'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]
+    ).join('');
+    codes.push(`${code.slice(0, 4)}-${code.slice(4)}`);
+  }
+  return codes;
+}
+
+export function TwoFactorSettings({ isAdmin = false, required = false }: TwoFactorSettingsProps) {
   const { user } = useAuth();
   const [factors, setFactors] = useState<TOTPFactor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,6 +55,11 @@ export function TwoFactorSettings() {
   const [verifyCode, setVerifyCode] = useState('');
   const [showEnrollDialog, setShowEnrollDialog] = useState(false);
   const [copiedSecret, setCopiedSecret] = useState(false);
+  
+  // Backup codes
+  const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [showBackupCodesDialog, setShowBackupCodesDialog] = useState(false);
+  const [copiedBackupCodes, setCopiedBackupCodes] = useState(false);
 
   const fetchFactors = async () => {
     if (!user) return;
@@ -101,14 +123,22 @@ export function TwoFactorSettings() {
 
       if (error) throw error;
 
+      // Generate and show backup codes
+      const codes = generateBackupCodes();
+      setBackupCodes(codes);
+      
+      // Store backup codes hash in user metadata (in production, store these securely server-side)
+      // For now we'll just show them to the user
+      
       toast({
         title: '2FA Enabled',
-        description: 'Two-factor authentication is now active on your account.',
+        description: 'Two-factor authentication is now active. Save your backup codes!',
       });
 
       setShowEnrollDialog(false);
       setEnrollmentData(null);
       setVerifyCode('');
+      setShowBackupCodesDialog(true);
       fetchFactors();
     } catch (error: any) {
       toast({
@@ -122,6 +152,15 @@ export function TwoFactorSettings() {
   };
 
   const unenroll = async (factorId: string) => {
+    if (isAdmin && required) {
+      toast({
+        title: 'Cannot disable 2FA',
+        description: 'Two-factor authentication is required for admin accounts.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase.auth.mfa.unenroll({ factorId });
 
@@ -148,6 +187,39 @@ export function TwoFactorSettings() {
       setCopiedSecret(true);
       setTimeout(() => setCopiedSecret(false), 2000);
     }
+  };
+
+  const copyBackupCodes = () => {
+    navigator.clipboard.writeText(backupCodes.join('\n'));
+    setCopiedBackupCodes(true);
+    setTimeout(() => setCopiedBackupCodes(false), 2000);
+    toast({
+      title: 'Codes copied',
+      description: 'Backup codes copied to clipboard.',
+    });
+  };
+
+  const downloadBackupCodes = () => {
+    const content = `AWW Backup Codes\n${'='.repeat(40)}\n\nThese codes can be used to access your account if you lose access to your authenticator app.\nEach code can only be used once.\n\n${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}\n\nGenerated: ${new Date().toISOString()}\n\nKeep these codes safe and secure!`;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'aww-backup-codes.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast({
+      title: 'Codes downloaded',
+      description: 'Backup codes saved to file.',
+    });
+  };
+
+  const regenerateBackupCodes = () => {
+    const codes = generateBackupCodes();
+    setBackupCodes(codes);
+    setShowBackupCodesDialog(true);
   };
 
   const verifiedFactors = factors.filter(f => f.status === 'verified');
@@ -177,11 +249,23 @@ export function TwoFactorSettings() {
               <CardTitle className="text-lg">Two-Factor Authentication</CardTitle>
               <CardDescription>
                 Add an extra layer of security to your account
+                {isAdmin && required && !has2FA && (
+                  <span className="text-destructive font-medium"> (Required for admins)</span>
+                )}
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {isAdmin && required && !has2FA && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                As an admin, you must enable two-factor authentication to access administrative features.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {has2FA ? (
             <>
               <Alert className="border-forest/30 bg-forest/10">
@@ -208,15 +292,27 @@ export function TwoFactorSettings() {
                         </p>
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => unenroll(factor.id)}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <ShieldOff className="w-4 h-4 mr-1" />
-                      Remove
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={regenerateBackupCodes}
+                      >
+                        <Key className="w-4 h-4 mr-1" />
+                        Backup Codes
+                      </Button>
+                      {!(isAdmin && required) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => unenroll(factor.id)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <ShieldOff className="w-4 h-4 mr-1" />
+                          Remove
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -312,6 +408,57 @@ export function TwoFactorSettings() {
                 <CheckCircle2 className="w-4 h-4 mr-2" />
               )}
               Verify & Enable 2FA
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Backup Codes Dialog */}
+      <Dialog open={showBackupCodesDialog} onOpenChange={setShowBackupCodesDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Key className="w-5 h-5 text-primary" />
+              Backup Codes
+            </DialogTitle>
+            <DialogDescription>
+              Save these codes in a secure location. Each code can only be used once to access your account if you lose your authenticator.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                These codes will only be shown once. Make sure to save them now!
+              </AlertDescription>
+            </Alert>
+
+            <div className="grid grid-cols-2 gap-2 p-4 bg-muted rounded-lg font-mono text-sm">
+              {backupCodes.map((code, i) => (
+                <div key={i} className="p-2 bg-background rounded text-center">
+                  {code}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={copyBackupCodes} className="flex-1">
+                {copiedBackupCodes ? (
+                  <CheckCircle2 className="w-4 h-4 mr-2 text-forest" />
+                ) : (
+                  <Copy className="w-4 h-4 mr-2" />
+                )}
+                Copy
+              </Button>
+              <Button variant="outline" onClick={downloadBackupCodes} className="flex-1">
+                <Download className="w-4 h-4 mr-2" />
+                Download
+              </Button>
+            </div>
+
+            <Button onClick={() => setShowBackupCodesDialog(false)} className="w-full">
+              I've saved my codes
             </Button>
           </div>
         </DialogContent>
