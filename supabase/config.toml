@@ -35,3 +35,15 @@ verify_jwt = true
 
 [functions.vehicle-api]
 verify_jwt = true
+
+[functions.incident-remediation]
+verify_jwt = true
+
+[functions.send-sms]
+verify_jwt = true
+
+[functions.send-email-digest]
+verify_jwt = true
+
+[functions.route-navigator]
+verify_jwt = true
