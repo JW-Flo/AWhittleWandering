@@ -7,13 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { MapPin, Compass } from 'lucide-react';
+import { MapPin, Compass, AlertTriangle, Shield } from 'lucide-react';
+import { checkPasswordBreach, checkPasswordStrength } from '@/lib/passwordSecurity';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [passwordWarning, setPasswordWarning] = useState<string | null>(null);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -39,7 +42,35 @@ export default function Auth() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPasswordWarning(null);
+    
+    // Check password strength first
+    const strengthResult = checkPasswordStrength(password);
+    if (!strengthResult.isValid) {
+      toast({
+        title: 'Password requirements not met',
+        description: strengthResult.errors[0],
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsLoading(true);
+    
+    // Check for leaked password
+    const breachResult = await checkPasswordBreach(password);
+    if (breachResult.isCompromised) {
+      setIsLoading(false);
+      setPasswordWarning(
+        `This password has appeared in ${breachResult.breachCount?.toLocaleString()} data breaches. Please choose a different password.`
+      );
+      toast({
+        title: 'Compromised password detected',
+        description: 'This password has been exposed in data breaches. Please choose a different one.',
+        variant: 'destructive',
+      });
+      return;
+    }
     
     const { error } = await signUp(email, password, fullName);
     
@@ -148,6 +179,14 @@ export default function Auth() {
                       minLength={6}
                     />
                   </div>
+                  {passwordWarning && (
+                    <Alert variant="destructive">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription className="text-sm">
+                        {passwordWarning}
+                      </AlertDescription>
+                    </Alert>
+                  )}
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? 'Creating account...' : 'Create Account'}
                   </Button>
