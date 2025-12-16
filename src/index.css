@@ -8,57 +8,57 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Evergreen Forest - warmer, more varied palette */
-    --background: 180 8% 7%;
-    --foreground: 45 30% 93%;
+    /* AWW Forest Night - cohesive warm dark palette */
+    --background: 30 8% 8%;
+    --foreground: 40 25% 92%;
 
-    --card: 170 10% 11%;
-    --card-foreground: 45 30% 93%;
+    --card: 30 10% 12%;
+    --card-foreground: 40 25% 92%;
 
-    --popover: 170 10% 11%;
-    --popover-foreground: 45 30% 93%;
+    --popover: 30 10% 12%;
+    --popover-foreground: 40 25% 92%;
 
-    /* Rich evergreen primary */
-    --primary: 145 40% 38%;
-    --primary-foreground: 45 30% 95%;
+    /* Warm amber primary - the adventure spirit */
+    --primary: 38 75% 50%;
+    --primary-foreground: 30 15% 8%;
 
-    --secondary: 170 8% 14%;
-    --secondary-foreground: 45 25% 88%;
+    --secondary: 30 8% 16%;
+    --secondary-foreground: 40 20% 85%;
 
-    --muted: 150 10% 15%;
-    --muted-foreground: 40 12% 50%;
+    --muted: 30 8% 18%;
+    --muted-foreground: 35 10% 50%;
 
-    /* Warm filtered sunlight accent */
-    --accent: 38 75% 50%;
-    --accent-foreground: 150 20% 5%;
+    /* Forest green accent for success/nature */
+    --accent: 145 45% 35%;
+    --accent-foreground: 40 25% 95%;
 
-    --destructive: 0 60% 40%;
+    --destructive: 0 65% 45%;
     --destructive-foreground: 40 25% 92%;
 
-    --border: 150 12% 16%;
-    --input: 150 12% 12%;
-    --ring: 135 50% 32%;
+    --border: 30 10% 18%;
+    --input: 30 10% 14%;
+    --ring: 38 70% 45%;
 
-    /* Ancient Forest Palette */
-    --forest-floor: 150 20% 5%;
-    --redwood-bark: 15 35% 18%;
-    --redwood-deep: 12 30% 12%;
-    --moss: 120 45% 25%;
-    --moss-bright: 115 55% 35%;
-    --fern: 140 40% 30%;
-    --lichen: 75 25% 45%;
+    /* AWW Palette - warm forest tones */
+    --forest-floor: 30 15% 6%;
+    --redwood-bark: 20 30% 20%;
+    --redwood-deep: 25 25% 14%;
+    --moss: 140 40% 28%;
+    --moss-bright: 135 50% 38%;
+    --fern: 145 35% 32%;
+    --lichen: 80 20% 45%;
     
-    /* Canopy Light */
-    --sunbeam: 45 80% 55%;
+    /* Warm Light */
+    --sunbeam: 42 85% 58%;
     --golden-hour: 38 75% 50%;
-    --dappled-light: 50 60% 65%;
-    --mist: 150 15% 70%;
+    --dappled-light: 45 55% 62%;
+    --mist: 40 12% 65%;
     
-    /* Forest Depths */
-    --shadow-deep: 150 25% 8%;
-    --twilight-green: 160 30% 20%;
-    --ancient-teal: 175 35% 28%;
-    --river-stone: 180 10% 40%;
+    /* Dark Depths */
+    --shadow-deep: 30 20% 6%;
+    --twilight-green: 145 25% 22%;
+    --ancient-teal: 150 30% 28%;
+    --river-stone: 35 8% 42%;
 
     /* Atmospheric Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(var(--moss)), hsl(var(--fern)));
@@ -88,23 +88,28 @@ All colors MUST be HSL.
 
     --radius: 0.5rem;
 
-    --sidebar-background: 150 20% 5%;
+    --sidebar-background: 30 15% 6%;
     --sidebar-foreground: 40 25% 92%;
-    --sidebar-primary: 135 50% 32%;
-    --sidebar-primary-foreground: 40 25% 95%;
-    --sidebar-accent: 150 12% 12%;
+    --sidebar-primary: 38 75% 50%;
+    --sidebar-primary-foreground: 30 15% 8%;
+    --sidebar-accent: 30 10% 14%;
     --sidebar-accent-foreground: 40 20% 88%;
-    --sidebar-border: 150 12% 16%;
-    --sidebar-ring: 135 50% 32%;
+    --sidebar-border: 30 10% 18%;
+    --sidebar-ring: 38 70% 45%;
 
-    /* Legacy semantic colors */
-    --road: 180 10% 40%;
-    --forest: 135 50% 32%;
-    --sand: 45 50% 50%;
+    /* Semantic colors */
+    --road: 35 8% 42%;
+    --forest: 145 45% 35%;
+    --sand: 42 55% 55%;
     --sunset: 38 75% 50%;
-    --sky: 175 35% 35%;
-    --charging: 120 45% 35%;
+    --sky: 200 45% 45%;
+    --charging: 145 50% 40%;
     --driving: 38 75% 50%;
+    
+    /* Status colors */
+    --success: 145 50% 40%;
+    --warning: 38 85% 55%;
+    --info: 200 60% 50%;
   }
 }
 

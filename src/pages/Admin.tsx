@@ -167,12 +167,12 @@ export default function Admin() {
             </Link>
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-2">
-                <Shield className="w-6 h-6 text-adventure-gold" />
+                <Shield className="w-6 h-6 text-primary" />
                 Admin Portal
               </h1>
               <p className="text-sm text-muted-foreground">Manage users, journeys, and platform settings</p>
             </div>
-            <Badge variant="outline" className="ml-auto border-adventure-gold/50 text-adventure-gold">
+            <Badge variant="outline" className="ml-auto border-primary/50 text-primary">
               Admin Access
             </Badge>
           </div>
@@ -297,7 +297,7 @@ export default function Admin() {
                     <div className="flex items-center gap-3 mb-2">
                       <Database className="w-5 h-5 text-primary" />
                       <span className="font-medium">Database Status</span>
-                      <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30">
+                      <Badge variant="outline" className="bg-success/10 text-success border-success/30">
                         Healthy
                       </Badge>
                     </div>
@@ -308,19 +308,19 @@ export default function Admin() {
                     <div className="flex items-center gap-3 mb-2">
                       <Car className="w-5 h-5 text-primary" />
                       <span className="font-medium">Tessie API</span>
-                      <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30">
+                      <Badge variant="outline" className="bg-success/10 text-success border-success/30">
                         Connected
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">Vehicle API integration active</p>
                   </div>
                   
-                  <div className="p-4 bg-adventure-gold/10 border border-adventure-gold/30 rounded-lg">
+                  <div className="p-4 bg-primary/10 border border-primary/30 rounded-lg">
                     <div className="flex items-center gap-3 mb-2">
-                      <AlertTriangle className="w-5 h-5 text-adventure-gold" />
+                      <AlertTriangle className="w-5 h-5 text-primary" />
                       <span className="font-medium">Session Management</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">Session timeout: 7 days (configurable)</p>
+                    <p className="text-sm text-muted-foreground">Session timeout: 30 minutes of inactivity</p>
                   </div>
                 </div>
               </TabsContent>
