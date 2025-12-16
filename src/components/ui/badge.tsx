@@ -12,10 +12,10 @@ const badgeVariants = cva(
         secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/90",
         destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline: "text-foreground border-border hover:bg-secondary/50",
-        // Status badges with proper contrast on hover
-        success: "border-transparent bg-adventure-green/20 text-adventure-green hover:bg-adventure-green/30",
-        warning: "border-transparent bg-adventure-gold/20 text-adventure-gold hover:bg-adventure-gold/30",
-        info: "border-transparent bg-tesla-blue/20 text-tesla-blue hover:bg-tesla-blue/30",
+        // Status badges using design system tokens
+        success: "border-transparent bg-success/20 text-success hover:bg-success/30",
+        warning: "border-transparent bg-warning/20 text-warning hover:bg-warning/30",
+        info: "border-transparent bg-info/20 text-info hover:bg-info/30",
       },
     },
     defaultVariants: {
