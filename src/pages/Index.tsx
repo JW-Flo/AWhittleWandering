@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import ImmersiveJourneyMap from '@/components/ImmersiveJourneyMap';
 import SignInDialog from '@/components/SignInDialog';
+import FeatureRequestWidget from '@/components/FeatureRequestWidget';
 import { Footer } from '@/components/layout/Footer';
 import { Logo } from '@/components/Logo';
 import {
@@ -401,6 +402,9 @@ export default function Index() {
           <SignInDialog open={signInOpen} onOpenChange={setSignInOpen} />
         </div>
       </section>
+
+      {/* Feature Request Widget */}
+      <FeatureRequestWidget variant="floating" />
 
       {/* Footer */}
       <Footer />
