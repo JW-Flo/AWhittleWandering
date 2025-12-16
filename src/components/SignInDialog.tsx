@@ -12,7 +12,9 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { Car, Mail, Lock, User } from 'lucide-react';
+import { Car, Mail, Lock, User, AlertTriangle, Shield } from 'lucide-react';
+import { checkPasswordBreach, checkPasswordStrength } from '@/lib/passwordSecurity';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface SignInDialogProps {
   open: boolean;
@@ -23,6 +25,7 @@ export default function SignInDialog({ open, onOpenChange }: SignInDialogProps) 
   const { signIn, signUp } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
+  const [passwordWarning, setPasswordWarning] = useState<string | null>(null);
 
   // Sign In form state
   const [signInEmail, setSignInEmail] = useState('');
@@ -60,6 +63,7 @@ export default function SignInDialog({ open, onOpenChange }: SignInDialogProps) 
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPasswordWarning(null);
 
     if (signUpPassword !== signUpConfirmPassword) {
       toast({
@@ -70,16 +74,33 @@ export default function SignInDialog({ open, onOpenChange }: SignInDialogProps) 
       return;
     }
 
-    if (signUpPassword.length < 6) {
+    // Check password strength
+    const strengthResult = checkPasswordStrength(signUpPassword);
+    if (!strengthResult.isValid) {
       toast({
-        title: 'Password too short',
-        description: 'Password must be at least 6 characters.',
+        title: 'Password requirements not met',
+        description: strengthResult.errors[0],
         variant: 'destructive',
       });
       return;
     }
 
     setIsLoading(true);
+
+    // Check for leaked password
+    const breachResult = await checkPasswordBreach(signUpPassword);
+    if (breachResult.isCompromised) {
+      setIsLoading(false);
+      setPasswordWarning(
+        `This password has appeared in ${breachResult.breachCount?.toLocaleString()} data breaches. Please choose a different password for your security.`
+      );
+      toast({
+        title: 'Compromised password detected',
+        description: 'This password has been exposed in data breaches. Please choose a different one.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     const { error } = await signUp(signUpEmail, signUpPassword, signUpName || undefined);
 
@@ -114,7 +135,9 @@ export default function SignInDialog({ open, onOpenChange }: SignInDialogProps) 
     setSignUpPassword('');
     setSignUpConfirmPassword('');
     setSignUpName('');
+    setPasswordWarning(null);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -191,6 +214,15 @@ export default function SignInDialog({ open, onOpenChange }: SignInDialogProps) 
                   />
                 </div>
               </div>
+
+              {passwordWarning && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription className="text-sm">
+                    {passwordWarning}
+                  </AlertDescription>
+                </Alert>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="signup-email">Email</Label>
