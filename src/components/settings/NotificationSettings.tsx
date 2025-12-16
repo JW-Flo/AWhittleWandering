@@ -119,15 +119,15 @@ export default function NotificationSettings() {
     }
   };
 
-  const handleSMSConsent = async (consented: boolean, timestamp: string) => {
+  const handleSMSConsent = async (consented: boolean, timestamp: string, phoneNumber?: string) => {
     if (!user) return;
 
-    if (consented) {
+    if (consented && phoneNumber) {
       // Log consent for compliance
       try {
         await supabase.from('sms_consent_log').insert({
           user_id: user.id,
-          phone_number: pendingPhoneNumber || prefs.phone_number || '',
+          phone_number: phoneNumber,
           action: 'opt_in',
           consent_given: true,
           consent_timestamp: timestamp,
@@ -141,7 +141,7 @@ export default function NotificationSettings() {
       setPrefs(p => ({
         ...p,
         sms_enabled: true,
-        phone_number: pendingPhoneNumber || p.phone_number,
+        phone_number: phoneNumber,
         sms_consent_given: true,
         sms_consent_timestamp: timestamp
       }));

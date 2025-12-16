@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Smartphone, Shield, Info } from 'lucide-react';
 
@@ -17,24 +18,33 @@ interface SMSConsentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   phoneNumber: string;
-  onConsent: (consented: boolean, timestamp: string) => void;
+  onConsent: (consented: boolean, timestamp: string, phoneNumber?: string) => void;
 }
 
 export default function SMSConsentDialog({
   open,
   onOpenChange,
-  phoneNumber,
+  phoneNumber: initialPhoneNumber,
   onConsent,
 }: SMSConsentDialogProps) {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [agreedToFrequency, setAgreedToFrequency] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState(initialPhoneNumber);
 
-  const canSubmit = agreedToTerms && agreedToFrequency;
+  // Update phone number when dialog opens with new initial value
+  useEffect(() => {
+    if (open) {
+      setPhoneNumber(initialPhoneNumber);
+    }
+  }, [open, initialPhoneNumber]);
+
+  const isValidPhoneNumber = phoneNumber && phoneNumber.replace(/\D/g, '').length >= 10;
+  const canSubmit = agreedToTerms && agreedToFrequency && isValidPhoneNumber;
 
   const handleConsent = () => {
     if (!canSubmit) return;
     const timestamp = new Date().toISOString();
-    onConsent(true, timestamp);
+    onConsent(true, timestamp, phoneNumber);
     onOpenChange(false);
     // Reset for next time
     setAgreedToTerms(false);
@@ -61,8 +71,24 @@ export default function SMSConsentDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[300px] pr-4">
+        <ScrollArea className="max-h-[350px] pr-4">
           <div className="space-y-4">
+            {/* Phone Number Input */}
+            <div className="space-y-2">
+              <Label htmlFor="sms-phone">Phone Number</Label>
+              <Input
+                id="sms-phone"
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="+1 (555) 123-4567"
+                className="font-mono"
+              />
+              {phoneNumber && !isValidPhoneNumber && (
+                <p className="text-xs text-destructive">Please enter a valid phone number (at least 10 digits)</p>
+              )}
+            </div>
+
             {/* Terms Section */}
             <div className="bg-muted/50 rounded-lg p-4 space-y-3">
               <div className="flex items-start gap-2">
@@ -87,14 +113,6 @@ export default function SMSConsentDialog({
                   </p>
                 </div>
               </div>
-            </div>
-
-            {/* Phone Number Display */}
-            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
-              <p className="text-sm">
-                <span className="text-muted-foreground">Phone number:</span>{' '}
-                <span className="font-mono font-medium">{phoneNumber || 'Not provided'}</span>
-              </p>
             </div>
 
             {/* Consent Checkboxes */}
