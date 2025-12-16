@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useFlagshipGating } from '@/hooks/useFlagshipGating';
@@ -13,7 +13,7 @@ import { Logo } from '@/components/Logo';
 import { JourneyWaypoint } from '@/data/journeyRoute';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Map, Image, Calendar, Zap, Activity, CheckCircle, Unlock, Settings, Home } from 'lucide-react';
+import { Map, Image, Calendar, Zap, Activity, CheckCircle, Unlock, Settings, Home, Eye, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -27,9 +27,38 @@ export default function Explore() {
   const [isLoading, setIsLoading] = useState(true);
   const [journeyId, setJourneyId] = useState<string | null>(null);
   const [explorationProgress, setExplorationProgress] = useState(0);
+  const [viewStats, setViewStats] = useState<{ total_views: number; unique_visitors: number } | null>(null);
+  const hasTrackedView = useRef(false);
   
   // Flagship journey owner ID (your user ID for the AWW journey)
   const flagshipOwnerId = 'flagship-owner';
+
+  // Track page view
+  useEffect(() => {
+    if (hasTrackedView.current) return;
+    hasTrackedView.current = true;
+
+    async function trackView() {
+      try {
+        const { data, error } = await supabase.functions.invoke('track-view', {
+          body: { page_path: '/explore' }
+        });
+        
+        if (error) {
+          console.error('Error tracking view:', error);
+          return;
+        }
+        
+        if (data?.stats) {
+          setViewStats(data.stats);
+        }
+      } catch (err) {
+        console.error('View tracking error:', err);
+      }
+    }
+    
+    trackView();
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -113,6 +142,20 @@ export default function Explore() {
                 <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-forest/10 rounded-full border border-forest/20">
                   <CheckCircle className="w-4 h-4 text-forest" />
                   <span className="text-xs text-forest font-medium">Features Unlocked</span>
+                </div>
+              )}
+              {/* View Counter */}
+              {viewStats && (
+                <div className="hidden md:flex items-center gap-3 px-3 py-1.5 bg-muted/50 rounded-full">
+                  <div className="flex items-center gap-1.5">
+                    <Eye className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">{viewStats.total_views.toLocaleString()} views</span>
+                  </div>
+                  <div className="w-px h-3 bg-border" />
+                  <div className="flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">{viewStats.unique_visitors.toLocaleString()} visitors</span>
+                  </div>
                 </div>
               )}
             </div>

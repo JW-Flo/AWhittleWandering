@@ -677,6 +677,50 @@ export type Database = {
           },
         ]
       }
+      page_views: {
+        Row: {
+          country_code: string | null
+          created_at: string
+          id: string
+          journey_id: string | null
+          page_path: string
+          referrer: string | null
+          user_agent: string | null
+          viewed_at: string
+          visitor_id: string | null
+        }
+        Insert: {
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          journey_id?: string | null
+          page_path: string
+          referrer?: string | null
+          user_agent?: string | null
+          viewed_at?: string
+          visitor_id?: string | null
+        }
+        Update: {
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          journey_id?: string | null
+          page_path?: string
+          referrer?: string | null
+          user_agent?: string | null
+          viewed_at?: string
+          visitor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_views_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           account_status: string | null
@@ -1103,6 +1147,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_flagship_view_count: {
+        Args: never
+        Returns: {
+          total_views: number
+          unique_visitors: number
+        }[]
+      }
+      get_page_view_stats: {
+        Args: { p_journey_id?: string; p_page_path?: string }
+        Returns: {
+          journey_id: string
+          page_path: string
+          total_views: number
+          unique_visitors: number
+        }[]
+      }
       get_user_api_credential_status: {
         Args: { credential_id: string }
         Returns: {
