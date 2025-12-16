@@ -110,12 +110,24 @@ const Terms = () => {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-foreground mb-4">7. Privacy</h2>
-            <p className="text-muted-foreground leading-relaxed">
-              Your privacy is important to us. Please review our{" "}
-              <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link> to understand 
-              how we collect, use, and protect your information, including location data and vehicle telemetry.
-            </p>
+            <h2 className="text-2xl font-semibold text-foreground mb-4">7. Privacy & Data Rights</h2>
+            <div className="text-muted-foreground leading-relaxed space-y-4">
+              <p>
+                Your privacy is important to us. Please review our{" "}
+                <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link> to understand 
+                how we collect, use, and protect your information, including location data and vehicle telemetry.
+              </p>
+              <p>
+                <strong className="text-foreground">Data Subject Access Requests:</strong> You have the right to 
+                access, correct, delete, or export your personal data at any time. To exercise these rights, 
+                please visit our{" "}
+                <Link to="/data-request" className="text-primary hover:underline">Data Request Portal</Link> or 
+                email us at{" "}
+                <a href="mailto:privacy@awhittlewandering.com" className="text-primary hover:underline">
+                  privacy@awhittlewandering.com
+                </a>.
+              </p>
+            </div>
           </section>
 
           <section>
