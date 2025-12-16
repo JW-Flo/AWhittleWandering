@@ -31,8 +31,8 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
     totalDistance: 15847,
     totalEnergy: 6915,
     averageEfficiency: 2.29,
-    carbonSaved: 12478,
-    costSavings: 5234.40,
+    carbonSaved: 6340, // lbs CO2 (gas: 528 gal × 19.6 lbs/gal = 10,349 lbs, minus EV grid emissions)
+    costSavings: 844, // Realistic: Gas $1,674 - Home charging $830 = $844 max savings
   },
   timeRange = '90d'
 }) => {
@@ -191,25 +191,25 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                     <div className="text-center">
                       <p className="text-sm text-muted-foreground">Total Charging Cost</p>
                       <p className="text-2xl font-bold">{formatCurrency(1847)}</p>
-                      <p className="text-xs text-adventure-green">259 sessions</p>
+                      <p className="text-xs text-muted-foreground">259 sessions (mostly Superchargers)</p>
                     </div>
                   </CardContent>
                 </Card>
                 <Card className="bg-secondary border-border">
                   <CardContent className="p-6">
                     <div className="text-center">
-                      <p className="text-sm text-muted-foreground">Cost per Mile</p>
-                      <p className="text-2xl font-bold">$0.12</p>
-                      <p className="text-xs text-adventure-green">vs $0.35 gas</p>
+                      <p className="text-sm text-muted-foreground">Gas Equivalent</p>
+                      <p className="text-2xl font-bold">$1,674</p>
+                      <p className="text-xs text-muted-foreground">30 MPG @ $3.17/gal</p>
                     </div>
                   </CardContent>
                 </Card>
                 <Card className="bg-secondary border-border">
                   <CardContent className="p-6">
                     <div className="text-center">
-                      <p className="text-sm text-muted-foreground">Avg Session Cost</p>
-                      <p className="text-2xl font-bold">$7.13</p>
-                      <p className="text-xs text-muted-foreground">26.7 kWh avg</p>
+                      <p className="text-sm text-muted-foreground">Home Charging Value</p>
+                      <p className="text-2xl font-bold text-adventure-green">$830</p>
+                      <p className="text-xs text-adventure-green">If charged at home rates</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -230,11 +230,11 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Equivalent Trees</span>
-                        <span className="font-medium">142 trees/year</span>
+                        <span className="font-medium">72 trees/year</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Gasoline Saved</span>
-                        <span className="font-medium">634 gallons</span>
+                        <span className="text-sm text-muted-foreground">Gasoline Not Burned</span>
+                        <span className="font-medium">528 gallons</span>
                       </div>
                     </div>
                   </CardContent>
@@ -298,10 +298,10 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                   <DollarSign className="h-4 w-4 text-adventure-green" />
                 </div>
                 <div>
-                  <h4 className="font-medium text-foreground">Cost Savings</h4>
+                  <h4 className="font-medium text-foreground">Cost Comparison</h4>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Compared to a 30 MPG vehicle at $3.17/gallon (national average), you saved over $4,800 
-                    in fuel costs during this 89-day adventure.
+                    A 30 MPG vehicle at $3.17/gallon would have cost $1,674 for this trip. 
+                    Actual charging costs: $1,847 (mostly Superchargers). Home charging equivalent: ~$830.
                   </p>
                 </div>
               </div>
