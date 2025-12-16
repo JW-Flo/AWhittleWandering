@@ -1,22 +1,116 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import PrivacySettings from '@/components/settings/PrivacySettings';
 import NotificationSettings from '@/components/settings/NotificationSettings';
 import { TwoFactorSettings } from '@/components/settings/TwoFactorSettings';
-import { ArrowLeft, Shield, Bell, Lock } from 'lucide-react';
-import { useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { ArrowLeft, Shield, Bell, Lock, MailX, CheckCircle2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function Settings() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
+  const [unsubscribeHandled, setUnsubscribeHandled] = useState(false);
+  const [processingUnsubscribe, setProcessingUnsubscribe] = useState(false);
+
+  // Handle unsubscribe from URL params
+  useEffect(() => {
+    const handleUnsubscribe = async () => {
+      const unsubscribe = searchParams.get('unsubscribe');
+      const userId = searchParams.get('uid');
+      
+      if (unsubscribe === 'true' && !unsubscribeHandled) {
+        setProcessingUnsubscribe(true);
+        
+        try {
+          // If user is logged in, use their ID. Otherwise, use the uid param
+          const targetUserId = user?.id || userId;
+          
+          if (targetUserId) {
+            const { error } = await supabase
+              .from('notification_preferences')
+              .upsert({
+                user_id: targetUserId,
+                email_enabled: false,
+                updated_at: new Date().toISOString()
+              }, {
+                onConflict: 'user_id'
+              });
+
+            if (error) throw error;
+
+            toast({
+              title: 'Unsubscribed Successfully',
+              description: 'You have been unsubscribed from email notifications.',
+            });
+          }
+        } catch (error: any) {
+          console.error('Unsubscribe error:', error);
+          toast({
+            title: 'Unsubscribe Failed',
+            description: 'Please try again or contact support.',
+            variant: 'destructive'
+          });
+        } finally {
+          setUnsubscribeHandled(true);
+          setProcessingUnsubscribe(false);
+        }
+      }
+    };
+
+    handleUnsubscribe();
+  }, [searchParams, user, unsubscribeHandled, toast]);
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate('/auth');
+      // Allow unsubscribe without auth
+      const unsubscribe = searchParams.get('unsubscribe');
+      if (unsubscribe !== 'true') {
+        navigate('/auth');
+      }
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, searchParams]);
+
+  // Show unsubscribe confirmation for unauthenticated users
+  if (!user && searchParams.get('unsubscribe') === 'true') {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center">
+            {processingUnsubscribe ? (
+              <div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            ) : unsubscribeHandled ? (
+              <CheckCircle2 className="w-12 h-12 text-success mx-auto mb-4" />
+            ) : (
+              <MailX className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            )}
+            <CardTitle>
+              {processingUnsubscribe ? 'Processing...' : 'Unsubscribed'}
+            </CardTitle>
+            <CardDescription>
+              {unsubscribeHandled 
+                ? 'You have been unsubscribed from AWW email notifications.'
+                : 'Processing your unsubscribe request...'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="text-sm text-muted-foreground mb-4">
+              You can manage your notification preferences anytime by signing in.
+            </p>
+            <Button onClick={() => navigate('/')} variant="outline">
+              Return Home
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (loading || !user) {
     return (
@@ -42,7 +136,20 @@ export default function Settings() {
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-2xl">
-        <Tabs defaultValue="security" className="space-y-6">
+        {/* Show unsubscribe banner if just unsubscribed */}
+        {unsubscribeHandled && (
+          <Card className="mb-6 border-success/30 bg-success/5">
+            <CardContent className="p-4 flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-success" />
+              <div>
+                <p className="font-medium text-success">Email Notifications Disabled</p>
+                <p className="text-sm text-muted-foreground">You can re-enable them in the Notifications tab below.</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <Tabs defaultValue={searchParams.get('unsubscribe') === 'true' ? 'notifications' : 'security'} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="security" className="flex items-center gap-2">
               <Lock className="w-4 h-4" />
