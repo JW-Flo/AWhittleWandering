@@ -147,8 +147,8 @@ export default function RouteNavigator({ className = '' }: RouteNavigatorProps) 
   ];
 
   return (
-    <Card className={`flex flex-col ${className}`}>
-      <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6">
+    <Card className={`flex flex-col overflow-hidden ${className}`}>
+      <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 shrink-0">
         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
           <Navigation className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
           <span className="truncate">AI Route Navigator</span>
@@ -156,30 +156,30 @@ export default function RouteNavigator({ className = '' }: RouteNavigatorProps) 
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="flex-1 flex flex-col gap-3 sm:gap-4 p-3 sm:p-4 pt-0">
+      <CardContent className="flex-1 flex flex-col gap-3 sm:gap-4 p-3 sm:p-4 pt-0 min-h-0 overflow-hidden">
         {messages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-2 sm:p-4">
-            <Navigation className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground/50 mb-3 sm:mb-4" />
-            <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4">
-              Ask about routes, charging stops, scenic detours, or trip planning!
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-2 sm:p-4 min-h-0 overflow-auto">
+            <Navigation className="w-8 h-8 sm:w-10 sm:h-10 text-muted-foreground/50 mb-2 sm:mb-3 shrink-0" />
+            <p className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-3">
+              Ask about routes, charging, or trip planning!
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-sm">
+            <div className="grid grid-cols-2 gap-1.5 w-full max-w-xs">
               {quickPrompts.map((prompt, i) => (
                 <Button
                   key={i}
                   variant="outline"
                   size="sm"
-                  className="text-xs h-auto py-2.5 px-3 justify-start"
+                  className="text-[10px] sm:text-xs h-auto py-1.5 px-2 justify-start"
                   onClick={() => setInput(prompt.text)}
                 >
-                  <prompt.icon className="w-3.5 h-3.5 mr-2 shrink-0" />
+                  <prompt.icon className="w-3 h-3 mr-1.5 shrink-0" />
                   <span className="truncate text-left">{prompt.text}</span>
                 </Button>
               ))}
             </div>
           </div>
         ) : (
-          <ScrollArea className="flex-1 pr-2 sm:pr-4" ref={scrollRef}>
+          <ScrollArea className="flex-1 min-h-0" ref={scrollRef}>
             <div className="space-y-3 sm:space-y-4">
               {messages.map((msg, i) => (
                 <div
@@ -208,7 +208,7 @@ export default function RouteNavigator({ className = '' }: RouteNavigatorProps) 
           </ScrollArea>
         )}
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 shrink-0 pt-2">
           <Input
             placeholder="Ask about routes..."
             value={input}
