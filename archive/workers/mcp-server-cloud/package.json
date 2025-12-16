@@ -11,7 +11,7 @@
     "test": "echo \"No tests yet\" && exit 0"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^0.4.0",
+    "@modelcontextprotocol/sdk": "^1.25.0",
     "hono": "^4.0.0"
   },
   "devDependencies": {
