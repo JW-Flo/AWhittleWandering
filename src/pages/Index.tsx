@@ -97,8 +97,7 @@ export default function Index() {
               className="text-6xl md:text-8xl lg:text-9xl font-display font-bold tracking-tight animate-fade-in"
               style={{ animationDelay: '0.1s' }}
             >
-              <span className="block text-foreground">A Whittle</span>
-              <span className="block text-gradient-sunset">Wandering</span>
+              <span className="block text-gradient-sunset">AWW</span>
             </h1>
 
             {/* Subtitle */}
