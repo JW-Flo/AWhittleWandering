@@ -8,12 +8,14 @@ import JourneyTimeline from '@/components/JourneyTimeline';
 import PhotoUpload from '@/components/PhotoUpload';
 import LiveVehicleStatus from '@/components/LiveVehicleStatus';
 import FollowButton from '@/components/journey/FollowButton';
+import { Footer } from '@/components/layout/Footer';
+import { Logo } from '@/components/Logo';
 import { JourneyWaypoint } from '@/data/journeyRoute';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Map, Image, Calendar, Zap, Activity, CheckCircle, Unlock, Settings } from 'lucide-react';
+import { Map, Image, Calendar, Zap, Activity, CheckCircle, Unlock, Settings, Home } from 'lucide-react';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 export default function Explore() {
   const { user } = useAuth();
@@ -87,12 +89,15 @@ export default function Explore() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
+              <Link to="/" className="hover:opacity-80 transition-opacity">
+                <Logo size="sm" showText={false} />
+              </Link>
               <div>
                 <h1 className="text-2xl font-bold text-gradient-primary">Explore AWW Journey</h1>
                 <p className="text-sm text-muted-foreground">48-state Tesla road trip • June - August 2025</p>
@@ -126,13 +131,18 @@ export default function Explore() {
               <Button variant="ghost" size="icon" onClick={() => navigate('/settings')}>
                 <Settings className="w-5 h-5" />
               </Button>
+              <Link to="/">
+                <Button variant="ghost" size="icon">
+                  <Home className="w-5 h-5" />
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-6">
+      <div className="flex-1 container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Map Section - Takes 2/3 on large screens */}
           <div className="lg:col-span-2">
@@ -221,6 +231,9 @@ export default function Explore() {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <Footer variant="minimal" />
     </div>
   );
 }
