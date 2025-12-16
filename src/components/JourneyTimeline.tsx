@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Calendar, Camera, Star, Mountain, Sunset, Cloud, Zap, Navigation, Route } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MapPin, Calendar, Camera, Star, Mountain, Zap, Navigation, Route, ChevronDown, ChevronUp, Filter } from 'lucide-react';
 import { journeyWaypoints, JourneyWaypoint } from '@/data/journeyRoute';
+import { getHighlightWaypoints } from '@/lib/waypointMatching';
 import WaypointDetailDrawer from './WaypointDetailDrawer';
 
 interface JourneyTimelineProps {
@@ -10,6 +12,8 @@ interface JourneyTimelineProps {
   currentLocation?: { lat: number; lng: number } | null;
   batteryLevel?: number;
   isCharging?: boolean;
+  showAll?: boolean; // Show all 57 waypoints vs curated highlights
+  consumerMode?: boolean; // Intelligent selection for consumers
 }
 
 const getTypeIcon = (type: string) => {
@@ -36,13 +40,27 @@ const JourneyTimeline: React.FC<JourneyTimelineProps> = ({
   isLoading = false,
   currentLocation = null,
   batteryLevel,
-  isCharging = false
+  isCharging = false,
+  showAll = false,
+  consumerMode = false
 }) => {
   const [selectedWaypoint, setSelectedWaypoint] = useState<JourneyWaypoint | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
+  const [expanded, setExpanded] = useState(showAll);
+  const [filterType, setFilterType] = useState<'all' | 'highlight' | 'charging' | 'waypoint'>('all');
 
-  // Use actual journey waypoints
-  const waypoints = journeyWaypoints;
+  // Determine which waypoints to show
+  const waypoints = useMemo(() => {
+    let points = consumerMode ? getHighlightWaypoints(15) : journeyWaypoints;
+    
+    if (filterType !== 'all') {
+      points = points.filter(w => w.type === filterType);
+    }
+    
+    return points;
+  }, [consumerMode, filterType]);
+
+  const displayedWaypoints = expanded ? waypoints : waypoints.slice(0, 20);
 
   if (isLoading) {
     return (
@@ -113,12 +131,28 @@ const JourneyTimeline: React.FC<JourneyTimelineProps> = ({
           </div>
         )}
 
+        {/* Filter buttons */}
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          <Filter className="w-4 h-4 text-muted-foreground" />
+          {(['all', 'highlight', 'charging', 'waypoint'] as const).map(type => (
+            <Button
+              key={type}
+              size="sm"
+              variant={filterType === type ? 'secondary' : 'ghost'}
+              className="h-7 text-xs capitalize"
+              onClick={() => setFilterType(type)}
+            >
+              {type === 'all' ? 'All' : type === 'highlight' ? 'Highlights' : type === 'charging' ? 'Charging' : 'Stops'}
+            </Button>
+          ))}
+        </div>
+
         <div className="relative max-h-[600px] overflow-y-auto pr-2">
           {/* Timeline line */}
           <div className="absolute left-6 top-4 bottom-4 w-0.5 bg-gradient-to-b from-forest via-sunset to-muted" />
 
           <div className="space-y-4">
-            {waypoints.slice(0, 20).map((waypoint, index) => {
+            {displayedWaypoints.map((waypoint, index) => {
               const IconComponent = getTypeIcon(waypoint.type);
               const iconColor = getTypeColor(waypoint.type);
 
@@ -177,9 +211,29 @@ const JourneyTimeline: React.FC<JourneyTimelineProps> = ({
               );
             })}
 
-            {waypoints.length > 20 && (
-              <div className="text-center py-4 text-sm text-muted-foreground">
-                +{waypoints.length - 20} more stops...
+            {waypoints.length > 20 && !expanded && (
+              <div className="text-center py-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setExpanded(true)}
+                  className="gap-2"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                  Show all {waypoints.length} stops
+                </Button>
+              </div>
+            )}
+            
+            {expanded && waypoints.length > 20 && (
+              <div className="text-center py-4">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setExpanded(false)}
+                  className="gap-2 text-muted-foreground"
+                >
+                  <ChevronUp className="w-4 h-4" />
+                  Show less
+                </Button>
               </div>
             )}
           </div>
