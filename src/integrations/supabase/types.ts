@@ -186,6 +186,54 @@ export type Database = {
           },
         ]
       }
+      incident_log: {
+        Row: {
+          action_taken: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          incident_type: string
+          notification_channels: string[] | null
+          notification_sent: boolean | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          user_id: string
+        }
+        Insert: {
+          action_taken?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          incident_type: string
+          notification_channels?: string[] | null
+          notification_sent?: boolean | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+          user_id: string
+        }
+        Update: {
+          action_taken?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          incident_type?: string
+          notification_channels?: string[] | null
+          notification_sent?: boolean | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       journal_entries: {
         Row: {
           content: string | null
@@ -547,6 +595,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_status: string | null
           anonymize_username: boolean | null
           avatar_url: string | null
           bio: string | null
@@ -562,10 +611,14 @@ export type Database = {
           full_name: string | null
           has_viewed_flagship: boolean | null
           id: string
+          locked_at: string | null
+          locked_by: string | null
+          locked_reason: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          account_status?: string | null
           anonymize_username?: boolean | null
           avatar_url?: string | null
           bio?: string | null
@@ -581,10 +634,14 @@ export type Database = {
           full_name?: string | null
           has_viewed_flagship?: boolean | null
           id?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          locked_reason?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          account_status?: string | null
           anonymize_username?: boolean | null
           avatar_url?: string | null
           bio?: string | null
@@ -600,6 +657,9 @@ export type Database = {
           full_name?: string | null
           has_viewed_flagship?: boolean | null
           id?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          locked_reason?: string | null
           updated_at?: string
           user_id?: string
         }
