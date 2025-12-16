@@ -110,16 +110,40 @@ export const journeyWaypoints: JourneyWaypoint[] = [
     elevation: 1086
   },
 
+  // === GRAND CANYON ===
+  { 
+    lat: 36.056198, lng: -112.125198, 
+    name: "Grand Canyon", 
+    date: "Jun 10", 
+    state: "AZ", 
+    type: "highlight", 
+    description: "One of the Seven Natural Wonders. South Rim views are absolutely humbling. No photo does it justice - the scale is incomprehensible. Watched sunset paint the canyon walls.",
+    miles: 230,
+    elevation: 6860
+  },
+
   // === NEVADA ===
   { 
     lat: 36.169941, lng: -115.139832, 
     name: "Las Vegas", 
-    date: "Jun 10-11", 
+    date: "Jun 11-12", 
     state: "NV", 
     type: "highlight", 
     description: "Sin City sparkles in the desert. Walked the Strip, saw the fountains at Bellagio, and charged up at the Luxor. What happens in Vegas...",
-    miles: 297,
+    miles: 280,
     elevation: 2001
+  },
+
+  // === JOSHUA TREE ===
+  { 
+    lat: 33.873415, lng: -115.900992, 
+    name: "Joshua Tree", 
+    date: "Jun 12", 
+    state: "CA", 
+    type: "highlight", 
+    description: "Otherworldly desert landscape. Those twisted Joshua trees are unlike anything else. Stars at night were incredible. U2 was onto something.",
+    miles: 180,
+    elevation: 2700
   },
 
   // === CALIFORNIA - SOUTHERN ===
@@ -130,7 +154,7 @@ export const journeyWaypoints: JourneyWaypoint[] = [
     state: "CA", 
     type: "highlight", 
     description: "Four days exploring the City of Angels. Hollywood, Griffith Observatory, Santa Monica Pier, and the best tacos outside Texas.",
-    miles: 270,
+    miles: 135,
     elevation: 285
   },
   { 
@@ -187,27 +211,67 @@ export const journeyWaypoints: JourneyWaypoint[] = [
     miles: 274,
     elevation: 50
   },
+  { 
+    lat: 45.889764, lng: -123.961525, 
+    name: "Cannon Beach", 
+    date: "Jun 21", 
+    state: "OR", 
+    type: "highlight", 
+    description: "Iconic Haystack Rock rising from the Pacific. Stayed the night listening to waves crash. The Oregon coast is pure magic - mist, sea stacks, and endless beaches.",
+    miles: 79,
+    elevation: 20
+  },
 
   // === WASHINGTON ===
   { 
-    lat: 47.606209, lng: -122.332069, 
-    name: "Seattle", 
+    lat: 48.088890, lng: -121.774722, 
+    name: "Verlot", 
     date: "Jun 22", 
     state: "WA", 
     type: "highlight", 
+    description: "Drove all the way from Cannon Beach to see Troy and his wife. Camped the night in the Mt. Baker-Snoqualmie National Forest. Old growth forest, rushing rivers, and great company.",
+    miles: 235,
+    elevation: 900
+  },
+  { 
+    lat: 47.606209, lng: -122.332069, 
+    name: "Seattle", 
+    date: "Jun 23", 
+    state: "WA", 
+    type: "highlight", 
     description: "Emerald City living up to its name. Pike Place Market, Space Needle, and the best coffee culture in America. Go Seahawks!",
-    miles: 174,
+    miles: 65,
     elevation: 175
   },
   { 
-    lat: 48.145687, lng: -123.140240, 
-    name: "Port Angeles", 
-    date: "Jun 23", 
+    lat: 47.980239, lng: -123.499748, 
+    name: "Olympic NP - Hoh Rain Forest", 
+    date: "Jun 23-24", 
+    state: "WA", 
+    type: "highlight", 
+    description: "The Hoh Rain Forest is otherworldly. Moss drapes everything, ancient trees tower overhead. One of the quietest places on Earth. Hall of Mosses trail was spiritual.",
+    miles: 140,
+    elevation: 578
+  },
+  { 
+    lat: 47.996944, lng: -123.428056, 
+    name: "Lake Angeles Campground", 
+    date: "Jun 24", 
     state: "WA", 
     type: "waypoint", 
-    description: "Gateway to Olympic National Park. Drove to Hurricane Ridge for panoramic mountain views. Temperate rainforest unlike anywhere else.",
-    miles: 81,
-    elevation: 32
+    description: "Camped at Lake Angeles after exploring the Hoh. Peaceful night under the stars in Olympic National Park. The Pacific Northwest is something else.",
+    miles: 25,
+    elevation: 4196
+  },
+  { 
+    lat: 48.079510, lng: -123.126490, 
+    name: "Sequim", 
+    date: "Jun 24", 
+    state: "WA", 
+    type: "waypoint", 
+    description: "Dinner with Brian Williamson, my former Director. Great catching up and getting his perspective on life and career. The lavender fields here are famous.",
+    miles: 35,
+    elevation: 183
   },
 
   // === IDAHO ===
@@ -266,7 +330,27 @@ export const journeyWaypoints: JourneyWaypoint[] = [
     elevation: 6237
   },
 
-  // === UTAH ===
+  // === UTAH - NATIONAL PARKS ===
+  { 
+    lat: 37.297817, lng: -113.026185, 
+    name: "Zion National Park", 
+    date: "Jun 28", 
+    state: "UT", 
+    type: "highlight", 
+    description: "Angels Landing was intense but worth every step. The Narrows, massive sandstone cliffs, and the Virgin River cutting through. Utah's crown jewel.",
+    miles: 160,
+    elevation: 4000
+  },
+  { 
+    lat: 38.573936, lng: -109.549632, 
+    name: "Moab", 
+    date: "Jun 29", 
+    state: "UT", 
+    type: "highlight", 
+    description: "Adventure capital of Utah. Arches National Park, Canyonlands, and the Colorado River. Delicate Arch at sunset was bucket list perfection.",
+    miles: 310,
+    elevation: 4026
+  },
   { 
     lat: 40.760780, lng: -111.891045, 
     name: "Salt Lake City", 
@@ -274,7 +358,7 @@ export const journeyWaypoints: JourneyWaypoint[] = [
     state: "UT", 
     type: "highlight", 
     description: "Temple Square, Great Salt Lake, and the Bonneville Salt Flats nearby. Mountains rise dramatically right from the city streets.",
-    miles: 275,
+    miles: 235,
     elevation: 4226
   },
   { 
