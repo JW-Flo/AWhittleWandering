@@ -186,7 +186,7 @@ export default function Index() {
             <div className="prose prose-lg prose-invert mx-auto text-muted-foreground">
               <p className="text-xl leading-relaxed">
                 In the summer of 2025, we set out to do something extraordinary — 
-                visit all 48 contiguous United States in a single Tesla Model Y named <strong className="text-forest">Sasha</strong>.
+                visit all 48 contiguous United States in a single Tesla Model Y named <strong className="text-forest">Shadowfax</strong>.
               </p>
               <p className="text-xl leading-relaxed">
                 From the humid shores of Corpus Christi to the rugged peaks of Montana, 
@@ -201,7 +201,7 @@ export default function Index() {
                 <Car className="w-6 h-6 text-forest" />
               </div>
               <div className="text-left">
-                <p className="font-display font-semibold text-foreground">Tesla Model Y "Sasha"</p>
+                <p className="font-display font-semibold text-foreground">Tesla Model Y "Shadowfax"</p>
                 <p className="text-sm text-muted-foreground">436 Wh/mi average • 259 charging sessions</p>
               </div>
             </div>
