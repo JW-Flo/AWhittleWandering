@@ -50,3 +50,6 @@ verify_jwt = true
 
 [functions.route-navigator]
 verify_jwt = true
+
+[functions.tessie-sync]
+verify_jwt = true
