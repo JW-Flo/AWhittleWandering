@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Navigation, Send, Loader2, MapPin, Zap, Clock, Route } from 'lucide-react';
 
@@ -147,52 +148,52 @@ export default function RouteNavigator({ className = '' }: RouteNavigatorProps) 
 
   return (
     <Card className={`flex flex-col ${className}`}>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Navigation className="w-5 h-5 text-primary" />
-          AI Route Navigator
-          <span className="text-xs font-normal text-muted-foreground ml-auto">Beta</span>
+      <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6">
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <Navigation className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+          <span className="truncate">AI Route Navigator</span>
+          <Badge variant="outline" className="ml-auto text-[10px] sm:text-xs shrink-0">Beta</Badge>
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="flex-1 flex flex-col gap-4 p-4 pt-0">
+      <CardContent className="flex-1 flex flex-col gap-3 sm:gap-4 p-3 sm:p-4 pt-0">
         {messages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
-            <Navigation className="w-12 h-12 text-muted-foreground/50 mb-4" />
-            <p className="text-muted-foreground mb-4">
-              Ask me about route planning, charging stops, scenic detours, or trip optimization!
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-2 sm:p-4">
+            <Navigation className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground/50 mb-3 sm:mb-4" />
+            <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4">
+              Ask about routes, charging stops, scenic detours, or trip planning!
             </p>
-            <div className="grid grid-cols-2 gap-2 w-full max-w-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-sm">
               {quickPrompts.map((prompt, i) => (
                 <Button
                   key={i}
                   variant="outline"
                   size="sm"
-                  className="text-xs h-auto py-2 px-3 justify-start"
+                  className="text-xs h-auto py-2.5 px-3 justify-start"
                   onClick={() => setInput(prompt.text)}
                 >
-                  <prompt.icon className="w-3 h-3 mr-2 shrink-0" />
-                  <span className="truncate">{prompt.text}</span>
+                  <prompt.icon className="w-3.5 h-3.5 mr-2 shrink-0" />
+                  <span className="truncate text-left">{prompt.text}</span>
                 </Button>
               ))}
             </div>
           </div>
         ) : (
-          <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
-            <div className="space-y-4">
+          <ScrollArea className="flex-1 pr-2 sm:pr-4" ref={scrollRef}>
+            <div className="space-y-3 sm:space-y-4">
               {messages.map((msg, i) => (
                 <div
                   key={i}
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
+                    className={`max-w-[90%] sm:max-w-[85%] rounded-lg px-3 py-2 text-sm ${
                       msg.role === 'user'
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted'
                     }`}
                   >
-                    <div className="whitespace-pre-wrap">{msg.content}</div>
+                    <div className="whitespace-pre-wrap break-words">{msg.content}</div>
                   </div>
                 </div>
               ))}
@@ -209,17 +210,18 @@ export default function RouteNavigator({ className = '' }: RouteNavigatorProps) 
 
         <div className="flex gap-2">
           <Input
-            placeholder="Ask about routes, charging, or destinations..."
+            placeholder="Ask about routes..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isLoading}
-            className="flex-1"
+            className="flex-1 text-base sm:text-sm"
           />
           <Button 
             size="icon" 
             onClick={sendMessage} 
             disabled={!input.trim() || isLoading}
+            className="shrink-0"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
