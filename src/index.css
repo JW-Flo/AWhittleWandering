@@ -1,106 +1,99 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
+All colors MUST be HSL.
+*/
+
 @layer base {
   :root {
-    /* Adventure/Travel Theme - Warm Earth Tones */
-    --background: 40 20% 98%;
-    --foreground: 30 10% 15%;
-    
-    --card: 40 25% 97%;
-    --card-foreground: 30 10% 15%;
-    
-    --popover: 40 25% 97%;
-    --popover-foreground: 30 10% 15%;
-    
-    --primary: 24 80% 50%;
-    --primary-foreground: 40 20% 98%;
-    
-    --secondary: 145 40% 40%;
-    --secondary-foreground: 40 20% 98%;
-    
-    --muted: 35 15% 90%;
-    --muted-foreground: 30 10% 45%;
-    
-    --accent: 35 60% 75%;
-    --accent-foreground: 30 10% 15%;
-    
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    
-    --border: 35 20% 85%;
-    --input: 35 20% 85%;
-    --ring: 24 80% 50%;
-    
-    --radius: 0.75rem;
-    
-    /* Custom semantic colors */
-    --road: 220 10% 40%;
-    --forest: 145 40% 35%;
-    --sand: 40 50% 85%;
-    --sunset: 24 90% 55%;
-    --sky: 200 70% 60%;
-    --charging: 145 60% 45%;
-    --driving: 24 80% 50%;
-    
-    --sidebar-background: 40 20% 98%;
-    --sidebar-foreground: 30 10% 15%;
-    --sidebar-primary: 24 80% 50%;
-    --sidebar-primary-foreground: 40 20% 98%;
-    --sidebar-accent: 35 60% 75%;
-    --sidebar-accent-foreground: 30 10% 15%;
-    --sidebar-border: 35 20% 85%;
-    --sidebar-ring: 24 80% 50%;
-  }
+    --background: 220 13% 9%;
+    --foreground: 210 40% 98%;
 
-  .dark {
-    --background: 220 15% 10%;
-    --foreground: 40 15% 95%;
-    
-    --card: 220 15% 13%;
-    --card-foreground: 40 15% 95%;
-    
-    --popover: 220 15% 13%;
-    --popover-foreground: 40 15% 95%;
-    
-    --primary: 24 85% 55%;
-    --primary-foreground: 220 15% 10%;
-    
-    --secondary: 145 45% 45%;
-    --secondary-foreground: 220 15% 10%;
-    
-    --muted: 220 15% 20%;
-    --muted-foreground: 40 10% 65%;
-    
-    --accent: 35 50% 35%;
-    --accent-foreground: 40 15% 95%;
-    
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 0 0% 98%;
-    
-    --border: 220 15% 20%;
-    --input: 220 15% 20%;
-    --ring: 24 85% 55%;
-    
-    --road: 220 10% 60%;
-    --forest: 145 40% 50%;
-    --sand: 40 30% 30%;
-    --sunset: 24 90% 60%;
-    --sky: 200 60% 50%;
-    --charging: 145 55% 50%;
-    --driving: 24 85% 55%;
-    
-    --sidebar-background: 220 15% 10%;
-    --sidebar-foreground: 40 15% 95%;
-    --sidebar-primary: 24 85% 55%;
-    --sidebar-primary-foreground: 220 15% 10%;
-    --sidebar-accent: 35 50% 35%;
-    --sidebar-accent-foreground: 40 15% 95%;
-    --sidebar-border: 220 15% 20%;
-    --sidebar-ring: 24 85% 55%;
+    --card: 224 27% 11%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 224 27% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 193 100% 43%;
+    --primary-foreground: 220 13% 9%;
+
+    --secondary: 220 13% 15%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 220 13% 15%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 193 100% 43%;
+    --accent-foreground: 220 13% 9%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 13% 20%;
+    --input: 220 13% 15%;
+    --ring: 193 100% 43%;
+
+    /* Tesla-inspired colors */
+    --tesla-blue: 193 100% 43%;
+    --tesla-blue-dark: 193 100% 35%;
+    --tesla-cyan: 180 100% 50%;
+    --tesla-dark: 220 13% 9%;
+    --tesla-darker: 220 20% 6%;
+    --tesla-gray: 220 13% 15%;
+    --tesla-gray-light: 220 13% 20%;
+
+    /* Adventure Colors */
+    --adventure-orange: 25 100% 58%;
+    --adventure-red: 0 84% 60%;
+    --adventure-gold: 43 96% 56%;
+    --adventure-purple: 252 95% 75%;
+    --adventure-green: 120 62% 50%;
+    --adventure-teal: 174 100% 40%;
+
+    /* Story-telling Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--tesla-blue)), hsl(var(--tesla-cyan)));
+    --gradient-adventure: linear-gradient(135deg, hsl(var(--adventure-orange)), hsl(var(--adventure-red)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--tesla-blue) / 0.9), hsl(var(--adventure-purple) / 0.8));
+    --gradient-sunset: linear-gradient(135deg, hsl(var(--adventure-orange)), hsl(var(--adventure-gold)));
+    --gradient-card: linear-gradient(145deg, hsl(var(--tesla-gray)), hsl(var(--tesla-dark)));
+    --gradient-card-hover: linear-gradient(145deg, hsl(var(--tesla-gray-light)), hsl(var(--tesla-gray)));
+    --gradient-glow: radial-gradient(circle at center, hsl(var(--tesla-blue) / 0.3), transparent 70%);
+    --gradient-milestone: linear-gradient(135deg, hsl(var(--adventure-gold) / 0.2), hsl(var(--adventure-orange) / 0.1));
+
+    /* Immersive Shadows */
+    --shadow-tesla: 0 8px 32px hsl(var(--tesla-blue) / 0.2);
+    --shadow-adventure: 0 12px 40px hsl(var(--adventure-orange) / 0.3);
+    --shadow-card: 0 4px 20px hsl(var(--tesla-darker) / 0.5);
+    --shadow-hero: 0 20px 80px hsl(var(--tesla-blue) / 0.4);
+    --shadow-milestone: 0 8px 30px hsl(var(--adventure-gold) / 0.3);
+
+    /* Story Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-story: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 220 13% 9%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 193 100% 43%;
+    --sidebar-primary-foreground: 220 13% 9%;
+    --sidebar-accent: 220 13% 15%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 13% 20%;
+    --sidebar-ring: 193 100% 43%;
+
+    /* Legacy semantic colors for compatibility */
+    --road: 220 13% 40%;
+    --forest: 174 100% 40%;
+    --sand: 43 50% 40%;
+    --sunset: 25 100% 58%;
+    --sky: 193 100% 43%;
+    --charging: 120 62% 50%;
+    --driving: 25 100% 58%;
   }
 }
 
@@ -108,75 +101,169 @@
   * {
     @apply border-border;
   }
-  
+
   body {
     @apply bg-background text-foreground;
-    font-family: 'Source Sans 3', system-ui, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
-  }
-  
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', Georgia, serif;
-    @apply tracking-tight;
   }
 }
 
-@layer utilities {
-  .font-display {
-    font-family: 'Playfair Display', Georgia, serif;
+@layer components {
+  /* Card Styles */
+  .card-tesla {
+    @apply bg-card rounded-lg border border-border;
+    background: var(--gradient-card);
+    box-shadow: var(--shadow-card);
+    transition: var(--transition-smooth);
   }
-  
-  .font-body {
-    font-family: 'Source Sans 3', system-ui, sans-serif;
+
+  .card-tesla:hover {
+    background: var(--gradient-card-hover);
+    box-shadow: var(--shadow-tesla);
+    transform: translateY(-2px);
   }
-  
-  .text-gradient-sunset {
-    background: linear-gradient(135deg, hsl(24 90% 55%), hsl(35 80% 60%));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+
+  /* Glow Effects */
+  .glow-tesla {
+    box-shadow: var(--shadow-tesla);
   }
-  
-  .text-gradient-forest {
-    background: linear-gradient(135deg, hsl(145 40% 35%), hsl(160 35% 45%));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+
+  .glow-adventure {
+    box-shadow: var(--shadow-adventure);
   }
-  
-  .bg-gradient-sunset {
-    background: linear-gradient(135deg, hsl(24 90% 55%), hsl(35 80% 60%));
+
+  .glow-hero {
+    box-shadow: var(--shadow-hero);
   }
-  
-  .bg-gradient-forest {
-    background: linear-gradient(135deg, hsl(145 40% 35%), hsl(160 35% 45%));
+
+  /* Gradient Backgrounds */
+  .bg-gradient-primary {
+    background: var(--gradient-primary);
   }
-  
+
+  .bg-gradient-adventure {
+    background: var(--gradient-adventure);
+  }
+
   .bg-gradient-hero {
-    background: linear-gradient(180deg, hsl(200 70% 60% / 0.1), hsl(40 20% 98%));
+    background: var(--gradient-hero);
   }
-  
-  .shadow-card {
-    box-shadow: 0 4px 20px -4px hsl(30 10% 15% / 0.08);
+
+  .bg-gradient-sunset {
+    background: var(--gradient-sunset);
   }
-  
-  .shadow-elevated {
-    box-shadow: 0 12px 40px -12px hsl(30 10% 15% / 0.15);
+
+  .bg-gradient-card {
+    background: var(--gradient-card);
   }
-  
-  .shadow-glow {
-    box-shadow: 0 0 30px hsl(24 80% 50% / 0.25);
+
+  .bg-gradient-milestone {
+    background: var(--gradient-milestone);
+  }
+
+  /* Text Gradients */
+  .text-gradient-primary {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-adventure {
+    background: var(--gradient-adventure);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-sunset {
+    background: var(--gradient-sunset);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Interactive States */
+  .interactive-scale {
+    transition: var(--transition-smooth);
+  }
+
+  .interactive-scale:hover {
+    transform: scale(1.02);
+  }
+
+  .interactive-scale:active {
+    transform: scale(0.98);
+  }
+
+  /* Milestone Styles */
+  .milestone-card {
+    @apply rounded-xl border border-border p-6;
+    background: var(--gradient-milestone);
+    box-shadow: var(--shadow-milestone);
+  }
+
+  /* Story Animation Classes */
+  .animate-story-enter {
+    animation: storyEnter 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+
+  @keyframes storyEnter {
+    from {
+      opacity: 0;
+      transform: translateY(30px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  /* Pulse Glow Animation */
+  .pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% {
+      box-shadow: 0 0 20px hsl(var(--tesla-blue) / 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px hsl(var(--tesla-blue) / 0.6);
+    }
+  }
+
+  /* Stat Card Variant */
+  .stat-card {
+    @apply bg-card rounded-lg border border-border p-4;
+    background: var(--gradient-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  .stat-card-tesla {
+    @apply stat-card;
+    border-color: hsl(var(--tesla-blue) / 0.3);
+  }
+
+  .stat-card-adventure {
+    @apply stat-card;
+    border-color: hsl(var(--adventure-orange) / 0.3);
+  }
+
+  .stat-card-success {
+    @apply stat-card;
+    border-color: hsl(var(--adventure-green) / 0.3);
   }
 }
 
 /* Mapbox overrides */
 .mapboxgl-map {
-  font-family: 'Source Sans 3', system-ui, sans-serif;
+  font-family: system-ui, sans-serif;
 }
 
 .mapboxgl-popup-content {
   @apply bg-card text-card-foreground rounded-lg p-4;
-  box-shadow: 0 12px 40px -12px hsl(30 10% 15% / 0.15);
+  box-shadow: var(--shadow-card);
 }
 
 .mapboxgl-popup-close-button {
@@ -190,13 +277,18 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-muted/50;
+  @apply bg-background;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/30 rounded-full;
+  @apply bg-muted rounded-full;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-muted-foreground/50;
+}
+
+/* Focus visible styles */
+*:focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
 }
