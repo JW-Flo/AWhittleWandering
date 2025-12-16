@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { journeyWaypoints, generateRouteCoordinates, JourneyWaypoint } from '@/data/journeyRoute';
 import { Play, Pause, RotateCcw, MapPin, Crosshair, SkipForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useFlagshipWaypoints, FlagshipWaypoint } from '@/hooks/useFlagshipWaypoints';
 
 interface ImmersiveJourneyMapProps {
   mapboxToken: string;
@@ -25,8 +25,16 @@ export default function ImmersiveJourneyMap({
   const [mapLoaded, setMapLoaded] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentWaypointIndex, setCurrentWaypointIndex] = useState(0);
-  const [activeWaypoint, setActiveWaypoint] = useState<JourneyWaypoint | null>(null);
+  const [activeWaypoint, setActiveWaypoint] = useState<FlagshipWaypoint | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
+  
+  // Fetch waypoints from database
+  const { data: waypoints = [], isLoading } = useFlagshipWaypoints();
+
+  // Generate route coordinates from waypoints
+  const routeCoordinates = useMemo(() => {
+    return waypoints.map(wp => [wp.longitude, wp.latitude] as [number, number]);
+  }, [waypoints]);
 
   // Initialize map
   useEffect(() => {
@@ -42,8 +50,8 @@ export default function ImmersiveJourneyMap({
       pitch: 30,
       bearing: 0,
       interactive: true,
-      renderWorldCopies: false, // Prevents duplicate markers
-      fadeDuration: 0, // Reduces wobble during transitions
+      renderWorldCopies: false,
+      fadeDuration: 0,
     });
 
     map.current.addControl(
@@ -53,8 +61,6 @@ export default function ImmersiveJourneyMap({
 
     map.current.on('load', () => {
       setMapLoaded(true);
-      addRouteLayer();
-      addWaypointMarkers();
     });
 
     return () => {
@@ -65,12 +71,28 @@ export default function ImmersiveJourneyMap({
     };
   }, [mapboxToken]);
 
+  // Add route and markers when waypoints load
+  useEffect(() => {
+    if (!mapLoaded || !map.current || waypoints.length === 0) return;
+
+    addRouteLayer();
+    addWaypointMarkers();
+  }, [mapLoaded, waypoints]);
+
   const addRouteLayer = useCallback(() => {
-    if (!map.current) return;
+    if (!map.current || routeCoordinates.length === 0) return;
 
-    const coordinates = generateRouteCoordinates();
+    // Remove existing layers if they exist
+    if (map.current.getLayer('journey-route-glow')) {
+      map.current.removeLayer('journey-route-glow');
+    }
+    if (map.current.getLayer('journey-route-line')) {
+      map.current.removeLayer('journey-route-line');
+    }
+    if (map.current.getSource('journey-route')) {
+      map.current.removeSource('journey-route');
+    }
 
-    // Add route source
     map.current.addSource('journey-route', {
       type: 'geojson',
       data: {
@@ -78,12 +100,11 @@ export default function ImmersiveJourneyMap({
         properties: {},
         geometry: {
           type: 'LineString',
-          coordinates,
+          coordinates: routeCoordinates,
         },
       },
     });
 
-    // Add route glow (background)
     map.current.addLayer({
       id: 'journey-route-glow',
       type: 'line',
@@ -100,7 +121,6 @@ export default function ImmersiveJourneyMap({
       },
     });
 
-    // Add main route line
     map.current.addLayer({
       id: 'journey-route-line',
       type: 'line',
@@ -115,33 +135,33 @@ export default function ImmersiveJourneyMap({
         'line-opacity': 0.9,
       },
     });
-  }, []);
+  }, [routeCoordinates]);
 
   const addWaypointMarkers = useCallback(() => {
-    if (!map.current) return;
+    if (!map.current || waypoints.length === 0) return;
 
     // Clear existing markers
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
 
-    // Add markers for highlights only (to avoid clutter)
-    const highlights = journeyWaypoints.filter(wp => 
-      wp.type === 'highlight' || wp.type === 'start' || wp.type === 'stop'
-    );
-
-    highlights.forEach((waypoint) => {
+    // Add markers for all waypoints
+    waypoints.forEach((waypoint, index) => {
       const el = document.createElement('div');
       el.className = 'waypoint-marker';
       
-      const isStart = waypoint.type === 'start';
-      const isEnd = waypoint.type === 'stop';
-      const size = (isStart || isEnd) ? 20 : 14;
+      const isStart = index === 0;
+      const isEnd = index === waypoints.length - 1;
+      const isFriend = waypoint.waypoint_type === 'friend';
+      const isPark = waypoint.waypoint_type === 'park';
+      const isHighlight = waypoint.is_highlight;
       
-      // No CSS transitions - prevents markers from "flying" during map animations
+      const size = (isStart || isEnd) ? 20 : isHighlight ? 16 : 12;
+      const color = isStart ? '#22c55e' : isEnd ? '#ef4444' : isFriend ? '#8b5cf6' : isPark ? '#16a34a' : '#e65c00';
+      
       el.style.cssText = `
         width: ${size}px;
         height: ${size}px;
-        background-color: ${isStart ? '#22c55e' : isEnd ? '#ef4444' : '#e65c00'};
+        background-color: ${color};
         border-radius: 50%;
         border: 3px solid white;
         box-shadow: 0 2px 8px rgba(0,0,0,0.4);
@@ -160,17 +180,21 @@ export default function ImmersiveJourneyMap({
       el.addEventListener('click', () => {
         setActiveWaypoint(waypoint);
         map.current?.easeTo({
-          center: [waypoint.lng, waypoint.lat],
+          center: [waypoint.longitude, waypoint.latitude],
           zoom: 10,
           duration: 800,
         });
       });
 
+      const peopleHtml = waypoint.people_met?.length 
+        ? `<div style="font-size: 11px; color: #8b5cf6; margin-top: 4px;">👤 ${waypoint.people_met.join(', ')}</div>` 
+        : '';
+
       const marker = new mapboxgl.Marker({
         element: el,
         anchor: 'center',
       })
-        .setLngLat([waypoint.lng, waypoint.lat])
+        .setLngLat([waypoint.longitude, waypoint.latitude])
         .setPopup(
           new mapboxgl.Popup({ 
             offset: 25, 
@@ -179,8 +203,9 @@ export default function ImmersiveJourneyMap({
           }).setHTML(`
             <div style="font-family: system-ui; padding: 8px; max-width: 250px;">
               <strong style="color: #e65c00; font-size: 14px;">${waypoint.name}</strong>
-              <div style="font-size: 12px; color: #666; margin-top: 4px;">${waypoint.state} • ${waypoint.date}</div>
+              <div style="font-size: 12px; color: #666; margin-top: 4px;">${waypoint.state_code || ''} • ${new Date(waypoint.arrived_at).toLocaleDateString()}</div>
               ${waypoint.description ? `<div style="font-size: 12px; color: #444; margin-top: 8px; line-height: 1.4;">${waypoint.description}</div>` : ''}
+              ${peopleHtml}
             </div>
           `)
         )
@@ -190,61 +215,62 @@ export default function ImmersiveJourneyMap({
     });
 
     // Add vehicle marker for animation
-    const vehicleEl = document.createElement('div');
-    vehicleEl.innerHTML = `
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="12" r="10" fill="#22c55e" stroke="white" stroke-width="2"/>
-        <path d="M8 12h8M12 8l4 4-4 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    `;
-    vehicleEl.style.cssText = 'z-index: 100; display: none;';
-    
-    vehicleMarkerRef.current = new mapboxgl.Marker({
-      element: vehicleEl,
-      anchor: 'center',
-    })
-      .setLngLat([journeyWaypoints[0].lng, journeyWaypoints[0].lat])
-      .addTo(map.current!);
-  }, []);
+    if (!vehicleMarkerRef.current && waypoints.length > 0) {
+      const vehicleEl = document.createElement('div');
+      vehicleEl.innerHTML = `
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" fill="#22c55e" stroke="white" stroke-width="2"/>
+          <path d="M8 12h8M12 8l4 4-4 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      `;
+      vehicleEl.style.cssText = 'z-index: 100; display: none;';
+      
+      vehicleMarkerRef.current = new mapboxgl.Marker({
+        element: vehicleEl,
+        anchor: 'center',
+      })
+        .setLngLat([waypoints[0].longitude, waypoints[0].latitude])
+        .addTo(map.current!);
+    }
+  }, [waypoints]);
 
   const flyToWaypoint = useCallback((index: number, smooth = true) => {
-    if (!map.current || index >= journeyWaypoints.length) return;
+    if (!map.current || index >= waypoints.length) return;
 
-    const waypoint = journeyWaypoints[index];
+    const waypoint = waypoints[index];
     setCurrentWaypointIndex(index);
     setActiveWaypoint(waypoint);
 
-    // Show vehicle marker
     if (vehicleMarkerRef.current) {
       vehicleMarkerRef.current.getElement().style.display = 'block';
-      vehicleMarkerRef.current.setLngLat([waypoint.lng, waypoint.lat]);
+      vehicleMarkerRef.current.setLngLat([waypoint.longitude, waypoint.latitude]);
     }
 
-    // Calculate bearing to next waypoint for smooth camera
     const nextIndex = index + 1;
     let bearing = 0;
-    if (nextIndex < journeyWaypoints.length) {
-      const next = journeyWaypoints[nextIndex];
-      const dLng = next.lng - waypoint.lng;
-      const dLat = next.lat - waypoint.lat;
+    if (nextIndex < waypoints.length) {
+      const next = waypoints[nextIndex];
+      const dLng = next.longitude - waypoint.longitude;
+      const dLat = next.latitude - waypoint.latitude;
       bearing = Math.atan2(dLng, dLat) * (180 / Math.PI);
     }
 
     map.current.easeTo({
-      center: [waypoint.lng, waypoint.lat],
+      center: [waypoint.longitude, waypoint.latitude],
       zoom: smooth ? 9 : 8,
       pitch: 45,
       bearing: bearing,
       duration: smooth ? 2500 : 1500,
     });
-  }, []);
+  }, [waypoints]);
 
   const startAnimation = useCallback(() => {
+    if (waypoints.length === 0) return;
     setIsPlaying(true);
     let index = currentWaypointIndex;
 
     const animate = () => {
-      if (index >= journeyWaypoints.length) {
+      if (index >= waypoints.length) {
         setIsPlaying(false);
         return;
       }
@@ -252,9 +278,8 @@ export default function ImmersiveJourneyMap({
       flyToWaypoint(index, true);
       index++;
 
-      // Longer pause at special waypoints
-      const waypoint = journeyWaypoints[index - 1];
-      const pauseTime = waypoint.type === 'highlight' ? 4000 : 2500;
+      const waypoint = waypoints[index - 1];
+      const pauseTime = waypoint.is_highlight ? 4000 : 2500;
 
       animationRef.current = window.setTimeout(() => {
         animate();
@@ -262,7 +287,7 @@ export default function ImmersiveJourneyMap({
     };
 
     animate();
-  }, [currentWaypointIndex, flyToWaypoint]);
+  }, [currentWaypointIndex, flyToWaypoint, waypoints]);
 
   const pauseAnimation = useCallback(() => {
     setIsPlaying(false);
@@ -272,9 +297,9 @@ export default function ImmersiveJourneyMap({
   }, []);
 
   const skipToNext = useCallback(() => {
-    const nextIndex = Math.min(currentWaypointIndex + 1, journeyWaypoints.length - 1);
+    const nextIndex = Math.min(currentWaypointIndex + 1, waypoints.length - 1);
     flyToWaypoint(nextIndex, false);
-  }, [currentWaypointIndex, flyToWaypoint]);
+  }, [currentWaypointIndex, flyToWaypoint, waypoints.length]);
 
   const resetAnimation = useCallback(() => {
     pauseAnimation();
@@ -314,6 +339,14 @@ export default function ImmersiveJourneyMap({
     );
   }
 
+  if (isLoading) {
+    return (
+      <div className={`flex items-center justify-center bg-muted rounded-lg ${className}`}>
+        <p className="text-muted-foreground">Loading waypoints...</p>
+      </div>
+    );
+  }
+
   return (
     <div className={`relative rounded-2xl overflow-hidden ${className}`}>
       {/* Map Container */}
@@ -332,6 +365,7 @@ export default function ImmersiveJourneyMap({
               variant="ghost"
               className="h-8 w-8 p-0 rounded-full hover:bg-primary/20"
               onClick={startAnimation}
+              disabled={waypoints.length === 0}
             >
               <Play className="w-4 h-4 text-primary" />
             </Button>
@@ -351,6 +385,7 @@ export default function ImmersiveJourneyMap({
               className="h-8 w-8 p-0 rounded-full hover:bg-muted"
               onClick={skipToNext}
               title="Skip to next"
+              disabled={waypoints.length === 0}
             >
               <SkipForward className="w-4 h-4 text-muted-foreground" />
             </Button>
@@ -363,7 +398,7 @@ export default function ImmersiveJourneyMap({
               <RotateCcw className="w-4 h-4 text-muted-foreground" />
             </Button>
             <span className="text-xs text-muted-foreground ml-2">
-              {currentWaypointIndex} / {journeyWaypoints.length} stops
+              {currentWaypointIndex} / {waypoints.length} stops
             </span>
           </div>
 
@@ -385,8 +420,8 @@ export default function ImmersiveJourneyMap({
           <div className="flex-1 max-w-xs bg-background/90 backdrop-blur-sm rounded-xl px-4 py-3 shadow-lg border border-border animate-fade-in">
             <div className="flex items-start gap-3">
               <div className={`mt-1 w-3 h-3 rounded-full flex-shrink-0 ${
-                activeWaypoint.type === 'start' ? 'bg-green-500' :
-                activeWaypoint.type === 'charging' ? 'bg-yellow-500' :
+                activeWaypoint.waypoint_type === 'friend' ? 'bg-violet-500' :
+                activeWaypoint.waypoint_type === 'park' ? 'bg-green-600' :
                 'bg-primary'
               }`} />
               <div className="min-w-0">
@@ -394,10 +429,15 @@ export default function ImmersiveJourneyMap({
                   {activeWaypoint.name}
                 </h4>
                 <p className="text-xs text-muted-foreground">
-                  {activeWaypoint.state} • {activeWaypoint.date}
+                  {activeWaypoint.state_code} • {new Date(activeWaypoint.arrived_at).toLocaleDateString()}
                 </p>
+                {activeWaypoint.people_met && activeWaypoint.people_met.length > 0 && (
+                  <p className="text-xs text-violet-500 mt-1">
+                    👤 {activeWaypoint.people_met.join(', ')}
+                  </p>
+                )}
                 {activeWaypoint.description && (
-                  <p className="text-xs text-foreground/70 mt-1 line-clamp-1">
+                  <p className="text-xs text-foreground/70 mt-1 line-clamp-2">
                     {activeWaypoint.description}
                   </p>
                 )}
@@ -415,8 +455,12 @@ export default function ImmersiveJourneyMap({
             <span className="text-muted-foreground">Start</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-            <span className="text-muted-foreground">Highlights</span>
+            <div className="w-2.5 h-2.5 rounded-full bg-violet-500" />
+            <span className="text-muted-foreground">Friends</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-green-600" />
+            <span className="text-muted-foreground">Parks</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-0.5 bg-primary rounded" />
