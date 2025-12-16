@@ -26,6 +26,7 @@ export function Footer({ variant = 'full' }: FooterProps) {
               <span className="font-display font-bold text-foreground">AWW</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
               <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
               <Link to="/sms-terms" className="hover:text-foreground transition-colors">SMS Terms</Link>
             </div>
@@ -98,6 +99,14 @@ export function Footer({ variant = 'full' }: FooterProps) {
           <div className="space-y-4">
             <h4 className="font-display font-semibold text-foreground">Legal</h4>
             <ul className="space-y-3">
+              <li>
+                <Link 
+                  to="/terms" 
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Terms of Service
+                </Link>
+              </li>
               <li>
                 <Link 
                   to="/privacy" 
