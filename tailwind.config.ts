@@ -52,31 +52,36 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Tesla-inspired colors
-        tesla: {
-          blue: "hsl(var(--tesla-blue))",
-          "blue-dark": "hsl(var(--tesla-blue-dark))",
-          cyan: "hsl(var(--tesla-cyan))",
-          dark: "hsl(var(--tesla-dark))",
-          darker: "hsl(var(--tesla-darker))",
-          gray: "hsl(var(--tesla-gray))",
-          "gray-light": "hsl(var(--tesla-gray-light))",
+        // Nature palette
+        nature: {
+          forest: "hsl(var(--nature-forest))",
+          "forest-light": "hsl(var(--nature-forest-light))",
+          moss: "hsl(var(--nature-moss))",
+          earth: "hsl(var(--nature-earth))",
+          bark: "hsl(var(--nature-bark))",
+          stone: "hsl(var(--nature-stone))",
         },
-        // Adventure colors
-        adventure: {
-          orange: "hsl(var(--adventure-orange))",
-          red: "hsl(var(--adventure-red))",
-          gold: "hsl(var(--adventure-gold))",
-          purple: "hsl(var(--adventure-purple))",
-          green: "hsl(var(--adventure-green))",
-          teal: "hsl(var(--adventure-teal))",
+        // Warm tones
+        warm: {
+          amber: "hsl(var(--warm-amber))",
+          sunset: "hsl(var(--warm-sunset))",
+          gold: "hsl(var(--warm-gold))",
+          ember: "hsl(var(--warm-ember))",
+        },
+        // Sky & water
+        sky: {
+          twilight: "hsl(var(--sky-twilight))",
+          dusk: "hsl(var(--sky-dusk))",
+        },
+        water: {
+          deep: "hsl(var(--water-deep))",
+          teal: "hsl(var(--water-teal))",
         },
         // Legacy semantic colors
         road: "hsl(var(--road))",
         forest: "hsl(var(--forest))",
         sand: "hsl(var(--sand))",
         sunset: "hsl(var(--sunset))",
-        sky: "hsl(var(--sky))",
         charging: "hsl(var(--charging))",
         driving: "hsl(var(--driving))",
         sidebar: {
@@ -121,8 +126,8 @@ export default {
           to: { opacity: "1", transform: "translateY(0)" },
         },
         "pulse-glow": {
-          "0%, 100%": { boxShadow: "0 0 20px hsl(193 100% 43% / 0.3)" },
-          "50%": { boxShadow: "0 0 40px hsl(193 100% 43% / 0.6)" },
+          "0%, 100%": { boxShadow: "0 0 20px hsl(152 45% 35% / 0.3)" },
+          "50%": { boxShadow: "0 0 40px hsl(152 45% 35% / 0.5)" },
         },
         "story-enter": {
           from: { opacity: "0", transform: "translateY(30px) scale(0.95)" },
