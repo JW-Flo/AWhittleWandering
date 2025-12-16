@@ -16,8 +16,8 @@ export default function SMSTerms() {
       {/* Header */}
       <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <Logo className="h-8 w-auto" />
+          <Link to="/" className="hover:opacity-80 transition-opacity">
+            <Logo size="sm" />
           </Link>
           <Link to="/">
             <Button variant="ghost" size="sm" className="gap-2">
