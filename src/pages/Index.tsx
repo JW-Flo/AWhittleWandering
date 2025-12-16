@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import ImmersiveJourneyMap from '@/components/ImmersiveJourneyMap';
 import SignInDialog from '@/components/SignInDialog';
+import { Footer } from '@/components/layout/Footer';
+import { Logo } from '@/components/Logo';
 import {
   Navigation, 
   MapPin, 
@@ -12,7 +14,11 @@ import {
   ChevronDown,
   Car,
   Calendar,
-  Route
+  Route,
+  Globe,
+  Users,
+  Trophy,
+  Sparkles
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -60,7 +66,33 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden flex flex-col">
+      {/* Floating Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 p-4">
+        <div className="container mx-auto">
+          <div className="flex items-center justify-between">
+            <Logo size="sm" showText={false} />
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => navigate('/explore')}
+                className="hidden sm:flex"
+              >
+                Explore Journey
+              </Button>
+              <Button 
+                size="sm"
+                onClick={handleSignInClick}
+                className="rounded-full"
+              >
+                Sign In
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
       {/* Immersive Hero - Full Screen */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Animated Background Layers */}
@@ -119,7 +151,7 @@ export default function Index() {
 
             {/* CTA */}
             <div 
-              className="pt-4 animate-fade-in"
+              className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in"
               style={{ animationDelay: '0.3s' }}
             >
               <Button 
@@ -129,6 +161,15 @@ export default function Index() {
               >
                 Follow the Journey
                 <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg"
+                className="text-lg px-8 py-6 rounded-full"
+                onClick={() => navigate('/explore')}
+              >
+                <Globe className="mr-2 w-5 h-5" />
+                Preview Map
               </Button>
             </div>
           </div>
@@ -231,6 +272,64 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Features Preview */}
+      <section className="py-24 bg-card/50 relative overflow-hidden">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-display font-bold mb-4">
+              Track Your Own <span className="text-gradient-primary">Adventures</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              AWW isn't just about our journey — it's a platform for all adventurers.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {/* Feature 1 */}
+            <div className="bg-card rounded-2xl border border-border p-6 hover:border-primary/50 transition-colors group">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                <Globe className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-display font-bold mb-2">Interactive Maps</h3>
+              <p className="text-muted-foreground">
+                Watch your journey unfold in real-time with beautiful 3D terrain maps and animated route playback.
+              </p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="bg-card rounded-2xl border border-border p-6 hover:border-forest/50 transition-colors group">
+              <div className="w-12 h-12 rounded-xl bg-forest/10 flex items-center justify-center mb-4 group-hover:bg-forest/20 transition-colors">
+                <Zap className="w-6 h-6 text-forest" />
+              </div>
+              <h3 className="text-xl font-display font-bold mb-2">Rich Analytics</h3>
+              <p className="text-muted-foreground">
+                Track energy consumption, charging patterns, efficiency metrics, and compare with other adventurers.
+              </p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="bg-card rounded-2xl border border-border p-6 hover:border-sunset/50 transition-colors group">
+              <div className="w-12 h-12 rounded-xl bg-sunset/10 flex items-center justify-center mb-4 group-hover:bg-sunset/20 transition-colors">
+                <Users className="w-6 h-6 text-sunset" />
+              </div>
+              <h3 className="text-xl font-display font-bold mb-2">Share & Follow</h3>
+              <p className="text-muted-foreground">
+                Share your journey with friends and family. Get notifications when you cross state lines.
+              </p>
+            </div>
+          </div>
+
+          {/* Leaderboard Teaser */}
+          <div className="mt-16 text-center">
+            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-milestone border border-primary/20">
+              <Trophy className="w-5 h-5 text-primary" />
+              <span className="text-foreground font-medium">Compete on the Leaderboard</span>
+              <Sparkles className="w-5 h-5 text-primary" />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Route Preview Placeholder */}
       <section className="py-24 bg-card relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
@@ -303,22 +402,8 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Minimal Footer */}
-      <footer className="border-t border-border/50 py-8 bg-card/50">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-sunset flex items-center justify-center">
-                <Navigation className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="font-display font-bold text-lg">AWW</span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              June 3 – August 31, 2025 • 48 States • 100% Electric
-            </p>
-          </div>
-        </div>
-      </footer>
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
