@@ -131,7 +131,12 @@ serve(async (req: Request): Promise<Response> => {
                   You're receiving this because you follow this journey on AWW.
                 </p>
                 <p style="margin: 8px 0 0; color: #9ca3af; font-size: 12px;">
-                  <a href="#" style="color: #6b7280;">Unsubscribe</a> · <a href="#" style="color: #6b7280;">Manage preferences</a>
+                  <a href="https://www.awhittlewandering.com/settings?unsubscribe=${btoa(recipientUserId)}" style="color: #6b7280; text-decoration: underline;">Unsubscribe</a>
+                  &nbsp;·&nbsp;
+                  <a href="https://www.awhittlewandering.com/settings" style="color: #6b7280; text-decoration: underline;">Manage preferences</a>
+                </p>
+                <p style="margin: 12px 0 0; color: #d1d5db; font-size: 11px;">
+                  A Whittle Wandering · Track your adventures across the world
                 </p>
               </td>
             </tr>
@@ -140,11 +145,18 @@ serve(async (req: Request): Promise<Response> => {
       </html>
     `;
 
+    // Generate unsubscribe URL for headers
+    const unsubscribeUrl = `https://www.awhittlewandering.com/settings?unsubscribe=${btoa(recipientUserId)}`;
+
     const emailResponse = await resend.emails.send({
       from: "AWW Journey <updates@awhittlewandering.com>",
       to: [profile.email],
       subject: `🗺️ Journey Update: ${journeyName}`,
       html: emailHtml,
+      headers: {
+        "List-Unsubscribe": `<${unsubscribeUrl}>`,
+        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+      },
     });
 
     console.log("Email sent successfully:", emailResponse);

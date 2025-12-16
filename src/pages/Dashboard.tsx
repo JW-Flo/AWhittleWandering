@@ -20,6 +20,7 @@ import CSVImport from '@/components/CSVImport';
 import PhotoUpload from '@/components/PhotoUpload';
 import FlagshipGate from '@/components/FlagshipGate';
 import RouteNavigator from '@/components/RouteNavigator';
+import { JourneyList } from '@/components/journey/JourneyList';
 import { useTessieData } from '@/hooks/useTessieData';
 import { 
   MapPin, 
@@ -230,10 +231,14 @@ export default function Dashboard() {
 
         {/* Main Dashboard Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 bg-secondary">
+          <TabsList className="grid w-full grid-cols-7 bg-secondary">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Map className="w-4 h-4" />
               <span className="hidden md:inline">Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="journeys" className="flex items-center gap-2">
+              <Navigation className="w-4 h-4" />
+              <span className="hidden md:inline">Journeys</span>
             </TabsTrigger>
             <TabsTrigger value="live" className="flex items-center gap-2">
               <Activity className="w-4 h-4" />
@@ -319,6 +324,24 @@ export default function Dashboard() {
               {/* AI Route Navigator POC */}
               <RouteNavigator className="h-[300px]" />
             </div>
+          </TabsContent>
+
+          {/* Journeys Tab - Manage your journeys */}
+          <TabsContent value="journeys" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Navigation className="w-5 h-5 text-primary" />
+                  Your Journeys
+                </CardTitle>
+                <CardDescription>
+                  Manage, export, archive, or delete your journey data
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <JourneyList />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Live Tab - Real-time vehicle data */}

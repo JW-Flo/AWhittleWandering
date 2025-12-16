@@ -43,6 +43,30 @@ AWW is a multi-tenant platform for tracking EV road trips with compartmentalized
 
 ---
 
+## Archive & Retention Policy
+
+### User Activity Status
+- **Active user**: Last login within 90 days
+- **Inactive user**: No login for 90+ days
+
+### Archive Retention
+- **Active users**: Archived journeys retained for 1 year (365 days)
+- **Inactive users**: Archived journeys retained for 90 days
+- **Maximum total storage for inactive users**: 180 days (90 days inactive + 90 days retention)
+
+### Reminder Emails (with unsubscribe links)
+1. **Inactive notification**: Sent when user becomes inactive (90 days no login)
+2. **Deletion warning**: Sent 2 weeks before archived journey deletion
+3. All emails include List-Unsubscribe headers for one-click unsubscribe
+
+### Automated Cleanup Cron (Daily 3am UTC)
+- Updates archive expiration for newly inactive users
+- Sends warning emails for journeys expiring within 14 days
+- Permanently deletes expired archived journeys and their D1 databases
+- Notifies users when their data has been deleted
+
+---
+
 ## Platform Limits
 
 | Resource | Limit | Rationale |

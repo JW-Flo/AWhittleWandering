@@ -318,18 +318,20 @@ serve(async (req) => {
 
       case 'archive': {
         // Archive journey - calculate expiration based on user activity
+        // Inactive = 90 days no login, then 90 more days retention = 180 days max total
         const { data: profile } = await supabase
           .from('profiles')
           .select('last_active_at')
           .eq('user_id', user.id)
           .maybeSingle();
 
-        // Determine if user is "active" (logged in within last 30 days)
+        // Determine if user is "active" (logged in within last 90 days)
         const lastActive = profile?.last_active_at ? new Date(profile.last_active_at) : new Date();
         const daysSinceActive = Math.floor((Date.now() - lastActive.getTime()) / (1000 * 60 * 60 * 24));
-        const isActiveUser = daysSinceActive <= 30;
+        const isActiveUser = daysSinceActive <= 90;
 
-        // Active users: 1 year, Inactive users: 90 days
+        // Active users: 1 year, Inactive users (>90 days): 90 days retention
+        // This means inactive users have max 180 days total (90 inactive + 90 retention)
         const retentionDays = isActiveUser ? 365 : 90;
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + retentionDays);
