@@ -12,6 +12,7 @@ import ImmersiveJourneyMap from '@/components/ImmersiveJourneyMap';
 import AdvancedAnalyticsDashboard from '@/components/AdvancedAnalyticsDashboard';
 import JourneyTimeline from '@/components/JourneyTimeline';
 import MediaGallery from '@/components/MediaGallery';
+import FloatingVehicleWidget from '@/components/FloatingVehicleWidget';
 import LiveVehicleStatus from '@/components/LiveVehicleStatus';
 import WeatherOverlay from '@/components/WeatherOverlay';
 import StatesProgressMap from '@/components/StatesProgressMap';
@@ -138,6 +139,8 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Floating Vehicle Widget */}
+      <FloatingVehicleWidget />
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -151,10 +154,6 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {/* Compact Live Status */}
-            <LiveVehicleStatus compact className="hidden lg:flex" />
-            
-            {/* Quick Links */}
             <Button variant="ghost" size="sm" onClick={() => navigate('/leaderboard')} className="hidden md:flex">
               <TrendingUp className="w-4 h-4 mr-1" />
               Leaderboard
