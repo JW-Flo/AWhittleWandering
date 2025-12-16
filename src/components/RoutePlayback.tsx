@@ -2,10 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { journeyWaypoints, JourneyWaypoint } from '@/data/journeyRoute';
-import { Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight, MapPin, Calendar, Zap, Image } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight, MapPin, Calendar, Zap, Mountain, Route, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
+import WaypointDetailDrawer from './WaypointDetailDrawer';
 
 interface RoutePlaybackProps {
   mapboxToken: string;
@@ -24,6 +25,7 @@ export default function RoutePlayback({ mapboxToken, className = '', onWaypointC
   const [currentIndex, setCurrentIndex] = useState(0);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [progress, setProgress] = useState(0);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const currentWaypoint = journeyWaypoints[currentIndex];
 
@@ -229,7 +231,10 @@ export default function RoutePlayback({ mapboxToken, className = '', onWaypointC
 
       {/* Current Location Info */}
       <div className="absolute top-4 left-4 right-4 flex items-start gap-4">
-        <div className="bg-background/95 backdrop-blur-md rounded-xl px-4 py-3 shadow-lg border border-border flex-1 max-w-md">
+        <div 
+          className="bg-background/95 backdrop-blur-md rounded-xl px-4 py-3 shadow-lg border border-border flex-1 max-w-md cursor-pointer hover:border-primary/50 transition-colors"
+          onClick={() => setDrawerOpen(true)}
+        >
           <div className="flex items-center gap-2 mb-1">
             <MapPin className="w-4 h-4 text-primary" />
             <h3 className="font-semibold text-foreground">{currentWaypoint.name}</h3>
@@ -237,18 +242,35 @@ export default function RoutePlayback({ mapboxToken, className = '', onWaypointC
               {currentWaypoint.state}
             </Badge>
           </div>
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
             <span className="flex items-center gap-1">
               <Calendar className="w-3 h-3" />
               {currentWaypoint.date}
             </span>
-            <span className="flex items-center gap-1">
-              <Zap className="w-3 h-3" />
-              {currentWaypoint.type}
-            </span>
+            {currentWaypoint.miles && (
+              <span className="flex items-center gap-1">
+                <Route className="w-3 h-3" />
+                {currentWaypoint.miles} mi
+              </span>
+            )}
+            {currentWaypoint.elevation && (
+              <span className="flex items-center gap-1">
+                <Mountain className="w-3 h-3" />
+                {currentWaypoint.elevation.toLocaleString()} ft
+              </span>
+            )}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-5 px-1.5 text-xs ml-auto"
+              onClick={(e) => { e.stopPropagation(); setDrawerOpen(true); }}
+            >
+              <Info className="w-3 h-3 mr-1" />
+              Details
+            </Button>
           </div>
           {currentWaypoint.description && (
-            <p className="text-xs text-foreground/70 mt-2">{currentWaypoint.description}</p>
+            <p className="text-xs text-foreground/70 mt-2 line-clamp-2">{currentWaypoint.description}</p>
           )}
         </div>
 
@@ -341,6 +363,15 @@ export default function RoutePlayback({ mapboxToken, className = '', onWaypointC
           </div>
         </div>
       </div>
+
+      {/* Waypoint Detail Drawer */}
+      <WaypointDetailDrawer
+        waypoint={currentWaypoint}
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        waypointIndex={currentIndex}
+        totalWaypoints={journeyWaypoints.length}
+      />
     </div>
   );
 }
