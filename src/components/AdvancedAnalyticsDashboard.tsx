@@ -81,11 +81,11 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
           </CardContent>
         </Card>
 
-        <Card className="card-tesla">
+        <Card className="card-tesla group cursor-pointer relative">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Cost Savings</p>
+                <p className="text-sm font-medium text-muted-foreground">Cost Comparison</p>
                 <p className="text-2xl font-bold text-foreground">
                   {formatCurrency(insights.costSavings)}
                 </p>
@@ -94,8 +94,23 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
             </div>
             <div className="mt-2">
               <Badge className="text-xs bg-adventure-gold/20 text-adventure-gold border-0">
-                vs gasoline
+                home charging vs gas
               </Badge>
+            </div>
+            {/* Math tooltip on hover */}
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-3 bg-popover border border-border rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+              <p className="text-xs font-semibold text-foreground mb-2">💡 The Math:</p>
+              <div className="text-xs space-y-1 text-muted-foreground">
+                <p><strong>Gas equivalent:</strong> 15,847 mi ÷ 30 MPG = 528 gal</p>
+                <p>528 gal × $3.17/gal = <strong>$1,674</strong></p>
+                <p className="border-t border-border pt-1 mt-1">
+                  <strong>EV home charging:</strong> 6,915 kWh × $0.12/kWh = <strong>$830</strong>
+                </p>
+                <p className="text-adventure-green font-medium">Savings: $1,674 - $830 = $844</p>
+                <p className="text-xs text-muted-foreground/70 mt-2 italic">
+                  Note: Actual Supercharger cost was $1,847 (road trip rates)
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>

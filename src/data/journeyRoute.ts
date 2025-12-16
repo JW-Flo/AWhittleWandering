@@ -426,27 +426,27 @@ export const journeyWaypoints: JourneyWaypoint[] = [
     elevation: 1176
   },
 
-  // === SOUTH DAKOTA ===
+  // === IOWA - QUICK STOP ===
   { 
-    lat: 43.969515, lng: -103.460701, 
-    name: "Rapid City", 
+    lat: 40.796100, lng: -95.857720, 
+    name: "Iowa Border", 
     date: "Jul 7", 
-    state: "SD", 
-    type: "highlight", 
-    description: "Gateway to Mt. Rushmore, Crazy Horse, and Badlands. Presidents' faces in granite are even more impressive in person.",
-    miles: 397,
-    elevation: 3202
+    state: "IA", 
+    type: "waypoint", 
+    description: "Quick stop just across the Nebraska-Iowa border. Put a foot down in the Hawkeye State. Cornfields as far as the eye can see - classic Midwest.",
+    miles: 52,
+    elevation: 1010
   },
 
-  // === NORTH DAKOTA ===
+  // === NORTH DAKOTA - FARGO ===
   { 
     lat: 46.877186, lng: -96.789803, 
     name: "Fargo", 
-    date: "Jul 8", 
+    date: "Jul 7-8", 
     state: "ND", 
-    type: "waypoint", 
-    description: "Ya, you betcha! Famous Fargo wood chipper and friendly Midwest vibes. Surprisingly vibrant downtown scene.",
-    miles: 432,
+    type: "highlight", 
+    description: "Ya, you betcha! Drove straight north from the Iowa border to the Jasper Hotel downtown. Famous Fargo wood chipper, friendly Midwest vibes, and surprisingly vibrant downtown scene. Great night in a classy hotel.",
+    miles: 380,
     elevation: 902
   },
 
