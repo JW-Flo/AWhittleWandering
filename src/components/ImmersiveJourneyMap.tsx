@@ -137,6 +137,7 @@ export default function ImmersiveJourneyMap({
       const isEnd = waypoint.type === 'stop';
       const size = (isStart || isEnd) ? 20 : 14;
       
+      // No CSS transitions - prevents markers from "flying" during map animations
       el.style.cssText = `
         width: ${size}px;
         height: ${size}px;
@@ -145,16 +146,16 @@ export default function ImmersiveJourneyMap({
         border: 3px solid white;
         box-shadow: 0 2px 8px rgba(0,0,0,0.4);
         cursor: pointer;
-        transition: transform 0.2s ease;
         z-index: 10;
+        will-change: auto;
       `;
       
       el.addEventListener('mouseenter', () => {
-        el.style.transform = 'scale(1.3)';
+        el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.5)';
         setActiveWaypoint(waypoint);
       });
       el.addEventListener('mouseleave', () => {
-        el.style.transform = 'scale(1)';
+        el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.4)';
       });
       el.addEventListener('click', () => {
         setActiveWaypoint(waypoint);
