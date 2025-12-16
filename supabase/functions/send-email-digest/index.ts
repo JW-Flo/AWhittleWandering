@@ -118,7 +118,7 @@ serve(async (req: Request): Promise<Response> => {
             <!-- CTA Button -->
             <tr>
               <td style="padding: 30px 20px; text-align: center;">
-                <a href="https://aww.lovable.app/explore" style="display: inline-block; background: linear-gradient(135deg, #ea580c 0%, #16a34a 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                <a href="https://www.awhittlewandering.com/explore" style="display: inline-block; background: linear-gradient(135deg, #ea580c 0%, #16a34a 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
                   View Full Journey →
                 </a>
               </td>
