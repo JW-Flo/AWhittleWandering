@@ -29,6 +29,9 @@ double_confirm_changes = false
 [functions.csv-import]
 verify_jwt = true
 
+[functions.d1-stats]
+verify_jwt = true
+
 [functions.extract-waypoints]
 verify_jwt = true
 
