@@ -339,3 +339,13 @@ All colors MUST be HSL.
 .animate-fall {
   animation: fall 1.5s linear infinite;
 }
+
+/* Shimmer loading animation */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
