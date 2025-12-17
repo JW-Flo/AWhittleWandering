@@ -22,9 +22,16 @@ import {
   CheckCircle2,
   MapPin,
   AlertTriangle,
-  Database
+  Database,
+  Shield,
+  Eye,
+  EyeOff,
+  Globe,
+  Lock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Maximum journeys per user to control Cloudflare D1 costs
 const MAX_JOURNEYS_PER_USER = 5;
@@ -71,6 +78,8 @@ export function JourneyCreationWizard() {
     startLocation: '',
     endLocation: '',
     isOpenEnded: true,
+    isPublic: false,
+    locationPrivacy: 'city' as 'exact' | 'city' | 'region' | 'state',
   });
 
   const [vehicleData, setVehicleData] = useState({
@@ -261,6 +270,7 @@ export function JourneyCreationWizard() {
           end_date: journeyData.isOpenEnded ? null : journeyData.endDate || null,
           vehicle_id: vehicleResult.id,
           data_storage_type: 'cloudflare_d1', // Using D1 for compartmentalized storage
+          is_public: journeyData.isPublic,
         })
         .select('id')
         .single();
@@ -501,6 +511,114 @@ export function JourneyCreationWizard() {
               </CardContent>
             </Card>
 
+            {/* Privacy Settings */}
+            <Card className="border-primary/20">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-primary" />
+                  Journey Privacy Settings
+                </CardTitle>
+                <CardDescription>
+                  Control who can see your journey data
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Public/Private Toggle */}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      {journeyData.isPublic ? (
+                        <Globe className="w-4 h-4 text-primary" />
+                      ) : (
+                        <Lock className="w-4 h-4 text-muted-foreground" />
+                      )}
+                      <Label className="font-medium">
+                        {journeyData.isPublic ? 'Public Journey' : 'Private Journey'}
+                      </Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {journeyData.isPublic 
+                        ? 'Anyone can view your journey route, stats, and updates'
+                        : 'Only you can see your journey data'
+                      }
+                    </p>
+                  </div>
+                  <Switch
+                    checked={journeyData.isPublic}
+                    onCheckedChange={(checked) => setJourneyData(prev => ({ ...prev, isPublic: checked }))}
+                  />
+                </div>
+
+                {/* Public Journey Disclosure */}
+                {journeyData.isPublic && (
+                  <div className="space-y-4 p-4 bg-amber-500/10 rounded-lg border border-amber-500/20">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm">
+                        <p className="font-medium text-amber-600 dark:text-amber-400 mb-2">Public Journey Data Disclosure</p>
+                        <p className="text-muted-foreground mb-3">When your journey is public, the following data becomes visible to anyone:</p>
+                        <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
+                          <li>Your journey route and waypoints (with 24-hour delay)</li>
+                          <li>Vehicle battery levels and charging sessions</li>
+                          <li>States visited and travel statistics</li>
+                          <li>Journal entries and uploaded photos</li>
+                          <li>Your display name (not email)</li>
+                        </ul>
+                      </div>
+                    </div>
+
+                    {/* Location Privacy Level */}
+                    <div className="space-y-2 pt-2">
+                      <Label className="text-sm font-medium">Location Precision for Public View</Label>
+                      <Select
+                        value={journeyData.locationPrivacy}
+                        onValueChange={(value: 'exact' | 'city' | 'region' | 'state') => 
+                          setJourneyData(prev => ({ ...prev, locationPrivacy: value }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="city">
+                            <div className="flex items-center gap-2">
+                              <span>City Level (~1km)</span>
+                              <span className="text-xs text-muted-foreground">(Recommended)</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="region">
+                            <span>Region (~50km blur)</span>
+                          </SelectItem>
+                          <SelectItem value="state">
+                            <span>State Only (Most Private)</span>
+                          </SelectItem>
+                          <SelectItem value="exact">
+                            <div className="flex items-center gap-2">
+                              <span>Exact Location</span>
+                              <span className="text-xs text-destructive">(Not recommended)</span>
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        This controls how precisely your location appears to public viewers.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Privacy tip for private journeys */}
+                {!journeyData.isPublic && (
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-sm text-muted-foreground flex items-start gap-2">
+                      <Eye className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      You can make your journey public later from your dashboard settings.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Summary */}
             <Card>
               <CardHeader>
@@ -529,8 +647,14 @@ export function JourneyCreationWizard() {
                     <p className="font-medium">{selectedProvider?.display_name}</p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Status:</span>
-                    <p className="font-medium text-green-500">Connected</p>
+                    <span className="text-muted-foreground">Visibility:</span>
+                    <p className="font-medium flex items-center gap-1">
+                      {journeyData.isPublic ? (
+                        <><Globe className="w-3 h-3" /> Public</>
+                      ) : (
+                        <><Lock className="w-3 h-3" /> Private</>
+                      )}
+                    </p>
                   </div>
                 </div>
 
