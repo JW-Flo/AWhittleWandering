@@ -40,21 +40,13 @@ export default function Index() {
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
     window.addEventListener('scroll', handleScroll);
-    fetchMapboxToken();
+    // Use public token from env directly
+    const token = import.meta.env.VITE_MAPBOX_TOKEN;
+    if (token) {
+      setMapboxToken(token);
+    }
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const fetchMapboxToken = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-      if (error) throw error;
-      if (data?.token) {
-        setMapboxToken(data.token);
-      }
-    } catch (error) {
-      console.error('Error fetching Mapbox token:', error);
-    }
-  };
 
   if (loading) {
     return (

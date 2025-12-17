@@ -103,23 +103,11 @@ export default function Dashboard() {
     }
   };
 
-  const fetchMapboxToken = async () => {
-    try {
-      console.log('[Dashboard] Fetching Mapbox token...');
-      const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-      console.log('[Dashboard] Mapbox response:', { data, error });
-      if (error) {
-        console.error('[Dashboard] Mapbox token error:', error);
-        throw error;
-      }
-      if (data?.token) {
-        console.log('[Dashboard] Setting Mapbox token, length:', data.token.length);
-        setMapboxToken(data.token);
-      } else {
-        console.warn('[Dashboard] No token in response:', data);
-      }
-    } catch (error) {
-      console.error('[Dashboard] Error fetching Mapbox token:', error);
+  const fetchMapboxToken = () => {
+    // Use public token from env directly
+    const token = import.meta.env.VITE_MAPBOX_TOKEN;
+    if (token) {
+      setMapboxToken(token);
     }
   };
 
