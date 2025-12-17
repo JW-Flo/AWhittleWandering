@@ -174,7 +174,7 @@ export default function Admin() {
     try {
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, email, full_name, created_at, user_id, account_status');
+        .select('id, full_name, display_name, created_at, user_id, account_status');
       if (profilesError) throw profilesError;
 
       const { data: roles, error: rolesError } = await supabase.from('user_roles').select('user_id, role');
@@ -182,7 +182,7 @@ export default function Admin() {
 
       const usersWithRoles = profiles?.map(profile => ({
         id: profile.user_id,
-        email: profile.email || '',
+        email: profile.display_name || profile.full_name || 'Unknown User', // Email removed for security
         full_name: profile.full_name,
         created_at: profile.created_at,
         role: roles?.find(r => r.user_id === profile.user_id)?.role || 'user',

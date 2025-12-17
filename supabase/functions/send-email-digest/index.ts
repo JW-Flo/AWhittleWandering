@@ -35,18 +35,22 @@ serve(async (req: Request): Promise<Response> => {
 
     const { recipientUserId, journeyId, journeyName, highlights }: DigestRequest = await req.json();
 
-    // Get user's email and preferences
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("email, display_name, full_name")
-      .eq("user_id", recipientUserId)
-      .single();
-
-    if (profileError || !profile?.email) {
+    // Get user's email from auth.users (using service role)
+    const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(recipientUserId);
+    
+    if (authError || !authUser?.user?.email) {
+      console.log("No auth user email found:", authError);
       return new Response(JSON.stringify({ skipped: true, reason: "No email found" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Get user's display preferences
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name, full_name")
+      .eq("user_id", recipientUserId)
+      .single();
 
     const { data: prefs } = await supabase
       .from("notification_preferences")
@@ -60,7 +64,7 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    const userName = profile.display_name || profile.full_name || "Explorer";
+    const userName = profile?.display_name || profile?.full_name || "Explorer";
 
     // Build HTML email
     const highlightsHtml = highlights.map(h => `
@@ -150,7 +154,7 @@ serve(async (req: Request): Promise<Response> => {
 
     const emailResponse = await resend.emails.send({
       from: "AWW Journey <updates@awhittlewandering.com>",
-      to: [profile.email],
+      to: [authUser.user.email!],
       subject: `🗺️ Journey Update: ${journeyName}`,
       html: emailHtml,
       headers: {
