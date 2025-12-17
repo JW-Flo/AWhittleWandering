@@ -364,13 +364,7 @@ const ImmersiveJourneyMap: React.FC<ImmersiveJourneyMapProps> = ({
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className={`flex items-center justify-center bg-muted rounded-lg ${className}`}>
-        <p className="text-muted-foreground">Loading waypoints...</p>
-      </div>
-    );
-  }
+  // Removed the isLoading block - map should render while waypoints load in background
 
   return (
     <div className={`relative rounded-2xl overflow-hidden ${className}`} style={{ minHeight: '400px', height: '100%' }}>
