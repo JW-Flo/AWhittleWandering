@@ -426,7 +426,7 @@ const ImmersiveJourneyMap: React.FC<ImmersiveJourneyMapProps> = ({
               <RotateCcw className="w-4 h-4 text-muted-foreground" />
             </Button>
             <span className="text-xs text-muted-foreground ml-2">
-              {currentWaypointIndex} / {waypoints.length} stops
+              {isLoading ? 'Loading...' : `${currentWaypointIndex} / ${waypoints.length} stops`}
             </span>
           </div>
 
