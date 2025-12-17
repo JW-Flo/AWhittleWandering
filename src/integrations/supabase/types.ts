@@ -1147,6 +1147,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_credential_validity: {
+        Args: { p_credential_id: string }
+        Returns: {
+          created_at: string
+          error_message: string
+          id: string
+          is_valid: boolean
+          last_verified_at: string
+          provider_id: string
+          updated_at: string
+        }[]
+      }
       get_flagship_view_count: {
         Args: never
         Returns: {
