@@ -15,7 +15,8 @@ import { toast } from '@/hooks/use-toast';
 import { Car, Mail, Lock, User, AlertTriangle, Shield } from 'lucide-react';
 import { checkPasswordBreach, checkPasswordStrength } from '@/lib/passwordSecurity';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-
+import { SocialLoginButtons } from '@/components/social/SocialLoginButtons';
+import { Separator } from '@/components/ui/separator';
 interface SignInDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -255,6 +256,17 @@ const SignInDialog = forwardRef<HTMLDivElement, SignInDialogProps>(
             </TabsList>
 
             <TabsContent value="signin" className="space-y-4 mt-4">
+              <SocialLoginButtons mode="signin" />
+              
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <Separator className="w-full" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Or continue with email</span>
+                </div>
+              </div>
+
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signin-email">Email</Label>
@@ -295,6 +307,17 @@ const SignInDialog = forwardRef<HTMLDivElement, SignInDialogProps>(
             </TabsContent>
 
             <TabsContent value="signup" className="space-y-4 mt-4">
+              <SocialLoginButtons mode="signup" />
+              
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <Separator className="w-full" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Or sign up with email</span>
+                </div>
+              </div>
+
               <form onSubmit={handleSignUp} className="space-y-4">
                 {/* Privacy Notice */}
                 <div className="p-3 bg-muted/50 rounded-lg border border-border/50">

@@ -486,6 +486,72 @@ export type Database = {
           },
         ]
       }
+      journey_tracks: {
+        Row: {
+          album_art_url: string | null
+          album_name: string | null
+          artist_name: string
+          created_at: string
+          id: string
+          journey_id: string
+          latitude: number | null
+          longitude: number | null
+          played_at: string | null
+          preview_url: string | null
+          spotify_track_id: string
+          track_name: string
+          user_id: string
+          waypoint_id: string | null
+        }
+        Insert: {
+          album_art_url?: string | null
+          album_name?: string | null
+          artist_name: string
+          created_at?: string
+          id?: string
+          journey_id: string
+          latitude?: number | null
+          longitude?: number | null
+          played_at?: string | null
+          preview_url?: string | null
+          spotify_track_id: string
+          track_name: string
+          user_id: string
+          waypoint_id?: string | null
+        }
+        Update: {
+          album_art_url?: string | null
+          album_name?: string | null
+          artist_name?: string
+          created_at?: string
+          id?: string
+          journey_id?: string
+          latitude?: number | null
+          longitude?: number | null
+          played_at?: string | null
+          preview_url?: string | null
+          spotify_track_id?: string
+          track_name?: string
+          user_id?: string
+          waypoint_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_tracks_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journey_tracks_waypoint_id_fkey"
+            columns: ["waypoint_id"]
+            isOneToOne: false
+            referencedRelation: "flagship_waypoints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       journeys: {
         Row: {
           archive_expires_at: string | null
@@ -861,6 +927,42 @@ export type Database = {
           ip_address?: string | null
           phone_number?: string
           user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      spotify_connections: {
+        Row: {
+          access_token: string
+          created_at: string
+          display_name: string | null
+          expires_at: string
+          id: string
+          refresh_token: string
+          spotify_user_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          display_name?: string | null
+          expires_at: string
+          id?: string
+          refresh_token: string
+          spotify_user_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          display_name?: string | null
+          expires_at?: string
+          id?: string
+          refresh_token?: string
+          spotify_user_id?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

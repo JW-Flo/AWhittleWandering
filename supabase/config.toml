@@ -76,3 +76,6 @@ verify_jwt = true
 
 [functions.weather]
 verify_jwt = true
+
+[functions.spotify-auth]
+verify_jwt = true
