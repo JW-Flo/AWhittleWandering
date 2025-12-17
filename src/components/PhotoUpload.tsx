@@ -1,11 +1,12 @@
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { 
   Upload, 
   Image, 
@@ -17,7 +18,9 @@ import {
   CheckCircle,
   Loader2,
   Plus,
-  Sparkles
+  Sparkles,
+  Video,
+  MapPinOff
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -40,7 +43,9 @@ interface UploadFile {
   error?: string;
   gpsLat?: number;
   gpsLng?: number;
+  dateTaken?: Date;
   matchedWaypoint?: JourneyWaypoint;
+  isVideo: boolean;
 }
 
 const US_STATES = [
@@ -65,6 +70,8 @@ export default function PhotoUpload({ journeyId, currentWaypoint, onUploadComple
   const [newTag, setNewTag] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [isUploading, setIsUploading] = useState(false);
+  const [includeGeolocation, setIncludeGeolocation] = useState(true);
+  const [autoMatchWaypoints, setAutoMatchWaypoints] = useState(true);
 
   // Extract GPS coordinates from EXIF data
   const extractGPSFromFile = async (file: File): Promise<{ lat: number; lng: number } | null> => {
@@ -80,11 +87,12 @@ export default function PhotoUpload({ journeyId, currentWaypoint, onUploadComple
     
     const newFiles: UploadFile[] = await Promise.all(
       selectedFiles.map(async (file) => {
-        const gps = await extractGPSFromFile(file);
+        const gps = includeGeolocation ? await extractGPSFromFile(file) : null;
+        const isVideo = file.type.startsWith('video/');
         let matchedWaypoint: JourneyWaypoint | undefined;
         
-        // Try to match to nearest waypoint if GPS available
-        if (gps) {
+        // Try to match to nearest waypoint if GPS available and auto-match enabled
+        if (gps && autoMatchWaypoints) {
           const match = findNearestWaypoint(gps.lat, gps.lng);
           if (match) {
             matchedWaypoint = match.waypoint;
@@ -93,19 +101,20 @@ export default function PhotoUpload({ journeyId, currentWaypoint, onUploadComple
         
         return {
           file,
-          preview: URL.createObjectURL(file),
+          preview: isVideo ? '' : URL.createObjectURL(file),
           progress: 0,
           status: 'pending' as const,
           gpsLat: gps?.lat,
           gpsLng: gps?.lng,
-          matchedWaypoint
+          matchedWaypoint,
+          isVideo
         };
       })
     );
 
     setFiles(prev => [...prev, ...newFiles]);
     setIsDialogOpen(true);
-  }, []);
+  }, [includeGeolocation, autoMatchWaypoints]);
 
   const removeFile = (index: number) => {
     setFiles(prev => {
@@ -282,15 +291,68 @@ export default function PhotoUpload({ journeyId, currentWaypoint, onUploadComple
             </DialogHeader>
 
             <div className="space-y-4">
+              {/* Geolocation & Auto-match toggles */}
+              <div className="flex flex-col gap-3 p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {includeGeolocation ? (
+                      <MapPin className="w-4 h-4 text-primary" />
+                    ) : (
+                      <MapPinOff className="w-4 h-4 text-muted-foreground" />
+                    )}
+                    <Label htmlFor="geo-toggle" className="text-sm font-medium cursor-pointer">
+                      Include location data
+                    </Label>
+                  </div>
+                  <Switch
+                    id="geo-toggle"
+                    checked={includeGeolocation}
+                    onCheckedChange={setIncludeGeolocation}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {includeGeolocation 
+                    ? "GPS coordinates from photos will be used to match waypoints" 
+                    : "Location data will not be extracted or shared"}
+                </p>
+                
+                {includeGeolocation && (
+                  <div className="flex items-center justify-between pt-2 border-t border-border">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-primary" />
+                      <Label htmlFor="auto-match" className="text-sm font-medium cursor-pointer">
+                        Auto-match to waypoints
+                      </Label>
+                    </div>
+                    <Switch
+                      id="auto-match"
+                      checked={autoMatchWaypoints}
+                      onCheckedChange={setAutoMatchWaypoints}
+                    />
+                  </div>
+                )}
+              </div>
+
               {/* File Previews with auto-match indicators */}
               <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
                 {files.map((f, idx) => (
                   <div key={idx} className="relative aspect-square rounded-lg overflow-hidden bg-muted">
-                    <img 
-                      src={f.preview} 
-                      alt={`Preview ${idx}`}
-                      className="w-full h-full object-cover"
-                    />
+                    {f.isVideo ? (
+                      <div className="w-full h-full flex items-center justify-center bg-muted">
+                        <Video className="w-8 h-8 text-muted-foreground" />
+                      </div>
+                    ) : (
+                      <img 
+                        src={f.preview} 
+                        alt={`Preview ${idx}`}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                    {f.isVideo && (
+                      <div className="absolute bottom-1 left-1 bg-black/70 rounded px-1.5 py-0.5">
+                        <span className="text-[10px] text-white font-medium">VIDEO</span>
+                      </div>
+                    )}
                     {f.matchedWaypoint && (
                       <div className="absolute top-1 left-1 bg-primary/90 rounded px-1.5 py-0.5 flex items-center gap-1">
                         <Sparkles className="w-3 h-3 text-primary-foreground" />
