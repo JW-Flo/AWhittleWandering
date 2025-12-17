@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo, forwardRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Play, Pause, RotateCcw, MapPin, Crosshair, SkipForward } from 'lucide-react';
@@ -12,8 +12,12 @@ interface ImmersiveJourneyMapProps {
   userLocation?: { lat: number; lng: number } | null;
 }
 
-const ImmersiveJourneyMap = forwardRef<HTMLDivElement, ImmersiveJourneyMapProps>(
-  ({ mapboxToken, className = '', showCenterButton = false, userLocation = null }, ref) => {
+const ImmersiveJourneyMap: React.FC<ImmersiveJourneyMapProps> = ({
+  mapboxToken,
+  className = '',
+  showCenterButton = false,
+  userLocation = null
+}) => {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null);
     const animationRef = useRef<number | null>(null);
@@ -344,9 +348,9 @@ const ImmersiveJourneyMap = forwardRef<HTMLDivElement, ImmersiveJourneyMapProps>
   }
 
   return (
-    <div className={`relative rounded-2xl overflow-hidden ${className}`}>
+    <div className={`relative rounded-2xl overflow-hidden ${className}`} style={{ minHeight: '400px' }}>
       {/* Map Container */}
-      <div ref={mapContainer} className="absolute inset-0" />
+      <div ref={mapContainer} className="absolute inset-0 w-full h-full" />
 
       {/* Gradient Overlay */}
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-background/60 via-transparent to-transparent" />
@@ -476,9 +480,6 @@ const ImmersiveJourneyMap = forwardRef<HTMLDivElement, ImmersiveJourneyMapProps>
       </div>
     </div>
   );
-  }
-);
-
-ImmersiveJourneyMap.displayName = 'ImmersiveJourneyMap';
+};
 
 export default ImmersiveJourneyMap;
