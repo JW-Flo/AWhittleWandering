@@ -34,30 +34,46 @@ const ImmersiveJourneyMap = forwardRef<HTMLDivElement, ImmersiveJourneyMapProps>
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken) return;
+    console.log('Map init effect - token:', mapboxToken ? 'present' : 'missing', 'container:', mapContainer.current ? 'present' : 'missing');
+    
+    if (!mapContainer.current || !mapboxToken) {
+      console.log('Map init skipped - missing:', !mapContainer.current ? 'container' : 'token');
+      return;
+    }
 
+    console.log('Initializing Mapbox with token:', mapboxToken.substring(0, 20) + '...');
     mapboxgl.accessToken = mapboxToken;
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/outdoors-v12',
-      center: [-98.5795, 39.8283],
-      zoom: 3.5,
-      pitch: 30,
-      bearing: 0,
-      interactive: true,
-      renderWorldCopies: false,
-      fadeDuration: 0,
-    });
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/outdoors-v12',
+        center: [-98.5795, 39.8283],
+        zoom: 3.5,
+        pitch: 30,
+        bearing: 0,
+        interactive: true,
+        renderWorldCopies: false,
+        fadeDuration: 0,
+      });
+      console.log('Map instance created successfully');
 
-    map.current.addControl(
-      new mapboxgl.NavigationControl({ visualizePitch: true }),
-      'top-right'
-    );
+      map.current.addControl(
+        new mapboxgl.NavigationControl({ visualizePitch: true }),
+        'top-right'
+      );
 
-    map.current.on('load', () => {
-      setMapLoaded(true);
-    });
+      map.current.on('load', () => {
+        console.log('Map loaded event fired');
+        setMapLoaded(true);
+      });
+
+      map.current.on('error', (e) => {
+        console.error('Mapbox error:', e);
+      });
+    } catch (error) {
+      console.error('Error creating map:', error);
+    }
 
     return () => {
       markersRef.current.forEach(m => m.remove());
