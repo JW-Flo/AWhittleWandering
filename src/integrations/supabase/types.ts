@@ -735,7 +735,6 @@ export type Database = {
             | Database["public"]["Enums"]["media_visibility"]
             | null
           display_name: string | null
-          email: string | null
           full_name: string | null
           has_viewed_flagship: boolean | null
           id: string
@@ -759,7 +758,6 @@ export type Database = {
             | Database["public"]["Enums"]["media_visibility"]
             | null
           display_name?: string | null
-          email?: string | null
           full_name?: string | null
           has_viewed_flagship?: boolean | null
           id?: string
@@ -783,7 +781,6 @@ export type Database = {
             | Database["public"]["Enums"]["media_visibility"]
             | null
           display_name?: string | null
-          email?: string | null
           full_name?: string | null
           has_viewed_flagship?: boolean | null
           id?: string
@@ -1173,6 +1170,21 @@ export type Database = {
           page_path: string
           total_views: number
           unique_visitors: number
+        }[]
+      }
+      get_public_drive_data_with_delay: {
+        Args: { p_journey_id: string }
+        Returns: {
+          battery_level: number
+          battery_range: number
+          elevation_ft: number
+          heading: number
+          id: string
+          journey_id: string
+          latitude: number
+          longitude: number
+          recorded_at: string
+          speed_mph: number
         }[]
       }
       get_user_api_credential_status: {

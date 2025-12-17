@@ -65,19 +65,23 @@ serve(async (req) => {
 
     console.log(`Processing incident action: ${action} for user: ${userId}`);
 
-    // Get user profile and notification preferences
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("email, full_name, user_id")
-      .eq("user_id", userId)
-      .single();
-
-    if (profileError || !profile) {
+    // Get user email from auth.users
+    const { data: targetUser, error: targetUserError } = await supabase.auth.admin.getUserById(userId);
+    
+    if (targetUserError || !targetUser?.user) {
       return new Response(JSON.stringify({ error: "User not found" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const userEmail = targetUser.user.email;
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, user_id")
+      .eq("user_id", userId)
+      .single();
 
     const { data: notifPrefs } = await supabase
       .from("notification_preferences")
@@ -133,7 +137,7 @@ serve(async (req) => {
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h1 style="color: #dc2626; margin-bottom: 20px;">🔒 Account ${action === "lock" ? "Locked" : "Suspended"}</h1>
           <p style="color: #374151; font-size: 16px; line-height: 1.6;">
-            Hello ${profile.full_name || "there"},
+            Hello ${profile?.full_name || "there"},
           </p>
           <p style="color: #374151; font-size: 16px; line-height: 1.6;">
             Your A Whittle Wandering account has been ${action === "lock" ? "temporarily locked" : "suspended"} due to the following reason:
@@ -161,18 +165,18 @@ serve(async (req) => {
       `;
 
       // Send email if Resend is configured
-      if (resendApiKey && profile.email) {
+      if (resendApiKey && userEmail) {
         try {
           const resend = new Resend(resendApiKey);
           await resend.emails.send({
             from: "AWW Security <security@awhittlewandering.com>",
-            to: [profile.email],
+            to: [userEmail],
             subject: emailSubject,
             html: emailHtml,
           });
           notificationChannels.push("email");
           notificationsSent = true;
-          console.log(`Email sent to ${profile.email}`);
+          console.log(`Email sent to ${userEmail}`);
         } catch (emailErr) {
           console.error("Email send error:", emailErr);
         }
