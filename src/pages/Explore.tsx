@@ -74,24 +74,13 @@ export default function Explore() {
     async function fetchData() {
       console.log('[Explore] Starting fetchData...');
       try {
-        // Fetch Mapbox token with a timeout
-        const tokenPromise = supabase.functions.invoke('get-mapbox-token');
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Token fetch timeout')), 8000)
-        );
-        
-        const { data: tokenData, error: tokenError } = await Promise.race([
-          tokenPromise,
-          timeoutPromise
-        ]) as any;
+        // Use public token from env directly
+        const token = import.meta.env.VITE_MAPBOX_TOKEN;
+        if (token) {
+          setMapboxToken(token);
+        }
         
         if (!isMounted) return;
-        
-        console.log('[Explore] Token response:', { hasToken: !!tokenData?.token, error: tokenError });
-        
-        if (!tokenError && tokenData?.token) {
-          setMapboxToken(tokenData.token);
-        }
 
         // Fetch first journey for photo uploads
         if (user) {
