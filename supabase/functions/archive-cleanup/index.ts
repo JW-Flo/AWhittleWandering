@@ -34,7 +34,7 @@ serve(async (req: Request): Promise<Response> => {
     console.log("Checking for newly inactive users...");
     const { data: inactiveProfiles, error: profileError } = await supabase
       .from("profiles")
-      .select("user_id, email, display_name, full_name, last_active_at")
+      .select("user_id, display_name, full_name, last_active_at")
       .lt("last_active_at", inactiveThreshold.toISOString());
 
     if (profileError) {
@@ -82,7 +82,7 @@ serve(async (req: Request): Promise<Response> => {
       .from("journeys")
       .select(`
         id, name, user_id, archive_expires_at,
-        profiles!inner(email, display_name, full_name)
+        profiles!inner(display_name, full_name)
       `)
       .not("archived_at", "is", null)
       .lte("archive_expires_at", warningThreshold.toISOString())
@@ -186,7 +186,7 @@ serve(async (req: Request): Promise<Response> => {
       .from("notification_queue")
       .select(`
         id, recipient_user_id, notification_type, title, body, journey_id,
-        profiles!inner(email, display_name, full_name)
+        profiles!inner(display_name, full_name)
       `)
       .eq("sent", false)
       .in("notification_type", ["account_inactive", "deletion_warning", "journey_deleted"])
@@ -203,7 +203,6 @@ serve(async (req: Request): Promise<Response> => {
           const { error: sendError } = await supabase.functions.invoke("send-archive-reminder", {
             body: {
               recipientUserId: notification.recipient_user_id,
-              email: (notification as any).profiles?.email,
               userName: (notification as any).profiles?.display_name || (notification as any).profiles?.full_name || "Explorer",
               notificationType: notification.notification_type,
               title: notification.title,

@@ -11,7 +11,6 @@ const corsHeaders = {
 
 interface ReminderRequest {
   recipientUserId: string;
-  email: string;
   userName: string;
   notificationType: "account_inactive" | "deletion_warning" | "journey_deleted";
   title: string;
@@ -30,13 +29,19 @@ serve(async (req: Request): Promise<Response> => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { recipientUserId, email, userName, notificationType, title, body, journeyId }: ReminderRequest = await req.json();
+    const { recipientUserId, userName, notificationType, title, body, journeyId }: ReminderRequest = await req.json();
 
-    if (!email) {
+    // Get email from auth.users using service role
+    const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(recipientUserId);
+    
+    if (authError || !authUser?.user?.email) {
+      console.log("No email found for user:", recipientUserId);
       return new Response(JSON.stringify({ skipped: true, reason: "No email" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const email = authUser.user.email;
 
     // Check if user has email enabled
     const { data: prefs } = await supabase
