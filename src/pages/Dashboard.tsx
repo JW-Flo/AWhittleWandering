@@ -276,10 +276,19 @@ export default function Dashboard() {
                 <CardDescription>Interactive exploration of your complete route</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                <ImmersiveJourneyMap 
-                  className="h-[500px]"
-                  mapboxToken={mapboxToken}
-                />
+                {mapboxToken ? (
+                  <ImmersiveJourneyMap 
+                    className="h-[500px]"
+                    mapboxToken={mapboxToken}
+                  />
+                ) : (
+                  <div className="h-[500px] flex items-center justify-center bg-muted/50">
+                    <div className="text-center space-y-2">
+                      <Map className="w-8 h-8 text-muted-foreground animate-pulse mx-auto" />
+                      <p className="text-sm text-muted-foreground">Loading map...</p>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -402,7 +411,7 @@ export default function Dashboard() {
             </Card>
             
             {/* Live Map with current location */}
-            {vehicleState && mapboxToken && (
+            {vehicleState && (
               <Card className="overflow-hidden">
                 <CardHeader>
                   <CardTitle>Live Location</CardTitle>
@@ -411,10 +420,16 @@ export default function Dashboard() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-0 h-[400px]">
-                  <ImmersiveJourneyMap 
-                    className="h-full"
-                    mapboxToken={mapboxToken}
-                  />
+                  {mapboxToken ? (
+                    <ImmersiveJourneyMap 
+                      className="h-full"
+                      mapboxToken={mapboxToken}
+                    />
+                  ) : (
+                    <div className="h-full flex items-center justify-center bg-muted/50">
+                      <Map className="w-8 h-8 text-muted-foreground animate-pulse" />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
