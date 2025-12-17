@@ -105,18 +105,21 @@ export default function Dashboard() {
 
   const fetchMapboxToken = async () => {
     try {
-      console.log('Fetching Mapbox token...');
+      console.log('[Dashboard] Fetching Mapbox token...');
       const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-      console.log('Mapbox token response:', { data, error });
-      if (error) throw error;
+      console.log('[Dashboard] Mapbox response:', { data, error });
+      if (error) {
+        console.error('[Dashboard] Mapbox token error:', error);
+        throw error;
+      }
       if (data?.token) {
-        console.log('Setting Mapbox token:', data.token.substring(0, 20) + '...');
+        console.log('[Dashboard] Setting Mapbox token, length:', data.token.length);
         setMapboxToken(data.token);
       } else {
-        console.warn('No token in response:', data);
+        console.warn('[Dashboard] No token in response:', data);
       }
     } catch (error) {
-      console.error('Error fetching Mapbox token:', error);
+      console.error('[Dashboard] Error fetching Mapbox token:', error);
     }
   };
 
