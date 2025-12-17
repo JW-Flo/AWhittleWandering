@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { escapeHtml } from '@/lib/htmlSanitizer';
 
 interface MapPoint {
   lat: number;
@@ -131,11 +132,13 @@ export default function JourneyMap({
       el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
       el.style.cursor = 'pointer';
 
+      const safeName = escapeHtml(stop.name) || `Charging Stop ${index + 1}`;
+      
       new mapboxgl.Marker(el)
         .setLngLat([stop.lng, stop.lat])
         .setPopup(
           new mapboxgl.Popup({ offset: 25 }).setHTML(
-            `<div class="font-body"><strong>${stop.name || `Charging Stop ${index + 1}`}</strong></div>`
+            `<div class="font-body"><strong>${safeName}</strong></div>`
           )
         )
         .addTo(map.current!);
