@@ -142,7 +142,10 @@ export default function Dashboard() {
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div 
+            className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => navigate('/')}
+          >
             <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center">
               <Navigation className="w-5 h-5 text-primary-foreground" />
             </div>
