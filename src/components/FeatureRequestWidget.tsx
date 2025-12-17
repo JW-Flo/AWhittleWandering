@@ -76,7 +76,7 @@ const FeatureRequestWidget = forwardRef<HTMLDivElement, FeatureRequestWidgetProp
         <DialogTrigger asChild>
           {triggerButton}
         </DialogTrigger>
-        <DialogContent ref={ref} className="sm:max-w-[425px]">
+        <DialogContent ref={ref} className="sm:max-w-[425px] [&>button]:h-8 [&>button]:w-8 [&>button]:rounded-md [&>button]:border [&>button]:border-border [&>button]:bg-background [&>button]:hover:bg-accent">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Lightbulb className="w-5 h-5 text-primary" />
