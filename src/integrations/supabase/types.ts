@@ -113,6 +113,13 @@ export type Database = {
             referencedRelation: "journeys"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "charging_sessions_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "public_journeys"
+            referencedColumns: ["id"]
+          },
         ]
       }
       drive_data: {
@@ -182,6 +189,13 @@ export type Database = {
             columns: ["journey_id"]
             isOneToOne: false
             referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drive_data_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "public_journeys"
             referencedColumns: ["id"]
           },
         ]
@@ -360,6 +374,13 @@ export type Database = {
             referencedRelation: "journeys"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "journal_entries_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "public_journeys"
+            referencedColumns: ["id"]
+          },
         ]
       }
       journey_followers: {
@@ -390,6 +411,13 @@ export type Database = {
             columns: ["journey_id"]
             isOneToOne: false
             referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journey_followers_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "public_journeys"
             referencedColumns: ["id"]
           },
         ]
@@ -484,6 +512,13 @@ export type Database = {
             referencedRelation: "journeys"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "journey_media_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "public_journeys"
+            referencedColumns: ["id"]
+          },
         ]
       }
       journey_tracks: {
@@ -541,6 +576,13 @@ export type Database = {
             columns: ["journey_id"]
             isOneToOne: false
             referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journey_tracks_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "public_journeys"
             referencedColumns: ["id"]
           },
           {
@@ -741,6 +783,13 @@ export type Database = {
             referencedRelation: "journeys"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "notification_queue_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "public_journeys"
+            referencedColumns: ["id"]
+          },
         ]
       }
       page_views: {
@@ -783,6 +832,13 @@ export type Database = {
             columns: ["journey_id"]
             isOneToOne: false
             referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_views_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "public_journeys"
             referencedColumns: ["id"]
           },
         ]
@@ -1007,6 +1063,13 @@ export type Database = {
             columns: ["journey_id"]
             isOneToOne: false
             referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "states_visited_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "public_journeys"
             referencedColumns: ["id"]
           },
         ]
@@ -1243,7 +1306,48 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_journeys: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string | null
+          description: string | null
+          end_date: string | null
+          id: string | null
+          name: string | null
+          start_date: string | null
+          states_count: number | null
+          total_kwh: number | null
+          total_miles: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string | null
+          name?: string | null
+          start_date?: string | null
+          states_count?: number | null
+          total_kwh?: number | null
+          total_miles?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string | null
+          name?: string | null
+          start_date?: string | null
+          states_count?: number | null
+          total_kwh?: number | null
+          total_miles?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_credential_validity: {
