@@ -5,6 +5,29 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Input validation constants
+const MAX_QUERY_LENGTH = 1000;
+const MAX_PREFERENCES_LENGTH = 2000;
+
+function validateCoordinates(lat: unknown, lng: unknown): boolean {
+  return (
+    typeof lat === 'number' &&
+    typeof lng === 'number' &&
+    !isNaN(lat) &&
+    !isNaN(lng) &&
+    Math.abs(lat) <= 90 &&
+    Math.abs(lng) <= 180
+  );
+}
+
+function sanitizeInput(input: string): string {
+  // Remove potential prompt injection patterns while keeping legitimate queries
+  return input
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .trim();
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -12,12 +35,73 @@ serve(async (req) => {
   }
 
   try {
-    const { query, currentLocation, preferences } = await req.json();
-    
+    let body;
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: 'Invalid request body' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { query, currentLocation, preferences } = body;
+
+    // Validate query
+    if (!query || typeof query !== 'string') {
+      return new Response(JSON.stringify({ error: 'Query is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (query.length > MAX_QUERY_LENGTH) {
+      return new Response(JSON.stringify({ error: 'Query exceeds maximum length' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Validate currentLocation if provided
+    if (currentLocation !== undefined && currentLocation !== null) {
+      if (typeof currentLocation !== 'object') {
+        return new Response(JSON.stringify({ error: 'Invalid location format' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (!validateCoordinates(currentLocation.lat, currentLocation.lng)) {
+        return new Response(JSON.stringify({ error: 'Invalid coordinates' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Validate preferences if provided
+    if (preferences !== undefined && preferences !== null) {
+      const preferencesStr = JSON.stringify(preferences);
+      if (preferencesStr.length > MAX_PREFERENCES_LENGTH) {
+        return new Response(JSON.stringify({ error: 'Preferences data too large' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+      // Log server-side only, return generic error to client
+      console.error('AI service configuration error');
+      return new Response(JSON.stringify({ error: 'Service temporarily unavailable' }), {
+        status: 503,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
+
+    // Sanitize user input
+    const sanitizedQuery = sanitizeInput(query);
 
     // Build a context-aware prompt for route suggestions
     const systemPrompt = `You are an AI route navigator assistant for "A Whittle Wandering" (AWW), an EV road trip tracking platform. 
@@ -40,8 +124,8 @@ When suggesting routes, format your response with:
 Be conversational but informative. If you don't have specific information, provide general guidance based on best practices for EV road trips.`;
 
     const userMessage = currentLocation 
-      ? `Current location: ${currentLocation.lat}, ${currentLocation.lng}\n\nUser query: ${query}\n\nPreferences: ${JSON.stringify(preferences || {})}`
-      : `User query: ${query}\n\nPreferences: ${JSON.stringify(preferences || {})}`;
+      ? `Current location: ${currentLocation.lat}, ${currentLocation.lng}\n\nUser query: ${sanitizedQuery}\n\nPreferences: ${JSON.stringify(preferences || {})}`
+      : `User query: ${sanitizedQuery}\n\nPreferences: ${JSON.stringify(preferences || {})}`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -72,9 +156,10 @@ Be conversational but informative. If you don't have specific information, provi
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+      // Log detailed error server-side only
       const errorText = await response.text();
-      console.error('AI gateway error:', response.status, errorText);
-      return new Response(JSON.stringify({ error: 'AI service temporarily unavailable' }), {
+      console.error('AI service error:', response.status, errorText);
+      return new Response(JSON.stringify({ error: 'Service temporarily unavailable' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -90,10 +175,9 @@ Be conversational but informative. If you don't have specific information, provi
     });
 
   } catch (error) {
+    // Log detailed error server-side only, return generic message to client
     console.error('Route navigator error:', error);
-    return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : 'Unknown error' 
-    }), {
+    return new Response(JSON.stringify({ error: 'An unexpected error occurred' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
