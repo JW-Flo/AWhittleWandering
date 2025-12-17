@@ -4,6 +4,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Play, Pause, RotateCcw, MapPin, Crosshair, SkipForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFlagshipWaypoints, FlagshipWaypoint } from '@/hooks/useFlagshipWaypoints';
+import { escapeHtml, escapeHtmlArray } from '@/lib/htmlSanitizer';
 
 interface ImmersiveJourneyMapProps {
   mapboxToken: string;
@@ -211,8 +212,13 @@ const ImmersiveJourneyMap: React.FC<ImmersiveJourneyMapProps> = ({
         });
       });
 
-      const peopleHtml = waypoint.people_met?.length 
-        ? `<div style="font-size: 11px; color: #8b5cf6; margin-top: 4px;">👤 ${waypoint.people_met.join(', ')}</div>` 
+      const safeName = escapeHtml(waypoint.name);
+      const safeStateCode = escapeHtml(waypoint.state_code);
+      const safeDescription = escapeHtml(waypoint.description);
+      const safePeopleMet = escapeHtmlArray(waypoint.people_met);
+      
+      const peopleHtml = safePeopleMet.length 
+        ? `<div style="font-size: 11px; color: #8b5cf6; margin-top: 4px;">👤 ${safePeopleMet.join(', ')}</div>` 
         : '';
 
       const marker = new mapboxgl.Marker({
@@ -227,9 +233,9 @@ const ImmersiveJourneyMap: React.FC<ImmersiveJourneyMapProps> = ({
             className: 'waypoint-popup'
           }).setHTML(`
             <div style="font-family: system-ui; padding: 8px; max-width: 250px;">
-              <strong style="color: #e65c00; font-size: 14px;">${waypoint.name}</strong>
-              <div style="font-size: 12px; color: #666; margin-top: 4px;">${waypoint.state_code || ''} • ${new Date(waypoint.arrived_at).toLocaleDateString()}</div>
-              ${waypoint.description ? `<div style="font-size: 12px; color: #444; margin-top: 8px; line-height: 1.4;">${waypoint.description}</div>` : ''}
+              <strong style="color: #e65c00; font-size: 14px;">${safeName}</strong>
+              <div style="font-size: 12px; color: #666; margin-top: 4px;">${safeStateCode || ''} • ${new Date(waypoint.arrived_at).toLocaleDateString()}</div>
+              ${safeDescription ? `<div style="font-size: 12px; color: #444; margin-top: 8px; line-height: 1.4;">${safeDescription}</div>` : ''}
               ${peopleHtml}
             </div>
           `)
