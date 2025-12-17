@@ -38,35 +38,60 @@ const ImmersiveJourneyMap: React.FC<ImmersiveJourneyMapProps> = ({
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken) return;
+    console.log('[ImmersiveJourneyMap] Init effect - mapContainer:', !!mapContainer.current, 'mapboxToken:', !!mapboxToken, 'token length:', mapboxToken?.length);
+    
+    if (!mapContainer.current) {
+      console.warn('[ImmersiveJourneyMap] No map container ref');
+      return;
+    }
+    
+    if (!mapboxToken) {
+      console.warn('[ImmersiveJourneyMap] No mapbox token');
+      return;
+    }
 
-    mapboxgl.accessToken = mapboxToken;
+    // Check container dimensions
+    const rect = mapContainer.current.getBoundingClientRect();
+    console.log('[ImmersiveJourneyMap] Container dimensions:', rect.width, 'x', rect.height);
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/outdoors-v12',
-      center: [-98.5795, 39.8283],
-      zoom: 3.5,
-      pitch: 30,
-      bearing: 0,
-      interactive: true,
-      renderWorldCopies: false,
-      fadeDuration: 0,
-    });
+    try {
+      mapboxgl.accessToken = mapboxToken;
+      console.log('[ImmersiveJourneyMap] Creating map...');
 
-    map.current.addControl(
-      new mapboxgl.NavigationControl({ visualizePitch: true }),
-      'top-right'
-    );
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/outdoors-v12',
+        center: [-98.5795, 39.8283],
+        zoom: 3.5,
+        pitch: 30,
+        bearing: 0,
+        interactive: true,
+        renderWorldCopies: false,
+        fadeDuration: 0,
+      });
 
-    map.current.on('load', () => {
-      setMapLoaded(true);
-    });
+      map.current.addControl(
+        new mapboxgl.NavigationControl({ visualizePitch: true }),
+        'top-right'
+      );
+
+      map.current.on('load', () => {
+        console.log('[ImmersiveJourneyMap] Map loaded successfully');
+        setMapLoaded(true);
+      });
+
+      map.current.on('error', (e) => {
+        console.error('[ImmersiveJourneyMap] Map error:', e);
+      });
+    } catch (error) {
+      console.error('[ImmersiveJourneyMap] Failed to create map:', error);
+    }
 
     return () => {
       markersRef.current.forEach(m => m.remove());
       vehicleMarkerRef.current?.remove();
       map.current?.remove();
+      map.current = null;
       if (animationRef.current) clearTimeout(animationRef.current);
     };
   }, [mapboxToken]);
@@ -348,9 +373,12 @@ const ImmersiveJourneyMap: React.FC<ImmersiveJourneyMapProps> = ({
   }
 
   return (
-    <div className={`relative rounded-2xl overflow-hidden ${className}`} style={{ minHeight: '400px' }}>
-      {/* Map Container */}
-      <div ref={mapContainer} className="absolute inset-0 w-full h-full" />
+    <div className={`relative rounded-2xl overflow-hidden ${className}`} style={{ minHeight: '400px', height: '100%' }}>
+      {/* Map Container - must have explicit dimensions for Mapbox */}
+      <div 
+        ref={mapContainer} 
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' }} 
+      />
 
       {/* Gradient Overlay */}
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-background/60 via-transparent to-transparent" />

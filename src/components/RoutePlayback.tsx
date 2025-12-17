@@ -31,31 +31,52 @@ export default function RoutePlayback({ mapboxToken, className = '', onWaypointC
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken) return;
+    console.log('[RoutePlayback] Init - mapContainer:', !!mapContainer.current, 'mapboxToken:', !!mapboxToken, 'token length:', mapboxToken?.length);
+    
+    if (!mapContainer.current) {
+      console.warn('[RoutePlayback] No map container');
+      return;
+    }
+    
+    if (!mapboxToken) {
+      console.warn('[RoutePlayback] No mapbox token');
+      return;
+    }
 
-    mapboxgl.accessToken = mapboxToken;
+    try {
+      mapboxgl.accessToken = mapboxToken;
+      console.log('[RoutePlayback] Creating map...');
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/satellite-streets-v12',
-      center: [currentWaypoint.lng, currentWaypoint.lat],
-      zoom: 10,
-      pitch: 45,
-      bearing: -17.6,
-    });
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/satellite-streets-v12',
+        center: [currentWaypoint.lng, currentWaypoint.lat],
+        zoom: 10,
+        pitch: 45,
+        bearing: -17.6,
+      });
 
-    map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
+      map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
 
-    map.current.on('load', () => {
-      setMapLoaded(true);
-      addRouteLayer();
-      addVehicleMarker();
-    });
+      map.current.on('load', () => {
+        console.log('[RoutePlayback] Map loaded successfully');
+        setMapLoaded(true);
+        addRouteLayer();
+        addVehicleMarker();
+      });
+
+      map.current.on('error', (e) => {
+        console.error('[RoutePlayback] Map error:', e);
+      });
+    } catch (error) {
+      console.error('[RoutePlayback] Failed to create map:', error);
+    }
 
     return () => {
       if (animationRef.current) clearTimeout(animationRef.current);
       vehicleMarker.current?.remove();
       map.current?.remove();
+      map.current = null;
     };
   }, [mapboxToken]);
 

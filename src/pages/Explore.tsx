@@ -61,12 +61,37 @@ export default function Explore() {
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
+    
+    // Set a max timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      if (isMounted && isLoading) {
+        console.log('[Explore] Loading timeout - forcing isLoading=false');
+        setIsLoading(false);
+      }
+    }, 10000);
+
     async function fetchData() {
+      console.log('[Explore] Starting fetchData...');
       try {
-        // Fetch Mapbox token
-        const { data: tokenData, error: tokenError } = await supabase.functions.invoke('get-mapbox-token');
-        if (tokenError) throw tokenError;
-        setMapboxToken(tokenData.token);
+        // Fetch Mapbox token with a timeout
+        const tokenPromise = supabase.functions.invoke('get-mapbox-token');
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Token fetch timeout')), 8000)
+        );
+        
+        const { data: tokenData, error: tokenError } = await Promise.race([
+          tokenPromise,
+          timeoutPromise
+        ]) as any;
+        
+        if (!isMounted) return;
+        
+        console.log('[Explore] Token response:', { hasToken: !!tokenData?.token, error: tokenError });
+        
+        if (!tokenError && tokenData?.token) {
+          setMapboxToken(tokenData.token);
+        }
 
         // Fetch first journey for photo uploads
         if (user) {
@@ -76,17 +101,26 @@ export default function Explore() {
             .order('start_date', { ascending: false })
             .limit(1);
           
-          if (journeys && journeys.length > 0) {
+          if (journeys && journeys.length > 0 && isMounted) {
             setJourneyId(journeys[0].id);
           }
         }
       } catch (err) {
-        console.error('Error fetching data:', err);
+        console.error('[Explore] Error fetching data:', err);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          console.log('[Explore] Setting isLoading to false');
+          setIsLoading(false);
+        }
       }
     }
+    
     fetchData();
+    
+    return () => {
+      isMounted = false;
+      clearTimeout(loadingTimeout);
+    };
   }, [user]);
 
   const handleWaypointChange = (waypoint: JourneyWaypoint, index: number) => {
