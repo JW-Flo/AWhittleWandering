@@ -285,10 +285,32 @@ export default function Dashboard() {
                     mapboxToken={mapboxToken}
                   />
                 ) : (
-                  <div className="h-[500px] flex items-center justify-center bg-muted/50">
-                    <div className="text-center space-y-2">
-                      <Map className="w-8 h-8 text-muted-foreground animate-pulse mx-auto" />
-                      <p className="text-sm text-muted-foreground">Loading map...</p>
+                  <div className="h-[500px] relative overflow-hidden bg-gradient-to-br from-muted/30 via-muted/50 to-muted/30">
+                    {/* Shimmer effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-foreground/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+                    
+                    {/* Map placeholder content */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <div className="relative">
+                        <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
+                          <Map className="w-8 h-8 text-primary" />
+                        </div>
+                        <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-accent flex items-center justify-center">
+                          <div className="w-3 h-3 rounded-full bg-accent-foreground animate-ping" />
+                        </div>
+                      </div>
+                      <p className="mt-4 text-sm font-medium text-muted-foreground">Loading journey map...</p>
+                      <p className="text-xs text-muted-foreground/60">Fetching Mapbox credentials</p>
+                    </div>
+                    
+                    {/* Decorative map grid lines */}
+                    <div className="absolute inset-0 opacity-10">
+                      <div className="absolute top-1/4 left-0 right-0 h-px bg-border" />
+                      <div className="absolute top-2/4 left-0 right-0 h-px bg-border" />
+                      <div className="absolute top-3/4 left-0 right-0 h-px bg-border" />
+                      <div className="absolute left-1/4 top-0 bottom-0 w-px bg-border" />
+                      <div className="absolute left-2/4 top-0 bottom-0 w-px bg-border" />
+                      <div className="absolute left-3/4 top-0 bottom-0 w-px bg-border" />
                     </div>
                   </div>
                 )}
@@ -429,8 +451,14 @@ export default function Dashboard() {
                       mapboxToken={mapboxToken}
                     />
                   ) : (
-                    <div className="h-full flex items-center justify-center bg-muted/50">
-                      <Map className="w-8 h-8 text-muted-foreground animate-pulse" />
+                    <div className="h-full relative overflow-hidden bg-gradient-to-br from-muted/30 via-muted/50 to-muted/30">
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-foreground/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
+                          <Activity className="w-6 h-6 text-primary" />
+                        </div>
+                        <p className="mt-3 text-sm text-muted-foreground">Loading live map...</p>
+                      </div>
                     </div>
                   )}
                 </CardContent>
