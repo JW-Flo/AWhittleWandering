@@ -296,6 +296,17 @@ const SignInDialog = forwardRef<HTMLDivElement, SignInDialogProps>(
 
             <TabsContent value="signup" className="space-y-4 mt-4">
               <form onSubmit={handleSignUp} className="space-y-4">
+                {/* Privacy Notice */}
+                <div className="p-3 bg-muted/50 rounded-lg border border-border/50">
+                  <div className="flex items-start gap-2">
+                    <Shield className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+                    <div className="text-xs text-muted-foreground">
+                      <p className="font-medium text-foreground mb-1">Your Privacy Matters</p>
+                      <p>We collect vehicle telemetry, location data, and journey information. You control what's public in your settings. <a href="/privacy" target="_blank" className="text-primary hover:underline">Read our Privacy Policy</a></p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="signup-name">Full Name (optional)</Label>
                   <div className="relative">
@@ -368,6 +379,10 @@ const SignInDialog = forwardRef<HTMLDivElement, SignInDialogProps>(
                     />
                   </div>
                 </div>
+
+                <p className="text-xs text-muted-foreground">
+                  By creating an account, you agree to our <a href="/terms" target="_blank" className="text-primary hover:underline">Terms of Service</a> and <a href="/privacy" target="_blank" className="text-primary hover:underline">Privacy Policy</a>.
+                </p>
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? 'Creating account...' : 'Create Account'}
