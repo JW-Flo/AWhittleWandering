@@ -131,7 +131,33 @@ const Terms = () => {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-foreground mb-4">8. Disclaimer of Warranties</h2>
+            <h2 className="text-2xl font-semibold text-foreground mb-4">8. Analytics & Visitor Tracking</h2>
+            <div className="text-muted-foreground leading-relaxed space-y-4">
+              <p>
+                <strong className="text-foreground">8.1 Analytics Collection:</strong> We collect anonymous analytics 
+                data to improve our service, including: page views, session duration, pages visited, referring 
+                sources, device type (mobile/desktop), browser type, operating system, and approximate geographic 
+                region based on IP address.
+              </p>
+              <p>
+                <strong className="text-foreground">8.2 Visitor Identification:</strong> We use anonymous visitor 
+                identifiers to understand site usage patterns. These identifiers do not contain personally 
+                identifiable information and are used solely for analytics purposes.
+              </p>
+              <p>
+                <strong className="text-foreground">8.3 No Sale of Data:</strong> We do not sell or share your 
+                analytics data with third parties for marketing purposes.
+              </p>
+              <p>
+                <strong className="text-foreground">8.4 Administrative Access:</strong> Platform administrators 
+                may access aggregated analytics data including visitor sessions, traffic sources, device 
+                breakdowns, and page view statistics for operational and security purposes.
+              </p>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold text-foreground mb-4">9. Disclaimer of Warranties</h2>
             <p className="text-muted-foreground leading-relaxed">
               THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED. 
               WE DO NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, ERROR-FREE, OR SECURE. VEHICLE DATA AND 
@@ -141,7 +167,7 @@ const Terms = () => {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-foreground mb-4">9. Limitation of Liability</h2>
+            <h2 className="text-2xl font-semibold text-foreground mb-4">10. Limitation of Liability</h2>
             <p className="text-muted-foreground leading-relaxed">
               TO THE MAXIMUM EXTENT PERMITTED BY LAW, AWW SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, 
               CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING FROM YOUR USE OF THE SERVICE. OUR TOTAL LIABILITY SHALL NOT 
@@ -150,7 +176,7 @@ const Terms = () => {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-foreground mb-4">10. Indemnification</h2>
+            <h2 className="text-2xl font-semibold text-foreground mb-4">11. Indemnification</h2>
             <p className="text-muted-foreground leading-relaxed">
               You agree to indemnify and hold harmless AWW and its officers, directors, employees, and agents from 
               any claims, damages, losses, or expenses arising from your use of the service, violation of these terms, 
@@ -159,7 +185,7 @@ const Terms = () => {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-foreground mb-4">11. Modifications to Service</h2>
+            <h2 className="text-2xl font-semibold text-foreground mb-4">12. Modifications to Service</h2>
             <p className="text-muted-foreground leading-relaxed">
               We reserve the right to modify, suspend, or discontinue the service (or any part thereof) at any time 
               with or without notice. We shall not be liable to you or any third party for any modification, 
@@ -168,7 +194,7 @@ const Terms = () => {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-foreground mb-4">12. Changes to Terms</h2>
+            <h2 className="text-2xl font-semibold text-foreground mb-4">13. Changes to Terms</h2>
             <p className="text-muted-foreground leading-relaxed">
               We may update these Terms of Service from time to time. We will notify you of material changes by 
               posting the new terms on this page and updating the "Last updated" date. Your continued use of the 
@@ -177,7 +203,7 @@ const Terms = () => {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-foreground mb-4">13. Governing Law</h2>
+            <h2 className="text-2xl font-semibold text-foreground mb-4">14. Governing Law</h2>
             <p className="text-muted-foreground leading-relaxed">
               These terms shall be governed by and construed in accordance with the laws of the State of Texas, 
               United States, without regard to its conflict of law provisions.
@@ -185,7 +211,7 @@ const Terms = () => {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-foreground mb-4">14. Dispute Resolution</h2>
+            <h2 className="text-2xl font-semibold text-foreground mb-4">15. Dispute Resolution</h2>
             <p className="text-muted-foreground leading-relaxed">
               Any disputes arising from these terms or your use of the service shall first be attempted to be 
               resolved through good-faith negotiation. If negotiation fails, disputes shall be resolved through 
@@ -194,7 +220,7 @@ const Terms = () => {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-foreground mb-4">15. Contact Information</h2>
+            <h2 className="text-2xl font-semibold text-foreground mb-4">16. Contact Information</h2>
             <p className="text-muted-foreground leading-relaxed">
               For questions about these Terms of Service, please contact us at:{" "}
               <a href="mailto:legal@awhittlewandering.com" className="text-primary hover:underline">

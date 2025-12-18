@@ -105,6 +105,42 @@ const ImmersiveJourneyMap: React.FC<ImmersiveJourneyMapProps> = ({
     addWaypointMarkers();
   }, [mapLoaded, waypoints]);
 
+  // Add user location marker when provided
+  const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
+  
+  useEffect(() => {
+    if (!mapLoaded || !map.current || !userLocation) return;
+    
+    // Remove existing user marker
+    if (userMarkerRef.current) {
+      userMarkerRef.current.remove();
+    }
+    
+    // Create pulsing user location marker
+    const el = document.createElement('div');
+    el.innerHTML = `
+      <div style="position: relative; width: 24px; height: 24px;">
+        <div style="position: absolute; inset: 0; background: #3b82f6; border-radius: 50%; opacity: 0.3; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+        <div style="position: absolute; inset: 4px; background: #3b82f6; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.4);"></div>
+      </div>
+    `;
+    
+    userMarkerRef.current = new mapboxgl.Marker({ element: el })
+      .setLngLat([userLocation.lng, userLocation.lat])
+      .addTo(map.current);
+    
+    // Center map on user location
+    map.current.easeTo({
+      center: [userLocation.lng, userLocation.lat],
+      zoom: 10,
+      duration: 1000,
+    });
+    
+    return () => {
+      userMarkerRef.current?.remove();
+    };
+  }, [mapLoaded, userLocation]);
+
   const addRouteLayer = useCallback(() => {
     if (!map.current || routeCoordinates.length === 0) return;
 

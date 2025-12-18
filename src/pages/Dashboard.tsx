@@ -438,34 +438,34 @@ export default function Dashboard() {
             </Card>
             
             {/* Live Map with current location */}
-            {vehicleState && (
-              <Card className="overflow-hidden">
-                <CardHeader>
-                  <CardTitle>Live Location</CardTitle>
-                  <CardDescription>
-                    {vehicleState.latitude.toFixed(4)}, {vehicleState.longitude.toFixed(4)}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-0 h-[400px]">
-                  {mapboxToken ? (
-                    <ImmersiveJourneyMap 
-                      className="h-full"
-                      mapboxToken={mapboxToken}
-                    />
-                  ) : (
-                    <div className="h-full relative overflow-hidden bg-gradient-to-br from-muted/30 via-muted/50 to-muted/30">
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-foreground/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
-                          <Activity className="w-6 h-6 text-primary" />
-                        </div>
-                        <p className="mt-3 text-sm text-muted-foreground">Loading live map...</p>
+            <Card className="overflow-hidden">
+              <CardHeader>
+                <CardTitle>Live Location</CardTitle>
+                <CardDescription>
+                  {vehicleState ? `${vehicleState.latitude.toFixed(4)}, ${vehicleState.longitude.toFixed(4)}` : 'Waiting for vehicle data...'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0 h-[400px]">
+                {mapboxToken ? (
+                  <ImmersiveJourneyMap 
+                    className="h-full"
+                    mapboxToken={mapboxToken}
+                    showCenterButton={true}
+                    userLocation={vehicleState ? { lat: vehicleState.latitude, lng: vehicleState.longitude } : null}
+                  />
+                ) : (
+                  <div className="h-full relative overflow-hidden bg-gradient-to-br from-muted/30 via-muted/50 to-muted/30">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-foreground/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
+                        <Activity className="w-6 h-6 text-primary" />
                       </div>
+                      <p className="mt-3 text-sm text-muted-foreground">Loading live map...</p>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Analytics Tab */}
