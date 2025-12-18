@@ -27,6 +27,7 @@ import MarketingDashboard from '@/components/admin/MarketingDashboard';
 import { UserFeedback } from '@/components/admin/UserFeedback';
 import { BetaAccessAudit } from '@/components/admin/BetaAccessAudit';
 import { GPSWaypointRebuild } from '@/components/admin/GPSWaypointRebuild';
+import { WaypointDetailsEditor } from '@/components/admin/WaypointDetailsEditor';
 import { 
   Shield, 
   Users, 
@@ -560,7 +561,10 @@ export default function Admin() {
 
               {/* GPS Waypoint Rebuild Tab */}
               <TabsContent value="gps" className="mt-0">
-                <GPSWaypointRebuild />
+                <div className="space-y-6">
+                  <GPSWaypointRebuild />
+                  <WaypointDetailsEditor />
+                </div>
               </TabsContent>
 
               {/* Users Tab */}
