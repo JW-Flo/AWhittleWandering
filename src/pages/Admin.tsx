@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useAdminAudit } from '@/hooks/useAdminAudit';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { TwoFactorSettings } from '@/components/settings/TwoFactorSettings';
 import FeatureRequestWidget from '@/components/FeatureRequestWidget';
 import { PreLaunchChecklist } from '@/components/admin/PreLaunchChecklist';
+import { VisitorAnalytics } from '@/components/admin/VisitorAnalytics';
 import { 
   Shield, 
   Users, 
@@ -47,7 +49,8 @@ import {
   Bell,
   Plug,
   Send,
-  Rocket
+  Rocket,
+  BarChart3
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -68,6 +71,7 @@ interface Stats {
   activeToday: number;
   dsarRequests: number;
   openIncidents: number;
+  pageViews: number;
 }
 
 interface AuditLog {
@@ -120,12 +124,13 @@ export default function Admin() {
   const { user, session } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logRoleChange, logAccountAction, logDataExport, logAdminAccess, logSecurityReview } = useAdminAudit();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserData[]>([]);
   const [stats, setStats] = useState<Stats>({ 
     totalUsers: 0, totalJourneys: 0, totalWaypoints: 0, totalMedia: 0,
-    activeToday: 0, dsarRequests: 0, openIncidents: 0
+    activeToday: 0, dsarRequests: 0, openIncidents: 0, pageViews: 0
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
@@ -161,6 +166,10 @@ export default function Admin() {
         return;
       }
       setIsAdmin(true);
+      
+      // Log admin portal access for audit
+      logAdminAccess('admin_portal_login');
+      
       fetchData();
     } catch (error) {
       console.error('Error checking admin access:', error);
@@ -190,12 +199,13 @@ export default function Admin() {
       })) || [];
       setUsers(usersWithRoles);
 
-      const [journeysRes, waypointsRes, mediaRes, auditRes, incidentsRes] = await Promise.all([
+      const [journeysRes, waypointsRes, mediaRes, auditRes, incidentsRes, pageViewsRes] = await Promise.all([
         supabase.from('journeys').select('id', { count: 'exact', head: true }),
         supabase.from('drive_data').select('id', { count: 'exact', head: true }),
         supabase.from('journey_media').select('id', { count: 'exact', head: true }),
         supabase.from('security_audit_log').select('*').order('created_at', { ascending: false }).limit(100),
-        supabase.from('incident_log').select('*').order('created_at', { ascending: false }).limit(50)
+        supabase.from('incident_log').select('*').order('created_at', { ascending: false }).limit(50),
+        supabase.from('page_views').select('id', { count: 'exact', head: true })
       ]);
 
       const dsarCount = auditRes.data?.filter(log => log.action.startsWith('dsar_')).length || 0;
@@ -208,7 +218,8 @@ export default function Admin() {
         totalMedia: mediaRes.count || 0,
         activeToday: 0,
         dsarRequests: dsarCount,
-        openIncidents
+        openIncidents,
+        pageViews: pageViewsRes.count || 0
       });
 
       setAuditLogs(auditRes.data || []);
@@ -250,6 +261,15 @@ export default function Admin() {
       if (response.error) throw response.error;
 
       const result = response.data;
+      
+      // Log the account action for audit
+      await logAccountAction(
+        incidentAction === 'lock' ? 'account_lock' : 'account_suspend',
+        selectedUser.id,
+        incidentReason,
+        incidentSeverity
+      );
+      
       toast({
         title: "Incident Processed",
         description: `Account ${incidentAction}ed. ${result.notificationsSent ? `Notifications sent via: ${result.notificationChannels.join(', ')}` : 'No notifications sent.'}`,
@@ -280,6 +300,10 @@ export default function Admin() {
       });
 
       if (response.error) throw response.error;
+      
+      // Log the unlock action for audit
+      await logAccountAction('account_unlock', userId, 'Account unlocked by admin');
+      
       toast({ title: "Account Unlocked", description: "User can now access their account" });
       fetchData();
     } catch (error) {
@@ -314,10 +338,17 @@ export default function Admin() {
 
   const handleRoleChange = async (userId: string, newRole: 'admin' | 'user' | 'premium') => {
     try {
+      const currentUser = users.find(u => u.id === userId);
+      const oldRole = currentUser?.role || 'user';
+      
       const { error } = await supabase
         .from('user_roles')
         .upsert({ user_id: userId, role: newRole }, { onConflict: 'user_id' });
       if (error) throw error;
+      
+      // Log the role change for audit
+      await logRoleChange(userId, oldRole, newRole);
+      
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
       toast({ title: "Role Updated", description: `User role changed to ${newRole}` });
       fetchData();
@@ -329,6 +360,9 @@ export default function Admin() {
 
   const exportUserData = async (userId: string, email: string) => {
     try {
+      // Log the data export for audit
+      await logDataExport(userId);
+      
       const [profileRes, journeysRes, mediaRes, prefsRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('user_id', userId).single(),
         supabase.from('journeys').select('*').eq('user_id', userId),
@@ -398,12 +432,13 @@ export default function Admin() {
       {/* Content */}
       <div className="container mx-auto px-4 py-8">
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-8">
           {[
             { icon: Users, value: stats.totalUsers, label: 'Users', color: 'text-primary' },
             { icon: MapPin, value: stats.totalJourneys, label: 'Journeys', color: 'text-primary' },
             { icon: Activity, value: stats.totalWaypoints.toLocaleString(), label: 'Data Points', color: 'text-primary' },
             { icon: Image, value: stats.totalMedia, label: 'Media', color: 'text-primary' },
+            { icon: Eye, value: stats.pageViews.toLocaleString(), label: 'Page Views', color: 'text-success' },
             { icon: ScrollText, value: auditLogs.length, label: 'Audit Events', color: 'text-amber-500' },
             { icon: FileText, value: stats.dsarRequests, label: 'DSAR', color: 'text-blue-500' },
             { icon: ShieldAlert, value: stats.openIncidents, label: 'Open Incidents', color: 'text-destructive' },
@@ -428,6 +463,7 @@ export default function Admin() {
             <CardHeader>
               <TabsList className="bg-secondary flex-wrap h-auto gap-1">
                 <TabsTrigger value="launch"><Rocket className="w-4 h-4 mr-1" />Launch</TabsTrigger>
+                <TabsTrigger value="analytics"><BarChart3 className="w-4 h-4 mr-1" />Analytics</TabsTrigger>
                 <TabsTrigger value="users"><Users className="w-4 h-4 mr-1" />Users</TabsTrigger>
                 <TabsTrigger value="incidents"><ShieldAlert className="w-4 h-4 mr-1" />Incidents</TabsTrigger>
                 <TabsTrigger value="integrations"><Plug className="w-4 h-4 mr-1" />Integrations</TabsTrigger>
@@ -442,6 +478,11 @@ export default function Admin() {
               {/* Launch Checklist Tab */}
               <TabsContent value="launch" className="mt-0">
                 <PreLaunchChecklist />
+              </TabsContent>
+
+              {/* Analytics Tab */}
+              <TabsContent value="analytics" className="mt-0">
+                <VisitorAnalytics />
               </TabsContent>
 
               {/* Users Tab */}
