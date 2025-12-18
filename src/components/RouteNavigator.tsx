@@ -3,8 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Navigation, Send, Loader2, MapPin, Zap, Clock, Route } from 'lucide-react';
+import { Navigation, Send, Loader2, MapPin, Zap, Clock, Route, LocateFixed } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -15,10 +16,17 @@ interface RouteNavigatorProps {
   className?: string;
 }
 
+interface UserLocation {
+  lat: number;
+  lng: number;
+}
+
 export default function RouteNavigator({ className = '' }: RouteNavigatorProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -27,8 +35,46 @@ export default function RouteNavigator({ className = '' }: RouteNavigatorProps) 
     }
   }, [messages]);
 
+  const getUserLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser');
+      return;
+    }
+    
+    setIsGettingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+        toast.success('Location detected! You can now ask about places near you.');
+        setIsGettingLocation(false);
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        toast.error('Unable to get your location. Please enable location access.');
+        setIsGettingLocation(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
+
+    // Check if query mentions "near me" or location-based terms
+    const locationTerms = ['near me', 'around me', 'nearby', 'closest', 'nearest', 'my location', 'where i am'];
+    const needsLocation = locationTerms.some(term => input.toLowerCase().includes(term));
+    
+    if (needsLocation && !userLocation) {
+      toast.info('Please share your location first to get nearby results', {
+        action: {
+          label: 'Share Location',
+          onClick: getUserLocation,
+        },
+      });
+    }
 
     const userMessage: Message = { role: 'user', content: input.trim() };
     setMessages(prev => [...prev, userMessage]);
@@ -51,14 +97,22 @@ export default function RouteNavigator({ className = '' }: RouteNavigatorProps) 
     };
 
     try {
+      // Get the user's session token
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('Please sign in to use the AI Navigator');
+      }
+
       const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/route-navigator`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ 
           query: input.trim(),
+          currentLocation: userLocation,
           preferences: {
             vehicleType: 'Tesla Model Y',
             preferScenic: true,
@@ -142,7 +196,7 @@ export default function RouteNavigator({ className = '' }: RouteNavigatorProps) 
   const quickPrompts = [
     { icon: Route, text: "Plan a route from Austin to Denver" },
     { icon: Zap, text: "Where should I charge on I-10?" },
-    { icon: MapPin, text: "Scenic stops near Grand Canyon" },
+    { icon: MapPin, text: "Charging stations near me" },
     { icon: Clock, text: "How long to drive coast to coast?" },
   ];
 
@@ -163,6 +217,23 @@ export default function RouteNavigator({ className = '' }: RouteNavigatorProps) 
             <p className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-3">
               Ask about routes, charging, or trip planning!
             </p>
+            
+            {/* Location button */}
+            <Button
+              variant={userLocation ? "secondary" : "outline"}
+              size="sm"
+              className="mb-3 text-xs"
+              onClick={getUserLocation}
+              disabled={isGettingLocation}
+            >
+              {isGettingLocation ? (
+                <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+              ) : (
+                <LocateFixed className={`w-3 h-3 mr-1.5 ${userLocation ? 'text-green-500' : ''}`} />
+              )}
+              {userLocation ? 'Location shared' : 'Share my location'}
+            </Button>
+            
             <div className="grid grid-cols-2 gap-1.5 w-full max-w-xs">
               {quickPrompts.map((prompt, i) => (
                 <Button
