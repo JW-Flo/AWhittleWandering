@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Shield, MapPin, Eye, EyeOff, User, Loader2 } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { Shield, MapPin, Eye, EyeOff, User, Loader2, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -14,11 +15,29 @@ import { toast } from 'sonner';
 type LocationPrivacy = 'exact' | 'city' | 'region' | 'state';
 type MediaVisibility = 'public' | 'followers' | 'private';
 
+// Delay options in minutes
+const DELAY_OPTIONS = [
+  { value: 5, label: '5 minutes' },
+  { value: 15, label: '15 minutes' },
+  { value: 30, label: '30 minutes' },
+  { value: 60, label: '1 hour' },
+  { value: 120, label: '2 hours' },
+  { value: 360, label: '6 hours' },
+  { value: 720, label: '12 hours' },
+];
+
+const formatDelay = (minutes: number): string => {
+  if (minutes < 60) return `${minutes} minutes`;
+  const hours = minutes / 60;
+  return hours === 1 ? '1 hour' : `${hours} hours`;
+};
+
 interface PrivacySettingsData {
   default_location_privacy: LocationPrivacy;
   default_media_visibility: MediaVisibility;
   anonymize_username: boolean;
   display_name: string | null;
+  location_delay_minutes: number;
 }
 
 export default function PrivacySettings() {
@@ -29,7 +48,8 @@ export default function PrivacySettings() {
     default_location_privacy: 'city',
     default_media_visibility: 'followers',
     anonymize_username: false,
-    display_name: null
+    display_name: null,
+    location_delay_minutes: 1440 // Default 24 hours
   });
 
   useEffect(() => {
@@ -50,7 +70,8 @@ export default function PrivacySettings() {
           default_location_privacy: (data.default_location_privacy as LocationPrivacy) || 'city',
           default_media_visibility: (data.default_media_visibility as MediaVisibility) || 'followers',
           anonymize_username: data.anonymize_username || false,
-          display_name: data.display_name
+          display_name: data.display_name,
+          location_delay_minutes: 1440 // Store in profile when DB column added
         });
       }
     } catch (error) {
@@ -260,17 +281,36 @@ export default function PrivacySettings() {
             <Switch defaultChecked={false} />
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+          <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10">
-                <Shield className="w-5 h-5 text-primary" />
+                <Clock className="w-5 h-5 text-primary" />
               </div>
-              <div>
-                <Label>24-Hour Location Delay</Label>
-                <p className="text-sm text-muted-foreground">Public viewers see location 24h delayed</p>
+              <div className="flex-1">
+                <Label>Location Delay for Public Journeys</Label>
+                <p className="text-sm text-muted-foreground">
+                  Public viewers see your location delayed by: <span className="font-medium text-foreground">{formatDelay(settings.location_delay_minutes)}</span>
+                </p>
               </div>
             </div>
-            <Switch defaultChecked={true} />
+            <div className="px-2">
+              <Slider
+                value={[DELAY_OPTIONS.findIndex(o => o.value === settings.location_delay_minutes) >= 0 
+                  ? DELAY_OPTIONS.findIndex(o => o.value === settings.location_delay_minutes)
+                  : 6]}
+                min={0}
+                max={DELAY_OPTIONS.length - 1}
+                step={1}
+                onValueChange={(value) => {
+                  setSettings(s => ({ ...s, location_delay_minutes: DELAY_OPTIONS[value[0]].value }));
+                }}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                <span>5 min</span>
+                <span>12 hours</span>
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">

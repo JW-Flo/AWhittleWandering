@@ -17,10 +17,54 @@ import { useEffect, useState } from 'react';
 export default function Settings() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const [unsubscribeHandled, setUnsubscribeHandled] = useState(false);
   const [processingUnsubscribe, setProcessingUnsubscribe] = useState(false);
+  const [spotifyCallbackHandled, setSpotifyCallbackHandled] = useState(false);
+
+  // Handle Spotify OAuth callback
+  useEffect(() => {
+    const handleSpotifyCallback = async () => {
+      const spotifyCallback = searchParams.get('spotify_callback');
+      const code = searchParams.get('code');
+      
+      if (spotifyCallback === 'true' && code && !spotifyCallbackHandled && user) {
+        setSpotifyCallbackHandled(true);
+        
+        try {
+          const { data, error } = await supabase.functions.invoke('spotify-auth', {
+            body: { action: 'exchange_code', code }
+          });
+          
+          if (error) throw error;
+          
+          toast({
+            title: 'Spotify Connected!',
+            description: data.display_name 
+              ? `Connected as ${data.display_name}` 
+              : 'Your Spotify account has been connected.',
+          });
+          
+          // Clean up URL params
+          const newParams = new URLSearchParams(searchParams);
+          newParams.delete('spotify_callback');
+          newParams.delete('code');
+          newParams.delete('state');
+          setSearchParams(newParams, { replace: true });
+        } catch (error: any) {
+          console.error('Spotify callback error:', error);
+          toast({
+            title: 'Spotify Connection Failed',
+            description: 'Unable to complete Spotify connection. Please try again.',
+            variant: 'destructive'
+          });
+        }
+      }
+    };
+
+    handleSpotifyCallback();
+  }, [searchParams, user, spotifyCallbackHandled, toast, setSearchParams]);
 
   // Handle unsubscribe from URL params
   useEffect(() => {
@@ -125,7 +169,9 @@ export default function Settings() {
 
   const defaultTab = searchParams.get('unsubscribe') === 'true' 
     ? 'notifications' 
-    : searchParams.get('tab') || 'account';
+    : searchParams.get('spotify_callback') === 'true'
+      ? 'integrations'
+      : searchParams.get('tab') || 'account';
 
   return (
     <div className="min-h-screen bg-background">
