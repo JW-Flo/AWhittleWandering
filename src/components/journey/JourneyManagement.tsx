@@ -22,7 +22,9 @@ import {
   Trash2, 
   Calendar,
   AlertTriangle,
-  Clock
+  Clock,
+  CheckCircle,
+  Flag
 } from 'lucide-react';
 import { format as formatDate, formatDistanceToNow } from 'date-fns';
 import {
@@ -43,6 +45,7 @@ interface Journey {
   export_generated_at: string | null;
   total_miles: number | null;
   cloudflare_d1_id: string | null;
+  is_complete: boolean | null;
 }
 
 interface JourneyManagementProps {
@@ -56,8 +59,10 @@ export function JourneyManagement({ journey, onUpdate }: JourneyManagementProps)
   const [isArchiving, setIsArchiving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUnarchiving, setIsUnarchiving] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
 
   const isArchived = !!journey.archived_at;
+  const isComplete = !!journey.is_complete;
 
   const handleExport = async (format: 'json' | 'csv' = 'json') => {
     setIsExporting(true);
@@ -183,6 +188,34 @@ export function JourneyManagement({ journey, onUpdate }: JourneyManagementProps)
     }
   };
 
+  const handleMarkComplete = async () => {
+    setIsCompleting(true);
+    try {
+      const { error } = await supabase
+        .from('journeys')
+        .update({ is_complete: !isComplete })
+        .eq('id', journey.id);
+
+      if (error) throw error;
+
+      toast({
+        title: isComplete ? 'Journey Reopened' : 'Journey Completed',
+        description: isComplete 
+          ? `"${journey.name}" is now active again.`
+          : `"${journey.name}" marked complete. Notifications stopped.`,
+      });
+      onUpdate();
+    } catch (err: any) {
+      toast({
+        title: 'Update Failed',
+        description: err.message || 'Failed to update journey status.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCompleting(false);
+    }
+  };
+
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
@@ -209,12 +242,18 @@ export function JourneyManagement({ journey, onUpdate }: JourneyManagementProps)
   };
 
   return (
-    <Card className={isArchived ? 'border-muted bg-muted/20' : ''}>
+    <Card className={isArchived ? 'border-muted bg-muted/20' : isComplete ? 'border-success/30 bg-success/5' : ''}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div>
             <CardTitle className="text-lg flex items-center gap-2">
               {journey.name}
+              {isComplete && (
+                <Badge variant="outline" className="font-normal text-success border-success/30">
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  Complete
+                </Badge>
+              )}
               {isArchived && (
                 <Badge variant="secondary" className="font-normal">
                   <Archive className="w-3 h-3 mr-1" />
@@ -245,6 +284,33 @@ export function JourneyManagement({ journey, onUpdate }: JourneyManagementProps)
 
       <CardContent>
         <div className="flex flex-wrap gap-2">
+          {/* Mark Complete Button */}
+          {!isArchived && (
+            <Button
+              variant={isComplete ? 'outline' : 'default'}
+              size="sm"
+              onClick={handleMarkComplete}
+              disabled={isCompleting}
+            >
+              {isCompleting ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                  Updating...
+                </>
+              ) : isComplete ? (
+                <>
+                  <Flag className="w-4 h-4 mr-2" />
+                  Reopen
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Mark Complete
+                </>
+              )}
+            </Button>
+          )}
+
           {/* Export Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
