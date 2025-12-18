@@ -74,11 +74,10 @@ export default function Explore() {
     async function fetchData() {
       console.log('[Explore] Starting fetchData...');
       try {
-        // Use public token from env directly
-        const token = import.meta.env.VITE_MAPBOX_TOKEN;
-        if (token) {
-          setMapboxToken(token);
-        }
+        // Use public token from env directly - ensure it's set immediately
+        const token = import.meta.env.VITE_MAPBOX_TOKEN || '';
+        console.log('[Explore] Mapbox token available:', !!token, 'length:', token.length);
+        setMapboxToken(token);
         
         if (!isMounted) return;
 
