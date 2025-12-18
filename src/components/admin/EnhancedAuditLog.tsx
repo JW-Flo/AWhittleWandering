@@ -43,14 +43,22 @@ interface FilterState {
 }
 
 const ACTION_CATEGORIES = {
-  auth: ['admin_login', 'admin_logout', 'login', 'logout', 'signup'],
+  auth: ['admin_login', 'admin_logout', 'login', 'logout', 'signup', 'password_reset'],
   user_management: ['role_change', 'account_lock', 'account_unlock', 'account_suspend', 'view_user_data', 'export_user_data'],
   incidents: ['incident_create', 'incident_resolve'],
   dsar: ['dsar_view', 'dsar_process', 'dsar_submit'],
-  settings: ['settings_change', 'privacy_update', 'notification_update'],
+  settings: ['settings_change', 'privacy_update', 'notification_update', 'notification_toggle', 'vehicle_add', 'vehicle_edit', 'vehicle_delete', 'api_key_add', 'api_key_remove'],
   security: ['security_review', '2fa_enabled', '2fa_disabled', 'password_change'],
-  journey: ['journey_create', 'journey_update', 'journey_delete', 'journey_publish'],
+  journey: ['journey_create', 'journey_update', 'journey_delete', 'journey_publish', 'journey_view', 'journey_share', 'journey_follow', 'journey_unfollow'],
   analytics: ['analytics_view', 'report_generate', 'export_analytics'],
+  navigation: ['page_view', 'navigate'],
+  media: ['media_view', 'media_upload', 'media_delete', 'media_download', 'gallery_open'],
+  social: ['social_share', 'social_connect', 'social_disconnect', 'follow_user', 'unfollow_user'],
+  ui: ['button_click', 'tab_change', 'modal_open', 'modal_close', 'drawer_open', 'drawer_close', 'search', 'filter_apply', 'sort_change'],
+  playback: ['waypoint_view', 'waypoint_click', 'route_playback_start', 'route_playback_pause', 'route_playback_complete'],
+  map: ['map_zoom', 'map_pan', 'map_marker_click', 'map_load_failed'],
+  errors: ['error_occurred'],
+  features: ['feature_request_submit'],
 };
 
 const ACTION_ICONS: Record<string, typeof User> = {
@@ -62,6 +70,14 @@ const ACTION_ICONS: Record<string, typeof User> = {
   security: Lock,
   journey: Activity,
   analytics: Eye,
+  navigation: Eye,
+  media: FileText,
+  social: User,
+  ui: Activity,
+  playback: Activity,
+  map: Activity,
+  errors: Bell,
+  features: FileText,
 };
 
 export function EnhancedAuditLog() {
@@ -254,12 +270,20 @@ export function EnhancedAuditLog() {
             <SelectItem value="all">All Actions</SelectItem>
             <SelectItem value="auth">Authentication</SelectItem>
             <SelectItem value="user_management">User Management</SelectItem>
-            <SelectItem value="incidents">Incidents</SelectItem>
-            <SelectItem value="dsar">DSAR</SelectItem>
+            <SelectItem value="navigation">Page Views</SelectItem>
+            <SelectItem value="journey">Journeys</SelectItem>
+            <SelectItem value="playback">Route Playback</SelectItem>
+            <SelectItem value="media">Media</SelectItem>
+            <SelectItem value="social">Social</SelectItem>
+            <SelectItem value="ui">UI Interactions</SelectItem>
             <SelectItem value="settings">Settings</SelectItem>
             <SelectItem value="security">Security</SelectItem>
-            <SelectItem value="journey">Journeys</SelectItem>
+            <SelectItem value="incidents">Incidents</SelectItem>
+            <SelectItem value="dsar">DSAR</SelectItem>
             <SelectItem value="analytics">Analytics</SelectItem>
+            <SelectItem value="map">Map</SelectItem>
+            <SelectItem value="errors">Errors</SelectItem>
+            <SelectItem value="features">Feature Requests</SelectItem>
           </SelectContent>
         </Select>
 

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useFlagshipGating } from '@/hooks/useFlagshipGating';
+import { useActivityLogger } from '@/hooks/useActivityLogger';
 import RoutePlayback from '@/components/RoutePlayback';
 import LocationMediaGallery from '@/components/LocationMediaGallery';
 import JourneyTimeline from '@/components/JourneyTimeline';
@@ -22,6 +23,7 @@ export default function Explore() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { hasViewedFlagship, markFlagshipViewed } = useFlagshipGating();
+  const { logTabChange, logButtonClick, logError } = useActivityLogger();
   const [mapboxToken, setMapboxToken] = useState<string>('');
   const [currentWaypoint, setCurrentWaypoint] = useState<JourneyWaypoint | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -228,7 +230,7 @@ export default function Explore() {
 
           {/* Sidebar - Takes 1/3 on large screens */}
           <div className="space-y-6">
-            <Tabs defaultValue="media" className="w-full">
+            <Tabs defaultValue="media" className="w-full" onValueChange={(tab) => logTabChange(tab)}>
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="media" className="flex items-center gap-1.5">
                   <Image className="w-4 h-4" />

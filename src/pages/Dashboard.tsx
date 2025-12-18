@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useFlagshipGating } from '@/hooks/useFlagshipGating';
+import { useActivityLogger } from '@/hooks/useActivityLogger';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -65,6 +66,7 @@ interface Vehicle {
 export default function Dashboard() {
   const { user, signOut } = useAuth();
   const { hasViewedFlagship } = useFlagshipGating();
+  const { logPageView, logTabChange } = useActivityLogger();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [journeys, setJourneys] = useState<Journey[]>([]);
@@ -82,9 +84,10 @@ export default function Dashboard() {
       return;
     }
 
+    logPageView('/dashboard');
     fetchData();
     fetchMapboxToken();
-  }, [user, navigate]);
+  }, [user, navigate, logPageView]);
 
   const fetchData = async () => {
     try {
@@ -249,7 +252,7 @@ export default function Dashboard() {
         </section>
 
         {/* Main Dashboard Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={(tab) => { setActiveTab(tab); logTabChange(`dashboard_${tab}`); }} className="space-y-6">
           <TabsList className="grid w-full grid-cols-7 bg-secondary">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Map className="w-4 h-4" />

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdminAudit } from '@/hooks/useAdminAudit';
+import { useActivityLogger } from '@/hooks/useActivityLogger';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -140,6 +141,7 @@ export default function Admin() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { logRoleChange, logAccountAction, logDataExport, logAdminAccess, logSecurityReview } = useAdminAudit();
+  const { logPageView, logTabChange } = useActivityLogger();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserData[]>([]);
@@ -193,6 +195,7 @@ export default function Admin() {
       
       // Log admin portal access for audit
       logAdminAccess('admin_portal_login');
+      logPageView('/admin');
       
       fetchData();
     } catch (error) {
@@ -499,7 +502,7 @@ export default function Admin() {
 
         {/* Main Tabs */}
         <Card className="card-nature">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={(tab) => { setActiveTab(tab); logTabChange(`admin_${tab}`); }}>
             <CardHeader>
               <TabsList className="bg-secondary flex-wrap h-auto gap-1">
                 <TabsTrigger value="launch"><Rocket className="w-4 h-4 mr-1" />Launch</TabsTrigger>

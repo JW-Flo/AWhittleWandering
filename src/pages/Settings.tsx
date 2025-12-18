@@ -1,5 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useActivityLogger } from '@/hooks/useActivityLogger';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,9 +20,15 @@ export default function Settings() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
+  const { logTabChange, logPageView } = useActivityLogger();
   const [unsubscribeHandled, setUnsubscribeHandled] = useState(false);
   const [processingUnsubscribe, setProcessingUnsubscribe] = useState(false);
   const [spotifyCallbackHandled, setSpotifyCallbackHandled] = useState(false);
+
+  // Log page view on mount
+  useEffect(() => {
+    logPageView('/settings');
+  }, [logPageView]);
 
   // Handle Spotify OAuth callback
   useEffect(() => {
@@ -202,7 +209,7 @@ export default function Settings() {
           </Card>
         )}
 
-        <Tabs defaultValue={defaultTab} className="space-y-6">
+        <Tabs defaultValue={defaultTab} className="space-y-6" onValueChange={(tab) => logTabChange(`settings_${tab}`)}>
           <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="account" className="flex items-center gap-2">
               <User className="w-4 h-4" />
