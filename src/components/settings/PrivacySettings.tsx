@@ -96,126 +96,202 @@ export default function PrivacySettings() {
   }
 
   return (
-    <Card className="card-tesla">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Shield className="w-5 h-5 text-primary" />
-          Privacy & Tracking Settings
-        </CardTitle>
-        <CardDescription>
-          Control how your location is shared and tracked during journeys
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Location Tracking Privacy */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-muted-foreground" />
-            <Label className="text-base font-semibold">Location Tracking Privacy</Label>
+    <div className="space-y-6">
+      <Card className="card-tesla">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-primary" />
+            Privacy & Tracking Settings
+          </CardTitle>
+          <CardDescription>
+            Control how your location is shared and tracked during journeys
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Location Tracking Privacy */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-muted-foreground" />
+              <Label className="text-base font-semibold">Location Tracking Privacy</Label>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Control how precisely your location is shared with followers and on public journeys
+            </p>
+            <Select
+              value={settings.default_location_privacy}
+              onValueChange={(value: LocationPrivacy) => setSettings(s => ({ ...s, default_location_privacy: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="exact">
+                  <div className="flex items-center gap-2">
+                    <span>Exact Location</span>
+                    <Badge variant="destructive" className="text-xs">Full GPS visible</Badge>
+                  </div>
+                </SelectItem>
+                <SelectItem value="city">
+                  <div className="flex items-center gap-2">
+                    <span>City Level</span>
+                    <Badge variant="secondary" className="text-xs">Recommended</Badge>
+                  </div>
+                </SelectItem>
+                <SelectItem value="region">
+                  <div className="flex items-center gap-2">
+                    <span>Region (~50mi blur)</span>
+                    <Badge variant="outline" className="text-xs">More Private</Badge>
+                  </div>
+                </SelectItem>
+                <SelectItem value="state">
+                  <div className="flex items-center gap-2">
+                    <span>State Only</span>
+                    <Badge variant="outline" className="text-xs">Most Private</Badge>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Control how precisely your location is shared with followers and on public journeys
-          </p>
-          <Select
-            value={settings.default_location_privacy}
-            onValueChange={(value: LocationPrivacy) => setSettings(s => ({ ...s, default_location_privacy: value }))}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="exact">
-                <div className="flex items-center gap-2">
-                  <span>Exact Location</span>
-                  <Badge variant="destructive" className="text-xs">Full GPS visible</Badge>
-                </div>
-              </SelectItem>
-              <SelectItem value="city">
-                <div className="flex items-center gap-2">
-                  <span>City Level</span>
-                  <Badge variant="secondary" className="text-xs">Recommended</Badge>
-                </div>
-              </SelectItem>
-              <SelectItem value="region">
-                <div className="flex items-center gap-2">
-                  <span>Region (~50mi blur)</span>
-                  <Badge variant="outline" className="text-xs">More Private</Badge>
-                </div>
-              </SelectItem>
-              <SelectItem value="state">
-                <div className="flex items-center gap-2">
-                  <span>State Only</span>
-                  <Badge variant="outline" className="text-xs">Most Private</Badge>
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
 
-        {/* Display Name */}
-        <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
-          <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-muted-foreground" />
-            <Label>Display Name (Username)</Label>
+          {/* Display Name */}
+          <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-2">
+              <User className="w-4 h-4 text-muted-foreground" />
+              <Label>Display Name (Username)</Label>
+            </div>
+            <Input
+              value={settings.display_name || ''}
+              onChange={(e) => setSettings(s => ({ ...s, display_name: e.target.value }))}
+              placeholder="Your public username..."
+            />
+            <p className="text-xs text-muted-foreground">
+              This name appears on leaderboards and public journeys. Choose something you're comfortable sharing.
+            </p>
           </div>
-          <Input
-            value={settings.display_name || ''}
-            onChange={(e) => setSettings(s => ({ ...s, display_name: e.target.value }))}
-            placeholder="Your public username..."
-          />
-          <p className="text-xs text-muted-foreground">
-            This name appears on leaderboards and public journeys. Choose something you're comfortable sharing.
-          </p>
-        </div>
 
-        {/* Media Visibility */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Eye className="w-4 h-4 text-muted-foreground" />
-            <Label>Default Media Visibility</Label>
+          {/* Media Visibility */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Eye className="w-4 h-4 text-muted-foreground" />
+              <Label>Default Media Visibility</Label>
+            </div>
+            <Select
+              value={settings.default_media_visibility}
+              onValueChange={(value: MediaVisibility) => setSettings(s => ({ ...s, default_media_visibility: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="public">
+                  <div className="flex items-center gap-2">
+                    <Eye className="w-4 h-4" />
+                    <span>Public - Anyone can view</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="followers">
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    <span>Followers Only - Approved followers</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="private">
+                  <div className="flex items-center gap-2">
+                    <EyeOff className="w-4 h-4" />
+                    <span>Private - Only you</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <Select
-            value={settings.default_media_visibility}
-            onValueChange={(value: MediaVisibility) => setSettings(s => ({ ...s, default_media_visibility: value }))}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="public">
-                <div className="flex items-center gap-2">
-                  <Eye className="w-4 h-4" />
-                  <span>Public - Anyone can view</span>
-                </div>
-              </SelectItem>
-              <SelectItem value="followers">
-                <div className="flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  <span>Followers Only - Approved followers</span>
-                </div>
-              </SelectItem>
-              <SelectItem value="private">
-                <div className="flex items-center gap-2">
-                  <EyeOff className="w-4 h-4" />
-                  <span>Private - Only you</span>
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
 
-        {/* Save Button */}
-        <Button onClick={saveSettings} disabled={saving} className="w-full">
-          {saving ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            'Save Privacy Settings'
-          )}
-        </Button>
-      </CardContent>
-    </Card>
+          {/* Save Button */}
+          <Button onClick={saveSettings} disabled={saving} className="w-full">
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Save Privacy Settings'
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Additional Privacy Controls */}
+      <Card className="card-tesla">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <EyeOff className="w-5 h-5 text-primary" />
+            Advanced Privacy Controls
+          </CardTitle>
+          <CardDescription>
+            Fine-tune your data sharing and visibility preferences
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <User className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <Label>Anonymize on Leaderboards</Label>
+                <p className="text-sm text-muted-foreground">Show as "Anonymous User" publicly</p>
+              </div>
+            </div>
+            <Switch
+              checked={settings.anonymize_username}
+              onCheckedChange={(checked) => setSettings(s => ({ ...s, anonymize_username: checked }))}
+            />
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <MapPin className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <Label>Hide Exact Timestamps</Label>
+                <p className="text-sm text-muted-foreground">Show dates only, not specific times</p>
+              </div>
+            </div>
+            <Switch defaultChecked={false} />
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Shield className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <Label>24-Hour Location Delay</Label>
+                <p className="text-sm text-muted-foreground">Public viewers see location 24h delayed</p>
+              </div>
+            </div>
+            <Switch defaultChecked={true} />
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Eye className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <Label>Allow Profile Discovery</Label>
+                <p className="text-sm text-muted-foreground">Others can find you via search</p>
+              </div>
+            </div>
+            <Switch defaultChecked={true} />
+          </div>
+
+          <Button variant="outline" className="w-full" onClick={saveSettings} disabled={saving}>
+            {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+            Save Advanced Settings
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
