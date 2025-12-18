@@ -521,6 +521,66 @@ export type Database = {
           },
         ]
       }
+      journey_notification_settings: {
+        Row: {
+          created_at: string | null
+          email_enabled: boolean | null
+          id: string
+          journey_id: string
+          notify_charging_stop: boolean | null
+          notify_new_waypoint: boolean | null
+          notify_photos: boolean | null
+          notify_state_crossing: boolean | null
+          push_enabled: boolean | null
+          sms_enabled: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_enabled?: boolean | null
+          id?: string
+          journey_id: string
+          notify_charging_stop?: boolean | null
+          notify_new_waypoint?: boolean | null
+          notify_photos?: boolean | null
+          notify_state_crossing?: boolean | null
+          push_enabled?: boolean | null
+          sms_enabled?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email_enabled?: boolean | null
+          id?: string
+          journey_id?: string
+          notify_charging_stop?: boolean | null
+          notify_new_waypoint?: boolean | null
+          notify_photos?: boolean | null
+          notify_state_crossing?: boolean | null
+          push_enabled?: boolean | null
+          sms_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_notification_settings_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journey_notification_settings_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "public_journeys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       journey_tracks: {
         Row: {
           album_art_url: string | null
@@ -608,6 +668,7 @@ export type Database = {
           export_generated_at: string | null
           export_url: string | null
           id: string
+          is_complete: boolean | null
           is_public: boolean | null
           name: string
           start_date: string
@@ -631,6 +692,7 @@ export type Database = {
           export_generated_at?: string | null
           export_url?: string | null
           id?: string
+          is_complete?: boolean | null
           is_public?: boolean | null
           name: string
           start_date: string
@@ -654,6 +716,7 @@ export type Database = {
           export_generated_at?: string | null
           export_url?: string | null
           id?: string
+          is_complete?: boolean | null
           is_public?: boolean | null
           name?: string
           start_date?: string
@@ -1274,6 +1337,33 @@ export type Database = {
           },
         ]
       }
+      user_follows: {
+        Row: {
+          created_at: string | null
+          followed_user_id: string
+          follower_user_id: string
+          id: string
+          notify_journey_updates: boolean | null
+          notify_new_journey: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          followed_user_id: string
+          follower_user_id: string
+          id?: string
+          notify_journey_updates?: boolean | null
+          notify_new_journey?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          followed_user_id?: string
+          follower_user_id?: string
+          id?: string
+          notify_journey_updates?: boolean | null
+          notify_new_journey?: boolean | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1469,6 +1559,13 @@ export type Database = {
           longitude: number
           recorded_at: string
           speed_mph: number
+        }[]
+      }
+      get_public_profile: {
+        Args: { p_user_id: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
         }[]
       }
       get_user_api_credential_status: {

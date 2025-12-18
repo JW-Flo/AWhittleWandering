@@ -7,11 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Bell, Mail, Smartphone, Globe, MapPin, Zap, Camera, Loader2, CheckCircle2, Send } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Bell, Mail, Smartphone, Globe, MapPin, Zap, Camera, Loader2, CheckCircle2, Send, Route, Settings2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import SMSConsentDialog from './SMSConsentDialog';
+import JourneyNotificationSettings from './JourneyNotificationSettings';
 
 // Format phone to E.164 for Twilio
 const formatPhoneE164 = (phone: string): string => {
@@ -235,235 +237,253 @@ export default function NotificationSettings() {
   }
 
   return (
-    <Card className="card-tesla">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Bell className="w-5 h-5 text-primary" />
-          Journey Notification Settings
-        </CardTitle>
-        <CardDescription>
-          Choose how you receive updates for journeys you follow. These apply per-journey.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Notification Channels */}
-        <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            Channels
-          </h3>
+    <div className="space-y-6">
+      <Tabs defaultValue="global" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="global" className="flex items-center gap-2">
+            <Settings2 className="w-4 h-4" />
+            Global Defaults
+          </TabsTrigger>
+          <TabsTrigger value="per-journey" className="flex items-center gap-2">
+            <Route className="w-4 h-4" />
+            Per-Journey
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="global" className="mt-6">
+          <Card className="card-tesla">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="w-5 h-5 text-primary" />
+                Default Notification Settings
+              </CardTitle>
+              <CardDescription>
+                Set your default notification preferences. These apply when you follow new journeys.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Notification Channels */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                  Channels
+                </h3>
 
-          {/* Email */}
-          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Mail className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <Label className="text-base">Email Notifications</Label>
-                <p className="text-sm text-muted-foreground">Receive updates via email</p>
-              </div>
-            </div>
-            <Switch
-              checked={prefs.email_enabled}
-              onCheckedChange={(checked) => setPrefs(p => ({ ...p, email_enabled: checked }))}
-            />
-          </div>
-
-          {prefs.email_enabled && (
-            <div className="pl-4 border-l-2 border-primary/20">
-              <Label>Email Frequency</Label>
-              <Select
-                value={prefs.email_digest_frequency}
-                onValueChange={(value: 'realtime' | 'daily' | 'weekly') => 
-                  setPrefs(p => ({ ...p, email_digest_frequency: value }))
-                }
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="realtime">Real-time (instant)</SelectItem>
-                  <SelectItem value="daily">Daily digest</SelectItem>
-                  <SelectItem value="weekly">Weekly summary</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* SMS */}
-          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-sunset/10">
-                <Smartphone className="w-5 h-5 text-sunset" />
-              </div>
-              <div>
-                <Label className="text-base">SMS Notifications</Label>
-                <p className="text-sm text-muted-foreground">
-                  Major updates via text message
-                  <Badge variant="outline" className="ml-2 text-xs">Premium</Badge>
-                </p>
-              </div>
-            </div>
-            <Switch
-              checked={prefs.sms_enabled}
-              onCheckedChange={(checked) => {
-                if (checked && !prefs.sms_consent_given) {
-                  // Need consent first - prompt for phone number then show dialog
-                  setPendingPhoneNumber(prefs.phone_number || '');
-                  setShowConsentDialog(true);
-                } else {
-                  setPrefs(p => ({ ...p, sms_enabled: checked }));
-                }
-              }}
-            />
-          </div>
-
-          {prefs.sms_enabled && (
-            <div className="pl-4 border-l-2 border-sunset/20 space-y-3">
-              {/* Consent Status */}
-              {prefs.sms_consent_given && (
-                <div className="flex items-center gap-2 text-sm text-forest">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>
-                    Consent given {prefs.sms_consent_timestamp && 
-                      `on ${new Date(prefs.sms_consent_timestamp).toLocaleDateString()}`
-                    }
-                  </span>
+                {/* Email */}
+                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <Mail className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <Label className="text-base">Email Notifications</Label>
+                      <p className="text-sm text-muted-foreground">Receive updates via email</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={prefs.email_enabled}
+                    onCheckedChange={(checked) => setPrefs(p => ({ ...p, email_enabled: checked }))}
+                  />
                 </div>
-              )}
-              
-              <div>
-                <Label>Phone Number</Label>
-                <div className="flex gap-2 mt-1">
-                  <Input
-                    type="tel"
-                    value={prefs.phone_number || ''}
-                    onChange={(e) => {
-                      const newNumber = e.target.value;
-                      // If phone number changed significantly, require new consent
-                      if (prefs.sms_consent_given && isValidPhone(newNumber) && newNumber !== prefs.phone_number) {
-                        setPendingPhoneNumber(newNumber);
+
+                {prefs.email_enabled && (
+                  <div className="pl-4 border-l-2 border-primary/20">
+                    <Label>Email Frequency</Label>
+                    <Select
+                      value={prefs.email_digest_frequency}
+                      onValueChange={(value: 'realtime' | 'daily' | 'weekly') => 
+                        setPrefs(p => ({ ...p, email_digest_frequency: value }))
+                      }
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="realtime">Real-time (instant)</SelectItem>
+                        <SelectItem value="daily">Daily digest</SelectItem>
+                        <SelectItem value="weekly">Weekly summary</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* SMS */}
+                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-sunset/10">
+                      <Smartphone className="w-5 h-5 text-sunset" />
+                    </div>
+                    <div>
+                      <Label className="text-base">SMS Notifications</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Major updates via text message
+                        <Badge variant="outline" className="ml-2 text-xs">Premium</Badge>
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={prefs.sms_enabled}
+                    onCheckedChange={(checked) => {
+                      if (checked && !prefs.sms_consent_given) {
+                        setPendingPhoneNumber(prefs.phone_number || '');
                         setShowConsentDialog(true);
                       } else {
-                        setPrefs(p => ({ ...p, phone_number: newNumber }));
+                        setPrefs(p => ({ ...p, sms_enabled: checked }));
                       }
                     }}
-                    placeholder="+1 (555) 123-4567"
-                    className="flex-1"
                   />
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={sendTestSMS}
-                    disabled={saving || !prefs.phone_number || !isValidPhone(prefs.phone_number)}
-                  >
-                    <Send className="w-4 h-4 mr-1" />
-                    Test
-                  </Button>
                 </div>
-                {prefs.phone_number && !isValidPhone(prefs.phone_number) && (
-                  <p className="text-xs text-destructive mt-1">Enter a valid phone number (10+ digits)</p>
+
+                {prefs.sms_enabled && (
+                  <div className="pl-4 border-l-2 border-sunset/20 space-y-3">
+                    {prefs.sms_consent_given && (
+                      <div className="flex items-center gap-2 text-sm text-forest">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>
+                          Consent given {prefs.sms_consent_timestamp && 
+                            `on ${new Date(prefs.sms_consent_timestamp).toLocaleDateString()}`
+                          }
+                        </span>
+                      </div>
+                    )}
+                    
+                    <div>
+                      <Label>Phone Number</Label>
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          type="tel"
+                          value={prefs.phone_number || ''}
+                          onChange={(e) => {
+                            const newNumber = e.target.value;
+                            if (prefs.sms_consent_given && isValidPhone(newNumber) && newNumber !== prefs.phone_number) {
+                              setPendingPhoneNumber(newNumber);
+                              setShowConsentDialog(true);
+                            } else {
+                              setPrefs(p => ({ ...p, phone_number: newNumber }));
+                            }
+                          }}
+                          placeholder="+1 (555) 123-4567"
+                          className="flex-1"
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={sendTestSMS}
+                          disabled={saving || !prefs.phone_number || !isValidPhone(prefs.phone_number)}
+                        >
+                          <Send className="w-4 h-4 mr-1" />
+                          Test
+                        </Button>
+                      </div>
+                      {prefs.phone_number && !isValidPhone(prefs.phone_number) && (
+                        <p className="text-xs text-destructive mt-1">Enter a valid phone number (10+ digits)</p>
+                      )}
+                    </div>
+                    
+                    <p className="text-xs text-muted-foreground">
+                      Standard messaging rates may apply. Reply STOP to opt out at any time.
+                    </p>
+                  </div>
                 )}
+
+                {/* Push */}
+                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-forest/10">
+                      <Globe className="w-5 h-5 text-forest" />
+                    </div>
+                    <div>
+                      <Label className="text-base">Push Notifications</Label>
+                      <p className="text-sm text-muted-foreground">Browser/PWA notifications</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {!prefs.push_enabled && (
+                      <Button size="sm" variant="outline" onClick={requestPushPermission}>
+                        Enable
+                      </Button>
+                    )}
+                    <Switch
+                      checked={prefs.push_enabled}
+                      onCheckedChange={(checked) => setPrefs(p => ({ ...p, push_enabled: checked }))}
+                    />
+                  </div>
+                </div>
               </div>
-              
-              <p className="text-xs text-muted-foreground">
-                Standard messaging rates may apply. Reply STOP to opt out at any time.
-              </p>
-            </div>
-          )}
 
-          {/* Push */}
-          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-forest/10">
-                <Globe className="w-5 h-5 text-forest" />
+              <Separator />
+
+              {/* Notification Types */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                  What to Notify
+                </h3>
+
+                <div className="grid gap-3">
+                  <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-primary" />
+                      <span>New waypoints & stops</span>
+                    </div>
+                    <Switch
+                      checked={prefs.notify_new_waypoint}
+                      onCheckedChange={(checked) => setPrefs(p => ({ ...p, notify_new_waypoint: checked }))}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-forest" />
+                      <span>State border crossings</span>
+                    </div>
+                    <Switch
+                      checked={prefs.notify_state_crossing}
+                      onCheckedChange={(checked) => setPrefs(p => ({ ...p, notify_state_crossing: checked }))}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-2">
+                      <Camera className="w-4 h-4 text-sunset" />
+                      <span>New photos & media</span>
+                    </div>
+                    <Switch
+                      checked={prefs.notify_photos}
+                      onCheckedChange={(checked) => setPrefs(p => ({ ...p, notify_photos: checked }))}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-primary" />
+                      <span>Charging sessions</span>
+                    </div>
+                    <Switch
+                      checked={prefs.notify_charging_stop}
+                      onCheckedChange={(checked) => setPrefs(p => ({ ...p, notify_charging_stop: checked }))}
+                    />
+                  </div>
+                </div>
               </div>
-              <div>
-                <Label className="text-base">Push Notifications</Label>
-                <p className="text-sm text-muted-foreground">Browser/PWA notifications</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {!prefs.push_enabled && (
-                <Button size="sm" variant="outline" onClick={requestPushPermission}>
-                  Enable
-                </Button>
-              )}
-              <Switch
-                checked={prefs.push_enabled}
-                onCheckedChange={(checked) => setPrefs(p => ({ ...p, push_enabled: checked }))}
-              />
-            </div>
-          </div>
-        </div>
 
-        <Separator />
-
-        {/* Notification Types */}
-        <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            What to Notify
-          </h3>
-
-          <div className="grid gap-3">
-            <div className="flex items-center justify-between py-2">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-primary" />
-                <span>New waypoints & stops</span>
-              </div>
-              <Switch
-                checked={prefs.notify_new_waypoint}
-                onCheckedChange={(checked) => setPrefs(p => ({ ...p, notify_new_waypoint: checked }))}
-              />
-            </div>
-
-            <div className="flex items-center justify-between py-2">
-              <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4 text-forest" />
-                <span>State border crossings</span>
-              </div>
-              <Switch
-                checked={prefs.notify_state_crossing}
-                onCheckedChange={(checked) => setPrefs(p => ({ ...p, notify_state_crossing: checked }))}
-              />
-            </div>
-
-            <div className="flex items-center justify-between py-2">
-              <div className="flex items-center gap-2">
-                <Camera className="w-4 h-4 text-sunset" />
-                <span>New photos & media</span>
-              </div>
-              <Switch
-                checked={prefs.notify_photos}
-                onCheckedChange={(checked) => setPrefs(p => ({ ...p, notify_photos: checked }))}
-              />
-            </div>
-
-            <div className="flex items-center justify-between py-2">
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-primary" />
-                <span>Charging sessions</span>
-              </div>
-              <Switch
-                checked={prefs.notify_charging_stop}
-                onCheckedChange={(checked) => setPrefs(p => ({ ...p, notify_charging_stop: checked }))}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Save Button */}
-        <Button onClick={savePreferences} disabled={saving} className="w-full">
-          {saving ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            'Save Notification Settings'
-          )}
-        </Button>
-      </CardContent>
+              {/* Save Button */}
+              <Button onClick={savePreferences} disabled={saving} className="w-full">
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Default Settings'
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="per-journey" className="mt-6">
+          <JourneyNotificationSettings />
+        </TabsContent>
+      </Tabs>
 
       {/* SMS Consent Dialog */}
       <SMSConsentDialog
@@ -472,6 +492,6 @@ export default function NotificationSettings() {
         phoneNumber={pendingPhoneNumber || prefs.phone_number || ''}
         onConsent={handleSMSConsent}
       />
-    </Card>
+    </div>
   );
 }
