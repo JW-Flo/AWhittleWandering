@@ -134,7 +134,8 @@ Deno.serve(async (req) => {
 
   try {
     const forwarded = req.headers.get('x-forwarded-for');
-    const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
+    const cfConnectingIp = req.headers.get('cf-connecting-ip');
+    const ip = cfConnectingIp || (forwarded ? forwarded.split(',')[0].trim() : 'unknown');
     
     if (isRateLimited(ip)) {
       console.warn(`Rate limit exceeded for IP: ${ip}`);
@@ -197,6 +198,37 @@ Deno.serve(async (req) => {
     // Parse UTM params from page URL or referrer
     const utmParams = parseUtmParams(page_url || referrer);
     
+    // Get geolocation from Cloudflare headers (free with Cloudflare)
+    const cfCountry = req.headers.get('cf-ipcountry');
+    const cfCity = req.headers.get('cf-ipcity');
+    const cfRegion = req.headers.get('cf-region');
+    
+    // Fallback: Try free IP geolocation API if Cloudflare headers not available
+    let geoData = {
+      country_code: cfCountry || null,
+      city: cfCity || null,
+      region: cfRegion || null
+    };
+    
+    // If no Cloudflare headers and IP is valid, try ipapi.co (free tier: 30k/month)
+    if (!cfCountry && ip !== 'unknown' && !ip.startsWith('127.') && !ip.startsWith('192.168.')) {
+      try {
+        const geoResponse = await fetch(`https://ipapi.co/${ip}/json/`, {
+          headers: { 'User-Agent': 'AWW-Analytics/1.0' }
+        });
+        if (geoResponse.ok) {
+          const geo = await geoResponse.json();
+          geoData = {
+            country_code: geo.country_code || null,
+            city: geo.city || null,
+            region: geo.region || null
+          };
+        }
+      } catch (geoErr) {
+        console.warn('Geo lookup failed:', geoErr);
+      }
+    }
+    
     // Check if returning visitor (has previous views)
     const { count: previousViews } = await supabase
       .from('page_views')
@@ -205,7 +237,7 @@ Deno.serve(async (req) => {
     
     const isReturningVisitor = (previousViews || 0) > 0;
 
-    // Insert page view with all details
+    // Insert page view with all details including geolocation
     const { error } = await supabase
       .from('page_views')
       .insert({
@@ -237,6 +269,9 @@ Deno.serve(async (req) => {
         utm_campaign: utmParams.utm_campaign,
         utm_term: utmParams.utm_term,
         utm_content: utmParams.utm_content,
+        country_code: geoData.country_code,
+        city: geoData.city,
+        region: geoData.region,
       });
 
     if (error) {

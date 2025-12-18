@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Car, Battery, Zap, X, MapPin, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,12 +8,25 @@ import { cn } from '@/lib/utils';
 
 interface FloatingVehicleWidgetProps {
   className?: string;
+  onLocationClick?: (lat: number, lng: number) => void;
 }
 
-export default function FloatingVehicleWidget({ className }: FloatingVehicleWidgetProps) {
+export default function FloatingVehicleWidget({ className, onLocationClick }: FloatingVehicleWidgetProps) {
+  const navigate = useNavigate();
   const [isDismissed, setIsDismissed] = useState(false);
   const [isDrivingOff, setIsDrivingOff] = useState(false);
   const { vehicleState, isLoading, error, refresh } = useTessieData(undefined, true, 30000);
+
+  const handleLocationClick = () => {
+    if (vehicleState) {
+      if (onLocationClick) {
+        onLocationClick(vehicleState.latitude, vehicleState.longitude);
+      } else {
+        // Navigate to dashboard live tab with location params
+        navigate(`/dashboard?tab=live&lat=${vehicleState.latitude}&lng=${vehicleState.longitude}`);
+      }
+    }
+  };
 
   const handleDismiss = () => {
     setIsDrivingOff(true);
@@ -147,13 +161,16 @@ export default function FloatingVehicleWidget({ className }: FloatingVehicleWidg
             />
           </div>
 
-          {/* Location */}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <MapPin className="w-3 h-3" />
-            <span className="font-mono">
+          {/* Location - Clickable */}
+          <button 
+            onClick={handleLocationClick}
+            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors w-full text-left group"
+          >
+            <MapPin className="w-3 h-3 group-hover:text-primary" />
+            <span className="font-mono underline-offset-2 group-hover:underline">
               {vehicleState.latitude.toFixed(3)}, {vehicleState.longitude.toFixed(3)}
             </span>
-          </div>
+          </button>
 
           {/* Driving indicator */}
           {vehicleState.speed > 0 && (
