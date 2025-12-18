@@ -70,19 +70,19 @@ export default function FollowButton({ journeyId, journeyOwnerId, className = ''
         setIsApproved(false);
         toast.success('Unfollowed journey');
       } else {
-        // Follow
+        // Follow - requires owner approval
         const { error } = await supabase
           .from('journey_followers')
           .insert({
             journey_id: journeyId,
             follower_user_id: user.id,
-            approved: true // Auto-approve for now, can be changed to require approval
+            approved: false // Requires owner approval
           });
 
         if (error) throw error;
         setIsFollowing(true);
-        setIsApproved(true);
-        toast.success('Now following this journey!');
+        setIsApproved(false);
+        toast.success('Follow request sent! Waiting for owner approval.');
       }
     } catch (error) {
       console.error('Error updating follow status:', error);
