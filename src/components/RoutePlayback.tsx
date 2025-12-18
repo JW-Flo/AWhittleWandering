@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { journeyWaypoints, JourneyWaypoint } from '@/data/journeyRoute';
-import { Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight, MapPin, Calendar, Zap, Mountain, Route, Info } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight, MapPin, Calendar, Zap, Mountain, Route, Info, RefreshCw, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
@@ -21,11 +21,13 @@ export default function RoutePlayback({ mapboxToken, className = '', onWaypointC
   const animationRef = useRef<number | null>(null);
   
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [progress, setProgress] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   const currentWaypoint = journeyWaypoints[currentIndex];
 
@@ -40,8 +42,12 @@ export default function RoutePlayback({ mapboxToken, className = '', onWaypointC
     
     if (!mapboxToken) {
       console.warn('[RoutePlayback] No mapbox token');
+      setMapError('Mapbox token not available');
       return;
     }
+
+    // Reset error state on retry
+    setMapError(null);
 
     // Check container dimensions
     const rect = mapContainer.current.getBoundingClientRect();
@@ -53,6 +59,7 @@ export default function RoutePlayback({ mapboxToken, className = '', onWaypointC
       const timeoutId = setTimeout(() => {
         if (mapContainer.current) {
           mapContainer.current.style.minHeight = '400px';
+          setRetryCount(prev => prev + 1);
         }
       }, 100);
       return () => clearTimeout(timeoutId);
@@ -78,12 +85,14 @@ export default function RoutePlayback({ mapboxToken, className = '', onWaypointC
       map.current.on('load', () => {
         console.log('[RoutePlayback] Map loaded successfully');
         setMapLoaded(true);
+        setMapError(null);
         addRouteLayer();
         addVehicleMarker();
       });
 
       map.current.on('error', (e) => {
         console.error('[RoutePlayback] Map error:', e);
+        setMapError('Failed to load map. Please check your connection.');
       });
       
       map.current.on('idle', () => {
@@ -91,6 +100,7 @@ export default function RoutePlayback({ mapboxToken, className = '', onWaypointC
       });
     } catch (error) {
       console.error('[RoutePlayback] Failed to create map:', error);
+      setMapError('Failed to initialize map');
     }
 
     return () => {
@@ -99,7 +109,7 @@ export default function RoutePlayback({ mapboxToken, className = '', onWaypointC
       map.current?.remove();
       map.current = null;
     };
-  }, [mapboxToken]);
+  }, [mapboxToken, retryCount]);
 
   const addRouteLayer = useCallback(() => {
     if (!map.current) return;
@@ -255,10 +265,24 @@ export default function RoutePlayback({ mapboxToken, className = '', onWaypointC
   const previousWaypoint = () => goToWaypoint(currentIndex - 1);
   const nextWaypoint = () => goToWaypoint(currentIndex + 1);
 
-  if (!mapboxToken) {
+  const handleRetry = () => {
+    setMapError(null);
+    setMapLoaded(false);
+    setRetryCount(prev => prev + 1);
+  };
+
+  if (!mapboxToken || mapError) {
     return (
-      <div className={`flex items-center justify-center bg-muted rounded-lg ${className}`}>
-        <p className="text-muted-foreground">Loading map...</p>
+      <div className={`flex flex-col items-center justify-center bg-muted/50 rounded-2xl ${className}`} style={{ minHeight: '400px' }}>
+        <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
+        <p className="text-muted-foreground mb-2">{mapError || 'Loading map...'}</p>
+        <p className="text-xs text-muted-foreground/60 mb-4">
+          {!mapboxToken ? 'Waiting for Mapbox token...' : 'Please try again'}
+        </p>
+        <Button variant="outline" size="sm" onClick={handleRetry}>
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Retry
+        </Button>
       </div>
     );
   }
