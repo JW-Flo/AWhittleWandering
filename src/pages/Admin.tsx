@@ -22,6 +22,7 @@ import { VisitorAnalytics } from '@/components/admin/VisitorAnalytics';
 import { UserDetailDrawer } from '@/components/admin/UserDetailDrawer';
 import { EnhancedAuditLog } from '@/components/admin/EnhancedAuditLog';
 import { IncidentDetailDrawer } from '@/components/admin/IncidentDetailDrawer';
+import { SecurityDashboard } from '@/components/admin/SecurityDashboard';
 import MarketingDashboard from '@/components/admin/MarketingDashboard';
 import { 
   Shield, 
@@ -807,34 +808,8 @@ export default function Admin() {
                   {/* Admin 2FA Settings */}
                   <TwoFactorSettings isAdmin={true} required={true} />
 
-                  {/* Security Status Cards */}
-                  <div className="space-y-4">
-                    <h3 className="font-medium">Security Status</h3>
-                    {[
-                      { status: 'success', icon: CheckCircle2, title: 'Session Timeout', desc: '30-minute inactivity timeout', badge: 'Active' },
-                      { status: 'success', icon: CheckCircle2, title: 'Row Level Security', desc: 'All tables protected with RLS policies', badge: 'Enabled' },
-                      { status: 'success', icon: CheckCircle2, title: 'API Token Encryption', desc: 'Tokens encrypted at rest', badge: 'Secured' },
-                      { status: 'success', icon: CheckCircle2, title: 'Incident Automation', desc: 'Auto-notify on account actions', badge: 'Active' },
-                      { status: 'success', icon: CheckCircle2, title: 'Password Security', desc: 'Leaked password protection & strength requirements', badge: 'Active' },
-                      { status: 'success', icon: CheckCircle2, title: 'Admin 2FA', desc: 'Required for all admin accounts', badge: 'Enforced' },
-                      { status: 'success', icon: CheckCircle2, title: 'Security Headers', desc: 'X-Frame-Options, X-Content-Type-Options, Referrer-Policy', badge: 'Active' },
-                      { status: 'success', icon: CheckCircle2, title: 'XSS Protection', desc: 'React auto-escapes, no raw HTML rendering', badge: 'Active' },
-                      { status: 'warning', icon: AlertTriangle, title: 'Rate Limiting', desc: 'Per-endpoint limits in edge functions', badge: 'Edge Functions' },
-                    ].map((item, i) => (
-                      <Card key={i} className={`border-${item.status === 'success' ? 'success' : item.status === 'warning' ? 'amber-500' : 'blue-500'}/30 bg-${item.status === 'success' ? 'success' : item.status === 'warning' ? 'amber-500' : 'blue-500'}/5`}>
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-3">
-                            <item.icon className={`w-5 h-5 ${item.status === 'success' ? 'text-success' : item.status === 'warning' ? 'text-amber-500' : 'text-blue-500'}`} />
-                            <div className="flex-1">
-                              <span className="font-medium">{item.title}</span>
-                              <p className="text-sm text-muted-foreground">{item.desc}</p>
-                            </div>
-                            <Badge variant="outline">{item.badge}</Badge>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                  {/* Security Scanner Dashboard */}
+                  <SecurityDashboard />
                 </div>
               </TabsContent>
 

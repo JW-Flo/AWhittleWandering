@@ -1206,6 +1206,66 @@ export type Database = {
         }
         Relationships: []
       }
+      security_scan_results: {
+        Row: {
+          checks_performed: Json | null
+          completed_at: string | null
+          created_at: string
+          critical_count: number
+          findings: Json | null
+          high_count: number
+          id: string
+          low_count: number
+          medium_count: number
+          remediation_applied: boolean | null
+          remediation_details: Json | null
+          scan_type: string
+          started_at: string
+          status: string
+          summary: Json | null
+          total_findings: number
+          trigger_source: string
+        }
+        Insert: {
+          checks_performed?: Json | null
+          completed_at?: string | null
+          created_at?: string
+          critical_count?: number
+          findings?: Json | null
+          high_count?: number
+          id?: string
+          low_count?: number
+          medium_count?: number
+          remediation_applied?: boolean | null
+          remediation_details?: Json | null
+          scan_type?: string
+          started_at?: string
+          status?: string
+          summary?: Json | null
+          total_findings?: number
+          trigger_source?: string
+        }
+        Update: {
+          checks_performed?: Json | null
+          completed_at?: string | null
+          created_at?: string
+          critical_count?: number
+          findings?: Json | null
+          high_count?: number
+          id?: string
+          low_count?: number
+          medium_count?: number
+          remediation_applied?: boolean | null
+          remediation_details?: Json | null
+          scan_type?: string
+          started_at?: string
+          status?: string
+          summary?: Json | null
+          total_findings?: number
+          trigger_source?: string
+        }
+        Relationships: []
+      }
       sms_consent_log: {
         Row: {
           action: string
