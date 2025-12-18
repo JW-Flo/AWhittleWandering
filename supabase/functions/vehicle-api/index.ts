@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,6 +18,20 @@ interface VehicleData {
   inside_temp?: number;
   outside_temp?: number;
   last_seen?: string;
+}
+
+// Audit logging helper
+async function logAuditEvent(supabase: any, userId: string, action: string, metadata: Record<string, any>) {
+  try {
+    await supabase.from('security_audit_log').insert({
+      user_id: userId,
+      action,
+      resource_type: 'vehicle_api',
+      metadata
+    });
+  } catch (error) {
+    console.error('Failed to log audit event:', error);
+  }
 }
 
 // Tessie API handler
@@ -87,12 +102,6 @@ async function fetchTessieData(token: string, vin?: string, action: string = 'st
 
 // Smartcar API handler (placeholder for OAuth flow)
 async function fetchSmartcarData(token: string, vin?: string, action: string = 'state'): Promise<{ success: boolean; vehicle?: VehicleData; error?: string }> {
-  // Smartcar uses OAuth, so this would typically involve:
-  // 1. User authorizing via Smartcar Connect
-  // 2. Exchange code for access token
-  // 3. Use access token to fetch vehicle data
-  
-  // For now, return placeholder indicating OAuth is required
   return {
     success: false,
     error: 'Smartcar requires OAuth authorization. This feature is coming soon.',
@@ -128,6 +137,31 @@ serve(async (req) => {
   }
 
   try {
+    // Require authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Verify user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid or expired token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { action, provider, token, vin } = await req.json();
 
     if (!provider) {
@@ -144,7 +178,14 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Vehicle API request: provider=${provider}, action=${action || 'state'}, hasVin=${!!vin}`);
+    console.log(`Vehicle API request: user=${user.id}, provider=${provider}, action=${action || 'state'}`);
+
+    // Log the API call for audit
+    await logAuditEvent(supabase, user.id, 'vehicle_api_call', {
+      provider,
+      action: action || 'state',
+      hasVin: !!vin
+    });
 
     const result = await handleProvider(provider, token, vin, action || 'state');
 

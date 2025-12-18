@@ -103,24 +103,46 @@ export default function Index() {
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* PNW Atmospheric Background */}
         <div className="absolute inset-0 bg-gradient-to-b from-twilight-green/90 via-background to-background" />
-        <div 
-          className="absolute inset-0 opacity-40"
-          style={{
-            backgroundImage: `radial-gradient(circle at 20% 50%, hsl(var(--moss)) 0%, transparent 50%),
-                             radial-gradient(circle at 80% 30%, hsl(var(--ancient-teal)) 0%, transparent 40%),
-                             radial-gradient(circle at 50% 80%, hsl(var(--primary)) 0%, transparent 30%)`
-          }}
-        />
         
-        {/* Misty rain forest lines */}
+        {/* Subtle nature-inspired orbs - organic and floating */}
         <div className="absolute inset-0 overflow-hidden">
+          {/* Soft glowing orbs like filtered sunlight through trees */}
           <div 
-            className="absolute left-1/2 top-0 w-0.5 h-full bg-gradient-to-b from-mist/0 via-mist/30 to-mist/0"
-            style={{ transform: `translateY(${scrollY * 0.5}px)` }}
+            className="absolute w-[600px] h-[600px] rounded-full opacity-20 blur-3xl"
+            style={{
+              background: 'radial-gradient(circle, hsl(var(--moss-bright)) 0%, transparent 70%)',
+              top: '10%',
+              left: '-10%',
+              transform: `translateY(${scrollY * 0.1}px)`,
+            }}
           />
           <div 
-            className="absolute left-[calc(50%-4px)] top-0 w-8 border-l border-r border-dashed border-mist/15 h-full"
-            style={{ transform: `translateY(${scrollY * 0.3}px)` }}
+            className="absolute w-[400px] h-[400px] rounded-full opacity-15 blur-3xl"
+            style={{
+              background: 'radial-gradient(circle, hsl(var(--ancient-teal)) 0%, transparent 70%)',
+              top: '30%',
+              right: '-5%',
+              transform: `translateY(${scrollY * 0.15}px)`,
+            }}
+          />
+          <div 
+            className="absolute w-[500px] h-[500px] rounded-full opacity-10 blur-3xl"
+            style={{
+              background: 'radial-gradient(circle, hsl(var(--primary)) 0%, transparent 60%)',
+              bottom: '10%',
+              left: '30%',
+              transform: `translateY(${-scrollY * 0.08}px)`,
+            }}
+          />
+          
+          {/* Subtle forest particles/fireflies effect */}
+          <div className="absolute inset-0 opacity-30"
+            style={{
+              backgroundImage: `radial-gradient(circle at 20% 30%, hsl(var(--sunbeam) / 0.3) 1px, transparent 1px),
+                               radial-gradient(circle at 70% 60%, hsl(var(--sunbeam) / 0.2) 1px, transparent 1px),
+                               radial-gradient(circle at 40% 80%, hsl(var(--moss-bright) / 0.2) 1px, transparent 1px)`,
+              backgroundSize: '100px 100px, 150px 150px, 80px 80px',
+            }}
           />
         </div>
 
