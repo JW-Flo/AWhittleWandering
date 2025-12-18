@@ -11,8 +11,40 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { access_code } = await req.json();
+    const { email, access_code, check_only } = await req.json();
 
+    if (!email || typeof email !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Email is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const sanitizedEmail = email.trim().toLowerCase();
+
+    // Create admin client with service role
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    // Check if user already exists in auth
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const existingUser = existingUsers?.users?.find(u => u.email === sanitizedEmail);
+
+    // If just checking if user exists (for UI flow)
+    if (check_only) {
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          existingUser: !!existingUser
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // For actual auth, we need access code
     if (!access_code || typeof access_code !== 'string') {
       return new Response(
         JSON.stringify({ error: 'Access code is required' }),
@@ -22,7 +54,6 @@ Deno.serve(async (req) => {
 
     const sanitizedCode = access_code.trim().toUpperCase();
     
-    // Basic validation
     if (sanitizedCode.length < 10 || sanitizedCode.length > 64) {
       return new Response(
         JSON.stringify({ error: 'Invalid access code format' }),
@@ -30,24 +61,18 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create admin client with service role
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
-
-    // Verify the access code and get beta tester info
+    // Verify the email + access code combination in beta_testers
     const { data: tester, error: verifyError } = await supabaseAdmin
       .from('beta_testers')
-      .select('id, name, email, access_code, expires_at, is_active')
+      .select('id, name, email, access_code, expires_at, is_active, access_count')
+      .eq('email', sanitizedEmail)
       .eq('access_code', sanitizedCode)
       .eq('is_active', true)
       .single();
 
     if (verifyError || !tester) {
       return new Response(
-        JSON.stringify({ error: 'Invalid or expired access code' }),
+        JSON.stringify({ error: 'Invalid email or access code' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -60,28 +85,24 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if user already exists
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find(u => u.email === tester.email);
+    // Record the access
+    await supabaseAdmin
+      .from('beta_testers')
+      .update({ 
+        last_accessed_at: new Date().toISOString(),
+        access_count: (tester.access_count || 0) + 1
+      })
+      .eq('id', tester.id);
 
     if (existingUser) {
-      // Existing user - they need to sign in with their own password
-      console.log(`Existing user ${tester.email} verified for beta access`);
-      
-      // Record the access
-      await supabaseAdmin
-        .from('beta_testers')
-        .update({ 
-          last_accessed_at: new Date().toISOString(),
-          access_count: (tester as any).access_count ? (tester as any).access_count + 1 : 1
-        })
-        .eq('id', tester.id);
+      // Existing user - they are verified, return flag for password entry
+      console.log(`Existing user ${sanitizedEmail} verified for beta access`);
 
       return new Response(
         JSON.stringify({ 
           success: true,
           existingUser: true,
-          email: tester.email,
+          email: sanitizedEmail,
           name: tester.name
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -89,8 +110,8 @@ Deno.serve(async (req) => {
     }
 
     // New user: create account with access code as password
-    const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email: tester.email,
+    const { error: createError } = await supabaseAdmin.auth.admin.createUser({
+      email: sanitizedEmail,
       password: sanitizedCode,
       email_confirm: true,
       user_metadata: {
@@ -107,22 +128,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Created beta account for ${tester.email}`);
+    console.log(`Created beta account for ${sanitizedEmail}`);
 
-    // Record the access
-    await supabaseAdmin
-      .from('beta_testers')
-      .update({ 
-        last_accessed_at: new Date().toISOString(),
-        access_count: (tester as any).access_count ? (tester as any).access_count + 1 : 1
-      })
-      .eq('id', tester.id);
-
-    // Return credentials for client-side sign in
+    // Return credentials for new user sign-in
     return new Response(
       JSON.stringify({ 
         success: true,
-        email: tester.email,
+        existingUser: false,
+        email: sanitizedEmail,
         password: sanitizedCode,
         name: tester.name
       }),
