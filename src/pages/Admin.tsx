@@ -27,12 +27,10 @@ import {
   Shield, 
   Users, 
   Database, 
-  Activity,
   ChevronLeft,
   AlertTriangle,
   Search,
   RefreshCw,
-  MapPin,
   Car,
   Image,
   FileText,
@@ -469,52 +467,52 @@ export default function Admin() {
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 py-8">
-        {/* Stats - Clickable */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-8">
-          {[
-            { icon: Users, value: stats.totalUsers, label: 'Users', color: 'text-primary', tab: 'users' },
-            { icon: MapPin, value: stats.totalJourneys, label: 'Journeys', color: 'text-primary', tab: 'system' },
-            { icon: Activity, value: stats.totalWaypoints.toLocaleString(), label: 'Data Points', color: 'text-primary', tab: 'system' },
-            { icon: Image, value: stats.totalMedia, label: 'Media', color: 'text-primary', tab: 'system' },
-            { icon: Eye, value: stats.pageViews.toLocaleString(), label: 'Page Views', color: 'text-success', tab: 'analytics' },
-            { icon: ScrollText, value: auditLogs.length, label: 'Audit Events', color: 'text-amber-500', tab: 'audit' },
-            { icon: FileText, value: stats.dsarRequests, label: 'DSAR', color: 'text-blue-500', tab: 'dsar' },
-            { icon: ShieldAlert, value: stats.openIncidents, label: 'Open Incidents', color: 'text-destructive', tab: 'incidents' },
-          ].map((stat, i) => (
-            <Card 
-              key={i} 
-              className="card-nature cursor-pointer hover:border-primary/50 transition-colors"
-              onClick={() => setActiveTab(stat.tab)}
-            >
-              <CardContent className="p-3">
-                <div className="flex items-center gap-2">
-                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
-                  <div>
-                    <p className="text-xl font-bold">{stat.value}</p>
-                    <p className="text-xs text-muted-foreground">{stat.label}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Main Tabs */}
+      <div className="container mx-auto px-4 py-6">
+        {/* Unified Navigation Tabs with Metrics */}
         <Card className="card-nature">
           <Tabs value={activeTab} onValueChange={(tab) => { setActiveTab(tab); logTabChange(`admin_${tab}`); }}>
-            <CardHeader>
-              <TabsList className="bg-secondary flex-wrap h-auto gap-1">
-                <TabsTrigger value="launch"><Rocket className="w-4 h-4 mr-1" />Launch</TabsTrigger>
-                <TabsTrigger value="analytics"><BarChart3 className="w-4 h-4 mr-1" />Analytics</TabsTrigger>
-                <TabsTrigger value="marketing"><Megaphone className="w-4 h-4 mr-1" />Marketing</TabsTrigger>
-                <TabsTrigger value="users"><Users className="w-4 h-4 mr-1" />Users</TabsTrigger>
-                <TabsTrigger value="incidents"><ShieldAlert className="w-4 h-4 mr-1" />Incidents</TabsTrigger>
-                <TabsTrigger value="integrations"><Plug className="w-4 h-4 mr-1" />Integrations</TabsTrigger>
-                <TabsTrigger value="security"><Lock className="w-4 h-4 mr-1" />Security</TabsTrigger>
-                <TabsTrigger value="dsar"><FileText className="w-4 h-4 mr-1" />DSAR</TabsTrigger>
-                <TabsTrigger value="audit"><ScrollText className="w-4 h-4 mr-1" />Audit</TabsTrigger>
-                <TabsTrigger value="system"><Database className="w-4 h-4 mr-1" />System</TabsTrigger>
+            <CardHeader className="pb-4">
+              <TabsList className="bg-secondary/50 flex-wrap h-auto gap-1 p-1.5 w-full justify-start">
+                <TabsTrigger value="launch" className="gap-1.5">
+                  <Rocket className="w-4 h-4" />Launch
+                </TabsTrigger>
+                <TabsTrigger value="analytics" className="gap-1.5">
+                  <BarChart3 className="w-4 h-4" />Analytics
+                  <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-success/20 text-success">{stats.pageViews.toLocaleString()}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="marketing" className="gap-1.5">
+                  <Megaphone className="w-4 h-4" />Marketing
+                </TabsTrigger>
+                <TabsTrigger value="users" className="gap-1.5">
+                  <Users className="w-4 h-4" />Users
+                  <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">{stats.totalUsers}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="incidents" className="gap-1.5">
+                  <ShieldAlert className="w-4 h-4" />Incidents
+                  {stats.openIncidents > 0 && (
+                    <Badge variant="destructive" className="ml-1 h-5 px-1.5 text-xs">{stats.openIncidents}</Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="integrations" className="gap-1.5">
+                  <Plug className="w-4 h-4" />Integrations
+                </TabsTrigger>
+                <TabsTrigger value="security" className="gap-1.5">
+                  <Lock className="w-4 h-4" />Security
+                </TabsTrigger>
+                <TabsTrigger value="dsar" className="gap-1.5">
+                  <FileText className="w-4 h-4" />DSAR
+                  {stats.dsarRequests > 0 && (
+                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-blue-500/20 text-blue-400">{stats.dsarRequests}</Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="audit" className="gap-1.5">
+                  <ScrollText className="w-4 h-4" />Audit
+                  <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-amber-500/20 text-amber-400">{auditLogs.length}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="system" className="gap-1.5">
+                  <Database className="w-4 h-4" />System
+                  <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">{stats.totalJourneys}J / {stats.totalWaypoints.toLocaleString()}D / {stats.totalMedia}M</Badge>
+                </TabsTrigger>
               </TabsList>
             </CardHeader>
             
