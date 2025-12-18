@@ -70,7 +70,7 @@ export default function Index() {
       />
       
       {/* Floating Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 p-4">
+      <header className="fixed top-0 left-0 right-0 z-50 pt-4 px-4 pb-2 bg-gradient-to-b from-background/80 to-transparent backdrop-blur-sm">
         <div className="container mx-auto">
           <div className="flex items-center justify-between">
             <Logo size="sm" showText={false} />
