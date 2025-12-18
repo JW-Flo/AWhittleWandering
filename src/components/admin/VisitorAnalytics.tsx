@@ -82,6 +82,10 @@ interface VisitorSession {
   is_returning: boolean;
   avg_time_on_page: number | null;
   total_clicks: number;
+  city: string | null;
+  region: string | null;
+  country_code: string | null;
+  connection_type: string | null;
 }
 
 interface AnalyticsSummary {
@@ -202,7 +206,11 @@ export function VisitorAnalytics() {
           timezone: firstView.timezone,
           is_returning: firstView.is_returning_visitor || false,
           avg_time_on_page: avgTimeOnPage,
-          total_clicks: totalClicks
+          total_clicks: totalClicks,
+          city: firstView.city,
+          region: firstView.region,
+          country_code: firstView.country_code,
+          connection_type: firstView.connection_type
         });
       });
 
@@ -578,7 +586,13 @@ export function VisitorAnalytics() {
                         </Badge>
                       ))}
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-muted-foreground">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs text-muted-foreground">
+                      {(session.city || session.region || session.country_code) && (
+                        <span className="flex items-center gap-1 text-primary font-medium">
+                          <MapPin className="w-3 h-3" />
+                          {[session.city, session.region, session.country_code].filter(Boolean).join(', ')}
+                        </span>
+                      )}
                       <span className="flex items-center gap-1">
                         <Chrome className="w-3 h-3" />
                         {session.browser} / {session.os}
@@ -593,6 +607,18 @@ export function VisitorAnalytics() {
                         <span className="flex items-center gap-1">
                           <Languages className="w-3 h-3" />
                           {session.language}
+                        </span>
+                      )}
+                      {session.timezone && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {session.timezone}
+                        </span>
+                      )}
+                      {session.connection_type && (
+                        <span className="flex items-center gap-1">
+                          <Wifi className="w-3 h-3" />
+                          {session.connection_type}
                         </span>
                       )}
                       {session.avg_time_on_page && (
