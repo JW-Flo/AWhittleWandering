@@ -138,7 +138,7 @@ export default function Index() {
 
             {/* Title */}
             <h1 
-              className="text-6xl md:text-8xl lg:text-9xl font-display font-bold tracking-tight animate-fade-in"
+              className="text-5xl sm:text-6xl md:text-8xl lg:text-9xl font-display font-bold tracking-tight animate-fade-in"
               style={{ animationDelay: '0.1s' }}
             >
               <span className="block text-foreground">A Whittle</span>
@@ -196,49 +196,49 @@ export default function Index() {
             The Numbers Behind the Adventure
           </h2>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 gap-4 sm:gap-8 md:grid-cols-4 max-w-5xl mx-auto">
             {/* Miles */}
             <div className="text-center group">
               <div className="relative">
-                <p className="text-5xl md:text-7xl font-display font-bold text-gradient-sunset">
+                <p className="text-4xl sm:text-5xl md:text-7xl font-display font-bold text-gradient-sunset">
                   15,847
                 </p>
-                <Route className="absolute -top-2 -right-2 w-6 h-6 text-sunset/50 group-hover:text-sunset transition-colors" />
+                <Route className="absolute -top-2 -right-2 w-5 h-5 sm:w-6 sm:h-6 text-sunset/50 group-hover:text-sunset transition-colors" />
               </div>
-              <p className="text-muted-foreground mt-2 font-medium">Miles Traveled</p>
+              <p className="text-sm sm:text-base text-muted-foreground mt-2 font-medium">Miles Traveled</p>
             </div>
 
             {/* States */}
             <div className="text-center group">
               <div className="relative">
-                <p className="text-5xl md:text-7xl font-display font-bold text-forest">
+                <p className="text-4xl sm:text-5xl md:text-7xl font-display font-bold text-forest">
                   48
                 </p>
-                <MapPin className="absolute -top-2 -right-2 w-6 h-6 text-forest/50 group-hover:text-forest transition-colors" />
+                <MapPin className="absolute -top-2 -right-2 w-5 h-5 sm:w-6 sm:h-6 text-forest/50 group-hover:text-forest transition-colors" />
               </div>
-              <p className="text-muted-foreground mt-2 font-medium">States Visited</p>
+              <p className="text-sm sm:text-base text-muted-foreground mt-2 font-medium">States Visited</p>
             </div>
 
             {/* kWh */}
             <div className="text-center group">
               <div className="relative">
-                <p className="text-5xl md:text-7xl font-display font-bold text-primary">
+                <p className="text-4xl sm:text-5xl md:text-7xl font-display font-bold text-primary">
                   6,915
                 </p>
-                <Zap className="absolute -top-2 -right-2 w-6 h-6 text-primary/50 group-hover:text-primary transition-colors" />
+                <Zap className="absolute -top-2 -right-2 w-5 h-5 sm:w-6 sm:h-6 text-primary/50 group-hover:text-primary transition-colors" />
               </div>
-              <p className="text-muted-foreground mt-2 font-medium">kWh Consumed</p>
+              <p className="text-sm sm:text-base text-muted-foreground mt-2 font-medium">kWh Consumed</p>
             </div>
 
             {/* Days */}
             <div className="text-center group">
               <div className="relative">
-                <p className="text-5xl md:text-7xl font-display font-bold text-sand">
+                <p className="text-4xl sm:text-5xl md:text-7xl font-display font-bold text-sand">
                   89
                 </p>
-                <Calendar className="absolute -top-2 -right-2 w-6 h-6 text-sand/50 group-hover:text-sand transition-colors" />
+                <Calendar className="absolute -top-2 -right-2 w-5 h-5 sm:w-6 sm:h-6 text-sand/50 group-hover:text-sand transition-colors" />
               </div>
-              <p className="text-muted-foreground mt-2 font-medium">Days on the Road</p>
+              <p className="text-sm sm:text-base text-muted-foreground mt-2 font-medium">Days on the Road</p>
             </div>
           </div>
         </div>
