@@ -38,6 +38,7 @@ interface SavedView {
 interface FilterState {
   action: string;
   resourceType: string;
+  userId: string;
   dateRange: { from: Date | undefined; to: Date | undefined };
   search: string;
 }
@@ -84,9 +85,11 @@ export function EnhancedAuditLog() {
   const { toast } = useToast();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(false);
+  const [uniqueUsers, setUniqueUsers] = useState<string[]>([]);
   const [filters, setFilters] = useState<FilterState>({
     action: 'all',
     resourceType: 'all',
+    userId: 'all',
     dateRange: { from: subDays(new Date(), 7), to: new Date() },
     search: ''
   });
@@ -102,7 +105,7 @@ export function EnhancedAuditLog() {
 
   useEffect(() => {
     fetchLogs();
-  }, [filters.action, filters.resourceType, filters.dateRange]);
+  }, [filters.action, filters.resourceType, filters.userId, filters.dateRange]);
 
   const loadSavedViews = () => {
     const stored = localStorage.getItem('audit_saved_views');
@@ -132,7 +135,7 @@ export function EnhancedAuditLog() {
         .from('security_audit_log')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(500);
+        .limit(1000);
 
       if (filters.dateRange.from) {
         query = query.gte('created_at', startOfDay(filters.dateRange.from).toISOString());
@@ -151,10 +154,17 @@ export function EnhancedAuditLog() {
       if (filters.resourceType !== 'all') {
         query = query.eq('resource_type', filters.resourceType);
       }
+      if (filters.userId !== 'all') {
+        query = query.eq('user_id', filters.userId);
+      }
 
       const { data, error } = await query;
       if (error) throw error;
       setLogs(data || []);
+      
+      // Extract unique user IDs for the filter dropdown
+      const users = [...new Set((data || []).map(l => l.user_id))];
+      setUniqueUsers(users);
     } catch (error) {
       console.error('Error fetching audit logs:', error);
       toast({ title: 'Error', description: 'Failed to fetch audit logs', variant: 'destructive' });
@@ -296,11 +306,36 @@ export function EnhancedAuditLog() {
             <SelectItem value="all">All Resources</SelectItem>
             <SelectItem value="user">User</SelectItem>
             <SelectItem value="journey">Journey</SelectItem>
+            <SelectItem value="page">Pages</SelectItem>
+            <SelectItem value="ui">UI</SelectItem>
+            <SelectItem value="media">Media</SelectItem>
+            <SelectItem value="playback">Playback</SelectItem>
+            <SelectItem value="settings">Settings</SelectItem>
+            <SelectItem value="social">Social</SelectItem>
+            <SelectItem value="search">Search</SelectItem>
+            <SelectItem value="error">Errors</SelectItem>
             <SelectItem value="admin_portal">Admin Portal</SelectItem>
             <SelectItem value="security">Security</SelectItem>
             <SelectItem value="analytics">Analytics</SelectItem>
           </SelectContent>
         </Select>
+
+        {uniqueUsers.length > 1 && (
+          <Select value={filters.userId} onValueChange={(v) => setFilters(prev => ({ ...prev, userId: v }))}>
+            <SelectTrigger className="w-[160px]">
+              <User className="w-4 h-4 mr-2" />
+              <SelectValue placeholder="User" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Users ({uniqueUsers.length})</SelectItem>
+              {uniqueUsers.map(userId => (
+                <SelectItem key={userId} value={userId}>
+                  {userId.substring(0, 8)}...
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         <Popover>
           <PopoverTrigger asChild>
