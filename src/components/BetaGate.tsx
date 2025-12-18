@@ -14,8 +14,11 @@ interface BetaGateProps {
 export default function BetaGate({ children }: BetaGateProps) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [accessCode, setAccessCode] = useState('');
+  const [password, setPassword] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [existingUserEmail, setExistingUserEmail] = useState<string | null>(null);
+  const [existingUserName, setExistingUserName] = useState<string | null>(null);
 
   // Check for existing auth session on mount
   useEffect(() => {
@@ -61,7 +64,18 @@ export default function BetaGate({ children }: BetaGateProps) {
         return;
       }
 
-      // Sign in with the provisioned credentials
+      // Check if this is an existing user who needs to enter their password
+      if (data.existingUser) {
+        setExistingUserEmail(data.email);
+        setExistingUserName(data.name);
+        setIsVerifying(false);
+        toast.success('Access code verified!', {
+          description: 'Please enter your password to sign in.'
+        });
+        return;
+      }
+
+      // New user: sign in with the provisioned credentials (access code as password)
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password
@@ -84,6 +98,47 @@ export default function BetaGate({ children }: BetaGateProps) {
     } finally {
       setIsVerifying(false);
     }
+  };
+
+  const signInExistingUser = async () => {
+    if (!password.trim()) {
+      setError('Please enter your password');
+      return;
+    }
+
+    setIsVerifying(true);
+    setError(null);
+
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: existingUserEmail!,
+        password: password
+      });
+
+      if (signInError) {
+        console.error('Sign in error:', signInError);
+        setError('Invalid password. Please try again.');
+        setIsVerifying(false);
+        return;
+      }
+
+      toast.success(`Welcome back, ${existingUserName || 'Beta Tester'}!`, {
+        description: 'You are now signed in.'
+      });
+
+    } catch (err) {
+      console.error('Sign in error:', err);
+      setError('An error occurred. Please try again.');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const resetToCodeEntry = () => {
+    setExistingUserEmail(null);
+    setExistingUserName(null);
+    setPassword('');
+    setError(null);
   };
 
   // Show loading while checking session
@@ -138,55 +193,118 @@ export default function BetaGate({ children }: BetaGateProps) {
           </CardHeader>
           
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  type="password"
-                  placeholder="Enter your access code"
-                  value={accessCode}
-                  onChange={(e) => {
-                    setAccessCode(e.target.value.toUpperCase());
-                    setError(null);
-                  }}
-                  onKeyDown={(e) => e.key === 'Enter' && verifyAndSignIn()}
-                  className="pl-10 font-mono"
-                  autoComplete="off"
-                  spellCheck={false}
-                />
-              </div>
-              
-              {error && (
-                <div className="flex items-center gap-2 text-sm text-destructive">
-                  <AlertCircle className="w-4 h-4" />
-                  {error}
+            {existingUserEmail ? (
+              // Password entry for existing users
+              <>
+                <div className="text-center text-sm text-muted-foreground mb-2">
+                  Signing in as <span className="font-medium text-foreground">{existingUserEmail}</span>
                 </div>
-              )}
-            </div>
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type="password"
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setError(null);
+                      }}
+                      onKeyDown={(e) => e.key === 'Enter' && signInExistingUser()}
+                      className="pl-10"
+                      autoComplete="current-password"
+                      autoFocus
+                    />
+                  </div>
+                  
+                  {error && (
+                    <div className="flex items-center gap-2 text-sm text-destructive">
+                      <AlertCircle className="w-4 h-4" />
+                      {error}
+                    </div>
+                  )}
+                </div>
 
-            <Button 
-              className="w-full" 
-              onClick={verifyAndSignIn}
-              disabled={isVerifying || !accessCode.trim()}
-            >
-              {isVerifying ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Access Beta
-                </>
-              )}
-            </Button>
+                <Button 
+                  className="w-full" 
+                  onClick={signInExistingUser}
+                  disabled={isVerifying || !password.trim()}
+                >
+                  {isVerifying ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      Sign In
+                    </>
+                  )}
+                </Button>
 
-            <div className="text-center pt-4 border-t border-border">
-              <p className="text-xs text-muted-foreground">
-                Your access code is your secure key to your beta account.
-              </p>
-            </div>
+                <Button 
+                  variant="ghost" 
+                  className="w-full text-muted-foreground"
+                  onClick={resetToCodeEntry}
+                >
+                  Use a different access code
+                </Button>
+              </>
+            ) : (
+              // Access code entry
+              <>
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type="password"
+                      placeholder="Enter your access code"
+                      value={accessCode}
+                      onChange={(e) => {
+                        setAccessCode(e.target.value.toUpperCase());
+                        setError(null);
+                      }}
+                      onKeyDown={(e) => e.key === 'Enter' && verifyAndSignIn()}
+                      className="pl-10 font-mono"
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                  </div>
+                  
+                  {error && (
+                    <div className="flex items-center gap-2 text-sm text-destructive">
+                      <AlertCircle className="w-4 h-4" />
+                      {error}
+                    </div>
+                  )}
+                </div>
+
+                <Button 
+                  className="w-full" 
+                  onClick={verifyAndSignIn}
+                  disabled={isVerifying || !accessCode.trim()}
+                >
+                  {isVerifying ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      Access Beta
+                    </>
+                  )}
+                </Button>
+
+                <div className="text-center pt-4 border-t border-border">
+                  <p className="text-xs text-muted-foreground">
+                    Your access code is your secure key to your beta account.
+                  </p>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

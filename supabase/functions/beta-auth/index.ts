@@ -64,44 +64,50 @@ Deno.serve(async (req) => {
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
     const existingUser = existingUsers?.users?.find(u => u.email === tester.email);
 
-    if (!existingUser) {
-      // Create the user with the access code as password
-      const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-        email: tester.email,
-        password: sanitizedCode,
-        email_confirm: true, // Auto-confirm email
-        user_metadata: {
-          full_name: tester.name,
-          beta_tester: true,
-        }
-      });
+    if (existingUser) {
+      // Existing user - they need to sign in with their own password
+      console.log(`Existing user ${tester.email} verified for beta access`);
+      
+      // Record the access
+      await supabaseAdmin
+        .from('beta_testers')
+        .update({ 
+          last_accessed_at: new Date().toISOString(),
+          access_count: (tester as any).access_count ? (tester as any).access_count + 1 : 1
+        })
+        .eq('id', tester.id);
 
-      if (createError) {
-        console.error('Error creating user:', createError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to provision account' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      console.log(`Created beta account for ${tester.email}`);
-    } else {
-      // Existing user: update their password to the access code for beta sign-in
-      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-        existingUser.id,
-        { password: sanitizedCode }
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          existingUser: true,
+          email: tester.email,
+          name: tester.name
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-
-      if (updateError) {
-        console.error('Error updating user password:', updateError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to configure account for beta access' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      console.log(`Updated beta access for existing user ${tester.email}`);
     }
+
+    // New user: create account with access code as password
+    const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+      email: tester.email,
+      password: sanitizedCode,
+      email_confirm: true,
+      user_metadata: {
+        full_name: tester.name,
+        beta_tester: true,
+      }
+    });
+
+    if (createError) {
+      console.error('Error creating user:', createError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to provision account' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`Created beta account for ${tester.email}`);
 
     // Record the access
     await supabaseAdmin
