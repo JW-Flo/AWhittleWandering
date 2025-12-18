@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,6 +13,32 @@ serve(async (req) => {
   }
 
   try {
+    // AUTHENTICATION REQUIRED
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
+    
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Invalid token' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log('Weather API authorized for user:', user.id);
+
     const OPENWEATHER_API_KEY = Deno.env.get('OPENWEATHER_API_KEY');
     if (!OPENWEATHER_API_KEY) {
       throw new Error('OPENWEATHER_API_KEY is not configured');
@@ -22,6 +49,15 @@ serve(async (req) => {
 
     if (!lat || !lon) {
       throw new Error('Latitude and longitude are required');
+    }
+
+    // Validate coordinates
+    if (typeof lat !== 'number' || typeof lon !== 'number' || 
+        Math.abs(lat) > 90 || Math.abs(lon) > 180) {
+      return new Response(JSON.stringify({ error: 'Invalid coordinates' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     let endpoint = '';
