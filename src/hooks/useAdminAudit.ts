@@ -4,6 +4,9 @@ import { useAuth } from '@/hooks/useAuth';
 type AuditAction = 
   | 'admin_login'
   | 'admin_logout'
+  | 'login'
+  | 'logout'
+  | 'signup'
   | 'view_user_data'
   | 'export_user_data'
   | 'role_change'
@@ -14,9 +17,27 @@ type AuditAction =
   | 'incident_resolve'
   | 'dsar_view'
   | 'dsar_process'
+  | 'dsar_submit'
   | 'settings_change'
+  | 'privacy_update'
+  | 'notification_update'
   | 'analytics_view'
-  | 'security_review';
+  | 'security_review'
+  | '2fa_enabled'
+  | '2fa_disabled'
+  | 'password_change'
+  | 'journey_create'
+  | 'journey_update'
+  | 'journey_delete'
+  | 'journey_publish'
+  | 'report_generate'
+  | 'export_analytics'
+  | 'api_key_added'
+  | 'api_key_removed'
+  | 'vehicle_added'
+  | 'vehicle_removed'
+  | 'media_upload'
+  | 'media_delete';
 
 interface AuditMetadata {
   target_user_id?: string;
@@ -25,6 +46,9 @@ interface AuditMetadata {
   reason?: string;
   severity?: string;
   ip_address?: string;
+  journey_id?: string;
+  vehicle_id?: string;
+  media_id?: string;
   [key: string]: unknown;
 }
 
@@ -107,6 +131,25 @@ export function useAdminAudit() {
       review_type: reviewType
     });
 
+  const logUserView = (targetUserId: string) =>
+    logAuditEvent('view_user_data', 'user', targetUserId, {
+      target_user_id: targetUserId
+    });
+
+  const logJourneyAction = (
+    action: 'journey_create' | 'journey_update' | 'journey_delete' | 'journey_publish',
+    journeyId: string,
+    metadata?: AuditMetadata
+  ) =>
+    logAuditEvent(action, 'journey', journeyId, { journey_id: journeyId, ...metadata });
+
+  const logSettingsChange = (settingType: string, oldValue?: string, newValue?: string) =>
+    logAuditEvent('settings_change', 'settings', undefined, {
+      setting_type: settingType,
+      old_value: oldValue,
+      new_value: newValue
+    });
+
   return {
     logAuditEvent,
     logRoleChange,
@@ -114,6 +157,9 @@ export function useAdminAudit() {
     logDataExport,
     logAdminAccess,
     logAnalyticsView,
-    logSecurityReview
+    logSecurityReview,
+    logUserView,
+    logJourneyAction,
+    logSettingsChange
   };
 }
