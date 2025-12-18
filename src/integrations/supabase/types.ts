@@ -80,6 +80,45 @@ export type Database = {
         }
         Relationships: []
       }
+      beta_testers: {
+        Row: {
+          access_code: string
+          access_count: number | null
+          created_at: string | null
+          email: string
+          expires_at: string | null
+          granted_by: string | null
+          id: string
+          is_active: boolean | null
+          last_accessed_at: string | null
+          name: string | null
+        }
+        Insert: {
+          access_code: string
+          access_count?: number | null
+          created_at?: string | null
+          email: string
+          expires_at?: string | null
+          granted_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_accessed_at?: string | null
+          name?: string | null
+        }
+        Update: {
+          access_code?: string
+          access_count?: number | null
+          created_at?: string | null
+          email?: string
+          expires_at?: string | null
+          granted_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_accessed_at?: string | null
+          name?: string | null
+        }
+        Relationships: []
+      }
       blocked_visitors: {
         Row: {
           blocked_at: string

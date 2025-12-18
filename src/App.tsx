@@ -8,6 +8,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from "@/hooks/useAuth";
 import { PageLoadingSkeleton, DashboardLoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { Car } from "lucide-react";
+import BetaGate from "@/components/BetaGate";
 
 // Eagerly loaded pages (critical path)
 import Index from "./pages/Index";
@@ -44,98 +45,100 @@ const App = () => (
         <AuthProvider>
           <Toaster />
           <Sonner />
-          <BrowserRouter>
-            <Routes>
-              {/* Critical path - eagerly loaded */}
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              
-              {/* Lazy loaded routes with appropriate loading states */}
-              <Route 
-                path="/dashboard" 
-                element={
-                  <Suspense fallback={<DashboardLoadingSkeleton />}>
-                    <Dashboard />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="/explore" 
-                element={
-                  <Suspense fallback={<PageLoadingSkeleton />}>
-                    <Explore />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="/journey/new" 
-                element={
-                  <Suspense fallback={<SimpleLoader />}>
-                    <NewJourney />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="/settings" 
-                element={
-                  <Suspense fallback={<SimpleLoader />}>
-                    <Settings />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="/leaderboard" 
-                element={
-                  <Suspense fallback={<SimpleLoader />}>
-                    <Leaderboard />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="/admin" 
-                element={
-                  <Suspense fallback={<DashboardLoadingSkeleton />}>
-                    <Admin />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="/sms-terms" 
-                element={
-                  <Suspense fallback={<SimpleLoader />}>
-                    <SMSTerms />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="/privacy" 
-                element={
-                  <Suspense fallback={<SimpleLoader />}>
-                    <Privacy />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="/terms" 
-                element={
-                  <Suspense fallback={<SimpleLoader />}>
-                    <Terms />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="/data-request" 
-                element={
-                  <Suspense fallback={<SimpleLoader />}>
-                    <DataRequest />
-                  </Suspense>
-                } 
-              />
-              
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+          <BetaGate>
+            <BrowserRouter>
+              <Routes>
+                {/* Critical path - eagerly loaded */}
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                
+                {/* Lazy loaded routes with appropriate loading states */}
+                <Route 
+                  path="/dashboard" 
+                  element={
+                    <Suspense fallback={<DashboardLoadingSkeleton />}>
+                      <Dashboard />
+                    </Suspense>
+                  } 
+                />
+                <Route 
+                  path="/explore" 
+                  element={
+                    <Suspense fallback={<PageLoadingSkeleton />}>
+                      <Explore />
+                    </Suspense>
+                  } 
+                />
+                <Route 
+                  path="/journey/new" 
+                  element={
+                    <Suspense fallback={<SimpleLoader />}>
+                      <NewJourney />
+                    </Suspense>
+                  } 
+                />
+                <Route 
+                  path="/settings" 
+                  element={
+                    <Suspense fallback={<SimpleLoader />}>
+                      <Settings />
+                    </Suspense>
+                  } 
+                />
+                <Route 
+                  path="/leaderboard" 
+                  element={
+                    <Suspense fallback={<SimpleLoader />}>
+                      <Leaderboard />
+                    </Suspense>
+                  } 
+                />
+                <Route 
+                  path="/admin" 
+                  element={
+                    <Suspense fallback={<DashboardLoadingSkeleton />}>
+                      <Admin />
+                    </Suspense>
+                  } 
+                />
+                <Route 
+                  path="/sms-terms" 
+                  element={
+                    <Suspense fallback={<SimpleLoader />}>
+                      <SMSTerms />
+                    </Suspense>
+                  } 
+                />
+                <Route 
+                  path="/privacy" 
+                  element={
+                    <Suspense fallback={<SimpleLoader />}>
+                      <Privacy />
+                    </Suspense>
+                  } 
+                />
+                <Route 
+                  path="/terms" 
+                  element={
+                    <Suspense fallback={<SimpleLoader />}>
+                      <Terms />
+                    </Suspense>
+                  } 
+                />
+                <Route 
+                  path="/data-request" 
+                  element={
+                    <Suspense fallback={<SimpleLoader />}>
+                      <DataRequest />
+                    </Suspense>
+                  } 
+                />
+                
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </BetaGate>
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
