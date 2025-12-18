@@ -7,9 +7,11 @@ import PrivacySettings from '@/components/settings/PrivacySettings';
 import NotificationSettings from '@/components/settings/NotificationSettings';
 import { TwoFactorSettings } from '@/components/settings/TwoFactorSettings';
 import IntegrationsSettings from '@/components/settings/IntegrationsSettings';
+import VehiclesSettings from '@/components/settings/VehiclesSettings';
+import AccountSettings from '@/components/settings/AccountSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Shield, Bell, Lock, MailX, CheckCircle2, Link2 } from 'lucide-react';
+import { ArrowLeft, Shield, Bell, Lock, MailX, CheckCircle2, Link2, Car, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function Settings() {
@@ -121,6 +123,10 @@ export default function Settings() {
     );
   }
 
+  const defaultTab = searchParams.get('unsubscribe') === 'true' 
+    ? 'notifications' 
+    : searchParams.get('tab') || 'account';
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -136,7 +142,7 @@ export default function Settings() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
+      <main className="container mx-auto px-4 py-8 max-w-3xl">
         {/* Show unsubscribe banner if just unsubscribed */}
         {unsubscribeHandled && (
           <Card className="mb-6 border-success/30 bg-success/5">
@@ -150,8 +156,16 @@ export default function Settings() {
           </Card>
         )}
 
-        <Tabs defaultValue={searchParams.get('unsubscribe') === 'true' ? 'notifications' : 'security'} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+        <Tabs defaultValue={defaultTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="account" className="flex items-center gap-2">
+              <User className="w-4 h-4" />
+              <span className="hidden sm:inline">Account</span>
+            </TabsTrigger>
+            <TabsTrigger value="vehicles" className="flex items-center gap-2">
+              <Car className="w-4 h-4" />
+              <span className="hidden sm:inline">Vehicles</span>
+            </TabsTrigger>
             <TabsTrigger value="security" className="flex items-center gap-2">
               <Lock className="w-4 h-4" />
               <span className="hidden sm:inline">Security</span>
@@ -169,6 +183,14 @@ export default function Settings() {
               <span className="hidden sm:inline">Integrations</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="account">
+            <AccountSettings />
+          </TabsContent>
+
+          <TabsContent value="vehicles">
+            <VehiclesSettings />
+          </TabsContent>
 
           <TabsContent value="security">
             <TwoFactorSettings />
