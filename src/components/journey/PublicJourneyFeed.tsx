@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MapPin, Route, Zap, Calendar, Users, ArrowRight, Globe, RefreshCw } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
+import FollowButton from './FollowButton';
 
 interface PublicJourney {
   id: string;
@@ -174,12 +175,19 @@ export default function PublicJourneyFeed() {
                   <span className="text-xs text-muted-foreground">
                     Updated {formatDistanceToNow(new Date(journey.updated_at), { addSuffix: true })}
                   </span>
-                  <Link to={`/explore?journey=${journey.id}`}>
-                    <Button variant="ghost" size="sm" className="h-7 text-xs">
-                      View Journey
-                      <ArrowRight className="w-3 h-3 ml-1" />
-                    </Button>
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <FollowButton 
+                      journeyId={journey.id} 
+                      journeyOwnerId="" 
+                      className="h-7 text-xs"
+                    />
+                    <Link to={`/explore?journey=${journey.id}`}>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs">
+                        View
+                        <ArrowRight className="w-3 h-3 ml-1" />
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -16,6 +16,7 @@ interface Journey {
   export_generated_at: string | null;
   total_miles: number | null;
   cloudflare_d1_id: string | null;
+  is_complete: boolean | null;
 }
 
 export function JourneyList() {
@@ -28,7 +29,7 @@ export function JourneyList() {
 
     const { data, error } = await supabase
       .from('journeys')
-      .select('id, name, start_date, end_date, archived_at, archive_expires_at, export_generated_at, total_miles, cloudflare_d1_id')
+      .select('id, name, start_date, end_date, archived_at, archive_expires_at, export_generated_at, total_miles, cloudflare_d1_id, is_complete')
       .eq('user_id', user.id)
       .order('start_date', { ascending: false });
 
