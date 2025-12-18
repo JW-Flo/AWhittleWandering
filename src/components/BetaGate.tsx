@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/Logo';
-import { Shield, Lock, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Shield, Lock, AlertCircle, CheckCircle2, Loader2, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface BetaGateProps {
@@ -193,6 +193,27 @@ export default function BetaGate({ children }: BetaGateProps) {
     );
   }
 
-  // User is authenticated, render children
-  return <>{children}</>;
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    toast.success('Signed out successfully');
+  };
+
+  // User is authenticated, render children with sign-out button
+  return (
+    <>
+      {/* Floating Sign Out Button */}
+      <div className="fixed bottom-4 right-4 z-50">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={handleSignOut}
+          className="shadow-lg bg-card/90 backdrop-blur-sm border-border/50 hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Exit Beta
+        </Button>
+      </div>
+      {children}
+    </>
+  );
 }
