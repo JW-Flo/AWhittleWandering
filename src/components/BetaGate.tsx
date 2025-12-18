@@ -46,48 +46,44 @@ export default function BetaGate({ children }: BetaGateProps) {
       return;
     }
 
+    // Basic input validation
+    const sanitizedCode = accessCode.trim().toUpperCase();
+    if (sanitizedCode.length < 10 || sanitizedCode.length > 64) {
+      setError('Invalid access code format.');
+      return;
+    }
+
     setIsVerifying(true);
     setError(null);
 
     try {
+      // Use secure RPC function instead of direct table access
       const { data, error: queryError } = await supabase
-        .from('beta_testers')
-        .select('id, name, expires_at, is_active, access_count')
-        .eq('access_code', accessCode.trim())
-        .single();
+        .rpc('verify_beta_access_code', { p_access_code: sanitizedCode });
 
-      if (queryError || !data) {
+      if (queryError) {
+        console.error('Beta verification error:', queryError);
+        setError('Verification failed. Please try again.');
+        setIsVerifying(false);
+        return;
+      }
+
+      if (!data || data.length === 0) {
         setError('Invalid access code. Please check and try again.');
         setIsVerifying(false);
         return;
       }
 
-      if (!data.is_active) {
-        setError('This access code has been deactivated.');
-        setIsVerifying(false);
-        return;
-      }
+      const tester = data[0];
 
-      if (data.expires_at && new Date(data.expires_at) < new Date()) {
-        setError('This access code has expired.');
-        setIsVerifying(false);
-        return;
-      }
-
-      // Update access count and last accessed
-      await supabase
-        .from('beta_testers')
-        .update({ 
-          last_accessed_at: new Date().toISOString(),
-          access_count: (data.access_count || 0) + 1
-        })
-        .eq('id', data.id);
+      // Record the access using secure function
+      await supabase.rpc('record_beta_access', { p_tester_id: tester.id });
 
       // Store access in localStorage
-      localStorage.setItem(BETA_ACCESS_KEY, data.id);
-      localStorage.setItem(BETA_ACCESS_EXPIRY_KEY, data.expires_at || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString());
+      localStorage.setItem(BETA_ACCESS_KEY, tester.id);
+      localStorage.setItem(BETA_ACCESS_EXPIRY_KEY, tester.expires_at || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString());
       
-      toast.success(`Welcome, ${data.name || 'Beta Tester'}!`, {
+      toast.success(`Welcome, ${tester.name || 'Beta Tester'}!`, {
         description: 'You now have access to the beta.'
       });
       
