@@ -232,6 +232,9 @@ export default function Admin() {
         setUsers(usersData.users || []);
       }
 
+      // Get user count from the fetched users data
+      const userCount = usersData?.users?.length || 0;
+
       const [journeysRes, waypointsRes, mediaRes, auditRes, incidentsRes, pageViewsRes] = await Promise.all([
         supabase.from('journeys').select('id', { count: 'exact', head: true }),
         supabase.from('drive_data').select('id', { count: 'exact', head: true }),
@@ -245,7 +248,7 @@ export default function Admin() {
       const openIncidents = incidentsRes.data?.filter(i => !i.resolved).length || 0;
 
       setStats({
-        totalUsers: users.length,
+        totalUsers: userCount,
         totalJourneys: journeysRes.count || 0,
         totalWaypoints: waypointsRes.count || 0,
         totalMedia: mediaRes.count || 0,
