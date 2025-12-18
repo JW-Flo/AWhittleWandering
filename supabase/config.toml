@@ -85,3 +85,6 @@ verify_jwt = false
 
 [functions.admin-users]
 verify_jwt = true
+
+[functions.audit-d1-sync]
+verify_jwt = true
