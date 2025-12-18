@@ -33,13 +33,13 @@ export default function FollowButton({ journeyId, journeyOwnerId, className = ''
         .select('approved')
         .eq('journey_id', journeyId)
         .eq('follower_user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
       
       if (data) {
         setIsFollowing(true);
-        setIsApproved(data.approved);
+        setIsApproved(data.approved ?? false);
       }
     } catch (error) {
       console.error('Error checking follow status:', error);
