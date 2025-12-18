@@ -43,6 +43,21 @@ export default function RoutePlayback({ mapboxToken, className = '', onWaypointC
       return;
     }
 
+    // Check container dimensions
+    const rect = mapContainer.current.getBoundingClientRect();
+    console.log('[RoutePlayback] Container dimensions:', rect.width, 'x', rect.height);
+    
+    // If container has no dimensions, wait for next frame
+    if (rect.width === 0 || rect.height === 0) {
+      console.log('[RoutePlayback] Container has no dimensions, retrying...');
+      const timeoutId = setTimeout(() => {
+        if (mapContainer.current) {
+          mapContainer.current.style.minHeight = '400px';
+        }
+      }, 100);
+      return () => clearTimeout(timeoutId);
+    }
+
     try {
       mapboxgl.accessToken = mapboxToken;
       console.log('[RoutePlayback] Creating map...');
@@ -54,6 +69,8 @@ export default function RoutePlayback({ mapboxToken, className = '', onWaypointC
         zoom: 10,
         pitch: 45,
         bearing: -17.6,
+        attributionControl: true,
+        preserveDrawingBuffer: true,
       });
 
       map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
@@ -67,6 +84,10 @@ export default function RoutePlayback({ mapboxToken, className = '', onWaypointC
 
       map.current.on('error', (e) => {
         console.error('[RoutePlayback] Map error:', e);
+      });
+      
+      map.current.on('idle', () => {
+        console.log('[RoutePlayback] Map idle');
       });
     } catch (error) {
       console.error('[RoutePlayback] Failed to create map:', error);
@@ -243,9 +264,9 @@ export default function RoutePlayback({ mapboxToken, className = '', onWaypointC
   }
 
   return (
-    <div className={`relative rounded-2xl overflow-hidden bg-card ${className}`}>
+    <div className={`relative rounded-2xl overflow-hidden bg-card ${className}`} style={{ minHeight: '400px' }}>
       {/* Map */}
-      <div ref={mapContainer} className="absolute inset-0" />
+      <div ref={mapContainer} className="absolute inset-0" style={{ minHeight: '400px' }} />
 
       {/* Gradient overlay */}
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-background/80 via-transparent to-transparent" />
