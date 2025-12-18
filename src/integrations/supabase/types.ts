@@ -1917,6 +1917,17 @@ export type Database = {
         }
         Returns: string
       }
+      record_beta_access: { Args: { p_tester_id: string }; Returns: undefined }
+      verify_beta_access_code: {
+        Args: { p_access_code: string }
+        Returns: {
+          access_count: number
+          expires_at: string
+          id: string
+          is_active: boolean
+          name: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "user" | "premium"
