@@ -88,6 +88,14 @@ export default function RouteExportDialog({
     return url;
   };
 
+  // Generate Waze URL
+  const generateWazeUrl = () => {
+    if (waypoints.length === 0) return '';
+    
+    const destination = waypoints[waypoints.length - 1];
+    return `https://waze.com/ul?ll=${destination.lat},${destination.lng}&navigate=yes`;
+  };
+
   // Generate waypoints JSON for copying
   const generateWaypointsJson = () => {
     return JSON.stringify(waypoints.map(wp => ({
@@ -159,6 +167,7 @@ export default function RouteExportDialog({
 
   const appleMapsUrl = generateAppleMapsUrl();
   const googleMapsUrl = generateGoogleMapsUrl();
+  const wazeUrl = generateWazeUrl();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -200,7 +209,7 @@ export default function RouteExportDialog({
           {/* Navigation Apps */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Open in Navigation App</Label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <Button
                 variant="outline"
                 className="h-auto py-3 flex-col gap-1"
@@ -218,6 +227,15 @@ export default function RouteExportDialog({
               >
                 <MapPin className="w-5 h-5" />
                 <span className="text-xs">Google Maps</span>
+              </Button>
+              <Button
+                variant="outline"
+                className="h-auto py-3 flex-col gap-1"
+                onClick={() => openUrl(wazeUrl)}
+                disabled={!wazeUrl}
+              >
+                <Navigation className="w-5 h-5" />
+                <span className="text-xs">Waze</span>
               </Button>
             </div>
           </div>

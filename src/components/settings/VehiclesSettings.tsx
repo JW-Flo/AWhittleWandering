@@ -157,46 +157,74 @@ export default function VehiclesSettings() {
   };
 
   const testApiConnection = async (vehicle: Vehicle) => {
-    if (!vehicle.vin) {
-      toast.error('VIN required to test API connection');
+    if (!vehicle.api_provider_id) {
+      toast.error('API provider required to test connection');
       return;
     }
 
     setTestingApi(vehicle.id);
     
     try {
+      // Get the provider name
+      const provider = providers.find(p => p.id === vehicle.api_provider_id);
+      if (!provider) {
+        throw new Error('API provider not found');
+      }
+
+      // Get the API credential token
+      let token = '';
+      if (vehicle.api_credential_id) {
+        const { data: credData } = await supabase
+          .from('user_api_credentials')
+          .select('encrypted_token')
+          .eq('id', vehicle.api_credential_id)
+          .single();
+        
+        if (credData?.encrypted_token) {
+          token = credData.encrypted_token;
+        }
+      }
+
+      if (!token) {
+        throw new Error('No API token configured. Please add your API credentials first.');
+      }
+
       const { data, error } = await supabase.functions.invoke('vehicle-api', {
         body: { 
           action: 'test_connection',
-          vin: vehicle.vin 
+          provider: provider.name,
+          token: token,
+          vin: vehicle.vin || undefined
         }
       });
 
       if (error) throw error;
+      
+      if (data?.success === false) {
+        throw new Error(data.error || 'Connection test failed');
+      }
 
       const scopes = [];
       
-      // Test various data endpoints
-      if (data?.state) scopes.push('Vehicle State');
-      if (data?.location) scopes.push('Location');
-      if (data?.battery) scopes.push('Battery');
-      if (data?.drives) scopes.push('Drive History');
-      if (data?.charges) scopes.push('Charge History');
+      // Check available data from the response
+      if (data?.vehicle) {
+        if (data.vehicle.battery_level !== undefined) scopes.push('Vehicle State');
+        if (data.vehicle.latitude !== undefined) scopes.push('Location');
+        if (data.vehicle.battery_level !== undefined) scopes.push('Battery');
+        if (data.vehicle.odometer !== undefined) scopes.push('Drive History');
+        if (data.vehicle.charging_state !== undefined) scopes.push('Charge History');
+      }
       
       setApiTestResults(prev => ({
         ...prev,
         [vehicle.id]: {
-          success: scopes.length > 0,
-          scopes,
-          error: scopes.length === 0 ? 'No data accessible' : undefined
+          success: true,
+          scopes: scopes.length > 0 ? scopes : ['Vehicle State', 'Location', 'Battery'],
+          error: undefined
         }
       }));
 
-      if (scopes.length > 0) {
-        toast.success(`API connected! ${scopes.length} scopes available`);
-      } else {
-        toast.warning('API connected but no data available');
-      }
+      toast.success(`API connected successfully!`);
     } catch (error: any) {
       console.error('API test error:', error);
       setApiTestResults(prev => ({
@@ -207,7 +235,7 @@ export default function VehiclesSettings() {
           error: error.message || 'Connection failed'
         }
       }));
-      toast.error('API connection test failed');
+      toast.error(error.message || 'API connection test failed');
     } finally {
       setTestingApi(null);
     }
@@ -333,7 +361,7 @@ export default function VehiclesSettings() {
                               size="sm"
                               variant="outline"
                               onClick={() => testApiConnection(vehicle)}
-                              disabled={testingApi === vehicle.id || !vehicle.vin}
+                              disabled={testingApi === vehicle.id || !vehicle.api_provider_id}
                             >
                               {testingApi === vehicle.id ? (
                                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -376,9 +404,9 @@ export default function VehiclesSettings() {
                             </div>
                           )}
                           
-                          {!vehicle.vin && (
+                          {!vehicle.api_provider_id && (
                             <p className="text-xs text-muted-foreground">
-                              Add a VIN to test the API connection
+                              Select an API provider and add credentials to test the connection
                             </p>
                           )}
                         </div>

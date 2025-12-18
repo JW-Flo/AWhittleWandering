@@ -386,7 +386,7 @@ export default function Dashboard() {
               </div>
               
               {/* AI Route Navigator POC */}
-              <RouteNavigator className="h-[300px]" />
+              <RouteNavigator className="h-full min-h-[400px]" />
             </div>
           </TabsContent>
 
