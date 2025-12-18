@@ -17,9 +17,11 @@ import {
   Trash2,
   Share2,
   Star,
-  Loader2
+  Loader2,
+  Lock
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchSignedUrls } from '@/hooks/useSignedUrl';
 
 interface MediaItem {
   id: string;
@@ -90,13 +92,21 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
           return;
         }
 
-        if (data) {
+        if (data && data.length > 0) {
+          // Fetch signed URLs for all media files
+          const filesToFetch = data.map(item => ({
+            file_path: item.file_path,
+            journey_id: journeyId
+          }));
+          
+          const signedUrls = await fetchSignedUrls(filesToFetch);
+
           const mappedMedia: MediaItem[] = data.map((item, index) => ({
             id: item.id,
             type: item.type as 'photo' | 'video',
             filename: item.file_path.split('/').pop() || 'unknown',
-            url: item.file_url,
-            thumbnailUrl: item.thumbnail_url || item.file_url,
+            url: signedUrls.get(item.file_path) || '',
+            thumbnailUrl: signedUrls.get(item.file_path) || '',
             title: item.caption || `Media ${index + 1}`,
             description: item.caption || '',
             location: {
@@ -109,7 +119,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
             },
             timestamp: item.taken_at || item.created_at,
             tags: item.tags || [],
-            tripDay: 1, // Would need calculation based on journey start
+            tripDay: 1,
             fileSize: item.file_size_bytes || 0,
             uploadedAt: item.created_at,
             isFavorite: item.is_favorite || false,

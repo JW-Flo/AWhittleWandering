@@ -5,12 +5,62 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Simple in-memory rate limiting (per IP)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const MAX_REQUESTS_PER_HOUR = 3;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const record = rateLimitMap.get(ip);
+  
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  
+  if (record.count >= MAX_REQUESTS_PER_HOUR) {
+    return false;
+  }
+  
+  record.count++;
+  return true;
+}
+
+// Email validation regex
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Input sanitization - escape HTML to prevent XSS in stored data
+function sanitizeInput(input: string): string {
+  return input
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+    .trim();
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Get client IP for rate limiting
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+                     req.headers.get('cf-connecting-ip') || 
+                     'unknown';
+    
+    // Check rate limit
+    if (!checkRateLimit(clientIp)) {
+      console.warn(`[dsar-submit] Rate limit exceeded for IP: ${clientIp}`);
+      return new Response(
+        JSON.stringify({ error: 'Too many requests. Please try again later.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -26,14 +76,54 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { request_type, email, name, details } = await req.json();
+    const body = await req.json();
+    const { request_type, email, name, details } = body;
 
+    // Validate required fields
     if (!request_type || !email || !name) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
+        JSON.stringify({ error: 'Missing required fields: request_type, email, and name are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Validate request_type
+    const validRequestTypes = ['access', 'deletion', 'rectification', 'portability', 'objection'];
+    if (!validRequestTypes.includes(request_type)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid request type' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate email format
+    if (!EMAIL_REGEX.test(email) || email.length > 254) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid email format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate name length
+    if (typeof name !== 'string' || name.trim().length === 0 || name.length > 100) {
+      return new Response(
+        JSON.stringify({ error: 'Name must be between 1 and 100 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate details length if provided
+    if (details && (typeof details !== 'string' || details.length > 5000)) {
+      return new Response(
+        JSON.stringify({ error: 'Details must not exceed 5000 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Sanitize inputs
+    const sanitizedEmail = sanitizeInput(email.toLowerCase());
+    const sanitizedName = sanitizeInput(name);
+    const sanitizedDetails = details ? sanitizeInput(details) : '';
 
     // Insert DSAR request using service role (bypasses RLS)
     const { data, error } = await supabase
@@ -42,11 +132,12 @@ Deno.serve(async (req) => {
         user_id: userId,
         action: 'dsar_submit',
         resource_type: 'dsar_request',
+        ip_address: clientIp,
         metadata: {
           request_type,
-          email,
-          name,
-          details: details || '',
+          email: sanitizedEmail,
+          name: sanitizedName,
+          details: sanitizedDetails,
           submitted_at: new Date().toISOString(),
           is_authenticated: userId !== '00000000-0000-0000-0000-000000000000',
           status: 'pending'
@@ -63,7 +154,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`DSAR ${request_type} submitted by ${email}`);
+    console.log(`[dsar-submit] DSAR ${request_type} submitted by ${sanitizedEmail} from IP ${clientIp}`);
 
     return new Response(
       JSON.stringify({ success: true, id: data.id }),
