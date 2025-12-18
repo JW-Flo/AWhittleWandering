@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -70,6 +71,45 @@ serve(async (req) => {
   }
 
   try {
+    // Require authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Authentication required' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    // Verify user is admin
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Check admin role
+    const { data: roleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
+
+    if (!roleData) {
+      return new Response(JSON.stringify({ error: 'Admin access required' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const TESSIE_API_KEY = Deno.env.get('TESSIE_API_KEY');
     if (!TESSIE_API_KEY) {
       throw new Error('TESSIE_API_KEY is not configured');
@@ -81,7 +121,15 @@ serve(async (req) => {
       throw new Error('VIN is required');
     }
 
-    console.log(`Extracting waypoints for VIN ${vin} from ${fromDate} to ${toDate}`);
+    // Audit log
+    await supabase.from('security_audit_log').insert({
+      user_id: user.id,
+      action: 'extract_waypoints',
+      resource_type: 'tessie_api',
+      metadata: { vin: vin.slice(-4), fromDate, toDate }
+    });
+
+    console.log(`Extracting waypoints for VIN ${vin} from ${fromDate} to ${toDate}`)
 
     // Fetch drives from Tessie API
     const params = new URLSearchParams();
