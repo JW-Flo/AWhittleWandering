@@ -338,6 +338,39 @@ export type Database = {
           },
         ]
       }
+      feedback_surveys: {
+        Row: {
+          comments: string | null
+          completed_at: string
+          created_at: string
+          id: string
+          rating: number | null
+          responses: Json
+          survey_type: string
+          user_id: string
+        }
+        Insert: {
+          comments?: string | null
+          completed_at?: string
+          created_at?: string
+          id?: string
+          rating?: number | null
+          responses?: Json
+          survey_type?: string
+          user_id: string
+        }
+        Update: {
+          comments?: string | null
+          completed_at?: string
+          created_at?: string
+          id?: string
+          rating?: number | null
+          responses?: Json
+          survey_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       flagship_waypoints: {
         Row: {
           arrived_at: string
