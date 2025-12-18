@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_lockouts: {
+        Row: {
+          created_at: string
+          email: string
+          failed_attempts: number | null
+          id: string
+          lock_reason: string | null
+          locked_until: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          failed_attempts?: number | null
+          id?: string
+          lock_reason?: string | null
+          locked_until: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          failed_attempts?: number | null
+          id?: string
+          lock_reason?: string | null
+          locked_until?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       api_providers: {
         Row: {
           auth_type: string
@@ -737,6 +767,90 @@ export type Database = {
           },
         ]
       }
+      login_alerts: {
+        Row: {
+          acknowledged: boolean | null
+          acknowledged_at: string | null
+          alert_type: string
+          city: string | null
+          country_code: string | null
+          created_at: string
+          details: Json | null
+          device_fingerprint: string | null
+          id: string
+          ip_address: string | null
+          notification_sent: boolean | null
+          user_id: string
+        }
+        Insert: {
+          acknowledged?: boolean | null
+          acknowledged_at?: string | null
+          alert_type: string
+          city?: string | null
+          country_code?: string | null
+          created_at?: string
+          details?: Json | null
+          device_fingerprint?: string | null
+          id?: string
+          ip_address?: string | null
+          notification_sent?: boolean | null
+          user_id: string
+        }
+        Update: {
+          acknowledged?: boolean | null
+          acknowledged_at?: string | null
+          alert_type?: string
+          city?: string | null
+          country_code?: string | null
+          created_at?: string
+          details?: Json | null
+          device_fingerprint?: string | null
+          id?: string
+          ip_address?: string | null
+          notification_sent?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      login_attempts: {
+        Row: {
+          city: string | null
+          country_code: string | null
+          created_at: string
+          device_fingerprint: string | null
+          email: string
+          failure_reason: string | null
+          id: string
+          ip_address: string | null
+          success: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          city?: string | null
+          country_code?: string | null
+          created_at?: string
+          device_fingerprint?: string | null
+          email: string
+          failure_reason?: string | null
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          city?: string | null
+          country_code?: string | null
+          created_at?: string
+          device_fingerprint?: string | null
+          email?: string
+          failure_reason?: string | null
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           created_at: string
@@ -1293,6 +1407,45 @@ export type Database = {
         }
         Relationships: []
       }
+      trusted_devices: {
+        Row: {
+          city: string | null
+          country_code: string | null
+          created_at: string
+          device_fingerprint: string
+          device_name: string | null
+          id: string
+          ip_address: string | null
+          is_trusted: boolean | null
+          last_used_at: string
+          user_id: string
+        }
+        Insert: {
+          city?: string | null
+          country_code?: string | null
+          created_at?: string
+          device_fingerprint: string
+          device_name?: string | null
+          id?: string
+          ip_address?: string | null
+          is_trusted?: boolean | null
+          last_used_at?: string
+          user_id: string
+        }
+        Update: {
+          city?: string | null
+          country_code?: string | null
+          created_at?: string
+          device_fingerprint?: string
+          device_name?: string | null
+          id?: string
+          ip_address?: string | null
+          is_trusted?: boolean | null
+          last_used_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_api_credentials: {
         Row: {
           created_at: string
@@ -1518,6 +1671,7 @@ export type Database = {
       }
     }
     Functions: {
+      cleanup_old_login_attempts: { Args: never; Returns: undefined }
       get_credential_validity: {
         Args: { p_credential_id: string }
         Returns: {
