@@ -103,11 +103,22 @@ export default function Dashboard() {
     }
   };
 
-  const fetchMapboxToken = () => {
-    // Use public token from env directly
-    const token = import.meta.env.VITE_MAPBOX_TOKEN;
-    if (token) {
-      setMapboxToken(token);
+  const fetchMapboxToken = async () => {
+    // Try env var first
+    const envToken = import.meta.env.VITE_MAPBOX_TOKEN;
+    if (envToken) {
+      setMapboxToken(envToken);
+      return;
+    }
+    
+    // Fallback to edge function
+    try {
+      const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+      if (!error && data?.token) {
+        setMapboxToken(data.token);
+      }
+    } catch (err) {
+      console.error('Failed to fetch mapbox token:', err);
     }
   };
 
@@ -473,6 +484,43 @@ export default function Dashboard() {
 
           {/* Media Tab */}
           <TabsContent value="media" className="space-y-6">
+            {/* Media Library Access Button */}
+            <Card className="card-tesla border-primary/20">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Image className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium">Import from Device</h4>
+                    <p className="text-sm text-muted-foreground">Access photos and videos from your device library</p>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.multiple = true;
+                    input.accept = 'image/*,video/*';
+                    input.onchange = (e) => {
+                      const files = (e.target as HTMLInputElement).files;
+                      if (files && files.length > 0) {
+                        toast({
+                          title: `${files.length} file(s) selected`,
+                          description: 'Ready to upload to your journey'
+                        });
+                      }
+                    };
+                    input.click();
+                  }}
+                >
+                  <Image className="w-4 h-4 mr-2" />
+                  Browse Library
+                </Button>
+              </CardContent>
+            </Card>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
                 <MediaGallery />
