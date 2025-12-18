@@ -6,6 +6,28 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Simple in-memory rate limiting per user
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const MAX_REQUESTS_PER_MINUTE = 10;
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const record = rateLimitMap.get(userId);
+  
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(userId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  
+  if (record.count >= MAX_REQUESTS_PER_MINUTE) {
+    return false;
+  }
+  
+  record.count++;
+  return true;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -33,6 +55,15 @@ serve(async (req) => {
       console.error('[get-mapbox-token] Invalid auth token:', authError?.message);
       return new Response(JSON.stringify({ error: 'Invalid authentication' }), {
         status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Check rate limit per user
+    if (!checkRateLimit(user.id)) {
+      console.warn(`[get-mapbox-token] Rate limit exceeded for user: ${user.id}`);
+      return new Response(JSON.stringify({ error: 'Too many requests' }), {
+        status: 429,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
