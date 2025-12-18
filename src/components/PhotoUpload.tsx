@@ -181,18 +181,14 @@ export default function PhotoUpload({ journeyId, currentWaypoint, onUploadComple
           return updated;
         });
 
-        // Get public URL
-        const { data: urlData } = supabase.storage
-          .from('journey-photos')
-          .getPublicUrl(fileName);
-
-        // Insert metadata
+        // Store file path only - signed URLs will be generated on retrieval
+        // Insert metadata with file_path (file_url will be generated via signed-url edge function)
         const { error: dbError } = await supabase.from('journey_media').insert({
           journey_id: journeyId,
           user_id: user.id,
           type: fileType,
           file_path: fileName,
-          file_url: urlData.publicUrl,
+          file_url: fileName, // Store path, actual URL fetched via signed-url function
           caption: caption || null,
           taken_at: new Date(selectedDate).toISOString(),
           latitude: currentWaypoint?.lat || null,
