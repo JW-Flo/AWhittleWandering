@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { Resend } from 'https://esm.sh/resend@2.0.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,13 +7,13 @@ const corsHeaders = {
 };
 
 // Rate limiting config
-const MAX_ATTEMPTS_PER_EMAIL = 5; // Max attempts per email in time window
-const MAX_ATTEMPTS_PER_IP = 10; // Max attempts per IP in time window
-const RATE_LIMIT_WINDOW_MINUTES = 15; // Time window for rate limiting
-const LOCKOUT_DURATION_MINUTES = 30; // Account lockout duration
+const MAX_ATTEMPTS_PER_EMAIL = 5;
+const MAX_ATTEMPTS_PER_IP = 10;
+const RATE_LIMIT_WINDOW_MINUTES = 15;
+const LOCKOUT_DURATION_MINUTES = 30;
 
 interface LoginCheckRequest {
-  action: 'check_rate_limit' | 'record_attempt' | 'check_device' | 'get_alerts' | 'acknowledge_alert';
+  action: 'check_rate_limit' | 'record_attempt' | 'check_device' | 'get_alerts' | 'acknowledge_alert' | 'revoke_device';
   email?: string;
   ipAddress?: string;
   userAgent?: string;
@@ -21,7 +22,83 @@ interface LoginCheckRequest {
   failureReason?: string;
   userId?: string;
   alertId?: string;
-  honeypot?: string; // CAPTCHA honeypot field
+  deviceId?: string;
+  honeypot?: string;
+}
+
+// Send security alert email
+async function sendSecurityAlertEmail(
+  userEmail: string,
+  alertType: 'new_device' | 'new_location',
+  details: Record<string, any>
+) {
+  const resendKey = Deno.env.get('RESEND_API_KEY');
+  if (!resendKey) {
+    console.log('[auth-security] RESEND_API_KEY not configured, skipping email');
+    return;
+  }
+
+  const resend = new Resend(resendKey);
+  const siteUrl = Deno.env.get('SITE_URL') || 'https://www.awhittlewandering.com';
+
+  const alertTitle = alertType === 'new_device' 
+    ? 'New Device Login Detected' 
+    : 'Login From New Location';
+
+  const alertMessage = alertType === 'new_device'
+    ? `A new device "${details.deviceName || 'Unknown Device'}" was used to sign into your AWW account.`
+    : `Your account was accessed from a new location${details.city ? ` (${details.city})` : ''}.`;
+
+  try {
+    await resend.emails.send({
+      from: 'AWW Security <security@awhittlewandering.com>',
+      to: [userEmail],
+      subject: `⚠️ Security Alert: ${alertTitle}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0d1117; color: #c9d1d9; padding: 20px;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: #161b22; border-radius: 12px; overflow: hidden; border: 1px solid #30363d;">
+            <div style="padding: 24px; background: linear-gradient(135deg, #d97706 0%, #92400e 100%);">
+              <h1 style="margin: 0; color: white; font-size: 24px;">🛡️ Security Alert</h1>
+            </div>
+            <div style="padding: 24px;">
+              <h2 style="color: #f0883e; margin-top: 0;">${alertTitle}</h2>
+              <p style="font-size: 16px; line-height: 1.6;">${alertMessage}</p>
+              
+              <div style="background-color: #21262d; padding: 16px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+                ${details.deviceName ? `<p style="margin: 0 0 8px 0; font-size: 14px;"><strong>Device:</strong> ${details.deviceName}</p>` : ''}
+                ${details.ip ? `<p style="margin: 0 0 8px 0; font-size: 14px;"><strong>IP Address:</strong> ${details.ip}</p>` : ''}
+                ${details.city ? `<p style="margin: 0; font-size: 14px;"><strong>Location:</strong> ${details.city}</p>` : ''}
+              </div>
+              
+              <p style="font-size: 14px; color: #8b949e;">If this was you, no action is needed. If you don't recognize this activity, please secure your account immediately:</p>
+              
+              <div style="margin: 24px 0;">
+                <a href="${siteUrl}/settings?tab=security" style="display: inline-block; background-color: #d97706; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">Review Security Settings</a>
+              </div>
+              
+              <hr style="border: none; border-top: 1px solid #30363d; margin: 24px 0;">
+              
+              <p style="font-size: 12px; color: #6e7681; margin: 0;">
+                This is an automated security notification from A Whittle Wandering. 
+                You received this because security alerts are enabled for your account.
+              </p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    });
+    console.log(`[auth-security] Security alert email sent to ${userEmail.substring(0, 5)}***`);
+  } catch (error) {
+    console.error('[auth-security] Failed to send security email:', error);
+  }
 }
 
 Deno.serve(async (req) => {
@@ -36,11 +113,11 @@ Deno.serve(async (req) => {
     );
 
     const body: LoginCheckRequest = await req.json();
-    const { action, email, ipAddress, userAgent, deviceFingerprint, success, failureReason, userId, alertId, honeypot } = body;
+    const { action, email, ipAddress, userAgent, deviceFingerprint, success, failureReason, userId, alertId, deviceId, honeypot } = body;
 
     console.log(`[auth-security] Action: ${action}, Email: ${email?.substring(0, 5)}***, IP: ${ipAddress}`);
 
-    // CAPTCHA honeypot check - if filled, it's a bot
+    // CAPTCHA honeypot check
     if (honeypot && honeypot.length > 0) {
       console.log(`[auth-security] Honeypot triggered - bot detected`);
       return new Response(JSON.stringify({ 
@@ -182,6 +259,10 @@ Deno.serve(async (req) => {
 
       // If successful, check for suspicious login
       if (success && userId && deviceFingerprint) {
+        // Get user email for notifications
+        const { data: userData } = await supabase.auth.admin.getUserById(userId);
+        const userEmail = userData?.user?.email;
+
         const { data: existingDevice } = await supabase
           .from('trusted_devices')
           .select('*')
@@ -190,24 +271,34 @@ Deno.serve(async (req) => {
           .single();
 
         if (!existingDevice) {
-          // New device detected - create alert
+          // New device detected
           console.log(`[auth-security] New device detected for user: ${userId}`);
+          
+          const deviceName = parseDeviceName(userAgent || '');
           
           await supabase.from('login_alerts').insert({
             user_id: userId,
             alert_type: 'new_device',
             ip_address: ipAddress,
             device_fingerprint: deviceFingerprint,
-            details: { userAgent, firstSeen: new Date().toISOString() }
+            details: { userAgent, deviceName, firstSeen: new Date().toISOString() }
           });
 
           // Add as trusted device
           await supabase.from('trusted_devices').insert({
             user_id: userId,
             device_fingerprint: deviceFingerprint,
-            device_name: parseDeviceName(userAgent || ''),
+            device_name: deviceName,
             ip_address: ipAddress
           });
+
+          // Send email notification
+          if (userEmail) {
+            await sendSecurityAlertEmail(userEmail, 'new_device', {
+              deviceName,
+              ip: ipAddress
+            });
+          }
 
           return new Response(JSON.stringify({
             recorded: true,
@@ -238,6 +329,15 @@ Deno.serve(async (req) => {
                 deviceName: existingDevice.device_name
               }
             });
+
+            // Send email notification
+            if (userEmail) {
+              await sendSecurityAlertEmail(userEmail, 'new_location', {
+                deviceName: existingDevice.device_name,
+                ip: ipAddress,
+                previousIp: existingDevice.ip_address
+              });
+            }
 
             return new Response(JSON.stringify({
               recorded: true,
@@ -297,6 +397,27 @@ Deno.serve(async (req) => {
         .eq('user_id', userId);
 
       return new Response(JSON.stringify({ acknowledged: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (action === 'revoke_device') {
+      if (!deviceId || !userId) {
+        return new Response(JSON.stringify({ error: 'Device ID and User ID required' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        });
+      }
+
+      await supabase
+        .from('trusted_devices')
+        .delete()
+        .eq('id', deviceId)
+        .eq('user_id', userId);
+
+      console.log(`[auth-security] Device revoked: ${deviceId} for user: ${userId}`);
+
+      return new Response(JSON.stringify({ revoked: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
