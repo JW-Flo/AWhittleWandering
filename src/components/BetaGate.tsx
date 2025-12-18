@@ -4,52 +4,45 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/Logo';
-import { Shield, Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Shield, Lock, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface BetaGateProps {
   children: ReactNode;
 }
 
-const BETA_ACCESS_KEY = 'aww_beta_access';
-const BETA_ACCESS_EXPIRY_KEY = 'aww_beta_expiry';
-
 export default function BetaGate({ children }: BetaGateProps) {
-  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [accessCode, setAccessCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Check for existing access on mount
+  // Check for existing auth session on mount
   useEffect(() => {
-    const storedAccess = localStorage.getItem(BETA_ACCESS_KEY);
-    const storedExpiry = localStorage.getItem(BETA_ACCESS_EXPIRY_KEY);
-    
-    if (storedAccess && storedExpiry) {
-      const expiryDate = new Date(storedExpiry);
-      if (expiryDate > new Date()) {
-        setHasAccess(true);
-        return;
-      } else {
-        // Clear expired access
-        localStorage.removeItem(BETA_ACCESS_KEY);
-        localStorage.removeItem(BETA_ACCESS_EXPIRY_KEY);
-      }
-    }
-    
-    setHasAccess(false);
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+
+    checkSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const verifyAccessCode = async () => {
+  const verifyAndSignIn = async () => {
     if (!accessCode.trim()) {
-      setError('Please enter an access code');
+      setError('Please enter your access code');
       return;
     }
 
-    // Basic input validation
     const sanitizedCode = accessCode.trim().toUpperCase();
     if (sanitizedCode.length < 10 || sanitizedCode.length > 64) {
-      setError('Invalid access code format.');
+      setError('Invalid access code format');
       return;
     }
 
@@ -57,56 +50,53 @@ export default function BetaGate({ children }: BetaGateProps) {
     setError(null);
 
     try {
-      // Use secure RPC function instead of direct table access
-      const { data, error: queryError } = await supabase
-        .rpc('verify_beta_access_code', { p_access_code: sanitizedCode });
-
-      if (queryError) {
-        console.error('Beta verification error:', queryError);
-        setError('Verification failed. Please try again.');
-        setIsVerifying(false);
-        return;
-      }
-
-      if (!data || data.length === 0) {
-        setError('Invalid access code. Please check and try again.');
-        setIsVerifying(false);
-        return;
-      }
-
-      const tester = data[0];
-
-      // Record the access using secure function
-      await supabase.rpc('record_beta_access', { p_tester_id: tester.id });
-
-      // Store access in localStorage
-      localStorage.setItem(BETA_ACCESS_KEY, tester.id);
-      localStorage.setItem(BETA_ACCESS_EXPIRY_KEY, tester.expires_at || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString());
-      
-      toast.success(`Welcome, ${tester.name || 'Beta Tester'}!`, {
-        description: 'You now have access to the beta.'
+      // Call edge function to verify code and provision account
+      const { data, error: fnError } = await supabase.functions.invoke('beta-auth', {
+        body: { access_code: sanitizedCode }
       });
-      
-      setHasAccess(true);
+
+      if (fnError || !data?.success) {
+        setError(data?.error || 'Invalid access code. Please check and try again.');
+        setIsVerifying(false);
+        return;
+      }
+
+      // Sign in with the provisioned credentials
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password
+      });
+
+      if (signInError) {
+        console.error('Sign in error:', signInError);
+        setError('Failed to sign in. Please try again.');
+        setIsVerifying(false);
+        return;
+      }
+
+      toast.success(`Welcome, ${data.name || 'Beta Tester'}!`, {
+        description: 'You are now signed into your beta account.'
+      });
+
     } catch (err) {
-      console.error('Beta verification error:', err);
+      console.error('Beta auth error:', err);
       setError('An error occurred. Please try again.');
     } finally {
       setIsVerifying(false);
     }
   };
 
-  // Show loading while checking
-  if (hasAccess === null) {
+  // Show loading while checking session
+  if (isAuthenticated === null) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  // Show gate if no access
-  if (!hasAccess) {
+  // Show gate if not authenticated
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="absolute inset-0 bg-gradient-to-b from-twilight-green/30 via-background to-background" />
@@ -139,10 +129,10 @@ export default function BetaGate({ children }: BetaGateProps) {
             <div>
               <CardTitle className="text-2xl font-display flex items-center justify-center gap-2">
                 <Shield className="w-6 h-6 text-primary" />
-                Beta Access Required
+                Beta Access
               </CardTitle>
               <CardDescription className="mt-2">
-                A Whittle Wandering is currently in private beta. Enter your access code to continue.
+                Enter your access code to sign into your provisioned beta account.
               </CardDescription>
             </div>
           </CardHeader>
@@ -152,14 +142,14 @@ export default function BetaGate({ children }: BetaGateProps) {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  type="text"
-                  placeholder="Enter access code (e.g., AWW-BETA-xxxxx)"
+                  type="password"
+                  placeholder="Enter your access code"
                   value={accessCode}
                   onChange={(e) => {
                     setAccessCode(e.target.value.toUpperCase());
                     setError(null);
                   }}
-                  onKeyDown={(e) => e.key === 'Enter' && verifyAccessCode()}
+                  onKeyDown={(e) => e.key === 'Enter' && verifyAndSignIn()}
                   className="pl-10 font-mono"
                   autoComplete="off"
                   spellCheck={false}
@@ -176,31 +166,25 @@ export default function BetaGate({ children }: BetaGateProps) {
 
             <Button 
               className="w-full" 
-              onClick={verifyAccessCode}
+              onClick={verifyAndSignIn}
               disabled={isVerifying || !accessCode.trim()}
             >
               {isVerifying ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
-                  Verifying...
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Signing in...
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Verify Access
+                  Access Beta
                 </>
               )}
             </Button>
 
             <div className="text-center pt-4 border-t border-border">
               <p className="text-xs text-muted-foreground">
-                Don't have an access code?{' '}
-                <a 
-                  href="mailto:beta@awhittlewandering.com" 
-                  className="text-primary hover:underline"
-                >
-                  Request access
-                </a>
+                Your access code is your secure key to your beta account.
               </p>
             </div>
           </CardContent>
@@ -209,6 +193,6 @@ export default function BetaGate({ children }: BetaGateProps) {
     );
   }
 
-  // User has access, render children
+  // User is authenticated, render children
   return <>{children}</>;
 }
