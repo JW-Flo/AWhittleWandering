@@ -84,6 +84,8 @@ export type Database = {
         Row: {
           access_code: string
           access_count: number | null
+          claimed_at: string | null
+          claimed_by_user_id: string | null
           created_at: string | null
           email: string
           expires_at: string | null
@@ -96,6 +98,8 @@ export type Database = {
         Insert: {
           access_code: string
           access_count?: number | null
+          claimed_at?: string | null
+          claimed_by_user_id?: string | null
           created_at?: string | null
           email: string
           expires_at?: string | null
@@ -108,6 +112,8 @@ export type Database = {
         Update: {
           access_code?: string
           access_count?: number | null
+          claimed_at?: string | null
+          claimed_by_user_id?: string | null
           created_at?: string | null
           email?: string
           expires_at?: string | null
@@ -955,6 +961,8 @@ export type Database = {
       }
       login_attempts: {
         Row: {
+          access_code_attempted: string | null
+          auth_method: string | null
           city: string | null
           country_code: string | null
           created_at: string
@@ -967,6 +975,8 @@ export type Database = {
           user_agent: string | null
         }
         Insert: {
+          access_code_attempted?: string | null
+          auth_method?: string | null
           city?: string | null
           country_code?: string | null
           created_at?: string
@@ -979,6 +989,8 @@ export type Database = {
           user_agent?: string | null
         }
         Update: {
+          access_code_attempted?: string | null
+          auth_method?: string | null
           city?: string | null
           country_code?: string | null
           created_at?: string

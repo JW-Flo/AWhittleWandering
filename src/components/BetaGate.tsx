@@ -38,7 +38,7 @@ export default function BetaGate({ children }: BetaGateProps) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Check if email exists when user finishes typing
+  // Check if email requires password (only joe@awhittlewandering.com)
   const checkEmailExists = async () => {
     if (!email.trim() || !email.includes('@')) {
       return;
@@ -54,12 +54,15 @@ export default function BetaGate({ children }: BetaGateProps) {
 
       if (fnError) {
         console.error('Check error:', fnError);
+        setIsExistingUser(false);
         return;
       }
 
-      setIsExistingUser(data?.existingUser ?? false);
+      // Only show password field for joe@awhittlewandering.com
+      setIsExistingUser(data?.requiresPassword ?? false);
     } catch (err) {
       console.error('Check email error:', err);
+      setIsExistingUser(false);
     } finally {
       setIsChecking(false);
     }
@@ -71,9 +74,13 @@ export default function BetaGate({ children }: BetaGateProps) {
       return;
     }
 
-    const secondField = isExistingUser ? password : accessCode;
-    if (!secondField.trim()) {
-      setError(isExistingUser ? 'Please enter your password' : 'Please enter your access code');
+    if (!accessCode.trim()) {
+      setError('Please enter your access code');
+      return;
+    }
+
+    if (isExistingUser && !password.trim()) {
+      setError('Please enter your password');
       return;
     }
 
@@ -81,26 +88,25 @@ export default function BetaGate({ children }: BetaGateProps) {
     setError(null);
 
     try {
-      if (isExistingUser) {
-        // Existing user: verify access code first, then sign in with password
-        const { data, error: fnError } = await supabase.functions.invoke('beta-auth', {
-          body: { email: email.trim(), access_code: accessCode }
-        });
+      // Verify access code first
+      const { data, error: fnError } = await supabase.functions.invoke('beta-auth', {
+        body: { email: email.trim(), access_code: accessCode }
+      });
 
-        // If they haven't entered access code yet, prompt for it
-        if (!accessCode.trim()) {
-          setError('Please enter your access code to verify beta access, then your password');
-          setIsVerifying(false);
-          return;
-        }
+      if (fnError) {
+        setError('Unable to verify access. Please try again.');
+        setIsVerifying(false);
+        return;
+      }
 
-        if (fnError || !data?.success) {
-          setError(data?.error || 'Invalid access code');
-          setIsVerifying(false);
-          return;
-        }
+      if (!data?.success) {
+        setError(data?.error || 'Invalid email or access code');
+        setIsVerifying(false);
+        return;
+      }
 
-        // Now sign in with their password
+      // For joe@awhittlewandering.com - requires password
+      if (data.requiresPassword) {
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password: password
@@ -114,18 +120,7 @@ export default function BetaGate({ children }: BetaGateProps) {
 
         toast.success(`Welcome back, ${data.name || 'Beta Tester'}!`);
       } else {
-        // New user: verify and provision
-        const { data, error: fnError } = await supabase.functions.invoke('beta-auth', {
-          body: { email: email.trim(), access_code: accessCode }
-        });
-
-        if (fnError || !data?.success) {
-          setError(data?.error || 'Invalid email or access code');
-          setIsVerifying(false);
-          return;
-        }
-
-        // Sign in with provisioned credentials
+        // New or other users - sign in with access code as password
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: data.email,
           password: data.password
@@ -137,9 +132,13 @@ export default function BetaGate({ children }: BetaGateProps) {
           return;
         }
 
-        toast.success(`Welcome, ${data.name || 'Beta Tester'}!`, {
-          description: 'Your beta account has been created.'
-        });
+        if (data.existingUser) {
+          toast.success(`Welcome back, ${data.name || 'Beta Tester'}!`);
+        } else {
+          toast.success(`Welcome, ${data.name || 'Beta Tester'}!`, {
+            description: 'Your beta account has been created.'
+          });
+        }
       }
     } catch (err) {
       console.error('Auth error:', err);
@@ -204,7 +203,7 @@ export default function BetaGate({ children }: BetaGateProps) {
               </CardTitle>
               <CardDescription className="mt-2">
                 {isExistingUser === null 
-                  ? 'Enter your email to get started'
+                  ? 'Enter the email linked to your access code'
                   : isExistingUser 
                     ? 'Welcome back! Enter your access code and password'
                     : 'Enter your access code to create your account'
@@ -321,8 +320,8 @@ export default function BetaGate({ children }: BetaGateProps) {
             <div className="text-center pt-4 border-t border-border">
               <p className="text-xs text-muted-foreground">
                 {isExistingUser 
-                  ? 'Enter your access code to verify beta access, then your password to sign in.'
-                  : 'Your access code provisions your beta account automatically.'
+                  ? 'Enter your access code and password to sign in.'
+                  : 'Use the email linked to your access code. Your account will be created automatically.'
                 }
               </p>
             </div>
