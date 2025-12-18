@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/Logo';
-import { Shield, Lock, AlertCircle, CheckCircle2, Loader2, LogOut } from 'lucide-react';
+import { Shield, Lock, AlertCircle, CheckCircle2, Loader2, LogOut, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface BetaGateProps {
@@ -13,12 +13,14 @@ interface BetaGateProps {
 
 export default function BetaGate({ children }: BetaGateProps) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [email, setEmail] = useState('');
   const [accessCode, setAccessCode] = useState('');
   const [password, setPassword] = useState('');
+  const [isExistingUser, setIsExistingUser] = useState<boolean | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [existingUserEmail, setExistingUserEmail] = useState<string | null>(null);
-  const [existingUserName, setExistingUserName] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
 
   // Check for existing auth session on mount
   useEffect(() => {
@@ -29,7 +31,6 @@ export default function BetaGate({ children }: BetaGateProps) {
 
     checkSession();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session);
     });
@@ -37,72 +38,42 @@ export default function BetaGate({ children }: BetaGateProps) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const verifyAndSignIn = async () => {
-    if (!accessCode.trim()) {
-      setError('Please enter your access code');
+  // Check if email exists when user finishes typing
+  const checkEmailExists = async () => {
+    if (!email.trim() || !email.includes('@')) {
       return;
     }
 
-    const sanitizedCode = accessCode.trim().toUpperCase();
-    if (sanitizedCode.length < 10 || sanitizedCode.length > 64) {
-      setError('Invalid access code format');
-      return;
-    }
-
-    setIsVerifying(true);
+    setIsChecking(true);
     setError(null);
 
     try {
-      // Call edge function to verify code and provision account
       const { data, error: fnError } = await supabase.functions.invoke('beta-auth', {
-        body: { access_code: sanitizedCode }
+        body: { email: email.trim(), check_only: true }
       });
 
-      if (fnError || !data?.success) {
-        setError(data?.error || 'Invalid access code. Please check and try again.');
-        setIsVerifying(false);
+      if (fnError) {
+        console.error('Check error:', fnError);
         return;
       }
 
-      // Check if this is an existing user who needs to enter their password
-      if (data.existingUser) {
-        setExistingUserEmail(data.email);
-        setExistingUserName(data.name);
-        setIsVerifying(false);
-        toast.success('Access code verified!', {
-          description: 'Please enter your password to sign in.'
-        });
-        return;
-      }
-
-      // New user: sign in with the provisioned credentials (access code as password)
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password
-      });
-
-      if (signInError) {
-        console.error('Sign in error:', signInError);
-        setError('Failed to sign in. Please try again.');
-        setIsVerifying(false);
-        return;
-      }
-
-      toast.success(`Welcome, ${data.name || 'Beta Tester'}!`, {
-        description: 'You are now signed into your beta account.'
-      });
-
+      setIsExistingUser(data?.existingUser ?? false);
     } catch (err) {
-      console.error('Beta auth error:', err);
-      setError('An error occurred. Please try again.');
+      console.error('Check email error:', err);
     } finally {
-      setIsVerifying(false);
+      setIsChecking(false);
     }
   };
 
-  const signInExistingUser = async () => {
-    if (!password.trim()) {
-      setError('Please enter your password');
+  const handleSubmit = async () => {
+    if (!email.trim() || !email.includes('@')) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    const secondField = isExistingUser ? password : accessCode;
+    if (!secondField.trim()) {
+      setError(isExistingUser ? 'Please enter your password' : 'Please enter your access code');
       return;
     }
 
@@ -110,35 +81,81 @@ export default function BetaGate({ children }: BetaGateProps) {
     setError(null);
 
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: existingUserEmail!,
-        password: password
-      });
+      if (isExistingUser) {
+        // Existing user: verify access code first, then sign in with password
+        const { data, error: fnError } = await supabase.functions.invoke('beta-auth', {
+          body: { email: email.trim(), access_code: accessCode }
+        });
 
-      if (signInError) {
-        console.error('Sign in error:', signInError);
-        setError('Invalid password. Please try again.');
-        setIsVerifying(false);
-        return;
+        // If they haven't entered access code yet, prompt for it
+        if (!accessCode.trim()) {
+          setError('Please enter your access code to verify beta access, then your password');
+          setIsVerifying(false);
+          return;
+        }
+
+        if (fnError || !data?.success) {
+          setError(data?.error || 'Invalid access code');
+          setIsVerifying(false);
+          return;
+        }
+
+        // Now sign in with their password
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password: password
+        });
+
+        if (signInError) {
+          setError('Invalid password. Please try again.');
+          setIsVerifying(false);
+          return;
+        }
+
+        toast.success(`Welcome back, ${data.name || 'Beta Tester'}!`);
+      } else {
+        // New user: verify and provision
+        const { data, error: fnError } = await supabase.functions.invoke('beta-auth', {
+          body: { email: email.trim(), access_code: accessCode }
+        });
+
+        if (fnError || !data?.success) {
+          setError(data?.error || 'Invalid email or access code');
+          setIsVerifying(false);
+          return;
+        }
+
+        // Sign in with provisioned credentials
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: data.email,
+          password: data.password
+        });
+
+        if (signInError) {
+          setError('Failed to sign in. Please try again.');
+          setIsVerifying(false);
+          return;
+        }
+
+        toast.success(`Welcome, ${data.name || 'Beta Tester'}!`, {
+          description: 'Your beta account has been created.'
+        });
       }
-
-      toast.success(`Welcome back, ${existingUserName || 'Beta Tester'}!`, {
-        description: 'You are now signed in.'
-      });
-
     } catch (err) {
-      console.error('Sign in error:', err);
+      console.error('Auth error:', err);
       setError('An error occurred. Please try again.');
     } finally {
       setIsVerifying(false);
     }
   };
 
-  const resetToCodeEntry = () => {
-    setExistingUserEmail(null);
-    setExistingUserName(null);
+  const resetForm = () => {
+    setEmail('');
+    setAccessCode('');
     setPassword('');
+    setIsExistingUser(null);
     setError(null);
+    setUserName(null);
   };
 
   // Show loading while checking session
@@ -156,7 +173,6 @@ export default function BetaGate({ children }: BetaGateProps) {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="absolute inset-0 bg-gradient-to-b from-twilight-green/30 via-background to-background" />
         
-        {/* Subtle background orbs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div 
             className="absolute w-[400px] h-[400px] rounded-full opacity-20 blur-3xl"
@@ -187,124 +203,129 @@ export default function BetaGate({ children }: BetaGateProps) {
                 Beta Access
               </CardTitle>
               <CardDescription className="mt-2">
-                Enter your access code to sign into your provisioned beta account.
+                {isExistingUser === null 
+                  ? 'Enter your email to get started'
+                  : isExistingUser 
+                    ? 'Welcome back! Enter your access code and password'
+                    : 'Enter your access code to create your account'
+                }
               </CardDescription>
             </div>
           </CardHeader>
           
           <CardContent className="space-y-4">
-            {existingUserEmail ? (
-              // Password entry for existing users
-              <>
-                <div className="text-center text-sm text-muted-foreground mb-2">
-                  Signing in as <span className="font-medium text-foreground">{existingUserEmail}</span>
+            {/* Email field */}
+            <div className="space-y-2">
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setError(null);
+                    setIsExistingUser(null);
+                  }}
+                  onBlur={checkEmailExists}
+                  className="pl-10"
+                  autoComplete="email"
+                />
+              </div>
+              {isChecking && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Checking...
                 </div>
-                <div className="space-y-2">
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      type="password"
-                      placeholder="Enter your password"
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        setError(null);
-                      }}
-                      onKeyDown={(e) => e.key === 'Enter' && signInExistingUser()}
-                      className="pl-10"
-                      autoComplete="current-password"
-                      autoFocus
-                    />
-                  </div>
-                  
-                  {error && (
-                    <div className="flex items-center gap-2 text-sm text-destructive">
-                      <AlertCircle className="w-4 h-4" />
-                      {error}
-                    </div>
-                  )}
+              )}
+            </div>
+
+            {/* Access code field (always shown after email check) */}
+            {isExistingUser !== null && (
+              <div className="space-y-2">
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    type="password"
+                    placeholder="Enter your access code"
+                    value={accessCode}
+                    onChange={(e) => {
+                      setAccessCode(e.target.value.toUpperCase());
+                      setError(null);
+                    }}
+                    onKeyDown={(e) => e.key === 'Enter' && !isExistingUser && handleSubmit()}
+                    className="pl-10 font-mono"
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
                 </div>
-
-                <Button 
-                  className="w-full" 
-                  onClick={signInExistingUser}
-                  disabled={isVerifying || !password.trim()}
-                >
-                  {isVerifying ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Signing in...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-4 h-4 mr-2" />
-                      Sign In
-                    </>
-                  )}
-                </Button>
-
-                <Button 
-                  variant="ghost" 
-                  className="w-full text-muted-foreground"
-                  onClick={resetToCodeEntry}
-                >
-                  Use a different access code
-                </Button>
-              </>
-            ) : (
-              // Access code entry
-              <>
-                <div className="space-y-2">
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      type="password"
-                      placeholder="Enter your access code"
-                      value={accessCode}
-                      onChange={(e) => {
-                        setAccessCode(e.target.value.toUpperCase());
-                        setError(null);
-                      }}
-                      onKeyDown={(e) => e.key === 'Enter' && verifyAndSignIn()}
-                      className="pl-10 font-mono"
-                      autoComplete="off"
-                      spellCheck={false}
-                    />
-                  </div>
-                  
-                  {error && (
-                    <div className="flex items-center gap-2 text-sm text-destructive">
-                      <AlertCircle className="w-4 h-4" />
-                      {error}
-                    </div>
-                  )}
-                </div>
-
-                <Button 
-                  className="w-full" 
-                  onClick={verifyAndSignIn}
-                  disabled={isVerifying || !accessCode.trim()}
-                >
-                  {isVerifying ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Verifying...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-4 h-4 mr-2" />
-                      Access Beta
-                    </>
-                  )}
-                </Button>
-
-                <div className="text-center pt-4 border-t border-border">
-                  <p className="text-xs text-muted-foreground">
-                    Your access code is your secure key to your beta account.
-                  </p>
-                </div>
-              </>
+              </div>
             )}
+
+            {/* Password field (only for existing users) */}
+            {isExistingUser && (
+              <div className="space-y-2">
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    type="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setError(null);
+                    }}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+                    className="pl-10"
+                    autoComplete="current-password"
+                  />
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className="flex items-center gap-2 text-sm text-destructive">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                {error}
+              </div>
+            )}
+
+            <Button 
+              className="w-full" 
+              onClick={handleSubmit}
+              disabled={isVerifying || !email.trim() || isExistingUser === null || (isExistingUser ? (!accessCode.trim() || !password.trim()) : !accessCode.trim())}
+            >
+              {isVerifying ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {isExistingUser ? 'Signing in...' : 'Creating account...'}
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  {isExistingUser ? 'Sign In' : 'Access Beta'}
+                </>
+              )}
+            </Button>
+
+            {isExistingUser !== null && (
+              <Button 
+                variant="ghost" 
+                className="w-full text-muted-foreground text-sm"
+                onClick={resetForm}
+              >
+                Use a different email
+              </Button>
+            )}
+
+            <div className="text-center pt-4 border-t border-border">
+              <p className="text-xs text-muted-foreground">
+                {isExistingUser 
+                  ? 'Enter your access code to verify beta access, then your password to sign in.'
+                  : 'Your access code provisions your beta account automatically.'
+                }
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -316,10 +337,8 @@ export default function BetaGate({ children }: BetaGateProps) {
     toast.success('Signed out successfully');
   };
 
-  // User is authenticated, render children with sign-out button
   return (
     <>
-      {/* Floating Sign Out Button */}
       <div className="fixed bottom-4 right-4 z-50">
         <Button 
           variant="outline" 
