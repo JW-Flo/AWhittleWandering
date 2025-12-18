@@ -59,10 +59,19 @@ import { format } from 'date-fns';
 interface UserData {
   id: string;
   email: string;
+  phone?: string;
   full_name: string | null;
+  display_name?: string | null;
+  avatar_url?: string | null;
   created_at: string;
   role: string;
   account_status?: string;
+  last_sign_in_at?: string;
+  last_active_at?: string;
+  journey_count?: number;
+  email_enabled?: boolean;
+  sms_enabled?: boolean;
+  providers?: string[];
 }
 
 interface Stats {
@@ -188,23 +197,32 @@ export default function Admin() {
 
   const fetchData = async () => {
     try {
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, full_name, display_name, created_at, user_id, account_status');
-      if (profilesError) throw profilesError;
+      // Fetch users with emails via admin edge function
+      const { data: usersData, error: usersError } = await supabase.functions.invoke('admin-users', {
+        body: { action: 'list_users' }
+      });
 
-      const { data: roles, error: rolesError } = await supabase.from('user_roles').select('user_id, role');
-      if (rolesError) throw rolesError;
-
-      const usersWithRoles = profiles?.map(profile => ({
-        id: profile.user_id,
-        email: profile.display_name || profile.full_name || 'Unknown User', // Email removed for security
-        full_name: profile.full_name,
-        created_at: profile.created_at,
-        role: roles?.find(r => r.user_id === profile.user_id)?.role || 'user',
-        account_status: profile.account_status || 'active'
-      })) || [];
-      setUsers(usersWithRoles);
+      if (usersError) {
+        console.error('Error fetching users:', usersError);
+        // Fallback to profiles if edge function fails
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, display_name, created_at, user_id, account_status, last_active_at');
+        const { data: roles } = await supabase.from('user_roles').select('user_id, role');
+        
+        const fallbackUsers = profiles?.map(profile => ({
+          id: profile.user_id,
+          email: profile.display_name || profile.full_name || 'Unknown User',
+          full_name: profile.full_name,
+          created_at: profile.created_at,
+          role: roles?.find(r => r.user_id === profile.user_id)?.role || 'user',
+          account_status: profile.account_status || 'active',
+          last_active_at: profile.last_active_at
+        })) || [];
+        setUsers(fallbackUsers);
+      } else {
+        setUsers(usersData.users || []);
+      }
 
       const [journeysRes, waypointsRes, mediaRes, auditRes, incidentsRes, pageViewsRes] = await Promise.all([
         supabase.from('journeys').select('id', { count: 'exact', head: true }),
@@ -219,7 +237,7 @@ export default function Admin() {
       const openIncidents = incidentsRes.data?.filter(i => !i.resolved).length || 0;
 
       setStats({
-        totalUsers: profiles?.length || 0,
+        totalUsers: users.length,
         totalJourneys: journeysRes.count || 0,
         totalWaypoints: waypointsRes.count || 0,
         totalMedia: mediaRes.count || 0,
@@ -515,12 +533,23 @@ export default function Admin() {
                           logAdminAccess(`view_user_${u.id}`);
                         }}
                       >
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium hover:text-primary transition-colors">{u.full_name || 'No name'}</p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-medium hover:text-primary transition-colors">{u.full_name || u.display_name || 'No name'}</p>
                           {getStatusBadge(u.account_status || 'active')}
+                          {u.journey_count && u.journey_count > 0 && (
+                            <Badge variant="outline" className="text-xs">{u.journey_count} journeys</Badge>
+                          )}
                         </div>
-                        <p className="text-sm text-muted-foreground">{u.email}</p>
-                        <p className="text-xs text-muted-foreground">Joined {format(new Date(u.created_at), 'MMM d, yyyy')}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          <p className="text-sm text-primary">{u.email}</p>
+                          {u.phone && <p className="text-sm text-muted-foreground">📱 {u.phone}</p>}
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                          <span>Joined {format(new Date(u.created_at), 'MMM d, yyyy')}</span>
+                          {u.last_sign_in_at && <span>Last login: {format(new Date(u.last_sign_in_at), 'MMM d, h:mm a')}</span>}
+                          {u.email_enabled && <span className="text-success">📧 Email</span>}
+                          {u.sms_enabled && <span className="text-success">💬 SMS</span>}
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <Select value={u.role} onValueChange={(v) => handleRoleChange(u.id, v as 'admin' | 'user' | 'premium')}>

@@ -82,3 +82,6 @@ verify_jwt = true
 
 [functions.dsar-submit]
 verify_jwt = false
+
+[functions.admin-users]
+verify_jwt = true
