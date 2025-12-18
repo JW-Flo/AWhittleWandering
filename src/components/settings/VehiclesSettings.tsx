@@ -234,16 +234,23 @@ export default function VehiclesSettings() {
                   <div className="flex items-center gap-2">
                     <Button
                       size="icon"
-                      variant="ghost"
-                      onClick={() => openEditDialog(vehicle)}
+                      variant="secondary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEditDialog(vehicle);
+                      }}
+                      className="h-10 w-10"
                     >
                       <Edit2 className="w-4 h-4" />
                     </Button>
                     <Button
                       size="icon"
-                      variant="ghost"
-                      className="text-destructive hover:bg-destructive/10"
-                      onClick={() => handleDelete(vehicle.id)}
+                      variant="destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(vehicle.id);
+                      }}
+                      className="h-10 w-10"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
