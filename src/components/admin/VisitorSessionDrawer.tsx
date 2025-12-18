@@ -117,7 +117,7 @@ export function VisitorSessionDrawer({ session, open, onOpenChange }: VisitorSes
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-2xl overflow-hidden flex flex-col">
+      <SheetContent className="w-full sm:max-w-2xl overflow-hidden flex flex-col p-6">
         <SheetHeader className="mb-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">

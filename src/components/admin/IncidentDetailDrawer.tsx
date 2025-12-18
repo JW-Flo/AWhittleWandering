@@ -182,7 +182,7 @@ export function IncidentDetailDrawer({ incident, open, onOpenChange, onRefresh }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto p-6">
         <SheetHeader className="mb-6">
           <div className="flex items-center gap-3">
             <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
