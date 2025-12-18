@@ -80,6 +80,45 @@ export type Database = {
         }
         Relationships: []
       }
+      blocked_visitors: {
+        Row: {
+          blocked_at: string
+          blocked_by: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          ip_address: string | null
+          is_permanent: boolean | null
+          reason: string | null
+          user_agent: string | null
+          visitor_id: string
+        }
+        Insert: {
+          blocked_at?: string
+          blocked_by?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          ip_address?: string | null
+          is_permanent?: boolean | null
+          reason?: string | null
+          user_agent?: string | null
+          visitor_id: string
+        }
+        Update: {
+          blocked_at?: string
+          blocked_by?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          ip_address?: string | null
+          is_permanent?: boolean | null
+          reason?: string | null
+          user_agent?: string | null
+          visitor_id?: string
+        }
+        Relationships: []
+      }
       charging_sessions: {
         Row: {
           charger_type: string | null
@@ -151,6 +190,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      data_retention_config: {
+        Row: {
+          description: string | null
+          id: string
+          is_enabled: boolean | null
+          retention_days: number
+          table_name: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          retention_days?: number
+          table_name: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          retention_days?: number
+          table_name?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       drive_data: {
         Row: {
