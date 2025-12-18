@@ -152,6 +152,42 @@ export function UserDetailDrawer({ user, open, onOpenChange, onExportData, onRef
     }
   };
 
+  // Send SMS to user
+  const handleSendSMS = async () => {
+    if (!user || !details?.notificationPrefs?.phone_number) return;
+    
+    const message = prompt('Enter message to send to user:');
+    if (!message) return;
+    
+    setActionLoading(true);
+    try {
+      const response = await supabase.functions.invoke('send-sms', {
+        body: {
+          to: details.notificationPrefs.phone_number,
+          message: `AWW Admin: ${message}`
+        }
+      });
+      
+      if (response.error) throw response.error;
+      
+      // Log the admin contact
+      await supabase.from('security_audit_log').insert({
+        user_id: user.id,
+        action: 'admin_sms_contact',
+        resource_type: 'user',
+        resource_id: user.id,
+        metadata: { message_preview: message.substring(0, 50) }
+      });
+      
+      toast({ title: 'SMS Sent', description: 'Message sent successfully.' });
+    } catch (error) {
+      console.error('Error sending SMS:', error);
+      toast({ title: 'Error', description: 'Failed to send SMS', variant: 'destructive' });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active': return 'border-success/50 text-success';
@@ -270,6 +306,44 @@ export function UserDetailDrawer({ user, open, onOpenChange, onExportData, onRef
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Quick Contact Actions */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Mail className="w-4 h-4" /> Quick Contact
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => window.open(`mailto:${user.email}?subject=AWW%20Admin%20Contact`, '_blank')}
+                    >
+                      <Mail className="w-4 h-4 mr-1" />
+                      Send Email
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      disabled={!details.notificationPrefs?.phone_number || !details.notificationPrefs?.sms_enabled}
+                      onClick={() => handleSendSMS()}
+                    >
+                      <Smartphone className="w-4 h-4 mr-1" />
+                      Send SMS
+                    </Button>
+                  </div>
+                  {details.notificationPrefs?.phone_number ? (
+                    <p className="text-xs text-muted-foreground">
+                      Phone: {details.notificationPrefs.phone_number}
+                      {!details.notificationPrefs.sms_enabled && ' (SMS disabled)'}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">No phone number on file</p>
+                  )}
+                </CardContent>
+              </Card>
 
               <Button variant="outline" className="w-full" onClick={() => onExportData(user.id, user.email)}>
                 <Download className="w-4 h-4 mr-2" /> Export User Data
