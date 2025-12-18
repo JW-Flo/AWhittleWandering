@@ -238,7 +238,7 @@ const SignInDialog = forwardRef<HTMLDivElement, SignInDialogProps>(
 
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent ref={ref} className="sm:max-w-md">
+        <DialogContent ref={ref} className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
           <DialogHeader className="text-center">
             <div className="mx-auto w-12 h-12 rounded-full bg-gradient-sunset flex items-center justify-center mb-4">
               <Car className="w-6 h-6 text-primary-foreground" />
