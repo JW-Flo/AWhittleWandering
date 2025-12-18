@@ -7,12 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import PrivacySettings from '@/components/settings/PrivacySettings';
 import NotificationSettings from '@/components/settings/NotificationSettings';
 import { TwoFactorSettings } from '@/components/settings/TwoFactorSettings';
+import { TrustedDevicesSettings } from '@/components/settings/TrustedDevicesSettings';
 import IntegrationsSettings from '@/components/settings/IntegrationsSettings';
 import VehiclesSettings from '@/components/settings/VehiclesSettings';
 import AccountSettings from '@/components/settings/AccountSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Shield, Bell, Lock, MailX, CheckCircle2, Link2, Car, User } from 'lucide-react';
+import { ArrowLeft, Shield, Bell, Lock, MailX, CheckCircle2, Link2, Car, User, Smartphone } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function Settings() {
@@ -210,7 +211,7 @@ export default function Settings() {
         )}
 
         <Tabs defaultValue={defaultTab} className="space-y-6" onValueChange={(tab) => logTabChange(`settings_${tab}`)}>
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="account" className="flex items-center gap-2">
               <User className="w-4 h-4" />
               <span className="hidden sm:inline">Account</span>
@@ -222,6 +223,10 @@ export default function Settings() {
             <TabsTrigger value="security" className="flex items-center gap-2">
               <Lock className="w-4 h-4" />
               <span className="hidden sm:inline">Security</span>
+            </TabsTrigger>
+            <TabsTrigger value="devices" className="flex items-center gap-2">
+              <Smartphone className="w-4 h-4" />
+              <span className="hidden sm:inline">Devices</span>
             </TabsTrigger>
             <TabsTrigger value="privacy" className="flex items-center gap-2">
               <Shield className="w-4 h-4" />
@@ -247,6 +252,10 @@ export default function Settings() {
 
           <TabsContent value="security">
             <TwoFactorSettings />
+          </TabsContent>
+
+          <TabsContent value="devices">
+            <TrustedDevicesSettings />
           </TabsContent>
 
           <TabsContent value="privacy">
