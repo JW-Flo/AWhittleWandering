@@ -123,25 +123,30 @@ export default function Explore() {
     };
   }, [user]);
 
-  // Track if user has completed the journey
+  // Track if user has completed the journey or already shown survey
   const hasCompletedJourney = useRef(false);
+  const surveyShownThisSession = useRef(false);
 
-  // Show survey when navigating away from the page (if user explored significantly)
+  // 5-minute timer to show survey
   useEffect(() => {
-    return () => {
-      // Cleanup - if user explored 50%+ and navigating away, show survey on next visit
-      if (explorationProgress >= 50 && !hasCompletedJourney.current && user) {
-        // Store that we should show survey
-        localStorage.setItem('aww_pending_survey', 'true');
+    if (!user || surveyShownThisSession.current) return;
+    
+    const timer = setTimeout(() => {
+      if (!hasCompletedJourney.current && !surveyShownThisSession.current) {
+        surveyShownThisSession.current = true;
+        setShowSurvey(true);
       }
-    };
-  }, [explorationProgress, user]);
+    }, 5 * 60 * 1000); // 5 minutes
+    
+    return () => clearTimeout(timer);
+  }, [user]);
 
-  // Check for pending survey on mount
+  // Check for pending survey on mount (from previous session navigation)
   useEffect(() => {
     const pendingSurvey = localStorage.getItem('aww_pending_survey');
-    if (pendingSurvey === 'true' && user) {
+    if (pendingSurvey === 'true' && user && !surveyShownThisSession.current) {
       localStorage.removeItem('aww_pending_survey');
+      surveyShownThisSession.current = true;
       setTimeout(() => setShowSurvey(true), 1000);
     }
   }, [user]);
@@ -164,8 +169,9 @@ export default function Explore() {
     }
 
     // Show survey when user completes the journey (reaches 100%)
-    if (progress >= 100 && !hasCompletedJourney.current && user) {
+    if (progress >= 100 && !hasCompletedJourney.current && user && !surveyShownThisSession.current) {
       hasCompletedJourney.current = true;
+      surveyShownThisSession.current = true;
       setTimeout(() => setShowSurvey(true), 2000);
     }
   };
