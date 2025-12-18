@@ -8,12 +8,13 @@ import JourneyTimeline from '@/components/JourneyTimeline';
 import PhotoUpload from '@/components/PhotoUpload';
 import LiveVehicleStatus from '@/components/LiveVehicleStatus';
 import FollowButton from '@/components/journey/FollowButton';
+import PublicJourneyFeed from '@/components/journey/PublicJourneyFeed';
 import { Footer } from '@/components/layout/Footer';
 import { Logo } from '@/components/Logo';
 import { JourneyWaypoint } from '@/data/journeyRoute';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Map, Image, Calendar, Zap, Activity, CheckCircle, Unlock, Settings, Home, Eye, Users } from 'lucide-react';
+import { Map, Image, Calendar, Zap, Activity, CheckCircle, Unlock, Settings, Home, Eye, Users, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -293,6 +294,9 @@ export default function Explore() {
                 </div>
               </TabsContent>
             </Tabs>
+
+            {/* Public Journey Feed */}
+            <PublicJourneyFeed />
           </div>
         </div>
       </div>

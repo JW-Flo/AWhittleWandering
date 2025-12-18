@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Navigation, Send, Loader2, MapPin, Zap, Clock, Route, LocateFixed } from 'lucide-react';
+import { Navigation, Send, Loader2, MapPin, Zap, Clock, Route, LocateFixed, Car, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import RouteExportDialog from './RouteExportDialog';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -21,12 +22,21 @@ interface UserLocation {
   lng: number;
 }
 
+interface ExtractedWaypoint {
+  name: string;
+  lat: number;
+  lng: number;
+  address?: string;
+}
+
 export default function RouteNavigator({ className = '' }: RouteNavigatorProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [extractedWaypoints, setExtractedWaypoints] = useState<ExtractedWaypoint[]>([]);
+  const [showExportDialog, setShowExportDialog] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -279,6 +289,40 @@ export default function RouteNavigator({ className = '' }: RouteNavigatorProps) 
           </div>
         )}
 
+        {/* Export button when waypoints exist */}
+        {messages.length > 0 && (
+          <div className="flex gap-2 shrink-0 border-t border-border/50 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 text-xs"
+              onClick={() => {
+                // Extract sample waypoints from conversation (in production, parse AI response)
+                const sampleWaypoints: ExtractedWaypoint[] = userLocation 
+                  ? [{ name: 'Your Location', lat: userLocation.lat, lng: userLocation.lng }]
+                  : [];
+                setExtractedWaypoints(sampleWaypoints);
+                setShowExportDialog(true);
+              }}
+            >
+              <Car className="w-3 h-3 mr-1" />
+              Send to Vehicle
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 text-xs"
+              onClick={() => {
+                setExtractedWaypoints([]);
+                setShowExportDialog(true);
+              }}
+            >
+              <ExternalLink className="w-3 h-3 mr-1" />
+              Export Route
+            </Button>
+          </div>
+        )}
+
         <div className="flex gap-2 shrink-0 pt-2">
           <Input
             placeholder="Ask about routes..."
@@ -302,6 +346,14 @@ export default function RouteNavigator({ className = '' }: RouteNavigatorProps) 
           </Button>
         </div>
       </CardContent>
+
+      {/* Route Export Dialog */}
+      <RouteExportDialog
+        open={showExportDialog}
+        onOpenChange={setShowExportDialog}
+        waypoints={extractedWaypoints}
+        routeName="AI Suggested Route"
+      />
     </Card>
   );
 }
