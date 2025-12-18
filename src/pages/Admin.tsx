@@ -862,6 +862,7 @@ export default function Admin() {
         open={userDetailOpen} 
         onOpenChange={setUserDetailOpen}
         onExportData={exportUserData}
+        onRefresh={fetchData}
       />
     </div>
   );
