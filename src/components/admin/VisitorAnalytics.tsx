@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { VisitorSessionDrawer } from './VisitorSessionDrawer';
 import { 
   Users, 
   Eye, 
@@ -115,6 +116,8 @@ export function VisitorAnalytics() {
   const [dateRange, setDateRange] = useState('7');
   const [pageViews, setPageViews] = useState<PageView[]>([]);
   const [sessions, setSessions] = useState<VisitorSession[]>([]);
+  const [selectedSession, setSelectedSession] = useState<VisitorSession | null>(null);
+  const [sessionDrawerOpen, setSessionDrawerOpen] = useState(false);
   const [summary, setSummary] = useState<AnalyticsSummary>({
     total_views: 0,
     unique_visitors: 0,
@@ -411,6 +414,7 @@ export function VisitorAnalytics() {
   }
 
   return (
+    <>
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -558,7 +562,11 @@ export function VisitorAnalytics() {
                 {sessions.slice(0, 50).map((session) => (
                   <div 
                     key={session.visitor_id} 
-                    className="p-4 bg-secondary/30 rounded-lg border border-border/50"
+                    className="p-4 bg-secondary/30 rounded-lg border border-border/50 cursor-pointer hover:border-primary/50 hover:shadow-md transition-all"
+                    onClick={() => {
+                      setSelectedSession(session);
+                      setSessionDrawerOpen(true);
+                    }}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
@@ -575,8 +583,11 @@ export function VisitorAnalytics() {
                           </Badge>
                         )}
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {format(new Date(session.last_seen), 'MMM d, h:mm a')}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          {format(new Date(session.last_seen), 'MMM d, h:mm a')}
+                        </span>
+                        <ArrowRight className="w-4 h-4 text-muted-foreground" />
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-1 mb-2">
@@ -940,5 +951,13 @@ export function VisitorAnalytics() {
         </CardContent>
       </Card>
     </div>
+    
+    {/* Visitor Session Drawer */}
+    <VisitorSessionDrawer
+      session={selectedSession}
+      open={sessionDrawerOpen}
+      onOpenChange={setSessionDrawerOpen}
+    />
+    </>
   );
 }

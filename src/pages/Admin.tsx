@@ -20,6 +20,7 @@ import { PreLaunchChecklist } from '@/components/admin/PreLaunchChecklist';
 import { VisitorAnalytics } from '@/components/admin/VisitorAnalytics';
 import { UserDetailDrawer } from '@/components/admin/UserDetailDrawer';
 import { EnhancedAuditLog } from '@/components/admin/EnhancedAuditLog';
+import { IncidentDetailDrawer } from '@/components/admin/IncidentDetailDrawer';
 import { 
   Shield, 
   Users, 
@@ -52,7 +53,8 @@ import {
   Plug,
   Send,
   Rocket,
-  BarChart3
+  BarChart3,
+  ArrowRight
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -162,6 +164,10 @@ export default function Admin() {
   // User detail drawer state
   const [userDetailOpen, setUserDetailOpen] = useState(false);
   const [detailUser, setDetailUser] = useState<UserData | null>(null);
+  
+  // Incident detail drawer state
+  const [incidentDetailOpen, setIncidentDetailOpen] = useState(false);
+  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -665,7 +671,14 @@ export default function Admin() {
                   ) : (
                     <div className="space-y-3">
                       {incidents.map((incident) => (
-                        <Card key={incident.id} className={`border ${incident.resolved ? 'border-border' : 'border-destructive/50'}`}>
+                        <Card 
+                          key={incident.id} 
+                          className={`border cursor-pointer transition-all hover:shadow-md ${incident.resolved ? 'border-border hover:border-primary/30' : 'border-destructive/50 hover:border-destructive'}`}
+                          onClick={() => {
+                            setSelectedIncident(incident);
+                            setIncidentDetailOpen(true);
+                          }}
+                        >
                           <CardContent className="p-4">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
@@ -688,6 +701,7 @@ export default function Admin() {
                                   )}
                                 </div>
                               </div>
+                              <ArrowRight className="w-4 h-4 text-muted-foreground" />
                             </div>
                           </CardContent>
                         </Card>
@@ -891,6 +905,14 @@ export default function Admin() {
         open={userDetailOpen} 
         onOpenChange={setUserDetailOpen}
         onExportData={exportUserData}
+        onRefresh={fetchData}
+      />
+      
+      {/* Incident Detail Drawer */}
+      <IncidentDetailDrawer
+        incident={selectedIncident}
+        open={incidentDetailOpen}
+        onOpenChange={setIncidentDetailOpen}
         onRefresh={fetchData}
       />
     </div>
