@@ -21,6 +21,7 @@ import { VisitorAnalytics } from '@/components/admin/VisitorAnalytics';
 import { UserDetailDrawer } from '@/components/admin/UserDetailDrawer';
 import { EnhancedAuditLog } from '@/components/admin/EnhancedAuditLog';
 import { IncidentDetailDrawer } from '@/components/admin/IncidentDetailDrawer';
+import MarketingDashboard from '@/components/admin/MarketingDashboard';
 import { 
   Shield, 
   Users, 
@@ -54,6 +55,7 @@ import {
   Send,
   Rocket,
   BarChart3,
+  Megaphone,
   ArrowRight
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -499,6 +501,7 @@ export default function Admin() {
               <TabsList className="bg-secondary flex-wrap h-auto gap-1">
                 <TabsTrigger value="launch"><Rocket className="w-4 h-4 mr-1" />Launch</TabsTrigger>
                 <TabsTrigger value="analytics"><BarChart3 className="w-4 h-4 mr-1" />Analytics</TabsTrigger>
+                <TabsTrigger value="marketing"><Megaphone className="w-4 h-4 mr-1" />Marketing</TabsTrigger>
                 <TabsTrigger value="users"><Users className="w-4 h-4 mr-1" />Users</TabsTrigger>
                 <TabsTrigger value="incidents"><ShieldAlert className="w-4 h-4 mr-1" />Incidents</TabsTrigger>
                 <TabsTrigger value="integrations"><Plug className="w-4 h-4 mr-1" />Integrations</TabsTrigger>
@@ -518,6 +521,11 @@ export default function Admin() {
               {/* Analytics Tab */}
               <TabsContent value="analytics" className="mt-0">
                 <VisitorAnalytics />
+              </TabsContent>
+
+              {/* Marketing Tab */}
+              <TabsContent value="marketing" className="mt-0">
+                <MarketingDashboard />
               </TabsContent>
 
               {/* Users Tab */}
