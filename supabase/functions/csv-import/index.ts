@@ -31,12 +31,56 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // AUTHENTICATION REQUIRED
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    const { action, data, journey_id, user_id } = await req.json();
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    
+    // Verify user authentication
+    const authSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: authError } = await authSupabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Invalid token' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log('CSV Import authorized for user:', user.id);
+
+    const { action, data, journey_id } = await req.json();
     console.log(`CSV Import request: action=${action}, journey_id=${journey_id}, rows=${data?.length || 0}`);
+
+    // For import actions, verify user owns the journey
+    if (action === 'import_drive_data' && journey_id) {
+      const { data: journey, error: journeyError } = await authSupabase
+        .from('journeys')
+        .select('id, user_id')
+        .eq('id', journey_id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (journeyError || !journey) {
+        return new Response(JSON.stringify({ error: 'Journey not found or access denied' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Use service role for data operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     if (action === 'parse_preview') {
       // Parse CSV and return preview (first 10 rows + stats)
@@ -59,8 +103,8 @@ serve(async (req) => {
     }
 
     if (action === 'import_drive_data') {
-      if (!journey_id || !user_id) {
-        throw new Error('journey_id and user_id are required');
+      if (!journey_id) {
+        throw new Error('journey_id is required');
       }
 
       const rows = data as string[][];
@@ -109,7 +153,7 @@ serve(async (req) => {
 
         driveData.push({
           journey_id,
-          user_id,
+          user_id: user.id, // Use authenticated user's ID
           recorded_at: new Date(timestamp).toISOString(),
           latitude: lat,
           longitude: lng,
@@ -167,7 +211,8 @@ serve(async (req) => {
             start_date: first.recorded_at?.split('T')[0],
             end_date: last.recorded_at?.split('T')[0]
           })
-          .eq('id', journey_id);
+          .eq('id', journey_id)
+          .eq('user_id', user.id);
       }
 
       return new Response(JSON.stringify({ 
