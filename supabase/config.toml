@@ -42,7 +42,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.get-mapbox-token]
-verify_jwt = false
+verify_jwt = true
 
 [functions.incident-remediation]
 verify_jwt = true
