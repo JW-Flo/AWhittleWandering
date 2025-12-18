@@ -794,35 +794,113 @@ export type Database = {
       }
       page_views: {
         Row: {
+          browser: string | null
+          browser_version: string | null
+          city: string | null
+          click_count: number | null
+          connection_type: string | null
           country_code: string | null
           created_at: string
+          device_type: string | null
+          entry_page: boolean | null
+          exit_page: boolean | null
           id: string
+          is_bounce: boolean | null
+          is_returning_visitor: boolean | null
           journey_id: string | null
+          language: string | null
+          os: string | null
+          os_version: string | null
           page_path: string
           referrer: string | null
+          region: string | null
+          screen_height: number | null
+          screen_width: number | null
+          scroll_depth_percent: number | null
+          session_duration_ms: number | null
+          session_id: string | null
+          time_on_page_ms: number | null
+          timezone: string | null
           user_agent: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
           viewed_at: string
           visitor_id: string | null
         }
         Insert: {
+          browser?: string | null
+          browser_version?: string | null
+          city?: string | null
+          click_count?: number | null
+          connection_type?: string | null
           country_code?: string | null
           created_at?: string
+          device_type?: string | null
+          entry_page?: boolean | null
+          exit_page?: boolean | null
           id?: string
+          is_bounce?: boolean | null
+          is_returning_visitor?: boolean | null
           journey_id?: string | null
+          language?: string | null
+          os?: string | null
+          os_version?: string | null
           page_path: string
           referrer?: string | null
+          region?: string | null
+          screen_height?: number | null
+          screen_width?: number | null
+          scroll_depth_percent?: number | null
+          session_duration_ms?: number | null
+          session_id?: string | null
+          time_on_page_ms?: number | null
+          timezone?: string | null
           user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
           viewed_at?: string
           visitor_id?: string | null
         }
         Update: {
+          browser?: string | null
+          browser_version?: string | null
+          city?: string | null
+          click_count?: number | null
+          connection_type?: string | null
           country_code?: string | null
           created_at?: string
+          device_type?: string | null
+          entry_page?: boolean | null
+          exit_page?: boolean | null
           id?: string
+          is_bounce?: boolean | null
+          is_returning_visitor?: boolean | null
           journey_id?: string | null
+          language?: string | null
+          os?: string | null
+          os_version?: string | null
           page_path?: string
           referrer?: string | null
+          region?: string | null
+          screen_height?: number | null
+          screen_width?: number | null
+          scroll_depth_percent?: number | null
+          session_duration_ms?: number | null
+          session_id?: string | null
+          time_on_page_ms?: number | null
+          timezone?: string | null
           user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
           viewed_at?: string
           visitor_id?: string | null
         }
