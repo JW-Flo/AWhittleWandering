@@ -79,3 +79,6 @@ verify_jwt = true
 
 [functions.spotify-auth]
 verify_jwt = true
+
+[functions.dsar-submit]
+verify_jwt = false
