@@ -233,7 +233,7 @@ export default function Admin() {
       setIncidents(incidentsRes.data as Incident[] || []);
 
       const dsars = (auditRes.data || [])
-        .filter(log => log.action.startsWith('dsar_'))
+        .filter(log => log.action === 'dsar_submit' || log.action.startsWith('dsar_'))
         .map(log => ({
           id: log.id,
           action: log.action,
