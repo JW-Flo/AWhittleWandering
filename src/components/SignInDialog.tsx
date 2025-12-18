@@ -1,4 +1,4 @@
-import React, { useState, forwardRef } from 'react';
+import React, { useState, forwardRef, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,23 +12,56 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { Car, Mail, Lock, User, AlertTriangle, Shield } from 'lucide-react';
+import { Car, Mail, Lock, User, AlertTriangle, Shield, AlertCircle } from 'lucide-react';
 import { checkPasswordBreach, checkPasswordStrength } from '@/lib/passwordSecurity';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { SocialLoginButtons } from '@/components/social/SocialLoginButtons';
 import { Separator } from '@/components/ui/separator';
+import { supabase } from '@/integrations/supabase/client';
+
 interface SignInDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
+// Generate device fingerprint
+const generateDeviceFingerprint = (): string => {
+  const canvas = document.createElement('canvas');
+  const gl = canvas.getContext('webgl');
+  const debugInfo = gl?.getExtension('WEBGL_debug_renderer_info');
+  const renderer = debugInfo ? gl?.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : '';
+  
+  const fingerprint = [
+    navigator.userAgent,
+    navigator.language,
+    new Date().getTimezoneOffset(),
+    screen.width + 'x' + screen.height,
+    screen.colorDepth,
+    renderer
+  ].join('|');
+  
+  // Simple hash
+  let hash = 0;
+  for (let i = 0; i < fingerprint.length; i++) {
+    const char = fingerprint.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(36);
+};
+
 const SignInDialog = forwardRef<HTMLDivElement, SignInDialogProps>(
   ({ open, onOpenChange }, ref) => {
-    const { signIn, signUp, mfaChallenge, completeMFA, cancelMFA } = useAuth();
+    const { signIn, signUp, mfaChallenge, completeMFA, cancelMFA, user } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
     const [passwordWarning, setPasswordWarning] = useState<string | null>(null);
     const [mfaCode, setMfaCode] = useState('');
+    const [rateLimitError, setRateLimitError] = useState<string | null>(null);
+    const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
+
+    // CAPTCHA honeypot - invisible to users, only bots fill it
+    const [honeypot, setHoneypot] = useState('');
 
     // Sign In form state
     const [signInEmail, setSignInEmail] = useState('');
@@ -40,25 +73,115 @@ const SignInDialog = forwardRef<HTMLDivElement, SignInDialogProps>(
     const [signUpConfirmPassword, setSignUpConfirmPassword] = useState('');
     const [signUpName, setSignUpName] = useState('');
 
+    // Check rate limit before sign in
+    const checkRateLimit = async (email: string): Promise<boolean> => {
+      try {
+        const response = await supabase.functions.invoke('auth-security', {
+          body: {
+            action: 'check_rate_limit',
+            email,
+            honeypot
+          }
+        });
+
+        if (response.error) {
+          console.error('Rate limit check error:', response.error);
+          return true; // Allow on error to not block legitimate users
+        }
+
+        const data = response.data;
+        
+        if (!data.allowed) {
+          setRateLimitError(data.message);
+          return false;
+        }
+
+        setAttemptsRemaining(data.attemptsRemaining);
+        setRateLimitError(null);
+        return true;
+      } catch (error) {
+        console.error('Rate limit check failed:', error);
+        return true; // Allow on error
+      }
+    };
+
+    // Record login attempt
+    const recordLoginAttempt = async (email: string, success: boolean, failureReason?: string) => {
+      try {
+        const deviceFingerprint = generateDeviceFingerprint();
+        
+        await supabase.functions.invoke('auth-security', {
+          body: {
+            action: 'record_attempt',
+            email,
+            userAgent: navigator.userAgent,
+            deviceFingerprint,
+            success,
+            failureReason,
+            userId: user?.id,
+            honeypot
+          }
+        });
+      } catch (error) {
+        console.error('Failed to record login attempt:', error);
+      }
+    };
+
     const handleSignIn = async (e: React.FormEvent) => {
       e.preventDefault();
+      setRateLimitError(null);
+
+      // CAPTCHA honeypot check
+      if (honeypot) {
+        toast({
+          title: 'Access Denied',
+          description: 'Suspicious activity detected.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Check rate limit first
+      const allowed = await checkRateLimit(signInEmail);
+      if (!allowed) {
+        toast({
+          title: 'Too many attempts',
+          description: rateLimitError || 'Please wait before trying again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       setIsLoading(true);
 
       const { error, mfaRequired } = await signIn(signInEmail, signInPassword);
 
       if (mfaRequired) {
-        // MFA is required, the auth context will handle showing MFA challenge
         setIsLoading(false);
         return;
       }
 
       if (error) {
+        // Record failed attempt
+        await recordLoginAttempt(signInEmail, false, error.message);
+        
         toast({
           title: 'Sign in failed',
           description: error.message,
           variant: 'destructive',
         });
+        
+        if (attemptsRemaining !== null && attemptsRemaining <= 2) {
+          toast({
+            title: 'Warning',
+            description: `${attemptsRemaining - 1} attempts remaining before temporary lockout.`,
+            variant: 'destructive',
+          });
+        }
       } else {
+        // Record successful attempt
+        await recordLoginAttempt(signInEmail, true);
+        
         toast({
           title: 'Welcome back!',
           description: 'Successfully signed in.',
@@ -103,6 +226,16 @@ const SignInDialog = forwardRef<HTMLDivElement, SignInDialogProps>(
     const handleSignUp = async (e: React.FormEvent) => {
       e.preventDefault();
       setPasswordWarning(null);
+
+      // CAPTCHA honeypot check
+      if (honeypot) {
+        toast({
+          title: 'Access Denied',
+          description: 'Suspicious activity detected.',
+          variant: 'destructive',
+        });
+        return;
+      }
 
       if (signUpPassword !== signUpConfirmPassword) {
         toast({
@@ -176,6 +309,8 @@ const SignInDialog = forwardRef<HTMLDivElement, SignInDialogProps>(
       setSignUpName('');
       setPasswordWarning(null);
       setMfaCode('');
+      setRateLimitError(null);
+      setHoneypot('');
     };
 
     // Show MFA verification if challenge is active
@@ -249,6 +384,13 @@ const SignInDialog = forwardRef<HTMLDivElement, SignInDialogProps>(
             </DialogDescription>
           </DialogHeader>
 
+          {rateLimitError && (
+            <Alert variant="destructive" className="mt-2">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{rateLimitError}</AlertDescription>
+            </Alert>
+          )}
+
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'signin' | 'signup')} className="mt-4">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -268,6 +410,25 @@ const SignInDialog = forwardRef<HTMLDivElement, SignInDialogProps>(
               </div>
 
               <form onSubmit={handleSignIn} className="space-y-4">
+                {/* CAPTCHA Honeypot - invisible to users */}
+                <input
+                  type="text"
+                  name="website"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                  style={{ 
+                    position: 'absolute', 
+                    left: '-9999px', 
+                    opacity: 0,
+                    height: 0,
+                    width: 0,
+                    pointerEvents: 'none'
+                  }}
+                  aria-hidden="true"
+                />
+
                 <div className="space-y-2">
                   <Label htmlFor="signin-email">Email</Label>
                   <div className="relative">
@@ -300,7 +461,7 @@ const SignInDialog = forwardRef<HTMLDivElement, SignInDialogProps>(
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" className="w-full" disabled={isLoading || !!rateLimitError}>
                   {isLoading ? 'Signing in...' : 'Sign In'}
                 </Button>
               </form>
@@ -319,6 +480,25 @@ const SignInDialog = forwardRef<HTMLDivElement, SignInDialogProps>(
               </div>
 
               <form onSubmit={handleSignUp} className="space-y-4">
+                {/* CAPTCHA Honeypot - invisible to users */}
+                <input
+                  type="text"
+                  name="company"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                  style={{ 
+                    position: 'absolute', 
+                    left: '-9999px', 
+                    opacity: 0,
+                    height: 0,
+                    width: 0,
+                    pointerEvents: 'none'
+                  }}
+                  aria-hidden="true"
+                />
+
                 {/* Privacy Notice */}
                 <div className="p-3 bg-muted/50 rounded-lg border border-border/50">
                   <div className="flex items-start gap-2">
