@@ -18,6 +18,8 @@ import { TwoFactorSettings } from '@/components/settings/TwoFactorSettings';
 import FeatureRequestWidget from '@/components/FeatureRequestWidget';
 import { PreLaunchChecklist } from '@/components/admin/PreLaunchChecklist';
 import { VisitorAnalytics } from '@/components/admin/VisitorAnalytics';
+import { UserDetailDrawer } from '@/components/admin/UserDetailDrawer';
+import { EnhancedAuditLog } from '@/components/admin/EnhancedAuditLog';
 import { 
   Shield, 
   Users, 
@@ -147,6 +149,10 @@ export default function Admin() {
   const [incidentSeverity, setIncidentSeverity] = useState<'low' | 'medium' | 'high' | 'critical'>('medium');
   const [sendNotifications, setSendNotifications] = useState(true);
   const [processingIncident, setProcessingIncident] = useState(false);
+  
+  // User detail drawer state
+  const [userDetailOpen, setUserDetailOpen] = useState(false);
+  const [detailUser, setDetailUser] = useState<UserData | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -500,10 +506,17 @@ export default function Admin() {
                 </div>
                 <div className="space-y-2">
                   {filteredUsers.map((u) => (
-                    <div key={u.id} className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg">
-                      <div className="flex-1">
+                    <div key={u.id} className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg hover:bg-secondary/70 transition-colors">
+                      <div 
+                        className="flex-1 cursor-pointer"
+                        onClick={() => {
+                          setDetailUser(u);
+                          setUserDetailOpen(true);
+                          logAdminAccess(`view_user_${u.id}`);
+                        }}
+                      >
                         <div className="flex items-center gap-2">
-                          <p className="font-medium">{u.full_name || 'No name'}</p>
+                          <p className="font-medium hover:text-primary transition-colors">{u.full_name || 'No name'}</p>
                           {getStatusBadge(u.account_status || 'active')}
                         </div>
                         <p className="text-sm text-muted-foreground">{u.email}</p>
@@ -815,29 +828,7 @@ export default function Admin() {
 
               {/* Audit Tab */}
               <TabsContent value="audit" className="mt-0">
-                <div className="mb-4 flex items-center gap-4">
-                  <Select value={auditFilter} onValueChange={setAuditFilter}>
-                    <SelectTrigger className="w-40"><SelectValue placeholder="Filter" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Events</SelectItem>
-                      <SelectItem value="security">Security</SelectItem>
-                      <SelectItem value="incidents">Incidents</SelectItem>
-                      <SelectItem value="dsar">DSAR</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <span className="text-sm text-muted-foreground">{filteredAuditLogs.length} events</span>
-                </div>
-                <div className="space-y-2 max-h-[500px] overflow-y-auto">
-                  {filteredAuditLogs.map((log) => (
-                    <div key={log.id} className="flex items-center gap-3 p-3 bg-secondary/30 rounded-lg text-sm">
-                      <span className="w-28 text-muted-foreground shrink-0">
-                        {format(new Date(log.created_at), 'MMM d, h:mm a')}
-                      </span>
-                      <Badge variant="outline">{log.action.replace(/_/g, ' ')}</Badge>
-                      <span className="text-muted-foreground">{log.resource_type}</span>
-                    </div>
-                  ))}
-                </div>
+                <EnhancedAuditLog />
               </TabsContent>
 
               {/* System Tab */}
@@ -864,6 +855,14 @@ export default function Admin() {
           </Tabs>
         </Card>
       </div>
+      
+      {/* User Detail Drawer */}
+      <UserDetailDrawer 
+        user={detailUser} 
+        open={userDetailOpen} 
+        onOpenChange={setUserDetailOpen}
+        onExportData={exportUserData}
+      />
     </div>
   );
 }
