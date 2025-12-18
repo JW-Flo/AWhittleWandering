@@ -22,6 +22,7 @@ import PhotoUpload from '@/components/PhotoUpload';
 import FlagshipGate from '@/components/FlagshipGate';
 import RouteNavigator from '@/components/RouteNavigator';
 import { JourneyList } from '@/components/journey/JourneyList';
+import { LoginAlertsBanner } from '@/components/LoginAlertsBanner';
 import { useTessieData } from '@/hooks/useTessieData';
 import { 
   MapPin, 
@@ -211,6 +212,9 @@ export default function Dashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-8">
+        {/* Login Security Alerts */}
+        <LoginAlertsBanner />
+
         {/* Welcome Section */}
         <section className="space-y-2">
           <h2 className="text-3xl font-bold text-foreground">

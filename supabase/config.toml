@@ -29,6 +29,9 @@ double_confirm_changes = false
 [functions.archive-cleanup]
 verify_jwt = false
 
+[functions.auth-security]
+verify_jwt = false
+
 [functions.csv-import]
 verify_jwt = true
 
