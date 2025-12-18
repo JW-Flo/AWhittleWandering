@@ -1883,6 +1883,20 @@ export type Database = {
           speed_mph: number
         }[]
       }
+      get_public_flagship_waypoints: {
+        Args: never
+        Returns: {
+          arrived_at: string
+          id: string
+          is_highlight: boolean
+          latitude_approx: number
+          longitude_approx: number
+          name: string
+          state_code: string
+          waypoint_number: number
+          waypoint_type: string
+        }[]
+      }
       get_public_profile: {
         Args: { p_user_id: string }
         Returns: {
