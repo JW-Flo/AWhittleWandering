@@ -5,6 +5,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { VisitorSessionDrawer } from './VisitorSessionDrawer';
 import { 
@@ -29,9 +34,13 @@ import {
   Repeat,
   Chrome,
   Megaphone,
-  Download
+  Download,
+  Ban,
+  ShieldX,
+  ShieldCheck,
+  Trash2
 } from 'lucide-react';
-import { format, subDays, startOfDay } from 'date-fns';
+import { format, subDays, startOfDay, addDays } from 'date-fns';
 
 interface PageView {
   id: string;
@@ -118,6 +127,16 @@ export function VisitorAnalytics() {
   const [sessions, setSessions] = useState<VisitorSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<VisitorSession | null>(null);
   const [sessionDrawerOpen, setSessionDrawerOpen] = useState(false);
+  
+  // Blocked visitors state
+  const [blockedVisitors, setBlockedVisitors] = useState<string[]>([]);
+  const [blockDialogOpen, setBlockDialogOpen] = useState(false);
+  const [visitorToBlock, setVisitorToBlock] = useState<VisitorSession | null>(null);
+  const [blockReason, setBlockReason] = useState('');
+  const [blockPermanent, setBlockPermanent] = useState(false);
+  const [blockDuration, setBlockDuration] = useState('7');
+  const [blocking, setBlocking] = useState(false);
+  
   const [summary, setSummary] = useState<AnalyticsSummary>({
     total_views: 0,
     unique_visitors: 0,
@@ -141,6 +160,7 @@ export function VisitorAnalytics() {
 
   useEffect(() => {
     fetchAnalytics();
+    fetchBlockedVisitors();
   }, [dateRange]);
 
   const fetchAnalytics = async () => {
@@ -373,6 +393,88 @@ export function VisitorAnalytics() {
     }
   };
 
+  const fetchBlockedVisitors = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('blocked_visitors')
+        .select('visitor_id')
+        .or('is_permanent.eq.true,expires_at.gt.' + new Date().toISOString());
+      
+      if (error) {
+        console.error('Error fetching blocked visitors:', error);
+        return;
+      }
+      
+      setBlockedVisitors((data || []).map(b => b.visitor_id));
+    } catch (error) {
+      console.error('Error fetching blocked visitors:', error);
+    }
+  };
+
+  const handleBlockVisitor = async () => {
+    if (!visitorToBlock) return;
+    
+    setBlocking(true);
+    try {
+      const expiresAt = blockPermanent 
+        ? null 
+        : addDays(new Date(), parseInt(blockDuration)).toISOString();
+      
+      const { error } = await supabase
+        .from('blocked_visitors')
+        .upsert({
+          visitor_id: visitorToBlock.visitor_id,
+          reason: blockReason || 'Blocked by admin',
+          expires_at: expiresAt,
+          is_permanent: blockPermanent,
+          user_agent: visitorToBlock.user_agent
+        }, { onConflict: 'visitor_id' });
+
+      if (error) throw error;
+
+      toast({ 
+        title: "Visitor Blocked", 
+        description: `Visitor ${visitorToBlock.visitor_id} has been blocked ${blockPermanent ? 'permanently' : `for ${blockDuration} days`}` 
+      });
+      
+      setBlockedVisitors(prev => [...prev, visitorToBlock.visitor_id]);
+      setBlockDialogOpen(false);
+      setVisitorToBlock(null);
+      setBlockReason('');
+      setBlockPermanent(false);
+    } catch (error) {
+      console.error('Error blocking visitor:', error);
+      toast({ title: "Error", description: "Failed to block visitor", variant: "destructive" });
+    } finally {
+      setBlocking(false);
+    }
+  };
+
+  const handleUnblockVisitor = async (visitorId: string) => {
+    try {
+      const { error } = await supabase
+        .from('blocked_visitors')
+        .delete()
+        .eq('visitor_id', visitorId);
+
+      if (error) throw error;
+
+      toast({ title: "Visitor Unblocked", description: `Visitor ${visitorId} has been unblocked` });
+      setBlockedVisitors(prev => prev.filter(v => v !== visitorId));
+    } catch (error) {
+      console.error('Error unblocking visitor:', error);
+      toast({ title: "Error", description: "Failed to unblock visitor", variant: "destructive" });
+    }
+  };
+
+  const openBlockDialog = (session: VisitorSession) => {
+    setVisitorToBlock(session);
+    setBlockReason('');
+    setBlockPermanent(false);
+    setBlockDuration('7');
+    setBlockDialogOpen(true);
+  };
+
   const exportData = () => {
     const exportObj = {
       exported_at: new Date().toISOString(),
@@ -584,6 +686,15 @@ export function VisitorAnalytics() {
                         )}
                       </div>
                       <div className="flex items-center gap-2">
+                        {blockedVisitors.includes(session.visitor_id) ? (
+                          <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleUnblockVisitor(session.visitor_id); }}>
+                            <ShieldCheck className="w-3 h-3 mr-1" />Unblock
+                          </Button>
+                        ) : (
+                          <Button size="sm" variant="ghost" className="text-destructive" onClick={(e) => { e.stopPropagation(); openBlockDialog(session); }}>
+                            <Ban className="w-3 h-3 mr-1" />Block
+                          </Button>
+                        )}
                         <span className="text-xs text-muted-foreground">
                           {format(new Date(session.last_seen), 'MMM d, h:mm a')}
                         </span>
@@ -958,6 +1069,55 @@ export function VisitorAnalytics() {
       open={sessionDrawerOpen}
       onOpenChange={setSessionDrawerOpen}
     />
+    
+    {/* Block Visitor Dialog */}
+    <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Ban className="w-5 h-5 text-destructive" />
+            Block Visitor
+          </DialogTitle>
+          <DialogDescription>
+            Block visitor {visitorToBlock?.visitor_id} from accessing the site.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label>Reason</Label>
+            <Textarea
+              value={blockReason}
+              onChange={(e) => setBlockReason(e.target.value)}
+              placeholder="Why are you blocking this visitor?"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch checked={blockPermanent} onCheckedChange={setBlockPermanent} />
+            <Label>Permanent block</Label>
+          </div>
+          {!blockPermanent && (
+            <div>
+              <Label>Duration (days)</Label>
+              <Select value={blockDuration} onValueChange={setBlockDuration}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 day</SelectItem>
+                  <SelectItem value="7">7 days</SelectItem>
+                  <SelectItem value="30">30 days</SelectItem>
+                  <SelectItem value="90">90 days</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setBlockDialogOpen(false)}>Cancel</Button>
+          <Button variant="destructive" onClick={handleBlockVisitor} disabled={blocking}>
+            {blocking ? 'Blocking...' : 'Block Visitor'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </>
   );
 }

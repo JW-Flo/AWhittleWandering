@@ -9,6 +9,8 @@ const corsHeaders = {
 // Inactive is 90 days, so total max storage for inactive is 180 days (90 days inactive + 90 days retention)
 const INACTIVE_DAYS = 90;
 const DAYS_BEFORE_DELETION_WARNING = 14;
+// Default data retention is 1 year (365 days)
+const DEFAULT_RETENTION_DAYS = 365;
 
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -75,6 +77,103 @@ serve(async (req: Request): Promise<Response> => {
     const inactiveThreshold = new Date(now.getTime() - INACTIVE_DAYS * 24 * 60 * 60 * 1000);
     const warningThreshold = new Date(now.getTime() + DAYS_BEFORE_DELETION_WARNING * 24 * 60 * 60 * 1000);
 
+    // Track cleanup stats
+    const cleanupStats = {
+      pageViewsDeleted: 0,
+      auditLogsDeleted: 0,
+      loginAttemptsDeleted: 0,
+      notificationsDeleted: 0,
+      tessieDrivesDeleted: 0,
+      expiredBlocksDeleted: 0,
+    };
+
+    // ========================================
+    // DATA RETENTION CLEANUP (1 YEAR DEFAULT)
+    // ========================================
+    console.log("Starting data retention cleanup (1 year policy)...");
+
+    // Fetch retention config
+    const { data: retentionConfig } = await supabase
+      .from("data_retention_config")
+      .select("table_name, retention_days, is_enabled");
+
+    const getRetentionDays = (tableName: string): number => {
+      const config = retentionConfig?.find(c => c.table_name === tableName);
+      return config?.is_enabled ? (config.retention_days || DEFAULT_RETENTION_DAYS) : DEFAULT_RETENTION_DAYS;
+    };
+
+    // 1. Clean up old page_views (default 1 year)
+    const pageViewsRetention = getRetentionDays("page_views");
+    const pageViewsCutoff = new Date(now.getTime() - pageViewsRetention * 24 * 60 * 60 * 1000);
+    console.log(`Cleaning page_views older than ${pageViewsRetention} days (${pageViewsCutoff.toISOString()})`);
+    
+    const { count: pageViewsCount } = await supabase
+      .from("page_views")
+      .delete({ count: "exact" })
+      .lt("viewed_at", pageViewsCutoff.toISOString());
+    cleanupStats.pageViewsDeleted = pageViewsCount || 0;
+
+    // 2. Clean up old security_audit_log (default 1 year)
+    const auditRetention = getRetentionDays("security_audit_log");
+    const auditCutoff = new Date(now.getTime() - auditRetention * 24 * 60 * 60 * 1000);
+    console.log(`Cleaning security_audit_log older than ${auditRetention} days`);
+    
+    const { count: auditCount } = await supabase
+      .from("security_audit_log")
+      .delete({ count: "exact" })
+      .lt("created_at", auditCutoff.toISOString());
+    cleanupStats.auditLogsDeleted = auditCount || 0;
+
+    // 3. Clean up old login_attempts (90 days)
+    const loginRetention = getRetentionDays("login_attempts");
+    const loginCutoff = new Date(now.getTime() - loginRetention * 24 * 60 * 60 * 1000);
+    console.log(`Cleaning login_attempts older than ${loginRetention} days`);
+    
+    const { count: loginCount } = await supabase
+      .from("login_attempts")
+      .delete({ count: "exact" })
+      .lt("created_at", loginCutoff.toISOString());
+    cleanupStats.loginAttemptsDeleted = loginCount || 0;
+
+    // 4. Clean up old processed notifications (90 days)
+    const notifRetention = getRetentionDays("notification_queue");
+    const notifCutoff = new Date(now.getTime() - notifRetention * 24 * 60 * 60 * 1000);
+    console.log(`Cleaning sent notification_queue older than ${notifRetention} days`);
+    
+    const { count: notifCount } = await supabase
+      .from("notification_queue")
+      .delete({ count: "exact" })
+      .eq("sent", true)
+      .lt("sent_at", notifCutoff.toISOString());
+    cleanupStats.notificationsDeleted = notifCount || 0;
+
+    // 5. Clean up old tessie_drives (1 year)
+    const tessieRetention = getRetentionDays("tessie_drives");
+    const tessieCutoff = new Date(now.getTime() - tessieRetention * 24 * 60 * 60 * 1000);
+    console.log(`Cleaning tessie_drives older than ${tessieRetention} days`);
+    
+    const { count: tessieCount } = await supabase
+      .from("tessie_drives")
+      .delete({ count: "exact" })
+      .lt("created_at", tessieCutoff.toISOString());
+    cleanupStats.tessieDrivesDeleted = tessieCount || 0;
+
+    // 6. Clean up expired blocked_visitors
+    console.log("Cleaning expired visitor blocks...");
+    const { count: blocksCount } = await supabase
+      .from("blocked_visitors")
+      .delete({ count: "exact" })
+      .eq("is_permanent", false)
+      .not("expires_at", "is", null)
+      .lt("expires_at", now.toISOString());
+    cleanupStats.expiredBlocksDeleted = blocksCount || 0;
+
+    console.log("Data retention cleanup complete:", cleanupStats);
+
+    // ========================================
+    // JOURNEY ARCHIVE LIFECYCLE
+    // ========================================
+    
     // 1. Update archive expiration for newly inactive users
     console.log("Checking for newly inactive users...");
     const { data: inactiveProfiles, error: profileError } = await supabase
@@ -270,6 +369,7 @@ serve(async (req: Request): Promise<Response> => {
 
     const summary = {
       timestamp: now.toISOString(),
+      dataRetention: cleanupStats,
       inactiveUsersProcessed: inactiveProfiles?.length || 0,
       warningsQueued: warningJourneys?.length || 0,
       journeysDeleted: expiredJourneys?.length || 0,
