@@ -105,21 +105,18 @@ export default function Dashboard() {
   };
 
   const fetchMapboxToken = async () => {
-    // Try env var first
-    const envToken = import.meta.env.VITE_MAPBOX_TOKEN;
-    if (envToken) {
-      console.log('[Dashboard] Using VITE_MAPBOX_TOKEN from env');
-      setMapboxToken(envToken);
-      return;
-    }
-    
-    // Fallback to edge function
+    // Always fetch from edge function (token is stored as secret)
     try {
       console.log('[Dashboard] Fetching mapbox token from edge function...');
       const { data, error } = await supabase.functions.invoke('get-mapbox-token');
       
       if (error) {
         console.error('[Dashboard] Edge function error:', error);
+        toast({
+          title: "Map Loading Error",
+          description: "Could not load map credentials. Please try refreshing.",
+          variant: "destructive"
+        });
         return;
       }
       
@@ -546,7 +543,7 @@ export default function Dashboard() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                <MediaGallery />
+                <MediaGallery journeyId={currentJourney?.id} />
               </div>
               <div>
                 {currentJourney && (

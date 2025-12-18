@@ -400,8 +400,12 @@ const ImmersiveJourneyMap: React.FC<ImmersiveJourneyMapProps> = ({
 
   if (!mapboxToken) {
     return (
-      <div className={`flex items-center justify-center bg-muted rounded-lg ${className}`}>
+      <div className={`flex flex-col items-center justify-center bg-muted/50 rounded-2xl ${className}`} style={{ minHeight: '400px' }}>
+        <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center animate-pulse mb-4">
+          <MapPin className="w-8 h-8 text-primary" />
+        </div>
         <p className="text-muted-foreground">Loading map...</p>
+        <p className="text-xs text-muted-foreground/60">Waiting for Mapbox token</p>
       </div>
     );
   }

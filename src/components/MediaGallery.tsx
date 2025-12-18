@@ -16,8 +16,10 @@ import {
   Download,
   Trash2,
   Share2,
-  Star
+  Star,
+  Loader2
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MediaItem {
   id: string;
@@ -45,93 +47,86 @@ interface MediaItem {
 }
 
 interface MediaGalleryProps {
-  media?: MediaItem[];
+  journeyId?: string;
   onMediaSelect?: (media: MediaItem) => void;
   onMediaDelete?: (mediaId: string) => void;
   onMediaUpdate?: (mediaId: string, updates: Partial<MediaItem>) => void;
 }
 
-// Sample media data
-const sampleMedia: MediaItem[] = [
-  {
-    id: '1',
-    type: 'photo',
-    filename: 'grand_canyon_1.jpg',
-    url: 'https://images.unsplash.com/photo-1474044159687-1ee9f3a51722?w=800',
-    title: 'Grand Canyon Sunrise',
-    description: 'First morning at the Grand Canyon, the colors were incredible',
-    location: { state: 'Arizona', city: 'Grand Canyon Village' },
-    timestamp: '2025-06-12T06:30:00Z',
-    tags: ['sunrise', 'canyon', 'nature'],
-    tripDay: 10,
-    fileSize: 4500000,
-    uploadedAt: '2025-06-12T12:00:00Z',
-    isFavorite: true,
-    views: 245
-  },
-  {
-    id: '2',
-    type: 'photo',
-    filename: 'pch_coast.jpg',
-    url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800',
-    title: 'Pacific Coast Highway',
-    description: 'Driving along the stunning California coastline',
-    location: { state: 'California', city: 'Big Sur' },
-    timestamp: '2025-06-16T14:20:00Z',
-    tags: ['coast', 'driving', 'ocean'],
-    tripDay: 14,
-    fileSize: 3800000,
-    uploadedAt: '2025-06-16T18:00:00Z',
-    isFavorite: true,
-    views: 189
-  },
-  {
-    id: '3',
-    type: 'photo',
-    filename: 'crater_lake.jpg',
-    url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800',
-    title: 'Crater Lake Blue',
-    description: 'The deepest blue water I have ever seen',
-    location: { state: 'Oregon', city: 'Crater Lake' },
-    timestamp: '2025-06-20T11:45:00Z',
-    tags: ['lake', 'blue', 'national-park'],
-    tripDay: 18,
-    fileSize: 5200000,
-    uploadedAt: '2025-06-20T16:00:00Z',
-    isFavorite: false,
-    views: 156
-  },
-  {
-    id: '4',
-    type: 'photo',
-    filename: 'white_sands.jpg',
-    url: 'https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=800',
-    title: 'White Sands Dunes',
-    description: 'Otherworldly landscape at White Sands',
-    location: { state: 'New Mexico', city: 'Alamogordo' },
-    timestamp: '2025-06-08T16:30:00Z',
-    tags: ['desert', 'dunes', 'sunset'],
-    tripDay: 6,
-    fileSize: 4100000,
-    uploadedAt: '2025-06-08T20:00:00Z',
-    isFavorite: true,
-    views: 312
-  },
-];
-
 const MediaGallery: React.FC<MediaGalleryProps> = ({
-  media = sampleMedia,
+  journeyId,
   onMediaSelect,
   onMediaDelete,
   onMediaUpdate
 }) => {
-  const [filteredMedia, setFilteredMedia] = useState<MediaItem[]>(media);
+  const [media, setMedia] = useState<MediaItem[]>([]);
+  const [filteredMedia, setFilteredMedia] = useState<MediaItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedState, setSelectedState] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'size' | 'state'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // Fetch media from database
+  useEffect(() => {
+    const fetchMedia = async () => {
+      setLoading(true);
+      try {
+        let query = supabase
+          .from('journey_media')
+          .select('*')
+          .order('taken_at', { ascending: false });
+
+        if (journeyId) {
+          query = query.eq('journey_id', journeyId);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          console.error('Error fetching media:', error);
+          return;
+        }
+
+        if (data) {
+          const mappedMedia: MediaItem[] = data.map((item, index) => ({
+            id: item.id,
+            type: item.type as 'photo' | 'video',
+            filename: item.file_path.split('/').pop() || 'unknown',
+            url: item.file_url,
+            thumbnailUrl: item.thumbnail_url || item.file_url,
+            title: item.caption || `Media ${index + 1}`,
+            description: item.caption || '',
+            location: {
+              state: item.state_code || 'Unknown',
+              city: item.location_name || 'Unknown',
+              coordinates: item.latitude && item.longitude ? {
+                lat: Number(item.latitude),
+                lng: Number(item.longitude)
+              } : undefined
+            },
+            timestamp: item.taken_at || item.created_at,
+            tags: item.tags || [],
+            tripDay: 1, // Would need calculation based on journey start
+            fileSize: item.file_size_bytes || 0,
+            uploadedAt: item.created_at,
+            isFavorite: item.is_favorite || false,
+            views: 0
+          }));
+          setMedia(mappedMedia);
+          setFilteredMedia(mappedMedia);
+        }
+      } catch (err) {
+        console.error('Failed to fetch media:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMedia();
+  }, [journeyId]);
 
   useEffect(() => {
     let filtered = [...media];
@@ -343,6 +338,17 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
       )}
     </Card>
   );
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <span className="ml-3 text-muted-foreground">Loading media...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

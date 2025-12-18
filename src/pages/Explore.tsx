@@ -70,7 +70,7 @@ export default function Explore() {
         console.log('[Explore] Loading timeout - forcing isLoading=false');
         setIsLoading(false);
       }
-    }, 10000);
+    }, 3000);
 
     async function fetchData() {
       console.log('[Explore] Starting fetchData...');
