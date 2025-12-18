@@ -88,3 +88,6 @@ verify_jwt = true
 
 [functions.audit-d1-sync]
 verify_jwt = true
+
+[functions.security-audit]
+verify_jwt = false
