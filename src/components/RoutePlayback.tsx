@@ -41,73 +41,90 @@ export default function RoutePlayback({ mapboxToken, className = '', onWaypointC
     }
     
     if (!mapboxToken) {
-      console.warn('[RoutePlayback] No mapbox token');
-      setMapError('Mapbox token not available');
+      console.warn('[RoutePlayback] No mapbox token yet');
       return;
     }
 
-    // Reset error state on retry
+    // Reset error state on new attempt
     setMapError(null);
 
-    // Check container dimensions
-    const rect = mapContainer.current.getBoundingClientRect();
-    console.log('[RoutePlayback] Container dimensions:', rect.width, 'x', rect.height);
-    
-    // If container has no dimensions, wait for next frame
-    if (rect.width === 0 || rect.height === 0) {
-      console.log('[RoutePlayback] Container has no dimensions, retrying...');
-      const timeoutId = setTimeout(() => {
-        if (mapContainer.current) {
-          mapContainer.current.style.minHeight = '400px';
-          setRetryCount(prev => prev + 1);
-        }
-      }, 100);
-      return () => clearTimeout(timeoutId);
-    }
-
-    try {
-      mapboxgl.accessToken = mapboxToken;
-      console.log('[RoutePlayback] Creating map...');
-
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/satellite-streets-v12',
-        center: [currentWaypoint.lng, currentWaypoint.lat],
-        zoom: 10,
-        pitch: 45,
-        bearing: -17.6,
-        attributionControl: true,
-        preserveDrawingBuffer: true,
-      });
-
-      map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
-
-      map.current.on('load', () => {
-        console.log('[RoutePlayback] Map loaded successfully');
-        setMapLoaded(true);
-        setMapError(null);
-        addRouteLayer();
-        addVehicleMarker();
-      });
-
-      map.current.on('error', (e) => {
-        console.error('[RoutePlayback] Map error:', e);
-        setMapError('Failed to load map. Please check your connection.');
-      });
+    // Ensure container has dimensions before creating map
+    const initMap = () => {
+      if (!mapContainer.current) return;
       
-      map.current.on('idle', () => {
-        console.log('[RoutePlayback] Map idle');
-      });
-    } catch (error) {
-      console.error('[RoutePlayback] Failed to create map:', error);
-      setMapError('Failed to initialize map');
-    }
+      const rect = mapContainer.current.getBoundingClientRect();
+      console.log('[RoutePlayback] Container dimensions:', rect.width, 'x', rect.height);
+      
+      // If container has no dimensions, retry after layout
+      if (rect.width === 0 || rect.height === 0) {
+        console.log('[RoutePlayback] Container has no dimensions, will retry...');
+        const retryTimeout = setTimeout(() => setRetryCount(prev => prev + 1), 200);
+        return () => clearTimeout(retryTimeout);
+      }
+
+      // Don't create a new map if one already exists
+      if (map.current) {
+        console.log('[RoutePlayback] Map already exists, skipping init');
+        return;
+      }
+
+      try {
+        mapboxgl.accessToken = mapboxToken;
+        console.log('[RoutePlayback] Creating map with token:', mapboxToken.substring(0, 20) + '...');
+        
+        // Ensure waypoint data exists
+        const waypoint = journeyWaypoints[0] || { lng: -97.388860, lat: 27.741570 };
+        console.log('[RoutePlayback] Initial center:', waypoint.lng, waypoint.lat);
+
+        map.current = new mapboxgl.Map({
+          container: mapContainer.current,
+          style: 'mapbox://styles/mapbox/satellite-streets-v12',
+          center: [waypoint.lng, waypoint.lat],
+          zoom: 10,
+          pitch: 45,
+          bearing: -17.6,
+          attributionControl: true,
+          preserveDrawingBuffer: true,
+        });
+
+        map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
+
+        map.current.on('load', () => {
+          console.log('[RoutePlayback] Map loaded successfully');
+          setMapLoaded(true);
+          setMapError(null);
+          addRouteLayer();
+          addVehicleMarker();
+        });
+
+        map.current.on('error', (e) => {
+          console.error('[RoutePlayback] Map error:', e);
+          setMapError('Failed to load map. Please check your connection.');
+        });
+        
+        map.current.on('idle', () => {
+          console.log('[RoutePlayback] Map idle');
+        });
+      } catch (error: any) {
+        console.error('[RoutePlayback] Failed to create map:', error?.message || error);
+        setMapError(`Failed to initialize map: ${error?.message || 'Unknown error'}`);
+      }
+    };
+
+    // Small delay to ensure DOM is ready
+    const initTimeout = setTimeout(initMap, 100);
 
     return () => {
+      clearTimeout(initTimeout);
       if (animationRef.current) clearTimeout(animationRef.current);
-      vehicleMarker.current?.remove();
-      map.current?.remove();
-      map.current = null;
+      if (vehicleMarker.current) {
+        vehicleMarker.current.remove();
+        vehicleMarker.current = null;
+      }
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
     };
   }, [mapboxToken, retryCount]);
 
@@ -271,18 +288,27 @@ export default function RoutePlayback({ mapboxToken, className = '', onWaypointC
     setRetryCount(prev => prev + 1);
   };
 
-  if (!mapboxToken || mapError) {
+  // Show error/loading state only when there's an actual error
+  if (mapError) {
     return (
       <div className={`flex flex-col items-center justify-center bg-muted/50 rounded-2xl ${className}`} style={{ minHeight: '400px' }}>
         <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
-        <p className="text-muted-foreground mb-2">{mapError || 'Loading map...'}</p>
-        <p className="text-xs text-muted-foreground/60 mb-4">
-          {!mapboxToken ? 'Waiting for Mapbox token...' : 'Please try again'}
-        </p>
+        <p className="text-muted-foreground mb-2">{mapError}</p>
+        <p className="text-xs text-muted-foreground/60 mb-4">Please try again</p>
         <Button variant="outline" size="sm" onClick={handleRetry}>
           <RefreshCw className="w-4 h-4 mr-2" />
           Retry
         </Button>
+      </div>
+    );
+  }
+
+  // Show loading state while waiting for token
+  if (!mapboxToken) {
+    return (
+      <div className={`flex flex-col items-center justify-center bg-muted/50 rounded-2xl ${className}`} style={{ minHeight: '400px' }}>
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-muted-foreground">Loading map...</p>
       </div>
     );
   }
