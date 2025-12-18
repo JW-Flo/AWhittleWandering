@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Image, Video, MapPin, Calendar, User, Heart, X, ChevronLeft, ChevronRight, Grid, List, Filter, Play } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Image, Video, MapPin, Calendar, User, Heart, ChevronLeft, ChevronRight, Grid, List, Play, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MediaItem {
   id: string;
@@ -25,153 +26,93 @@ interface LocationMediaGalleryProps {
   currentWaypoint?: JourneyWaypoint | null;
   currentIndex?: number;
   className?: string;
+  journeyId?: string;
 }
 
-// Sample media data synced to journey locations
-const sampleMedia: MediaItem[] = [
-  {
-    id: '1',
-    type: 'photo',
-    url: 'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=800',
-    caption: 'Starting the journey from Corpus Christi',
-    date: 'Jun 3',
-    state: 'TX',
-    location: { lat: 27.741570, lng: -97.388860, name: 'Corpus Christi' },
-    people: ['Alec'],
-    tags: ['start', 'beach', 'tesla'],
-    isFavorite: true,
-  },
-  {
-    id: '2',
-    type: 'photo',
-    url: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800',
-    caption: 'Texas Hill Country views',
-    date: 'Jun 6',
-    state: 'TX',
-    location: { lat: 30.256390, lng: -97.796510, name: 'Austin' },
-    people: [],
-    tags: ['scenic', 'hills'],
-  },
-  {
-    id: '3',
-    type: 'photo',
-    url: 'https://images.unsplash.com/photo-1494783367193-149034c05e8f?w=800',
-    caption: 'Welcome to New Mexico!',
-    date: 'Jun 7',
-    state: 'NM',
-    location: { lat: 32.346810, lng: -106.764740, name: 'Las Cruces' },
-    tags: ['state-crossing', 'desert'],
-  },
-  {
-    id: '4',
-    type: 'photo',
-    url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800',
-    caption: 'Arizona desert sunset',
-    date: 'Jun 8',
-    state: 'AZ',
-    location: { lat: 32.221740, lng: -110.926480, name: 'Tucson' },
-    tags: ['sunset', 'desert'],
-    isFavorite: true,
-  },
-  {
-    id: '5',
-    type: 'video',
-    url: 'https://images.unsplash.com/photo-1533587851505-d119e13fa0d7?w=800',
-    thumbnail: 'https://images.unsplash.com/photo-1533587851505-d119e13fa0d7?w=400',
-    caption: 'Driving through Phoenix',
-    date: 'Jun 9',
-    state: 'AZ',
-    location: { lat: 33.448376, lng: -112.074036, name: 'Phoenix' },
-    tags: ['driving', 'city'],
-  },
-  {
-    id: '6',
-    type: 'photo',
-    url: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800',
-    caption: 'Pacific Coast Highway views',
-    date: 'Jun 15',
-    state: 'CA',
-    location: { lat: 34.014736, lng: -118.493730, name: 'Santa Monica' },
-    people: ['Alec', 'Friend'],
-    tags: ['ocean', 'scenic'],
-    isFavorite: true,
-  },
-  {
-    id: '7',
-    type: 'photo',
-    url: 'https://images.unsplash.com/photo-1449034446853-66c86144b0ad?w=800',
-    caption: 'Golden Gate Bridge at sunset',
-    date: 'Jun 18',
-    state: 'CA',
-    location: { lat: 37.774929, lng: -122.419418, name: 'San Francisco' },
-    tags: ['landmark', 'bridge'],
-    isFavorite: true,
-  },
-  {
-    id: '8',
-    type: 'photo',
-    url: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800',
-    caption: 'Oregon coast beauty',
-    date: 'Jun 21',
-    state: 'OR',
-    location: { lat: 45.512230, lng: -122.658722, name: 'Portland' },
-    tags: ['coast', 'scenic'],
-  },
-  {
-    id: '9',
-    type: 'photo',
-    url: 'https://images.unsplash.com/photo-1416339442236-8ceb164046f8?w=800',
-    caption: 'Seattle skyline',
-    date: 'Jun 22',
-    state: 'WA',
-    location: { lat: 47.606209, lng: -122.332069, name: 'Seattle' },
-    people: ['Alec', 'Local Friend'],
-    tags: ['city', 'skyline'],
-  },
-  {
-    id: '10',
-    type: 'photo',
-    url: 'https://images.unsplash.com/photo-1472396961693-142e6e269027?w=800',
-    caption: 'Yellowstone hot springs',
-    date: 'Jun 29',
-    state: 'WY',
-    location: { lat: 44.427963, lng: -110.588455, name: 'Yellowstone' },
-    tags: ['national-park', 'nature'],
-    isFavorite: true,
-  },
-];
-
-export default function LocationMediaGallery({ currentWaypoint, currentIndex = 0, className = '' }: LocationMediaGalleryProps) {
+export default function LocationMediaGallery({ currentWaypoint, currentIndex = 0, className = '', journeyId }: LocationMediaGalleryProps) {
+  const [media, setMedia] = useState<MediaItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showAll, setShowAll] = useState(false);
   const [filterPeople, setFilterPeople] = useState<string | null>(null);
 
+  // Fetch media from database
+  useEffect(() => {
+    const fetchMedia = async () => {
+      setLoading(true);
+      try {
+        let query = supabase
+          .from('journey_media')
+          .select('*')
+          .order('taken_at', { ascending: false });
+        
+        if (journeyId) {
+          query = query.eq('journey_id', journeyId);
+        }
+
+        const { data, error } = await query.limit(50);
+        
+        if (error) {
+          console.error('Error fetching media:', error);
+          return;
+        }
+
+        if (data) {
+          const mappedMedia: MediaItem[] = data.map(item => ({
+            id: item.id,
+            type: item.type as 'photo' | 'video',
+            url: item.file_url,
+            thumbnail: item.thumbnail_url || item.file_url,
+            caption: item.caption || '',
+            date: item.taken_at ? new Date(item.taken_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
+            state: item.state_code || '',
+            location: {
+              lat: Number(item.latitude) || 0,
+              lng: Number(item.longitude) || 0,
+              name: item.location_name || 'Unknown'
+            },
+            people: item.people_tagged || [],
+            tags: item.tags || [],
+            isFavorite: item.is_favorite || false
+          }));
+          setMedia(mappedMedia);
+        }
+      } catch (err) {
+        console.error('Failed to fetch media:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMedia();
+  }, [journeyId]);
+
   // Filter media based on current waypoint location
   const filteredMedia = useMemo(() => {
-    let media = sampleMedia;
+    let filtered = media;
 
     // If showing nearby media, filter by state
     if (!showAll && currentWaypoint) {
-      media = media.filter(m => m.state === currentWaypoint.state);
+      filtered = filtered.filter(m => m.state === currentWaypoint.state);
     }
 
     // Filter by people if selected
     if (filterPeople) {
-      media = media.filter(m => m.people?.includes(filterPeople));
+      filtered = filtered.filter(m => m.people?.includes(filterPeople));
     }
 
-    return media;
-  }, [currentWaypoint, showAll, filterPeople]);
+    return filtered;
+  }, [media, currentWaypoint, showAll, filterPeople]);
 
   // Get unique people for filtering
   const uniquePeople = useMemo(() => {
     const people = new Set<string>();
-    sampleMedia.forEach(m => m.people?.forEach(p => people.add(p)));
+    media.forEach(m => m.people?.forEach(p => people.add(p)));
     return Array.from(people);
-  }, []);
+  }, [media]);
 
-  const openMedia = (media: MediaItem) => setSelectedMedia(media);
+  const openMedia = (mediaItem: MediaItem) => setSelectedMedia(mediaItem);
   const closeMedia = () => setSelectedMedia(null);
 
   const navigateMedia = (direction: 'prev' | 'next') => {
@@ -182,6 +123,17 @@ export default function LocationMediaGallery({ currentWaypoint, currentIndex = 0
       : (idx - 1 + filteredMedia.length) % filteredMedia.length;
     setSelectedMedia(filteredMedia[newIdx]);
   };
+
+  if (loading) {
+    return (
+      <Card className={`card-tesla ${className}`}>
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <span className="ml-2 text-muted-foreground">Loading media...</span>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className={`card-tesla ${className}`}>
@@ -257,38 +209,40 @@ export default function LocationMediaGallery({ currentWaypoint, currentIndex = 0
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Image className="w-12 h-12 text-muted-foreground mb-3" />
             <p className="text-sm text-muted-foreground">
-              No media for {currentWaypoint?.state || 'this location'}
+              {media.length === 0 ? 'No media uploaded yet' : `No media for ${currentWaypoint?.state || 'this location'}`}
             </p>
-            <Button size="sm" variant="link" onClick={() => setShowAll(true)}>
-              Show all media
-            </Button>
+            {media.length > 0 && (
+              <Button size="sm" variant="link" onClick={() => setShowAll(true)}>
+                Show all media
+              </Button>
+            )}
           </div>
         ) : (
           <ScrollArea className="h-[320px]">
             {viewMode === 'grid' ? (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {filteredMedia.map(media => (
+                {filteredMedia.map(mediaItem => (
                   <div
-                    key={media.id}
+                    key={mediaItem.id}
                     className="relative aspect-square rounded-lg overflow-hidden cursor-pointer group"
-                    onClick={() => openMedia(media)}
+                    onClick={() => openMedia(mediaItem)}
                   >
                     <img
-                      src={media.thumbnail || media.url}
-                      alt={media.caption}
+                      src={mediaItem.thumbnail || mediaItem.url}
+                      alt={mediaItem.caption}
                       className="w-full h-full object-cover transition-transform group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     
                     {/* Media type indicator */}
-                    {media.type === 'video' && (
+                    {mediaItem.type === 'video' && (
                       <div className="absolute top-2 right-2 bg-black/60 rounded-full p-1">
                         <Play className="w-3 h-3 text-white" />
                       </div>
                     )}
                     
                     {/* Favorite indicator */}
-                    {media.isFavorite && (
+                    {mediaItem.isFavorite && (
                       <div className="absolute top-2 left-2">
                         <Heart className="w-4 h-4 text-red-500 fill-red-500" />
                       </div>
@@ -296,12 +250,12 @@ export default function LocationMediaGallery({ currentWaypoint, currentIndex = 0
                     
                     {/* Hover info */}
                     <div className="absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <p className="text-white text-xs font-medium line-clamp-1">{media.caption}</p>
+                      <p className="text-white text-xs font-medium line-clamp-1">{mediaItem.caption}</p>
                       <div className="flex items-center gap-1 mt-1">
                         <Badge variant="secondary" className="text-[10px] h-4 bg-white/20 text-white">
-                          {media.state}
+                          {mediaItem.state}
                         </Badge>
-                        <span className="text-white/70 text-[10px]">{media.date}</span>
+                        <span className="text-white/70 text-[10px]">{mediaItem.date}</span>
                       </div>
                     </div>
                   </div>
@@ -309,19 +263,19 @@ export default function LocationMediaGallery({ currentWaypoint, currentIndex = 0
               </div>
             ) : (
               <div className="space-y-2">
-                {filteredMedia.map(media => (
+                {filteredMedia.map(mediaItem => (
                   <div
-                    key={media.id}
+                    key={mediaItem.id}
                     className="flex gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                    onClick={() => openMedia(media)}
+                    onClick={() => openMedia(mediaItem)}
                   >
                     <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
                       <img
-                        src={media.thumbnail || media.url}
-                        alt={media.caption}
+                        src={mediaItem.thumbnail || mediaItem.url}
+                        alt={mediaItem.caption}
                         className="w-full h-full object-cover"
                       />
-                      {media.type === 'video' && (
+                      {mediaItem.type === 'video' && (
                         <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                           <Play className="w-6 h-6 text-white" />
                         </div>
@@ -329,24 +283,24 @@ export default function LocationMediaGallery({ currentWaypoint, currentIndex = 0
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="font-medium text-sm line-clamp-2">{media.caption}</p>
-                        {media.isFavorite && <Heart className="w-4 h-4 text-red-500 fill-red-500 flex-shrink-0" />}
+                        <p className="font-medium text-sm line-clamp-2">{mediaItem.caption}</p>
+                        {mediaItem.isFavorite && <Heart className="w-4 h-4 text-red-500 fill-red-500 flex-shrink-0" />}
                       </div>
                       <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <MapPin className="w-3 h-3" />
-                          {media.location.name}
+                          {mediaItem.location.name}
                         </span>
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
-                          {media.date}
+                          {mediaItem.date}
                         </span>
                       </div>
-                      {media.people && media.people.length > 0 && (
+                      {mediaItem.people && mediaItem.people.length > 0 && (
                         <div className="flex items-center gap-1 mt-1">
                           <User className="w-3 h-3 text-muted-foreground" />
                           <span className="text-xs text-muted-foreground">
-                            {media.people.join(', ')}
+                            {mediaItem.people.join(', ')}
                           </span>
                         </div>
                       )}
