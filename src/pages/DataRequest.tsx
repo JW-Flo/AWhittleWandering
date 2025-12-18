@@ -69,26 +69,19 @@ const DataRequest = () => {
     setSubmitting(true);
 
     try {
-      // Log the DSAR request
-      const { error } = await supabase
-        .from('security_audit_log')
-        .insert({
-          user_id: user?.id || '00000000-0000-0000-0000-000000000000',
-          action: `dsar_${requestType}_submitted`,
-          resource_type: 'dsar_request',
-          metadata: {
-            request_type: requestType,
-            email: email,
-            name: name,
-            details: details,
-            submitted_at: new Date().toISOString(),
-            is_authenticated: !!user
-          }
-        });
+      // Submit DSAR request via edge function (bypasses RLS for anonymous users)
+      const { data, error } = await supabase.functions.invoke('dsar-submit', {
+        body: {
+          request_type: requestType,
+          email: email,
+          name: name,
+          details: details
+        }
+      });
 
-      if (error && error.code !== '42501') {
-        // Ignore RLS errors for anonymous users, but log others
-        console.error('Error logging DSAR:', error);
+      if (error) {
+        console.error('Error submitting DSAR:', error);
+        throw error;
       }
 
       setSubmitted(true);
