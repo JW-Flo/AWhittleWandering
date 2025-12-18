@@ -5,8 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Image, Video, MapPin, Calendar, User, Heart, ChevronLeft, ChevronRight, Grid, List, Play, Loader2 } from 'lucide-react';
+import { Image, Video, MapPin, Calendar, User, Heart, ChevronLeft, ChevronRight, Grid, List, Play, Loader2, Lock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchSignedUrls } from '@/hooks/useSignedUrl';
 
 interface MediaItem {
   id: string;
@@ -58,12 +59,20 @@ export default function LocationMediaGallery({ currentWaypoint, currentIndex = 0
           return;
         }
 
-        if (data) {
+        if (data && data.length > 0) {
+          // Fetch signed URLs for all media files
+          const filesToFetch = data.map(item => ({
+            file_path: item.file_path,
+            journey_id: journeyId
+          }));
+          
+          const signedUrls = await fetchSignedUrls(filesToFetch);
+
           const mappedMedia: MediaItem[] = data.map(item => ({
             id: item.id,
             type: item.type as 'photo' | 'video',
-            url: item.file_url,
-            thumbnail: item.thumbnail_url || item.file_url,
+            url: signedUrls.get(item.file_path) || '',
+            thumbnail: signedUrls.get(item.file_path) || '',
             caption: item.caption || '',
             date: item.taken_at ? new Date(item.taken_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
             state: item.state_code || '',
