@@ -85,6 +85,22 @@ Deno.serve(async (req) => {
       }
 
       console.log(`Created beta account for ${tester.email}`);
+    } else {
+      // Existing user: update their password to the access code for beta sign-in
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+        existingUser.id,
+        { password: sanitizedCode }
+      );
+
+      if (updateError) {
+        console.error('Error updating user password:', updateError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to configure account for beta access' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`Updated beta access for existing user ${tester.email}`);
     }
 
     // Record the access
