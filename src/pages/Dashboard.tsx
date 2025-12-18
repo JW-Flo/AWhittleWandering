@@ -38,7 +38,8 @@ import {
   Database,
   Activity,
   Compass,
-  Settings
+  Settings,
+  RefreshCw
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -107,18 +108,29 @@ export default function Dashboard() {
     // Try env var first
     const envToken = import.meta.env.VITE_MAPBOX_TOKEN;
     if (envToken) {
+      console.log('[Dashboard] Using VITE_MAPBOX_TOKEN from env');
       setMapboxToken(envToken);
       return;
     }
     
     // Fallback to edge function
     try {
+      console.log('[Dashboard] Fetching mapbox token from edge function...');
       const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-      if (!error && data?.token) {
+      
+      if (error) {
+        console.error('[Dashboard] Edge function error:', error);
+        return;
+      }
+      
+      if (data?.token) {
+        console.log('[Dashboard] Got mapbox token from edge function');
         setMapboxToken(data.token);
+      } else {
+        console.warn('[Dashboard] No token in response:', data);
       }
     } catch (err) {
-      console.error('Failed to fetch mapbox token:', err);
+      console.error('[Dashboard] Failed to fetch mapbox token:', err);
     }
   };
 
@@ -282,10 +294,12 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent className="p-0">
                 {mapboxToken ? (
-                  <ImmersiveJourneyMap 
-                    className="h-[500px]"
-                    mapboxToken={mapboxToken}
-                  />
+                  <div className="relative">
+                    <ImmersiveJourneyMap 
+                      className="h-[500px]"
+                      mapboxToken={mapboxToken}
+                    />
+                  </div>
                 ) : (
                   <div className="h-[500px] relative overflow-hidden bg-gradient-to-br from-muted/30 via-muted/50 to-muted/30">
                     {/* Shimmer effect */}
@@ -303,6 +317,15 @@ export default function Dashboard() {
                       </div>
                       <p className="mt-4 text-sm font-medium text-muted-foreground">Loading journey map...</p>
                       <p className="text-xs text-muted-foreground/60">Fetching Mapbox credentials</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-4"
+                        onClick={fetchMapboxToken}
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Retry
+                      </Button>
                     </div>
                     
                     {/* Decorative map grid lines */}
