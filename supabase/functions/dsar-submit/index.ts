@@ -125,7 +125,42 @@ Deno.serve(async (req) => {
     const sanitizedName = sanitizeInput(name);
     const sanitizedDetails = details ? sanitizeInput(details) : '';
 
-    // Insert DSAR request using service role (bypasses RLS)
+    // Check for existing pending DSAR from same email within last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const { data: existingRequests, error: checkError } = await supabase
+      .from('security_audit_log')
+      .select('id, metadata, created_at')
+      .eq('action', 'dsar_submit')
+      .eq('resource_type', 'dsar_request')
+      .gte('created_at', thirtyDaysAgo.toISOString());
+
+    if (checkError) {
+      console.error('[dsar-submit] Error checking existing requests:', checkError);
+    } else if (existingRequests) {
+      // Check if any existing request matches this email
+      const duplicateRequest = existingRequests.find(req => {
+        const metadata = req.metadata as { email?: string; status?: string };
+        return metadata?.email === sanitizedEmail && metadata?.status === 'pending';
+      });
+
+      if (duplicateRequest) {
+        console.warn(`[dsar-submit] Duplicate request blocked for email: ${sanitizedEmail}`);
+        return new Response(
+          JSON.stringify({ 
+            error: 'A pending request from this email already exists. Please wait for it to be processed before submitting another request.',
+            existing_request_date: duplicateRequest.created_at
+          }),
+          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // Log service role operation for audit
+    console.log(`[dsar-submit] Service role operation: inserting DSAR for ${sanitizedEmail} from IP ${clientIp}`);
+
+    // Insert DSAR request using service role
     const { data, error } = await supabase
       .from('security_audit_log')
       .insert({
