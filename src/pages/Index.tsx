@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useActivityLogger } from '@/hooks/useActivityLogger';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import ImmersiveJourneyMap from '@/components/ImmersiveJourneyMap';
@@ -33,20 +34,35 @@ const homepageJsonLd = {
 export default function Index() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { logButtonClick, logPageView } = useActivityLogger();
   const [scrollY, setScrollY] = useState(0);
   const [mapboxToken, setMapboxToken] = useState('');
   const [signInOpen, setSignInOpen] = useState(false);
 
   useEffect(() => {
+    logPageView('/');
     const handleScroll = () => setScrollY(window.scrollY);
     window.addEventListener('scroll', handleScroll);
-    // Use public token from env directly
-    const token = import.meta.env.VITE_MAPBOX_TOKEN;
-    if (token) {
-      setMapboxToken(token);
+    
+    // Fetch mapbox token from edge function
+    async function fetchMapboxToken() {
+      try {
+        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+        if (error) {
+          console.error('Error fetching mapbox token:', error);
+          return;
+        }
+        if (data?.token) {
+          setMapboxToken(data.token);
+        }
+      } catch (err) {
+        console.error('Failed to fetch mapbox token:', err);
+      }
     }
+    fetchMapboxToken();
+    
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [logPageView]);
 
   if (loading) {
     return (

@@ -290,15 +290,24 @@ export default function RoutePlayback({ mapboxToken, className = '', onWaypointC
 
   // Show error/loading state only when there's an actual error
   if (mapError) {
+    const isCspError = mapError.includes('Content Security Policy') || mapError.includes('Worker');
     return (
       <div className={`flex flex-col items-center justify-center bg-muted/50 rounded-2xl ${className}`} style={{ minHeight: '400px' }}>
         <AlertCircle className="w-12 h-12 text-muted-foreground mb-4" />
-        <p className="text-muted-foreground mb-2">{mapError}</p>
-        <p className="text-xs text-muted-foreground/60 mb-4">Please try again</p>
-        <Button variant="outline" size="sm" onClick={handleRetry}>
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Retry
-        </Button>
+        <p className="text-muted-foreground mb-2 text-center px-4">
+          {isCspError ? 'Map preview unavailable in sandbox' : mapError}
+        </p>
+        <p className="text-xs text-muted-foreground/60 mb-4 text-center px-4">
+          {isCspError 
+            ? 'The map will work correctly on the deployed site (awhittlewandering.com)' 
+            : 'Please try again'}
+        </p>
+        {!isCspError && (
+          <Button variant="outline" size="sm" onClick={handleRetry}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Retry
+          </Button>
+        )}
       </div>
     );
   }
