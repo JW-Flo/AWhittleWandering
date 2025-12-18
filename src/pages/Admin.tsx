@@ -137,6 +137,7 @@ export default function Admin() {
   const [dsarRequests, setDsarRequests] = useState<DSARRequest[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [auditFilter, setAuditFilter] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState('launch');
   
   // Incident dialog state
   const [incidentDialogOpen, setIncidentDialogOpen] = useState(false);
@@ -431,19 +432,23 @@ export default function Admin() {
 
       {/* Content */}
       <div className="container mx-auto px-4 py-8">
-        {/* Stats */}
+        {/* Stats - Clickable */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-8">
           {[
-            { icon: Users, value: stats.totalUsers, label: 'Users', color: 'text-primary' },
-            { icon: MapPin, value: stats.totalJourneys, label: 'Journeys', color: 'text-primary' },
-            { icon: Activity, value: stats.totalWaypoints.toLocaleString(), label: 'Data Points', color: 'text-primary' },
-            { icon: Image, value: stats.totalMedia, label: 'Media', color: 'text-primary' },
-            { icon: Eye, value: stats.pageViews.toLocaleString(), label: 'Page Views', color: 'text-success' },
-            { icon: ScrollText, value: auditLogs.length, label: 'Audit Events', color: 'text-amber-500' },
-            { icon: FileText, value: stats.dsarRequests, label: 'DSAR', color: 'text-blue-500' },
-            { icon: ShieldAlert, value: stats.openIncidents, label: 'Open Incidents', color: 'text-destructive' },
+            { icon: Users, value: stats.totalUsers, label: 'Users', color: 'text-primary', tab: 'users' },
+            { icon: MapPin, value: stats.totalJourneys, label: 'Journeys', color: 'text-primary', tab: 'system' },
+            { icon: Activity, value: stats.totalWaypoints.toLocaleString(), label: 'Data Points', color: 'text-primary', tab: 'system' },
+            { icon: Image, value: stats.totalMedia, label: 'Media', color: 'text-primary', tab: 'system' },
+            { icon: Eye, value: stats.pageViews.toLocaleString(), label: 'Page Views', color: 'text-success', tab: 'analytics' },
+            { icon: ScrollText, value: auditLogs.length, label: 'Audit Events', color: 'text-amber-500', tab: 'audit' },
+            { icon: FileText, value: stats.dsarRequests, label: 'DSAR', color: 'text-blue-500', tab: 'dsar' },
+            { icon: ShieldAlert, value: stats.openIncidents, label: 'Open Incidents', color: 'text-destructive', tab: 'incidents' },
           ].map((stat, i) => (
-            <Card key={i} className="card-nature">
+            <Card 
+              key={i} 
+              className="card-nature cursor-pointer hover:border-primary/50 transition-colors"
+              onClick={() => setActiveTab(stat.tab)}
+            >
               <CardContent className="p-3">
                 <div className="flex items-center gap-2">
                   <stat.icon className={`w-6 h-6 ${stat.color}`} />
@@ -459,7 +464,7 @@ export default function Admin() {
 
         {/* Main Tabs */}
         <Card className="card-nature">
-          <Tabs defaultValue="launch">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
             <CardHeader>
               <TabsList className="bg-secondary flex-wrap h-auto gap-1">
                 <TabsTrigger value="launch"><Rocket className="w-4 h-4 mr-1" />Launch</TabsTrigger>
