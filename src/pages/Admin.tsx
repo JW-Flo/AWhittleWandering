@@ -26,6 +26,7 @@ import { SecurityDashboard } from '@/components/admin/SecurityDashboard';
 import MarketingDashboard from '@/components/admin/MarketingDashboard';
 import { UserFeedback } from '@/components/admin/UserFeedback';
 import { BetaAccessAudit } from '@/components/admin/BetaAccessAudit';
+import { GPSWaypointRebuild } from '@/components/admin/GPSWaypointRebuild';
 import { 
   Shield, 
   Users, 
@@ -60,7 +61,8 @@ import {
   Megaphone,
   ArrowRight,
   MessageSquare,
-  Key
+  Key,
+  Navigation
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -520,6 +522,9 @@ export default function Admin() {
                   <ScrollText className="w-4 h-4" />Audit
                   <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-amber-500/20 text-amber-400">{auditLogs.length}</Badge>
                 </TabsTrigger>
+                <TabsTrigger value="gps" className="gap-1.5">
+                  <Navigation className="w-4 h-4" />GPS
+                </TabsTrigger>
                 <TabsTrigger value="system" className="gap-1.5">
                   <Database className="w-4 h-4" />System
                   <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">{stats.totalJourneys}J / {stats.totalWaypoints.toLocaleString()}D / {stats.totalMedia}M</Badge>
@@ -551,6 +556,11 @@ export default function Admin() {
               {/* Beta Access Audit Tab */}
               <TabsContent value="beta" className="mt-0">
                 <BetaAccessAudit />
+              </TabsContent>
+
+              {/* GPS Waypoint Rebuild Tab */}
+              <TabsContent value="gps" className="mt-0">
+                <GPSWaypointRebuild />
               </TabsContent>
 
               {/* Users Tab */}
