@@ -19,6 +19,57 @@ serve(async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Authentication: Only allow calls from admin users or internal services
+    const authHeader = req.headers.get("Authorization");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    
+    // Check if this is an internal service call (using service role key)
+    const isServiceCall = authHeader === `Bearer ${serviceRoleKey}`;
+    
+    if (!isServiceCall) {
+      // If not a service call, must be an authenticated admin user
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: "Unauthorized - No authorization header" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const supabaseAuth = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } }
+      );
+
+      const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+      
+      if (authError || !user) {
+        console.error("Auth error:", authError);
+        return new Response(JSON.stringify({ error: "Unauthorized - Invalid token" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Verify the user has admin role
+      const { data: isAdmin, error: roleError } = await supabaseAuth.rpc("has_role", {
+        _user_id: user.id,
+        _role: "admin"
+      });
+
+      if (roleError || !isAdmin) {
+        console.error("Role check failed:", roleError);
+        return new Response(JSON.stringify({ error: "Forbidden - Admin access required" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      console.log("SMS send authorized for admin user:", user.id);
+    } else {
+      console.log("SMS send authorized via service role key");
+    }
+
     const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
     const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
     const messagingServiceSid = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
