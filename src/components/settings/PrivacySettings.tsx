@@ -7,12 +7,33 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
-import { Shield, MapPin, Eye, EyeOff, User, Loader2, Clock } from 'lucide-react';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { Shield, MapPin, Eye, EyeOff, User, Loader2, Clock, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 type LocationPrivacy = 'exact' | 'city' | 'region' | 'state';
+
+const LOCATION_PRIVACY_INFO: Record<LocationPrivacy, { title: string; description: string; warning?: string }> = {
+  exact: {
+    title: 'Exact Location',
+    description: 'Your precise GPS coordinates are shared with followers and on public journeys. This shows your exact real-time position.',
+    warning: 'Not recommended for safety reasons. Others can see exactly where you are.'
+  },
+  city: {
+    title: 'City Level',
+    description: 'Your location is generalized to a ~5 mile radius. Followers see which city you\'re in without your exact position.',
+  },
+  region: {
+    title: 'Region (~50mi blur)',
+    description: 'Your location is blurred to a ~50 mile radius. This shows the general area without revealing specific locations.',
+  },
+  state: {
+    title: 'State Only',
+    description: 'Only the state you\'re currently in is shared. This provides maximum privacy while still allowing journey tracking.',
+  }
+};
 type MediaVisibility = 'public' | 'followers' | 'private';
 
 // Delay options in minutes
@@ -146,30 +167,42 @@ export default function PrivacySettings() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="exact">
-                  <div className="flex items-center gap-2">
-                    <span>Exact Location</span>
-                    <Badge variant="destructive" className="text-xs">Full GPS visible</Badge>
-                  </div>
-                </SelectItem>
-                <SelectItem value="city">
-                  <div className="flex items-center gap-2">
-                    <span>City Level</span>
-                    <Badge variant="secondary" className="text-xs">Recommended</Badge>
-                  </div>
-                </SelectItem>
-                <SelectItem value="region">
-                  <div className="flex items-center gap-2">
-                    <span>Region (~50mi blur)</span>
-                    <Badge variant="outline" className="text-xs">More Private</Badge>
-                  </div>
-                </SelectItem>
-                <SelectItem value="state">
-                  <div className="flex items-center gap-2">
-                    <span>State Only</span>
-                    <Badge variant="outline" className="text-xs">Most Private</Badge>
-                  </div>
-                </SelectItem>
+                {(['exact', 'city', 'region', 'state'] as LocationPrivacy[]).map((level) => {
+                  const info = LOCATION_PRIVACY_INFO[level];
+                  return (
+                    <HoverCard key={level} openDelay={200}>
+                      <HoverCardTrigger asChild>
+                        <SelectItem value={level} className="cursor-pointer">
+                          <div className="flex items-center gap-2">
+                            <span>{info.title}</span>
+                            {level === 'exact' && (
+                              <Badge variant="destructive" className="text-xs">Full GPS visible</Badge>
+                            )}
+                            {level === 'city' && (
+                              <Badge variant="secondary" className="text-xs">Recommended</Badge>
+                            )}
+                            {level === 'region' && (
+                              <Badge variant="outline" className="text-xs">More Private</Badge>
+                            )}
+                            {level === 'state' && (
+                              <Badge variant="outline" className="text-xs">Most Private</Badge>
+                            )}
+                            <Info className="w-3 h-3 text-muted-foreground ml-1" />
+                          </div>
+                        </SelectItem>
+                      </HoverCardTrigger>
+                      <HoverCardContent side="right" className="w-80">
+                        <div className="space-y-2">
+                          <h4 className="font-semibold">{info.title}</h4>
+                          <p className="text-sm text-muted-foreground">{info.description}</p>
+                          {info.warning && (
+                            <p className="text-sm text-destructive font-medium">{info.warning}</p>
+                          )}
+                        </div>
+                      </HoverCardContent>
+                    </HoverCard>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

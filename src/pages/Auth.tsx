@@ -10,6 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import { MapPin, Compass, AlertTriangle, Shield } from 'lucide-react';
 import { checkPasswordBreach, checkPasswordStrength } from '@/lib/passwordSecurity';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { SocialLoginButtons } from '@/components/social/SocialLoginButtons';
+import { Separator } from '@/components/ui/separator';
 
 export default function Auth() {
   const [email, setEmail] = useState('');
@@ -115,82 +117,108 @@ export default function Auth() {
               </TabsList>
               
               <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-email">Email</Label>
-                    <Input
-                      id="signin-email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
+                <div className="space-y-4">
+                  <SocialLoginButtons mode="signin" />
+                  
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <Separator className="w-full" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-card px-2 text-muted-foreground">or continue with email</span>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-password">Password</Label>
-                    <Input
-                      id="signin-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? 'Signing in...' : 'Sign In'}
-                  </Button>
-                </form>
+                  
+                  <form onSubmit={handleSignIn} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signin-email">Email</Label>
+                      <Input
+                        id="signin-email"
+                        type="email"
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signin-password">Password</Label>
+                      <Input
+                        id="signin-password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading ? 'Signing in...' : 'Sign In'}
+                    </Button>
+                  </form>
+                </div>
               </TabsContent>
               
               <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">Full Name</Label>
-                    <Input
-                      id="signup-name"
-                      type="text"
-                      placeholder="John Doe"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                    />
+                <div className="space-y-4">
+                  <SocialLoginButtons mode="signup" />
+                  
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <Separator className="w-full" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-card px-2 text-muted-foreground">or sign up with email</span>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      minLength={6}
-                    />
-                  </div>
-                  {passwordWarning && (
-                    <Alert variant="destructive">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription className="text-sm">
-                        {passwordWarning}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? 'Creating account...' : 'Create Account'}
-                  </Button>
-                </form>
+                  
+                  <form onSubmit={handleSignUp} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-name">Full Name</Label>
+                      <Input
+                        id="signup-name"
+                        type="text"
+                        placeholder="John Doe"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email">Email</Label>
+                      <Input
+                        id="signup-email"
+                        type="email"
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password">Password</Label>
+                      <Input
+                        id="signup-password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                    {passwordWarning && (
+                      <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription className="text-sm">
+                          {passwordWarning}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading ? 'Creating account...' : 'Create Account'}
+                    </Button>
+                  </form>
+                </div>
               </TabsContent>
             </Tabs>
           </CardContent>
