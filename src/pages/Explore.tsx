@@ -75,10 +75,17 @@ export default function Explore() {
     async function fetchData() {
       console.log('[Explore] Starting fetchData...');
       try {
-        // Use public token from env directly - ensure it's set immediately
-        const token = import.meta.env.VITE_MAPBOX_TOKEN || '';
-        console.log('[Explore] Mapbox token available:', !!token, 'length:', token.length);
-        setMapboxToken(token);
+        // Fetch mapbox token from edge function (public endpoint)
+        const { data: tokenData, error: tokenError } = await supabase.functions.invoke('get-mapbox-token');
+        
+        if (tokenError) {
+          console.error('[Explore] Failed to fetch mapbox token:', tokenError);
+        } else if (tokenData?.token) {
+          console.log('[Explore] Mapbox token fetched successfully');
+          setMapboxToken(tokenData.token);
+        } else {
+          console.warn('[Explore] No token in response');
+        }
         
         if (!isMounted) return;
 
