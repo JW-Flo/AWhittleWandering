@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Car, Plus, Trash2, Edit2, Loader2, Zap, CheckCircle, AlertCircle, Key, RefreshCw } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Car, Plus, Trash2, Edit2, Loader2, Zap, CheckCircle, AlertCircle, Key, RefreshCw, ChevronDown, TestTube } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -39,6 +40,8 @@ export default function VehiclesSettings() {
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [testingApi, setTestingApi] = useState<string | null>(null);
+  const [apiTestResults, setApiTestResults] = useState<Record<string, { success: boolean; scopes: string[]; error?: string }>>({});
   
   const [formData, setFormData] = useState({
     nickname: '',
@@ -153,6 +156,63 @@ export default function VehiclesSettings() {
     });
   };
 
+  const testApiConnection = async (vehicle: Vehicle) => {
+    if (!vehicle.vin) {
+      toast.error('VIN required to test API connection');
+      return;
+    }
+
+    setTestingApi(vehicle.id);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('vehicle-api', {
+        body: { 
+          action: 'test_connection',
+          vin: vehicle.vin 
+        }
+      });
+
+      if (error) throw error;
+
+      const scopes = [];
+      
+      // Test various data endpoints
+      if (data?.state) scopes.push('Vehicle State');
+      if (data?.location) scopes.push('Location');
+      if (data?.battery) scopes.push('Battery');
+      if (data?.drives) scopes.push('Drive History');
+      if (data?.charges) scopes.push('Charge History');
+      
+      setApiTestResults(prev => ({
+        ...prev,
+        [vehicle.id]: {
+          success: scopes.length > 0,
+          scopes,
+          error: scopes.length === 0 ? 'No data accessible' : undefined
+        }
+      }));
+
+      if (scopes.length > 0) {
+        toast.success(`API connected! ${scopes.length} scopes available`);
+      } else {
+        toast.warning('API connected but no data available');
+      }
+    } catch (error: any) {
+      console.error('API test error:', error);
+      setApiTestResults(prev => ({
+        ...prev,
+        [vehicle.id]: {
+          success: false,
+          scopes: [],
+          error: error.message || 'Connection failed'
+        }
+      }));
+      toast.error('API connection test failed');
+    } finally {
+      setTestingApi(null);
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -197,65 +257,135 @@ export default function VehiclesSettings() {
           <div className="space-y-3">
             {vehicles.map((vehicle) => {
               const provider = providers.find(p => p.id === vehicle.api_provider_id);
+              const testResult = apiTestResults[vehicle.id];
+              
               return (
-                <div
-                  key={vehicle.id}
-                  className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Car className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-semibold">{vehicle.nickname}</h4>
-                        {vehicle.api_credential_id && (
-                          <Badge variant="outline" className="text-xs bg-success/10 text-success border-success/30">
-                            <Zap className="w-3 h-3 mr-1" />
-                            Connected
-                          </Badge>
-                        )}
+                <Collapsible key={vehicle.id}>
+                  <div className="bg-muted/50 rounded-lg border border-border">
+                    <div className="flex items-center justify-between p-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Car className="w-6 h-6 text-primary" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold">{vehicle.nickname}</h4>
+                            {vehicle.api_credential_id && (
+                              <Badge variant="outline" className="text-xs bg-success/10 text-success border-success/30">
+                                <Zap className="w-3 h-3 mr-1" />
+                                Connected
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {[vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(' ') || 'No details'}
+                          </p>
+                          {vehicle.vin && (
+                            <p className="text-xs text-muted-foreground/70 font-mono mt-0.5">
+                              VIN: {vehicle.vin.slice(-6)}
+                            </p>
+                          )}
+                          {provider && (
+                            <Badge variant="secondary" className="text-xs mt-1">
+                              {provider.display_name}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {[vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(' ') || 'No details'}
-                      </p>
-                      {vehicle.vin && (
-                        <p className="text-xs text-muted-foreground/70 font-mono mt-0.5">
-                          VIN: {vehicle.vin.slice(-6)}
-                        </p>
-                      )}
-                      {provider && (
-                        <Badge variant="secondary" className="text-xs mt-1">
-                          {provider.display_name}
-                        </Badge>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <CollapsibleTrigger asChild>
+                          <Button size="icon" variant="ghost" className="h-10 w-10">
+                            <ChevronDown className="w-4 h-4" />
+                          </Button>
+                        </CollapsibleTrigger>
+                        <Button
+                          size="icon"
+                          variant="secondary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditDialog(vehicle);
+                          }}
+                          className="h-10 w-10"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(vehicle.id);
+                          }}
+                          className="h-10 w-10"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
+                    
+                    <CollapsibleContent>
+                      <div className="px-4 pb-4 pt-2 border-t border-border space-y-4">
+                        {/* API Test Section */}
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm font-medium">API Connection Test</Label>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => testApiConnection(vehicle)}
+                              disabled={testingApi === vehicle.id || !vehicle.vin}
+                            >
+                              {testingApi === vehicle.id ? (
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              ) : (
+                                <TestTube className="w-4 h-4 mr-2" />
+                              )}
+                              Test Connection
+                            </Button>
+                          </div>
+                          
+                          {testResult && (
+                            <div className={`p-3 rounded-lg ${testResult.success ? 'bg-success/10 border border-success/30' : 'bg-destructive/10 border border-destructive/30'}`}>
+                              <div className="flex items-center gap-2 mb-2">
+                                {testResult.success ? (
+                                  <CheckCircle className="w-4 h-4 text-success" />
+                                ) : (
+                                  <AlertCircle className="w-4 h-4 text-destructive" />
+                                )}
+                                <span className="font-medium text-sm">
+                                  {testResult.success ? 'Connection Successful' : 'Connection Failed'}
+                                </span>
+                              </div>
+                              
+                              {testResult.success && testResult.scopes.length > 0 && (
+                                <div className="space-y-1">
+                                  <p className="text-xs text-muted-foreground">Available data scopes:</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {testResult.scopes.map(scope => (
+                                      <Badge key={scope} variant="secondary" className="text-xs">
+                                        {scope}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {testResult.error && (
+                                <p className="text-xs text-destructive">{testResult.error}</p>
+                              )}
+                            </div>
+                          )}
+                          
+                          {!vehicle.vin && (
+                            <p className="text-xs text-muted-foreground">
+                              Add a VIN to test the API connection
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </CollapsibleContent>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="icon"
-                      variant="secondary"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEditDialog(vehicle);
-                      }}
-                      className="h-10 w-10"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(vehicle.id);
-                      }}
-                      className="h-10 w-10"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
+                </Collapsible>
               );
             })}
           </div>

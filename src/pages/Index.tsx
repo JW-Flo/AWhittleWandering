@@ -57,7 +57,7 @@ export default function Index() {
   }
 
   if (user) {
-    navigate('/dashboard');
+    navigate('/explore');
     return null;
   }
 
