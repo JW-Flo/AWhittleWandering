@@ -2,8 +2,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useActivityLogger } from '@/hooks/useActivityLogger';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
-import ImmersiveJourneyMap from '@/components/ImmersiveJourneyMap';
 import SignInDialog from '@/components/SignInDialog';
 import FeatureRequestWidget from '@/components/FeatureRequestWidget';
 import { Footer } from '@/components/layout/Footer';
@@ -36,30 +34,12 @@ export default function Index() {
   const navigate = useNavigate();
   const { logButtonClick, logPageView } = useActivityLogger();
   const [scrollY, setScrollY] = useState(0);
-  const [mapboxToken, setMapboxToken] = useState('');
   const [signInOpen, setSignInOpen] = useState(false);
 
   useEffect(() => {
     logPageView('/');
     const handleScroll = () => setScrollY(window.scrollY);
     window.addEventListener('scroll', handleScroll);
-    
-    // Fetch mapbox token from edge function
-    async function fetchMapboxToken() {
-      try {
-        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-        if (error) {
-          console.error('Error fetching mapbox token:', error);
-          return;
-        }
-        if (data?.token) {
-          setMapboxToken(data.token);
-        }
-      } catch (err) {
-        console.error('Failed to fetch mapbox token:', err);
-      }
-    }
-    fetchMapboxToken();
     
     return () => window.removeEventListener('scroll', handleScroll);
   }, [logPageView]);
@@ -390,20 +370,43 @@ export default function Index() {
             Interactive maps, real-time data, and the complete story of an unforgettable summer.
           </p>
 
-          <div className="max-w-6xl mx-auto aspect-[16/10] rounded-2xl overflow-hidden border border-border shadow-elevated">
-            {mapboxToken ? (
-              <ImmersiveJourneyMap 
-                className="h-full w-full"
-                mapboxToken={mapboxToken}
-              />
-            ) : (
-              <div className="h-full w-full bg-background/50 flex items-center justify-center">
-                <div className="text-center space-y-4">
-                  <Navigation className="w-16 h-16 text-primary mx-auto animate-pulse" />
-                  <p className="text-muted-foreground">Loading map...</p>
+          <div 
+            className="max-w-6xl mx-auto aspect-[16/10] rounded-2xl overflow-hidden border border-border shadow-elevated bg-gradient-to-br from-twilight-green/20 via-card to-forest/10 relative cursor-pointer group"
+            onClick={() => navigate('/explore')}
+          >
+            {/* Static Map Preview - lightweight alternative to heavy 3D map */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center space-y-6">
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mx-auto group-hover:bg-primary/30 transition-colors">
+                    <Globe className="w-12 h-12 text-primary" />
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-forest/20 flex items-center justify-center">
+                    <MapPin className="w-4 h-4 text-forest" />
+                  </div>
                 </div>
+                <div>
+                  <p className="text-xl font-display font-semibold text-foreground mb-2">Interactive Journey Map</p>
+                  <p className="text-muted-foreground">Click to explore the full route across 48 states</p>
+                </div>
+                <Button variant="outline" className="rounded-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                  <Navigation className="w-4 h-4 mr-2" />
+                  View Map
+                </Button>
               </div>
-            )}
+            </div>
+            
+            {/* Decorative route line */}
+            <svg className="absolute inset-0 w-full h-full opacity-20" viewBox="0 0 100 60" preserveAspectRatio="none">
+              <path 
+                d="M10,50 Q25,20 40,35 T60,25 T80,40 T95,20" 
+                stroke="currentColor" 
+                strokeWidth="0.5" 
+                fill="none" 
+                className="text-primary"
+                strokeDasharray="2,2"
+              />
+            </svg>
           </div>
         </div>
       </section>
