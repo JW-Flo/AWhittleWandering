@@ -24,6 +24,7 @@ import { EnhancedAuditLog } from '@/components/admin/EnhancedAuditLog';
 import { IncidentDetailDrawer } from '@/components/admin/IncidentDetailDrawer';
 import { SecurityDashboard } from '@/components/admin/SecurityDashboard';
 import MarketingDashboard from '@/components/admin/MarketingDashboard';
+import { UserFeedback } from '@/components/admin/UserFeedback';
 import { 
   Shield, 
   Users, 
@@ -56,7 +57,8 @@ import {
   Rocket,
   BarChart3,
   Megaphone,
-  ArrowRight
+  ArrowRight,
+  MessageSquare
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -484,6 +486,9 @@ export default function Admin() {
                 <TabsTrigger value="marketing" className="gap-1.5">
                   <Megaphone className="w-4 h-4" />Marketing
                 </TabsTrigger>
+                <TabsTrigger value="feedback" className="gap-1.5">
+                  <MessageSquare className="w-4 h-4" />Feedback
+                </TabsTrigger>
                 <TabsTrigger value="users" className="gap-1.5">
                   <Users className="w-4 h-4" />Users
                   <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">{stats.totalUsers}</Badge>
@@ -531,6 +536,11 @@ export default function Admin() {
               {/* Marketing Tab */}
               <TabsContent value="marketing" className="mt-0">
                 <MarketingDashboard />
+              </TabsContent>
+
+              {/* User Feedback Tab */}
+              <TabsContent value="feedback" className="mt-0">
+                <UserFeedback />
               </TabsContent>
 
               {/* Users Tab */}

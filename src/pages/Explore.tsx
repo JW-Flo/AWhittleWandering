@@ -10,6 +10,7 @@ import PhotoUpload from '@/components/PhotoUpload';
 import LiveVehicleStatus from '@/components/LiveVehicleStatus';
 import FollowButton from '@/components/journey/FollowButton';
 import PublicJourneyFeed from '@/components/journey/PublicJourneyFeed';
+import FlagshipSurvey from '@/components/FlagshipSurvey';
 import { Footer } from '@/components/layout/Footer';
 import { Logo } from '@/components/Logo';
 import { JourneyWaypoint } from '@/data/journeyRoute';
@@ -31,6 +32,7 @@ export default function Explore() {
   const [journeyId, setJourneyId] = useState<string | null>(null);
   const [explorationProgress, setExplorationProgress] = useState(0);
   const [viewStats, setViewStats] = useState<{ total_views: number; unique_visitors: number } | null>(null);
+  const [showSurvey, setShowSurvey] = useState(false);
   const hasTrackedView = useRef(false);
   
   // Flagship journey owner ID (your user ID for the AWW journey)
@@ -135,6 +137,8 @@ export default function Explore() {
       toast.success('Consumer features unlocked!', {
         description: 'You can now create your own journeys and track your vehicle.'
       });
+      // Show survey after a brief delay
+      setTimeout(() => setShowSurvey(true), 2000);
     }
   };
 
@@ -312,6 +316,9 @@ export default function Explore() {
 
       {/* Footer */}
       <Footer variant="minimal" />
+
+      {/* Survey Dialog */}
+      <FlagshipSurvey open={showSurvey} onOpenChange={setShowSurvey} />
     </div>
   );
 }
