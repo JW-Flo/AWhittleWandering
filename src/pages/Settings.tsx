@@ -6,9 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import PrivacySettings from '@/components/settings/PrivacySettings';
 import NotificationSettings from '@/components/settings/NotificationSettings';
 import { TwoFactorSettings } from '@/components/settings/TwoFactorSettings';
+import IntegrationsSettings from '@/components/settings/IntegrationsSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Shield, Bell, Lock, MailX, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Shield, Bell, Lock, MailX, CheckCircle2, Link2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function Settings() {
@@ -150,18 +151,22 @@ export default function Settings() {
         )}
 
         <Tabs defaultValue={searchParams.get('unsubscribe') === 'true' ? 'notifications' : 'security'} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="security" className="flex items-center gap-2">
               <Lock className="w-4 h-4" />
-              Security
+              <span className="hidden sm:inline">Security</span>
             </TabsTrigger>
             <TabsTrigger value="privacy" className="flex items-center gap-2">
               <Shield className="w-4 h-4" />
-              Privacy
+              <span className="hidden sm:inline">Privacy</span>
             </TabsTrigger>
             <TabsTrigger value="notifications" className="flex items-center gap-2">
               <Bell className="w-4 h-4" />
-              Notifications
+              <span className="hidden sm:inline">Notifications</span>
+            </TabsTrigger>
+            <TabsTrigger value="integrations" className="flex items-center gap-2">
+              <Link2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Integrations</span>
             </TabsTrigger>
           </TabsList>
 
@@ -175,6 +180,10 @@ export default function Settings() {
 
           <TabsContent value="notifications">
             <NotificationSettings />
+          </TabsContent>
+
+          <TabsContent value="integrations">
+            <IntegrationsSettings />
           </TabsContent>
         </Tabs>
       </main>
