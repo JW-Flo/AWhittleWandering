@@ -27,7 +27,9 @@ import {
   Eye,
   EyeOff,
   Globe,
-  Lock
+  Lock,
+  Sparkles,
+  Wand2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
@@ -68,6 +70,8 @@ export function JourneyCreationWizard() {
   const [journeyCount, setJourneyCount] = useState<number>(0);
   const [limitChecked, setLimitChecked] = useState(false);
   const [isProvisioningStorage, setIsProvisioningStorage] = useState(false);
+  const [isGeneratingTestJourney, setIsGeneratingTestJourney] = useState(false);
+  const [testJourneyTheme, setTestJourneyTheme] = useState('');
 
   // Form state
   const [journeyData, setJourneyData] = useState({
@@ -205,6 +209,58 @@ export function JourneyCreationWizard() {
     }
   };
 
+  const generateTestJourney = async () => {
+    setIsGeneratingTestJourney(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-test-journey', {
+        body: {
+          vehicleMake: vehicleData.make || 'Tesla',
+          vehicleModel: vehicleData.model || 'Model 3',
+          theme: testJourneyTheme || undefined,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data?.data) {
+        const aiJourney = data.data;
+        
+        // Fill in journey data
+        setJourneyData(prev => ({
+          ...prev,
+          name: aiJourney.journey.name,
+          description: aiJourney.journey.description,
+          startLocation: aiJourney.journey.startLocation,
+        }));
+        
+        // Fill in vehicle data
+        setVehicleData(prev => ({
+          ...prev,
+          nickname: aiJourney.vehicle.nickname,
+          year: aiJourney.vehicle.year,
+          make: prev.make || 'Tesla',
+          model: prev.model || 'Model 3',
+        }));
+
+        toast({
+          title: 'Test Journey Generated!',
+          description: `Created "${aiJourney.journey.name}" with ${aiJourney.waypoints?.length || 0} waypoints.`,
+        });
+      } else {
+        throw new Error(data?.error || 'Failed to generate journey');
+      }
+    } catch (err: any) {
+      console.error('Error generating test journey:', err);
+      toast({
+        title: 'Generation Failed',
+        description: err.message || 'Could not generate test journey. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGeneratingTestJourney(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!user) return;
     
@@ -312,6 +368,61 @@ export function JourneyCreationWizard() {
       case 0:
         return (
           <div className="space-y-6">
+            {/* AI Test Journey Generator */}
+            <div className="p-4 border border-dashed border-primary/30 rounded-lg bg-primary/5">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0">
+                  <Wand2 className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <div className="flex-1 space-y-3">
+                  <div>
+                    <h3 className="font-medium flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-primary" />
+                      Generate AI Test Journey
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Let AI create a unique sample journey with realistic waypoints and data
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Theme (optional, e.g., 'coastal road trip', 'national parks')"
+                      value={testJourneyTheme}
+                      onChange={(e) => setTestJourneyTheme(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={generateTestJourney}
+                      disabled={isGeneratingTestJourney}
+                      className="whitespace-nowrap"
+                    >
+                      {isGeneratingTestJourney ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Generate
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Or enter manually</span>
+              </div>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="journey-name">Journey Name *</Label>
               <Input
