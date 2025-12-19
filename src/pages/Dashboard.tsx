@@ -22,6 +22,8 @@ import PhotoUpload from '@/components/PhotoUpload';
 import FlagshipGate from '@/components/FlagshipGate';
 import RouteNavigator from '@/components/RouteNavigator';
 import VoiceJournal from '@/components/journey/VoiceJournal';
+import JournalEntriesViewer from '@/components/journey/JournalEntriesViewer';
+import MemoryPromptWidget from '@/components/journey/MemoryPromptWidget';
 import { JourneyList } from '@/components/journey/JourneyList';
 import { LoginAlertsBanner } from '@/components/LoginAlertsBanner';
 import { useTessieData } from '@/hooks/useTessieData';
@@ -415,21 +417,44 @@ export default function Dashboard() {
 
           {/* Live Tab - Real-time vehicle data */}
           <TabsContent value="live" className="space-y-6">
+            {/* Smart Memory Prompt */}
+            {currentJourney && vehicleState && (
+              <MemoryPromptWidget
+                vehicleState={{
+                  latitude: vehicleState.latitude,
+                  longitude: vehicleState.longitude,
+                  speed: vehicleState.speed,
+                  batteryLevel: vehicleState.batteryLevel
+                }}
+                journeyId={currentJourney.id}
+                onRecordVoice={() => {
+                  const voiceSection = document.getElementById('voice-journal-section');
+                  voiceSection?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                onUploadPhotos={() => {
+                  setActiveTab('media');
+                  logTabChange('dashboard_media');
+                }}
+              />
+            )}
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
                 <LiveVehicleStatus />
                 
                 {/* Voice Journal for Active Journeys */}
                 {currentJourney && (
-                  <VoiceJournal 
-                    journeyId={currentJourney.id}
-                    currentWaypoint={vehicleState ? {
-                      name: 'Current Location',
-                      latitude: vehicleState.latitude,
-                      longitude: vehicleState.longitude
-                    } : null}
-                    onEntrySaved={() => toast({ title: "Memory saved!", description: "Your voice note has been added to your journey." })}
-                  />
+                  <div id="voice-journal-section">
+                    <VoiceJournal 
+                      journeyId={currentJourney.id}
+                      currentWaypoint={vehicleState ? {
+                        name: 'Current Location',
+                        latitude: vehicleState.latitude,
+                        longitude: vehicleState.longitude
+                      } : null}
+                      onEntrySaved={() => toast({ title: "Memory saved!", description: "Your voice note has been added to your journey." })}
+                    />
+                  </div>
                 )}
               </div>
               
@@ -515,7 +540,15 @@ export default function Dashboard() {
           </TabsContent>
 
           {/* Timeline Tab */}
-          <TabsContent value="timeline">
+          <TabsContent value="timeline" className="space-y-6">
+            {/* Journal Entries Viewer */}
+            {currentJourney && (
+              <JournalEntriesViewer journeyId={currentJourney.id} />
+            )}
+            {!currentJourney && (
+              <JournalEntriesViewer />
+            )}
+            
             <JourneyTimeline 
               currentLocation={vehicleState ? { lat: vehicleState.latitude, lng: vehicleState.longitude } : null}
               batteryLevel={vehicleState?.batteryLevel}
