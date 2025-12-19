@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bell, Mail, Smartphone, Globe, MapPin, Zap, Camera, Loader2, CheckCircle2, Send, Route, Settings2 } from 'lucide-react';
+import { Bell, Mail, Smartphone, Globe, MapPin, Zap, Camera, Loader2, CheckCircle2, Send, Route, Settings2, Mic } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -46,6 +46,7 @@ interface NotificationPrefs {
   notify_charging_stop: boolean;
   notify_state_crossing: boolean;
   notify_photos: boolean;
+  notify_daily_memory: boolean;
   sms_consent_given: boolean;
   sms_consent_timestamp: string | null;
 }
@@ -66,6 +67,7 @@ export default function NotificationSettings() {
     notify_charging_stop: false,
     notify_state_crossing: true,
     notify_photos: true,
+    notify_daily_memory: true,
     sms_consent_given: false,
     sms_consent_timestamp: null
   });
@@ -94,6 +96,7 @@ export default function NotificationSettings() {
           notify_charging_stop: data.notify_charging_stop ?? false,
           notify_state_crossing: data.notify_state_crossing ?? true,
           notify_photos: data.notify_photos ?? true,
+          notify_daily_memory: (data as any).notify_daily_memory ?? true,
           sms_consent_given: data.sms_consent_given ?? false,
           sms_consent_timestamp: data.sms_consent_timestamp
         });
@@ -460,6 +463,20 @@ export default function NotificationSettings() {
                     <Switch
                       checked={prefs.notify_charging_stop}
                       onCheckedChange={(checked) => setPrefs(p => ({ ...p, notify_charging_stop: checked }))}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-2">
+                      <Mic className="w-4 h-4 text-sunset" />
+                      <div>
+                        <span>Daily memory reminder</span>
+                        <p className="text-xs text-muted-foreground">Evening nudge to capture thoughts</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={prefs.notify_daily_memory}
+                      onCheckedChange={(checked) => setPrefs(p => ({ ...p, notify_daily_memory: checked }))}
                     />
                   </div>
                 </div>

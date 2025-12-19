@@ -21,6 +21,7 @@ import CSVImport from '@/components/CSVImport';
 import PhotoUpload from '@/components/PhotoUpload';
 import FlagshipGate from '@/components/FlagshipGate';
 import RouteNavigator from '@/components/RouteNavigator';
+import VoiceJournal from '@/components/journey/VoiceJournal';
 import { JourneyList } from '@/components/journey/JourneyList';
 import { LoginAlertsBanner } from '@/components/LoginAlertsBanner';
 import { useTessieData } from '@/hooks/useTessieData';
@@ -415,8 +416,21 @@ export default function Dashboard() {
           {/* Live Tab - Real-time vehicle data */}
           <TabsContent value="live" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-2 space-y-6">
                 <LiveVehicleStatus />
+                
+                {/* Voice Journal for Active Journeys */}
+                {currentJourney && (
+                  <VoiceJournal 
+                    journeyId={currentJourney.id}
+                    currentWaypoint={vehicleState ? {
+                      name: 'Current Location',
+                      latitude: vehicleState.latitude,
+                      longitude: vehicleState.longitude
+                    } : null}
+                    onEntrySaved={() => toast({ title: "Memory saved!", description: "Your voice note has been added to your journey." })}
+                  />
+                )}
               </div>
               
               {/* Weather Overlay */}
