@@ -56,8 +56,13 @@ serve(async (req) => {
     
     // Prepare form data for OpenAI Whisper
     const formData = new FormData();
-    const blob = new Blob([binaryAudio.buffer], { type: 'audio/webm' });
-    formData.append('file', blob, 'audio.webm');
+    // Create a File from Uint8Array - use slice to get ArrayBuffer
+    const arrayBuffer = binaryAudio.buffer.slice(
+      binaryAudio.byteOffset,
+      binaryAudio.byteOffset + binaryAudio.byteLength
+    ) as ArrayBuffer;
+    const file = new File([arrayBuffer], 'audio.webm', { type: 'audio/webm' });
+    formData.append('file', file);
     formData.append('model', 'whisper-1');
     formData.append('language', 'en');
     formData.append('response_format', 'json');
