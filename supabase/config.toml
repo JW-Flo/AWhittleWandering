@@ -100,3 +100,12 @@ verify_jwt = true
 
 [functions.send-memory-reminder]
 verify_jwt = false
+
+[functions.signed-url]
+verify_jwt = true
+
+[functions.beta-auth]
+verify_jwt = false
+
+[functions.generate-test-journey]
+verify_jwt = true
