@@ -490,6 +490,7 @@ export type Database = {
       }
       journal_entries: {
         Row: {
+          audio_url: string | null
           content: string | null
           created_at: string
           entry_date: string
@@ -504,10 +505,13 @@ export type Database = {
           photo_urls: string[] | null
           state_code: string | null
           title: string | null
+          transcription_source: string | null
           updated_at: string
           user_id: string
+          waypoint_id: string | null
         }
         Insert: {
+          audio_url?: string | null
           content?: string | null
           created_at?: string
           entry_date: string
@@ -522,10 +526,13 @@ export type Database = {
           photo_urls?: string[] | null
           state_code?: string | null
           title?: string | null
+          transcription_source?: string | null
           updated_at?: string
           user_id: string
+          waypoint_id?: string | null
         }
         Update: {
+          audio_url?: string | null
           content?: string | null
           created_at?: string
           entry_date?: string
@@ -540,8 +547,10 @@ export type Database = {
           photo_urls?: string[] | null
           state_code?: string | null
           title?: string | null
+          transcription_source?: string | null
           updated_at?: string
           user_id?: string
+          waypoint_id?: string | null
         }
         Relationships: [
           {
@@ -1007,10 +1016,12 @@ export type Database = {
       notification_preferences: {
         Row: {
           created_at: string
+          daily_memory_time: string | null
           email_digest_frequency: string | null
           email_enabled: boolean | null
           id: string
           notify_charging_stop: boolean | null
+          notify_daily_memory: boolean | null
           notify_new_waypoint: boolean | null
           notify_photos: boolean | null
           notify_state_crossing: boolean | null
@@ -1026,10 +1037,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          daily_memory_time?: string | null
           email_digest_frequency?: string | null
           email_enabled?: boolean | null
           id?: string
           notify_charging_stop?: boolean | null
+          notify_daily_memory?: boolean | null
           notify_new_waypoint?: boolean | null
           notify_photos?: boolean | null
           notify_state_crossing?: boolean | null
@@ -1045,10 +1058,12 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          daily_memory_time?: string | null
           email_digest_frequency?: string | null
           email_enabled?: boolean | null
           id?: string
           notify_charging_stop?: boolean | null
+          notify_daily_memory?: boolean | null
           notify_new_waypoint?: boolean | null
           notify_photos?: boolean | null
           notify_state_crossing?: boolean | null
