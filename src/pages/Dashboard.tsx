@@ -24,6 +24,7 @@ import RouteNavigator from '@/components/RouteNavigator';
 import VoiceJournal from '@/components/journey/VoiceJournal';
 import JournalEntriesViewer from '@/components/journey/JournalEntriesViewer';
 import MemoryPromptWidget from '@/components/journey/MemoryPromptWidget';
+import UnifiedTripTimeline from '@/components/journey/UnifiedTripTimeline';
 import { JourneyList } from '@/components/journey/JourneyList';
 import { LoginAlertsBanner } from '@/components/LoginAlertsBanner';
 import { useTessieData } from '@/hooks/useTessieData';
@@ -541,12 +542,19 @@ export default function Dashboard() {
 
           {/* Timeline Tab */}
           <TabsContent value="timeline" className="space-y-6">
-            {/* Journal Entries Viewer */}
-            {currentJourney && (
-              <JournalEntriesViewer journeyId={currentJourney.id} />
-            )}
-            {!currentJourney && (
-              <JournalEntriesViewer />
+            {/* Unified Trip Timeline - shows everything chronologically */}
+            {currentJourney ? (
+              <UnifiedTripTimeline 
+                journeyId={currentJourney.id} 
+                showNudges={true}
+              />
+            ) : (
+              <Card className="card-tesla">
+                <CardContent className="text-center py-12 text-muted-foreground">
+                  <Calendar className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                  <p>Select a journey to view its timeline</p>
+                </CardContent>
+              </Card>
             )}
             
             <JourneyTimeline 
