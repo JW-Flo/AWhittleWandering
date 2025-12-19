@@ -5,7 +5,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Mic, MicOff, Loader2, Save, Trash2, Sparkles, MapPin } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Mic, MicOff, Loader2, Save, Trash2, Sparkles, MapPin, Volume2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -39,6 +40,7 @@ export default function VoiceJournal({
   const [transcript, setTranscript] = useState('');
   const [title, setTitle] = useState('');
   const [recordingDuration, setRecordingDuration] = useState(0);
+  const [audioOnlyMode, setAudioOnlyMode] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -73,11 +75,10 @@ export default function VoiceJournal({
       };
       
       mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.start(1000); // Collect data every second
+      mediaRecorder.start(1000);
       setIsRecording(true);
       setRecordingDuration(0);
       
-      // Start duration timer
       timerRef.current = setInterval(() => {
         setRecordingDuration(d => d + 1);
       }, 1000);
@@ -108,7 +109,6 @@ export default function VoiceJournal({
     
     setIsTranscribing(true);
     try {
-      // Convert blob to base64
       const reader = new FileReader();
       const base64Promise = new Promise<string>((resolve, reject) => {
         reader.onloadend = () => {
@@ -128,7 +128,6 @@ export default function VoiceJournal({
       
       if (data?.text) {
         setTranscript(data.text);
-        // Auto-generate title from first sentence or first 50 chars
         const firstSentence = data.text.split(/[.!?]/)[0].trim();
         setTitle(firstSentence.slice(0, 50) + (firstSentence.length > 50 ? '...' : ''));
         toast.success('Transcription complete!');
@@ -144,14 +143,25 @@ export default function VoiceJournal({
   }, [audioBlob]);
 
   const saveEntry = useCallback(async () => {
-    if (!user || !transcript.trim()) {
+    if (!user) {
+      toast.error('Please sign in to save entries');
+      return;
+    }
+
+    // For audio-only mode, we just need the audio blob
+    // For transcribed mode, we need transcript
+    if (!audioOnlyMode && !transcript.trim()) {
       toast.error('Please add some content before saving');
+      return;
+    }
+
+    if (audioOnlyMode && !audioBlob) {
+      toast.error('Please record audio before saving');
       return;
     }
     
     setIsSaving(true);
     try {
-      // Upload audio if we have it
       let audioUrl: string | null = null;
       if (audioBlob) {
         const fileName = `${user.id}/${journeyId}/${Date.now()}.webm`;
@@ -161,6 +171,8 @@ export default function VoiceJournal({
         
         if (!uploadError) {
           audioUrl = fileName;
+        } else {
+          console.error('Audio upload error:', uploadError);
         }
       }
       
@@ -168,26 +180,26 @@ export default function VoiceJournal({
         journey_id: journeyId,
         user_id: user.id,
         entry_date: new Date().toISOString().split('T')[0],
-        title: title || 'Voice Note',
-        content: transcript,
+        title: title || (audioOnlyMode ? 'Voice Memory' : 'Voice Note'),
+        content: audioOnlyMode ? null : transcript,
         latitude: currentWaypoint?.latitude,
         longitude: currentWaypoint?.longitude,
         location_name: currentWaypoint?.location || currentWaypoint?.name,
         state_code: currentWaypoint?.state_code,
         audio_url: audioUrl,
-        transcription_source: audioBlob ? 'voice' : 'manual',
+        transcription_source: audioOnlyMode ? 'audio_only' : (audioBlob ? 'voice' : 'manual'),
         waypoint_id: currentWaypoint?.id
       });
       
       if (error) throw error;
       
-      toast.success('Memory saved!');
+      toast.success(audioOnlyMode ? 'Audio memory saved!' : 'Memory saved!');
       
-      // Reset form
       setTranscript('');
       setTitle('');
       setAudioBlob(null);
       setRecordingDuration(0);
+      setAudioOnlyMode(false);
       
       onEntrySaved?.();
     } catch (error) {
@@ -196,7 +208,7 @@ export default function VoiceJournal({
     } finally {
       setIsSaving(false);
     }
-  }, [user, journeyId, currentWaypoint, transcript, title, audioBlob, onEntrySaved]);
+  }, [user, journeyId, currentWaypoint, transcript, title, audioBlob, audioOnlyMode, onEntrySaved]);
 
   const clearRecording = () => {
     setAudioBlob(null);
@@ -235,6 +247,21 @@ export default function VoiceJournal({
       </CardHeader>
       
       <CardContent className="space-y-4">
+        {/* Audio Only Mode Toggle */}
+        <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
+          <div className="flex items-center gap-2">
+            <Volume2 className="w-4 h-4 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium">Audio-only mode</p>
+              <p className="text-xs text-muted-foreground">Save recording without transcription</p>
+            </div>
+          </div>
+          <Switch
+            checked={audioOnlyMode}
+            onCheckedChange={setAudioOnlyMode}
+          />
+        </div>
+
         {/* Recording Controls */}
         <div className="flex items-center gap-3">
           <Button
@@ -271,9 +298,17 @@ export default function VoiceJournal({
             </Button>
           )}
         </div>
+
+        {/* Audio recorded indicator */}
+        {audioBlob && !isRecording && (
+          <div className="flex items-center gap-2 p-2 rounded-lg bg-success/10 text-success text-sm">
+            <Volume2 className="w-4 h-4" />
+            <span>Audio recorded ({formatDuration(recordingDuration)})</span>
+          </div>
+        )}
         
-        {/* Transcribe Button */}
-        {audioBlob && !transcript && (
+        {/* Transcribe Button - only show if not in audio-only mode */}
+        {audioBlob && !transcript && !audioOnlyMode && (
           <Button
             variant="secondary"
             className="w-full"
@@ -295,45 +330,49 @@ export default function VoiceJournal({
         )}
         
         {/* Title Input */}
-        {(transcript || !audioBlob) && (
+        {((transcript && !audioOnlyMode) || (!audioBlob && !audioOnlyMode) || audioOnlyMode) && (
           <div className="space-y-2">
             <Label htmlFor="entry-title">Title (optional)</Label>
             <Input
               id="entry-title"
-              placeholder="What's this memory about?"
+              placeholder={audioOnlyMode ? "Name this audio memory" : "What's this memory about?"}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
           </div>
         )}
         
-        {/* Transcript/Content Area */}
-        <div className="space-y-2">
-          <Label htmlFor="entry-content">
-            {audioBlob ? 'Transcript' : 'Your thoughts'}
-          </Label>
-          <Textarea
-            id="entry-content"
-            placeholder={audioBlob 
-              ? "Your transcribed words will appear here..." 
-              : "Type your thoughts, or tap the mic to record..."
-            }
-            value={transcript}
-            onChange={(e) => setTranscript(e.target.value)}
-            className="min-h-[120px] resize-none"
-          />
-          {transcript && (
-            <p className="text-xs text-muted-foreground text-right">
-              {transcript.split(/\s+/).filter(Boolean).length} words
-            </p>
-          )}
-        </div>
+        {/* Transcript/Content Area - hide in audio-only mode */}
+        {!audioOnlyMode && (
+          <div className="space-y-2">
+            <Label htmlFor="entry-content">
+              {audioBlob ? 'Transcript' : 'Your thoughts'}
+            </Label>
+            <Textarea
+              id="entry-content"
+              placeholder={audioBlob 
+                ? "Your transcribed words will appear here..." 
+                : "Type your thoughts, or tap the mic to record..."
+              }
+              value={transcript}
+              onChange={(e) => setTranscript(e.target.value)}
+              className="min-h-[120px] resize-none"
+            />
+            {transcript && (
+              <p className="text-xs text-muted-foreground text-right">
+                {transcript.split(/\s+/).filter(Boolean).length} words
+              </p>
+            )}
+          </div>
+        )}
         
         {/* Save Button */}
         <Button
           className="w-full"
           onClick={saveEntry}
-          disabled={!transcript.trim() || isSaving}
+          disabled={
+            (audioOnlyMode ? !audioBlob : !transcript.trim()) || isSaving
+          }
         >
           {isSaving ? (
             <>
@@ -343,14 +382,17 @@ export default function VoiceJournal({
           ) : (
             <>
               <Save className="w-4 h-4 mr-2" />
-              Save Memory
+              {audioOnlyMode ? 'Save Audio Memory' : 'Save Memory'}
             </>
           )}
         </Button>
         
         {/* Helpful tip */}
         <p className="text-xs text-muted-foreground text-center">
-          💡 Tip: Describe what surprised you, who you met, or how you feel right now
+          {audioOnlyMode 
+            ? '🎙️ Audio-only: Your recording will be saved as-is for later listening'
+            : '💡 Tip: Describe what surprised you, who you met, or how you feel right now'
+          }
         </p>
       </CardContent>
     </Card>
