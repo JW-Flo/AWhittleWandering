@@ -7,25 +7,29 @@ AWW is a multi-tenant platform for tracking EV road trips with compartmentalized
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Frontend (React)                          │
+│                        Frontend (React 19)                       │
 │  - Journey Creation Wizard                                       │
-│  - Interactive Map (Mapbox)                                      │
+│  - Interactive Map (Mapbox GL JS)                               │
 │  - Analytics Dashboard                                           │
+│  - Voice Journal with Transcription                             │
+│  - Unified Trip Timeline                                         │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Supabase Backend                              │
+│                    Lovable Cloud Backend                         │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
 │  │   Auth      │  │  Database   │  │   Storage   │             │
-│  │  (Users)    │  │ (Metadata)  │  │  (Photos)   │             │
+│  │  (Users)    │  │ (35 Tables) │  │  (Photos)   │             │
 │  └─────────────┘  └─────────────┘  └─────────────┘             │
 │                                                                  │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │              Edge Functions                              │   │
+│  │              Edge Functions (28 Total)                   │   │
 │  │  - journey-storage (D1 provisioning)                    │   │
 │  │  - vehicle-api (Tessie/Fleet API proxy)                 │   │
 │  │  - tessie-cloudflare-sync (data sync)                   │   │
+│  │  - voice-transcribe (OpenAI Whisper)                    │   │
+│  │  - send-memory-reminder (daily prompts)                 │   │
 │  └─────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
                               │
@@ -40,6 +44,33 @@ AWW is a multi-tenant platform for tracking EV road trips with compartmentalized
 │  └─────────────┘  └─────────────┘  └─────────────┘             │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Recent Features
+
+### Voice Journal (December 2024)
+- Record voice memos during travels
+- Automatic transcription via OpenAI Whisper
+- Location and waypoint association
+- Mood tagging and people met tracking
+
+### Memory Prompts (December 2024)
+- Smart nudges based on GPS dwell time analysis
+- Identifies locations where user spent 30+ minutes
+- Non-prescriptive prompts ("Did you meet someone new?")
+- Integrates with journal entries
+
+### Unified Trip Timeline (December 2024)
+- Chronological interleaving of all journey events
+- Groups by day with collapsible sections
+- Supports journal entries, photos, videos, charges, state crossings
+- Inline audio playback for voice notes
+
+### Spotify Integration (November 2024)
+- OAuth connection to Spotify
+- Track listening history during drives
+- Associate tracks with waypoints/locations
 
 ---
 
@@ -119,51 +150,57 @@ Vehicle API (Tessie/Fleet)
 
 ## Database Schema
 
-### Supabase (Metadata & Auth)
+### Supabase Tables (35 Total)
 
-#### journeys
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| user_id | UUID | Owner (FK to auth.users) |
-| name | TEXT | Journey name |
-| description | TEXT | Optional description |
-| start_date | DATE | Journey start |
-| end_date | DATE | Journey end (null if ongoing) |
-| vehicle_id | UUID | FK to vehicles |
-| cloudflare_d1_id | TEXT | D1 database UUID |
-| cloudflare_d1_name | TEXT | D1 database name |
-| data_storage_type | TEXT | 'supabase' or 'cloudflare_d1' |
-| is_public | BOOLEAN | Visibility |
-| total_miles | NUMERIC | Calculated stat |
-| total_kwh | NUMERIC | Calculated stat |
-| states_count | INTEGER | Calculated stat |
+#### Core Tables
+| Table | Purpose |
+|-------|---------|
+| `journeys` | User road trips with D1 database references |
+| `vehicles` | User vehicles with API provider links |
+| `user_api_credentials` | Encrypted API tokens |
+| `drive_data` | GPS telemetry points |
+| `charging_sessions` | EV charging events |
+| `states_visited` | State crossing records |
 
-#### vehicles
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| user_id | UUID | Owner |
-| nickname | TEXT | Display name |
-| make | TEXT | Manufacturer |
-| model | TEXT | Model name |
-| year | INTEGER | Model year |
-| vin | TEXT | Vehicle ID (encrypted) |
-| api_provider_id | UUID | FK to api_providers |
-| api_credential_id | UUID | FK to user_api_credentials |
+#### User & Auth Tables
+| Table | Purpose |
+|-------|---------|
+| `profiles` | User profile data with privacy settings |
+| `user_roles` | Role assignments (admin, user, premium) |
+| `beta_testers` | Beta access codes |
+| `trusted_devices` | Device fingerprints for security |
+| `login_attempts` | Auth attempt logging |
+| `login_alerts` | Suspicious login notifications |
+| `account_lockouts` | Brute-force protection |
 
-#### user_api_credentials
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| user_id | UUID | Owner |
-| provider_id | UUID | FK to api_providers |
-| encrypted_token | TEXT | Encrypted API key |
-| is_valid | BOOLEAN | Validation status |
-| last_verified_at | TIMESTAMP | Last verification |
-| error_message | TEXT | Last error if invalid |
+#### Journey Feature Tables
+| Table | Purpose |
+|-------|---------|
+| `journal_entries` | Text/voice journal entries |
+| `journey_media` | Photos/videos with location privacy |
+| `journey_tracks` | Spotify listening history |
+| `journey_followers` | Follow relationships |
+| `journey_notification_settings` | Per-journey notification prefs |
+| `flagship_waypoints` | Curated waypoints for flagship journey |
 
-### Cloudflare D1 (Per-Journey Telemetry)
+#### Notification Tables
+| Table | Purpose |
+|-------|---------|
+| `notification_preferences` | User notification settings |
+| `notification_queue` | Pending notifications |
+| `sms_consent_log` | TCPA compliance records |
+
+#### Admin & Security Tables
+| Table | Purpose |
+|-------|---------|
+| `security_audit_log` | Security event logging |
+| `security_scan_results` | Automated security scans |
+| `incident_log` | Security incidents |
+| `page_views` | Analytics |
+| `blocked_visitors` | Blocked IPs/visitors |
+| `data_retention_config` | Retention policy settings |
+
+### Cloudflare D1 Schema (Per-Journey)
 
 #### drives
 | Column | Type | Description |
@@ -207,49 +244,70 @@ Vehicle API (Tessie/Fleet)
 
 ---
 
-## Edge Functions
+## Edge Functions (28 Total)
 
-### journey-storage
-Provisions and manages D1 databases for journeys.
+### Authentication & Security
 
-**Actions:**
-- `provision`: Create new D1 database with schema
-- `status`: Get D1 stats for a journey
-- `export`: Export all drive/charge data as JSON for download
-- `archive`: Move journey to cold storage with expiration
-- `unarchive`: Restore archived journey to active
-- `delete`: Permanently delete D1 database and all journey data
+| Function | JWT | Secrets | Purpose |
+|----------|-----|---------|---------|
+| `auth-security` | ✅ | ENCRYPTION_KEY | Login security checks, device fingerprinting |
+| `beta-auth` | ❌ | - | Beta access code validation |
+| `security-audit` | ✅ | - | Security scanning and audit logging |
+| `incident-remediation` | ✅ | - | Security incident response |
 
-**Archive Retention Policy:**
-- Active users (login within 30 days): 1 year retention
-- Inactive users: 90 days retention
-- Users should export data before archiving for permanent backup
+### Vehicle & Data Sync
 
-**Request:**
-```json
-{
-  "action": "provision",
-  "journeyId": "uuid-here"
-}
-```
+| Function | JWT | Secrets | Purpose |
+|----------|-----|---------|---------|
+| `tessie` | ✅ | TESSIE_API_KEY | Direct Tessie API proxy |
+| `tessie-sync` | ✅ | TESSIE_API_KEY | Sync vehicle data to Supabase |
+| `tessie-cloudflare-sync` | ✅ | TESSIE_API_KEY, CF_* | Sync to Cloudflare D1 |
+| `vehicle-api` | ✅ | Various | Multi-provider vehicle API proxy |
+| `extract-waypoints` | ✅ | - | Parse waypoints from GPS telemetry |
 
-**Response:**
-```json
-{
-  "success": true,
-  "d1DatabaseId": "cf-d1-uuid",
-  "d1DatabaseName": "aww-journey-abc12345"
-}
-```
+### Journey Management
 
-### vehicle-api
-Proxy for vehicle API calls (Tessie, Tesla Fleet).
+| Function | JWT | Secrets | Purpose |
+|----------|-----|---------|---------|
+| `journey-storage` | ✅ | CF_API_TOKEN, CF_ACCOUNT_ID | D1 database provisioning |
+| `route-navigator` | ✅ | - | Route calculation and navigation |
+| `csv-import` | ✅ | - | Import telemetry from CSV files |
+| `generate-test-journey` | ✅ | - | Create test journey data |
 
-### tessie-cloudflare-sync
-Syncs vehicle data to the journey's D1 database.
+### Notifications
 
-### d1-stats
-Admin-only endpoint for querying D1 statistics.
+| Function | JWT | Secrets | Purpose |
+|----------|-----|---------|---------|
+| `send-sms` | ✅ | TWILIO_* | Twilio SMS dispatch |
+| `send-email-digest` | ❌ | RESEND_API_KEY | Resend email digests (cron) |
+| `send-memory-reminder` | ❌ | RESEND_API_KEY | Daily memory prompts (cron) |
+| `send-archive-reminder` | ❌ | RESEND_API_KEY | Archive expiry warnings (cron) |
+
+### Integrations
+
+| Function | JWT | Secrets | Purpose |
+|----------|-----|---------|---------|
+| `spotify-auth` | ✅ | SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET | Spotify OAuth flow |
+| `weather` | ✅ | WEATHER_API_KEY | Weather data for locations |
+| `get-mapbox-token` | ✅ | MAPBOX_TOKEN | Secure Mapbox token delivery |
+| `voice-transcribe` | ✅ | OPENAI_API_KEY | OpenAI Whisper transcription |
+
+### Media & Storage
+
+| Function | JWT | Secrets | Purpose |
+|----------|-----|---------|---------|
+| `signed-url` | ✅ | - | Generate signed URLs for private media |
+| `track-view` | ❌ | - | Anonymous page view tracking |
+
+### Admin
+
+| Function | JWT | Secrets | Purpose |
+|----------|-----|---------|---------|
+| `admin-users` | ✅ | - | User management (admin only) |
+| `d1-stats` | ✅ | CF_* | D1 database statistics (admin only) |
+| `audit-d1-sync` | ✅ | CF_* | Audit D1 sync status |
+| `archive-cleanup` | ❌ | CF_*, RESEND_API_KEY | Clean expired archives (cron) |
+| `dsar-submit` | ✅ | - | Data subject access requests |
 
 ---
 
@@ -298,22 +356,25 @@ User's Vehicle → Tessie API → Edge Function → User's D1 Database
 - Supabase Auth with email/password
 - Optional 2FA (TOTP) - required for admins
 - Session management with automatic refresh
+- Device fingerprinting for suspicious login detection
 
 ### Authorization (RLS)
 - All Supabase tables have RLS enabled
 - Users can only access their own data
-- Public journeys readable by anyone
-- Followers can access approved journeys
+- Public journeys readable by approved followers
+- Admin role checked via `has_role()` function
 
 ### Data Encryption
-- API credentials encrypted at rest
+- API credentials encrypted at rest with ENCRYPTION_KEY
 - D1 databases isolated per journey
 - No cross-user data queries possible
+- Media files in private buckets with signed URLs
 
 ### API Security
-- All edge functions validate JWT
+- All edge functions validate JWT (except public endpoints)
 - Rate limiting on sync endpoints
 - API tokens never exposed to frontend
+- CORS headers on all responses
 
 ---
 
@@ -337,26 +398,45 @@ User's Vehicle → Tessie API → Edge Function → User's D1 Database
 
 ## Cron Jobs
 
-| Name | Schedule | Function |
-|------|----------|----------|
-| tessie-sync-hourly | 0 * * * * | Sync to Supabase |
-| tessie-cloudflare-sync-hourly | 30 * * * * | Sync to Cloudflare D1 |
+| Name | Schedule | Function | Purpose |
+|------|----------|----------|---------|
+| tessie-sync-hourly | `0 * * * *` | tessie-sync | Sync to Supabase |
+| tessie-cloudflare-sync-hourly | `30 * * * *` | tessie-cloudflare-sync | Sync to D1 |
+| archive-cleanup-daily | `0 3 * * *` | archive-cleanup | Clean expired archives |
+| memory-reminder-daily | `0 20 * * *` | send-memory-reminder | Daily memory prompts |
+| email-digest-daily | `0 8 * * *` | send-email-digest | Daily email digests |
 
 ---
 
-## Environment Variables
+## Environment Variables & Secrets
 
-### Supabase Secrets
+### Supabase Secrets (15 Configured)
+
+| Name | Required By | Description |
+|------|-------------|-------------|
+| `TESSIE_API_KEY` | tessie, tessie-sync, tessie-cloudflare-sync | Platform Tessie key |
+| `MAPBOX_TOKEN` | get-mapbox-token | Map rendering |
+| `CLOUDFLARE_API_TOKEN` | journey-storage, tessie-cloudflare-sync | D1 management |
+| `CLOUDFLARE_ACCOUNT_ID` | journey-storage, tessie-cloudflare-sync | CF account |
+| `CLOUDFLARE_D1_DATABASE_ID` | tessie-cloudflare-sync | Flagship D1 |
+| `RESEND_API_KEY` | send-email-digest, send-archive-reminder, send-memory-reminder | Email |
+| `TWILIO_ACCOUNT_SID` | send-sms | SMS |
+| `TWILIO_AUTH_TOKEN` | send-sms | SMS auth |
+| `TWILIO_PHONE_NUMBER` | send-sms | SMS sender |
+| `OPENAI_API_KEY` | voice-transcribe | Whisper transcription |
+| `SPOTIFY_CLIENT_ID` | spotify-auth | Spotify OAuth |
+| `SPOTIFY_CLIENT_SECRET` | spotify-auth | Spotify OAuth |
+| `ENCRYPTION_KEY` | auth-security | Credential encryption |
+| `WEATHER_API_KEY` | weather | Weather data |
+
+### Frontend Environment Variables
+
 | Name | Description |
 |------|-------------|
-| TESSIE_API_KEY | Platform Tessie key (flagship) |
-| MAPBOX_TOKEN | Map rendering |
-| CLOUDFLARE_API_TOKEN | D1 management |
-| CLOUDFLARE_ACCOUNT_ID | CF account |
-| CLOUDFLARE_D1_DATABASE_ID | Flagship D1 |
-| RESEND_API_KEY | Email notifications |
-| TWILIO_ACCOUNT_SID | SMS notifications |
-| TWILIO_AUTH_TOKEN | SMS auth |
+| `VITE_SUPABASE_URL` | Supabase project URL |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase anon key |
+| `VITE_SUPABASE_PROJECT_ID` | Supabase project ID |
+| `VITE_MAPBOX_TOKEN` | Public Mapbox token |
 
 ---
 
@@ -371,13 +451,14 @@ User's Vehicle → Tessie API → Edge Function → User's D1 Database
 | `Unauthorized` | Invalid/expired JWT | Re-authenticate |
 | `Journey not found` | Wrong ID or no access | Check ownership |
 | `D1 query failed` | Invalid SQL or D1 issue | Check logs |
+| `Rate limit exceeded` | Too many API calls | Implement backoff |
 
 ---
 
 ## Monitoring
 
 ### Edge Function Logs
-Access via Supabase dashboard or `supabase--edge-function-logs` tool.
+Access via Lovable Cloud interface or edge function logs tool.
 
 ### D1 Sync Status
 Query `sync_log` table in each D1 database:
@@ -389,3 +470,110 @@ SELECT * FROM sync_log ORDER BY synced_at DESC LIMIT 10;
 - Vehicle API validation on credential save
 - D1 connectivity check on provision
 - Sync status in admin portal
+
+---
+
+## Self-Hosted GitHub Runner
+
+### Configuration
+- **Location**: `/Users/joe/actions-runner`
+- **Platform**: macOS
+- **Labels**: `self-hosted`
+
+### Capabilities
+- Node.js 20+ installed
+- Deno 2.x installed for edge function validation
+- Full npm/npx access
+
+### CI/CD Workflow
+The runner executes on push/PR to main:
+1. Install dependencies (`npm ci`)
+2. Run ESLint (`npm run lint`)
+3. Type check (`npm run typecheck`)
+4. Build application (`npm run build`)
+5. Validate edge function syntax
+
+### Setup Instructions
+```bash
+# Navigate to runner directory
+cd /Users/joe/actions-runner
+
+# Configure runner (if not already done)
+./config.sh --url https://github.com/your-org/a-whittle-wandering --token YOUR_TOKEN
+
+# Start runner
+./run.sh
+```
+
+---
+
+## Custom Hooks
+
+### useAuth
+Authentication state and methods:
+```typescript
+const { user, session, signIn, signOut, isAdmin, isLoading } = useAuth();
+```
+
+### useTessieData
+Vehicle telemetry data:
+```typescript
+const { vehicleState, driveHistory, chargeHistory, isLoading } = useTessieData(vehicleId);
+```
+
+### useWeather
+Weather for coordinates:
+```typescript
+const { weather, forecast, isLoading } = useWeather(lat, lng);
+```
+
+### useSignedUrl
+Generate signed URLs for private media:
+```typescript
+const { signedUrl, isLoading } = useSignedUrl(filePath, bucket);
+```
+
+### useFlagshipWaypoints
+Curated flagship journey waypoints:
+```typescript
+const { waypoints, isLoading } = useFlagshipWaypoints();
+```
+
+### useActivityLogger
+Security audit logging:
+```typescript
+const { logActivity } = useActivityLogger();
+await logActivity('journey_created', 'journey', journeyId);
+```
+
+---
+
+## Component Organization
+
+```
+src/components/
+├── ui/              # shadcn/ui primitives (42 components)
+│   ├── button.tsx
+│   ├── card.tsx
+│   ├── dialog.tsx
+│   └── ...
+├── admin/           # Admin-only (8 components)
+│   ├── UserDetailDrawer.tsx
+│   ├── SecurityDashboard.tsx
+│   └── ...
+├── journey/         # Journey features (13 components)
+│   ├── JourneyList.tsx
+│   ├── VoiceJournal.tsx
+│   ├── UnifiedTripTimeline.tsx
+│   └── ...
+├── settings/        # User settings (9 components)
+│   ├── AccountSettings.tsx
+│   ├── PrivacySettings.tsx
+│   └── ...
+├── social/          # Social features (3 components)
+│   ├── SocialShareButtons.tsx
+│   ├── SpotifyConnect.tsx
+│   └── ...
+└── auth/            # Auth components (1 component)
+    └── MFAVerification.tsx
+```
