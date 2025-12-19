@@ -1967,6 +1967,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_approved_follower: {
+        Args: { p_journey_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_journey_owner: {
+        Args: { p_journey_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_journey_public: { Args: { p_journey_id: string }; Returns: boolean }
       log_security_event: {
         Args: {
           p_action: string
