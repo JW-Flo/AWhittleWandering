@@ -1,1 +1,8 @@
-# AI Context (Repo-Local)\n\nPut *project truth* here so agents stop hallucinating:\n- architecture.md\n- data-contracts.md\n- env-manifest.md\n- runbook.md\n- fixtures/ (sample responses)\n
+# AI Context (Repo-Local)
+
+Put *project truth* here so agents stop hallucinating:
+- architecture.md
+- data-contracts.md
+- env-manifest.md
+- runbook.md
+- fixtures/ (sample responses)

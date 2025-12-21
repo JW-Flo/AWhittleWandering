@@ -15,7 +15,7 @@ write_file() {
     return 0
   fi
 
-  printf "%s" "$content" > "$path"
+  printf "%b" "$content" > "$path"
   echo "wrote: $path"
 }
 

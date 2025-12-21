@@ -1,1 +1,14 @@
----\ndescription: DevSecOps guardrails\nalwaysApply: true\n---\n\n## Security\n- Least privilege env vars; do not leak tokens client-side.\n- CORS must be explicit (no '*' in prod unless justified).\n- Rate limit/backoff for upstream calls.\n- Log safely: include requestId/latency/status; never log secrets.\n\n## Supply chain\n- Prefer pinned versions.\n- If adding deps: justify + check license + avoid heavy transitive bloat.\n
+---
+description: DevSecOps guardrails
+alwaysApply: true
+---
+
+## Security
+- Least privilege env vars; do not leak tokens client-side.
+- CORS must be explicit (no '*' in prod unless justified).
+- Rate limit/backoff for upstream calls.
+- Log safely: include requestId/latency/status; never log secrets.
+
+## Supply chain
+- Prefer pinned versions.
+- If adding deps: justify + check license + avoid heavy transitive bloat.

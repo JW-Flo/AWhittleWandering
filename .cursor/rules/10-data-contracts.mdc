@@ -1,1 +1,13 @@
----\ndescription: Data contract discipline\nalwaysApply: true\n---\n\n## Contract rules\n- Schema versioning: never silently rename or drop fields.\n- Boundary validation: runtime schemas at API edges.\n- If upstream shape changes: map -> canonical; add fixture + contract test.\n\n## UI rules\n- No blank screens. Always render loading/error/degraded state.\n- Degraded payload must include reason + lastUpdated.\n
+---
+description: Data contract discipline
+alwaysApply: true
+---
+
+## Contract rules
+- Schema versioning: never silently rename or drop fields.
+- Boundary validation: runtime schemas at API edges.
+- If upstream shape changes: map -> canonical; add fixture + contract test.
+
+## UI rules
+- No blank screens. Always render loading/error/degraded state.
+- Degraded payload must include reason + lastUpdated.

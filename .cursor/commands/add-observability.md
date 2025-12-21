@@ -1,1 +1,9 @@
-Add:\n- structured logs (route/status/latency/requestId)\n- safe error capture hooks\n- frontend error boundary + network failure capture\n\nDeliver:\n- minimal diffs\n- where to view logs\n- alerting hooks (optional)\n
+Add:
+- structured logs (route/status/latency/requestId)
+- safe error capture hooks
+- frontend error boundary + network failure capture
+
+Deliver:
+- minimal diffs
+- where to view logs
+- alerting hooks (optional)
