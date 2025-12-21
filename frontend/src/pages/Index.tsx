@@ -89,7 +89,7 @@ const Index = () => {
     setAuthLoading(true);
     setAuthMessage(null);
     try {
-      const response = await fetch(`${api.baseUrl}/drop`, {
+      const response = await fetch(`${api.baseUrl}/api/v1/auth`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action })
