@@ -1,0 +1,1 @@
+# Architecture\n\n- Describe runtime components (frontend, worker/api, analytics, storage)\n- List key routes + data flows\n- Note where secrets live (never in repo)\n
