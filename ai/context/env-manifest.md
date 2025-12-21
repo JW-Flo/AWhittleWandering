@@ -1,0 +1,1 @@
+# Environment Manifest\n\nList env vars *by component* (frontend/worker/analytics):\n\n| Var | Component | Required | Secret | Purpose |\n|---|---|---:|---:|---|\n\nRules:\n- No secrets committed.\n- Provide .env.example with placeholders.\n

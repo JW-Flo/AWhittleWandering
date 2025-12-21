@@ -1,0 +1,1 @@
+name: agent-pack\non:\n  pull_request:\n  push:\n    branches: [ main ]\n\njobs:\n  verify:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: bash scripts/bootstrap-agent-pack.sh\n      - run: |\n          git diff --exit-code || (echo "Agent pack drift. Run scripts/bootstrap-agent-pack.sh and commit results." && exit 1)\n

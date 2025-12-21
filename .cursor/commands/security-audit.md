@@ -1,0 +1,1 @@
+Audit for:\n- secrets exposure\n- client-side token leakage\n- CORS/auth issues\n- rate limiting/abuse\n- risky deps\n\nDeliver:\n- findings ranked by severity\n- exact file locations\n- concrete fixes\n- secret rotation checklist (if needed)\n
