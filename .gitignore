@@ -51,3 +51,6 @@ ollama-assistant.sh
 ollama-context.md
 monitor_progress.sh
 teslamate-reference/
+
+# local IDE/AI setup backups
+.backup/
