@@ -4,6 +4,8 @@
  * Runs on cron schedule
  */
 
+import { z } from 'zod';
+
 // Cloudflare D1 Database interface
 interface D1Database {
   prepare(query: string): D1PreparedStatement;
@@ -90,14 +92,15 @@ export class TeslaDataIngestion {
     // Ensure baseline records exist and map the configured VIN/vehicle identifier.
     const vin = this.config.vehicleIdOrVin || 'UNKNOWN_VIN';
     const now = new Date().toISOString();
+
+    // Avoid INSERT OR REPLACE on vehicles: it can delete+reinsert and violate FKs.
     await this.db.prepare(
-      `INSERT OR REPLACE INTO vehicles (id, vin, display_name, model, year, created_at, updated_at)
-       VALUES (?, ?, COALESCE((SELECT display_name FROM vehicles WHERE id = ?), 'Midnight Shadow'), COALESCE((SELECT model FROM vehicles WHERE id = ?), 'Model Y'), COALESCE((SELECT year FROM vehicles WHERE id = ?), 2023), COALESCE((SELECT created_at FROM vehicles WHERE id = ?), ?), ?)`
-    ).bind(
-      'midnight-shadow', vin,
-      'midnight-shadow', 'midnight-shadow', 'midnight-shadow',
-      'midnight-shadow', now, now
-    ).run();
+      `INSERT OR IGNORE INTO vehicles (id, vin, display_name, model, year, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind('midnight-shadow', vin, 'Midnight Shadow', 'Model Y', 2023, now, now).run();
+    await this.db.prepare(
+      `UPDATE vehicles SET vin = ?, updated_at = datetime('now') WHERE id = ?`
+    ).bind(vin, 'midnight-shadow').run();
 
     await this.db.prepare(
       `INSERT OR IGNORE INTO journeys (id, vehicle_id, name, description, start_date, target_states, status, created_at, updated_at)
@@ -270,7 +273,10 @@ export class TeslaDataIngestion {
         `/${this.config.vehicleIdOrVin}/drives?from=${thirtyDaysAgo}&to=${now}`
       );
 
-      if (!drivesData?.results) {
+      const driveResults = Array.isArray((drivesData as any)?.results)
+        ? (drivesData as any).results
+        : (Array.isArray(drivesData) ? drivesData : []);
+      if (!driveResults.length) {
         console.log('⚠️ No drives data received');
         return { success: true, recordsProcessed: 0, errors: [], timestamp: new Date().toISOString() };
       }
@@ -278,7 +284,7 @@ export class TeslaDataIngestion {
       let recordsProcessed = 0;
       const errors: string[] = [];
 
-      for (const drive of drivesData.results) {
+      for (const drive of driveResults) {
         try {
           const startedAt = this.normalizeIso(drive.started_at) || new Date().toISOString();
           const endedAt = this.normalizeIso(drive.ended_at) || startedAt;
@@ -358,7 +364,10 @@ export class TeslaDataIngestion {
         `/${this.config.vehicleIdOrVin}/charges?from=${thirtyDaysAgo}&to=${now}`
       );
 
-      if (!chargesData?.results) {
+      const chargeResults = Array.isArray((chargesData as any)?.results)
+        ? (chargesData as any).results
+        : (Array.isArray(chargesData) ? chargesData : []);
+      if (!chargeResults.length) {
         console.log('⚠️ No charges data received');
         return { success: true, recordsProcessed: 0, errors: [], timestamp: new Date().toISOString() };
       }
@@ -366,7 +375,7 @@ export class TeslaDataIngestion {
       let recordsProcessed = 0;
       const errors: string[] = [];
 
-      for (const charge of chargesData.results) {
+      for (const charge of chargeResults) {
         try {
           const startedAt = this.normalizeIso(charge.started_at) || new Date().toISOString();
           const endedAt = this.normalizeIso(charge.ended_at);
@@ -479,19 +488,99 @@ export class TeslaDataIngestion {
    */
   private async callTessieAPI(endpoint: string): Promise<any> {
     const url = `${this.config.baseUrl}${endpoint}`;
-    
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${this.config.apiKey}`,
-        'Content-Type': 'application/json'
-      }
-    });
 
-    if (!response.ok) {
-      throw new Error(`Tessie API error: ${response.status} ${response.statusText}`);
+    const headers = {
+      'Authorization': `Bearer ${this.config.apiKey}`,
+      'Content-Type': 'application/json'
+    } as const;
+
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    const timeoutMs = 10_000;
+    const maxAttempts = 3;
+
+    let lastErr: unknown;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const controller = new AbortController();
+      const to = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const res = await fetch(url, { headers, signal: controller.signal });
+        clearTimeout(to);
+
+        // Retry on rate limiting / transient upstream errors
+        if (!res.ok) {
+          const shouldRetry = res.status === 429 || (res.status >= 500 && res.status <= 599);
+          if (shouldRetry && attempt < maxAttempts) {
+            let retryAfterMs = 0;
+            const ra = res.headers.get('Retry-After');
+            const raSec = ra ? Number(ra) : NaN;
+            if (Number.isFinite(raSec) && raSec > 0) retryAfterMs = Math.min(30_000, Math.round(raSec * 1000));
+            const backoffMs = Math.min(10_000, Math.round(250 * Math.pow(2, attempt - 1)));
+            const jitterMs = Math.floor(Math.random() * 250);
+            await sleep(Math.max(retryAfterMs, backoffMs + jitterMs));
+            continue;
+          }
+          const body = await res.text().catch(() => '');
+          throw new Error(`Tessie API error: ${res.status} ${res.statusText}${body ? `: ${body.slice(0, 500)}` : ''}`);
+        }
+
+        const json = await res.json();
+
+        // Minimal runtime validation (external input is untrusted)
+        if (endpoint.endsWith('/state')) {
+          const stateSchema = z.object({
+            charge_state: z.object({
+              battery_level: z.number().optional(),
+              battery_range: z.number().optional(),
+              charging_state: z.string().optional(),
+              charger_power: z.number().optional()
+            }).optional(),
+            drive_state: z.object({
+              latitude: z.number().optional(),
+              longitude: z.number().optional(),
+              heading: z.number().optional(),
+              speed: z.number().optional(),
+              shift_state: z.string().optional()
+            }).optional(),
+            climate_state: z.object({
+              inside_temp: z.number().optional(),
+              outside_temp: z.number().optional(),
+              is_climate_on: z.boolean().optional()
+            }).optional(),
+            vehicle_state: z.object({
+              odometer: z.number().optional(),
+              locked: z.boolean().optional()
+            }).optional()
+          }).passthrough();
+          const parsed = stateSchema.safeParse(json);
+          if (!parsed.success) throw new Error('Tessie state payload validation failed');
+          return parsed.data;
+        }
+
+        if (endpoint.includes('/drives') || endpoint.includes('/charges')) {
+          const listSchema = z.union([
+            z.object({ results: z.array(z.any()) }).passthrough(),
+            z.array(z.any())
+          ]);
+          const parsed = listSchema.safeParse(json);
+          if (!parsed.success) throw new Error('Tessie list payload validation failed');
+          return parsed.data;
+        }
+
+        return json;
+      } catch (e) {
+        clearTimeout(to);
+        lastErr = e;
+        // Abort/timeout should be retried if attempts remain
+        if (attempt < maxAttempts) {
+          const backoffMs = Math.min(10_000, Math.round(250 * Math.pow(2, attempt - 1)));
+          const jitterMs = Math.floor(Math.random() * 250);
+          await sleep(backoffMs + jitterMs);
+          continue;
+        }
+      }
     }
 
-    return await response.json();
+    throw new Error(extractErrorMessage(lastErr));
   }
 
   /**

@@ -128,6 +128,13 @@ export class CronDataController {
 
     } catch (error) {
       const duration = Date.now() - startTime;
+
+      await this.logIngestionOperation('vehicle_state', {
+        success: false,
+        recordsProcessed: 0,
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
+        timestamp: new Date().toISOString()
+      }, duration);
       
       return new Response(JSON.stringify({
         success: false,
@@ -187,6 +194,13 @@ export class CronDataController {
 
     } catch (error) {
       const duration = Date.now() - startTime;
+
+      await this.logIngestionOperation('historical_backfill', {
+        success: false,
+        recordsProcessed: 0,
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
+        timestamp: new Date().toISOString()
+      }, duration);
       
       return new Response(JSON.stringify({
         success: false,
@@ -290,6 +304,13 @@ export class CronDataController {
 
     } catch (error) {
       const duration = Date.now() - startTime;
+
+      await this.logIngestionOperation('data_quality_check', {
+        success: false,
+        recordsProcessed: 0,
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
+        timestamp: new Date().toISOString()
+      }, duration);
       
       return new Response(JSON.stringify({
         success: false,
@@ -365,6 +386,13 @@ export class CronDataController {
 
     } catch (error) {
       const duration = Date.now() - startTime;
+
+      await this.logIngestionOperation('ai_processing', {
+        success: false,
+        recordsProcessed: 0,
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
+        timestamp: new Date().toISOString()
+      }, duration);
       
       return new Response(JSON.stringify({
         success: false,
