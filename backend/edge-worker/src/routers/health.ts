@@ -96,12 +96,12 @@ healthRouter.get('/', async (c) => {
 
       // Freshness evaluation
       if (vehicleStateAge != null) {
-        if (vehicleStateAge > 6 * 3600) { // >6h
-          health.status = 'degraded';
-          health.warnings.push('Vehicle state older than 6h');
-        } else if (vehicleStateAge > 24 * 3600) {
+        if (vehicleStateAge > 24 * 3600) {
           health.status = 'unhealthy';
           health.warnings.push('Vehicle state older than 24h');
+        } else if (vehicleStateAge > 6 * 3600) { // >6h
+          health.status = 'degraded';
+          health.warnings.push('Vehicle state older than 6h');
         }
       } else {
         health.status = 'degraded';
