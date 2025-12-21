@@ -112,15 +112,18 @@ git push origin --force --all
 - [x] `.dev.vars.example` template verified
 - [x] Pre-commit hook installed to prevent future incidents
 - [x] Credential rotation script created
-- [ ] **CREDENTIALS ROTATED** ⚠️ **ACTION REQUIRED** - Run `./scripts/rotate-exposed-credentials.sh`
-- [ ] Git history cleaned (optional)
+- [x] **Git history cleaned** ✅ - File removed from all commits using git-filter-repo
+- [x] **Remote repository updated** ✅ - Force pushed cleaned history
+- [x] Backup branch created: `backup-before-history-clean-20251221-142907`
+- [ ] **CREDENTIALS ROTATED** ⚠️ **ACTION REQUIRED** - Run `./scripts/rotate-exposed-credentials.sh` (API key is old, but rotation still recommended)
 - [ ] Team notified
 
 ## References
 
-- Commit that removed file: `2453e63`
-- File location in history: `backend/edge-worker/.dev.vars`
+- Commit that removed file: `2453e63` (no longer exists after history rewrite)
+- File location in history: `backend/edge-worker/.dev.vars` (removed from all history)
 - Example template: `backend/edge-worker/.dev.vars.example`
+- Backup branch: `backup-before-history-clean-20251221-142907` (contains original history if needed)
 
 ---
 
