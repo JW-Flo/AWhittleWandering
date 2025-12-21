@@ -70,6 +70,42 @@ export class TeslaDataIngestion {
   }
 
   /**
+   * Normalize timestamp to ISO string format
+   * Handles Unix seconds (9-12 digits), milliseconds (13 digits), and ISO strings
+   */
+  private normalizeIso(ts: string | number | null | undefined): string {
+    if (!ts) {
+      return new Date().toISOString();
+    }
+
+    // If already a number, convert to string for processing
+    const tsStr = String(ts);
+    
+    // Check if it's a numeric timestamp (Unix seconds or milliseconds)
+    // Match 9-13 digits (Unix seconds: 9-12, milliseconds: 13)
+    if (/^\d{9,13}$/.test(tsStr)) {
+      const tsNum = Number(tsStr);
+      // If 13 digits, it's already milliseconds; otherwise it's seconds
+      const ms = tsStr.length === 13 ? tsNum : tsNum * 1000;
+      const date = new Date(ms);
+      // Validate the date is valid
+      if (isNaN(date.getTime())) {
+        console.warn(`Invalid timestamp: ${tsStr}, defaulting to current time`);
+        return new Date().toISOString();
+      }
+      return date.toISOString();
+    }
+
+    // Try parsing as ISO string or other date format
+    const date = new Date(tsStr);
+    if (isNaN(date.getTime())) {
+      console.warn(`Invalid timestamp format: ${tsStr}, defaulting to current time`);
+      return new Date().toISOString();
+    }
+    return date.toISOString();
+  }
+
+  /**
    * Main ingestion orchestrator - runs all data collection
    */
   async ingestAllData(): Promise<IngestionResult> {
@@ -198,6 +234,14 @@ export class TeslaDataIngestion {
 
       for (const drive of drivesData.results) {
         try {
+          const startedAt = this.normalizeIso(drive.started_at);
+          const endedAt = this.normalizeIso(drive.ended_at);
+          
+          // Calculate duration from normalized timestamps
+          const durationMinutes = Math.round(
+            (new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 60000
+          );
+          
           await this.db.prepare(`
             INSERT OR REPLACE INTO drives (
               tessie_id, journey_id, vehicle_id, started_at, ended_at,
@@ -210,8 +254,8 @@ export class TeslaDataIngestion {
             drive.id,
             'continental-usa-2025',
             this.config.vehicleVin,
-            drive.started_at,
-            drive.ended_at,
+            startedAt,
+            endedAt,
             drive.starting_location || 'Unknown',
             drive.ending_location || 'Unknown',
             drive.starting_latitude || 0,
@@ -219,7 +263,7 @@ export class TeslaDataIngestion {
             drive.ending_latitude || 0,
             drive.ending_longitude || 0,
             drive.odometer_distance || 0,
-            Math.round((drive.ended_at - drive.started_at) / 60),
+            durationMinutes,
             drive.starting_battery || 0,
             drive.ending_battery || 0,
             drive.energy_used || 0,
@@ -287,8 +331,8 @@ export class TeslaDataIngestion {
             charge.id,
             'continental-usa-2025',
             this.config.vehicleVin,
-            charge.started_at,
-            charge.ended_at,
+            this.normalizeIso(charge.started_at),
+            this.normalizeIso(charge.ended_at),
             charge.location || 'Unknown',
             charge.latitude || 0,
             charge.longitude || 0,
