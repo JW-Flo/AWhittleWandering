@@ -128,6 +128,13 @@ export class CronDataController {
 
     } catch (error) {
       const duration = Date.now() - startTime;
+
+      await this.logIngestionOperation('vehicle_state', {
+        success: false,
+        recordsProcessed: 0,
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
+        timestamp: new Date().toISOString()
+      }, duration);
       
       return new Response(JSON.stringify({
         success: false,
@@ -187,6 +194,13 @@ export class CronDataController {
 
     } catch (error) {
       const duration = Date.now() - startTime;
+
+      await this.logIngestionOperation('historical_backfill', {
+        success: false,
+        recordsProcessed: 0,
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
+        timestamp: new Date().toISOString()
+      }, duration);
       
       return new Response(JSON.stringify({
         success: false,
@@ -224,13 +238,15 @@ export class CronDataController {
       `).first();
 
       const latestState = await this.db.prepare(`
-        SELECT MAX(timestamp) as latest FROM vehicle_states
+        SELECT MAX(timestamp) as latest FROM vehicle_state
       `).first();
 
       // Check if data is too old (more than 2 hours)
       const twoHoursAgo = Date.now() - (2 * 60 * 60 * 1000);
       
-      if (!latestState?.latest || latestState.latest < twoHoursAgo) {
+      const latestTs = (latestState as any)?.latest as string | undefined;
+      const latestMs = latestTs ? new Date(latestTs).getTime() : NaN;
+      if (!latestTs || Number.isNaN(latestMs) || latestMs < twoHoursAgo) {
         issues.push('Vehicle state data is stale (>2 hours old)');
       }
 
@@ -288,6 +304,13 @@ export class CronDataController {
 
     } catch (error) {
       const duration = Date.now() - startTime;
+
+      await this.logIngestionOperation('data_quality_check', {
+        success: false,
+        recordsProcessed: 0,
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
+        timestamp: new Date().toISOString()
+      }, duration);
       
       return new Response(JSON.stringify({
         success: false,
@@ -363,6 +386,13 @@ export class CronDataController {
 
     } catch (error) {
       const duration = Date.now() - startTime;
+
+      await this.logIngestionOperation('ai_processing', {
+        success: false,
+        recordsProcessed: 0,
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
+        timestamp: new Date().toISOString()
+      }, duration);
       
       return new Response(JSON.stringify({
         success: false,
@@ -405,6 +435,20 @@ export class CronDataController {
   /**
    * AI Processing Methods
    */
+  private async upsertApiCache(cacheKey: string, cacheType: string, data: unknown, ttlHours: number): Promise<void> {
+    const expiresAt = new Date(Date.now() + ttlHours * 60 * 60 * 1000).toISOString();
+    await this.db.prepare(
+      `INSERT OR REPLACE INTO api_cache (cache_key, cache_data, cache_type, expires_at, metadata)
+       VALUES (?, ?, ?, ?, ?)`
+    ).bind(
+      cacheKey,
+      JSON.stringify(data),
+      cacheType,
+      expiresAt,
+      JSON.stringify({ generatedAt: new Date().toISOString() })
+    ).run();
+  }
+
   private async processRouteAnalysis(): Promise<void> {
     // Analyze route efficiency and patterns
     const routeData = await this.db.prepare(`
@@ -424,18 +468,7 @@ export class CronDataController {
       routeComplexity: 'calculated', // Would implement actual complexity algorithm
       lastUpdated: new Date().toISOString()
     };
-
-    await this.db.prepare(`
-      INSERT OR REPLACE INTO component_cache 
-      (id, component_name, cache_key, data, expires_at)
-      VALUES (?, ?, ?, ?, ?)
-    `).bind(
-      'route_analysis_current',
-      'route_analysis',
-      'continental-usa-2025',
-      JSON.stringify(analysis),
-      new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString() // 6 hours
-    ).run();
+    await this.upsertApiCache('component:route_analysis:current', 'component', analysis, 6);
   }
 
   private async processEfficiencyTrends(): Promise<void> {
@@ -443,12 +476,12 @@ export class CronDataController {
     const efficiencyData = await this.db.prepare(`
       SELECT 
         DATE(started_at) as drive_date,
-        AVG(efficiency_score) as avg_efficiency,
+        AVG(efficiency_miles_per_kwh) as avg_efficiency,
         COUNT(*) as drive_count,
         SUM(distance_miles) as total_miles
       FROM drives 
       WHERE journey_id = 'continental-usa-2025' 
-        AND efficiency_score IS NOT NULL
+        AND efficiency_miles_per_kwh IS NOT NULL
       GROUP BY DATE(started_at)
       ORDER BY drive_date
     `).all();
@@ -458,18 +491,7 @@ export class CronDataController {
       overallTrend: 'stable', // Would implement trend analysis
       lastUpdated: new Date().toISOString()
     };
-
-    await this.db.prepare(`
-      INSERT OR REPLACE INTO component_cache 
-      (id, component_name, cache_key, data, expires_at)
-      VALUES (?, ?, ?, ?, ?)
-    `).bind(
-      'efficiency_trends_current',
-      'efficiency_trends',
-      'continental-usa-2025',
-      JSON.stringify(trends),
-      new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString()
-    ).run();
+    await this.upsertApiCache('component:efficiency_trends:current', 'component', trends, 6);
   }
 
   private async processChargingPatterns(): Promise<void> {
@@ -477,13 +499,13 @@ export class CronDataController {
     const chargingData = await this.db.prepare(`
       SELECT 
         charger_type,
-        AVG(charging_efficiency) as avg_efficiency,
+        AVG(charging_efficiency_kw) as avg_efficiency,
         AVG(cost_per_kwh) as avg_cost_per_kwh,
         COUNT(*) as session_count,
         SUM(energy_added_kwh) as total_energy
       FROM charges 
       WHERE journey_id = 'continental-usa-2025'
-        AND charging_efficiency IS NOT NULL
+        AND charging_efficiency_kw IS NOT NULL
       GROUP BY charger_type
     `).all();
 
@@ -492,17 +514,6 @@ export class CronDataController {
       totalSessions: chargingData.results?.reduce((sum: number, c: any) => sum + (c.session_count || 0), 0) || 0,
       lastUpdated: new Date().toISOString()
     };
-
-    await this.db.prepare(`
-      INSERT OR REPLACE INTO component_cache 
-      (id, component_name, cache_key, data, expires_at)
-      VALUES (?, ?, ?, ?, ?)
-    `).bind(
-      'charging_patterns_current',
-      'charging_patterns',
-      'continental-usa-2025',
-      JSON.stringify(patterns),
-      new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString()
-    ).run();
+    await this.upsertApiCache('component:charging_patterns:current', 'component', patterns, 6);
   }
 }

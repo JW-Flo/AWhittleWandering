@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="SAMEORIGIN" />
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://api.mapbox.com; style-src 'self' 'unsafe-inline' https://api.mapbox.com; img-src 'self' data: blob: https://*.mapbox.com https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.mapbox.com https://events.mapbox.com; font-src 'self' data:; frame-ancestors 'self';" />
+    <meta name="robots" content="index, follow" />
+    
+    <!-- Mobile Specific -->
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    
+    <title>A Whittle Wandering - Track Your Adventures Across the World</title>
+    <meta name="description" content="Follow the 48-state Tesla road trip adventure. 15,847 miles, 89 days, one electric vehicle named Shadowfax. Track your own journeys too." />
+    <meta name="author" content="Joe Whittle" />
+    <meta name="theme-color" content="#ea580c" />
+    <meta name="keywords" content="48 state road trip, Tesla road trip, EV adventure, cross country journey, electric vehicle travel, Shadowfax" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.awhittlewandering.com/" />
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="AWW" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.awhittlewandering.com/" />
+    <meta property="og:title" content="A Whittle Wandering - Track Your Adventures Across the World" />
+    <meta property="og:description" content="Follow the 48-state Tesla road trip adventure. 15,847 miles, 89 days, one electric vehicle named Shadowfax." />
+    <meta property="og:image" content="https://www.awhittlewandering.com/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="A Whittle Wandering" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://www.awhittlewandering.com/" />
+    <meta name="twitter:title" content="A Whittle Wandering - 48 State Tesla Adventure" />
+    <meta name="twitter:description" content="15,847 miles. 89 days. 48 states. One Tesla named Shadowfax. Follow the journey." />
+    <meta name="twitter:image" content="https://www.awhittlewandering.com/og-image.jpg" />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "A Whittle Wandering",
+      "alternateName": "AWW",
+      "url": "https://www.awhittlewandering.com",
+      "description": "Track your adventures across the world with interactive maps and real-time vehicle analytics.",
+      "applicationCategory": "TravelApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

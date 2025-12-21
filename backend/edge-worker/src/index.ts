@@ -15,6 +15,11 @@ import { telemetryRouter } from './routers/telemetry';
 import { unifiedDataRouter } from './routers/unifiedData';
 import { tripStatusRouter } from './routers/tripStatus';
 import { adminRouter } from './routers/admin';
+import { componentRouter } from './routers/component';
+import { analyticsRouter } from './routers/analytics';
+import { vehicleRouter } from './routers/vehicle';
+import { aiRouter } from './routers/ai';
+import { metaRouter } from './routers/meta';
 
 // Augment Env typing (local) for new PLATFORM_MODE variable
 declare global {
@@ -45,6 +50,12 @@ function snapshotLatency() {
   const p = (q: number) => sorted[Math.min(sorted.length-1, Math.floor(q * sorted.length))];
   return { count: sorted.length, p50: p(0.5), p95: p(0.95) };
 }
+
+// Expose to health router (best-effort; safe if overwritten)
+try {
+  // @ts-ignore
+  (globalThis as any).__LAT_SNAPSHOT__ = snapshotLatency;
+} catch { /* noop */ }
 
 // Latency measuring middleware (placed after error/rate/security so it measures full chain)
 app.use('*', async (c, next) => {
@@ -77,6 +88,11 @@ app.route('/api/v1/health', healthRouter);
 app.route('/api/v1/telemetry', telemetryRouter);
 app.route('/api/v1/unified-data', unifiedDataRouter);
 app.route('/api/v1/trip-status', tripStatusRouter);
+app.route('/api/v1/component', componentRouter);
+app.route('/api/v1/analytics', analyticsRouter);
+app.route('/api/v1/vehicle', vehicleRouter);
+app.route('/api/v1', aiRouter); // /route/* and /journal/*
+app.route('/api/v1/meta', metaRouter);
 app.use('/api/v1/admin/*', adminAuth);
 app.route('/api/v1/admin', adminRouter);
 
@@ -85,6 +101,8 @@ app.route('/api/v1/admin', adminRouter);
 app.get('/health', async (c) => c.json({ ok: true, status: 'healthy', timestamp: new Date().toISOString() }));
 app.get('/unified-data', async (c) => c.redirect('/api/v1/unified-data', 308));
 app.get('/trip-status', async (c) => c.redirect('/api/v1/trip-status', 308));
+// Frontend expects this path (older config)
+app.get('/api/v1/trip/status', async (c) => c.redirect('/api/v1/trip-status', 308));
 // Provide a config endpoint directly for demo
 app.get('/api/v1/config', async (c) => {
   const mode = c.env?.PLATFORM_MODE || 'live';
