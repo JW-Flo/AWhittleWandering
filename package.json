@@ -42,7 +42,8 @@
 		"api:audit": "node api-management-system.js audit",
 		"api:fix": "node api-management-system.js fix",
 		"api:health": "node api-management-system.js health",
-		"test:connectivity": "node scripts/test-connectivity.js",
+		"test:connectivity": "bash scripts/test-connectivity.sh",
+		"fix:bindings": "bash scripts/fix-bindings-wrangler.sh",
 		"pre-deploy": "./pre-deploy-api-check.sh",
 		"shell:integrate": "bash ./scripts/install-shell-integration.sh",
 		"webapp:qa": "bash ./scripts/webapp-qa.sh"
