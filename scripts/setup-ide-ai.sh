@@ -3,7 +3,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 ts="$(date +%Y%m%d-%H%M%S)"
-backup_dir=".backup/ide-ai/$ts"
+backup_dir="/tmp/ide-ai/"
 mkdir -p "$backup_dir"
 
 backup_path() {
