@@ -1,0 +1,402 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Pacific Northwest - Hoh Rain Forest & Olympic Peninsula */
+    --background: 160 15% 6%;
+    --foreground: 150 10% 92%;
+
+    --card: 155 12% 10%;
+    --card-foreground: 150 10% 92%;
+
+    --popover: 155 12% 10%;
+    --popover-foreground: 150 10% 92%;
+
+    /* Deep teal primary - misty forest spirit */
+    --primary: 170 50% 45%;
+    --primary-foreground: 160 20% 6%;
+
+    --secondary: 160 12% 14%;
+    --secondary-foreground: 150 15% 85%;
+
+    --muted: 160 10% 16%;
+    --muted-foreground: 155 8% 50%;
+
+    /* Moss green accent */
+    --accent: 130 40% 38%;
+    --accent-foreground: 150 10% 95%;
+
+    --destructive: 0 55% 45%;
+    --destructive-foreground: 150 10% 92%;
+
+    --border: 155 12% 16%;
+    --input: 155 12% 12%;
+    --ring: 170 45% 40%;
+
+    /* PNW Palette - misty rainforest tones */
+    --forest-floor: 160 18% 5%;
+    --redwood-bark: 25 25% 22%;
+    --redwood-deep: 155 20% 12%;
+    --moss: 125 35% 32%;
+    --moss-bright: 120 45% 42%;
+    --fern: 135 40% 36%;
+    --lichen: 145 25% 48%;
+    
+    /* Mist & Light */
+    --sunbeam: 45 65% 62%;
+    --golden-hour: 38 55% 52%;
+    --dappled-light: 50 45% 58%;
+    --mist: 170 15% 70%;
+    
+    /* Rain Forest Depths */
+    --shadow-deep: 160 25% 4%;
+    --twilight-green: 155 30% 20%;
+    --ancient-teal: 165 35% 28%;
+    --river-stone: 165 12% 45%;
+    --rain-mist: 180 20% 55%;
+    --cedar-bark: 20 20% 28%;
+    --lichen-gray: 160 8% 55%;
+
+    /* Atmospheric Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--moss)), hsl(var(--ancient-teal)));
+    --gradient-adventure: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--moss-bright)));
+    --gradient-hero: linear-gradient(180deg, hsl(var(--forest-floor)), hsl(var(--shadow-deep)));
+    --gradient-sunset: linear-gradient(135deg, hsl(var(--golden-hour)), hsl(var(--dappled-light)));
+    --gradient-card: linear-gradient(180deg, hsl(var(--card)), hsl(var(--forest-floor)));
+    --gradient-card-hover: linear-gradient(180deg, hsl(155 18% 14%), hsl(var(--card)));
+    --gradient-glow: radial-gradient(ellipse at center, hsl(var(--primary) / 0.15), transparent 70%);
+    --gradient-milestone: linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--moss) / 0.08));
+    --gradient-mist: linear-gradient(180deg, hsl(var(--mist) / 0.08), transparent);
+    --gradient-canopy: radial-gradient(ellipse at top, hsl(var(--moss-bright) / 0.12), transparent 60%);
+    --gradient-rain: linear-gradient(180deg, hsl(var(--rain-mist) / 0.05), hsl(var(--shadow-deep)));
+
+    /* Atmospheric Shadows */
+    --shadow-moss: 0 8px 32px hsl(var(--moss) / 0.2);
+    --shadow-warm: 0 12px 40px hsl(var(--primary) / 0.12);
+    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.5);
+    --shadow-hero: 0 20px 60px hsl(var(--primary) / 0.15);
+    --shadow-milestone: 0 8px 30px hsl(var(--primary) / 0.12);
+    --shadow-elevated: 0 16px 64px hsl(0 0% 0% / 0.6);
+    --shadow-forest: 0 0 100px hsl(var(--moss) / 0.08);
+    --shadow-mist: 0 0 80px hsl(var(--rain-mist) / 0.1);
+
+    /* Story Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-story: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 160 18% 5%;
+    --sidebar-foreground: 150 10% 92%;
+    --sidebar-primary: 170 50% 45%;
+    --sidebar-primary-foreground: 160 20% 6%;
+    --sidebar-accent: 155 12% 12%;
+    --sidebar-accent-foreground: 150 15% 88%;
+    --sidebar-border: 155 12% 16%;
+    --sidebar-ring: 170 45% 40%;
+
+    /* Semantic colors */
+    --road: 160 10% 42%;
+    --forest: 130 40% 38%;
+    --sand: 45 50% 55%;
+    --sunset: 38 55% 52%;
+    --sky: 195 50% 50%;
+    --charging: 155 45% 42%;
+    --driving: 170 50% 45%;
+    
+    /* Status colors */
+    --success: 145 45% 42%;
+    --warning: 40 70% 55%;
+    --info: 195 55% 52%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  /* Card Styles */
+  .card-nature {
+    @apply bg-card rounded-lg border border-border;
+    background: var(--gradient-card);
+    box-shadow: var(--shadow-card);
+    transition: var(--transition-smooth);
+  }
+
+  .card-nature:hover {
+    background: var(--gradient-card-hover);
+    box-shadow: var(--shadow-forest);
+    transform: translateY(-2px);
+  }
+
+  /* Glow Effects */
+  .glow-forest {
+    box-shadow: var(--shadow-forest);
+  }
+
+  .glow-adventure {
+    box-shadow: var(--shadow-adventure);
+  }
+
+  .glow-hero {
+    box-shadow: var(--shadow-hero);
+  }
+
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  /* Gradient Backgrounds */
+  .bg-gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .bg-gradient-adventure {
+    background: var(--gradient-adventure);
+  }
+
+  .bg-gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .bg-gradient-sunset {
+    background: var(--gradient-sunset);
+  }
+
+  .bg-gradient-card {
+    background: var(--gradient-card);
+  }
+
+  .bg-gradient-milestone {
+    background: var(--gradient-milestone);
+  }
+
+  /* Text Gradients */
+  .text-gradient-primary {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-adventure {
+    background: var(--gradient-adventure);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-sunset {
+    background: var(--gradient-sunset);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Interactive States */
+  .interactive-scale {
+    transition: var(--transition-smooth);
+  }
+
+  .interactive-scale:hover {
+    transform: scale(1.02);
+  }
+
+  .interactive-scale:active {
+    transform: scale(0.98);
+  }
+
+  /* Milestone Styles */
+  .milestone-card {
+    @apply rounded-xl border border-border p-6;
+    background: var(--gradient-milestone);
+    box-shadow: var(--shadow-milestone);
+  }
+
+  /* Story Animation Classes */
+  .animate-story-enter {
+    animation: storyEnter 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+
+  @keyframes storyEnter {
+    from {
+      opacity: 0;
+      transform: translateY(30px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  /* Pulse Glow Animation */
+  .pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% {
+      box-shadow: 0 0 20px hsl(var(--moss) / 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px hsl(var(--moss) / 0.5);
+    }
+  }
+
+  /* Stat Card Variant */
+  .stat-card {
+    @apply bg-card rounded-lg border border-border p-4;
+    background: var(--gradient-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  .stat-card-forest {
+    @apply stat-card;
+    border-color: hsl(var(--moss) / 0.3);
+  }
+
+  .stat-card-sunbeam {
+    @apply stat-card;
+    border-color: hsl(var(--golden-hour) / 0.3);
+  }
+
+  .stat-card-success {
+    @apply stat-card;
+    border-color: hsl(var(--moss-bright) / 0.3);
+  }
+}
+
+/* Mapbox overrides */
+.mapboxgl-map {
+  font-family: system-ui, sans-serif;
+}
+
+.mapboxgl-popup-content {
+  @apply bg-card text-card-foreground rounded-lg p-4;
+  box-shadow: var(--shadow-card);
+}
+
+.mapboxgl-popup-close-button {
+  @apply text-muted-foreground hover:text-foreground;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-background;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/50;
+}
+
+/* Focus visible styles */
+*:focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+}
+
+/* Mobile-optimized touch targets */
+@media (max-width: 768px) {
+  button, 
+  [role="button"],
+  a,
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Better tap highlighting */
+  button:active,
+  [role="button"]:active,
+  a:active {
+    transform: scale(0.98);
+    transition: transform 0.1s;
+  }
+  
+  /* Prevent text selection on interactive elements */
+  button,
+  [role="button"] {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  /* Safe area insets for notched devices */
+  .safe-area-inset {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Fixed elements respect safe areas */
+  .fixed {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Weather animations */
+@keyframes fall {
+  0% {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+.animate-fall {
+  animation: fall 1.5s linear infinite;
+}
+
+/* Shimmer loading animation */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
