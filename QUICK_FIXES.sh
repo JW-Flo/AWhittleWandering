@@ -66,11 +66,11 @@ if [ -d "migrations" ]; then
     
     # Verify database
     echo "Verifying database tables..."
-    wrangler d1 execute tesla-journey-tracker --remote --command "SELECT name FROM sqlite_master WHERE type='table' LIMIT 5" || {
+    if wrangler d1 execute tesla-journey-tracker --remote --command "SELECT name FROM sqlite_master WHERE type='table' LIMIT 5"; then
+        print_status "Database verified"
+    else
         print_warning "Could not verify database. Please check manually."
-    }
-    
-    print_status "Database verified"
+    fi
 else
     print_error "Migrations directory not found"
     exit 1
@@ -82,7 +82,7 @@ echo "================================================="
 
 # Build backend
 echo "Building backend..."
-npm run build || npm install && npm run build
+npm run build || { npm install && npm run build; }
 
 print_status "Backend built successfully"
 

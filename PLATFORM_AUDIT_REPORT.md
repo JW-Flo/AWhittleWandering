@@ -292,7 +292,7 @@ TESLA_VIN=demo_vin_replace_with_real
 ### **Mapbox API (Maps)** - ✅ **OPERATIONAL**
 
 **Status**: ✅ Token configured and functional  
-**Token Retrieved**: `pk.eyJ1IjoiaGFyZHdvcmtjbyIsImEiOiJjbWJteHA0cjYwYXRjMm1weGgwdnk5YWw2In0.0Bj4LWRpeefn0qPj_2VHcA`
+**Token Retrieved**: `pk.eyJ...` *(Token redacted for security)*
 
 **Features Implemented**:
 - ✅ Satellite/street view maps
