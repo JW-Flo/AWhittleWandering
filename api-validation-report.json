@@ -1,0 +1,130 @@
+{
+  "timestamp": "2025-12-21T08:25:01.596Z",
+  "backend": {
+    "root": {
+      "success": false,
+      "status": 404,
+      "hasEndpoints": false,
+      "duration": 724
+    },
+    "health": {
+      "success": true,
+      "status": 200,
+      "hasStatus": true,
+      "hasTimestamp": true,
+      "duration": 29,
+      "warnings": []
+    },
+    "health_api": {
+      "success": true,
+      "status": 200,
+      "hasStatus": true,
+      "hasTimestamp": true,
+      "duration": 84,
+      "warnings": [
+        "D1 database not reachable",
+        "R2 storage not reachable",
+        "Failed to compute ingestion metrics"
+      ]
+    },
+    "unifiedData": {
+      "success": false,
+      "status": 500,
+      "hasVehicle": false,
+      "hasJourney": false,
+      "hasSegments": false,
+      "duration": 70
+    },
+    "tripStatus": {
+      "success": false,
+      "status": 404,
+      "hasTripId": false,
+      "hasStatus": false,
+      "duration": 101
+    },
+    "config": {
+      "success": true,
+      "status": 200,
+      "hasFeatures": true,
+      "noSecretsExposed": false,
+      "duration": 27
+    },
+    "telemetry": {
+      "success": false,
+      "status": 404,
+      "acceptsData": false,
+      "duration": 32
+    },
+    "legacyRedirects": {
+      "unifiedData": false
+    }
+  },
+  "external": {
+    "tessie": {
+      "reachable": true,
+      "requiresAuth": true,
+      "structure": "valid"
+    },
+    "mapbox": {
+      "reachable": true,
+      "requiresAuth": true,
+      "structure": "valid"
+    },
+    "openweather": {
+      "reachable": true,
+      "requiresAuth": true,
+      "structure": "valid"
+    }
+  },
+  "security": {
+    "cors": {
+      "enabled": false
+    },
+    "headers": {
+      "contentTypeOptions": true,
+      "hasSecurityHeaders": true
+    },
+    "admin": {
+      "protected": true,
+      "status": 404
+    }
+  },
+  "performance": {
+    "responseTimes": {
+      "/health": {
+        "average": 28,
+        "acceptable": true
+      },
+      "/api/v1/unified-data": {
+        "average": 65,
+        "acceptable": true
+      },
+      "/api/v1/trip-status": {
+        "average": 30.333333333333332,
+        "acceptable": true
+      }
+    }
+  },
+  "errors": [],
+  "warnings": [],
+  "summary": {
+    "backend": {
+      "total": 8,
+      "successful": 3,
+      "successRate": "37.5%"
+    },
+    "external": {
+      "total": 3,
+      "reachable": 3
+    },
+    "security": {
+      "cors": false,
+      "headers": true,
+      "adminProtected": true
+    },
+    "overall": {
+      "status": "PARTIAL",
+      "timestamp": "2025-12-21T08:25:03.424Z"
+    }
+  }
+}
