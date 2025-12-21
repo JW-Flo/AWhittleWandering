@@ -51,14 +51,17 @@ describe('Dashboard Component', () => {
     };
 
     // Mock the fetch response
-    vi.stubGlobal('fetch', vi.fn(() =>
-      Promise.resolve({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: () => Promise.resolve(mockData),
-      })
-    ) as any));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve({
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          json: () => Promise.resolve(mockData),
+        })
+      ) as any
+    );
 
     render(<Dashboard />);
 
