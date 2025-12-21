@@ -1,0 +1,73 @@
+name: backend-deploy
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/edge-worker/**"
+      - "shared/**"
+  workflow_dispatch:
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Bun
+        run: npm install -g bun
+      - name: Install workspace deps
+        run: bun install
+      - name: Build shared schemas
+        working-directory: shared
+        run: bun run build
+      - name: Build backend worker
+        working-directory: backend/edge-worker
+        run: bun run build
+      - name: Install wrangler
+        run: npm i -g wrangler
+      - name: Deploy to Production
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.Cloudflare_Account_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.Cloudflare_API_token }}
+          TESSIE_API_KEY: ${{ secrets.TESSIE_API_KEY }}
+          MAPBOX_ACCESS_TOKEN: ${{ secrets.MAPBOX_ACCESS_TOKEN }}
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          TESLA_VIN: ${{ secrets.TESLA_VIN }}
+        working-directory: backend/edge-worker
+        run: |
+          # Set secrets from GitHub Secrets
+          echo "$TESSIE_API_KEY" | wrangler secret put TESSIE_API_KEY --env production
+          echo "$MAPBOX_ACCESS_TOKEN" | wrangler secret put MAPBOX_ACCESS_TOKEN --env production
+          echo "$OPENWEATHER_API_KEY" | wrangler secret put OPENWEATHER_API_KEY --env production
+          echo "$JWT_SECRET" | wrangler secret put JWT_SECRET --env production
+          echo "$TESLA_VIN" | wrangler secret put TESLA_VIN --env production
+          
+          # Deploy to production (bindings from wrangler.toml will be applied automatically)
+          wrangler deploy --env production
+      
+      - name: Deploy to Development
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.Cloudflare_Account_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.Cloudflare_API_token }}
+          TESSIE_API_KEY: ${{ secrets.TESSIE_API_KEY }}
+          MAPBOX_ACCESS_TOKEN: ${{ secrets.MAPBOX_ACCESS_TOKEN }}
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          TESLA_VIN: ${{ secrets.TESLA_VIN }}
+        working-directory: backend/edge-worker
+        run: |
+          # Set secrets from GitHub Secrets
+          echo "$TESSIE_API_KEY" | wrangler secret put TESSIE_API_KEY --env development
+          echo "$MAPBOX_ACCESS_TOKEN" | wrangler secret put MAPBOX_ACCESS_TOKEN --env development
+          echo "$OPENWEATHER_API_KEY" | wrangler secret put OPENWEATHER_API_KEY --env development
+          echo "$JWT_SECRET" | wrangler secret put JWT_SECRET --env development
+          echo "$TESLA_VIN" | wrangler secret put TESLA_VIN --env development
+          
+          # Deploy to development (bindings from wrangler.toml will be applied automatically)
+          wrangler deploy --env development

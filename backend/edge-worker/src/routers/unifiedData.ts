@@ -63,7 +63,17 @@ async function buildUnifiedData(c: any, limit: number) {
   };
 
   if (!db) {
+    logger.error('unified.build.error', { error: 'Database binding not available' });
     skeleton.tessieStatus.error = 'Database not configured';
+    return skeleton;
+  }
+
+  // Test database connection first
+  try {
+    await db.prepare('SELECT 1').first();
+  } catch (dbError: any) {
+    logger.error('unified.build.error', { error: `Database connection failed: ${dbError?.message || String(dbError)}` });
+    skeleton.tessieStatus.error = `Database connection failed: ${dbError?.message || 'Unknown error'}`;
     return skeleton;
   }
 
@@ -209,17 +219,30 @@ async function buildUnifiedData(c: any, limit: number) {
 }
 
 unifiedDataRouter.get('/', async (c) => {
-  const parsed = querySchema.safeParse(c.req.query());
-  const limit = Math.min(50, Math.max(1, Number(parsed.success ? (parsed.data.limit || '20') : 20)));
-  const revalidate = parsed.success && parsed.data.revalidate === 'true';
+  try {
+    const parsed = querySchema.safeParse(c.req.query());
+    const limit = Math.min(50, Math.max(1, Number(parsed.success ? (parsed.data.limit || '20') : 20)));
+    const revalidate = parsed.success && parsed.data.revalidate === 'true';
 
-  const cacheKey = `unified_data_v3:limit=${limit}`;
-  if (!revalidate) {
-    const cached = await CacheService.get(c, cacheKey);
-    if (cached) return c.json(cached);
+    const cacheKey = `unified_data_v3:limit=${limit}`;
+    if (!revalidate) {
+      const cached = await CacheService.get(c, cacheKey);
+      if (cached) return c.json(cached);
+    }
+
+    const unified = await buildUnifiedData(c, limit);
+    await CacheService.set(c, cacheKey, unified, 15);
+    return c.json(unified);
+  } catch (err: any) {
+    logger.error('unified.endpoint.error', { error: err?.message, stack: err?.stack });
+    // Return skeleton with error instead of throwing
+    const skeleton = {
+      overview: { tripName: 'Error', vehicle: 'Error', startDate: new Date().toISOString().slice(0, 10), daysElapsed: 0, totalMiles: 0, currentOdometer: 0, statesVisited: 0, totalStates: 48 },
+      currentStatus: { battery: { level: 0, range: 0, charging: 'Unknown' }, location: { coordinates: { lat: 0, lng: 0 }, city: 'Unknown', state: 'Unknown', lastUpdate: new Date().toISOString() }, vehicle: { odometer: 0, speed: 0, heading: 0, temperature: { inside: undefined, outside: undefined } } },
+      timeline: { drives: [], charges: [] },
+      liveData: { timestamp: Date.now(), vehicleState: {}, recentActivity: {} },
+      tessieStatus: { connected: false, lastUpdate: new Date().toISOString(), dataFreshness: 'unknown' as const, error: err?.message || 'Unknown error' }
+    };
+    return c.json(skeleton, 200);
   }
-
-  const unified = await buildUnifiedData(c, limit);
-  await CacheService.set(c, cacheKey, unified, 15);
-  return c.json(unified);
 });
