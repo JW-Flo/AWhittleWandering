@@ -10,6 +10,7 @@ build/
 out/
 
 # Runtime files
+.env
 .env.local
 .env.development.local
 .env.test.local
