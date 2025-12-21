@@ -1,46 +1,18 @@
 import { Context, Next } from 'hono';
-
-// Basic logging functions (simplified from utils/log.ts)
-let currentCorrelationId: string | undefined;
-
-export function setCorrelationId(id: string | undefined) {
-  currentCorrelationId = id;
-}
-
-export function log(level: string, event: string, payload?: any) {
-  const logEntry = {
-    level,
-    event,
-    correlationId: currentCorrelationId,
-    timestamp: new Date().toISOString(),
-    ...payload
-  };
-  console.log(JSON.stringify(logEntry));
-}
+import { logger, setCorrelationId } from '../utils/log';
 
 export async function requestLogger(c: Context, next: Next) {
   const cid = crypto.randomUUID();
   setCorrelationId(cid);
   const start = Date.now();
   
-  log('info', 'request.start', { 
-    correlationId: cid, 
-    method: c.req.method, 
-    path: c.req.path 
-  });
+  logger.info('request.start', { correlationId: cid, method: c.req.method, path: c.req.path });
 
   try {
     await next();
-    log('info', 'request.end', { 
-      correlationId: cid, 
-      status: c.res.status, 
-      durationMs: Date.now() - start 
-    });
+    logger.info('request.end', { correlationId: cid, status: c.res.status, durationMs: Date.now() - start });
   } catch (err) {
-    log('error', 'request.error', { 
-      correlationId: cid, 
-      error: (err as any)?.message 
-    });
+    logger.error('request.error', { correlationId: cid, error: (err as any)?.message });
     throw err;
   } finally {
     setCorrelationId(undefined);
@@ -72,7 +44,7 @@ export async function analyticsLogger(c: Context, next: Next) {
       });
     }
   } catch (error) {
-    console.error('Analytics write failed:', error);
+    logger.warn('analytics.write.failed', { error: (error as any)?.message });
   }
   
   // Also log to D1 if available
@@ -96,6 +68,6 @@ export async function analyticsLogger(c: Context, next: Next) {
       ).run();
     }
   } catch (error) {
-    console.error('Failed to log analytics:', error);
+    logger.warn('analytics.d1.failed', { error: (error as any)?.message });
   }
 }

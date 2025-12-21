@@ -5,7 +5,7 @@ export interface Env {
   
   // API Keys
   TESSIE_API_KEY?: string;
-  MAPBOX_ACCESS_TOKEN?: string;
+  MAPBOX_API_TOKEN?: string;
   OPENWEATHER_API_KEY?: string;
   
   // Vehicle Configuration

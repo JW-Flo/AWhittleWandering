@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { logger } from '../utils/log';
 
 // Latency snapshot accessor injected via index.ts (module augmentation pattern avoided for simplicity)
 // We attempt dynamic access from globalThis where we may attach metrics if needed; fallback noop.
@@ -47,7 +48,9 @@ healthRouter.get('/', async (c) => {
     } catch (e) {
       health.resources.d1_database = 'error';
       health.status = 'degraded';
-      health.warnings.push('D1 database not reachable');
+      const errorMsg = e instanceof Error ? e.message : String(e);
+      health.warnings.push(`D1 database not reachable: ${errorMsg.substring(0, 100)}`);
+      logger.error('D1 database error', { error: e instanceof Error ? e.message : String(e) });
     }
   } else {
     health.warnings.push('D1 database not configured');
@@ -60,7 +63,9 @@ healthRouter.get('/', async (c) => {
     } catch (e) {
       health.resources.r2_storage = 'error';
       health.status = 'degraded';
-      health.warnings.push('R2 storage not reachable');
+      const errorMsg = e instanceof Error ? e.message : String(e);
+      health.warnings.push(`R2 storage not reachable: ${errorMsg.substring(0, 100)}`);
+      logger.error('R2 storage error', { error: e instanceof Error ? e.message : String(e) });
     }
   } else {
     health.warnings.push('R2 storage not configured');
@@ -96,12 +101,12 @@ healthRouter.get('/', async (c) => {
 
       // Freshness evaluation
       if (vehicleStateAge != null) {
-        if (vehicleStateAge > 6 * 3600) { // >6h
-          health.status = 'degraded';
-          health.warnings.push('Vehicle state older than 6h');
-        } else if (vehicleStateAge > 24 * 3600) {
+        if (vehicleStateAge > 24 * 3600) {
           health.status = 'unhealthy';
           health.warnings.push('Vehicle state older than 24h');
+        } else if (vehicleStateAge > 6 * 3600) { // >6h
+          health.status = 'degraded';
+          health.warnings.push('Vehicle state older than 6h');
         }
       } else {
         health.status = 'degraded';

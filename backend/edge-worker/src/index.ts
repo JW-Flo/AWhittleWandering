@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { buildJobs } from './jobs';
 import { recordRun } from './utils/cronMetrics';
+import { logger } from './utils/log';
 
 // Middleware
 import { corsMiddleware, securityHeaders } from './middleware/cors';
@@ -15,6 +16,11 @@ import { telemetryRouter } from './routers/telemetry';
 import { unifiedDataRouter } from './routers/unifiedData';
 import { tripStatusRouter } from './routers/tripStatus';
 import { adminRouter } from './routers/admin';
+import { componentRouter } from './routers/component';
+import { analyticsRouter } from './routers/analytics';
+import { vehicleRouter } from './routers/vehicle';
+import { aiRouter } from './routers/ai';
+import { metaRouter } from './routers/meta';
 
 // Augment Env typing (local) for new PLATFORM_MODE variable
 declare global {
@@ -45,6 +51,12 @@ function snapshotLatency() {
   const p = (q: number) => sorted[Math.min(sorted.length-1, Math.floor(q * sorted.length))];
   return { count: sorted.length, p50: p(0.5), p95: p(0.95) };
 }
+
+// Expose to health router (best-effort; safe if overwritten)
+try {
+  // @ts-ignore
+  (globalThis as any).__LAT_SNAPSHOT__ = snapshotLatency;
+} catch { /* noop */ }
 
 // Latency measuring middleware (placed after error/rate/security so it measures full chain)
 app.use('*', async (c, next) => {
@@ -77,6 +89,11 @@ app.route('/api/v1/health', healthRouter);
 app.route('/api/v1/telemetry', telemetryRouter);
 app.route('/api/v1/unified-data', unifiedDataRouter);
 app.route('/api/v1/trip-status', tripStatusRouter);
+app.route('/api/v1/component', componentRouter);
+app.route('/api/v1/analytics', analyticsRouter);
+app.route('/api/v1/vehicle', vehicleRouter);
+app.route('/api/v1', aiRouter); // /route/* and /journal/*
+app.route('/api/v1/meta', metaRouter);
 app.use('/api/v1/admin/*', adminAuth);
 app.route('/api/v1/admin', adminRouter);
 
@@ -85,6 +102,8 @@ app.route('/api/v1/admin', adminRouter);
 app.get('/health', async (c) => c.json({ ok: true, status: 'healthy', timestamp: new Date().toISOString() }));
 app.get('/unified-data', async (c) => c.redirect('/api/v1/unified-data', 308));
 app.get('/trip-status', async (c) => c.redirect('/api/v1/trip-status', 308));
+// Frontend expects this path (older config)
+app.get('/api/v1/trip/status', async (c) => c.redirect('/api/v1/trip-status', 308));
 // Provide a config endpoint directly for demo
 app.get('/api/v1/config', async (c) => {
   const mode = c.env?.PLATFORM_MODE || 'live';
@@ -136,7 +155,7 @@ app.get('/', async (c) => {
   });
 });
 
-// Minimal demo joiner endpoint
+// Minimal demo joiner endpoint (no body validation needed - no body expected)
 app.post('/api/joiner', async (c) => {
   // Simulate joiner flow: create user, stub provision, assign role, return log
   const now = new Date().toISOString();
@@ -185,18 +204,20 @@ app.post('/drop', async (c) => {
   // Emit deprecation header so clients can migrate
   c.header('Deprecation', 'true');
   c.header('Link', '</api/v1/auth>; rel="successor-version"');
-  // Reuse logic by crafting request body
+  // Use same validation schema as /api/v1/auth
+  let parsed;
   try {
-    const body = await c.req.json();
-    // Proxy to /api/v1/auth by performing an internal fetch using app.fetch not available here; just replicate minimal logic
-    const action = body?.action;
-    if (!action || !['login', 'register'].includes(action)) {
-      return c.json({ ok: false, error: 'Invalid action. Use login or register.' }, 400);
+    const json = await c.req.json();
+    const result = authBodySchema.safeParse(json);
+    if (!result.success) {
+      return c.json({ ok: false, error: 'Validation failed', issues: result.error.issues }, 400);
     }
-    return c.json({ ok: true, action, message: `${action} successful (legacy /drop – migrate to /api/v1/auth)` });
+    parsed = result.data;
   } catch {
     return c.json({ ok: false, error: 'Malformed JSON body' }, 400);
   }
+  const { action } = parsed;
+  return c.json({ ok: true, action, message: `${action} successful (legacy /drop – migrate to /api/v1/auth)` });
 });
 
 // Export for Cloudflare Workers
@@ -223,16 +244,16 @@ export const scheduled: ExportedHandlerScheduledHandler = async (event, env, ctx
 
   const selected = mapping[cron];
   if (!selected) {
-    console.log(JSON.stringify({ level: 'debug', event: 'cron.noop', cron }));
+    logger.debug('Cron noop', { cron });
     return;
   }
-  console.log(JSON.stringify({ level: 'info', event: 'cron.start', cron, jobCount: selected.length }));
+  logger.info('Cron start', { cron, jobCount: selected.length });
   ctx.waitUntil((async () => {
     for (const item of selected) {
       await recordRun(env, cron, item.name, async () => {
         await jobs[item.name]();
       });
     }
-    console.log(JSON.stringify({ level: 'info', event: 'cron.end', cron }));
+    logger.info('Cron end', { cron });
   })());
 };

@@ -27,14 +27,14 @@ AI_MODEL_NAME = "@cf/meta/llama-3.1-8b-instruct"
 
 # CRITICAL API CONFIGURATION REQUIREMENTS:
 # 1. TESSIE_API_KEY - Tesla data integration (HIGHEST PRIORITY)
-# 2. MAPBOX_ACCESS_TOKEN - Map services and geocoding
+# 2. MAPBOX_API_TOKEN - Map services and geocoding
 # 3. OPENWEATHER_API_KEY - Weather data integration  
 # 4. JWT_SECRET - Authentication security (min 32 chars)
 # 5. TESLA_VIN - Tesla Vehicle Identification Number
 
 # ⚠️  ALL SECRETS MUST BE CONFIGURED FOR ZERO-FAILURE OPERATION ⚠️
 # Use: npx wrangler secret put TESSIE_API_KEY
-# Use: npx wrangler secret put MAPBOX_ACCESS_TOKEN  
+# Use: npx wrangler secret put MAPBOX_API_TOKEN  
 # Use: npx wrangler secret put OPENWEATHER_API_KEY
 # Use: npx wrangler secret put JWT_SECRET
 # Use: npx wrangler secret put TESLA_VIN
@@ -137,14 +137,14 @@ LOG_LEVEL = "info"
 
 # CRITICAL API CONFIGURATION REQUIREMENTS:
 # 1. TESSIE_API_KEY - Tesla data integration (HIGHEST PRIORITY)  
-# 2. MAPBOX_ACCESS_TOKEN - Map services and geocoding
+# 2. MAPBOX_API_TOKEN - Map services and geocoding
 # 3. OPENWEATHER_API_KEY - Weather data integration
 # 4. JWT_SECRET - Authentication security (min 32 chars)
 # 5. TESLA_VIN - Tesla Vehicle Identification Number
 
 # ⚠️  ALL SECRETS MUST BE CONFIGURED FOR ZERO-FAILURE OPERATION ⚠️
 # Use: npx wrangler secret put TESSIE_API_KEY --env production
-# Use: npx wrangler secret put MAPBOX_ACCESS_TOKEN --env production
+# Use: npx wrangler secret put MAPBOX_API_TOKEN --env production
 # Use: npx wrangler secret put OPENWEATHER_API_KEY --env production  
 # Use: npx wrangler secret put JWT_SECRET --env production
 # Use: npx wrangler secret put TESLA_VIN --env production
