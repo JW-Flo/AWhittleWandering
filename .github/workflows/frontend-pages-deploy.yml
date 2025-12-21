@@ -28,7 +28,7 @@ jobs:
         run: npm i -g wrangler
       - name: Deploy to Cloudflare Pages
         env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_PAGES_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.Cloudflare_Account_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.Cloudflare_API_token }}
         working-directory: frontend
         run: wrangler pages deploy dist --project-name=atlas-it

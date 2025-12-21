@@ -35,7 +35,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.Cloudflare_Account_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.Cloudflare_API_token }}
           TESSIE_API_KEY: ${{ secrets.TESSIE_API_KEY }}
-          MAPBOX_ACCESS_TOKEN: ${{ secrets.MAPBOX_ACCESS_TOKEN }}
+          MAPBOX_API_TOKEN: ${{ secrets.MAPBOX_API_TOKEN }}
           OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           TESLA_VIN: ${{ secrets.TESLA_VIN }}
@@ -43,7 +43,7 @@ jobs:
         run: |
           # Set secrets from GitHub Secrets
           echo "$TESSIE_API_KEY" | wrangler secret put TESSIE_API_KEY --env production
-          echo "$MAPBOX_ACCESS_TOKEN" | wrangler secret put MAPBOX_ACCESS_TOKEN --env production
+          echo "$MAPBOX_API_TOKEN" | wrangler secret put MAPBOX_API_TOKEN --env production
           echo "$OPENWEATHER_API_KEY" | wrangler secret put OPENWEATHER_API_KEY --env production
           echo "$JWT_SECRET" | wrangler secret put JWT_SECRET --env production
           echo "$TESLA_VIN" | wrangler secret put TESLA_VIN --env production
@@ -56,7 +56,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.Cloudflare_Account_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.Cloudflare_API_token }}
           TESSIE_API_KEY: ${{ secrets.TESSIE_API_KEY }}
-          MAPBOX_ACCESS_TOKEN: ${{ secrets.MAPBOX_ACCESS_TOKEN }}
+          MAPBOX_API_TOKEN: ${{ secrets.MAPBOX_API_TOKEN }}
           OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           TESLA_VIN: ${{ secrets.TESLA_VIN }}
@@ -64,7 +64,7 @@ jobs:
         run: |
           # Set secrets from GitHub Secrets
           echo "$TESSIE_API_KEY" | wrangler secret put TESSIE_API_KEY --env development
-          echo "$MAPBOX_ACCESS_TOKEN" | wrangler secret put MAPBOX_ACCESS_TOKEN --env development
+          echo "$MAPBOX_API_TOKEN" | wrangler secret put MAPBOX_API_TOKEN --env development
           echo "$OPENWEATHER_API_KEY" | wrangler secret put OPENWEATHER_API_KEY --env development
           echo "$JWT_SECRET" | wrangler secret put JWT_SECRET --env development
           echo "$TESLA_VIN" | wrangler secret put TESLA_VIN --env development
