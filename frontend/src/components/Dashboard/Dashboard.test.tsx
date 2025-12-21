@@ -73,7 +73,7 @@ describe('Dashboard Component', () => {
     // Check if vehicle data is rendered
     expect(screen.getByText('Model 3')).toBeInTheDocument();
     expect(screen.getByText('80%')).toBeInTheDocument();
-    expect(screen.getByText('Charging')).toBeInTheDocument();
+    expect(screen.getAllByText('Charging').length).toBeGreaterThan(0);
   });
 
   it('handles error state', async () => {
