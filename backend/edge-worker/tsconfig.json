@@ -9,7 +9,8 @@
     "strict": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["@cloudflare/workers-types"]
+    "types": ["@cloudflare/workers-types"],
+    "typeRoots": ["./node_modules/@types", "./node_modules"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
