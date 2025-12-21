@@ -26,8 +26,8 @@ Revert the deploy command in `.github/workflows/frontend-pages-deploy.yml`:
 ```yaml
 - name: Deploy to Cloudflare Pages
   env:
-    CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-    CLOUDFLARE_API_TOKEN: ${{ secrets.CF_PAGES_TOKEN }}
+    CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
   working-directory: frontend
   run: wrangler pages deploy dist --project-name=atlasit-platform
 ```
