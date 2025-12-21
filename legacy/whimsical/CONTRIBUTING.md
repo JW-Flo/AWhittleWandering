@@ -32,7 +32,7 @@ Create a `.env` file based on `.env.example`:
 cp .env.example .env
 ```
 
-Fill in the required values. Note: The production environment is managed by Lovable Cloud.
+Fill in the required values. Production environment variables and secrets should be managed via your hosting provider’s secret store (never committed to git).
 
 ### 4. Start Development Server
 
@@ -186,11 +186,11 @@ supabase functions serve my-function --env-file .env
 
 ## Database Migrations
 
-Migrations are managed through Lovable Cloud. To request a schema change:
+Migrations are managed via standard Supabase/Postgres migrations. To request a schema change:
 
 1. Document the required SQL in your PR description
 2. Include RLS policies for any new tables
-3. A maintainer will apply the migration through the Lovable interface
+3. A maintainer will apply the migration via the Supabase tooling (CLI/dashboard), following review
 
 ### RLS Policy Requirements
 

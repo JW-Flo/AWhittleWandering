@@ -59,9 +59,9 @@ export function PreLaunchChecklist() {
       id: 'ssl',
       category: 'Infrastructure',
       name: 'SSL Certificate',
-      description: 'HTTPS enabled via Lovable',
+      description: 'HTTPS enabled via CDN/hosting',
       status: 'pass',
-      details: 'Auto-provisioned by Lovable'
+      details: 'Auto-provisioned by hosting provider'
     });
 
     // Database checks

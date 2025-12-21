@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-AWW is an EV road trip tracking platform built with React 19 + Vite + TypeScript. It uses Lovable Cloud (Supabase) for backend services and Cloudflare D1 for compartmentalized per-journey telemetry storage.
+AWW is an EV road trip tracking platform built with React 19 + Vite + TypeScript. It uses Supabase for backend services and Cloudflare D1 for compartmentalized per-journey telemetry storage.
 
 ## Tech Stack
 
@@ -317,8 +317,8 @@ serve(async (req) => {
 ## Common Pitfalls
 
 1. **Never edit `src/integrations/supabase/types.ts`** - Auto-generated
-2. **Never edit `supabase/config.toml`** - Managed by Lovable
-3. **Never edit `.env`** - Managed by Lovable Cloud
+2. **Never edit `supabase/config.toml`** - Managed by Supabase configuration
+3. **Never commit `.env`** - Manage secrets via your deployment secret store
 4. **Always check RLS policies** when adding new tables
 5. **Use `auth.uid()` in RLS**, not session data
 6. **Encrypt sensitive data** before storing (API tokens)

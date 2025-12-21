@@ -6,6 +6,23 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const FETCH_TIMEOUT_MS = 25_000;
+
+function getEnv(name: string): string | null {
+  const v = Deno.env.get(name);
+  return v && v.trim().length > 0 ? v.trim() : null;
+}
+
+async function fetchWithTimeout(input: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 // Process base64 in chunks to prevent memory issues
 function processBase64Chunks(base64String: string, chunkSize = 32768): Uint8Array {
   const chunks: Uint8Array[] = [];
@@ -67,28 +84,17 @@ serve(async (req) => {
     formData.append('language', 'en');
     formData.append('response_format', 'json');
 
-    // Use Lovable AI gateway for transcription
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
-    }
-
-    // For transcription, we'll use a chat completion to process the audio description
-    // Since Lovable AI gateway uses chat completions, we'll adapt our approach
-    // First, let's try the OpenAI Whisper endpoint if available, otherwise use Gemini
-    
-    // Try OpenAI first if key is available
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    const OPENAI_API_KEY = getEnv('OPENAI_API_KEY');
     
     if (OPENAI_API_KEY) {
-      const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      const baseUrl = getEnv('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1';
+      const response = await fetchWithTimeout(`${baseUrl}/audio/transcriptions`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${OPENAI_API_KEY}`,
         },
         body: formData,
-      });
+      }, FETCH_TIMEOUT_MS);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -105,18 +111,15 @@ serve(async (req) => {
       );
     }
     
-    // Fallback: Use Lovable AI with Gemini for audio understanding
-    // Note: This requires audio to be processed differently
-    // For now, return a helpful message to set up OpenAI
-    console.log('OpenAI API key not found, transcription requires OpenAI Whisper');
+    console.log('Missing OPENAI_API_KEY; voice transcription unavailable');
     
     return new Response(
       JSON.stringify({ 
-        error: 'Voice transcription requires OpenAI API key for Whisper model',
+        error: 'Voice transcription is not configured',
         text: null 
       }),
       { 
-        status: 400,
+        status: 503,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
