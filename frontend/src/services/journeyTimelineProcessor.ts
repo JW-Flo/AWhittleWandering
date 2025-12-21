@@ -1,5 +1,5 @@
 import { HistoricalDrive } from '@/hooks/useUnifiedTessieApi';
-import { driveAnalysisService, JourneySegment, JourneyStatistics, TimelineEntry } from './driveAnalysisService';
+import { driveAnalysisService, JourneySegment, JourneyStatistics } from './driveAnalysisService';
 
 export interface AdvancedJourneyInsights {
   totalStatesVisited: number;

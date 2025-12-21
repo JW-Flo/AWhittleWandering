@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import EnhancedMapFeatures from './EnhancedMapFeatures';
 import AdvancedAnalyticsDashboard from './AdvancedAnalyticsDashboard';
 import AIJourneyAssistant from './AIJourneyAssistant';
@@ -40,7 +39,7 @@ export const EnhancedTeslaApp: React.FC<EnhancedTeslaAppProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [routeOptimization, setRouteOptimization] = useState<RouteOptimization | null>(null);
-  const [chargingRecommendations, setChargingRecommendations] = useState<SmartChargingRecommendation[]>([]);
+  const [_chargingRecommendations, _setChargingRecommendations] = useState<SmartChargingRecommendation[]>([]);
   const [journeyInsights, setJourneyInsights] = useState<JourneyInsights | null>(null);
   const [maintenanceAlerts, setMaintenanceAlerts] = useState<MaintenanceAlert[]>([]);
   const [notifications, setNotifications] = useState<NotificationPreferences | null>(null);

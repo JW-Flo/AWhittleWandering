@@ -1,5 +1,4 @@
 import React from 'react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Shield, Lock, Eye } from 'lucide-react';
 
 export const SecurityNotice: React.FC = () => {

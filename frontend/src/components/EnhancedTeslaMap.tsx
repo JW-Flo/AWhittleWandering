@@ -3,9 +3,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 // Dynamic load to reduce initial bundle size
-import { loadMapbox } from '@/lib/mapbox-loader';
 let mapboxgl: any; // loaded at runtime
-import { useUnifiedTessieApi } from '@/hooks/useUnifiedTessieApi';
 
 interface EnhancedTeslaMapProps {
   vehicleId: string;
@@ -22,7 +20,7 @@ const EnhancedTeslaMap: React.FC<EnhancedTeslaMapProps> = ({
   mapboxToken,
   startDate = '2025-06-03',
   endDate = '2025-07-26',
-  onLocationData
+  onLocationData: _onLocationData
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);

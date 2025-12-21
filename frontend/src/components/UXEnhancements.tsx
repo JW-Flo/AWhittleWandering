@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import {
   RealTimeStream,
   InteractiveTimelineEvent,
@@ -22,7 +21,6 @@ import {
   Zap,
   Camera,
   Users,
-  Settings,
   Download,
   Heart,
   MessageCircle
