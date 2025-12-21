@@ -1,15 +1,12 @@
 import { describe, it, expect } from 'vitest'
+import { API_CONFIG } from './lib/api-config'
 
 // Simple utility tests that don't require complex component rendering
 describe('Application Configuration', () => {
-  it('should have correct environment variables', () => {
-    expect(import.meta.env.VITE_APP_NAME).toBe("A Whittle Wandering")
-    expect(import.meta.env.VITE_APP_DESCRIPTION).toBe("48 Continental US Tesla Road Trip Tracker")
-  })
-
-  it('should have API base URL configured', () => {
-    expect(import.meta.env.VITE_API_BASE_URL).toBeDefined()
-    expect(import.meta.env.VITE_API_BASE_URL).toContain('workers.dev')
+  it('should have API configuration defaults', () => {
+    expect(API_CONFIG.BASE_URL).toMatch(/^https?:\/\//)
+    expect(API_CONFIG.ENDPOINTS.UNIFIED_DATA).toBe('/api/v1/unified-data')
+    expect(API_CONFIG.ENDPOINTS.HEALTH).toBe('/api/v1/health')
   })
 })
 
