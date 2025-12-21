@@ -5,6 +5,7 @@
  */
 
 import { z } from 'zod';
+import { logger } from './utils/log';
 
 // Cloudflare D1 Database interface
 interface D1Database {
@@ -126,7 +127,7 @@ export class TeslaDataIngestion {
     const errors: string[] = [];
     let totalRecords = 0;
 
-    console.log('🚀 Starting Tesla data ingestion...');
+    logger.info('Starting Tesla data ingestion');
 
     try {
       await this.ensureVehicleAndJourney();
@@ -150,8 +151,7 @@ export class TeslaDataIngestion {
       await this.updateJourneyMetadata();
 
       const duration = Date.now() - startTime;
-      console.log(`✅ Data ingestion completed in ${duration}ms`);
-      console.log(`📊 Total records processed: ${totalRecords}`);
+      logger.info('Data ingestion completed', { duration: `${duration}ms`, recordsProcessed: totalRecords });
 
       return {
         success: errors.length === 0,
@@ -161,7 +161,7 @@ export class TeslaDataIngestion {
       };
 
     } catch (error) {
-      console.error('❌ Data ingestion failed:', error);
+      logger.error('Data ingestion failed', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         recordsProcessed: totalRecords,
@@ -175,7 +175,7 @@ export class TeslaDataIngestion {
    * Ingest current vehicle state (battery, location, etc.)
    */
   async ingestVehicleState(): Promise<IngestionResult> {
-    console.log('📡 Ingesting current vehicle state...');
+    logger.info('Ingesting current vehicle state');
     
     try {
       await this.ensureVehicleAndJourney();
@@ -243,11 +243,11 @@ export class TeslaDataIngestion {
         // ignore history write failure
       }
 
-      console.log('✅ Vehicle state ingested successfully');
+      logger.info('Vehicle state ingested successfully');
       return { success: true, recordsProcessed: 1, errors: [], timestamp: new Date().toISOString() };
 
     } catch (error) {
-      console.error('❌ Vehicle state ingestion failed:', error);
+      logger.error('Vehicle state ingestion failed', { error: error instanceof Error ? error.message : String(error) });
       return { 
         success: false, 
         recordsProcessed: 0, 
@@ -261,7 +261,7 @@ export class TeslaDataIngestion {
    * Ingest historical drives from Tessie API
    */
   async ingestHistoricalDrives(): Promise<IngestionResult> {
-    console.log('🛣️ Ingesting historical drives...');
+    logger.info('Ingesting historical drives');
     
     try {
       await this.ensureVehicleAndJourney();
@@ -277,7 +277,7 @@ export class TeslaDataIngestion {
         ? (drivesData as any).results
         : (Array.isArray(drivesData) ? drivesData : []);
       if (!driveResults.length) {
-        console.log('⚠️ No drives data received');
+        logger.warn('No drives data received');
         return { success: true, recordsProcessed: 0, errors: [], timestamp: new Date().toISOString() };
       }
 
@@ -329,7 +329,7 @@ export class TeslaDataIngestion {
         }
       }
 
-      console.log(`✅ Processed ${recordsProcessed} drives`);
+      logger.info('Processed drives', { count: recordsProcessed });
       return { 
         success: errors.length === 0, 
         recordsProcessed, 
@@ -338,7 +338,7 @@ export class TeslaDataIngestion {
       };
 
     } catch (error) {
-      console.error('❌ Drives ingestion failed:', error);
+      logger.error('Drives ingestion failed', { error: error instanceof Error ? error.message : String(error) });
       return { 
         success: false, 
         recordsProcessed: 0, 
@@ -352,7 +352,7 @@ export class TeslaDataIngestion {
    * Ingest historical charge session data from Tessie API
    */
   async ingestHistoricalCharges(): Promise<IngestionResult> {
-    console.log('⚡ Ingesting historical charges...');
+    logger.info('Ingesting historical charges');
     
     try {
       await this.ensureVehicleAndJourney();
@@ -368,7 +368,7 @@ export class TeslaDataIngestion {
         ? (chargesData as any).results
         : (Array.isArray(chargesData) ? chargesData : []);
       if (!chargeResults.length) {
-        console.log('⚠️ No charges data received');
+        logger.warn('No charges data received');
         return { success: true, recordsProcessed: 0, errors: [], timestamp: new Date().toISOString() };
       }
 
@@ -408,7 +408,7 @@ export class TeslaDataIngestion {
         }
       }
 
-      console.log(`✅ Processed ${recordsProcessed} charges`);
+      logger.info('Processed charges', { count: recordsProcessed });
       return { 
         success: errors.length === 0, 
         recordsProcessed, 
@@ -417,7 +417,7 @@ export class TeslaDataIngestion {
       };
 
     } catch (error) {
-      console.error('❌ Charges ingestion failed:', error);
+      logger.error('Charges ingestion failed', { error: error instanceof Error ? error.message : String(error) });
       return { 
         success: false, 
         recordsProcessed: 0, 
@@ -431,7 +431,7 @@ export class TeslaDataIngestion {
    * Update journey metadata and statistics
    */
   private async updateJourneyMetadata(): Promise<void> {
-    console.log('📊 Updating journey metadata...');
+    logger.info('Updating journey metadata');
 
     try {
       // Calculate journey statistics from actual data
@@ -476,9 +476,9 @@ export class TeslaDataIngestion {
         'continental-usa-2025'
       ).run();
 
-      console.log('✅ Journey metadata updated');
+      logger.info('Journey metadata updated');
     } catch (error) {
-      console.error('❌ Journey metadata update failed:', error);
+      logger.error('Journey metadata update failed', { error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }

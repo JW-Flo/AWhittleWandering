@@ -4,6 +4,7 @@
  */
 
 import { TeslaDataIngestion } from './data-ingestion';
+import { logger } from './utils/log';
 
 // Cloudflare D1 Database interface
 interface D1Database {
@@ -53,7 +54,7 @@ export class CronDataController {
     const startTime = Date.now();
     
     try {
-      console.log('🔄 Starting scheduled full data sync...');
+      logger.info('Starting scheduled full data sync');
       
       const result = await this.ingestion.ingestAllData();
       const duration = Date.now() - startTime;
@@ -105,7 +106,7 @@ export class CronDataController {
     const startTime = Date.now();
     
     try {
-      console.log('⚡ Starting quick vehicle state update...');
+      logger.info('Starting quick vehicle state update');
       
       const result = await this.ingestion.ingestVehicleState();
       const duration = Date.now() - startTime;
@@ -157,7 +158,7 @@ export class CronDataController {
     const startTime = Date.now();
     
     try {
-      console.log('📚 Starting historical data backfill...');
+      logger.info('Starting historical data backfill');
       
       const drivesResult = await this.ingestion.ingestHistoricalDrives();
       const chargesResult = await this.ingestion.ingestHistoricalCharges();
@@ -223,7 +224,7 @@ export class CronDataController {
     const startTime = Date.now();
     
     try {
-      console.log('🔍 Starting data quality check...');
+      logger.info('Starting data quality check');
       
       const issues: string[] = [];
       const stats: any = {};
@@ -333,7 +334,7 @@ export class CronDataController {
     const startTime = Date.now();
     
     try {
-      console.log('🤖 Starting AI/ML data processing...');
+      logger.info('Starting AI/ML data processing');
       
       let processedComponents = 0;
       const errors: string[] = [];
@@ -428,7 +429,7 @@ export class CronDataController {
         durationMs
       ).run();
     } catch (error) {
-      console.error('Failed to log ingestion operation:', error);
+      logger.error('Failed to log ingestion operation', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 
