@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { logger } from '../utils/log';
 
 // Latency snapshot accessor injected via index.ts (module augmentation pattern avoided for simplicity)
 // We attempt dynamic access from globalThis where we may attach metrics if needed; fallback noop.
@@ -49,7 +50,7 @@ healthRouter.get('/', async (c) => {
       health.status = 'degraded';
       const errorMsg = e instanceof Error ? e.message : String(e);
       health.warnings.push(`D1 database not reachable: ${errorMsg.substring(0, 100)}`);
-      console.error('D1 database error:', e);
+      logger.error('D1 database error', { error: e instanceof Error ? e.message : String(e) });
     }
   } else {
     health.warnings.push('D1 database not configured');
@@ -64,7 +65,7 @@ healthRouter.get('/', async (c) => {
       health.status = 'degraded';
       const errorMsg = e instanceof Error ? e.message : String(e);
       health.warnings.push(`R2 storage not reachable: ${errorMsg.substring(0, 100)}`);
-      console.error('R2 storage error:', e);
+      logger.error('R2 storage error', { error: e instanceof Error ? e.message : String(e) });
     }
   } else {
     health.warnings.push('R2 storage not configured');

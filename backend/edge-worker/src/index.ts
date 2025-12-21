@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { buildJobs } from './jobs';
 import { recordRun } from './utils/cronMetrics';
+import { logger } from './utils/log';
 
 // Middleware
 import { corsMiddleware, securityHeaders } from './middleware/cors';
@@ -241,16 +242,16 @@ export const scheduled: ExportedHandlerScheduledHandler = async (event, env, ctx
 
   const selected = mapping[cron];
   if (!selected) {
-    console.log(JSON.stringify({ level: 'debug', event: 'cron.noop', cron }));
+    logger.debug('Cron noop', { cron });
     return;
   }
-  console.log(JSON.stringify({ level: 'info', event: 'cron.start', cron, jobCount: selected.length }));
+  logger.info('Cron start', { cron, jobCount: selected.length });
   ctx.waitUntil((async () => {
     for (const item of selected) {
       await recordRun(env, cron, item.name, async () => {
         await jobs[item.name]();
       });
     }
-    console.log(JSON.stringify({ level: 'info', event: 'cron.end', cron }));
+    logger.info('Cron end', { cron });
   })());
 };
