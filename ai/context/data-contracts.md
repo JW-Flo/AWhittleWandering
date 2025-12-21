@@ -1,1 +1,14 @@
-# Data Contracts\n\n## Principles\n- All external data is untrusted.\n- Validate at boundaries (runtime schema + types).\n- Version schemas; never silently rename fields.\n\n## Telemetry\n- Define canonical fields the UI consumes.\n- Define transform rules from upstream -> canonical.\n\n## Error/Degraded Modes\n- live | cached | archived | error\n- Always return a reason + lastUpdated when degraded.\n
+# Data Contracts
+
+## Principles
+- All external data is untrusted.
+- Validate at boundaries (runtime schema + types).
+- Version schemas; never silently rename fields.
+
+## Telemetry
+- Define canonical fields the UI consumes.
+- Define transform rules from upstream -> canonical.
+
+## Error/Degraded Modes
+- live | cached | archived | error
+- Always return a reason + lastUpdated when degraded.

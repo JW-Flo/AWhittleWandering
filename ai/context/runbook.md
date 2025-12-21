@@ -1,1 +1,15 @@
-# Runbook\n\n## Local dev\n- install\n- run\n- test\n\n## Deploy\n- CI steps\n- required secrets\n- rollback plan\n\n## Triage\n- where logs live\n- common failure modes\n
+# Runbook
+
+## Local dev
+- install
+- run
+- test
+
+## Deploy
+- CI steps
+- required secrets
+- rollback plan
+
+## Triage
+- where logs live
+- common failure modes
