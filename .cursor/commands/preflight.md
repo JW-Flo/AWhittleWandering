@@ -1,0 +1,1 @@
+Goal: Make repo green locally before any refactor.\n\nDo:\n- detect package manager + scripts\n- run: format check, lint, typecheck, tests\n- fix failures with minimal diffs\n\nDeliver:\n- commands run\n- failures\n- patch blocks\n- verification steps\n
