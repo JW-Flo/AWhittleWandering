@@ -5,6 +5,47 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const FETCH_TIMEOUT_MS = 20_000;
+const MAX_TEXT_LEN = 500;
+
+function getEnv(name: string): string | null {
+  const v = Deno.env.get(name);
+  return v && v.trim().length > 0 ? v.trim() : null;
+}
+
+async function fetchWithTimeout(input: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+async function sleep(ms: number): Promise<void> {
+  await new Promise((r) => setTimeout(r, ms));
+}
+
+async function fetchWithRetry(input: string, init: RequestInit, attempts = 3): Promise<Response> {
+  let lastErr: unknown = null;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetchWithTimeout(input, init, FETCH_TIMEOUT_MS);
+      if (res.status !== 429 && res.status !== 503) return res;
+      // simple backoff with jitter
+      const backoff = Math.min(1500 * Math.pow(2, i), 8000) + Math.floor(Math.random() * 250);
+      await sleep(backoff);
+      lastErr = new Error(`retryable status ${res.status}`);
+    } catch (e) {
+      lastErr = e;
+      const backoff = Math.min(1500 * Math.pow(2, i), 8000) + Math.floor(Math.random() * 250);
+      await sleep(backoff);
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error('AI request failed');
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -12,10 +53,16 @@ serve(async (req) => {
 
   try {
     const { action, waypointName, waypointLocation, journeyTheme, vehicleInfo } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const OPENAI_API_KEY = getEnv('OPENAI_API_KEY');
     
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    if (!OPENAI_API_KEY) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Service temporarily unavailable'
+      }), {
+        status: 503,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     let prompt = '';
@@ -61,16 +108,18 @@ Make it personal and evocative. Return only the description text.`;
       throw new Error(`Unknown action: ${action}. Supported: enhance_waypoint, suggest_highlights, generate_journal_prompt, enhance_journey_description`);
     }
 
-    console.log(`[generate-test-journey] Processing action: ${action} for ${waypointName || 'journey'}`);
+    const safeName = typeof waypointName === 'string' ? waypointName.slice(0, MAX_TEXT_LEN) : '';
+    console.log(`[generate-test-journey] Processing action: ${action} for ${safeName || 'journey'}`);
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const baseUrl = getEnv('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1';
+    const response = await fetchWithRetry(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: getEnv('OPENAI_MODEL') ?? 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
@@ -80,7 +129,7 @@ Make it personal and evocative. Return only the description text.`;
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[generate-test-journey] AI gateway error:', response.status, errorText);
+      console.error('[generate-test-journey] AI service error:', response.status, errorText);
       
       if (response.status === 429) {
         return new Response(JSON.stringify({ 
@@ -95,14 +144,14 @@ Make it personal and evocative. Return only the description text.`;
       if (response.status === 402) {
         return new Response(JSON.stringify({ 
           success: false, 
-          error: 'AI credits exhausted. Please add credits to continue.' 
+          error: 'AI service unavailable for this request.' 
         }), {
           status: 402,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       
-      throw new Error(`AI gateway error: ${response.status}`);
+      throw new Error(`AI service error: ${response.status}`);
     }
 
     const aiResponse = await response.json();
