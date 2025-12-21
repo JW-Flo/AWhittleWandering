@@ -1,1 +1,14 @@
----\ndescription: Core engineering contract (stability > vibes)\nalwaysApply: true\n---\n\n## Always\n- No secrets in repo. Use env + secret stores.\n- External data is untrusted: validate + sanitize + null-guard.\n- Prefer idempotent processing for event/telemetry flows.\n- Output: plan (short) + diff + risks + test plan.\n\n## Performance/cost\n- Prefer local checks (tests/lint/typecheck) before usg model guesses.\n- Avoid rewrites. Make smallest safe change that fixes root cause.\n
+---
+description: Core engineering contract (stability > vibes)
+alwaysApply: true
+---
+
+## Always
+- No secrets in repo. Use env + secret stores.
+- External data is untrusted: validate + sanitize + null-guard.
+- Prefer idempotent processing for event/telemetry flows.
+- Output: plan (short) + diff + risks + test plan.
+
+## Performance/cost
+- Prefer local checks (tests/lint/typecheck) before usg model guesses.
+- Avoid rewrites. Make smallest safe change that fixes root cause.

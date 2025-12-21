@@ -1,1 +1,10 @@
-Create PR-ready change:\n- summary\n- risks + rollback\n- test evidence\n- checklist: secrets/schema/degraded/logging\n\nDeliver:\n- branch name\n- commits\n- PR description\n
+Create PR-ready change:
+- summary
+- risks + rollback
+- test evidence
+- checklist: secrets/schema/degraded/logging
+
+Deliver:
+- branch name
+- commits
+- PR description
