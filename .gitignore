@@ -15,6 +15,7 @@ out/
 .env.development.local
 .env.test.local
 .env.production.local
+.dev.vars
 
 # Logs
 npm-debug.log*
@@ -52,6 +53,9 @@ ollama-assistant.sh
 ollama-context.md
 monitor_progress.sh
 teslamate-reference/
+
+# Local dev secrets (never commit)
+config/dev-secrets-config.env
 
 # local IDE/AI setup backups
 .backup/
