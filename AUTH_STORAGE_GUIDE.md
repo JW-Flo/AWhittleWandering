@@ -3,9 +3,41 @@
 
 This guide explains **where and how** all authentication credentials and API keys need to be saved in the A Whittle Wandering platform.
 
+> **🎯 RECOMMENDED: Use GitHub Secrets as the single source of truth**  
+> See [GITHUB_SECRETS_GUIDE.md](./GITHUB_SECRETS_GUIDE.md) for consolidated secret management via GitHub Actions.
+
 ---
 
 ## 🔐 Authentication Storage Locations
+
+### 0. **GitHub Secrets** (RECOMMENDED - Single Source of Truth) ⭐
+
+**Location:** GitHub Repository Settings → Secrets and variables → Actions
+
+**What needs to be saved:**
+- `TESSIE_API_KEY` - Tesla data integration
+- `MAPBOX_ACCESS_TOKEN` - Map services
+- `OPENWEATHER_API_KEY` - Weather data
+- `JWT_SECRET` - Authentication security (min 32 chars)
+- `TESLA_VIN` - Vehicle Identification Number
+- `CLOUDFLARE_API_TOKEN` - For syncing secrets
+
+**How to save:**
+1. Go to: `https://github.com/[OWNER]/[REPO]/settings/secrets/actions`
+2. Click "New repository secret"
+3. Add each secret with its value
+4. Secrets automatically sync to Cloudflare Workers via GitHub Actions
+
+**Benefits:**
+- ✅ Single source of truth
+- ✅ Automatic sync to Cloudflare
+- ✅ Version controlled access
+- ✅ Environment management
+- ✅ Audit trail
+
+**See:** [GITHUB_SECRETS_GUIDE.md](./GITHUB_SECRETS_GUIDE.md) for detailed setup
+
+---
 
 ### 1. **Backend API Secrets** (Cloudflare Workers)
 
