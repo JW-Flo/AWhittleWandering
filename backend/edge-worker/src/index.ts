@@ -15,6 +15,10 @@ import { telemetryRouter } from './routers/telemetry';
 import { unifiedDataRouter } from './routers/unifiedData';
 import { tripStatusRouter } from './routers/tripStatus';
 import { adminRouter } from './routers/admin';
+import { drivesRouter } from './routers/drives';
+import { chargesRouter } from './routers/charges';
+import { analyticsRouter } from './routers/analytics';
+import { mediaRouter } from './routers/media';
 
 // Augment Env typing (local) for new PLATFORM_MODE variable
 declare global {
@@ -77,6 +81,10 @@ app.route('/api/v1/health', healthRouter);
 app.route('/api/v1/telemetry', telemetryRouter);
 app.route('/api/v1/unified-data', unifiedDataRouter);
 app.route('/api/v1/trip-status', tripStatusRouter);
+app.route('/api/v1/drives', drivesRouter);
+app.route('/api/v1/charges', chargesRouter);
+app.route('/api/v1/analytics', analyticsRouter);
+app.route('/api/v1/media', mediaRouter);
 app.use('/api/v1/admin/*', adminAuth);
 app.route('/api/v1/admin', adminRouter);
 
@@ -125,6 +133,10 @@ app.get('/', async (c) => {
       telemetry: '/api/v1/telemetry',
       unifiedData: '/api/v1/unified-data',
       tripStatus: '/api/v1/trip-status',
+      drives: '/api/v1/drives',
+      charges: '/api/v1/charges',
+      analytics: '/api/v1/analytics',
+      media: '/api/v1/media',
       admin: '/api/v1/admin',
       config: '/api/v1/config'
     },
