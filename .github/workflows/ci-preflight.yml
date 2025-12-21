@@ -1,0 +1,24 @@
+name: ci-preflight
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
+      - name: Security scan (paths only)
+        run: bash scripts/security-scan.sh
+      - name: Preflight (if JS project)
+        run: |
+          if [[ -f package.json ]]; then
+            bash scripts/preflight.sh
+          else
+            echo "skip: no package.json"
+          fi

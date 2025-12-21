@@ -1,0 +1,11 @@
+---
+description: Core engineering contract (generic)
+globs: ["**/*"]
+alwaysApply: true
+---
+
+- No secrets in repo or outputs. Use env + secret stores.
+- External input is untrusted: validate/sanitize/null-guard.
+- Minimal diffs. No style refactors unless required.
+- Default output: Intent + Plan + Patch + Risks/Rollback + Verification.
+- Create missing folders/files when needed; only ask if risk of data loss/secret exposure.

@@ -1,0 +1,10 @@
+---
+description: Security & supply chain (generic)
+globs: ["**/*"]
+alwaysApply: true
+---
+
+- Redact tokens/keys. Never log credentials.
+- Explicit auth/CORS; no wildcard production defaults.
+- Prefer timeouts + retry-with-jitter for upstream calls where relevant.
+- Avoid deps; if adding deps: justify and note risk/alternatives.
