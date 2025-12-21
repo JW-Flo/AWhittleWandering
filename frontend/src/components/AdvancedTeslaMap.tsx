@@ -214,49 +214,36 @@ const AdvancedTeslaMap: React.FC<AdvancedTeslaMapProps> = ({
     if (segments.length > 0) {
       const segmentFeatures = segments.map(segment => ({
         type: 'Feature' as const,
-        useEffect(() => {
-          if (!mapContainer.current || !mapboxToken) return;
-          let cancelled = false;
-          (async () => {
-            if (!mapboxgl) {
-              mapboxgl = await loadMapbox();
-            }
-            if (cancelled) return;
-            mapboxgl.accessToken = mapboxToken;
-      
-            map.current = new mapboxgl.Map({
-              container: mapContainer.current,
-              style: 'mapbox://styles/mapbox/satellite-streets-v12', // Enhanced satellite view
-              center: [-98.5795, 39.8283], // Center of USA
-              zoom: 4,
-              projection: 'mercator',
-              pitch: 0,
-              bearing: 0,
-              maxPitch: 60, // Allow some 3D tilt for better route visualization
-            });
-        type: 'geojson',
-            // Add enhanced navigation controls
-            map.current.addControl(new mapboxgl.NavigationControl({
-              visualizePitch: true,
-              showCompass: true
-            }), 'top-right');
+        properties: {
+          speed: segment.avgSpeed,
+          distance: segment.distance
+        },
+        geometry: {
+          type: 'LineString' as const,
+          coordinates: segment.points.map(p => [p.lng, p.lat])
+        }
+      }));
 
-            // Add fullscreen control
-            map.current.addControl(new mapboxgl.FullscreenControl(), 'top-right');
+      map.current.addSource('route-segments-data', {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: segmentFeatures
+        }
+      });
+
+      map.current.addLayer({
+        id: 'route-segments',
         type: 'line',
-            // Add scale control
-            map.current.addControl(new mapboxgl.ScaleControl({
-              maxWidth: 80,
-              unit: 'imperial'
-            }), 'bottom-left');
+        source: 'route-segments-data',
         paint: {
-            map.current.on('load', () => {
-              setIsMapLoaded(true);
-            });
+          'line-color': [
+            'interpolate',
+            ['linear'],
             ['get', 'speed'],
-          })();
-          return () => { cancelled = true; map.current?.remove(); };
-        }, [mapboxToken]);
+            0, '#FF0000',
+            30, '#FFFF00',
+            70, '#00FF00'
           ],
           'line-width': 2,
           'line-opacity': 0.6

@@ -233,13 +233,6 @@ export default function JourneyJournal({
             {isGenerating ? 'Generating...' : 'Charging Stop'}
           </Button>
         </div>
-              className="h-6 px-2 text-xs"
-            >
-              <TrendingUp className="w-3 h-3 mr-1" />
-              Efficiency Check
-            </Button>
-          </div>
-        )}
       </CardHeader>
 
       <CardContent className="flex-1 overflow-hidden flex flex-col p-0">

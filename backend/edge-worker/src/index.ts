@@ -15,6 +15,7 @@ import { telemetryRouter } from './routers/telemetry';
 import { unifiedDataRouter } from './routers/unifiedData';
 import { tripStatusRouter } from './routers/tripStatus';
 import { adminRouter } from './routers/admin';
+import { componentRouter, analyticsRouter, vehicleRouter, aiRouter, debugRouter } from './routers/component';
 
 // Augment Env typing (local) for new PLATFORM_MODE variable
 declare global {
@@ -79,6 +80,24 @@ app.route('/api/v1/unified-data', unifiedDataRouter);
 app.route('/api/v1/trip-status', tripStatusRouter);
 app.use('/api/v1/admin/*', adminAuth);
 app.route('/api/v1/admin', adminRouter);
+
+// Component and analytics routers (frontend-facing)
+app.route('/api/v1/component', componentRouter);
+app.route('/api/v1/analytics', analyticsRouter);
+app.route('/api/v1/vehicle', vehicleRouter);
+app.route('/api/v1/route', aiRouter);
+app.route('/api/v1/journal', aiRouter);
+app.route('/api/v1/debug', debugRouter);
+
+// Legacy trip status route (frontend expects /api/v1/trip/status)
+app.get('/api/v1/trip/status', async (c) => {
+  return c.json({
+    tripId: "continental-usa-2025",
+    tripName: `Tesla Road Trip - ${new Date().getFullYear()}`,
+    status: "active",
+    timestamp: Date.now()
+  });
+});
 
 // Legacy and convenience routes
 // Provide a simple health endpoint directly

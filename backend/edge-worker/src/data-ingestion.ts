@@ -318,7 +318,7 @@ export class TeslaDataIngestion {
       return { 
         success: false, 
         recordsProcessed: 0, 
-        errors: [this.extractErrorMessage(error)], 
+        errors: [extractErrorMessage(error)], 
         timestamp: new Date().toISOString() 
       };
     }
