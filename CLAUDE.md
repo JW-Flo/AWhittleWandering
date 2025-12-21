@@ -1,0 +1,1 @@
+# Claude / Agent Instructions\n\nRead: ai/context/* before making changes.\n\nNon-negotiables:\n- No secrets in repo.\n- Validate external data.\n- Degrade gracefully.\n- Add tests for contract boundaries.\n
