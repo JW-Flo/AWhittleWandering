@@ -40,7 +40,7 @@ const VehicleStats = ({
     }
   };
 
-  const getBatteryColor = () => {
+  const _getBatteryColor = () => {
     if (batteryLevel > 50) return 'bg-tesla-cyan';
     if (batteryLevel > 20) return 'bg-yellow-500';
     return 'bg-destructive';

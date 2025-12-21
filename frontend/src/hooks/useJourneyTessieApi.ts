@@ -1,8 +1,7 @@
 // COMPATIBILITY WRAPPER: Enhanced Tessie API integration for A Whittle Wandering journey tracking
 // This is now a wrapper around useUnifiedTessieApi for backward compatibility
 
-import { useUnifiedTessieApi } from './useUnifiedTessieApi';
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { dynamicConfig } from '@/lib/dynamic-config';
 
 interface ChargeSessionData {

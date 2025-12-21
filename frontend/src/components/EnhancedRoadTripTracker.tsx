@@ -36,9 +36,9 @@ const EnhancedRoadTripTracker: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const extractStateFromAddress = (address: string): string | null => {
+  const _extractStateFromAddress = (_address: string): string | null => {
     const stateRegex = /, ([A-Z][a-z]+(?:\s[A-Z][a-z]+)*) \d/;
-    const match = address.match(stateRegex);
+    const match = _address.match(stateRegex);
     return match ? match[1] : null;
   };
 

@@ -60,7 +60,7 @@ interface InteractiveRoutePlannerProps {
 const InteractiveRoutePlanner: React.FC<InteractiveRoutePlannerProps> = ({
   onRouteChange,
   onOptimizedRouteGenerated,
-  currentLocation,
+  currentLocation: _currentLocation,
   vehicleRange = 300,
   vehicleBatteryLevel = 80
 }) => {
@@ -307,7 +307,7 @@ const InteractiveRoutePlanner: React.FC<InteractiveRoutePlannerProps> = ({
   };
 
   // Geocode address (placeholder implementation)
-  const geocodeAddress = async (address: string): Promise<{ lat: number; lng: number }> => {
+  const geocodeAddress = async (_address: string): Promise<{ lat: number; lng: number }> => {
     // In a real implementation, use a geocoding service
     // For now, return sample coordinates
     return { lat: 40.7128, lng: -74.0060 };

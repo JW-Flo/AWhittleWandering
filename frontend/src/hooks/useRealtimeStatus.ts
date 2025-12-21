@@ -132,6 +132,7 @@ export function useRealtimeStatus(options: UseRealtimeStatusOptions = {}) {
     return () => {
       stopPolling();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoStart, pollInterval]);
 
   // Cleanup on unmount

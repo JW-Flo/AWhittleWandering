@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, Brain, Lightbulb, Navigation } from 'lucide-react';
+import { Brain } from 'lucide-react';
 import { AISuggestion, JourneyContext } from '@/types/advancedFeatures';
 
 interface SmartAssistantProps {
@@ -12,7 +12,7 @@ interface SmartAssistantProps {
 }
 
 export const SmartAssistant: React.FC<SmartAssistantProps> = ({
-  currentContext,
+  currentContext: _currentContext,
   onSuggestionSelected
 }) => {
   const [query, setQuery] = useState('');

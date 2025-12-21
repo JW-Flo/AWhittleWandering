@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,18 +22,18 @@ export const EnhancedMapFeatures: React.FC<EnhancedMapProps> = ({
   currentLocation,
   destination,
   onRouteOptimized,
-  onChargingRecommendation
+  onChargingRecommendation: _onChargingRecommendation
 }) => {
   const [isOptimizing, setIsOptimizing] = useState(false);
-  const [recommendations, setRecommendations] = useState<TripRecommendation[]>([]);
+  const [_recommendations, _setRecommendations] = useState<TripRecommendation[]>([]);
   const [routeOptimization, setRouteOptimization] = useState<RouteOptimization | null>(null);
-  const [chargingStations, setChargingStations] = useState<SmartChargingRecommendation[]>([]);
+  const [_chargingStations, _setChargingStations] = useState<SmartChargingRecommendation[]>([]);
 
   // This will be implemented by phi3 model
-  const optimizeRoute = async () => {
+  const optimizeRoute = useCallback(async () => {
     setIsOptimizing(true);
     // TODO: Delegate to phi3 for route optimization algorithm
-    console.log('🤖 Delegating route optimization to phi3...');
+    console.warn('🤖 Delegating route optimization to phi3...');
     
     // Placeholder optimization result
     const optimization: RouteOptimization = {
@@ -47,19 +47,19 @@ export const EnhancedMapFeatures: React.FC<EnhancedMapProps> = ({
     setRouteOptimization(optimization);
     onRouteOptimized?.(optimization);
     setIsOptimizing(false);
-  };
+  }, [onRouteOptimized]);
 
   // This will be implemented by phi3 model  
-  const findSmartChargingStations = async () => {
-    console.log('🤖 Delegating smart charging analysis to phi3...');
+  const findSmartChargingStations = useCallback(async () => {
+    console.warn('🤖 Delegating smart charging analysis to phi3...');
     // TODO: Implement smart charging station recommendations
-  };
+  }, []);
 
   // This will be implemented by phi3 model
-  const generateTripRecommendations = async () => {
-    console.log('🤖 Delegating trip recommendations to phi3...');
+  const generateTripRecommendations = useCallback(async () => {
+    console.warn('🤖 Delegating trip recommendations to phi3...');
     // TODO: Implement AI-powered trip suggestions
-  };
+  }, []);
 
   useEffect(() => {
     if (currentLocation && destination) {
@@ -67,7 +67,7 @@ export const EnhancedMapFeatures: React.FC<EnhancedMapProps> = ({
       findSmartChargingStations();
       generateTripRecommendations();
     }
-  }, [currentLocation, destination]);
+  }, [currentLocation, destination, optimizeRoute, findSmartChargingStations, generateTripRecommendations]);
 
   return (
     <div className="space-y-6">

@@ -8,8 +8,6 @@ import {
   Navigation,
   AlertCircle,
   Leaf,
-  MapPin,
-  Clock,
   Target,
   Plus,
   Trash2,

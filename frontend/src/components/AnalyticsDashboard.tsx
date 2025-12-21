@@ -2,8 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, BarChart3, Zap, DollarSign, Activity } from 'lucide-react';
-import { JourneyAnalytics, CostAnalysis, AIInsight } from '@/types/advancedFeatures';
+import { BarChart3, Activity } from 'lucide-react';
+import { JourneyAnalytics } from '@/types/advancedFeatures';
 
 interface AnalyticsDashboardProps {
   journeyData: any[];
@@ -12,9 +12,9 @@ interface AnalyticsDashboardProps {
 
 export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   journeyData,
-  realTimeUpdates = true
+  realTimeUpdates: _realTimeUpdates = true
 }) => {
-  const [selectedMetric, setSelectedMetric] = useState<'efficiency' | 'cost' | 'time'>('efficiency');
+  const [_selectedMetric, _setSelectedMetric] = useState<'efficiency' | 'cost' | 'time'>('efficiency');
 
   // Simulate analytics processing with gemma3
   const analytics = useMemo((): JourneyAnalytics => {
