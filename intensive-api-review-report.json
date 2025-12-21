@@ -1,0 +1,224 @@
+{
+  "summary": {
+    "totalAPIs": 4,
+    "totalCredentials": 6,
+    "configuredCredentials": 0,
+    "missingCredentials": 5,
+    "criticalIssues": 5
+  },
+  "credentials": {
+    "TESSIE_API_KEY": {
+      "required": true,
+      "priority": 1,
+      "locations": {
+        "github": false,
+        "cloudflare": false,
+        "local": false,
+        "code": false
+      },
+      "usedIn": [],
+      "status": "missing"
+    },
+    "MAPBOX_ACCESS_TOKEN": {
+      "required": true,
+      "priority": 2,
+      "locations": {
+        "github": false,
+        "cloudflare": false,
+        "local": false,
+        "code": false
+      },
+      "usedIn": [],
+      "status": "missing"
+    },
+    "OPENWEATHER_API_KEY": {
+      "required": true,
+      "priority": 3,
+      "locations": {
+        "github": false,
+        "cloudflare": false,
+        "local": false,
+        "code": false
+      },
+      "usedIn": [],
+      "status": "missing"
+    },
+    "JWT_SECRET": {
+      "required": true,
+      "priority": 4,
+      "locations": {
+        "github": false,
+        "cloudflare": false,
+        "local": false,
+        "code": false
+      },
+      "usedIn": [],
+      "status": "missing"
+    },
+    "TESLA_VIN": {
+      "required": true,
+      "priority": 5,
+      "locations": {
+        "github": false,
+        "cloudflare": false,
+        "local": false,
+        "code": false
+      },
+      "usedIn": [],
+      "status": "missing"
+    },
+    "CLOUDFLARE_API_TOKEN": {
+      "required": false,
+      "priority": 6,
+      "locations": {
+        "github": false,
+        "cloudflare": false,
+        "local": false,
+        "code": false
+      },
+      "usedIn": [],
+      "status": "missing"
+    }
+  },
+  "apis": {
+    "tessie": {
+      "name": "Tessie API",
+      "baseUrl": "https://api.tessie.com",
+      "endpoints": [
+        "/drives",
+        "/charges"
+      ],
+      "usedIn": [
+        "frontend/src/hooks/useTessieApi.ts",
+        "frontend/src/hooks/useUnifiedTessieApi.ts",
+        "backend/edge-worker/src/ingestion/tessie-ingest.ts"
+      ],
+      "credentials": [
+        "TESSIE_API_KEY"
+      ],
+      "required": true,
+      "priority": 1
+    },
+    "mapbox": {
+      "name": "Mapbox API",
+      "baseUrl": "https://api.mapbox.com",
+      "endpoints": [],
+      "usedIn": [],
+      "credentials": [
+        "MAPBOX_ACCESS_TOKEN"
+      ],
+      "required": true,
+      "priority": 2
+    },
+    "openweather": {
+      "name": "OpenWeather API",
+      "baseUrl": "https://api.openweathermap.org/data/2.5",
+      "endpoints": [
+        "/weather",
+        "/onecall"
+      ],
+      "usedIn": [
+        "frontend/src/services/weatherService.ts"
+      ],
+      "credentials": [
+        "OPENWEATHER_API_KEY"
+      ],
+      "required": true,
+      "priority": 3
+    },
+    "backend": {
+      "name": "Backend API",
+      "baseUrl": "https://awhittlewandering-api.kd8jc7v8cd.workers.dev",
+      "endpoints": [],
+      "usedIn": [],
+      "credentials": [],
+      "required": true,
+      "priority": 0
+    }
+  },
+  "issues": [
+    {
+      "severity": "CRITICAL",
+      "type": "missing_credential",
+      "credential": "TESSIE_API_KEY",
+      "message": "Required credential TESSIE_API_KEY is not configured"
+    },
+    {
+      "severity": "CRITICAL",
+      "type": "missing_credential",
+      "credential": "MAPBOX_ACCESS_TOKEN",
+      "message": "Required credential MAPBOX_ACCESS_TOKEN is not configured"
+    },
+    {
+      "severity": "CRITICAL",
+      "type": "missing_credential",
+      "credential": "OPENWEATHER_API_KEY",
+      "message": "Required credential OPENWEATHER_API_KEY is not configured"
+    },
+    {
+      "severity": "CRITICAL",
+      "type": "missing_credential",
+      "credential": "JWT_SECRET",
+      "message": "Required credential JWT_SECRET is not configured"
+    },
+    {
+      "severity": "CRITICAL",
+      "type": "missing_credential",
+      "credential": "TESLA_VIN",
+      "message": "Required credential TESLA_VIN is not configured"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "CRITICAL",
+      "credential": "TESSIE_API_KEY",
+      "action": "Add TESSIE_API_KEY to GitHub Secrets and sync to Cloudflare Workers",
+      "steps": [
+        "1. Go to GitHub: Settings → Secrets → Actions",
+        "2. Add TESSIE_API_KEY as a repository secret",
+        "3. Run sync-secrets workflow or: ./scripts/sync-secrets-from-github.sh"
+      ]
+    },
+    {
+      "priority": "CRITICAL",
+      "credential": "MAPBOX_ACCESS_TOKEN",
+      "action": "Add MAPBOX_ACCESS_TOKEN to GitHub Secrets and sync to Cloudflare Workers",
+      "steps": [
+        "1. Go to GitHub: Settings → Secrets → Actions",
+        "2. Add MAPBOX_ACCESS_TOKEN as a repository secret",
+        "3. Run sync-secrets workflow or: ./scripts/sync-secrets-from-github.sh"
+      ]
+    },
+    {
+      "priority": "CRITICAL",
+      "credential": "OPENWEATHER_API_KEY",
+      "action": "Add OPENWEATHER_API_KEY to GitHub Secrets and sync to Cloudflare Workers",
+      "steps": [
+        "1. Go to GitHub: Settings → Secrets → Actions",
+        "2. Add OPENWEATHER_API_KEY as a repository secret",
+        "3. Run sync-secrets workflow or: ./scripts/sync-secrets-from-github.sh"
+      ]
+    },
+    {
+      "priority": "CRITICAL",
+      "credential": "JWT_SECRET",
+      "action": "Add JWT_SECRET to GitHub Secrets and sync to Cloudflare Workers",
+      "steps": [
+        "1. Go to GitHub: Settings → Secrets → Actions",
+        "2. Add JWT_SECRET as a repository secret",
+        "3. Run sync-secrets workflow or: ./scripts/sync-secrets-from-github.sh"
+      ]
+    },
+    {
+      "priority": "CRITICAL",
+      "credential": "TESLA_VIN",
+      "action": "Add TESLA_VIN to GitHub Secrets and sync to Cloudflare Workers",
+      "steps": [
+        "1. Go to GitHub: Settings → Secrets → Actions",
+        "2. Add TESLA_VIN as a repository secret",
+        "3. Run sync-secrets workflow or: ./scripts/sync-secrets-from-github.sh"
+      ]
+    }
+  ],
+  "timestamp": "2025-12-21T08:33:09.410Z"
+}

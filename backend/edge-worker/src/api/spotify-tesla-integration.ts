@@ -93,7 +93,7 @@ async function getTeslaState(env: Env): Promise<{
   mediaState: any;
 }> {
   const response = await fetch(`https://api.tessie.com/${env.VEHICLE_ID}/state`, {
-    headers: { 'Authorization': `Bearer ${env.TESSIE_API_TOKEN}` }
+    headers: { 'Authorization': `Bearer ${env.TESSIE_API_KEY}` }
   });
   
   const data = await response.json() as any;

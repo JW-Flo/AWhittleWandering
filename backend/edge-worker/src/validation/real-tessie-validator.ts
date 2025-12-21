@@ -104,7 +104,7 @@ async function validateTessieConnection(env: Env): Promise<void> {
   
   const response = await fetch('https://api.tessie.com/vehicles', {
     headers: {
-      'Authorization': `Bearer ${env.TESSIE_API_TOKEN}`,
+      'Authorization': `Bearer ${env.TESSIE_API_KEY}`,
       'Content-Type': 'application/json'
     }
   });
@@ -122,7 +122,7 @@ async function fetchRealVehicleState(env: Env): Promise<any> {
   
   const response = await fetch(`https://api.tessie.com/${env.VEHICLE_ID}/state`, {
     headers: {
-      'Authorization': `Bearer ${env.TESSIE_API_TOKEN}`,
+      'Authorization': `Bearer ${env.TESSIE_API_KEY}`,
       'Content-Type': 'application/json'
     }
   });
@@ -148,7 +148,7 @@ async function fetchAllHistoricalDrives(env: Env, since: string): Promise<any[]>
   while (hasMore) {
     const response = await fetch(`https://api.tessie.com/${env.VEHICLE_ID}/drives?since=${since}&page=${page}&per_page=100`, {
       headers: {
-        'Authorization': `Bearer ${env.TESSIE_API_TOKEN}`,
+        'Authorization': `Bearer ${env.TESSIE_API_KEY}`,
         'Content-Type': 'application/json'
       }
     });
@@ -186,7 +186,7 @@ async function fetchAllHistoricalCharges(env: Env, since: string): Promise<any[]
   while (hasMore) {
     const response = await fetch(`https://api.tessie.com/${env.VEHICLE_ID}/charges?since=${since}&page=${page}&per_page=100`, {
       headers: {
-        'Authorization': `Bearer ${env.TESSIE_API_TOKEN}`,
+        'Authorization': `Bearer ${env.TESSIE_API_KEY}`,
         'Content-Type': 'application/json'
       }
     });
