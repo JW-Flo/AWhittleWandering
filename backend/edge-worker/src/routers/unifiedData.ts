@@ -9,7 +9,25 @@ async function buildUnifiedData(c: any) {
 
   const db = c.env?.TESLA_DB;
   if (!db) {
-    throw new Error('Database not available');
+    // Return minimal data structure instead of throwing
+    return {
+      timestamp: new Date().toISOString(),
+      vehicle: null,
+      journey: {
+        id: 'continental-usa-2025',
+        name: 'Continental USA Tesla Road Trip 2025',
+        status: 'active',
+        stats: {
+          totalMiles: 0,
+          statesVisited: 0,
+          totalDrives: 0,
+          totalCharges: 0
+        }
+      },
+      segments: [],
+      milestones: [],
+      warning: 'Database not available'
+    };
   }
 
   // Basic structure for unified data response
@@ -118,7 +136,8 @@ async function buildUnifiedData(c: any) {
 
   } catch (error) {
     log('error', 'unified.build.error', { error: (error as any)?.message });
-    // Return minimal data on error
+    // Return minimal data on error with error details
+    unifiedData.warning = `Data processing error: ${(error as any)?.message || 'Unknown error'}`;
   }
 
   return unifiedData;

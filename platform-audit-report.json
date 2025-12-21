@@ -1,0 +1,416 @@
+{
+  "timestamp": "2025-12-21T09:15:35.784Z",
+  "summary": {
+    "total": 35,
+    "passed": 14,
+    "failed": 17,
+    "warnings": 4
+  },
+  "endpoints": [
+    {
+      "category": "endpoint",
+      "name": "GET /",
+      "status": "fail",
+      "details": {
+        "status": 404,
+        "responseTime": 12665,
+        "hasEndpoints": "no"
+      },
+      "timestamp": "2025-12-21T09:15:48.453Z"
+    },
+    {
+      "category": "endpoint",
+      "name": "GET /api/v1/health",
+      "status": "pass",
+      "details": {
+        "status": 200,
+        "responseTime": 87,
+        "statusValue": "degraded",
+        "resources": {
+          "d1_database": "error",
+          "r2_storage": "error",
+          "analytics_engine": "assumed",
+          "queue_system": "not_configured"
+        },
+        "warnings": [
+          "D1 database not reachable",
+          "R2 storage not reachable",
+          "Failed to compute ingestion metrics"
+        ]
+      },
+      "timestamp": "2025-12-21T09:15:48.540Z"
+    },
+    {
+      "category": "endpoint",
+      "name": "GET /health",
+      "status": "pass",
+      "details": {
+        "status": 200,
+        "responseTime": 32
+      },
+      "timestamp": "2025-12-21T09:15:48.572Z"
+    },
+    {
+      "category": "endpoint",
+      "name": "GET /api/v1/unified-data",
+      "status": "fail",
+      "details": {
+        "status": 500,
+        "responseTime": 65,
+        "hasVehicle": false,
+        "hasJourney": false,
+        "hasSegments": false,
+        "segmentCount": 0
+      },
+      "timestamp": "2025-12-21T09:15:48.637Z"
+    },
+    {
+      "category": "endpoint",
+      "name": "GET /api/v1/unified-data?revalidate=true",
+      "status": "fail",
+      "details": {
+        "status": 500,
+        "responseTime": 125
+      },
+      "timestamp": "2025-12-21T09:15:48.762Z"
+    },
+    {
+      "category": "endpoint",
+      "name": "GET /api/v1/telemetry/status",
+      "status": "fail",
+      "details": {
+        "status": 404,
+        "responseTime": 27,
+        "hasDrives": false,
+        "hasCharges": false
+      },
+      "timestamp": "2025-12-21T09:15:48.790Z"
+    },
+    {
+      "category": "endpoint",
+      "name": "POST /api/v1/telemetry",
+      "status": "fail",
+      "details": {
+        "status": 404,
+        "responseTime": 26
+      },
+      "timestamp": "2025-12-21T09:15:48.817Z"
+    },
+    {
+      "category": "endpoint",
+      "name": "GET /api/v1/trip-status",
+      "status": "fail",
+      "details": {
+        "status": 404,
+        "responseTime": 24,
+        "hasTripId": false,
+        "hasStatus": false
+      },
+      "timestamp": "2025-12-21T09:15:48.841Z"
+    },
+    {
+      "category": "endpoint",
+      "name": "GET /api/v1/trip-status/config",
+      "status": "fail",
+      "details": {
+        "status": 404,
+        "responseTime": 28,
+        "hasFeatures": false,
+        "hasMapboxToken": false
+      },
+      "timestamp": "2025-12-21T09:15:48.870Z"
+    },
+    {
+      "category": "endpoint",
+      "name": "GET /api/v1/admin/status",
+      "status": "fail",
+      "details": {
+        "status": 404,
+        "responseTime": 26
+      },
+      "timestamp": "2025-12-21T09:15:48.897Z"
+    },
+    {
+      "category": "endpoint",
+      "name": "POST /api/v1/admin/cache/clear",
+      "status": "fail",
+      "details": {
+        "status": 404,
+        "responseTime": 26
+      },
+      "timestamp": "2025-12-21T09:15:48.924Z"
+    },
+    {
+      "category": "endpoint",
+      "name": "GET /api/v1/admin/cron/metrics",
+      "status": "fail",
+      "details": {
+        "status": 404,
+        "responseTime": 27
+      },
+      "timestamp": "2025-12-21T09:15:48.952Z"
+    },
+    {
+      "category": "endpoint",
+      "name": "GET /api/v1/config",
+      "status": "pass",
+      "details": {
+        "status": 200,
+        "responseTime": 23,
+        "hasFeatures": true,
+        "hasApiVersion": true
+      },
+      "timestamp": "2025-12-21T09:15:48.975Z"
+    },
+    {
+      "category": "endpoint",
+      "name": "GET /unified-data (legacy)",
+      "status": "fail",
+      "details": {
+        "status": 500,
+        "isRedirect": false
+      },
+      "timestamp": "2025-12-21T09:15:49.029Z"
+    },
+    {
+      "category": "endpoint",
+      "name": "GET /trip-status (legacy)",
+      "status": "pass",
+      "details": {
+        "status": 200,
+        "isRedirect": false
+      },
+      "timestamp": "2025-12-21T09:15:49.055Z"
+    },
+    {
+      "category": "endpoint",
+      "name": "POST /api/v1/auth (login)",
+      "status": "fail",
+      "details": {
+        "status": 404,
+        "responseTime": 61
+      },
+      "timestamp": "2025-12-21T09:15:49.116Z"
+    },
+    {
+      "category": "endpoint",
+      "name": "POST /api/v1/auth (register)",
+      "status": "fail",
+      "details": {
+        "status": 404,
+        "responseTime": 64
+      },
+      "timestamp": "2025-12-21T09:15:49.181Z"
+    },
+    {
+      "category": "endpoint",
+      "name": "POST /drop (legacy)",
+      "status": "fail",
+      "details": {
+        "status": 404,
+        "responseTime": 27,
+        "hasDeprecation": false
+      },
+      "timestamp": "2025-12-21T09:15:49.208Z"
+    },
+    {
+      "category": "endpoint",
+      "name": "POST /api/joiner",
+      "status": "fail",
+      "details": {
+        "status": 404,
+        "responseTime": 26,
+        "hasUserId": false,
+        "hasLog": false
+      },
+      "timestamp": "2025-12-21T09:15:49.234Z"
+    },
+    {
+      "category": "endpoint",
+      "name": "GET /api/connectors",
+      "status": "fail",
+      "details": {
+        "status": 404,
+        "responseTime": 27,
+        "hasConnectors": false,
+        "connectorCount": 0
+      },
+      "timestamp": "2025-12-21T09:15:49.261Z"
+    }
+  ],
+  "functions": [
+    {
+      "category": "function",
+      "name": "Response Caching",
+      "status": "warning",
+      "details": {
+        "firstRequest": 63,
+        "cachedRequest": 73,
+        "revalidatedRequest": 63,
+        "cacheWorking": false,
+        "warning": "Cache may not be working optimally"
+      },
+      "timestamp": "2025-12-21T09:15:49.823Z"
+    },
+    {
+      "category": "function",
+      "name": "Error Handling",
+      "status": "fail",
+      "details": {
+        "status": 404,
+        "hasError": true,
+        "error": "Expected 400 for invalid data"
+      },
+      "timestamp": "2025-12-21T09:15:49.860Z"
+    },
+    {
+      "category": "function",
+      "name": "CORS Headers",
+      "status": "pass",
+      "details": {
+        "hasCorsHeader": true
+      },
+      "timestamp": "2025-12-21T09:15:49.942Z"
+    },
+    {
+      "category": "function",
+      "name": "Rate Limiting",
+      "status": "pass",
+      "details": {
+        "allRequestsSuccessful": true,
+        "failedRequests": 0
+      },
+      "timestamp": "2025-12-21T09:15:50.126Z"
+    }
+  ],
+  "dataPoints": [
+    {
+      "category": "data",
+      "name": "Health Check Data",
+      "status": "pass",
+      "details": {
+        "status": "degraded",
+        "resources": {
+          "d1_database": "error",
+          "r2_storage": "error",
+          "analytics_engine": "assumed",
+          "queue_system": "not_configured"
+        },
+        "ingestion": "available",
+        "performance": "available"
+      },
+      "timestamp": "2025-12-21T09:15:49.430Z"
+    },
+    {
+      "category": "data",
+      "name": "Data Ingestion Metrics",
+      "status": "pass",
+      "details": {},
+      "timestamp": "2025-12-21T09:15:49.430Z"
+    },
+    {
+      "category": "data",
+      "name": "Resource Availability",
+      "status": "warning",
+      "details": {
+        "d1Database": "error",
+        "r2Storage": "error",
+        "analyticsEngine": "assumed",
+        "queueSystem": "not_configured",
+        "warning": "Some resources not operational"
+      },
+      "timestamp": "2025-12-21T09:15:49.430Z"
+    }
+  ],
+  "integrations": [
+    {
+      "category": "integration",
+      "name": "Tessie API Configuration",
+      "status": "warning",
+      "details": {
+        "warning": "Tessie API not configured"
+      },
+      "timestamp": "2025-12-21T09:15:49.536Z"
+    },
+    {
+      "category": "integration",
+      "name": "Cache System",
+      "status": "warning",
+      "details": {
+        "functional": false,
+        "warning": "Cache clear failed"
+      },
+      "timestamp": "2025-12-21T09:15:49.623Z"
+    }
+  ],
+  "components": [
+    {
+      "category": "component",
+      "name": "Frontend App.tsx",
+      "status": "pass",
+      "details": {
+        "exists": true,
+        "path": "/workspace/frontend/src/App.tsx"
+      },
+      "timestamp": "2025-12-21T09:15:50.126Z"
+    },
+    {
+      "category": "component",
+      "name": "Frontend components",
+      "status": "pass",
+      "details": {
+        "exists": true,
+        "path": "/workspace/frontend/src/components"
+      },
+      "timestamp": "2025-12-21T09:15:50.127Z"
+    },
+    {
+      "category": "component",
+      "name": "Frontend hooks",
+      "status": "pass",
+      "details": {
+        "exists": true,
+        "path": "/workspace/frontend/src/hooks"
+      },
+      "timestamp": "2025-12-21T09:15:50.127Z"
+    },
+    {
+      "category": "component",
+      "name": "Frontend services",
+      "status": "pass",
+      "details": {
+        "exists": true,
+        "path": "/workspace/frontend/src/services"
+      },
+      "timestamp": "2025-12-21T09:15:50.127Z"
+    },
+    {
+      "category": "component",
+      "name": "Frontend pages",
+      "status": "pass",
+      "details": {
+        "exists": true,
+        "path": "/workspace/frontend/src/pages"
+      },
+      "timestamp": "2025-12-21T09:15:50.127Z"
+    },
+    {
+      "category": "component",
+      "name": "API Configuration Available",
+      "status": "pass",
+      "details": {
+        "hasFeatures": true,
+        "hasApiVersion": true,
+        "updateInterval": 30000
+      },
+      "timestamp": "2025-12-21T09:15:50.157Z"
+    }
+  ],
+  "errors": [
+    {
+      "category": "function",
+      "name": "Error Handling",
+      "error": "Expected 400 for invalid data"
+    }
+  ]
+}
