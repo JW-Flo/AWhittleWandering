@@ -1,18 +1,18 @@
 {
-  "timestamp": "2025-12-21T08:25:01.596Z",
+  "timestamp": "2025-12-21T08:32:07.946Z",
   "backend": {
     "root": {
       "success": false,
       "status": 404,
       "hasEndpoints": false,
-      "duration": 724
+      "duration": 314
     },
     "health": {
       "success": true,
       "status": 200,
       "hasStatus": true,
       "hasTimestamp": true,
-      "duration": 29,
+      "duration": 28,
       "warnings": []
     },
     "health_api": {
@@ -20,7 +20,7 @@
       "status": 200,
       "hasStatus": true,
       "hasTimestamp": true,
-      "duration": 84,
+      "duration": 95,
       "warnings": [
         "D1 database not reachable",
         "R2 storage not reachable",
@@ -33,14 +33,14 @@
       "hasVehicle": false,
       "hasJourney": false,
       "hasSegments": false,
-      "duration": 70
+      "duration": 64
     },
     "tripStatus": {
       "success": false,
       "status": 404,
       "hasTripId": false,
       "hasStatus": false,
-      "duration": 101
+      "duration": 80
     },
     "config": {
       "success": true,
@@ -53,7 +53,7 @@
       "success": false,
       "status": 404,
       "acceptsData": false,
-      "duration": 32
+      "duration": 27
     },
     "legacyRedirects": {
       "unifiedData": false
@@ -92,15 +92,15 @@
   "performance": {
     "responseTimes": {
       "/health": {
-        "average": 28,
+        "average": 30.666666666666668,
         "acceptable": true
       },
       "/api/v1/unified-data": {
-        "average": 65,
+        "average": 61,
         "acceptable": true
       },
       "/api/v1/trip-status": {
-        "average": 30.333333333333332,
+        "average": 27.666666666666668,
         "acceptable": true
       }
     }
@@ -124,7 +124,7 @@
     },
     "overall": {
       "status": "PARTIAL",
-      "timestamp": "2025-12-21T08:25:03.424Z"
+      "timestamp": "2025-12-21T08:32:09.317Z"
     }
   }
 }
