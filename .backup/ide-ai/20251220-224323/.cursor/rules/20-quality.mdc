@@ -1,9 +1,0 @@
----
-description: Quality gates (generic)
-globs: ["**/*"]
-alwaysApply: true
----
-
-- No “it should work.” Provide deterministic verification commands.
-- For behavior changes: add/update a minimal test or fixture.
-- Handle errors explicitly; avoid silent failures.
