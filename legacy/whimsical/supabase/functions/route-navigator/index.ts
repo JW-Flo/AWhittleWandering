@@ -9,6 +9,22 @@ const corsHeaders = {
 // Input validation constants
 const MAX_QUERY_LENGTH = 1000;
 const MAX_PREFERENCES_LENGTH = 2000;
+const FETCH_TIMEOUT_MS = 25_000;
+
+function getEnv(name: string): string | null {
+  const v = Deno.env.get(name);
+  return v && v.trim().length > 0 ? v.trim() : null;
+}
+
+async function fetchWithTimeout(input: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
 
 function validateCoordinates(lat: unknown, lng: unknown): boolean {
   return (
@@ -117,10 +133,9 @@ serve(async (req) => {
       }
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      // Log server-side only, return generic error to client
-      console.error('AI service configuration error');
+    const OPENAI_API_KEY = getEnv('OPENAI_API_KEY');
+    if (!OPENAI_API_KEY) {
+      console.error('[route-navigator] Missing OPENAI_API_KEY');
       return new Response(JSON.stringify({ error: 'Service temporarily unavailable' }), {
         status: 503,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -154,21 +169,23 @@ Be conversational but informative. If you don't have specific information, provi
       ? `Current location: ${currentLocation.lat}, ${currentLocation.lng}\n\nUser query: ${sanitizedQuery}\n\nPreferences: ${JSON.stringify(preferences || {})}`
       : `User query: ${sanitizedQuery}\n\nPreferences: ${JSON.stringify(preferences || {})}`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const baseUrl = getEnv('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1';
+    const response = await fetchWithTimeout(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        // Chat Completions-compatible endpoint (OpenAI or OpenAI-compatible gateways)
+        model: getEnv('OPENAI_MODEL') ?? 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userMessage }
         ],
         stream: true,
       }),
-    });
+    }, FETCH_TIMEOUT_MS);
 
     if (!response.ok) {
       if (response.status === 429) {
@@ -178,14 +195,14 @@ Be conversational but informative. If you don't have specific information, provi
         });
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: 'AI credits exhausted. Please add credits to continue.' }), {
+        return new Response(JSON.stringify({ error: 'AI service unavailable for this request.' }), {
           status: 402,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       // Log detailed error server-side only
       const errorText = await response.text();
-      console.error('AI service error:', response.status, errorText);
+      console.error('[route-navigator] AI service error:', response.status, errorText);
       return new Response(JSON.stringify({ error: 'Service temporarily unavailable' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

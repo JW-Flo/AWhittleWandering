@@ -17,7 +17,7 @@ AWW is a multi-tenant platform for tracking EV road trips with compartmentalized
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Lovable Cloud Backend                         │
+│                       Supabase Backend                            │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
 │  │   Auth      │  │  Database   │  │   Storage   │             │
 │  │  (Users)    │  │ (35 Tables) │  │  (Photos)   │             │
@@ -458,7 +458,7 @@ User's Vehicle → Tessie API → Edge Function → User's D1 Database
 ## Monitoring
 
 ### Edge Function Logs
-Access via Lovable Cloud interface or edge function logs tool.
+Access via Supabase logs/edge function tooling.
 
 ### D1 Sync Status
 Query `sync_log` table in each D1 database:
