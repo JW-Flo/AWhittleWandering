@@ -54,14 +54,14 @@ This guide covers deploying the frontend to Cloudflare Pages using both Git inte
            run: npm run build
          - name: Deploy to Cloudflare Pages
            env:
-             CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-             CLOUDFLARE_API_TOKEN: ${{ secrets.CF_PAGES_TOKEN }}
+             CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+             CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
            run: wrangler pages deploy dist --project-name atlas-it
    ```
 
 4. **Set Secrets in GitHub**
-   - `CF_ACCOUNT_ID`: Your Cloudflare account ID
-   - `CF_PAGES_TOKEN`: Pages API token
+   - `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare account ID
+   - `CLOUDFLARE_API_TOKEN`: Cloudflare API token (with Pages permissions)
 
 5. **Deploy**
    Push to main branch - deployment triggers automatically.
