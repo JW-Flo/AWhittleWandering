@@ -72,10 +72,11 @@ export class TeslaDataIngestion {
   /**
    * Normalize timestamp to ISO string format
    * Handles Unix seconds (9-12 digits), milliseconds (13 digits), and ISO strings
+   * Returns null if timestamp cannot be parsed (instead of silently using current time)
    */
-  private normalizeIso(ts: string | number | null | undefined): string {
+  private normalizeIso(ts: string | number | null | undefined): string | null {
     if (!ts) {
-      return new Date().toISOString();
+      return null;
     }
 
     // If already a number, convert to string for processing
@@ -90,8 +91,7 @@ export class TeslaDataIngestion {
       const date = new Date(ms);
       // Validate the date is valid
       if (isNaN(date.getTime())) {
-        console.warn(`Invalid timestamp: ${tsStr}, defaulting to current time`);
-        return new Date().toISOString();
+        return null;
       }
       return date.toISOString();
     }
@@ -99,8 +99,7 @@ export class TeslaDataIngestion {
     // Try parsing as ISO string or other date format
     const date = new Date(tsStr);
     if (isNaN(date.getTime())) {
-      console.warn(`Invalid timestamp format: ${tsStr}, defaulting to current time`);
-      return new Date().toISOString();
+      return null;
     }
     return date.toISOString();
   }
@@ -235,12 +234,63 @@ export class TeslaDataIngestion {
       for (const drive of drivesData.results) {
         try {
           const startedAt = this.normalizeIso(drive.started_at);
-          const endedAt = this.normalizeIso(drive.ended_at);
           
-          // Calculate duration from normalized timestamps
-          const durationMinutes = Math.round(
-            (new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 60000
-          );
+          // If started_at cannot be parsed, skip this drive with error
+          if (!startedAt) {
+            errors.push(`Drive ${drive.id}: Invalid started_at timestamp: ${drive.started_at}`);
+            continue;
+          }
+
+          let endedAt = this.normalizeIso(drive.ended_at);
+          let durationMinutes: number;
+
+          // Handle invalid ended_at timestamp
+          if (!endedAt) {
+            // Try to calculate ended_at from raw timestamps if both are numeric
+            if (typeof drive.started_at === 'number' && typeof drive.ended_at === 'number') {
+              // Calculate duration from raw timestamps (handles both seconds and milliseconds)
+              const startMs = drive.started_at < 1e12 ? drive.started_at * 1000 : drive.started_at;
+              const endMs = drive.ended_at < 1e12 ? drive.ended_at * 1000 : drive.ended_at;
+              const calculatedEnd = new Date(endMs);
+              if (!isNaN(calculatedEnd.getTime()) && endMs > startMs) {
+                endedAt = calculatedEnd.toISOString();
+                durationMinutes = Math.round((endMs - startMs) / 60000);
+                console.warn(`Drive ${drive.id}: Reconstructed ended_at from raw timestamps`);
+              }
+            }
+            
+            // If still no ended_at, try to use duration_minutes from API if available
+            if (!endedAt && drive.ended_at && drive.started_at) {
+              // Calculate duration from raw difference
+              const rawDuration = typeof drive.ended_at === 'number' && typeof drive.started_at === 'number'
+                ? Math.round((drive.ended_at - drive.started_at) / 60)
+                : null;
+              
+              if (rawDuration !== null && rawDuration > 0) {
+                const startDate = new Date(startedAt);
+                const calculatedEndDate = new Date(startDate.getTime() + (rawDuration * 60000));
+                endedAt = calculatedEndDate.toISOString();
+                durationMinutes = rawDuration;
+                console.warn(`Drive ${drive.id}: Calculated ended_at from duration (${rawDuration} minutes)`);
+              }
+            }
+            
+            // Last resort: if we have valid started_at but no way to calculate ended_at,
+            // use started_at (but log as error - this indicates data quality issue)
+            if (!endedAt) {
+              endedAt = startedAt;
+              durationMinutes = 0;
+              errors.push(`Drive ${drive.id}: Invalid ended_at timestamp, using started_at (data quality issue)`);
+              console.error(`Drive ${drive.id}: Cannot parse ended_at (${drive.ended_at}), defaulting to started_at. This corrupts timeline data.`);
+            }
+          }
+
+          // Calculate duration from normalized timestamps if not already calculated
+          if (durationMinutes === undefined) {
+            durationMinutes = Math.round(
+              (new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 60000
+            );
+          }
           
           await this.db.prepare(`
             INSERT OR REPLACE INTO drives (
@@ -320,6 +370,34 @@ export class TeslaDataIngestion {
 
       for (const charge of chargesData.results) {
         try {
+          const startedAt = this.normalizeIso(charge.started_at);
+          
+          // If started_at cannot be parsed, skip this charge with error
+          if (!startedAt) {
+            errors.push(`Charge ${charge.id}: Invalid started_at timestamp: ${charge.started_at}`);
+            continue;
+          }
+
+          // ended_at may be null for ongoing charges, but if provided and invalid, handle it
+          let endedAt = this.normalizeIso(charge.ended_at);
+          if (charge.ended_at && !endedAt) {
+            // Try to calculate from raw timestamps if both are numeric
+            if (typeof charge.started_at === 'number' && typeof charge.ended_at === 'number') {
+              const startMs = charge.started_at < 1e12 ? charge.started_at * 1000 : charge.started_at;
+              const endMs = charge.ended_at < 1e12 ? charge.ended_at * 1000 : charge.ended_at;
+              const calculatedEnd = new Date(startMs + (endMs - startMs));
+              if (!isNaN(calculatedEnd.getTime())) {
+                endedAt = calculatedEnd.toISOString();
+                console.warn(`Charge ${charge.id}: Reconstructed ended_at from raw timestamps`);
+              }
+            }
+            
+            // If still invalid and we have a value, log error but allow null (ongoing charge)
+            if (!endedAt && charge.ended_at) {
+              errors.push(`Charge ${charge.id}: Invalid ended_at timestamp: ${charge.ended_at}, treating as ongoing`);
+            }
+          }
+          
           await this.db.prepare(`
             INSERT OR REPLACE INTO charges (
               tessie_id, journey_id, vehicle_id, started_at, ended_at,
@@ -331,8 +409,8 @@ export class TeslaDataIngestion {
             charge.id,
             'continental-usa-2025',
             this.config.vehicleVin,
-            this.normalizeIso(charge.started_at),
-            this.normalizeIso(charge.ended_at),
+            startedAt,
+            endedAt,
             charge.location || 'Unknown',
             charge.latitude || 0,
             charge.longitude || 0,
