@@ -5,7 +5,7 @@ IFS=$'\n\t'
 scan_paths() {
   local pattern="$1"
   if ! command -v rg >/dev/null 2>&1; then
-    echo "[secscan] rg not found; skipping scan (CI installs ripgrep explicitly)"
+    echo "[secscan] rg not found; skipping scan (CI installs ripgrep explicitly)" >&2
     return 0
   fi
 
@@ -35,7 +35,9 @@ patterns=(
 # Keep this list tight; it should only include known-safe contexts.
 is_allowed_path() {
   local f="$1"
-  case "$f" in
+  # `rg --files-with-matches` returns paths like `./foo/bar`; normalize for matching.
+  local p="${f#./}"
+  case "$p" in
     docs/*|archive/*|legacy/*|qa/*|debug/*|GITHUB_SECRETS_GUIDE.md|SYNC_SECRETS_GUIDE.md) return 0 ;;
     *) return 1 ;;
   esac
