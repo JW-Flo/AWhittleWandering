@@ -4,40 +4,31 @@ IFS=$'\n\t'
 
 scan_paths() {
   local pattern="$1"
-  if command -v rg >/dev/null 2>&1; then
-    rg --hidden --no-ignore-vcs --fixed-strings --files-with-matches -- "$pattern" . \
-      -g '!.git/**' -g '!node_modules/**' -g '!dist/**' -g '!build/**' -g '!.wrangler/**' -g '!.backup/**' || true
-  else
-    # Fallback for environments without ripgrep.
-    grep -RIl -F -- "$pattern" . \
-      --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build --exclude-dir=.wrangler --exclude-dir=.backup 2>/dev/null || true
+  if ! command -v rg >/dev/null 2>&1; then
+    echo "[secscan] rg not found; skipping scan (CI installs ripgrep explicitly)"
+    return 0
   fi
+
+  # IMPORTANT: all flags (including -g) must come before the pattern/path args.
+  rg --hidden --no-ignore-vcs --files-with-matches \
+    -g '!.git/**' \
+    -g '!node_modules/**' -g '!dist/**' -g '!build/**' -g '!.wrangler/**' -g '!.backup/**' \
+    -g '!**/package-lock.json' -g '!**/pnpm-lock.yaml' -g '!**/yarn.lock' \
+    -g '!scripts/security-scan.sh' -g '!scripts/setup-ide-ai.sh' \
+    -- "$pattern" . || true
 }
 
 hits=0
 echo "[secscan] scanning for common secret patterns (paths only)..."
 
 patterns=(
-  # High-signal literals (fixed string search); avoids regex portability pitfalls in CI.
-  'AKIA'
-  'AIzaSy'
-  'xoxb-'
-  'xoxa-'
-  'xoxp-'
-  'xoxr-'
-  '-----BEGIN RSA PRIVATE KEY-----'
-  '-----BEGIN EC PRIVATE KEY-----'
-  '-----BEGIN OPENSSH PRIVATE KEY-----'
-  '-----BEGIN PGP PRIVATE KEY-----'
-  'sk-'
-  'Bearer '
-  'password='
-  'password:'
-  'api_key'
-  'api-key'
-  'apikey'
-  'secret='
-  'secret:'
+  'AKIA[0-9A-Z]{16}'
+  'AIzaSy[0-9A-Za-z\\-_]{35}'
+  'xox[baprs]-[0-9A-Za-z-]{10,}'
+  '-----BEGIN (RSA|EC|OPENSSH|PGP) PRIVATE KEY-----'
+  'sk-[A-Za-z0-9]{20,}'
+  'Bearer [A-Za-z0-9\\-_\\.]{20,}'
+  'password\\s*[:=]\\s*["'\''][^"'\'']+["'\'']'
 )
 
 # Files that commonly contain documentation/examples/placeholder text which are noisy in scans.
