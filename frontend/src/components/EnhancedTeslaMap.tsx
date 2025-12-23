@@ -1,13 +1,13 @@
-// Enhanced map component with real-time Tessie API route data
+// Enhanced map component with backend API route data
 // Displays actual driven paths, charging stops, and extended stays
 
 import React, { useEffect, useRef, useState } from 'react';
 // Dynamic load to reduce initial bundle size
 let mapboxgl: any; // loaded at runtime
+import { useUnifiedJourneyData } from '@/hooks/useUnifiedJourneyData';
 
 interface EnhancedTeslaMapProps {
-  vehicleId: string;
-  apiKey: string;
+  vehicleId?: string; // Optional - backend handles vehicle selection
   mapboxToken: string;
   startDate?: string;
   endDate?: string;
@@ -16,7 +16,6 @@ interface EnhancedTeslaMapProps {
 
 const EnhancedTeslaMap: React.FC<EnhancedTeslaMapProps> = ({
   vehicleId,
-  apiKey,
   mapboxToken,
   startDate = '2025-06-03',
   endDate = '2025-07-26',
@@ -27,12 +26,43 @@ const EnhancedTeslaMap: React.FC<EnhancedTeslaMapProps> = ({
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   
   const {
-    historicalDrives: driveHistory,
-    historicalCharges: chargeHistory,
-    isLoading,
+    data,
+    loading,
     error,
-    refreshHistoricalData: loadJourneyData,
-  } = useUnifiedTessieApi(apiKey);
+    refetch
+  } = useUnifiedJourneyData();
+
+  // Transform backend data to match component expectations
+  // Backend returns timeline.drives with: id, date, startLocation, endLocation, distance, duration, energyUsed
+  const driveData = data?.journey?.timeline?.drives || [];
+  const driveHistory = driveData.map((drive: any) => ({
+    id: String(drive.id),
+    start_time: drive.date,
+    end_time: drive.date,
+    start_address: drive.startLocation || 'Unknown',
+    end_address: drive.endLocation || 'Unknown',
+    distance_miles: Number(drive.distance) || 0,
+    duration_hours: (Number(drive.duration) || 0) / 60, // duration is in minutes
+    start_coordinates: { lat: 0, lng: 0 },
+    end_coordinates: { lat: 0, lng: 0 }
+  }));
+
+  // Backend returns timeline.charges with: id, date, location, energyAdded, duration
+  const chargeData = data?.journey?.timeline?.charges || [];
+  const chargeHistory = chargeData.map((charge: any) => ({
+    id: String(charge.id),
+    start_time: charge.date,
+    end_time: charge.date,
+    location: charge.location || 'Unknown',
+    energy_added_kwh: Number(charge.energyAdded) || 0,
+    cost: 0,
+    start_battery_level: 0,
+    end_battery_level: 0,
+    coordinates: { lat: 0, lng: 0 }
+  }));
+
+  const isLoading = loading;
+  const loadJourneyData = refetch;
 
   // Initialize map
   useEffect(() => {
@@ -74,10 +104,8 @@ const EnhancedTeslaMap: React.FC<EnhancedTeslaMapProps> = ({
 
   // Load journey data on mount
   useEffect(() => {
-    if (vehicleId && apiKey) {
-      loadJourneyData();
-    }
-  }, [vehicleId, apiKey, startDate, endDate, loadJourneyData]);
+    loadJourneyData();
+  }, [loadJourneyData]);
 
   // Removed locationHistory effect (no real-time location streaming implemented yet)
 

@@ -1,23 +1,63 @@
 import React from 'react';
-import { useUnifiedTessieApi } from '@/hooks/useUnifiedTessieApi';
+import { useUnifiedJourneyData } from '@/hooks/useUnifiedJourneyData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 interface ApiTestProps {
-  apiKey: string | null;
+  // API key prop removed - backend handles authentication
 }
 
-export const ApiTest: React.FC<ApiTestProps> = ({ apiKey }) => {
+export const ApiTest: React.FC<ApiTestProps> = () => {
   const {
-    vehicles,
-    vehicleData,
-    historicalDrives,
-    historicalCharges,
-    isLoading,
+    data,
+    loading,
     error,
-    refetch,
-    refreshHistoricalData
-  } = useUnifiedTessieApi(apiKey || undefined);
+    refetch
+  } = useUnifiedJourneyData();
+
+  // Transform backend data to match component expectations
+  const vehicles = data?.journey?.currentStatus?.vehicle ? [{
+    id: 'midnight-shadow',
+    display_name: data.journey.overview?.vehicle || 'Midnight Shadow',
+    state: 'online',
+    vin: 'midnight-shadow'
+  }] : [];
+
+  const vehicleData = data?.journey?.currentStatus ? {
+    battery_level: data.journey.currentStatus.battery?.level || 0,
+    battery_range: data.journey.currentStatus.battery?.range || 0,
+    charging_state: data.journey.currentStatus.battery?.charging || 'Unknown',
+    odometer: data.journey.currentStatus.vehicle?.odometer || 0,
+    speed: data.journey.currentStatus.vehicle?.speed || 0,
+    latitude: data.journey.currentStatus.location?.coordinates?.lat || 0,
+    longitude: data.journey.currentStatus.location?.coordinates?.lng || 0,
+    timestamp: Date.now()
+  } : null;
+
+  const historicalDrives = data?.journey?.timeline?.drives?.map((drive: any) => ({
+    id: drive.id,
+    start_time: drive.date,
+    end_time: drive.date,
+    start_address: drive.startLocation,
+    end_address: drive.endLocation,
+    distance_miles: drive.distance,
+    duration_hours: drive.duration / 60,
+    start_coordinates: { lat: 0, lng: 0 },
+    end_coordinates: { lat: 0, lng: 0 }
+  })) || [];
+
+  const historicalCharges = data?.journey?.timeline?.charges?.map((charge: any) => ({
+    id: charge.id,
+    start_time: charge.date,
+    end_time: charge.date,
+    location: charge.location,
+    energy_added_kwh: charge.energyAdded,
+    cost: 0,
+    coordinates: { lat: 0, lng: 0 }
+  })) || [];
+
+  const isLoading = loading;
+  const refreshHistoricalData = refetch;
 
   return (
     <Card className="m-4">
@@ -99,7 +139,7 @@ export const ApiTest: React.FC<ApiTestProps> = ({ apiKey }) => {
         {isLoading && (
           <div className="text-center py-4">
             <div className="inline-block animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-            <div className="mt-2 text-sm text-gray-600">Loading data from Tessie API...</div>
+            <div className="mt-2 text-sm text-gray-600">Loading data from backend API...</div>
           </div>
         )}
       </CardContent>

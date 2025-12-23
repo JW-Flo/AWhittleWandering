@@ -1,4 +1,4 @@
-import { HistoricalDrive } from '@/hooks/useUnifiedTessieApi';
+import type { HistoricalDrive } from '@/types/tessie';
 
 export interface JourneySegment {
   id: string;

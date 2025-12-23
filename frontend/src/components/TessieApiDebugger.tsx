@@ -16,10 +16,10 @@ interface ApiTestResult {
 }
 
 interface TessieApiDebuggerProps {
-  apiKey?: string | null;
+  // API key prop removed - backend handles authentication securely
 }
 
-const TessieApiDebugger: React.FC<TessieApiDebuggerProps> = ({ apiKey }) => {
+const TessieApiDebugger: React.FC<TessieApiDebuggerProps> = () => {
   const [testResults, setTestResults] = useState<ApiTestResult[]>([]);
   const [isRunning, setIsRunning] = useState(false);
 
@@ -31,23 +31,14 @@ const TessieApiDebugger: React.FC<TessieApiDebuggerProps> = ({ apiKey }) => {
   };
 
   const testApiCall = async (endpoint: string, description: string) => {
-    if (!apiKey) {
-      addResult({
-        endpoint,
-        method: 'GET',
-        success: false,
-        error: 'No API key provided'
-      });
-      return null;
-    }
-
     try {
       console.warn(`Testing: ${description} - ${endpoint}`);
       
-      const response = await fetch(`https://api.tessie.com/${endpoint}`, {
+      // Use backend proxy endpoint instead of direct Tessie API call
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
+      const response = await fetch(`${backendUrl}/api/v1/unified-data`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
       });
@@ -87,31 +78,10 @@ const TessieApiDebugger: React.FC<TessieApiDebuggerProps> = ({ apiKey }) => {
     setIsRunning(true);
     setTestResults([]);
 
-    console.warn('Starting Tessie API debugging...');
+    console.warn('Starting backend API debugging...');
 
-    // Test 1: Basic connectivity
-    await testApiCall('', 'Basic API connectivity');
-
-    // Test 2: Get vehicles
-    const vehicles = await testApiCall('vehicles', 'Get vehicles list');
-
-    if (vehicles && vehicles.results && vehicles.results.length > 0) {
-      const firstVehicle = vehicles.results[0];
-      const vin = firstVehicle.vin;
-      
-      if (vin) {
-        // Test 3: Get vehicle state
-        await testApiCall(`${vin}/state`, 'Get vehicle state');
-
-        // Test 4: Get drives
-        const startDate = '2025-06-01';
-        const endDate = new Date().toISOString().split('T')[0];
-        await testApiCall(`${vin}/drives?start_date=${startDate}&end_date=${endDate}`, 'Get historical drives');
-
-        // Test 5: Get charges
-        await testApiCall(`${vin}/charges?start_date=${startDate}&end_date=${endDate}`, 'Get historical charges');
-      }
-    }
+    // Test backend unified data endpoint
+    await testApiCall('unified-data', 'Backend unified data endpoint');
 
     setIsRunning(false);
   };
@@ -126,13 +96,13 @@ const TessieApiDebugger: React.FC<TessieApiDebuggerProps> = ({ apiKey }) => {
         <div className="flex items-center gap-2">
           <Button 
             onClick={runFullTest} 
-            disabled={isRunning || !apiKey}
+            disabled={isRunning}
             className="gap-2"
           >
-            {isRunning ? 'Testing...' : 'Run API Tests'}
+            {isRunning ? 'Testing...' : 'Test Backend API'}
           </Button>
-          <Badge variant={apiKey ? "default" : "destructive"}>
-            API Key: {apiKey ? 'Provided' : 'Missing'}
+          <Badge variant="default">
+            Backend Managed
           </Badge>
         </div>
       </CardHeader>
