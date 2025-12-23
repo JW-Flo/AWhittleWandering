@@ -36,7 +36,7 @@ Field labels become GitHub secret names (only labels matching `^[A-Z][A-Z0-9_]{1
 ### Config
 See `ops/secrets/github-sync-config.json`.
 - Denylist prevents syncing high-value automation credentials.
-- A “last synced” timestamp is stored as a **repo-level Actions variable** (`AWW_1P_LAST_SYNCED_ITEM_UPDATED_AT_<ENV>`) to avoid unnecessary writes.
+- Note: we intentionally do **not** store a “last synced” marker in GitHub Actions Variables because GitHub App tokens may not have access to that API. This workflow runs daily and re-applies secrets idempotently.
 
 
 
