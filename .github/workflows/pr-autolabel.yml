@@ -1,0 +1,82 @@
+name: PR Auto-label (Codex policy)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+concurrency:
+  group: pr-autolabel-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  autolabel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Apply Codex labels from policy
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pr = context.payload.pull_request;
+
+            if (!pr || pr.draft) {
+              core.info("No PR payload or PR is draft; skipping.");
+              return;
+            }
+
+            // Read policy file (stored as JSON-in-YAML for dependency-free parsing).
+            const policyPath = ".github/codex/policy.yml";
+            const policyResp = await github.rest.repos.getContent({ owner, repo, path: policyPath });
+            if (!policyResp?.data?.content) throw new Error(`Missing policy content at ${policyPath}`);
+            const policyText = Buffer.from(policyResp.data.content, "base64").toString("utf8");
+            let policy;
+            try {
+              policy = JSON.parse(policyText);
+            } catch (e) {
+              throw new Error(`Failed to parse ${policyPath} as JSON. Keep it JSON-only to avoid extra deps. Error: ${e?.message || e}`);
+            }
+
+            const runtimePaths = Array.isArray(policy.runtime_code_paths) ? policy.runtime_code_paths : [];
+            const defaultLabels = policy?.labels?.default || [];
+            const runtimeLabels = policy?.labels?.runtime || [];
+
+            // Fetch changed files (paginate).
+            const files = [];
+            for await (const resp of github.paginate.iterator(github.rest.pulls.listFiles, {
+              owner,
+              repo,
+              pull_number: pr.number,
+              per_page: 100,
+            })) {
+              for (const f of resp.data) files.push(f.filename);
+            }
+
+            const touchesRuntime = files.some((f) => runtimePaths.some((p) => f.startsWith(p)));
+
+            const desired = new Set();
+            for (const l of defaultLabels) desired.add(l);
+            if (touchesRuntime) for (const l of runtimeLabels) desired.add(l);
+
+            // Only add missing labels; never remove (prevents label-churn loops).
+            const existing = new Set((pr.labels || []).map((l) => l.name));
+            const toAdd = [...desired].filter((l) => !existing.has(l));
+
+            core.info(`changed_files=${files.length} touchesRuntime=${touchesRuntime}`);
+            core.info(`labels_to_add=${toAdd.join(",") || "(none)"}`);
+
+            if (toAdd.length === 0) return;
+
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number: pr.number,
+              labels: toAdd,
+            });
+
+
