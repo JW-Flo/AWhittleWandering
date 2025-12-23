@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+// CI automation test: tiny change in runtime path to confirm autolabel -> codex:run -> Codex Run.
 export const TeslaTelemetrySchema = z.object({
   timestamp: z.number(),
   location: z.object({
