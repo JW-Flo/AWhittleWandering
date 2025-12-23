@@ -8,9 +8,15 @@
  * 2. If place type unclear, web search the business name
  * 3. Use AI/LLM to classify place and infer likely activities
  * 4. Learn from user corrections over time
+ * 
+ * Rate Limit Aware:
+ * - Checks provider availability before making requests
+ * - Tracks all API calls for quota management
+ * - Skips exhausted providers to reduce latency
  */
 
 import { logger } from '../utils/log';
+import { ApiRateLimitTracker } from './apiRateLimitTracker';
 
 interface PlaceIntelligenceEnv {
   AI?: any; // Cloudflare AI binding
@@ -78,9 +84,21 @@ const activityCache = new Map<string, ActivityInference>();
 
 export class DynamicPlaceIntelligence {
   private env: PlaceIntelligenceEnv;
+  private rateLimitTracker: ApiRateLimitTracker | null = null;
 
   constructor(env: PlaceIntelligenceEnv) {
     this.env = env;
+    // Initialize rate limit tracker if DB is available
+    if (env.TESLA_DB) {
+      this.rateLimitTracker = new ApiRateLimitTracker(env.TESLA_DB);
+    }
+  }
+
+  /**
+   * Get the rate limit tracker for external access
+   */
+  getRateLimitTracker(): ApiRateLimitTracker | null {
+    return this.rateLimitTracker;
   }
 
   /**
@@ -142,9 +160,20 @@ export class DynamicPlaceIntelligence {
 
   /**
    * Reverse geocode using OpenStreetMap Nominatim
+   * Rate limit aware: OSM has strict limits (1 req/sec, 1000/day)
    */
   private async reverseGeocode(lat: number, lng: number): Promise<PlaceInfo> {
+    // Check Nominatim rate limits (very strict - 1 per second)
+    if (this.rateLimitTracker) {
+      const isAvailable = await this.rateLimitTracker.isProviderAvailable('nominatim');
+      if (!isAvailable) {
+        logger.warn('Nominatim rate limited, returning empty place');
+        return this.createEmptyPlace(lat, lng);
+      }
+    }
+
     const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&extratags=1&namedetails=1&zoom=18`;
+    const startTime = Date.now();
     
     try {
       const response = await fetch(url, {
@@ -152,9 +181,19 @@ export class DynamicPlaceIntelligence {
           'User-Agent': 'AWhittleWandering-Tesla-Tracker/1.0',
         },
       });
+      
+      const latencyMs = Date.now() - startTime;
 
       if (!response.ok) {
+        if (this.rateLimitTracker) {
+          await this.rateLimitTracker.recordRequest('nominatim', false, latencyMs, response.status.toString());
+        }
         throw new Error(`Geocode failed: ${response.status}`);
+      }
+
+      // Record successful request
+      if (this.rateLimitTracker) {
+        await this.rateLimitTracker.recordRequest('nominatim', true, latencyMs);
       }
 
       const data = await response.json() as any;
@@ -198,6 +237,10 @@ export class DynamicPlaceIntelligence {
         source: 'geocode',
       };
     } catch (error) {
+      const latencyMs = Date.now() - startTime;
+      if (this.rateLimitTracker) {
+        await this.rateLimitTracker.recordRequest('nominatim', false, latencyMs, 'ERROR');
+      }
       logger.warn('Reverse geocode failed', { error, lat, lng });
       return this.createEmptyPlace(lat, lng);
     }
@@ -206,6 +249,8 @@ export class DynamicPlaceIntelligence {
   /**
    * Enrich place info with web search using fallback chain:
    * Serper (2,500/mo) → Brave (2,000/mo) → Tavily (1,000/mo) → AI
+   * 
+   * Rate limit aware: skips providers at capacity to reduce latency
    */
   private async enrichWithSearch(place: PlaceInfo): Promise<PlaceInfo> {
     if (!place.name) return place;
@@ -229,10 +274,30 @@ export class DynamicPlaceIntelligence {
       for (const provider of providers) {
         if (!provider.key) continue;
         
+        // Check rate limits before making request (skip if at capacity)
+        if (this.rateLimitTracker) {
+          const isAvailable = await this.rateLimitTracker.isProviderAvailable(provider.name);
+          if (!isAvailable) {
+            logger.info(`Skipping ${provider.name} - at rate limit capacity`);
+            continue;
+          }
+        }
+        
+        const startTime = Date.now();
         try {
           const searchResult = await provider.fn();
+          const latencyMs = Date.now() - startTime;
+          
+          // Record successful request
+          if (this.rateLimitTracker) {
+            await this.rateLimitTracker.recordRequest(provider.name, true, latencyMs);
+          }
+          
           if (searchResult) {
-            logger.info(`Place search succeeded with ${provider.name}`, { place: place.name });
+            logger.info(`Place search succeeded with ${provider.name}`, { 
+              place: place.name, 
+              latencyMs 
+            });
             return {
               ...place,
               place_type: searchResult.type || place.place_type,
@@ -243,23 +308,48 @@ export class DynamicPlaceIntelligence {
               source: 'search',
             };
           }
-        } catch (providerError) {
-          // Log and try next provider
-          logger.warn(`${provider.name} search failed, trying next provider`, { error: providerError });
+        } catch (providerError: any) {
+          const latencyMs = Date.now() - startTime;
+          const errorCode = providerError?.status?.toString() || 'ERROR';
+          
+          // Record failed request
+          if (this.rateLimitTracker) {
+            await this.rateLimitTracker.recordRequest(provider.name, false, latencyMs, errorCode);
+          }
+          
+          logger.warn(`${provider.name} search failed, trying next provider`, { 
+            error: providerError,
+            latencyMs,
+            errorCode,
+          });
           continue;
         }
       }
 
       // Fallback: Use Cloudflare AI to search and understand
       if (this.env.AI) {
-        const aiResult = await this.searchWithAI(searchQuery, place);
-        if (aiResult) {
-          return {
-            ...place,
-            ...aiResult,
-            confidence: 0.8,
-            source: 'ai',
-          };
+        const startTime = Date.now();
+        try {
+          const aiResult = await this.searchWithAI(searchQuery, place);
+          const latencyMs = Date.now() - startTime;
+          
+          if (this.rateLimitTracker) {
+            await this.rateLimitTracker.recordRequest('cloudflare_ai', true, latencyMs);
+          }
+          
+          if (aiResult) {
+            return {
+              ...place,
+              ...aiResult,
+              confidence: 0.8,
+              source: 'ai',
+            };
+          }
+        } catch (aiError) {
+          const latencyMs = Date.now() - startTime;
+          if (this.rateLimitTracker) {
+            await this.rateLimitTracker.recordRequest('cloudflare_ai', false, latencyMs, 'AI_ERROR');
+          }
         }
       }
     } catch (error) {

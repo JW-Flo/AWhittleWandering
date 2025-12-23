@@ -57,6 +57,11 @@ EOF
 )"
 
 echo
-echo "Done. Next: verify endpoints were added in API Shield → Endpoint Management, then set schema action to Log/Block as desired."
+echo "Done."
+echo
+echo "Next (required for enforcement): sync Endpoint Management so Schema Validation applies:"
+echo "CF_API_TOKEN=... CF_ZONE_ID=... node ops/cloudflare/sync-endpoint-management.mjs"
+echo
+echo "Then set schema action to Log/Block as desired in Cloudflare dashboard."
 
 

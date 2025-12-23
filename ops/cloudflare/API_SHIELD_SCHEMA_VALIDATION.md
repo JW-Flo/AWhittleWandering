@@ -56,6 +56,16 @@ In Cloudflare dashboard:
   - Apply the uploaded schema to the hostname / endpoints.
   - Start with **Log**, review events, then move to **Block** once clean.
 
+#### Optional: automate Endpoint Management (recommended)
+
+If endpoints are not auto-added, sync from the OpenAPI spec:
+
+```bash
+export CF_API_TOKEN="..."
+export CF_ZONE_ID="..."
+node ops/cloudflare/sync-endpoint-management.mjs
+```
+
 ## Deploy strategy
 
 - **Phase 1 (safe)**: Schema action = **Log** (observe false positives)
@@ -65,10 +75,9 @@ In Cloudflare dashboard:
 
 Two items will eventually cause schema/behavior ambiguity:
 
-1. **Admin auth is currently layered**:
-   - `Authorization: Bearer ...` (from `JWT_SECRET`) at `/api/v1/admin/*` in `backend/edge-worker/src/index.ts`
-   - `X-Admin-Token` in `backend/edge-worker/src/routers/admin.ts`
-   - Cleanup path: choose **one** mechanism and standardize headers + OpenAPI `security` accordingly.
+1. **Admin auth is now standardized**:
+   - **Only** `Authorization: Bearer <ADMIN_TOKEN>` is supported for `/api/v1/admin/*`.
+   - Cleanup path: keep it this way; do not reintroduce alternate headers.
 
 2. **Response shapes vary** (`ok` vs `success`, different error payloads):
    - Cloudflare Schema Validation focuses on requests, but for developer UX we should standardize responses.

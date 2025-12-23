@@ -16,24 +16,8 @@ declare global {
 
 export const adminRouter = new Hono<{ Bindings: Env }>();
 
-// Admin authentication middleware
-adminRouter.use('*', async (c, next) => {
-  const token = c.req.header('X-Admin-Token');
-  const env = c.env;
-  const expectedToken = env?.ADMIN_TOKEN;
-
-  // If no admin token is configured, allow access (dev mode)
-  if (!expectedToken) {
-    await next();
-    return;
-  }
-
-  if (!token || token !== expectedToken) {
-    return c.json({ error: 'Unauthorized' }, 401);
-  }
-
-  await next();
-});
+// Auth is enforced at the app layer via `Authorization: Bearer <ADMIN_TOKEN>` on `/api/v1/admin/*`
+// (see `src/index.ts`). Keep this router focused on admin functionality only.
 
 adminRouter.post('/cache/clear', async (c) => {
   try {
