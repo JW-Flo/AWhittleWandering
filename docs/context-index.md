@@ -6,8 +6,8 @@ Single entry point to locate active architecture, roadmap, and operational conte
 Core Docs
 
 - Copilot / Contribution Guidance: `.github/copilot-instructions.md`
-- Canonical product roadmap: `ROADMAP.md`
-- Governance & coordination (non-roadmap): `docs/governance/README.md`
+- Roadmap & Patentability Abstractions: `docs/roadmap/README.md`
+- (Future) Topic Expansions: `docs/roadmap/<topic>.md` (only when index section grows > ~40 lines)
 
 Operational References
 
@@ -30,9 +30,3 @@ Update Workflow
 3. Keep this index lean; remove nothing, only append new links.
 
 Last Initialized: 2025-10-03
-
-Cross-Repo
-
-- Multi-Repo Manifest: docs/governance/multi-repo-manifest.json
-- Project-AtlasIT wrapper: ../Project-AtlasIT/.github/copilot-instructions.md
-- JW-Site wrapper: ../JW-Site/.github/copilot-instructions.md

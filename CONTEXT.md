@@ -1,10 +1,17 @@
 # Context
 
-## AtlasIT Alignment
+## AWhittleWandering
 
-- Defer to Project-AtlasIT/ROADMAP.md for the prioritized sequence and acceptance criteria.
-- Target platform: Cloudflare Workers. Guardrails:
-  - @sveltejs/adapter-cloudflare
-  - Strict CSP/HSTS/XFO in hooks.server.ts
-  - /health endpoint returns 200
-  - No `node:` imports in bundles (guard step)
+A personal Tesla road trip tracker for a 48-state continental US journey.
+
+## Platform
+
+- **Frontend**: React + TypeScript + Vite → Cloudflare Pages
+- **Backend**: Cloudflare Workers (Hono) + D1 database
+- **Integration**: Tessie Tesla API
+
+## Guardrails
+
+- Strict CSP/HSTS/XFO headers
+- `/healthz` endpoint returns 200
+- No secrets in repo (use Wrangler secrets + GitHub Actions secrets)

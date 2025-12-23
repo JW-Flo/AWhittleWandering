@@ -93,7 +93,7 @@ build_and_deploy() {
     
     # Deploy frontend
     log "Deploying frontend..."
-    if ! npx wrangler pages deploy dist --project-name="awhittlewandering-frontend"; then
+    if ! npx wrangler pages deploy dist --project-name="awhittlewandering"; then
         log "❌ Frontend deployment failed"
         return 1
     fi
