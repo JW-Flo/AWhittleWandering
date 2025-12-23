@@ -1,0 +1,58 @@
+name: Rotate Cloudflare deploy token (via manager token)
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Action"
+        required: true
+        default: rotate
+        type: choice
+        options:
+          - rotate
+          - clear_previous
+
+concurrency:
+  group: rotate-cloudflare-deploy-token
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  rotate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install 1Password CLI
+        uses: 1password/install-cli-action@v2
+
+      - name: Roll Cloudflare deploy token + update 1Password (AWW_SHARED)
+        env:
+          # Needs a 1Password Service Account token with WRITE access to AWW_SHARED.
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_ROTATE_SERVICE_ACCOUNT_TOKEN }}
+          ACTION: ${{ inputs.action }}
+        run: |
+          if [ -z "${OP_SERVICE_ACCOUNT_TOKEN:-}" ]; then
+            echo "❌ Missing OP_ROTATE_SERVICE_ACCOUNT_TOKEN repository secret (needs write access to 1Password vault AWW_SHARED)."
+            exit 1
+          fi
+          node ops/secrets/rotate-cloudflare-token.mjs
+
+      - name: Trigger secrets sync (1Password -> GitHub -> Cloudflare)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          curl -sS -X POST \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${REPO}/actions/workflows/1password-sync-github-env-secrets.yml/dispatches" \
+            -d '{"ref":"main"}' >/dev/null
+          echo "✅ Dispatched 1password-sync-github-env-secrets.yml"
+
+
