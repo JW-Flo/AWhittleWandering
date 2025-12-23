@@ -43,12 +43,12 @@ echo "[secscan] scanning for common secret patterns (paths only)..."
 
 patterns=(
   'AKIA[0-9A-Z]{16}'
-  'AIzaSy[0-9A-Za-z\\-_]{35}'
+  'AIzaSy[0-9A-Za-z\-_]{35}'
   'xox[baprs]-[0-9A-Za-z-]{10,}'
   '-----BEGIN (RSA|EC|OPENSSH|PGP) PRIVATE KEY-----'
   'sk-[A-Za-z0-9]{20,}'
-  'Bearer [A-Za-z0-9\\-_\\.]{20,}'
-  'password\\s*[:=]\\s*["'\''][^"'\'']+["'\'']'
+  'Bearer [A-Za-z0-9\-_\.]{20,}'
+  'password\s*[:=]\s*["'\''][^"'\'']+["'\'']'
 )
 
 # Files that commonly contain documentation/examples/placeholder text which are noisy in scans.
