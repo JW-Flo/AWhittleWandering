@@ -1,4 +1,4 @@
-import { HistoricalDrive } from '@/hooks/useUnifiedTessieApi';
+import type { HistoricalDrive } from '@/types/tessie';
 import { driveAnalysisService, JourneySegment, JourneyStatistics, TimelineEntry } from './driveAnalysisService';
 
 export interface AdvancedJourneyInsights {

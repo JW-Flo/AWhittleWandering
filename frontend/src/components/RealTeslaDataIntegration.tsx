@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useEnhancedTessieApi } from '@/hooks/useEnhancedTessieApi';
+import { useUnifiedJourneyData } from '@/hooks/useUnifiedJourneyData';
 import {
   Battery,
   MapPin,
@@ -27,23 +26,74 @@ interface RealTeslaDataIntegrationProps {
 const RealTeslaDataIntegration: React.FC<RealTeslaDataIntegrationProps> = ({
   onDataUpdate
 }) => {
-  const [apiKey, setApiKey] = useState<string>('');
-  const [isApiKeySet, setIsApiKeySet] = useState(false);
-  
   const {
-    vehicles,
-    selectedVehicle,
-    vehicleData,
-    driveHistory,
-    chargeHistory,
-    locationHistory,
-    isLoading,
+    data,
+    loading,
     error,
-    fetchVehicleData,
-    fetchDriveHistory,
-    fetchChargeHistory,
     refetch
-  } = useEnhancedTessieApi(isApiKeySet ? apiKey : undefined);
+  } = useUnifiedJourneyData();
+
+  // Transform backend data to match component expectations
+  const vehicles = data?.journey?.currentStatus?.vehicle ? [{
+    id: 'midnight-shadow',
+    display_name: data.journey.overview?.vehicle || 'Midnight Shadow',
+    state: 'online',
+    vin: 'midnight-shadow'
+  }] : [];
+
+  const selectedVehicle = vehicles[0] || null;
+  const vehicleData = data?.journey?.currentStatus ? {
+    battery_level: data.journey.currentStatus.battery?.level || 0,
+    battery_range: data.journey.currentStatus.battery?.range || 0,
+    charging_state: data.journey.currentStatus.battery?.charging || 'Unknown',
+    odometer: data.journey.currentStatus.vehicle?.odometer || 0,
+    speed: data.journey.currentStatus.vehicle?.speed || 0,
+    latitude: data.journey.currentStatus.location?.coordinates?.lat || 0,
+    longitude: data.journey.currentStatus.location?.coordinates?.lng || 0,
+    inside_temp: data.journey.currentStatus.vehicle?.temperature?.inside || 0,
+    outside_temp: data.journey.currentStatus.vehicle?.temperature?.outside || 0,
+    timestamp: Date.now()
+  } : null;
+
+  const driveHistory = data?.journey?.timeline?.drives?.map((drive: any) => ({
+    id: drive.id,
+    start_date: drive.date,
+    end_date: drive.date,
+    start_location_name: drive.startLocation,
+    end_location_name: drive.endLocation,
+    distance_miles: drive.distance,
+    duration_minutes: drive.duration,
+    start_latitude: 0,
+    start_longitude: 0,
+    end_latitude: 0,
+    end_longitude: 0
+  })) || [];
+
+  const chargeHistory = data?.journey?.timeline?.charges?.map((charge: any) => ({
+    id: charge.id,
+    start_date: charge.date,
+    end_date: charge.date,
+    location_name: charge.location,
+    energy_added: charge.energyAdded,
+    cost: 0,
+    latitude: 0,
+    longitude: 0
+  })) || [];
+
+  const locationHistory: any[] = [];
+  const isLoading = loading;
+
+  const fetchVehicleData = async (vehicleId: string) => {
+    await refetch();
+  };
+
+  const fetchDriveHistory = async (vehicleId: string, startDate: string, endDate: string) => {
+    await refetch();
+  };
+
+  const fetchChargeHistory = async (vehicleId: string, startDate: string, endDate: string) => {
+    await refetch();
+  };
 
   useEffect(() => {
     if (vehicleData && onDataUpdate) {
@@ -56,67 +106,9 @@ const RealTeslaDataIntegration: React.FC<RealTeslaDataIntegrationProps> = ({
     }
   }, [vehicleData, driveHistory, chargeHistory, locationHistory, onDataUpdate]);
 
-  const handleApiKeySubmit = () => {
-    if (apiKey.trim()) {
-      setIsApiKeySet(true);
-    }
-  };
-
   const handleStartDataSync = async () => {
-    if (selectedVehicle) {
-      try {
-        const endDate = new Date().toISOString().split('T')[0];
-        await Promise.all([
-          fetchVehicleData(selectedVehicle.id),
-          fetchDriveHistory(selectedVehicle.id, '2025-06-01', endDate),
-          fetchChargeHistory(selectedVehicle.id, '2025-06-01', endDate)
-        ]);
-      } catch (err) {
-        console.error('Data sync failed:', err);
-      }
-    }
+    await refetch();
   };
-
-  if (!isApiKeySet) {
-    return (
-      <Card className="max-w-2xl mx-auto">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5" />
-            Real Tesla Data Integration
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Alert>
-            <Activity className="h-4 w-4" />
-            <AlertDescription>
-              Connect your Tesla vehicle via Tessie API to access real-time data, 
-              historical drives, and charging sessions for your road trip tracking.
-            </AlertDescription>
-          </Alert>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Tessie API Key</label>
-            <div className="flex gap-2">
-              <Input
-                type="password"
-                placeholder="Enter your Tessie API key..."
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleApiKeySubmit()}
-              />
-              <Button onClick={handleApiKeySubmit} disabled={!apiKey.trim()}>
-                Connect
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Get your API key from: <a href="https://my.tessie.com/settings/api" target="_blank" rel="noopener noreferrer" className="underline">my.tessie.com/settings/api</a>
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <div className="space-y-6">

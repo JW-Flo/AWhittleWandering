@@ -1,6 +1,17 @@
 // Dynamic configuration service that fetches secure tokens from backend
 import React from 'react';
 import { api } from './api-config';
+import { z } from 'zod';
+
+const BackendConfigResponseSchema = z
+  .object({
+    // Token field names differ across implementations; accept either.
+    mapboxAccessToken: z.string().nullable().optional(),
+    mapboxToken: z.string().nullable().optional(),
+    appName: z.string().optional(),
+    apiVersion: z.string().optional()
+  })
+  .passthrough();
 
 interface BackendConfig {
   mapboxAccessToken: string;
@@ -41,8 +52,19 @@ class DynamicConfigService {
 
   private async fetchConfig(): Promise<BackendConfig> {
     try {
-      const config = await api.getConfig() as BackendConfig;
-      return config;
+      const raw = await api.getConfig();
+      const parsed = BackendConfigResponseSchema.safeParse(raw);
+      if (!parsed.success) {
+        console.error('Backend config response validation failed:', parsed.error);
+        throw new Error('Invalid backend config response');
+      }
+
+      const token = parsed.data.mapboxAccessToken ?? parsed.data.mapboxToken ?? '';
+      return {
+        mapboxAccessToken: token,
+        appName: parsed.data.appName ?? 'A Whittle Wandering',
+        apiVersion: parsed.data.apiVersion ?? '3.0.0'
+      };
     } catch (error) {
       console.error('Failed to fetch backend configuration:', error);
       

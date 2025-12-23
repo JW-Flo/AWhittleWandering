@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useUnifiedTessieApi } from './useUnifiedTessieApi';
+import { useUnifiedJourneyData } from './useUnifiedJourneyData';
 import { journeyTimelineProcessor, AdvancedJourneyInsights } from '@/services/journeyTimelineProcessor';
 import { driveAnalysisService } from '@/services/driveAnalysisService';
+import type { HistoricalDrive } from '@/types/tessie';
 
 // Static fallback data for when API is unavailable
 const FALLBACK_DATA = {
@@ -92,7 +93,24 @@ export const useRobustData = () => {
   const [dataSource, setDataSource] = useState<'api' | 'fallback'>('fallback');
   const [processingStage, setProcessingStage] = useState<string>('Initializing...');
 
-  const { historicalDrives: drives, isLoading: apiLoading, error: apiError } = useUnifiedTessieApi();
+  const { data, loading: apiLoading, error: apiError } = useUnifiedJourneyData();
+
+  // Transform backend data to HistoricalDrive format for analysis services
+  // Backend returns timeline.drives with: id, date, startLocation, endLocation, distance, duration, energyUsed
+  const driveData = data?.journey?.timeline?.drives || [];
+  const drives: HistoricalDrive[] = driveData.map((drive: any) => ({
+    id: String(drive.id || `drive-${Date.now()}-${Math.random()}`),
+    start_time: drive.date || new Date().toISOString(),
+    end_time: drive.date || new Date().toISOString(),
+    start_address: drive.startLocation || 'Unknown',
+    end_address: drive.endLocation || 'Unknown',
+    distance_miles: Number(drive.distance) || 0,
+    duration_hours: (Number(drive.duration) || 0) / 60, // duration is in minutes from backend
+    start_battery_level: 0,
+    end_battery_level: 0,
+    start_coordinates: { lat: 0, lng: 0 },
+    end_coordinates: { lat: 0, lng: 0 }
+  }));
 
   useEffect(() => {
     const processData = async () => {
