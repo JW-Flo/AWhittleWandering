@@ -8,7 +8,7 @@ interface TimelineDataDisplayProps {
   tessieApiKey?: string;
 }
 
-const TimelineDataDisplay: React.FC<TimelineDataDisplayProps> = ({ tessieApiKey: _tessieApiKey }) => {
+const TimelineDataDisplay: React.FC<TimelineDataDisplayProps> = ({ tessieApiKey }) => {
   const { insights, isLoading, error, dataSource } = useRobustData();
 
   if (isLoading) {
