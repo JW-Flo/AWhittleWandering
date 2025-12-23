@@ -128,6 +128,63 @@ function sleepMs(ms) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
 
+async function tryListTokens({ accountId, managerToken }) {
+  // Cloudflare has multiple token surfaces (user vs account-owned). We try both.
+  const endpoints = [
+    `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/api/tokens`,
+    `https://api.cloudflare.com/client/v4/user/tokens`,
+  ];
+
+  for (const url of endpoints) {
+    try {
+      const json = await cfRequestJson(url, { method: "GET", token: managerToken });
+      const result = json?.result;
+      if (Array.isArray(result)) return result;
+      // Sometimes the API wraps arrays differently; be tolerant.
+      if (Array.isArray(result?.tokens)) return result.tokens;
+    } catch (e) {
+      safeLog("cf.tokens.list.failed", { url, status: e?.status });
+    }
+  }
+  return [];
+}
+
+async function resolveTokenId({ accountId, managerToken, tokenId, tokenName }) {
+  const existing = String(tokenId || "").trim();
+  if (existing) return existing;
+
+  const name = String(tokenName || "").trim();
+  if (!name) {
+    throw new Error(
+      "Missing CLOUDFLARE_API_TOKEN_ID (preferred) or CLOUDFLARE_API_TOKEN_NAME (fallback; exact name of the deploy token as shown in Cloudflare UI)"
+    );
+  }
+
+  const tokens = await tryListTokens({ accountId, managerToken });
+  if (!tokens.length) throw new Error("Unable to list Cloudflare tokens to resolve CLOUDFLARE_API_TOKEN_ID");
+
+  // Find by exact name first, then case-insensitive.
+  const exact = tokens.filter((t) => String(t?.name || "") === name);
+  const ci = tokens.filter((t) => String(t?.name || "").toLowerCase() === name.toLowerCase());
+  const matches = exact.length ? exact : ci;
+
+  if (matches.length !== 1) {
+    const available = tokens
+      .map((t) => String(t?.name || ""))
+      .filter(Boolean)
+      .slice(0, 30);
+    throw new Error(
+      `Could not uniquely resolve deploy token id by name "${name}" (matches=${matches.length}). Available token names (first 30): ${available.join(
+        ", "
+      )}`
+    );
+  }
+
+  const id = String(matches[0]?.id || matches[0]?.identifier || "").trim();
+  if (!id) throw new Error("Cloudflare token list response did not include an id/identifier for the matched token");
+  return id;
+}
+
 async function rollCloudflareToken({ accountId, tokenId, managerToken }) {
   const url = `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/api/tokens/${encodeURIComponent(tokenId)}/roll`;
 
@@ -180,7 +237,8 @@ async function main() {
 
   const managerToken = getItemValue(vault, "CLOUDFLARE_TOKEN_MANAGER");
   const accountId = getItemValue(vault, "CLOUDFLARE_ACCOUNT_ID");
-  const tokenId = getItemValue(vault, "CLOUDFLARE_API_TOKEN_ID");
+  const tokenIdRaw = getItemValue(vault, "CLOUDFLARE_API_TOKEN_ID");
+  const tokenName = getItemValue(vault, "CLOUDFLARE_API_TOKEN_NAME");
 
   if (!managerToken) {
     throw new Error(
@@ -192,11 +250,7 @@ async function main() {
       "Missing CLOUDFLARE_ACCOUNT_ID in 1Password (either an item titled CLOUDFLARE_ACCOUNT_ID, or a field on op://AWW_SHARED/automation)"
     );
   }
-  if (!tokenId) {
-    throw new Error(
-      "Missing CLOUDFLARE_API_TOKEN_ID in 1Password (either an item titled CLOUDFLARE_API_TOKEN_ID, or a field on op://AWW_SHARED/automation)"
-    );
-  }
+  const tokenId = await resolveTokenId({ accountId, managerToken, tokenId: tokenIdRaw, tokenName });
 
   // Preserve current deploy token as *_PREVIOUS (for recovery/debug). This is NOT used by wrangler.
   const current = getItemValue(vault, "CLOUDFLARE_API_TOKEN");
