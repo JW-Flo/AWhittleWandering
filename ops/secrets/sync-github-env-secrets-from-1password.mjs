@@ -93,18 +93,19 @@ function main() {
 
   safeLog("sync.start", { repo, vault });
 
-  for (const target of targets) {
-    const itemTitle = cfg.onePassword.items?.[target];
-    if (!itemTitle) {
-      safeLog("sync.skip.missing_config", { target });
-      continue;
-    }
+  const singleItemTitle = cfg.onePassword.item;
+  const sources = singleItemTitle
+    ? [{ source: "shared", itemTitle: singleItemTitle }]
+    : targets
+        .map((target) => ({ source: target, itemTitle: cfg.onePassword.items?.[target] }))
+        .filter((s) => s.itemTitle);
 
+  for (const { source, itemTitle } of sources) {
     const item = getItem(vault, itemTitle);
     const opUpdatedAt = String(item.updated_at || item.updatedAt || "");
     if (!opUpdatedAt) throw new Error(`Missing updated_at for op://${vault}/${itemTitle}/*`);
 
-    safeLog("sync.apply.start", { target, scope: "repo", item: `${vault}/${itemTitle}`, opUpdatedAt });
+    safeLog("sync.apply.start", { source, scope: "repo", item: `${vault}/${itemTitle}`, opUpdatedAt });
 
     const fields = Array.isArray(item.fields) ? item.fields : [];
     let written = 0;
@@ -114,25 +115,27 @@ function main() {
 
       const value = f.value;
       if (value === null || value === undefined) continue;
-          const v = validateSecretValue(label, value);
-          if (!v.ok) {
-            safeLog("sync.secret.skip.invalid_value", { target, name: label, reason: v.reason });
-            continue;
-          }
+      const v = validateSecretValue(label, value);
+      if (!v.ok) {
+        safeLog("sync.secret.skip.invalid_value", { source, name: label, reason: v.reason });
+        continue;
+      }
 
-          setGithubRepoSecret(repo, label, v.value);
+      setGithubRepoSecret(repo, label, v.value);
       written += 1;
-      safeLog("sync.secret.set", { target, name: label });
+      safeLog("sync.secret.set", { source, name: label });
     }
-    safeLog("sync.apply.done", { target, written, opUpdatedAt });
+    safeLog("sync.apply.done", { source, written, opUpdatedAt });
+    results.push({ source, written, opUpdatedAt });
+  }
 
-    if (cfg.behavior?.triggerCloudflareWorkflow) {
-      const wf = cfg.behavior.cloudflareWorkflowFile || "sync-secrets.yml";
-      triggerWorkflow(repo, wf, target);
-      safeLog("sync.cloudflare.dispatched", { target, workflow: wf });
+  if (cfg.behavior?.triggerCloudflareWorkflow) {
+    const wf = cfg.behavior.cloudflareWorkflowFile || "sync-secrets.yml";
+    const cfTargets = cfg.behavior.cloudflareTargets || targets;
+    for (const t of cfTargets) {
+      triggerWorkflow(repo, wf, t);
+      safeLog("sync.cloudflare.dispatched", { target: t, workflow: wf });
     }
-
-    results.push({ target, written, opUpdatedAt });
   }
 
   safeLog("sync.done", { results });

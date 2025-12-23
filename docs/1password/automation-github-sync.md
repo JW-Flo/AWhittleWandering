@@ -8,15 +8,14 @@ This repo supports a fully automated sync (Option C):
 ### How it works
 - GitHub Actions workflow: `.github/workflows/1password-sync-github-env-secrets.yml`
   - runs daily (polling) and on manual dispatch
-  - reads the `AWW` vault items `dev` and `prod` (fields become secret names)
+  - reads the `AWW` vault item `prod` by default (fields become secret names)
   - writes those values into GitHub **repo secrets**
   - triggers the Cloudflare sync workflow (`sync-secrets.yml`) after applying changes, passing `target={development|production}`
   - workflow dispatch uses REST with an explicit ref (defaults to `main`)
 
 ### Required 1Password structure
 Create a dedicated vault named `AWW` with:
-- item `dev` containing fields like `TESSIE_API_KEY`, `MAPBOX_API_TOKEN`, etc.
-- item `prod` containing production versions of the same fields
+ - item `prod` containing fields like `TESSIE_API_KEY`, `MAPBOX_API_TOKEN`, etc.
 
 Field labels become GitHub secret names (only labels matching `^[A-Z][A-Z0-9_]{1,127}$`).
 
