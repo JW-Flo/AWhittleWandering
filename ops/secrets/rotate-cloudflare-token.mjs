@@ -296,6 +296,60 @@ async function rollCloudflareToken({ accountId, tokenId, managerToken }) {
   throw new Error("Unreachable");
 }
 
+async function getCloudflareTokenDetails({ accountId, tokenId, managerToken }) {
+  const acct = encodeURIComponent(accountId);
+  const id = encodeURIComponent(tokenId);
+  const urls = [
+    `https://api.cloudflare.com/client/v4/accounts/${acct}/tokens/${id}`,
+    `https://api.cloudflare.com/client/v4/accounts/${acct}/api/tokens/${id}`,
+    `https://api.cloudflare.com/client/v4/user/tokens/${id}`,
+  ];
+  let lastErr = null;
+  for (const url of urls) {
+    try {
+      const json = await cfRequestJson(url, { method: "GET", token: managerToken });
+      if (!json || json.success !== true) throw new Error("Cloudflare token details request did not succeed");
+      return json?.result || null;
+    } catch (e) {
+      lastErr = e;
+      safeLog("cf.token.details.failed", { url, status: e?.status, error: summarizeCfErrorBody(e?.body) });
+    }
+  }
+  throw lastErr || new Error("Unable to fetch Cloudflare token details");
+}
+
+async function createCloudflareToken({ accountId, managerToken, name, policies, condition }) {
+  const acct = encodeURIComponent(accountId);
+  const url = `https://api.cloudflare.com/client/v4/accounts/${acct}/tokens`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${managerToken}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name, policies, condition }),
+      signal: controller.signal,
+    });
+    const text = await res.text();
+    const json = JSON.parse(text || "null");
+    if (!res.ok || !json || json.success !== true) {
+      const err = new Error(`Cloudflare create token HTTP ${res.status}`);
+      err.status = res.status;
+      err.body = json;
+      throw err;
+    }
+    const value = String(json?.result?.value || "").trim();
+    if (!value) throw new Error("Cloudflare create token succeeded but did not return a token value");
+    return value;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function main() {
   const vault = "AWW_SHARED";
   const action = String(process.env.ACTION || "rotate");
@@ -353,7 +407,36 @@ async function main() {
     safeLog("cf.rotate.previous.skip.empty", { name: "CLOUDFLARE_API_TOKEN_PREVIOUS" });
   }
 
-  const next = await rollCloudflareToken({ accountId, tokenId, managerToken });
+  let next = "";
+  try {
+    next = await rollCloudflareToken({ accountId, tokenId, managerToken });
+  } catch (e) {
+    // Some Cloudflare accounts/tokens return 7003 "Could not route ..." for roll endpoints.
+    // In that case, fallback to clone+create: fetch token details and create a new token with the same policies.
+    const body = e?.body;
+    const code = Array.isArray(body?.errors) && body.errors[0] ? body.errors[0].code : undefined;
+    const msg = String(e?.message || "");
+    const isRouteError = code === 7003 || /Could not route/i.test(msg) || /perhaps your object identifier is invalid/i.test(msg);
+    safeLog("cf.roll.failed", { status: e?.status, code, isRouteError });
+    if (!isRouteError) throw e;
+
+    const details = await getCloudflareTokenDetails({ accountId, tokenId, managerToken });
+    const tokenNameResolved = String(details?.name || details?.token?.name || tokenName || "AWW Deploy Token").trim();
+    const policies = details?.policies;
+    const condition = details?.condition;
+    if (!Array.isArray(policies) || !policies.length) {
+      throw new Error("Cannot clone token: Cloudflare token details did not include policies[]");
+    }
+    next = await createCloudflareToken({
+      accountId,
+      managerToken,
+      name: tokenNameResolved,
+      policies,
+      condition,
+    });
+    safeLog("cf.token.created", { name: tokenNameResolved });
+  }
+
   upsertItemField(vault, "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_API_TOKEN", next);
   safeLog("cf.rotate.current.set", { name: "CLOUDFLARE_API_TOKEN" });
 
