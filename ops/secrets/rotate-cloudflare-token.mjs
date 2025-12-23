@@ -191,7 +191,10 @@ async function verifyTokenId({ deployToken }) {
 
 async function resolveTokenId({ accountId, managerToken, tokenId, tokenName }) {
   const existing = String(tokenId || "").trim();
-  if (existing) return existing;
+  if (existing) {
+    safeLog("cf.token_id.resolved.explicit", { idLen: existing.length });
+    return existing;
+  }
 
   const name = String(tokenName || "").trim();
   if (!name) {
@@ -220,45 +223,63 @@ async function resolveTokenId({ accountId, managerToken, tokenId, tokenName }) {
     );
   }
 
-  const id = String(matches[0]?.id || matches[0]?.identifier || "").trim();
-  if (!id) throw new Error("Cloudflare token list response did not include an id/identifier for the matched token");
-  return id;
+  const rawId = String(matches[0]?.id || "").trim();
+  const rawIdentifier = String(matches[0]?.identifier || "").trim();
+  const chosen = rawIdentifier || rawId;
+  safeLog("cf.token_id.resolved.by_name", {
+    tokenName: name,
+    hasId: Boolean(rawId),
+    hasIdentifier: Boolean(rawIdentifier),
+    idLen: rawId ? rawId.length : 0,
+    identifierLen: rawIdentifier ? rawIdentifier.length : 0,
+    chosenLen: chosen ? chosen.length : 0,
+  });
+  if (!chosen) throw new Error("Cloudflare token list response did not include an id/identifier for the matched token");
+  return chosen;
 }
 
 async function rollCloudflareToken({ accountId, tokenId, managerToken }) {
   const id = encodeURIComponent(tokenId);
   const acct = encodeURIComponent(accountId);
   const urls = [
+    // Account-owned token routes (preferred)
     `https://api.cloudflare.com/client/v4/accounts/${acct}/tokens/${id}/roll`,
+    `https://api.cloudflare.com/client/v4/accounts/${acct}/tokens/${id}/rotate`,
     `https://api.cloudflare.com/client/v4/accounts/${acct}/api/tokens/${id}/roll`,
+    // User token routes (fallback)
     `https://api.cloudflare.com/client/v4/user/tokens/${id}/roll`,
+    `https://api.cloudflare.com/client/v4/user/tokens/${id}/rotate`,
   ];
+  const methods = ["PUT", "POST"];
 
   const maxAttempts = 4;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       let lastErr = null;
-      for (const url of urls) {
-        try {
-          const json = await cfRequestJson(url, { method: "PUT", token: managerToken });
-          if (!json || json.success !== true) {
-            throw new Error(`Cloudflare roll failed: ${JSON.stringify({ success: json?.success, errors: json?.errors })}`);
+      for (const method of methods) {
+        for (const url of urls) {
+          try {
+            const json = await cfRequestJson(url, { method, token: managerToken });
+            if (!json || json.success !== true) {
+              throw new Error(`Cloudflare roll failed: ${JSON.stringify({ success: json?.success, errors: json?.errors })}`);
+            }
+            const value =
+              json?.result?.value ||
+              json?.result?.token ||
+              json?.result?.api_token ||
+              json?.result?.apiToken ||
+              json?.result ||
+              "";
+            const s = String(value || "").trim();
+            if (!s || s.startsWith("op://") || s.includes("\n") || s.includes("\r")) {
+              throw new Error("Cloudflare roll returned an unexpected token value shape");
+            }
+            safeLog("cf.roll.ok", { method, url });
+            return s;
+          } catch (e) {
+            lastErr = e;
+            safeLog("cf.roll.endpoint.failed", { method, url, status: e?.status, error: summarizeCfErrorBody(e?.body) });
           }
-          const value =
-            json?.result?.value ||
-            json?.result?.token ||
-            json?.result?.api_token ||
-            json?.result?.apiToken ||
-            json?.result ||
-            "";
-          const s = String(value || "").trim();
-          if (!s || s.startsWith("op://") || s.includes("\n") || s.includes("\r")) {
-            throw new Error("Cloudflare roll returned an unexpected token value shape");
-          }
-          return s;
-        } catch (e) {
-          lastErr = e;
-          safeLog("cf.roll.endpoint.failed", { url, status: e?.status, error: summarizeCfErrorBody(e?.body) });
         }
       }
       throw lastErr || new Error("Cloudflare roll failed on all known endpoints");
