@@ -11,6 +11,7 @@ This repo supports a fully automated sync (Option C):
   - reads the `AWW` vault items `dev` and `prod` (fields become secret names)
   - writes those values into GitHub **repo secrets**
   - triggers the Cloudflare sync workflow (`sync-secrets.yml`) after applying changes, passing `target={development|production}`
+  - workflow dispatch uses REST with an explicit ref (defaults to `main`)
 
 ### Required 1Password structure
 Create a dedicated vault named `AWW` with:

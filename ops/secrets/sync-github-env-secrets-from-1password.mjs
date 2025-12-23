@@ -49,7 +49,24 @@ function setGithubRepoSecret(repo, name, value) {
 }
 
 function triggerWorkflow(repo, workflowFile, target) {
-  run("gh", ["workflow", "run", workflowFile, "-f", `target=${target}`, "--repo", repo], { stdio: ["ignore", "pipe", "pipe"] });
+  // Avoid `gh workflow run` because it may query defaultBranchRef via GraphQL, which can be blocked for integrations.
+  // Dispatch via REST with an explicit ref.
+  const [owner, name] = String(repo).split("/", 2);
+  const ref = process.env.GITHUB_WORKFLOW_REF || "main";
+  run(
+    "gh",
+    [
+      "api",
+      "--method",
+      "POST",
+      `repos/${owner}/${name}/actions/workflows/${workflowFile}/dispatches`,
+      "-f",
+      `ref=${ref}`,
+      "-f",
+      `inputs[target]=${target}`,
+    ],
+    { stdio: ["ignore", "pipe", "pipe"] }
+  );
 }
 
 function main() {
