@@ -15,8 +15,19 @@ import { logger } from '../utils/log';
 interface PlaceIntelligenceEnv {
   AI?: any; // Cloudflare AI binding
   MAPBOX_API_TOKEN?: string;
-  SERPER_API_KEY?: string; // For web search (or use Cloudflare AI search)
+  // Web search providers (fallback chain)
+  SERPER_API_KEY?: string;  // serper.dev - 2,500 free/month
+  BRAVE_API_KEY?: string;   // brave.com/search/api - 2,000 free/month  
+  TAVILY_API_KEY?: string;  // tavily.com - 1,000 free/month (AI-optimized)
   TESLA_DB?: D1Database;
+}
+
+interface SearchResult {
+  type: string | null;
+  description: string | null;
+  hours: string | null;
+  raw: any;
+  provider: string;
 }
 
 export interface PlaceInfo {
@@ -193,7 +204,8 @@ export class DynamicPlaceIntelligence {
   }
 
   /**
-   * Enrich place info with web search
+   * Enrich place info with web search using fallback chain:
+   * Serper (2,500/mo) → Brave (2,000/mo) → Tavily (1,000/mo) → AI
    */
   private async enrichWithSearch(place: PlaceInfo): Promise<PlaceInfo> {
     if (!place.name) return place;
@@ -206,24 +218,39 @@ export class DynamicPlaceIntelligence {
       'what is',
     ].filter(Boolean).join(' ');
 
+    // Try each provider in order until one succeeds
+    const providers = [
+      { name: 'serper', fn: () => this.searchWithSerper(searchQuery), key: this.env.SERPER_API_KEY },
+      { name: 'brave', fn: () => this.searchWithBrave(searchQuery), key: this.env.BRAVE_API_KEY },
+      { name: 'tavily', fn: () => this.searchWithTavily(searchQuery), key: this.env.TAVILY_API_KEY },
+    ];
+
     try {
-      // Option 1: Use Serper API (Google Search API)
-      if (this.env.SERPER_API_KEY) {
-        const searchResult = await this.searchWithSerper(searchQuery);
-        if (searchResult) {
-          return {
-            ...place,
-            place_type: searchResult.type || place.place_type,
-            place_description: searchResult.description || place.place_description,
-            business_hours: searchResult.hours || place.business_hours,
-            raw_search: searchResult.raw,
-            confidence: 0.85,
-            source: 'search',
-          };
+      for (const provider of providers) {
+        if (!provider.key) continue;
+        
+        try {
+          const searchResult = await provider.fn();
+          if (searchResult) {
+            logger.info(`Place search succeeded with ${provider.name}`, { place: place.name });
+            return {
+              ...place,
+              place_type: searchResult.type || place.place_type,
+              place_description: searchResult.description || place.place_description,
+              business_hours: searchResult.hours || place.business_hours,
+              raw_search: { ...searchResult.raw, provider: searchResult.provider },
+              confidence: 0.85,
+              source: 'search',
+            };
+          }
+        } catch (providerError) {
+          // Log and try next provider
+          logger.warn(`${provider.name} search failed, trying next provider`, { error: providerError });
+          continue;
         }
       }
 
-      // Option 2: Use Cloudflare AI to search and understand
+      // Fallback: Use Cloudflare AI to search and understand
       if (this.env.AI) {
         const aiResult = await this.searchWithAI(searchQuery, place);
         if (aiResult) {
@@ -244,59 +271,166 @@ export class DynamicPlaceIntelligence {
 
   /**
    * Search using Serper API (Google Search)
+   * Free tier: 2,500 queries/month
+   * Docs: https://serper.dev/
    */
-  private async searchWithSerper(query: string): Promise<{
-    type: string | null;
-    description: string | null;
-    hours: string | null;
-    raw: any;
-  } | null> {
+  private async searchWithSerper(query: string): Promise<SearchResult | null> {
     if (!this.env.SERPER_API_KEY) return null;
 
-    try {
-      const response = await fetch('https://google.serper.dev/search', {
-        method: 'POST',
-        headers: {
-          'X-API-KEY': this.env.SERPER_API_KEY,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          q: query,
-          num: 3,
-        }),
-      });
+    const response = await fetch('https://google.serper.dev/search', {
+      method: 'POST',
+      headers: {
+        'X-API-KEY': this.env.SERPER_API_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        q: query,
+        num: 3,
+      }),
+    });
 
-      if (!response.ok) return null;
-
-      const data = await response.json() as any;
-      
-      // Extract knowledge graph if available
-      const kg = data.knowledgeGraph;
-      if (kg) {
-        return {
-          type: kg.type || null,
-          description: kg.description || null,
-          hours: kg.hours || null,
-          raw: data,
-        };
-      }
-
-      // Try to extract from organic results
-      const organic = data.organic?.[0];
-      if (organic) {
-        return {
-          type: null,
-          description: organic.snippet || null,
-          hours: null,
-          raw: data,
-        };
-      }
-
-      return null;
-    } catch (error) {
-      logger.warn('Serper search failed', { error });
-      return null;
+    if (!response.ok) {
+      throw new Error(`Serper API error: ${response.status}`);
     }
+
+    const data = await response.json() as any;
+    
+    // Extract knowledge graph if available
+    const kg = data.knowledgeGraph;
+    if (kg) {
+      return {
+        type: kg.type || null,
+        description: kg.description || null,
+        hours: kg.hours || null,
+        raw: data,
+        provider: 'serper',
+      };
+    }
+
+    // Try to extract from organic results
+    const organic = data.organic?.[0];
+    if (organic) {
+      return {
+        type: null,
+        description: organic.snippet || null,
+        hours: null,
+        raw: data,
+        provider: 'serper',
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Search using Brave Search API
+   * Free tier: 2,000 queries/month
+   * Docs: https://brave.com/search/api/
+   */
+  private async searchWithBrave(query: string): Promise<SearchResult | null> {
+    if (!this.env.BRAVE_API_KEY) return null;
+
+    const params = new URLSearchParams({
+      q: query,
+      count: '5',
+      result_filter: 'web',
+    });
+
+    const response = await fetch(`https://api.search.brave.com/res/v1/web/search?${params}`, {
+      headers: {
+        'Accept': 'application/json',
+        'X-Subscription-Token': this.env.BRAVE_API_KEY,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Brave API error: ${response.status}`);
+    }
+
+    const data = await response.json() as any;
+
+    // Extract from infobox (knowledge panel equivalent)
+    const infobox = data.infobox;
+    if (infobox) {
+      return {
+        type: infobox.type || infobox.subtype || null,
+        description: infobox.description || null,
+        hours: null,
+        raw: data,
+        provider: 'brave',
+      };
+    }
+
+    // Extract from web results
+    const webResult = data.web?.results?.[0];
+    if (webResult) {
+      return {
+        type: null,
+        description: webResult.description || null,
+        hours: null,
+        raw: data,
+        provider: 'brave',
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Search using Tavily API (AI-optimized search)
+   * Free tier: 1,000 queries/month
+   * Docs: https://tavily.com/
+   */
+  private async searchWithTavily(query: string): Promise<SearchResult | null> {
+    if (!this.env.TAVILY_API_KEY) return null;
+
+    const response = await fetch('https://api.tavily.com/search', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        api_key: this.env.TAVILY_API_KEY,
+        query: query,
+        search_depth: 'basic',
+        include_answer: true,
+        max_results: 3,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Tavily API error: ${response.status}`);
+    }
+
+    const data = await response.json() as any;
+
+    // Tavily provides a direct answer which is great for AI use cases
+    if (data.answer) {
+      // Try to extract type from the answer
+      const typeMatch = data.answer.match(/\b(golf course|restaurant|hotel|cafe|bar|museum|park|hospital|airport|stadium|gym|spa|salon|mall|store|shop|dealership|garage|mechanic|bank|pharmacy|school|church|theater|cinema)\b/i);
+      
+      return {
+        type: typeMatch ? typeMatch[1].toLowerCase().replace(/\s+/g, '_') : null,
+        description: data.answer,
+        hours: null,
+        raw: data,
+        provider: 'tavily',
+      };
+    }
+
+    // Fallback to first result
+    const result = data.results?.[0];
+    if (result) {
+      return {
+        type: null,
+        description: result.content || null,
+        hours: null,
+        raw: data,
+        provider: 'tavily',
+      };
+    }
+
+    return null;
   }
 
   /**
