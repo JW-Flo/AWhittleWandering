@@ -21,6 +21,7 @@ import { analyticsRouter } from './routers/analytics';
 import { vehicleRouter } from './routers/vehicle';
 import { aiRouter } from './routers/ai';
 import { metaRouter } from './routers/meta';
+import { placesRouter } from './routers/places';
 
 // Augment Env typing (local) for new PLATFORM_MODE variable
 declare global {
@@ -94,6 +95,7 @@ app.route('/api/v1/analytics', analyticsRouter);
 app.route('/api/v1/vehicle', vehicleRouter);
 app.route('/api/v1', aiRouter); // /route/* and /journal/*
 app.route('/api/v1/meta', metaRouter);
+app.route('/api/v1/places', placesRouter); // Dynamic place detection + activity inference
 app.use('/api/v1/admin/*', adminAuth);
 app.route('/api/v1/admin', adminRouter);
 

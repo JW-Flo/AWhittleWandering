@@ -1,0 +1,499 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "A Whittle Wandering API",
+    "version": "3.0.0",
+    "description": "Cloudflare Worker API surface for AWhittleWandering. This schema is intended for Cloudflare API Shield Schema Validation (OpenAPI v3.0.x; no external refs)."
+  },
+  "servers": [
+    {
+      "url": "https://api.awhittlewandering.com"
+    }
+  ],
+  "tags": [
+    { "name": "core" },
+    { "name": "health" },
+    { "name": "telemetry" },
+    { "name": "unified" },
+    { "name": "trip" },
+    { "name": "component" },
+    { "name": "analytics" },
+    { "name": "vehicle" },
+    { "name": "ai" },
+    { "name": "admin" },
+    { "name": "meta" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      },
+      "adminToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Admin-Token"
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "ok": { "type": "boolean" },
+          "success": { "type": "boolean" },
+          "error": { "type": "string" },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string" }
+        },
+        "additionalProperties": true
+      },
+      "AuthRequest": {
+        "type": "object",
+        "required": ["action"],
+        "properties": {
+          "action": { "type": "string", "enum": ["login", "register"] },
+          "username": { "type": "string", "minLength": 3 },
+          "password": { "type": "string", "minLength": 6 }
+        },
+        "additionalProperties": false
+      },
+      "TelemetryRequest": {
+        "type": "object",
+        "required": ["vin", "timestamp", "location", "battery"],
+        "properties": {
+          "vin": { "type": "string" },
+          "timestamp": { "type": "string" },
+          "location": {
+            "type": "object",
+            "required": ["latitude", "longitude"],
+            "properties": {
+              "latitude": { "type": "number" },
+              "longitude": { "type": "number" }
+            },
+            "additionalProperties": false
+          },
+          "battery": {
+            "type": "object",
+            "required": ["level", "range"],
+            "properties": {
+              "level": { "type": "number" },
+              "range": { "type": "number" }
+            },
+            "additionalProperties": false
+          },
+          "charging": {
+            "type": "object",
+            "required": ["state"],
+            "properties": {
+              "state": { "type": "string" },
+              "power": { "type": "number" }
+            },
+            "additionalProperties": false
+          },
+          "vehicle": {
+            "type": "object",
+            "required": ["state"],
+            "properties": {
+              "state": { "type": "string" },
+              "odometer": { "type": "number" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "AiOptimizeRequest": {
+        "type": "object",
+        "required": ["start", "end"],
+        "properties": {
+          "start": { "$ref": "#/components/schemas/LatLng" },
+          "end": { "$ref": "#/components/schemas/LatLng" },
+          "waypoints": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/LatLng" }
+          },
+          "constraints": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AiJournalRequest": {
+        "type": "object",
+        "properties": {
+          "date": { "type": "string" },
+          "highlights": { "type": "array", "items": { "type": "string" } },
+          "context": { "type": "object", "additionalProperties": true }
+        },
+        "additionalProperties": false
+      },
+      "LatLng": {
+        "type": "object",
+        "required": ["lat", "lng"],
+        "properties": {
+          "lat": { "type": "number" },
+          "lng": { "type": "number" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "tags": ["core"],
+        "summary": "Root service info",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": ["health"],
+        "summary": "Simple health (legacy)",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/unified-data": {
+      "get": {
+        "tags": ["unified"],
+        "summary": "Legacy redirect to unified data",
+        "responses": { "308": { "description": "Redirect" } }
+      }
+    },
+    "/trip-status": {
+      "get": {
+        "tags": ["trip"],
+        "summary": "Legacy redirect to trip status",
+        "responses": { "308": { "description": "Redirect" } }
+      }
+    },
+    "/api/v1/trip/status": {
+      "get": {
+        "tags": ["trip"],
+        "summary": "Legacy alias redirect to trip status",
+        "responses": { "308": { "description": "Redirect" } }
+      }
+    },
+    "/api/v1/config": {
+      "get": {
+        "tags": ["core"],
+        "summary": "Frontend config",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/connectors": {
+      "get": {
+        "tags": ["core"],
+        "summary": "Demo connectors list",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/joiner": {
+      "post": {
+        "tags": ["core"],
+        "summary": "Demo joiner flow (no request body)",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/v1/auth": {
+      "post": {
+        "tags": ["core"],
+        "summary": "Unified auth action",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AuthRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/drop": {
+      "post": {
+        "tags": ["core"],
+        "summary": "Legacy auth endpoint (deprecated)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AuthRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "tags": ["health"],
+        "summary": "Comprehensive health",
+        "responses": {
+          "200": { "description": "OK" },
+          "503": { "description": "Unhealthy" }
+        }
+      }
+    },
+    "/api/v1/health/simple": {
+      "get": {
+        "tags": ["health"],
+        "summary": "Simple health",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/v1/telemetry": {
+      "post": {
+        "tags": ["telemetry"],
+        "summary": "Submit telemetry",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TelemetryRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/api/v1/telemetry/status": {
+      "get": {
+        "tags": ["telemetry"],
+        "summary": "Telemetry ingestion status",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/v1/unified-data": {
+      "get": {
+        "tags": ["unified"],
+        "summary": "Unified frontend data",
+        "parameters": [
+          {
+            "name": "revalidate",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["true", "false"] }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "pattern": "^\\d+$" }
+          }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/v1/trip-status": {
+      "get": {
+        "tags": ["trip"],
+        "summary": "Trip status",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/v1/trip-status/config": {
+      "get": {
+        "tags": ["trip"],
+        "summary": "Trip config",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/v1/component/overview": {
+      "get": { "tags": ["component"], "summary": "Trip overview", "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/v1/component/current-status": {
+      "get": { "tags": ["component"], "summary": "Current vehicle status", "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/v1/component/states-progress": {
+      "get": { "tags": ["component"], "summary": "States progress", "responses": { "200": { "description": "OK" } } }
+    },
+    "/api/v1/component/recent-drives": {
+      "get": {
+        "tags": ["component"],
+        "summary": "Recent drives",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "pattern": "^\\d+$" }
+          }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/v1/analytics/comprehensive": {
+      "get": {
+        "tags": ["analytics"],
+        "summary": "Comprehensive analytics",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "pattern": "^\\d+$" }
+          }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/v1/analytics/efficiency": {
+      "get": {
+        "tags": ["analytics"],
+        "summary": "Efficiency analytics",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "pattern": "^\\d+$" }
+          }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/v1/analytics/charging": {
+      "get": {
+        "tags": ["analytics"],
+        "summary": "Charging analytics",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/v1/vehicle/state/enhanced": {
+      "get": {
+        "tags": ["vehicle"],
+        "summary": "Enhanced vehicle state",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/v1/route/optimize": {
+      "post": {
+        "tags": ["ai"],
+        "summary": "AI route optimization",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AiOptimizeRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "503": { "description": "AI not configured" }
+        }
+      }
+    },
+    "/api/v1/journal/generate": {
+      "post": {
+        "tags": ["ai"],
+        "summary": "AI journal generation",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AiJournalRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "503": { "description": "AI not configured" }
+        }
+      }
+    },
+    "/api/v1/meta/routes": {
+      "get": {
+        "tags": ["meta"],
+        "summary": "List public endpoints (static)",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/v1/admin/status": {
+      "get": {
+        "tags": ["admin"],
+        "summary": "Admin status",
+        "security": [{ "bearerAuth": [] }, { "adminToken": [] }],
+        "responses": { "200": { "description": "OK" }, "401": { "description": "Unauthorized" } }
+      }
+    },
+    "/api/v1/admin/cache/clear": {
+      "post": {
+        "tags": ["admin"],
+        "summary": "Clear caches",
+        "security": [{ "bearerAuth": [] }, { "adminToken": [] }],
+        "responses": { "200": { "description": "OK" }, "401": { "description": "Unauthorized" } }
+      }
+    },
+    "/api/v1/admin/cron/metrics": {
+      "get": {
+        "tags": ["admin"],
+        "summary": "Cron metrics (last 25)",
+        "security": [{ "bearerAuth": [] }, { "adminToken": [] }],
+        "responses": { "200": { "description": "OK" }, "401": { "description": "Unauthorized" } }
+      }
+    },
+    "/api/v1/admin/data/{resource}": {
+      "get": {
+        "tags": ["admin"],
+        "summary": "Admin data export (allowlisted)",
+        "security": [{ "bearerAuth": [] }, { "adminToken": [] }],
+        "parameters": [
+          {
+            "name": "resource",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vehicles",
+                "journeys",
+                "vehicle_state",
+                "vehicle_state_history",
+                "drives",
+                "charges",
+                "states_visited",
+                "daily_analytics",
+                "efficiency_metrics",
+                "ingestion_logs",
+                "api_cache",
+                "media"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "pattern": "^\\d+$" }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "pattern": "^\\d+$" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    }
+  }
+}
+

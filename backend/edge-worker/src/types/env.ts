@@ -7,6 +7,7 @@ export interface Env {
   TESSIE_API_KEY?: string;
   MAPBOX_API_TOKEN?: string;
   OPENWEATHER_API_KEY?: string;
+  SERPER_API_KEY?: string; // For dynamic place web search
   
   // Vehicle Configuration
   VEHICLE_ID?: string;
