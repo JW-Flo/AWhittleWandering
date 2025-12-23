@@ -1,85 +1,125 @@
 // Unified Journey Data Hook - Combines timeline, live status, and Tessie API data
 // Provides a single interface for all journey-related data across the application
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { apiRequest } from '@/lib/api-config';
 
-// Timeline data structure - individual entry from journey timeline
-interface TimelineEntry {
+// Drive entry from backend
+interface DriveEntry {
+  id: string | number;
   date: string;
-  state: string;
-  stateCode: string;
+  startLocation: string;
+  endLocation: string;
+  distance: number;
+  duration: number;
+  energyUsed: number;
+}
+
+// Charge entry from backend
+interface ChargeEntry {
+  id: string | number;
+  date: string;
   location: string;
-  description: string;
-  category: 'arrival' | 'departure' | 'overnight' | 'milestone' | 'activity';
-  coordinates: { lat: number; lng: number };
-  durationHours?: number;
-  significance: 'low' | 'medium' | 'high' | 'epic';
+  energyAdded: number;
+  duration: number;
 }
 
-// Live data from Tessie API
+// Timeline structure from backend
+interface Timeline {
+  drives: DriveEntry[];
+  charges: ChargeEntry[];
+}
+
+// Live data from Tessie API (via backend)
 interface LiveData {
-  batteryLevel?: number;
-  batteryRange?: number;
-  chargingState?: string;
-  location?: {
-    lat: number;
-    lng: number;
-    address?: string;
-  };
-  odometer?: number;
-  timestamp?: string;
-  vehicleState?: string;
-  climateState?: {
-    insideTemp?: number;
-    outsideTemp?: number;
-    isClimateOn?: boolean;
-  };
-}
-
-interface JourneyOverview {
-  name: string;
-  startDate: string;
-  currentDate: string;
-  daysElapsed: number;
-  statesVisited: number;
-  statesRemaining: number;
-  progressPercentage: number;
-  totalMiles: number;
-  averageMilesPerDay: number;
-}
-
-interface CurrentStatus {
-  location: {
-    state: string;
-    city: string;
-    coordinates: {
-      lat: number;
-      lng: number;
+  timestamp: number;
+  vehicleState: {
+    charge_state?: {
+      battery_level: number;
+      battery_range: number;
+      charging_state: string;
+    };
+    drive_state?: {
+      latitude: number;
+      longitude: number;
+      heading: number;
+      speed: number;
+    };
+    climate_state?: {
+      inside_temp?: number;
+      outside_temp?: number;
+    };
+    vehicle_state?: {
+      odometer: number;
     };
   };
-  vehicle: {
-    batteryLevel: number;
-    batteryRange: number;
-    chargingState: string;
-    odometer: number;
-    speed: number;
-    outsideTemp: number;
+  recentActivity: {
+    lastDrive?: DriveEntry;
+    lastCharge?: ChargeEntry;
   };
-  lastUpdate: string;
 }
 
+// Overview structure from backend
+interface JourneyOverview {
+  tripName: string;
+  vehicle: string;
+  startDate: string;
+  daysElapsed: number;
+  totalMiles: number;
+  currentOdometer: number;
+  statesVisited: number;
+  totalStates: number;
+}
+
+// Current status from backend
+interface CurrentStatus {
+  battery: {
+    level: number;
+    range: number;
+    charging: string;
+  };
+  location: {
+    coordinates: { lat: number; lng: number };
+    city: string;
+    state: string;
+    lastUpdate: string;
+  };
+  vehicle: {
+    odometer: number;
+    speed: number;
+    heading: number;
+    temperature: {
+      inside?: number;
+      outside?: number;
+    };
+  };
+}
+
+// Tessie status from backend
+interface TessieStatus {
+  connected: boolean;
+  lastUpdate: string;
+  dataFreshness: 'live' | 'cached' | 'unknown';
+  error?: string;
+}
+
+// Backend response structure (matches unifiedData.ts skeleton)
+interface BackendUnifiedData {
+  overview: JourneyOverview;
+  currentStatus: CurrentStatus;
+  timeline: Timeline;
+  liveData: LiveData;
+  tessieStatus: TessieStatus;
+}
+
+// Normalized data structure for frontend consumption
 interface UnifiedJourneyData {
   journey: {
     overview: JourneyOverview;
     currentStatus: CurrentStatus;
-    timeline: TimelineEntry[] | null;
-    liveData: LiveData | null;
-    tessieStatus: {
-      connected: boolean;
-      lastSync: string;
-      refreshInterval: number;
-    };
+    timeline: Timeline;
+    liveData: LiveData;
+    tessieStatus: TessieStatus;
   };
 }
 
@@ -88,20 +128,32 @@ export const useUnifiedJourneyData = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchUnifiedData = async () => {
-      try {
-        setError(null);
-        const unifiedData = await apiRequest<UnifiedJourneyData>('/api/v1/unified-data');
-        setData(unifiedData);
-      } catch (err) {
-        console.error('Failed to fetch unified journey data:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch journey data');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchUnifiedData = useCallback(async () => {
+    try {
+      setError(null);
+      const backendData = await apiRequest<BackendUnifiedData>('/api/v1/unified-data');
+      
+      // Normalize backend response to expected frontend structure
+      const normalizedData: UnifiedJourneyData = {
+        journey: {
+          overview: backendData.overview,
+          currentStatus: backendData.currentStatus,
+          timeline: backendData.timeline || { drives: [], charges: [] },
+          liveData: backendData.liveData,
+          tessieStatus: backendData.tessieStatus
+        }
+      };
+      
+      setData(normalizedData);
+    } catch (err) {
+      console.error('Failed to fetch unified journey data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch journey data');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
+  useEffect(() => {
     // Initial fetch
     fetchUnifiedData();
 
@@ -113,7 +165,7 @@ export const useUnifiedJourneyData = () => {
         clearInterval(interval);
       }
     };
-  }, []);
+  }, [fetchUnifiedData]);
 
   // Helper accessors for common data
   const overview = data?.journey?.overview || null;
@@ -135,10 +187,13 @@ export const useUnifiedJourneyData = () => {
     loading,
     error,
     
+    // Refetch function for manual refresh
+    refetch: fetchUnifiedData,
+    
     // Convenience accessors
     isConnected: tessieStatus?.connected || false,
-    lastUpdate: currentStatus?.lastUpdate || null,
-    progressPercentage: overview?.progressPercentage || 0,
+    lastUpdate: currentStatus?.location?.lastUpdate || null,
+    progressPercentage: overview ? Math.round((overview.statesVisited / overview.totalStates) * 100) : 0,
     statesVisited: overview?.statesVisited || 0,
     currentLocation: currentStatus?.location || null,
     vehicleStatus: currentStatus?.vehicle || null

@@ -1,14 +1,34 @@
 import { cors } from 'hono/cors';
 import { Context, Next } from 'hono';
 
+function isAllowedOrigin(origin: string): boolean {
+  // Local dev
+  if (origin === 'http://localhost:8080') return true;
+  if (origin === 'http://localhost:3000') return true;
+
+  // Canonical production domains
+  if (origin === 'https://awhittlewandering.com') return true;
+  if (origin === 'https://www.awhittlewandering.com') return true;
+
+  // Any subdomain under awhittlewandering.com (e.g., admin.*), if used
+  if (/^https:\/\/[a-z0-9-]+\.awhittlewandering\.com$/i.test(origin)) return true;
+
+  // Cloudflare Pages preview/prod domains that appear in repo automation and may still be used.
+  // Note: Hono's CORS middleware does not interpret '*' wildcards inside literal strings.
+  if (/^https:\/\/[a-z0-9-]+\.awhittlewandering-frontend\.pages\.dev$/i.test(origin)) return true;
+  if (/^https:\/\/[a-z0-9-]+\.awhittlewandering-site\.pages\.dev$/i.test(origin)) return true;
+  if (/^https:\/\/[a-z0-9-]+\.awhittlewandering\.pages\.dev$/i.test(origin)) return true;
+
+  return false;
+}
+
 export const corsMiddleware = cors({
-  origin: [
-    'https://awhittlewandering.com',
-    'https://*.awhittlewandering.com',
-    'https://*.awhittlewandering-frontend.pages.dev',
-    'http://localhost:8080',
-    'http://localhost:3000'
-  ],
+  origin: (origin) => {
+    // If the request has no Origin header (server-to-server / curl), do not emit CORS headers.
+    // This avoids an invalid combination when `credentials: true` (ACAO="*" is forbidden with credentials).
+    if (!origin) return null;
+    return isAllowedOrigin(origin) ? origin : null;
+  },
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization', 'X-Client-ID', 'X-Admin-Token'],
   credentials: true

@@ -1,4 +1,4 @@
-import { HistoricalDrive, HistoricalCharge } from '@/hooks/useUnifiedTessieApi';
+import type { HistoricalDrive, HistoricalCharge } from '@/types/tessie';
 
 interface JourneyStats {
   totalJourneyMiles: number;

@@ -107,18 +107,28 @@ app.get('/api/v1/trip/status', async (c) => c.redirect('/api/v1/trip-status', 30
 // Provide a config endpoint directly for demo
 app.get('/api/v1/config', async (c) => {
   const mode = c.env?.PLATFORM_MODE || 'live';
+  const url = new URL(c.req.url);
+  const apiBaseUrl = `${url.protocol}//${url.host}`;
+
+  // Mapbox token is safe to expose (public token); return null if not configured.
+  const mapboxToken = c.env?.MAPBOX_API_TOKEN || null;
+
   return c.json({
     appName: 'Tesla Road Trip Tracker',
     apiVersion: '3.0.0',
     mode,
+    apiBaseUrl,
+    // Backward/forward compatibility:
+    // - Older frontend(s) read `mapboxToken`
+    // - Newer frontend dynamic config expects `mapboxAccessToken`
+    mapboxToken,
+    mapboxAccessToken: mapboxToken,
     features: {
-      liveTeslaData: true,
-      mapIntegration: false,
+      liveTeslaData: !!c.env?.TESSIE_API_KEY,
+      mapIntegration: !!mapboxToken,
       realtimeUpdates: true
     },
-    updateInterval: mode === 'live' ? 30000 : 45000,
-    mapboxToken: null,
-    apiBaseUrl: '',
+    updateInterval: mode === 'live' ? 30000 : 45000
   });
 });
 // Optional: minimal connectors endpoint for demo (moved after app declaration)
