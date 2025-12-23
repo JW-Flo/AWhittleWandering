@@ -52,7 +52,8 @@ function triggerWorkflow(repo, workflowFile, target) {
   // Avoid `gh workflow run` because it may query defaultBranchRef via GraphQL, which can be blocked for integrations.
   // Dispatch via REST with an explicit ref.
   const [owner, name] = String(repo).split("/", 2);
-  const ref = process.env.GITHUB_WORKFLOW_REF || "main";
+  // In Actions, use the branch name, not the workflow ref.
+  const ref = process.env.GITHUB_REF_NAME || "main";
   run(
     "gh",
     [
