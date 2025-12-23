@@ -25,6 +25,7 @@ Field labels become GitHub secret names (only labels matching `^[A-Z][A-Z0-9_]{1
    - `production`
 2. Add `OP_SERVICE_ACCOUNT_TOKEN` as an environment secret in BOTH environments.
    - This is the only secret GitHub must hold to read from 1Password.
+   - Recommended: store it as a **repository secret** (single copy) to avoid environment duplication.
 3. Create a GitHub App installed on this repo with permissions to:
    - write environment secrets
    - trigger workflows
@@ -35,7 +36,7 @@ Field labels become GitHub secret names (only labels matching `^[A-Z][A-Z0-9_]{1
 ### Config
 See `ops/secrets/github-sync-config.json`.
 - Denylist prevents syncing high-value automation credentials.
-- A “last synced” timestamp is stored as a GitHub Environment variable to avoid unnecessary writes.
+- A “last synced” timestamp is stored as a **repo-level Actions variable** (`AWW_1P_LAST_SYNCED_ITEM_UPDATED_AT_<ENV>`) to avoid unnecessary writes.
 
 
 
