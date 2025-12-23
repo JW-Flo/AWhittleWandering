@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+// Note: schema-only module; safe to change for CI/automation verification without runtime side effects.
 export const TeslaTelemetrySchema = z.object({
   timestamp: z.number(),
   location: z.object({
