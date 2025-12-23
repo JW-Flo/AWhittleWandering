@@ -7,7 +7,11 @@ export interface Env {
   TESSIE_API_KEY?: string;
   MAPBOX_API_TOKEN?: string;
   OPENWEATHER_API_KEY?: string;
-  SERPER_API_KEY?: string; // For dynamic place web search
+  
+  // Web Search APIs (fallback chain: Serper → Brave → Tavily → AI)
+  SERPER_API_KEY?: string;      // serper.dev - 2,500 free/month
+  BRAVE_API_KEY?: string;       // brave.com/search/api - 2,000 free/month
+  TAVILY_API_KEY?: string;      // tavily.com - 1,000 free/month (optimized for AI)
   
   // Vehicle Configuration
   VEHICLE_ID?: string;

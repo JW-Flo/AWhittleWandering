@@ -18,9 +18,59 @@ interface PlacesEnv {
   AI?: any;
   MAPBOX_API_TOKEN?: string;
   SERPER_API_KEY?: string;
+  BRAVE_API_KEY?: string;
+  TAVILY_API_KEY?: string;
 }
 
 export const placesRouter = new Hono<{ Bindings: PlacesEnv }>();
+
+/**
+ * GET /api/v1/places/providers
+ * Check which search providers are configured
+ */
+placesRouter.get('/providers', async (c) => {
+  const providers = [
+    { 
+      name: 'serper', 
+      configured: !!c.env.SERPER_API_KEY,
+      freeQuota: '2,500/month',
+      docs: 'https://serper.dev/',
+    },
+    { 
+      name: 'brave', 
+      configured: !!c.env.BRAVE_API_KEY,
+      freeQuota: '2,000/month',
+      docs: 'https://brave.com/search/api/',
+    },
+    { 
+      name: 'tavily', 
+      configured: !!c.env.TAVILY_API_KEY,
+      freeQuota: '1,000/month',
+      docs: 'https://tavily.com/',
+    },
+    { 
+      name: 'cloudflare_ai', 
+      configured: !!c.env.AI,
+      freeQuota: 'Included with Workers',
+      docs: 'https://developers.cloudflare.com/workers-ai/',
+    },
+  ];
+
+  const totalFreeQueries = providers
+    .filter(p => p.configured && p.name !== 'cloudflare_ai')
+    .reduce((sum, p) => {
+      const num = parseInt(p.freeQuota.replace(/,/g, ''));
+      return sum + (isNaN(num) ? 0 : num);
+    }, 0);
+
+  return c.json({
+    success: true,
+    providers,
+    totalConfigured: providers.filter(p => p.configured).length,
+    estimatedFreeQueries: totalFreeQueries,
+    fallbackOrder: ['serper', 'brave', 'tavily', 'cloudflare_ai'],
+  });
+});
 
 /**
  * POST /api/v1/places/identify
