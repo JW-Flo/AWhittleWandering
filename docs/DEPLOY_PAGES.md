@@ -2,97 +2,64 @@
 
 ## Overview
 
-This guide covers deploying the frontend to Cloudflare Pages using both Git integration and direct Wrangler uploads.
+This guide covers deploying the AWhittleWandering frontend to Cloudflare Pages.
 
-## Method 1: Git Integration (Recommended)
+## Project Details
 
-### Prerequisites
+- **Project name**: `awhittlewandering`
+- **Pages URL**: `https://awhittlewandering.pages.dev`
+- **Custom domain**: `awhittlewandering.com`
 
-- Cloudflare account with Pages enabled
-- GitHub repository with frontend code
-- Wrangler CLI installed: `npm install -g wrangler`
+## Method 1: Automated (GitHub Actions)
 
-### Setup Steps
+Deployments are automatic on push to `main` when frontend files change.
 
-1. **Create Pages Project**
+### Workflow Location
 
-   ```bash
-   wrangler pages create atlas-it
-   ```
+`.github/workflows/frontend-pages-deploy.yml`
 
-2. **Configure wrangler.toml**
+### Required GitHub Secrets
 
-   ```toml
-   name = "atlas-it"
-   compatibility_date = "2023-10-30"
-   pages_build_output_dir = "dist"
+- `Cloudflare_Account_ID`: Your Cloudflare account ID
+- `Cloudflare_API_token`: Cloudflare API token (with Pages edit permissions)
 
-   [env.production]
-   name = "atlas-it"
-   ```
+### Trigger Manually
 
-3. **Set up GitHub Actions**
-   Create `.github/workflows/frontend-pages-deploy.yml`:
+```bash
+gh workflow run frontend-pages-deploy.yml
+```
 
-   ```yaml
-   name: frontend-pages-deploy
-   on:
-     push:
-       branches: [ main ]
-       paths:
-         - 'frontend/**'
-   jobs:
-     deploy-frontend:
-       runs-on: ubuntu-latest
-       steps:
-         - uses: actions/checkout@v4
-         - uses: actions/setup-node@v4
-           with:
-             node-version: '20'
-         - name: Build frontend
-           working-directory: frontend
-           run: npm run build
-         - name: Deploy to Cloudflare Pages
-           env:
-             CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-             CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-           run: wrangler pages deploy dist --project-name atlas-it
-   ```
-
-4. **Set Secrets in GitHub**
-   - `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare account ID
-   - `CLOUDFLARE_API_TOKEN`: Cloudflare API token (with Pages permissions)
-
-5. **Deploy**
-   Push to main branch - deployment triggers automatically.
-
-## Method 2: Direct Wrangler Upload
+## Method 2: Manual Deployment
 
 ### Prerequisites
 
-- Wrangler CLI installed
-- Built frontend assets
+- Wrangler CLI: `npm install -g wrangler`
+- Authenticated: `wrangler login`
 
-### Deployment Steps
+### Deploy Steps
 
-1. **Build the frontend**
+```bash
+# Build the frontend
+cd frontend
+npm run build
 
-   ```bash
-   cd frontend
-   npm run build
-   ```
+# Deploy to Pages
+wrangler pages deploy dist --project-name=awhittlewandering
+```
 
-2. **Deploy directly**
+Or use the npm script from repo root:
 
-   ```bash
-   wrangler pages deploy dist --project-name atlas-it
-   ```
+```bash
+npm run deploy:frontend
+```
 
-3. **With custom domain** (optional)
+## Initial Setup (One-time)
 
-   ```bash
-   wrangler pages deploy dist --project-name atlas-it --branch main
-   ```
+If the Pages project doesn't exist:
+
+```bash
+wrangler pages project create awhittlewandering
+```
 
 ## Environment Variables & Secrets
 
@@ -100,56 +67,58 @@ This guide covers deploying the frontend to Cloudflare Pages using both Git inte
 
 ```bash
 # API Keys
-wrangler secret put TESSIE_API_KEY --project-name atlas-it
-wrangler secret put MAPBOX_ACCESS_TOKEN --project-name atlas-it
+wrangler secret put TESSIE_API_KEY --project-name awhittlewandering
+wrangler secret put MAPBOX_ACCESS_TOKEN --project-name awhittlewandering
+wrangler secret put OPENWEATHER_API_KEY --project-name awhittlewandering
 
-# Environment Variables
-wrangler pages deployment create atlas-it --env production --var PUBLIC_BASE_URL=https://atlas-it.pages.dev
+# Auth
+wrangler secret put JWT_SECRET --project-name awhittlewandering
+
+# Other
+wrangler secret put TESLA_VIN --project-name awhittlewandering
 ```
 
-### Required Variables
+### Environment Variables
 
-- `PUBLIC_BASE_URL`: The public URL of your Pages site
-- `NODE_ENV`: Set to "production"
-- Feature flags: `FEATURE_MAPBOX`, `FEATURE_WEATHER`, etc.
+Set via Cloudflare Dashboard or wrangler:
+
+- `PUBLIC_BASE_URL`: `https://awhittlewandering.pages.dev`
+- `NODE_ENV`: `production`
+
+## Custom Domain Setup
+
+1. Go to Cloudflare Dashboard → Pages → awhittlewandering
+2. Click "Custom domains" → "Set up a custom domain"
+3. Enter `awhittlewandering.com`
+4. Follow DNS verification steps
 
 ## Troubleshooting
 
 ### Common Issues
 
 1. **Build fails**
-   - Check Node.js version compatibility
-   - Verify all dependencies are installed
-   - Check build logs for errors
+   - Check Node.js version (should be 20+)
+   - Run `bun install` to ensure dependencies
 
 2. **Deployment fails**
-   - Verify API token has Pages permissions
-   - Check project name matches exactly
-   - Ensure build output directory exists
+   - Verify API token has Pages edit permissions
+   - Check project name matches exactly: `awhittlewandering`
 
 3. **Secrets not working**
-   - Use `wrangler secret put` for sensitive values
-   - Use `--var` for non-sensitive environment variables
-   - Restart deployment after adding secrets
+   - Redeploy after adding secrets
+   - Verify secret names match code expectations
 
 ### Health Checks
 
 ```bash
 # Check deployment status
-wrangler pages deployment list --project-name atlas-it
+wrangler pages deployment list --project-name awhittlewandering
 
 # Test health endpoint
-curl -I https://atlas-it.pages.dev/healthz
+curl -I https://awhittlewandering.pages.dev/healthz
+curl -I https://awhittlewandering.com/healthz
 ```
 
 ## Rollback
 
-If deployment fails, see `ops/rollback/pages-switch.md` for rollback procedures.
-
-## Best Practices
-
-- Use Git integration for automatic deployments
-- Set up preview deployments for pull requests
-- Monitor deployment logs in Cloudflare dashboard
-- Use semantic versioning for releases
-- Keep secrets secure and rotate regularly
+See `ops/rollback/pages-switch.md` for rollback procedures.
