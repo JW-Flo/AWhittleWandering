@@ -170,9 +170,9 @@ async function tryListTokens({ accountId, managerToken }) {
   return [];
 }
 
-async function verifyTokenId({ deployToken }) {
+async function verifyTokenMeta({ deployToken }) {
   const token = String(deployToken || "").trim();
-  if (!token) return "";
+  if (!token) return { id: "", identifier: "", chosen: "" };
   // Cloudflare API Token verify endpoint (returns metadata including identifier/id).
   const url = "https://api.cloudflare.com/client/v4/user/tokens/verify";
   const json = await cfRequestJson(url, { method: "GET", token });
@@ -186,7 +186,7 @@ async function verifyTokenId({ deployToken }) {
     idLen: rawId ? rawId.length : 0,
     identifierLen: rawIdentifier ? rawIdentifier.length : 0,
   });
-  return chosen;
+  return { id: rawId, identifier: rawIdentifier, chosen };
 }
 
 async function resolveTokenId({ accountId, managerToken, tokenId, tokenName }) {
@@ -333,10 +333,16 @@ async function main() {
     tokenId = await resolveTokenId({ accountId, managerToken, tokenId: tokenIdRaw, tokenName });
   } catch (e) {
     safeLog("cf.token_id.resolve.failed", { message: String(e?.message || e) });
-    const verifiedId = await verifyTokenId({ deployToken: current });
-    if (!verifiedId) throw e;
-    tokenId = verifiedId;
+    const verified = await verifyTokenMeta({ deployToken: current });
+    if (!verified.chosen) throw e;
+    tokenId = verified.chosen;
     safeLog("cf.token_id.resolved.via_verify", {});
+  }
+  // If verify provides an "identifier", prefer it for roll calls (some Cloudflare APIs route on identifier, not id).
+  const verifiedNow = await verifyTokenMeta({ deployToken: current });
+  if (verifiedNow.identifier && verifiedNow.identifier !== tokenId) {
+    safeLog("cf.token_id.override.with_identifier", { fromLen: tokenId.length, toLen: verifiedNow.identifier.length });
+    tokenId = verifiedNow.identifier;
   }
 
   // Preserve current deploy token as *_PREVIOUS (for recovery/debug). This is NOT used by wrangler.
