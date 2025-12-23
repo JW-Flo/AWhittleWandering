@@ -43,9 +43,9 @@ function getItem(vault, title) {
   return runJson("op", ["item", "get", title, "--vault", vault, "--format", "json"]);
 }
 
-function setGithubEnvSecret(repo, envName, name, value) {
+function setGithubRepoSecret(repo, name, value) {
   // Avoid echoing the value; pass via process env.
-  run("gh", ["secret", "set", name, "--env", envName, "--repo", repo, "--body", value], { stdio: ["ignore", "pipe", "pipe"] });
+  run("gh", ["secret", "set", name, "--repo", repo, "--body", value], { stdio: ["ignore", "pipe", "pipe"] });
 }
 
 function triggerWorkflow(repo, workflowFile, target) {
@@ -67,8 +67,7 @@ function main() {
 
   for (const target of targets) {
     const itemTitle = cfg.onePassword.items?.[target];
-    const ghEnv = cfg.github.environments?.[target];
-    if (!itemTitle || !ghEnv) {
+    if (!itemTitle) {
       safeLog("sync.skip.missing_config", { target });
       continue;
     }
@@ -77,7 +76,7 @@ function main() {
     const opUpdatedAt = String(item.updated_at || item.updatedAt || "");
     if (!opUpdatedAt) throw new Error(`Missing updated_at for op://${vault}/${itemTitle}/*`);
 
-    safeLog("sync.apply.start", { target, ghEnv, item: `${vault}/${itemTitle}`, opUpdatedAt });
+    safeLog("sync.apply.start", { target, scope: "repo", item: `${vault}/${itemTitle}`, opUpdatedAt });
 
     const fields = Array.isArray(item.fields) ? item.fields : [];
     let written = 0;
@@ -90,7 +89,7 @@ function main() {
       const s = String(value);
       if (!s.trim()) continue;
 
-      setGithubEnvSecret(repo, ghEnv, label, s);
+      setGithubRepoSecret(repo, label, s);
       written += 1;
       safeLog("sync.secret.set", { target, name: label });
     }
