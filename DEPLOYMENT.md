@@ -79,10 +79,10 @@ Configure these in GitHub → Settings → Secrets and variables → Actions:
 
 | Secret Name | Description | Used By |
 |-------------|-------------|---------|
-| `Cloudflare_Account_ID` | Cloudflare account identifier | Both |
-| `Cloudflare_API_token` | API token with Workers/Pages edit | Both |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account identifier | Both |
+| `CLOUDFLARE_API_TOKEN` | API token with Workers/Pages edit | Both |
 | `TESSIE_API_KEY` | Tessie API key for Tesla data | Backend |
-| `MAPBOX_API_TOKEN` | Mapbox access token | Backend |
+| `MAPBOX_ACCESS_TOKEN` | Mapbox access token | Backend |
 | `OPENWEATHER_API_KEY` | OpenWeatherMap API key | Backend |
 | `JWT_SECRET` | JWT signing secret (min 32 chars) | Backend |
 | `TESLA_VIN` | Tesla Vehicle Identification Number | Backend |
@@ -173,7 +173,7 @@ wrangler secret put JWT_SECRET --project-name awhittlewandering
 
 ```bash
 wrangler secret put TESSIE_API_KEY --env production
-wrangler secret put MAPBOX_API_TOKEN --env production
+wrangler secret put MAPBOX_ACCESS_TOKEN --env production
 wrangler secret put OPENWEATHER_API_KEY --env production
 wrangler secret put JWT_SECRET --env production
 wrangler secret put TESLA_VIN --env production
