@@ -1,9 +1,10 @@
-name = "atlas-it"
+name = "awhittlewandering"
 compatibility_date = "2023-10-30"
 pages_build_output_dir = "dist"
 
 [env.production]
-name = "atlas-it"
+name = "awhittlewandering"
 
 # Cloudflare Pages configuration
 # This configures the static site deployment for the Tesla road trip frontend
+# Note: Custom domain awhittlewandering.com should be configured in Cloudflare dashboard
