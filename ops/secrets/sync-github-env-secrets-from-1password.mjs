@@ -43,19 +43,6 @@ function getItem(vault, title) {
   return runJson("op", ["item", "get", title, "--vault", vault, "--format", "json"]);
 }
 
-function getGithubEnvVar(repo, envName, varName) {
-  // Use repo-level Actions variables (GitHub Apps cannot always access Environment variables APIs).
-  const vars = runJson("gh", ["variable", "list", "--repo", repo, "--json", "name,value"]);
-  const found = (vars || []).find((v) => v.name === varName);
-  return found?.value || "";
-}
-
-function setGithubEnvVar(repo, envName, varName, value) {
-  // value is an ISO timestamp, not a secret.
-  // Use repo-level Actions variables.
-  run("gh", ["variable", "set", varName, "--repo", repo, "--body", value], { stdio: ["ignore", "pipe", "pipe"] });
-}
-
 function setGithubEnvSecret(repo, envName, name, value) {
   // Avoid echoing the value; pass via process env.
   run("gh", ["secret", "set", name, "--env", envName, "--repo", repo, "--body", value], { stdio: ["ignore", "pipe", "pipe"] });
@@ -72,7 +59,6 @@ function main() {
   const vault = cfg.onePassword.vault;
   const denySet = new Set(cfg.onePassword.denyFieldLabels || []);
   const labelRe = new RegExp(cfg.onePassword.fieldLabelRegex || "^[A-Z][A-Z0-9_]+$");
-  const lastSyncPrefix = cfg.github.lastSyncVarNamePrefix || "AWW_1P_LAST_SYNCED_ITEM_UPDATED_AT";
 
   const targets = ["development", "production"];
   const results = [];
@@ -91,14 +77,6 @@ function main() {
     const opUpdatedAt = String(item.updated_at || item.updatedAt || "");
     if (!opUpdatedAt) throw new Error(`Missing updated_at for op://${vault}/${itemTitle}/*`);
 
-    const lastSyncVar = `${lastSyncPrefix}_${String(target).toUpperCase()}`;
-    const prev = getGithubEnvVar(repo, ghEnv, lastSyncVar);
-    if (prev && prev >= opUpdatedAt) {
-      safeLog("sync.noop", { target, opUpdatedAt, lastSynced: prev });
-      results.push({ target, changed: false, opUpdatedAt });
-      continue;
-    }
-
     safeLog("sync.apply.start", { target, ghEnv, item: `${vault}/${itemTitle}`, opUpdatedAt });
 
     const fields = Array.isArray(item.fields) ? item.fields : [];
@@ -116,8 +94,6 @@ function main() {
       written += 1;
       safeLog("sync.secret.set", { target, name: label });
     }
-
-    setGithubEnvVar(repo, ghEnv, lastSyncVar, opUpdatedAt);
     safeLog("sync.apply.done", { target, written, opUpdatedAt });
 
     if (cfg.behavior?.triggerCloudflareWorkflow) {
@@ -126,7 +102,7 @@ function main() {
       safeLog("sync.cloudflare.dispatched", { target, workflow: wf });
     }
 
-    results.push({ target, changed: true, written, opUpdatedAt });
+    results.push({ target, written, opUpdatedAt });
   }
 
   safeLog("sync.done", { results });
