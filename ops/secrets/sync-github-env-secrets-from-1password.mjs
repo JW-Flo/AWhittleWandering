@@ -31,6 +31,14 @@ function validateSecretValue(label, value) {
   return { ok: true, value: s };
 }
 
+function tryRun(cmd, args) {
+  try {
+    return { ok: true, out: run(cmd, args) };
+  } catch (e) {
+    return { ok: false, error: e };
+  }
+}
+
 function safeLog(msg, meta = {}) {
   // Never log values.
   const clean = { ...meta };
@@ -51,6 +59,11 @@ function getRepo() {
 
 function getItem(vault, title) {
   return runJson("op", ["item", "get", title, "--vault", vault, "--format", "json"]);
+}
+
+function listItems(vault) {
+  // Returns [{id,title}, ...]
+  return runJson("op", ["item", "list", "--vault", vault, "--format", "json"]);
 }
 
 function setGithubRepoSecret(repo, name, value) {
@@ -80,6 +93,30 @@ function triggerWorkflow(repo, workflowFile, target) {
   );
 }
 
+function extractBestItemValue(item) {
+  const fields = Array.isArray(item?.fields) ? item.fields : [];
+  const candidates = [];
+  for (const f of fields) {
+    const v = f?.value;
+    if (v === null || v === undefined) continue;
+    const s = String(v).trim();
+    if (!s) continue;
+    const label = String(f?.label || "");
+    const id = String(f?.id || "");
+    const type = String(f?.type || "");
+    const purpose = String(f?.purpose || "");
+    const rank =
+      (id === "password" ? 100 : 0) +
+      (purpose.toUpperCase() === "PASSWORD" ? 50 : 0) +
+      (type.toUpperCase() === "CONCEALED" ? 25 : 0) +
+      (/^(value|token|secret|api[_ ]?key|key|password)$/i.test(label) ? 10 : 0);
+    candidates.push({ s, rank });
+  }
+  if (!candidates.length) return "";
+  candidates.sort((a, b) => b.rank - a.rank);
+  return candidates[0].s;
+}
+
 function main() {
   const cfg = getConfig();
   const repo = getRepo();
@@ -94,39 +131,92 @@ function main() {
   safeLog("sync.start", { repo, vault });
 
   const singleItemTitle = cfg.onePassword.item;
-  const sources = singleItemTitle
-    ? [{ source: "shared", itemTitle: singleItemTitle }]
-    : targets
-        .map((target) => ({ source: target, itemTitle: cfg.onePassword.items?.[target] }))
-        .filter((s) => s.itemTitle);
+  // Source mode 1: single bundled item (fields become secret names), e.g. AWW_SHARED/prod
+  // Source mode 2 (fallback): vault contains many items named like secret names (e.g. MAPBOX_API_TOKEN),
+  // in which case the item title becomes the secret name and we extract the best field value.
+  if (singleItemTitle) {
+    const got = tryRun("op", ["item", "get", singleItemTitle, "--vault", vault, "--format", "json"]);
+    if (got.ok) {
+      const item = JSON.parse(got.out || "null");
+      const opUpdatedAt = String(item?.updated_at || item?.updatedAt || "");
+      safeLog("sync.apply.start", { source: "bundled_item", scope: "repo", item: `${vault}/${singleItemTitle}`, opUpdatedAt });
 
-  for (const { source, itemTitle } of sources) {
-    const item = getItem(vault, itemTitle);
-    const opUpdatedAt = String(item.updated_at || item.updatedAt || "");
-    if (!opUpdatedAt) throw new Error(`Missing updated_at for op://${vault}/${itemTitle}/*`);
+      const fields = Array.isArray(item?.fields) ? item.fields : [];
+      let written = 0;
+      for (const f of fields) {
+        const label = String(f?.label || "");
+        if (!isAllowedLabel(label, labelRe, denySet)) continue;
 
-    safeLog("sync.apply.start", { source, scope: "repo", item: `${vault}/${itemTitle}`, opUpdatedAt });
+        const v = validateSecretValue(label, f?.value);
+        if (!v.ok) {
+          safeLog("sync.secret.skip.invalid_value", { source: "bundled_item", name: label, reason: v.reason });
+          continue;
+        }
 
-    const fields = Array.isArray(item.fields) ? item.fields : [];
-    let written = 0;
-    for (const f of fields) {
-      const label = String(f.label || "");
-      if (!isAllowedLabel(label, labelRe, denySet)) continue;
-
-      const value = f.value;
-      if (value === null || value === undefined) continue;
-      const v = validateSecretValue(label, value);
-      if (!v.ok) {
-        safeLog("sync.secret.skip.invalid_value", { source, name: label, reason: v.reason });
-        continue;
+        setGithubRepoSecret(repo, label, v.value);
+        written += 1;
+        safeLog("sync.secret.set", { source: "bundled_item", name: label });
       }
 
-      setGithubRepoSecret(repo, label, v.value);
-      written += 1;
-      safeLog("sync.secret.set", { source, name: label });
+      safeLog("sync.apply.done", { source: "bundled_item", written, opUpdatedAt });
+      results.push({ source: "bundled_item", written, opUpdatedAt });
+    } else {
+      safeLog("sync.source.bundled_item_missing", { item: `${vault}/${singleItemTitle}` });
+
+      const items = Array.isArray(listItems(vault)) ? listItems(vault) : [];
+      let written = 0;
+      safeLog("sync.apply.start", { source: "per_item", scope: "repo", itemCount: items.length });
+      for (const it of items) {
+        const title = String(it?.title || "");
+        if (!isAllowedLabel(title, labelRe, denySet)) continue;
+
+        // Fetch the full item (so we can extract concealed fields).
+        const item = getItem(vault, title);
+        const raw = extractBestItemValue(item);
+        const v = validateSecretValue(title, raw);
+        if (!v.ok) {
+          safeLog("sync.secret.skip.invalid_value", { source: "per_item", name: title, reason: v.reason });
+          continue;
+        }
+
+        setGithubRepoSecret(repo, title, v.value);
+        written += 1;
+        safeLog("sync.secret.set", { source: "per_item", name: title });
+      }
+      safeLog("sync.apply.done", { source: "per_item", written });
+      results.push({ source: "per_item", written });
     }
-    safeLog("sync.apply.done", { source, written, opUpdatedAt });
-    results.push({ source, written, opUpdatedAt });
+  } else {
+    const sources = targets
+      .map((target) => ({ source: target, itemTitle: cfg.onePassword.items?.[target] }))
+      .filter((s) => s.itemTitle);
+
+    for (const { source, itemTitle } of sources) {
+      const item = getItem(vault, itemTitle);
+      const opUpdatedAt = String(item.updated_at || item.updatedAt || "");
+      if (!opUpdatedAt) throw new Error(`Missing updated_at for op://${vault}/${itemTitle}/*`);
+
+      safeLog("sync.apply.start", { source, scope: "repo", item: `${vault}/${itemTitle}`, opUpdatedAt });
+
+      const fields = Array.isArray(item.fields) ? item.fields : [];
+      let written = 0;
+      for (const f of fields) {
+        const label = String(f.label || "");
+        if (!isAllowedLabel(label, labelRe, denySet)) continue;
+
+        const v = validateSecretValue(label, f.value);
+        if (!v.ok) {
+          safeLog("sync.secret.skip.invalid_value", { source, name: label, reason: v.reason });
+          continue;
+        }
+
+        setGithubRepoSecret(repo, label, v.value);
+        written += 1;
+        safeLog("sync.secret.set", { source, name: label });
+      }
+      safeLog("sync.apply.done", { source, written, opUpdatedAt });
+      results.push({ source, written, opUpdatedAt });
+    }
   }
 
   if (cfg.behavior?.triggerCloudflareWorkflow) {
