@@ -1,11 +1,19 @@
 // API configuration for A Whittle Wandering
+const getApiBaseUrl = () => {
+  const env = ((import.meta as any)?.env || {}) as Record<string, unknown>;
+  const override = (env.VITE_API_BASE_URL || env.VITE_BACKEND_URL) as string | undefined;
+  if (typeof override === 'string' && override.trim()) return override.trim();
+  if (env.DEV === true) return 'http://localhost:8787';
+  return 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
+};
+
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787',
+  BASE_URL: getApiBaseUrl(),
   ENDPOINTS: {
-    HEALTH: '/health',
+    HEALTH: '/api/v1/health',
     TELEMETRY: '/api/v1/telemetry',
-    TRIP_STATUS: '/api/v1/trip/status',
-  }
+    TRIP_STATUS: '/api/v1/trip-status',
+  },
 } as const;
 
 // Make API calls to our deployed backend
