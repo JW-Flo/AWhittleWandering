@@ -43,10 +43,29 @@ function extractBestItemValue(item) {
   return candidates[0].s;
 }
 
+function tryGetItemJson(vault, title) {
+  try {
+    return runJson("op", ["item", "get", title, "--vault", vault, "--format", "json"]);
+  } catch {
+    return null;
+  }
+}
+
 function getItemValue(vault, title) {
-  const item = runJson("op", ["item", "get", title, "--vault", vault, "--format", "json"]);
-  const v = extractBestItemValue(item);
-  return String(v || "").trim();
+  // Support BOTH patterns:
+  // - items named exactly like the secret (e.g. "CLOUDFLARE_API_TOKEN")
+  // - a shared "automation" item with fields labeled like the secret (e.g. "CLOUDFLARE_TOKEN_MANAGER")
+  const direct = tryGetItemJson(vault, title);
+  if (direct) return String(extractBestItemValue(direct) || "").trim();
+
+  const automation = tryGetItemJson(vault, "automation");
+  if (automation) {
+    const fields = Array.isArray(automation?.fields) ? automation.fields : [];
+    const hit = fields.find((f) => String(f?.label || "") === title);
+    const v = String(hit?.value ?? "").trim();
+    if (v) return v;
+  }
+  return "";
 }
 
 function upsertItemField(vault, title, fieldLabel, value) {
@@ -163,9 +182,17 @@ async function main() {
   const accountId = getItemValue(vault, "CLOUDFLARE_ACCOUNT_ID");
   const tokenId = getItemValue(vault, "CLOUDFLARE_API_TOKEN_ID");
 
-  if (!managerToken) throw new Error("Missing op://AWW_SHARED/CLOUDFLARE_TOKEN_MANAGER");
+  if (!managerToken) {
+    throw new Error(
+      "Missing CLOUDFLARE_TOKEN_MANAGER in 1Password (either an item titled CLOUDFLARE_TOKEN_MANAGER, or a field on op://AWW_SHARED/automation)"
+    );
+  }
   if (!accountId) throw new Error("Missing op://AWW_SHARED/CLOUDFLARE_ACCOUNT_ID");
-  if (!tokenId) throw new Error("Missing op://AWW_SHARED/CLOUDFLARE_API_TOKEN_ID (the identifier of the deploy token to roll)");
+  if (!tokenId) {
+    throw new Error(
+      "Missing CLOUDFLARE_API_TOKEN_ID in 1Password (either an item titled CLOUDFLARE_API_TOKEN_ID, or a field on op://AWW_SHARED/automation)"
+    );
+  }
 
   // Preserve current deploy token as *_PREVIOUS (for recovery/debug). This is NOT used by wrangler.
   const current = getItemValue(vault, "CLOUDFLARE_API_TOKEN");
