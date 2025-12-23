@@ -354,6 +354,24 @@ async function createCloudflareToken({ accountId, managerToken, name, policies, 
   }
 }
 
+function normalizePoliciesForCreate(policies) {
+  const src = Array.isArray(policies) ? policies : [];
+  const out = [];
+  for (const p of src) {
+    // Cloudflare rejects "reusing existing policies" when you pass policy IDs.
+    // Build a fresh policy payload from the reusable parts only.
+    const permissionGroups = Array.isArray(p?.permission_groups) ? p.permission_groups : Array.isArray(p?.permissionGroups) ? p.permissionGroups : null;
+    const resources = p?.resources && typeof p.resources === "object" ? p.resources : null;
+    if (!permissionGroups || !resources) continue;
+    out.push({
+      effect: String(p?.effect || "allow"),
+      permission_groups: permissionGroups,
+      resources,
+    });
+  }
+  return out;
+}
+
 async function main() {
   const vault = "AWW_SHARED";
   const action = String(process.env.ACTION || "rotate");
@@ -426,9 +444,10 @@ async function main() {
 
     const details = await getCloudflareTokenDetails({ accountId, tokenId, managerToken });
     const tokenNameResolved = String(details?.name || details?.token?.name || tokenName || "AWW Deploy Token").trim();
-    const policies = details?.policies;
+    const policiesRaw = details?.policies;
     const condition = details?.condition;
-    if (!Array.isArray(policies) || !policies.length) {
+    const policies = normalizePoliciesForCreate(policiesRaw);
+    if (!policies.length) {
       throw new Error("Cannot clone token: Cloudflare token details did not include policies[]");
     }
     next = await createCloudflareToken({
