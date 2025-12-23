@@ -187,7 +187,11 @@ async function main() {
       "Missing CLOUDFLARE_TOKEN_MANAGER in 1Password (either an item titled CLOUDFLARE_TOKEN_MANAGER, or a field on op://AWW_SHARED/automation)"
     );
   }
-  if (!accountId) throw new Error("Missing op://AWW_SHARED/CLOUDFLARE_ACCOUNT_ID");
+  if (!accountId) {
+    throw new Error(
+      "Missing CLOUDFLARE_ACCOUNT_ID in 1Password (either an item titled CLOUDFLARE_ACCOUNT_ID, or a field on op://AWW_SHARED/automation)"
+    );
+  }
   if (!tokenId) {
     throw new Error(
       "Missing CLOUDFLARE_API_TOKEN_ID in 1Password (either an item titled CLOUDFLARE_API_TOKEN_ID, or a field on op://AWW_SHARED/automation)"
