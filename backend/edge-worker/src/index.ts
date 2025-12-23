@@ -21,6 +21,7 @@ import { analyticsRouter } from './routers/analytics';
 import { vehicleRouter } from './routers/vehicle';
 import { aiRouter } from './routers/ai';
 import { metaRouter } from './routers/meta';
+import { journeysRouter } from './routers/journeys';
 
 // Augment Env typing (local) for new PLATFORM_MODE variable
 declare global {
@@ -94,6 +95,7 @@ app.route('/api/v1/analytics', analyticsRouter);
 app.route('/api/v1/vehicle', vehicleRouter);
 app.route('/api/v1', aiRouter); // /route/* and /journal/*
 app.route('/api/v1/meta', metaRouter);
+app.route('/api/v1/journeys', journeysRouter); // Multi-tenant journey management
 app.use('/api/v1/admin/*', adminAuth);
 app.route('/api/v1/admin', adminRouter);
 

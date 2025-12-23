@@ -1,7 +1,11 @@
 // Environment types for Cloudflare Workers
 export interface Env {
-  // D1 Database
+  // D1 Database (platform registry - tracks all journeys)
   TESLA_DB: D1Database;
+  
+  // Cloudflare API credentials for resource provisioning
+  CLOUDFLARE_ACCOUNT_ID?: string;
+  CLOUDFLARE_API_TOKEN?: string;
   
   // API Keys
   TESSIE_API_KEY?: string;
@@ -14,6 +18,7 @@ export interface Env {
   
   // Admin Configuration
   ADMIN_TOKEN?: string;
+  JWT_SECRET?: string;
   
   // Environment
   ENVIRONMENT?: string;
