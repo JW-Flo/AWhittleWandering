@@ -21,6 +21,16 @@ function isAllowedLabel(label, re, denySet) {
   return re.test(label);
 }
 
+function validateSecretValue(label, value) {
+  const s = String(value ?? "").trim();
+  if (!s) return { ok: false, reason: "empty" };
+  // Common misconfiguration: storing a 1Password reference literal instead of the raw value.
+  if (s.startsWith("op://")) return { ok: false, reason: "looks_like_op_reference" };
+  // Reject embedded newlines for secrets we pass to CLIs (prevents header formatting issues).
+  if (s.includes("\n") || s.includes("\r")) return { ok: false, reason: "contains_newlines" };
+  return { ok: true, value: s };
+}
+
 function safeLog(msg, meta = {}) {
   // Never log values.
   const clean = { ...meta };
@@ -104,10 +114,13 @@ function main() {
 
       const value = f.value;
       if (value === null || value === undefined) continue;
-      const s = String(value);
-      if (!s.trim()) continue;
+          const v = validateSecretValue(label, value);
+          if (!v.ok) {
+            safeLog("sync.secret.skip.invalid_value", { target, name: label, reason: v.reason });
+            continue;
+          }
 
-      setGithubRepoSecret(repo, label, s);
+          setGithubRepoSecret(repo, label, v.value);
       written += 1;
       safeLog("sync.secret.set", { target, name: label });
     }
