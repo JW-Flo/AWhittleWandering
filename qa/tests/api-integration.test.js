@@ -5,8 +5,11 @@
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 
-const API_BASE_URL = "https://awhittlewandering-api.kd8jc7v8cd.workers.dev";
-const FRONTEND_URL = "https://ab99ceea.awhittlewandering-frontend.pages.dev";
+import { getQAConfig } from "../src/qa-config.js";
+
+const runtime = getQAConfig();
+const API_BASE_URL =
+  runtime.apiBaseUrl || "https://awhittlewandering-api.kd8jc7v8cd.workers.dev";
 
 // Test configuration
 const TEST_CONFIG = {
