@@ -137,6 +137,8 @@ function main() {
   const vault = cfg.onePassword.vault;
   const denySet = new Set(cfg.onePassword.denyFieldLabels || []);
   const allowSet = new Set(cfg.onePassword.allowedSecretNames || []);
+  const allowPrefixes = Array.isArray(cfg.onePassword.allowedSecretPrefixes) ? cfg.onePassword.allowedSecretPrefixes : [];
+  const aliasMap = cfg.onePassword.secretAliases && typeof cfg.onePassword.secretAliases === "object" ? cfg.onePassword.secretAliases : {};
   const labelRe = new RegExp(cfg.onePassword.fieldLabelRegex || "^[A-Z][A-Z0-9_]+$");
 
   const targets = ["development", "production"];
@@ -182,25 +184,30 @@ function main() {
       safeLog("sync.apply.start", { source: "per_item", scope: "repo", itemCount: items.length });
       for (const it of items) {
         const title = String(it?.title || "");
-        // Enforce naming + denylist first.
-        if (!isAllowedLabel(title, labelRe, denySet)) continue;
+        const name = String(aliasMap[title] || title);
+
+        // Enforce naming + denylist first (based on destination name).
+        if (!isAllowedLabel(name, labelRe, denySet)) continue;
         // Never sync legacy CF_* items; only CLOUDFLARE_* is allowed.
-        if (title.startsWith("CF_")) continue;
-        // Strong allowlist guard: only sync the platform secrets we explicitly expect.
-        if (allowSet.size && !allowSet.has(title)) continue;
+        if (title.startsWith("CF_") || name.startsWith("CF_")) continue;
+
+        const allowedByName = allowSet.size ? allowSet.has(name) : false;
+        const allowedByPrefix = allowPrefixes.length ? allowPrefixes.some((p) => typeof p === "string" && name.startsWith(p)) : false;
+        // Guard: only sync platform-related items (explicit names OR allowed prefixes).
+        if ((allowSet.size || allowPrefixes.length) && !(allowedByName || allowedByPrefix)) continue;
 
         // Fetch the full item (so we can extract concealed fields).
         const item = getItem(vault, title);
         const raw = extractBestItemValue(item);
-        const v = validateSecretValue(title, raw);
+        const v = validateSecretValue(name, raw);
         if (!v.ok) {
-          safeLog("sync.secret.skip.invalid_value", { source: "per_item", name: title, reason: v.reason });
+          safeLog("sync.secret.skip.invalid_value", { source: "per_item", name, reason: v.reason });
           continue;
         }
 
-        setGithubRepoSecret(repo, title, v.value);
+        setGithubRepoSecret(repo, name, v.value);
         written += 1;
-        safeLog("sync.secret.set", { source: "per_item", name: title });
+        safeLog("sync.secret.set", { source: "per_item", name });
       }
       safeLog("sync.apply.done", { source: "per_item", written });
       results.push({ source: "per_item", written });
