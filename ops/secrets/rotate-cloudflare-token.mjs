@@ -176,8 +176,17 @@ async function verifyTokenId({ deployToken }) {
   // Cloudflare API Token verify endpoint (returns metadata including identifier/id).
   const url = "https://api.cloudflare.com/client/v4/user/tokens/verify";
   const json = await cfRequestJson(url, { method: "GET", token });
-  const id = String(json?.result?.id || json?.result?.identifier || "").trim();
-  return id;
+  const rawId = String(json?.result?.id || "").trim();
+  const rawIdentifier = String(json?.result?.identifier || "").trim();
+  // Prefer "identifier" if present; Cloudflare APIs often use it as the stable id.
+  const chosen = rawIdentifier || rawId;
+  safeLog("cf.token.verify", {
+    hasId: Boolean(rawId),
+    hasIdentifier: Boolean(rawIdentifier),
+    idLen: rawId ? rawId.length : 0,
+    identifierLen: rawIdentifier ? rawIdentifier.length : 0,
+  });
+  return chosen;
 }
 
 async function resolveTokenId({ accountId, managerToken, tokenId, tokenName }) {
