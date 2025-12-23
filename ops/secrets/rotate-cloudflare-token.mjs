@@ -19,6 +19,26 @@ function safeLog(msg, meta = {}) {
   process.stdout.write(`${msg}${suffix}\n`);
 }
 
+function summarizeCfErrorBody(body) {
+  try {
+    if (!body) return undefined;
+    if (typeof body === "string") return body.slice(0, 300);
+    const errs = Array.isArray(body?.errors) ? body.errors : [];
+    if (errs.length) {
+      const e0 = errs[0] || {};
+      return { code: e0.code, message: e0.message };
+    }
+    const msgs = Array.isArray(body?.messages) ? body.messages : [];
+    if (msgs.length) {
+      const m0 = msgs[0] || {};
+      return { code: m0.code, message: m0.message };
+    }
+    return JSON.stringify(body).slice(0, 300);
+  } catch {
+    return undefined;
+  }
+}
+
 function extractBestItemValue(item) {
   const fields = Array.isArray(item?.fields) ? item.fields : [];
   const candidates = [];
@@ -144,7 +164,7 @@ async function tryListTokens({ accountId, managerToken }) {
       // Sometimes the API wraps arrays differently; be tolerant.
       if (Array.isArray(result?.tokens)) return result.tokens;
     } catch (e) {
-      safeLog("cf.tokens.list.failed", { url, status: e?.status });
+      safeLog("cf.tokens.list.failed", { url, status: e?.status, error: summarizeCfErrorBody(e?.body) });
     }
   }
   return [];
@@ -229,7 +249,7 @@ async function rollCloudflareToken({ accountId, tokenId, managerToken }) {
           return s;
         } catch (e) {
           lastErr = e;
-          safeLog("cf.roll.endpoint.failed", { url, status: e?.status });
+          safeLog("cf.roll.endpoint.failed", { url, status: e?.status, error: summarizeCfErrorBody(e?.body) });
         }
       }
       throw lastErr || new Error("Cloudflare roll failed on all known endpoints");
