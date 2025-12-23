@@ -1,4 +1,11 @@
-# 🎯 Tesla App Development Sprint Progress Summary
+# Sprint Progress Summary (Execution Log — Non‑Normative)
+
+This document is a **sprint/execution log**, not the product roadmap.
+The **single canonical roadmap** is `ROADMAP.md` at repo root.
+
+---
+
+## 🎯 Tesla App Development Sprint Progress Summary
 
 ## 📊 **COMPREHENSIVE PROGRESS REPORT**
 
