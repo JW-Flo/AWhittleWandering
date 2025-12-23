@@ -8,6 +8,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import { getQAConfig } from '../src/qa-config.js';
 
 // Get project root dynamically
 const __filename = fileURLToPath(import.meta.url);
@@ -20,8 +21,9 @@ if (!fs.existsSync(SCREENSHOT_DIR)) {
   fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
 }
 
-const FRONTEND_URL = 'https://ab99ceea.awhittlewandering-frontend.pages.dev';
-const API_URL = 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
+const runtime = getQAConfig();
+const FRONTEND_URL = runtime.frontendUrl || 'https://awhittlewandering.pages.dev';
+const API_URL = runtime.apiBaseUrl || 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
 
 class E2ETestRunner {
   constructor() {

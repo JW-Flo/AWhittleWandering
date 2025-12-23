@@ -18,9 +18,9 @@ CHECK_INTERVAL=300  # 5 minutes
 ERROR_THRESHOLD=5   # Consecutive errors before triggering QA
 API_TIMEOUT=10      # API timeout in seconds
 
-# Service URLs
-BACKEND_URL="https://awhittlewandering-api.kd8jc7v8cd.workers.dev"
-FRONTEND_URL="https://ab99ceea.awhittlewandering-frontend.pages.dev"
+# Service URLs (override via env for repeatable runs)
+BACKEND_URL="${QA_API_BASE_URL:-https://awhittlewandering-api.kd8jc7v8cd.workers.dev}"
+FRONTEND_URL="${QA_FRONTEND_URL:-https://awhittlewandering.pages.dev}"
 
 # Counters
 CONSECUTIVE_ERRORS=0
@@ -62,7 +62,7 @@ run_health_checks() {
     log "🔍 Running comprehensive health checks..."
     
     # Backend health check
-    if check_service_health "Backend" "$BACKEND_URL" "/health"; then
+    if check_service_health "Backend" "$BACKEND_URL" "/api/v1/health"; then
         log "✅ Backend health: OK"
         ((checks_passed++))
     else
@@ -70,7 +70,7 @@ run_health_checks() {
     fi
     
     # Backend API data check
-    if check_service_health "Backend API" "$BACKEND_URL" "/api/tesla-data"; then
+    if check_service_health "Backend API" "$BACKEND_URL" "/api/v1/unified-data"; then
         log "✅ Backend API: OK"
         ((checks_passed++))
     else
@@ -85,9 +85,9 @@ run_health_checks() {
         log "❌ Frontend: FAILED"
     fi
     
-    # API response validation
-    local api_response=$(curl -s --max-time "$API_TIMEOUT" "$BACKEND_URL/api/tesla-data" 2>/dev/null)
-    if echo "$api_response" | jq -e '.battery_level' > /dev/null 2>&1; then
+    # API response validation (structure only; payload treated as untrusted)
+    local api_response=$(curl -s --max-time "$API_TIMEOUT" "$BACKEND_URL/api/v1/unified-data" 2>/dev/null)
+    if echo "$api_response" | jq -e '.overview and .currentStatus and .currentStatus.battery and (.currentStatus.battery.level|type=="number")' > /dev/null 2>&1; then
         log "✅ API Response Structure: OK"
         ((checks_passed++))
     else
@@ -111,7 +111,7 @@ check_performance() {
     
     # Measure backend response time
     local backend_start=$(date +%s%N)
-    if curl -s --max-time "$API_TIMEOUT" "$BACKEND_URL/health" > /dev/null; then
+    if curl -s --max-time "$API_TIMEOUT" "$BACKEND_URL/api/v1/health" > /dev/null; then
         local backend_end=$(date +%s%N)
         local backend_response_time=$(( (backend_end - backend_start) / 1000000 )) # Convert to milliseconds
         
