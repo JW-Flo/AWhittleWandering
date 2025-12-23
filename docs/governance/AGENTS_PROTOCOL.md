@@ -1,6 +1,6 @@
 # Multi-Agent Protocol (Operational Contract)
 
-Purpose
+Purpose  
 Provide deterministic coordination for concurrently running AI agents contributing to code + docs.
 
 Core Artifacts
@@ -28,9 +28,8 @@ Invariants Verification (Pre-Append Checklist)
 
 - Health shape unchanged except appended fields.
 - DB writes remain parameterized.
-- Journey id constant usage preserved.
+- Journey id constant usage preserved (until Stage 2 makes it multi-journey).
 - No unbounded scans introduced without cache/batch plan.
-- Logging uses `log()` helper.
 
 Rollback Procedure
 
@@ -50,3 +49,5 @@ Maintenance Cadence
 
 - Review manifest quarterly.
 - Prune nothing; archive only if repo size pressure emerges (rotate to dated directory preserving original).
+
+

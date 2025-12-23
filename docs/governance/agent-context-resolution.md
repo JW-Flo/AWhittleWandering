@@ -1,11 +1,11 @@
 # Agent Context Resolution Spec
 
-Goal
+Goal  
 Guarantee deterministic shared state for heterogeneous agent frameworks.
 
 Precedence Stack (Highest → Lowest)
 
-1. Invariants (instructions: Invariants + Sections 10–13)
+1. Canonical roadmap (`ROADMAP.md`) + repo instructions/invariants
 2. Live Change Feed (latest seq)
 3. Agents Manifest roles
 4. Multi-Repo Manifest (framework support)
@@ -13,7 +13,7 @@ Precedence Stack (Highest → Lowest)
 
 Acquisition Algorithm
 
-1. Fetch instructions hash (sections 0–13).
+1. Read canonical roadmap (`ROADMAP.md`) for stage/invariant context.
 2. Read last N (≤25) feed lines; capture max seq.
 3. If local cached seq < remote seq → invalidate previous assumptions.
 4. Load agents-manifest; verify role presence for acting framework.
@@ -23,7 +23,6 @@ Write Gate (Before Append)
 
 - Re-fetch feed tail; ensure seq unchanged.
 - Validate schema; compute next seq.
-- Log (planned) diff summary (future QA hook).
 - Append single NDJSON line.
 
 Failure Modes
@@ -40,3 +39,5 @@ Extensibility
 
 - Add new framework: append role + add to supportedFrameworks list + feed entry.
 - Schema evolution: additive only (optional fields).
+
+

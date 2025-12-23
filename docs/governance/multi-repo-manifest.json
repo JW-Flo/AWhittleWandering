@@ -4,43 +4,35 @@
   "repos": [
     {
       "name": "AWhittleWandering",
-      "path": "/Users/jw/dev/atlasit-workspace/AWhittleWandering",
+      "path": "(workspace root)",
       "role": "Canonical backend + shared governance source",
-      "primaryDocs": [
-        ".github/copilot-instructions.md",
-        "docs/roadmap/README.md",
-        "docs/roadmap/live-change-log.ndjson"
-      ],
+      "primaryDocs": [".github/copilot-instructions.md", "ROADMAP.md", "docs/governance/live-change-log.ndjson"],
       "wrappers": false,
       "owners": ["docs-curator", "analytics-aggregator"]
     },
     {
       "name": "Project-AtlasIT",
-      "path": "/Users/jw/dev/atlasit-workspace/Project-AtlasIT",
+      "path": "(sibling repo)",
       "role": "Core platform / extended services",
-      "primaryDocs": [
-        ".github/copilot-instructions.md",
-        "docs/restructure/REPO_RESTRUCTURE_PLAN.md"
-      ],
+      "primaryDocs": [".github/copilot-instructions.md", "docs/restructure/REPO_RESTRUCTURE_PLAN.md"],
       "wrappers": true,
       "owners": ["docs-curator"]
     },
     {
       "name": "JW-Site",
-      "path": "/Users/jw/dev/atlasit-workspace/JW-Site",
+      "path": "(sibling repo)",
       "role": "Public-facing web / marketing integration",
-      "primaryDocs": [
-        ".github/copilot-instructions.md",
-        "docs/restructure/REPO_RESTRUCTURE_PLAN.md"
-      ],
+      "primaryDocs": [".github/copilot-instructions.md", "docs/restructure/REPO_RESTRUCTURE_PLAN.md"],
       "wrappers": true,
       "owners": ["frontend-integrator"]
     }
   ],
   "invariants": {
     "canonicalInstructionsRepo": "AWhittleWandering",
-    "appendOnlyFeed": "docs/roadmap/live-change-log.ndjson",
+    "appendOnlyFeed": "docs/governance/live-change-log.ndjson",
     "seqRequired": true
   },
   "supportedFrameworks": ["copilot", "codex", "kline", "cline"]
 }
+
+
