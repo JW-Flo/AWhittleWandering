@@ -77,20 +77,33 @@ function triggerWorkflow(repo, workflowFile, target) {
   const [owner, name] = String(repo).split("/", 2);
   // In Actions, use the branch name, not the workflow ref.
   const ref = process.env.GITHUB_REF_NAME || "main";
-  run(
-    "gh",
-    [
-      "api",
-      "--method",
-      "POST",
-      `repos/${owner}/${name}/actions/workflows/${workflowFile}/dispatches`,
-      "-f",
-      `ref=${ref}`,
-      "-f",
-      `inputs[target]=${target}`,
-    ],
-    { stdio: ["ignore", "pipe", "pipe"] }
-  );
+  const args = [
+    "api",
+    "--method",
+    "POST",
+    `repos/${owner}/${name}/actions/workflows/${workflowFile}/dispatches`,
+    "-f",
+    `ref=${ref}`,
+    "-f",
+    `inputs[target]=${target}`,
+  ];
+
+  // GitHub can occasionally return transient 5xx for dispatches; retry with jitter.
+  const maxAttempts = 4;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      run("gh", args, { stdio: ["ignore", "pipe", "pipe"] });
+      return;
+    } catch (e) {
+      const msg = String(e?.message || e);
+      const is5xx = /HTTP\s+5\d\d/.test(msg) || /status\s+5\d\d/.test(msg);
+      const last = attempt === maxAttempts;
+      safeLog("sync.cloudflare.dispatch.error", { target, workflow: workflowFile, attempt, is5xx, last });
+      if (!is5xx || last) throw e;
+      const backoffMs = Math.round(250 * Math.pow(2, attempt - 1) + Math.random() * 250);
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, backoffMs);
+    }
+  }
 }
 
 function extractBestItemValue(item) {
@@ -229,8 +242,13 @@ function main() {
     const wf = cfg.behavior.cloudflareWorkflowFile || "sync-secrets.yml";
     const cfTargets = cfg.behavior.cloudflareTargets || targets;
     for (const t of cfTargets) {
-      triggerWorkflow(repo, wf, t);
-      safeLog("sync.cloudflare.dispatched", { target: t, workflow: wf });
+      try {
+        triggerWorkflow(repo, wf, t);
+        safeLog("sync.cloudflare.dispatched", { target: t, workflow: wf });
+      } catch (e) {
+        // Do not fail the whole secrets sync due to a flaky dispatch; it can be re-run manually.
+        safeLog("sync.cloudflare.dispatch.failed", { target: t, workflow: wf, message: String(e?.message || e) });
+      }
     }
   }
 
