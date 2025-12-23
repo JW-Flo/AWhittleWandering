@@ -44,14 +44,16 @@ function getItem(vault, title) {
 }
 
 function getGithubEnvVar(repo, envName, varName) {
-  const vars = runJson("gh", ["variable", "list", "--env", envName, "--repo", repo, "--json", "name,value"]);
+  // Use repo-level Actions variables (GitHub Apps cannot always access Environment variables APIs).
+  const vars = runJson("gh", ["variable", "list", "--repo", repo, "--json", "name,value"]);
   const found = (vars || []).find((v) => v.name === varName);
   return found?.value || "";
 }
 
 function setGithubEnvVar(repo, envName, varName, value) {
   // value is an ISO timestamp, not a secret.
-  run("gh", ["variable", "set", varName, "--env", envName, "--repo", repo, "--body", value], { stdio: ["ignore", "pipe", "pipe"] });
+  // Use repo-level Actions variables.
+  run("gh", ["variable", "set", varName, "--repo", repo, "--body", value], { stdio: ["ignore", "pipe", "pipe"] });
 }
 
 function setGithubEnvSecret(repo, envName, name, value) {
@@ -70,7 +72,7 @@ function main() {
   const vault = cfg.onePassword.vault;
   const denySet = new Set(cfg.onePassword.denyFieldLabels || []);
   const labelRe = new RegExp(cfg.onePassword.fieldLabelRegex || "^[A-Z][A-Z0-9_]+$");
-  const lastSyncVar = cfg.github.lastSyncVarName || "AWW_1P_LAST_SYNCED_ITEM_UPDATED_AT";
+  const lastSyncPrefix = cfg.github.lastSyncVarNamePrefix || "AWW_1P_LAST_SYNCED_ITEM_UPDATED_AT";
 
   const targets = ["development", "production"];
   const results = [];
@@ -89,6 +91,7 @@ function main() {
     const opUpdatedAt = String(item.updated_at || item.updatedAt || "");
     if (!opUpdatedAt) throw new Error(`Missing updated_at for op://${vault}/${itemTitle}/*`);
 
+    const lastSyncVar = `${lastSyncPrefix}_${String(target).toUpperCase()}`;
     const prev = getGithubEnvVar(repo, ghEnv, lastSyncVar);
     if (prev && prev >= opUpdatedAt) {
       safeLog("sync.noop", { target, opUpdatedAt, lastSynced: prev });
