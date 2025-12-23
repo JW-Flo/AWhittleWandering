@@ -2,10 +2,7 @@ name: PR Auto-label (Codex policy)
 
 on:
   pull_request:
-    # Include label changes so policy labels (e.g. codex:autonomous) are re-applied
-    # if someone removes them manually. This workflow only ADDS missing labels (never removes),
-    # so it converges quickly and does not loop indefinitely.
-    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   pull-requests: write

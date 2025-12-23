@@ -39,8 +39,6 @@ dist/
 *.pem
 .vscode/
 .idea/
-.idea/
 
 # Bun
 bun.lock
-.env.cloudflare
