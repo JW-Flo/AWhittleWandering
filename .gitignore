@@ -39,3 +39,6 @@ dist/
 *.pem
 .vscode/
 .idea/
+
+# Bun
+bun.lock

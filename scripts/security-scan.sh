@@ -14,6 +14,13 @@ scan_paths() {
     fi
   fi
 
+  # Hard runtime cap per pattern scan to avoid pathological hangs.
+  # Default: short for PRs, longer for full runs.
+  local rg_timeout="${RG_TIMEOUT_SECONDS:-}"
+  if [[ -z "$rg_timeout" ]]; then
+    if [[ "$mode" == "pr" ]]; then rg_timeout="8"; else rg_timeout="20"; fi
+  fi
+
   if ! command -v rg >/dev/null 2>&1; then
     echo "[secscan] rg not found; skipping scan (CI installs ripgrep explicitly)" >&2
     return 0
@@ -28,14 +35,25 @@ scan_paths() {
   fi
 
   # IMPORTANT: all flags (including -g) must come before the pattern/path args.
-  rg --hidden --no-ignore-vcs --files-with-matches \
-    --max-filesize 2M --max-count 1 \
-    -g '!.git/**' \
-    -g '!node_modules/**' -g '!dist/**' -g '!build/**' -g '!.wrangler/**' -g '!.backup/**' \
-    -g '!**/package-lock.json' -g '!**/pnpm-lock.yaml' -g '!**/yarn.lock' \
-    -g '!scripts/security-scan.sh' -g '!scripts/setup-ide-ai.sh' \
-    "${extra_globs[@]}" \
-    -- "$pattern" . || true
+  if command -v timeout >/dev/null 2>&1; then
+    timeout "${rg_timeout}s" rg --hidden --no-ignore-vcs --files-with-matches \
+      --max-filesize 2M --max-count 1 \
+      -g '!.git/**' \
+      -g '!node_modules/**' -g '!dist/**' -g '!build/**' -g '!.wrangler/**' -g '!.backup/**' \
+      -g '!**/package-lock.json' -g '!**/pnpm-lock.yaml' -g '!**/yarn.lock' \
+      -g '!scripts/security-scan.sh' -g '!scripts/setup-ide-ai.sh' \
+      "${extra_globs[@]}" \
+      -- "$pattern" . || true
+  else
+    rg --hidden --no-ignore-vcs --files-with-matches \
+      --max-filesize 2M --max-count 1 \
+      -g '!.git/**' \
+      -g '!node_modules/**' -g '!dist/**' -g '!build/**' -g '!.wrangler/**' -g '!.backup/**' \
+      -g '!**/package-lock.json' -g '!**/pnpm-lock.yaml' -g '!**/yarn.lock' \
+      -g '!scripts/security-scan.sh' -g '!scripts/setup-ide-ai.sh' \
+      "${extra_globs[@]}" \
+      -- "$pattern" . || true
+  fi
 }
 
 hits=0
