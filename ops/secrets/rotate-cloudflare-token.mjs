@@ -131,6 +131,7 @@ function sleepMs(ms) {
 async function tryListTokens({ accountId, managerToken }) {
   // Cloudflare has multiple token surfaces (user vs account-owned). We try both.
   const endpoints = [
+    `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/tokens`,
     `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/api/tokens`,
     `https://api.cloudflare.com/client/v4/user/tokens`,
   ];
@@ -147,6 +148,16 @@ async function tryListTokens({ accountId, managerToken }) {
     }
   }
   return [];
+}
+
+async function verifyTokenId({ deployToken }) {
+  const token = String(deployToken || "").trim();
+  if (!token) return "";
+  // Cloudflare API Token verify endpoint (returns metadata including identifier/id).
+  const url = "https://api.cloudflare.com/client/v4/user/tokens/verify";
+  const json = await cfRequestJson(url, { method: "GET", token });
+  const id = String(json?.result?.id || json?.result?.identifier || "").trim();
+  return id;
 }
 
 async function resolveTokenId({ accountId, managerToken, tokenId, tokenName }) {
@@ -186,27 +197,42 @@ async function resolveTokenId({ accountId, managerToken, tokenId, tokenName }) {
 }
 
 async function rollCloudflareToken({ accountId, tokenId, managerToken }) {
-  const url = `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/api/tokens/${encodeURIComponent(tokenId)}/roll`;
+  const id = encodeURIComponent(tokenId);
+  const acct = encodeURIComponent(accountId);
+  const urls = [
+    `https://api.cloudflare.com/client/v4/accounts/${acct}/tokens/${id}/roll`,
+    `https://api.cloudflare.com/client/v4/accounts/${acct}/api/tokens/${id}/roll`,
+    `https://api.cloudflare.com/client/v4/user/tokens/${id}/roll`,
+  ];
 
   const maxAttempts = 4;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      const json = await cfRequestJson(url, { method: "PUT", token: managerToken });
-      if (!json || json.success !== true) {
-        throw new Error(`Cloudflare roll failed: ${JSON.stringify({ success: json?.success, errors: json?.errors })}`);
+      let lastErr = null;
+      for (const url of urls) {
+        try {
+          const json = await cfRequestJson(url, { method: "PUT", token: managerToken });
+          if (!json || json.success !== true) {
+            throw new Error(`Cloudflare roll failed: ${JSON.stringify({ success: json?.success, errors: json?.errors })}`);
+          }
+          const value =
+            json?.result?.value ||
+            json?.result?.token ||
+            json?.result?.api_token ||
+            json?.result?.apiToken ||
+            json?.result ||
+            "";
+          const s = String(value || "").trim();
+          if (!s || s.startsWith("op://") || s.includes("\n") || s.includes("\r")) {
+            throw new Error("Cloudflare roll returned an unexpected token value shape");
+          }
+          return s;
+        } catch (e) {
+          lastErr = e;
+          safeLog("cf.roll.endpoint.failed", { url, status: e?.status });
+        }
       }
-      const value =
-        json?.result?.value ||
-        json?.result?.token ||
-        json?.result?.api_token ||
-        json?.result?.apiToken ||
-        json?.result ||
-        "";
-      const s = String(value || "").trim();
-      if (!s || s.startsWith("op://") || s.includes("\n") || s.includes("\r")) {
-        throw new Error("Cloudflare roll returned an unexpected token value shape");
-      }
-      return s;
+      throw lastErr || new Error("Cloudflare roll failed on all known endpoints");
     } catch (e) {
       const msg = String(e?.message || e);
       const isRetryable = /HTTP\s+5\d\d/.test(msg) || /timeout|aborted|ECONNRESET|EAI_AGAIN/i.test(msg);
@@ -250,10 +276,20 @@ async function main() {
       "Missing CLOUDFLARE_ACCOUNT_ID in 1Password (either an item titled CLOUDFLARE_ACCOUNT_ID, or a field on op://AWW_SHARED/automation)"
     );
   }
-  const tokenId = await resolveTokenId({ accountId, managerToken, tokenId: tokenIdRaw, tokenName });
+  // Resolve deploy token id (preferred: explicit id; fallback: name via token list; fallback2: verify current deploy token).
+  const current = getItemValue(vault, "CLOUDFLARE_API_TOKEN");
+  let tokenId = "";
+  try {
+    tokenId = await resolveTokenId({ accountId, managerToken, tokenId: tokenIdRaw, tokenName });
+  } catch (e) {
+    safeLog("cf.token_id.resolve.failed", { message: String(e?.message || e) });
+    const verifiedId = await verifyTokenId({ deployToken: current });
+    if (!verifiedId) throw e;
+    tokenId = verifiedId;
+    safeLog("cf.token_id.resolved.via_verify", {});
+  }
 
   // Preserve current deploy token as *_PREVIOUS (for recovery/debug). This is NOT used by wrangler.
-  const current = getItemValue(vault, "CLOUDFLARE_API_TOKEN");
   if (current) {
     upsertItemField(vault, "CLOUDFLARE_API_TOKEN_PREVIOUS", "CLOUDFLARE_API_TOKEN_PREVIOUS", current);
     safeLog("cf.rotate.previous.set", { name: "CLOUDFLARE_API_TOKEN_PREVIOUS" });
