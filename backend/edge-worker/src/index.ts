@@ -23,6 +23,7 @@ import { aiRouter } from './routers/ai';
 import { metaRouter } from './routers/meta';
 import { journeysRouter } from './routers/journeys';
 import { placesRouter } from './routers/places';
+import { verifyJwtHS256 } from './utils/jwtHs256';
 
 // Augment Env typing (local) for new PLATFORM_MODE variable
 declare global {
@@ -72,17 +73,44 @@ app.use('*', async (c, next) => {
 
 // Admin auth middleware (non-invasive; only enforces if ADMIN_TOKEN configured)
 const adminAuth = async (c: any, next: any) => {
-  const secret = c.env?.ADMIN_TOKEN;
-  if (!secret) return next(); // No token configured; skip enforcement (dev)
+  const secret = String(c.env?.ADMIN_TOKEN || '').trim();
+  const prev = String(c.env?.ADMIN_TOKEN_PREVIOUS || '').trim();
+  const jwtCur = String(c.env?.JWT_SECRET || '').trim();
+  const jwtPrev = String(c.env?.JWT_SECRET_PREVIOUS || '').trim();
+
+  // If nothing is configured, skip enforcement (dev).
+  if (!secret && !prev && !jwtCur && !jwtPrev) return next();
+
   const authz = c.req.header('Authorization') || '';
   if (!authz.startsWith('Bearer ')) {
     return c.json({ ok: false, error: 'Missing bearer token' }, 401);
   }
   const token = authz.slice(7).trim();
-  if (token !== secret) {
-    return c.json({ ok: false, error: 'Invalid token' }, 403);
+
+  // 1) Static token auth (rolling)
+  if ((secret && token === secret) || (prev && token === prev)) {
+    await next();
+    return;
   }
-  await next();
+
+  // 2) JWT admin auth (rolling secrets): accept HS256 token signed by JWT_SECRET or JWT_SECRET_PREVIOUS
+  const jwtSecrets = [jwtCur, jwtPrev].filter(Boolean);
+  if (jwtSecrets.length) {
+    const verified = await verifyJwtHS256(token, jwtSecrets);
+    if (verified.ok) {
+      const p: any = verified.payload;
+      const isAdmin =
+        p?.admin === true ||
+        p?.role === 'admin' ||
+        (typeof p?.scope === 'string' && p.scope.split(/\s+/).includes('admin'));
+      if (isAdmin) {
+        await next();
+        return;
+      }
+    }
+  }
+
+  return c.json({ ok: false, error: 'Invalid token' }, 403);
 };
 
 // Mount routers (admin protected)
