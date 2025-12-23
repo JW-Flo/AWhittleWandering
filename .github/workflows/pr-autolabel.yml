@@ -65,24 +65,74 @@ jobs:
 
             const touchesRuntime = files.some((f) => runtimePaths.some((p) => f.startsWith(p)));
 
-            const desired = new Set();
-            for (const l of defaultLabels) desired.add(l);
-            if (touchesRuntime) for (const l of runtimeLabels) desired.add(l);
+            // Determine verify tier for Codex runs.
+            // Default: lite for runtime PRs; auto-escalate to full for risky diffs.
+            const touchesBackend = files.some((f) => f.startsWith("backend/"));
+            const touchesFrontend = files.some((f) => f.startsWith("frontend/"));
+            const touchesShared = files.some((f) => f.startsWith("shared/"));
+            const touchedAreas = [touchesBackend, touchesFrontend, touchesShared].filter(Boolean).length;
+
+            const depsChanged = files.some((f) =>
+              f === "package-lock.json" ||
+              f === "pnpm-lock.yaml" ||
+              f === "yarn.lock" ||
+              f === "package.json" ||
+              f.endsWith("/package.json")
+            );
+
+            const gatesChanged = files.some((f) =>
+              f.startsWith(".github/workflows/") ||
+              f === ".github/codex/policy.yml" ||
+              f === "scripts/preflight.sh" ||
+              f === "scripts/security-scan.sh"
+            );
+
+            const shouldFull = depsChanged || gatesChanged || touchedAreas >= 2;
+
+            const desiredPreRun = new Set();
+            for (const l of defaultLabels) desiredPreRun.add(l);
+            if (touchesRuntime) {
+              // Apply verify tier labels first so the subsequent `codex:run` label event sees them.
+              desiredPreRun.add("codex:lite");
+              if (shouldFull) desiredPreRun.add("codex:full");
+              // Track which agent is doing the work when Codex automation is invoked.
+              desiredPreRun.add("agent:work:codex");
+            }
 
             // Only add missing labels; never remove (prevents label-churn loops).
             const existing = new Set((pr.labels || []).map((l) => l.name));
-            const toAdd = [...desired].filter((l) => !existing.has(l));
+            const toAddPreRun = [...desiredPreRun].filter((l) => !existing.has(l));
 
             core.info(`changed_files=${files.length} touchesRuntime=${touchesRuntime}`);
-            core.info(`labels_to_add=${toAdd.join(",") || "(none)"}`);
+            core.info(`depsChanged=${depsChanged} gatesChanged=${gatesChanged} touchedAreas=${touchedAreas} shouldFull=${shouldFull}`);
+            core.info(`labels_to_add_preRun=${toAddPreRun.join(",") || "(none)"}`);
 
-            if (toAdd.length === 0) return;
+            if (toAddPreRun.length > 0) {
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number: pr.number,
+                labels: toAddPreRun,
+              });
+              for (const l of toAddPreRun) existing.add(l);
+            }
+
+            // Add `codex:run` last so the labeled event sees codex:lite/full already present.
+            const toAddRun = [];
+            if (touchesRuntime) {
+              for (const l of runtimeLabels) {
+                if (!existing.has(l)) toAddRun.push(l);
+              }
+            }
+
+            core.info(`labels_to_add_run=${toAddRun.join(",") || "(none)"}`);
+            if (toAddRun.length === 0) return;
 
             await github.rest.issues.addLabels({
               owner,
               repo,
               issue_number: pr.number,
-              labels: toAdd,
+              labels: toAddRun,
             });
 
 
