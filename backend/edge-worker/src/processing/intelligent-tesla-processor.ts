@@ -98,8 +98,9 @@ export class TeslaDataProcessor {
    * Process real-time vehicle state with location intelligence
    */
   private async processVehicleState(): Promise<void> {
+    const token = this.env.TESSIE_API_TOKEN || this.env.TESSIE_API_KEY;
     const response = await fetch(`https://api.tessie.com/${this.env.VEHICLE_ID}/state`, {
-      headers: { 'Authorization': `Bearer ${this.env.TESSIE_API_KEY}` }
+      headers: { 'Authorization': `Bearer ${token}` }
     });
     
     const data = await response.json() as any;
@@ -160,10 +161,11 @@ export class TeslaDataProcessor {
    */
   private async processHistoricalDrives(): Promise<void> {
     console.log('🚗 Processing historical drives...');
+    const token = this.env.TESSIE_API_TOKEN || this.env.TESSIE_API_KEY;
     
     // Get drives since June 1, 2025
     const response = await fetch(`https://api.tessie.com/${this.env.VEHICLE_ID}/drives?since=2025-06-01T00:00:00Z`, {
-      headers: { 'Authorization': `Bearer ${this.env.TESSIE_API_KEY}` }
+      headers: { 'Authorization': `Bearer ${token}` }
     });
     
     const data = await response.json() as any;
@@ -243,9 +245,10 @@ export class TeslaDataProcessor {
    */
   private async processHistoricalCharges(): Promise<void> {
     console.log('🔋 Processing historical charges...');
+    const token = this.env.TESSIE_API_TOKEN || this.env.TESSIE_API_KEY;
     
     const response = await fetch(`https://api.tessie.com/${this.env.VEHICLE_ID}/charges?since=2025-06-01T00:00:00Z`, {
-      headers: { 'Authorization': `Bearer ${this.env.TESSIE_API_KEY}` }
+      headers: { 'Authorization': `Bearer ${token}` }
     });
     
     const data = await response.json() as any;

@@ -8,6 +8,9 @@ export interface Env {
   CLOUDFLARE_API_TOKEN?: string;
   
   // API Keys
+  // Tessie uses bearer tokens; canonical name is TESSIE_API_TOKEN.
+  // Back-compat: older deployments may still use TESSIE_API_KEY.
+  TESSIE_API_TOKEN?: string;
   TESSIE_API_KEY?: string;
   MAPBOX_API_TOKEN?: string;
   OPENWEATHER_API_KEY?: string;

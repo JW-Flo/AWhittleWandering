@@ -8,6 +8,7 @@ declare global {
   interface Env {
     ADMIN_TOKEN?: string;
     TESLA_DB?: any;
+    TESSIE_API_TOKEN?: string;
     TESSIE_API_KEY?: string;
     ENVIRONMENT?: string;
     PLATFORM_MODE?: string;
@@ -51,7 +52,7 @@ adminRouter.get('/status', async (c) => {
     timestamp: new Date().toISOString(),
     adminTokenConfigured: !!env?.ADMIN_TOKEN,
     dbAvailable: !!env?.TESLA_DB,
-    tessieConfigured: !!env?.TESSIE_API_KEY,
+    tessieConfigured: !!(env?.TESSIE_API_TOKEN || env?.TESSIE_API_KEY),
     environment: env?.ENVIRONMENT || 'unknown',
     platformMode: env?.PLATFORM_MODE || 'live'
   };

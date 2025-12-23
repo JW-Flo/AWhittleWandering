@@ -19,7 +19,7 @@ tripStatusRouter.get('/config', async (c) => {
     appName: 'Tesla Road Trip Tracker',
     apiVersion: '3.0.0',
     features: {
-      liveTeslaData: !!c.env?.TESSIE_API_KEY,
+      liveTeslaData: !!(c.env?.TESSIE_API_TOKEN || c.env?.TESSIE_API_KEY),
       mapIntegration: !!c.env?.MAPBOX_API_TOKEN,
       realtimeUpdates: true
     },
