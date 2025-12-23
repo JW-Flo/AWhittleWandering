@@ -21,6 +21,10 @@ const TARGET_URL = process.env.QA_FRONTEND_URL || "https://awhittlewandering.com
 const API_BASE =
   process.env.QA_API_BASE_URL || "https://awhittlewandering-api.kd8jc7v8cd.workers.dev";
 
+// Timeout durations for different wait scenarios
+const APP_SETTLE_TIMEOUT_MS = 8000;  // Time to wait for app to fetch data and settle
+const POST_INTERACTION_WAIT_MS = 1500; // Time to wait after UI interactions
+
 function exists(p) {
   try {
     return fs.existsSync(p);
@@ -177,7 +181,7 @@ async function main() {
 
     await step("wait-for-app-settle", async () => {
       // Give the app time to fetch data / settle.
-      await sleep(8000);
+      await sleep(APP_SETTLE_TIMEOUT_MS);
       report.bodyTextSample = await page.evaluate(() =>
         (document.body?.innerText || "").replace(/\s+/g, " ").trim().slice(0, 240)
       );
@@ -228,7 +232,7 @@ async function main() {
       report.canUseTestIds = canInteract;
       if (!canInteract) return;
       await page.click('[data-testid="refresh-button"]');
-      await sleep(1500);
+      await sleep(POST_INTERACTION_WAIT_MS);
       report.uiObservedErrorCard = Boolean(await page.$('[data-testid="error-card"]'));
       const shot = path.join(artifacts.dir, "after-refresh.png");
       await page.screenshot({ path: shot, fullPage: true });
