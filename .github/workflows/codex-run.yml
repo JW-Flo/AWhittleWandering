@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       verify_mode:
-        description: "Codex verification mode (lite=security scan only, full=security scan + preflight)"
+        description: "Codex verification mode (lite=no required gates, full=security scan + preflight)"
         required: false
         default: "lite"
         type: choice
@@ -41,7 +41,7 @@ jobs:
 
       # Label-controlled verification mode:
       # - codex:full => run preflight
-      # - otherwise  => lite (security scan only)
+      # - otherwise  => lite (no required gates)
       CODEX_VERIFY_MODE: >-
         ${{
           github.event_name == 'workflow_dispatch' && inputs.verify_mode ||
@@ -52,7 +52,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install ripgrep
+      - name: Install ripgrep (security scan)
+        if: ${{ env.CODEX_VERIFY_MODE == 'full' }}
         run: |
           set -euo pipefail
           if command -v rg >/dev/null 2>&1; then
@@ -94,9 +95,8 @@ jobs:
             Use the PR diff and PR description as the source of truth for what to build/fix.
 
             Verification policy:
-            - Always run: `bash scripts/security-scan.sh`
-            - If verify mode is "full", also run: `bash scripts/preflight.sh`
-            - If verify mode is "lite", DO NOT run `scripts/preflight.sh` or do heavy installs unless absolutely required to complete the requested change.
+            - If verify mode is "full": run `bash scripts/security-scan.sh` and `bash scripts/preflight.sh`.
+            - If verify mode is "lite": no required gates. Run `bash scripts/security-scan.sh` only when risk warrants (deps/auth/secrets/external APIs). Avoid heavy installs; do not run `scripts/preflight.sh` unless the PR is medium/high risk (or apply `codex:full`).
 
             Iteration policy:
             - If verification fails, implement the minimal safe fix(es) and re-run the relevant verification.
@@ -127,7 +127,7 @@ jobs:
               "",
               "Triggered by `codex:run` label.",
               "",
-              `Verify mode: \`${{ contains(github.event.pull_request.labels.*.name, 'codex:full') && 'full' || 'lite' }}\``,
+              `Verify mode: \`${process.env.CODEX_VERIFY_MODE || ""}\``,
               "",
               "### Final message",
               "```",
