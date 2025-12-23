@@ -1,0 +1,70 @@
+name: Cloudflare API Shield - Sync Schema + Endpoint Management
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - production
+    paths:
+      - 'backend/edge-worker/openapi.json'
+      - 'backend/edge-worker/src/index.ts'
+      - 'backend/edge-worker/src/routers/**'
+      - 'ops/cloudflare/**'
+
+jobs:
+  api-shield-sync:
+    name: Upload schema + sync Endpoint Management
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'package-lock.json'
+
+      - name: Install workspace deps
+        run: npm ci
+
+      - name: Run drift tests (schema <-> routes)
+        run: npm run test
+
+      - name: Generate OpenAPI drift report (always)
+        if: always()
+        run: |
+          npm run build:backend
+          node backend/edge-worker/scripts/openapi-drift-report.mjs
+
+      - name: Upload OpenAPI drift report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-drift-report
+          path: backend/edge-worker/openapi-drift-report.json
+          if-no-files-found: warn
+
+      - name: Upload OpenAPI schema to Cloudflare
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+        run: |
+          if [ -z "$CF_API_TOKEN" ] || [ -z "$CF_ZONE_ID" ]; then
+            echo "Missing CLOUDFLARE_API_TOKEN or CLOUDFLARE_ZONE_ID secrets."
+            exit 1
+          fi
+          chmod +x ./ops/cloudflare/upload-api-shield-schema.sh
+          ./ops/cloudflare/upload-api-shield-schema.sh
+
+      - name: Sync Endpoint Management from OpenAPI (required for enforcement)
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+        run: |
+          node ops/cloudflare/sync-endpoint-management.mjs
+
+
