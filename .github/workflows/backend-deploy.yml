@@ -47,6 +47,9 @@ jobs:
           echo "$OPENWEATHER_API_KEY" | wrangler secret put OPENWEATHER_API_KEY --env production
           echo "$JWT_SECRET" | wrangler secret put JWT_SECRET --env production
           echo "$TESLA_VIN" | wrangler secret put TESLA_VIN --env production
+          # Multi-tenant provisioning secrets
+          echo "$CLOUDFLARE_ACCOUNT_ID" | wrangler secret put CLOUDFLARE_ACCOUNT_ID --env production
+          echo "$CLOUDFLARE_API_TOKEN" | wrangler secret put CLOUDFLARE_API_TOKEN --env production
           
           # Deploy to production (bindings from wrangler.toml will be applied automatically)
           wrangler deploy --env production
@@ -68,6 +71,9 @@ jobs:
           echo "$OPENWEATHER_API_KEY" | wrangler secret put OPENWEATHER_API_KEY --env development
           echo "$JWT_SECRET" | wrangler secret put JWT_SECRET --env development
           echo "$TESLA_VIN" | wrangler secret put TESLA_VIN --env development
+          # Multi-tenant provisioning secrets
+          echo "$CLOUDFLARE_ACCOUNT_ID" | wrangler secret put CLOUDFLARE_ACCOUNT_ID --env development
+          echo "$CLOUDFLARE_API_TOKEN" | wrangler secret put CLOUDFLARE_API_TOKEN --env development
           
           # Deploy to development (bindings from wrangler.toml will be applied automatically)
           wrangler deploy --env development
