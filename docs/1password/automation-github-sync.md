@@ -2,14 +2,14 @@
 
 This repo supports a fully automated sync (Option C):
 - 1Password is the **source of truth**
-- GitHub Environment secrets are a **mirror** for workflows
+- GitHub **repo secrets** are a **mirror** for workflows
 - Cloudflare secrets are updated by the existing `sync-secrets.yml` workflow
 
 ### How it works
 - GitHub Actions workflow: `.github/workflows/1password-sync-github-env-secrets.yml`
   - runs daily (polling) and on manual dispatch
   - reads the `AWW` vault items `dev` and `prod` (fields become secret names)
-  - writes those values into GitHub Environment secrets (`development` / `production`)
+  - writes those values into GitHub **repo secrets**
   - triggers the Cloudflare sync workflow (`sync-secrets.yml`) after applying changes, passing `target={development|production}`
 
 ### Required 1Password structure
@@ -23,9 +23,8 @@ Field labels become GitHub secret names (only labels matching `^[A-Z][A-Z0-9_]{1
 1. Create GitHub environments:
    - `development`
    - `production`
-2. Add `OP_SERVICE_ACCOUNT_TOKEN` as an environment secret in BOTH environments.
+2. Add `OP_SERVICE_ACCOUNT_TOKEN` as a **repository secret**.
    - This is the only secret GitHub must hold to read from 1Password.
-   - Recommended: store it as a **repository secret** (single copy) to avoid environment duplication.
 3. Create a GitHub App installed on this repo with permissions to:
    - write environment secrets
    - trigger workflows
