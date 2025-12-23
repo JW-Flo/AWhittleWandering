@@ -337,6 +337,10 @@ async function createCloudflareToken({ accountId, managerToken, name, policies, 
     const text = await res.text();
     const json = JSON.parse(text || "null");
     if (!res.ok || !json || json.success !== true) {
+      safeLog("cf.token.create.failed", {
+        status: res.status,
+        error: summarizeCfErrorBody(json),
+      });
       const err = new Error(`Cloudflare create token HTTP ${res.status}`);
       err.status = res.status;
       err.body = json;
