@@ -123,6 +123,7 @@ function main() {
 
   const vault = cfg.onePassword.vault;
   const denySet = new Set(cfg.onePassword.denyFieldLabels || []);
+  const allowSet = new Set(cfg.onePassword.allowedSecretNames || []);
   const labelRe = new RegExp(cfg.onePassword.fieldLabelRegex || "^[A-Z][A-Z0-9_]+$");
 
   const targets = ["development", "production"];
@@ -168,7 +169,12 @@ function main() {
       safeLog("sync.apply.start", { source: "per_item", scope: "repo", itemCount: items.length });
       for (const it of items) {
         const title = String(it?.title || "");
+        // Enforce naming + denylist first.
         if (!isAllowedLabel(title, labelRe, denySet)) continue;
+        // Never sync legacy CF_* items; only CLOUDFLARE_* is allowed.
+        if (title.startsWith("CF_")) continue;
+        // Strong allowlist guard: only sync the platform secrets we explicitly expect.
+        if (allowSet.size && !allowSet.has(title)) continue;
 
         // Fetch the full item (so we can extract concealed fields).
         const item = getItem(vault, title);
