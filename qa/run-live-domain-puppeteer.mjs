@@ -2,7 +2,7 @@
  * Live-site Puppeteer QA for awhittlewandering.com
  *
  * Run (no local install required):
- *   PUPPETEER_SKIP_DOWNLOAD=1 npx -y -p puppeteer@24.34.0 -c "node qa/run-live-domain-puppeteer.mjs"
+ *   PUPPETEER_SKIP_DOWNLOAD=1 npx -y -p puppeteer -c "node qa/run-live-domain-puppeteer.mjs"
  *
  * Output:
  *   qa/reports/artifacts/<runId>/live-domain.json (+ screenshots)
