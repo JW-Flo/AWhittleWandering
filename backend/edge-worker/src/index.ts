@@ -69,16 +69,15 @@ app.use('*', async (c, next) => {
   (c as any).executionCtx?.waitUntil?.(Promise.resolve());
 });
 
-// Simple bearer/JWT-like admin auth middleware (non-invasive; only enforces if JWT_SECRET configured)
+// Admin auth middleware (non-invasive; only enforces if ADMIN_TOKEN configured)
 const adminAuth = async (c: any, next: any) => {
-  const secret = c.env?.JWT_SECRET;
-  if (!secret) return next(); // No secret configured; skip enforcement
+  const secret = c.env?.ADMIN_TOKEN;
+  if (!secret) return next(); // No token configured; skip enforcement (dev)
   const authz = c.req.header('Authorization') || '';
   if (!authz.startsWith('Bearer ')) {
     return c.json({ ok: false, error: 'Missing bearer token' }, 401);
   }
   const token = authz.slice(7).trim();
-  // Extremely lightweight token check: token must equal secret or secret prefixed hash
   if (token !== secret) {
     return c.json({ ok: false, error: 'Invalid token' }, 403);
   }

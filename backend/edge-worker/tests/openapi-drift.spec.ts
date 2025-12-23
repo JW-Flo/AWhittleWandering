@@ -15,8 +15,12 @@ function normalizePath(p: string): string {
   return p;
 }
 
+function key(method: string, path: string) {
+  return `${method.toUpperCase()} ${normalizePath(path)}`;
+}
+
 describe('OpenAPI drift', () => {
-  it('OpenAPI contains all implemented routes (GET/POST/PUT/DELETE/PATCH)', () => {
+  it('OpenAPI and implemented routes match (GET/POST/PUT/DELETE/PATCH)', () => {
     const routes: RouteLike[] = (app as any)?.routes || (app as any)?.router?.routes || [];
     expect(Array.isArray(routes)).toBe(true);
     expect(routes.length).toBeGreaterThan(0);
@@ -25,7 +29,9 @@ describe('OpenAPI drift', () => {
 
     const relevantMethods = new Set(['GET', 'POST', 'PUT', 'DELETE', 'PATCH']);
 
-    const missing: string[] = [];
+    // --- implemented -> openapi
+    const implemented = new Set<string>();
+    const missingInOpenApi: string[] = [];
     for (const r of routes) {
       const method = String((r as any).method || '').toUpperCase();
       const rawPath = String((r as any).path || '');
@@ -34,11 +40,31 @@ describe('OpenAPI drift', () => {
       if (!rawPath || rawPath === '*' || rawPath.includes('*')) continue; // ignore middleware/wildcards
 
       const path = normalizePath(toOpenApiPath(rawPath));
+      implemented.add(key(method, path));
+
       const op = openapiPaths[path]?.[method.toLowerCase()];
-      if (!op) missing.push(`${method} ${path}`);
+      if (!op) missingInOpenApi.push(key(method, path));
+    }
+    expect(
+      missingInOpenApi,
+      `Missing operations in openapi.json:\n- ${missingInOpenApi.join('\n- ')}`
+    ).toEqual([]);
+
+    // --- openapi -> implemented
+    const missingInCode: string[] = [];
+    for (const [p, ops] of Object.entries(openapiPaths)) {
+      for (const [m, _op] of Object.entries((ops as any) || {})) {
+        const method = String(m).toUpperCase();
+        if (!relevantMethods.has(method)) continue;
+        const k = key(method, String(p));
+        if (!implemented.has(k)) missingInCode.push(k);
+      }
     }
 
-    expect(missing, `Missing operations in openapi.json:\n- ${missing.join('\n- ')}`).toEqual([]);
+    expect(
+      missingInCode,
+      `Operations exist in openapi.json but are not implemented in the worker:\n- ${missingInCode.join('\n- ')}`
+    ).toEqual([]);
   });
 });
 

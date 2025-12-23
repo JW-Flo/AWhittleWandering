@@ -7,10 +7,12 @@
  * 3. AI classification (Cloudflare AI)
  * 
  * No hardcoded categories - learns dynamically.
+ * Rate limit aware - tracks usage and skips exhausted providers.
  */
 
 import { Hono } from 'hono';
 import { DynamicPlaceIntelligence } from '../services/dynamicPlaceIntelligence';
+import { ApiRateLimitTracker } from '../services/apiRateLimitTracker';
 import { logger } from '../utils/log';
 
 interface PlacesEnv {
@@ -70,6 +72,66 @@ placesRouter.get('/providers', async (c) => {
     estimatedFreeQueries: totalFreeQueries,
     fallbackOrder: ['serper', 'brave', 'tavily', 'cloudflare_ai'],
   });
+});
+
+/**
+ * GET /api/v1/places/rate-limits
+ * Get current rate limit status for all providers
+ */
+placesRouter.get('/rate-limits', async (c) => {
+  const tracker = new ApiRateLimitTracker(c.env.TESLA_DB);
+  
+  try {
+    const statuses = await tracker.getAllProviderStatuses();
+    const analytics = await tracker.getUsageAnalytics(30);
+    
+    // Find best available provider
+    const bestProvider = await tracker.getBestAvailableProvider([
+      'serper', 'brave', 'tavily', 'cloudflare_ai'
+    ]);
+
+    return c.json({
+      success: true,
+      providers: statuses,
+      bestAvailableProvider: bestProvider,
+      analytics: {
+        last30Days: analytics,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    logger.error('Failed to get rate limit status', { error });
+    return c.json({ 
+      success: false, 
+      error: 'Failed to get rate limit status',
+      message: 'Rate limit table may not exist - run migrations',
+    }, 500);
+  }
+});
+
+/**
+ * GET /api/v1/places/rate-limits/:provider
+ * Get detailed rate limit status for a specific provider
+ */
+placesRouter.get('/rate-limits/:provider', async (c) => {
+  const provider = c.req.param('provider');
+  const tracker = new ApiRateLimitTracker(c.env.TESLA_DB);
+  
+  try {
+    const status = await tracker.getProviderStatus(provider);
+    const prediction = await tracker.predictQuotaExhaustion(provider);
+
+    return c.json({
+      success: true,
+      provider,
+      status,
+      prediction,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    logger.error('Failed to get provider rate limit status', { error, provider });
+    return c.json({ success: false, error: 'Failed to get rate limit status' }, 500);
+  }
 });
 
 /**
