@@ -2,15 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "LiveChangeFeedEntry",
   "type": "object",
-  "required": [
-    "timestamp",
-    "version",
-    "area",
-    "type",
-    "summary",
-    "files",
-    "tags"
-  ],
+  "required": ["timestamp", "version", "area", "type", "summary", "files", "tags"],
   "properties": {
     "timestamp": { "type": "string", "format": "date-time" },
     "seq": {
@@ -22,16 +14,7 @@
     "area": { "type": "string", "minLength": 2 },
     "type": {
       "type": "string",
-      "enum": [
-        "init",
-        "feature",
-        "fix",
-        "refactor",
-        "docs",
-        "policy",
-        "deprecation",
-        "removal"
-      ]
+      "enum": ["init", "feature", "fix", "refactor", "docs", "policy", "deprecation", "removal"]
     },
     "summary": { "type": "string", "maxLength": 140 },
     "details": { "type": "string" },
@@ -55,3 +38,5 @@
   },
   "additionalProperties": false
 }
+
+

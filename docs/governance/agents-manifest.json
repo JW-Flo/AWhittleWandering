@@ -6,15 +6,11 @@
     {
       "id": "docs-curator",
       "description": "Maintains architectural & coordination docs; ensures invariants section accuracy.",
-      "permissions": [
-        "append_change_feed",
-        "update_docs",
-        "add_schema_optional"
-      ],
+      "permissions": ["append_change_feed", "update_docs", "add_schema_optional"],
       "primaryFiles": [
         ".github/copilot-instructions.md",
-        "docs/roadmap/README.md",
-        "docs/roadmap/live-change-feed.schema.json"
+        "ROADMAP.md",
+        "docs/governance/live-change-feed.schema.json"
       ]
     },
     {
@@ -26,10 +22,7 @@
         "add_cache_entry",
         "extend_health_metrics"
       ],
-      "primaryFiles": [
-        "backend/edge-worker/src/index.ts",
-        "backend/edge-worker/src/analytics/"
-      ]
+      "primaryFiles": ["backend/edge-worker/src/index.ts", "backend/edge-worker/src/analytics/"]
     },
     {
       "id": "frontend-integrator",
@@ -40,37 +33,25 @@
     {
       "id": "qa-gatekeeper",
       "description": "Extends QA scripts for contract/schema & governance compliance.",
-      "permissions": [
-        "append_change_feed",
-        "add_qa_script",
-        "enforce_seq",
-        "validate_schema"
-      ],
+      "permissions": ["append_change_feed", "add_qa_script", "enforce_seq", "validate_schema"],
       "primaryFiles": ["qa/"]
     },
     {
       "id": "codex-runner",
       "description": "External generation agent producing draft code under invariant compliance.",
       "permissions": ["append_change_feed", "propose_refactor", "add_endpoint"],
-      "primaryFiles": [
-        ".github/copilot-instructions.md",
-        "docs/roadmap/live-change-log.ndjson"
-      ]
+      "primaryFiles": [".github/copilot-instructions.md", "docs/governance/live-change-log.ndjson"]
     },
     {
       "id": "kline-runner",
       "description": "Strategic planner; produces architecture deltas read-only unless paired with docs-curator.",
       "permissions": ["append_change_feed"],
-      "primaryFiles": ["docs/roadmap/README.md"]
+      "primaryFiles": ["ROADMAP.md"]
     },
     {
       "id": "cline-runner",
       "description": "Refactoring + structure normalization executor.",
-      "permissions": [
-        "append_change_feed",
-        "apply_restructure",
-        "update_imports"
-      ],
+      "permissions": ["append_change_feed", "apply_restructure", "update_imports"],
       "primaryFiles": [
         "docs/restructure/REPO_RESTRUCTURE_PLAN.md",
         "docs/restructure/file-normalization-rules.md"
@@ -80,7 +61,9 @@
   "coordination": {
     "seqRequired": true,
     "conflictPolicy": "rebase_increment",
-    "changeFeed": "docs/roadmap/live-change-log.ndjson",
-    "schema": "docs/roadmap/live-change-feed.schema.json"
+    "changeFeed": "docs/governance/live-change-log.ndjson",
+    "schema": "docs/governance/live-change-feed.schema.json"
   }
 }
+
+

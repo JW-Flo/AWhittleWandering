@@ -1,7 +1,7 @@
 # Strategic Acquisition Path (Integration Overview)
 
-Purpose
-Outline how externally sourced research / acquisition documents (e.g., PDFs, diligence summaries) are normalized into the canonical roadmap and multi-agent context without duplicating proprietary detail.
+Purpose  
+Outline how externally sourced research / acquisition documents (e.g., PDFs, diligence summaries) are normalized into governance context without duplicating proprietary detail.
 
 Objectives
 
@@ -17,8 +17,8 @@ Lifecycle Stages
 2. Abstract Extraction
    - Human or curated agent produces < 300 word neutral summary (no sensitive figures unless already public).
    - Summary committed here under section "Registered Abstracts" with handle anchor.
-3. Roadmap Linkage
-   - Update roadmap README or domain topic file adding handle to relevant domain bullet (e.g., AI Policy Engine seed concept).
+3. Implementation Linkage
+   - Update `ROADMAP.md` or a supporting doc adding handle to relevant bullet (e.g., AI Policy Engine seed concept).
 4. Implementation Hooks
    - If code impact: create placeholder module path (e.g., src/policy/engine/) & feed entry type: feature.
 5. Review & Renewal
@@ -37,7 +37,7 @@ interface StrategicHandle {
 }
 ```
 
-Registered Abstracts
+Registered Abstracts  
 (Empty – add first entry upon initial handle registration.)
 
 Agent Usage Guidance
@@ -54,4 +54,6 @@ Governance Hooks
 Planned Next Steps
 
 - Register first strategic handle for AI Policy Engine deterministic rule lattice.
-- Add annual renewal QA script (docs/roadmap tooling) to flag stale handles.
+- Add annual renewal QA script to flag stale handles.
+
+
