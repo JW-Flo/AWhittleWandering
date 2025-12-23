@@ -1,0 +1,26 @@
+{
+  "runtime_code_paths": [
+    "backend/",
+    "frontend/",
+    "shared/"
+  ],
+  "docs_only_paths": [
+    "docs/",
+    ".github/",
+    "README.md",
+    "QA.md",
+    "SECURITY.md",
+    "PRIVACY.md",
+    "DATA_POLICY.md"
+  ],
+  "labels": {
+    "default": [
+      "codex:autonomous"
+    ],
+    "runtime": [
+      "codex:run"
+    ]
+  }
+}
+
+
