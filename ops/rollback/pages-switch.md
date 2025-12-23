@@ -1,70 +1,65 @@
-# Pages Project Switch Rollback
+# Pages Project Rollback Guide
 
 ## Overview
 
-If the atlas-it Pages project (new name) fails to deploy or has issues, follow these steps to revert to the previous stable project name (atlasit-platform). The two names differ only by the hyphen; be consistent across wrangler.toml, workflows, and check scripts.
+If the current Pages deployment fails, follow these steps to troubleshoot or roll back to a previous deployment.
 
-## Rollback Steps
+## Current Configuration
 
-### 1. Update wrangler.toml
+- **Project name**: `awhittlewandering`
+- **Pages URL**: `https://awhittlewandering.pages.dev`
+- **Custom domain**: `awhittlewandering.com`
 
-Change the project name back to the original:
+## Rollback to Previous Deployment
 
-```toml
-name = "atlasit-platform"
-compatibility_date = "2023-10-30"
-pages_build_output_dir = "dist"
+### Option 1: Via Cloudflare Dashboard
 
-[env.production]
-name = "atlasit-platform"
-```
+1. Go to Cloudflare Dashboard → Pages → awhittlewandering
+2. Click "Deployments"
+3. Find a working deployment and click "Rollback to this deployment"
 
-### 2. Update GitHub Workflow
-
-Revert the deploy command in `.github/workflows/frontend-pages-deploy.yml`:
-
-```yaml
-- name: Deploy to Cloudflare Pages
-  env:
-    CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-  working-directory: frontend
-  run: wrangler pages deploy dist --project-name=atlasit-platform
-```
-
-### 3. Redeploy
-
-Commit the changes and push to trigger a new deployment:
+### Option 2: Via Wrangler CLI
 
 ```bash
-git add .
-git commit -m "Rollback Pages project to atlasit-platform"
-git push origin main
+# List recent deployments
+wrangler pages deployment list --project-name awhittlewandering
+
+# Note the deployment ID of a working version, then promote it
+# (This is done via dashboard - CLI rollback requires redeploying from git)
 ```
 
-### 4. Verify
-
-Run the binding check script:
+### Option 3: Redeploy from Git
 
 ```bash
+# Checkout a known working commit
+git checkout <working-commit-sha>
+
+# Build and deploy manually
+cd frontend
+npm run build
+wrangler pages deploy dist --project-name=awhittlewandering
+
+# Return to main
+git checkout main
+```
+
+## Verify Deployment
+
+```bash
+# Run the binding check script
 ./ops/checks/pages-binding-check.sh
-```
 
-Update the script URL if needed:
-
-```bash
-# In pages-binding-check.sh, change:
-PROJECT_NAME="atlasit-platform"
-HEALTH_URL="https://atlasit-platform.pages.dev/healthz"
-GUARD_URL="https://atlasit-platform.pages.dev/guardz"
+# Or manually check:
+curl -I https://awhittlewandering.pages.dev/healthz
+curl -I https://awhittlewandering.com/healthz
 ```
 
 ## Prevention
 
-- Always test deployments in a staging environment first
-- Keep backups of working wrangler.toml configurations
-- Monitor deployment logs for binding errors
+- Always test deployments in preview branches first
+- Monitor deployment logs in Cloudflare dashboard
+- Keep the health endpoint (`/healthz`) functional
 
 ## Contact
 
-If rollback fails, contact Cloudflare support or check the dashboard for project settings.
+If rollback fails, check the Cloudflare dashboard for deployment logs and project settings.

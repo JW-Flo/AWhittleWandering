@@ -5,9 +5,9 @@ IFS=$'\n\t'
 # Cloudflare Pages Binding Check Script
 # Verifies a Pages project is healthy and bindings are correct.
 # Usage: ./ops/checks/pages-binding-check.sh [project-name]
-# Defaults to atlas-it. Derives URLs from project name.
+# Defaults to awhittlewandering. Derives URLs from project name.
 
-PROJECT_NAME="${1:-atlas-it}"
+PROJECT_NAME="${1:-awhittlewandering}"
 BASE="https://${PROJECT_NAME}.pages.dev"
 HEALTH_URL="${BASE}/healthz"
 GUARD_URL="${BASE}/guardz"
@@ -32,11 +32,8 @@ else
             echo "(frontend/wrangler.toml not found)"
         fi
     echo ""
-    echo "3. Fallback to atlasit-platform:"
-    echo "   wrangler pages deploy dist --project-name atlasit-platform"
-    echo ""
-    echo "4. Or create new project:"
-    echo "   wrangler pages create atlas-it"
+    echo "3. Or create new project:"
+    echo "   wrangler pages project create awhittlewandering"
     exit 1
 fi
 
