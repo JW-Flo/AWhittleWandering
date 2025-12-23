@@ -2,11 +2,15 @@ import { Hono } from 'hono';
 import { CacheService } from '../services/cache';
 import { persistCronRun } from '../utils/cronMetrics';
 import { z } from 'zod';
+import { signJwtHS256 } from '../utils/jwtHs256';
 
 // Augment Env typing locally for this module
 declare global {
   interface Env {
     ADMIN_TOKEN?: string;
+    ADMIN_TOKEN_PREVIOUS?: string;
+    JWT_SECRET?: string;
+    JWT_SECRET_PREVIOUS?: string;
     TESLA_DB?: any;
     TESSIE_API_TOKEN?: string;
     TESSIE_API_KEY?: string;
@@ -19,6 +23,31 @@ export const adminRouter = new Hono<{ Bindings: Env }>();
 
 // Auth is enforced at the app layer via `Authorization: Bearer <ADMIN_TOKEN>` on `/api/v1/admin/*`
 // (see `src/index.ts`). Keep this router focused on admin functionality only.
+
+adminRouter.post('/auth/token', async (c) => {
+  // This route is already protected by the adminAuth middleware at the app layer.
+  // It mints a short-lived admin JWT, enabling safe rotations via JWT_SECRET(_PREVIOUS).
+  const env = c.env;
+  const jwtSecret = String(env?.JWT_SECRET || '').trim();
+  if (!jwtSecret) {
+    return c.json({ ok: false, error: 'JWT_SECRET not configured' }, 503);
+  }
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  const ttlSec = 60 * 60; // 1h
+  const payload = {
+    admin: true,
+    scope: 'admin',
+    iat: nowSec,
+    exp: nowSec + ttlSec,
+    jti: (() => {
+      try { return crypto.randomUUID(); } catch { return String(nowSec); }
+    })(),
+  };
+
+  const token = await signJwtHS256(payload, jwtSecret);
+  return c.json({ ok: true, token, expiresInSec: ttlSec });
+});
 
 adminRouter.post('/cache/clear', async (c) => {
   try {

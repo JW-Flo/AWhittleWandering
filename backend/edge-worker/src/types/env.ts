@@ -26,7 +26,9 @@ export interface Env {
   
   // Admin Configuration
   ADMIN_TOKEN?: string;
+  ADMIN_TOKEN_PREVIOUS?: string;
   JWT_SECRET?: string;
+  JWT_SECRET_PREVIOUS?: string;
   
   // Environment
   ENVIRONMENT?: string;
