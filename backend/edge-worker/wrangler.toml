@@ -45,11 +45,15 @@ AI_MODEL_NAME = "@cf/meta/llama-3.1-8b-instruct"
 # new_classes = [ "JourneyTracker" ]
 
 # D1 SQL Database for Tesla data aggregation and caching
+# IMPORTANT: Production and development use SEPARATE databases to prevent data corruption
+# To create a dev database: npx wrangler d1 create tesla-journey-tracker-dev
 [[d1_databases]]
 binding = "TESLA_DB"
 database_name = "tesla-journey-tracker"
 database_id = "09a6ba85-bd36-4ad3-b5a8-92e230943dcb"
-preview_database_id = "09a6ba85-bd36-4ad3-b5a8-92e230943dcb"
+# Preview database is used for local dev and wrangler dev --remote
+# Using local SQLite for preview to prevent accidental production writes
+preview_database_id = "local"
 migrations_dir = "migrations"
 
 # R2 Object Storage for media files
@@ -100,11 +104,12 @@ name = "awhittlewandering-api-dev"
 AI_GATEWAY_ID = "awhittlewandering-ai"
 AI_MODEL_NAME = "@cf/meta/llama-3.1-8b-instruct"
 
-# Development D1 Database (same as production for simplicity)
+# Development D1 Database - uses local SQLite to prevent production data corruption
+# For remote dev testing, create a dev database: npx wrangler d1 create tesla-journey-tracker-dev
 [[env.development.d1_databases]]
 binding = "TESLA_DB"
-database_name = "tesla-journey-tracker"
-database_id = "09a6ba85-bd36-4ad3-b5a8-92e230943dcb"
+database_name = "tesla-journey-tracker-dev"
+database_id = "local"
 
 # Development R2 bucket (same as production)
 [[env.development.r2_buckets]]

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRobustData } from '../hooks/useRobustData';
 import { safeTimeString } from '@/utils/dateHelpers';
 
@@ -15,7 +15,7 @@ export function SystemHealthMonitor() {
   const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([]);
   const [overallHealth, setOverallHealth] = useState<'healthy' | 'degraded' | 'critical'>('healthy');
 
-  const runHealthChecks = useCallback(() => {
+  const runHealthChecks = () => {
     const checks: HealthCheck[] = [];
     const now = new Date();
 
@@ -79,13 +79,13 @@ export function SystemHealthMonitor() {
     } else {
       setOverallHealth('healthy');
     }
-  }, [drives, currentLocation, journeyInsights, loading, error, isLive]);
+  };
 
   useEffect(() => {
     runHealthChecks();
     const interval = setInterval(runHealthChecks, 10000);
     return () => clearInterval(interval);
-  }, [runHealthChecks]);
+  }, [vehicles, drives, charges, currentLocation, journeyInsights, loading, error, isLive]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
