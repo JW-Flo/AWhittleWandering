@@ -9,6 +9,7 @@
  */
 
 import { Env, D1Database } from '../types/env';
+import { getTessieBearerToken } from '../utils/tessieAuth';
 
 // =====================================================
 // SCHEDULED INGESTION WORKERS
@@ -22,10 +23,13 @@ export async function ingestVehicleState(env: Env): Promise<void> {
   const startTime = Date.now();
   
   try {
+    const token = getTessieBearerToken(env);
+    if (!token) throw new Error('Missing Tessie credential: set TESSIE_API_TOKEN (preferred) or TESSIE_API_KEY');
+
     // Fetch current state from Tessie
     const tessieResponse = await fetch(`https://api.tessie.com/${env.VEHICLE_ID}/state`, {
       headers: {
-        'Authorization': `Bearer ${env.TESSIE_API_KEY}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
@@ -108,6 +112,9 @@ export async function ingestDrives(env: Env): Promise<void> {
   const startTime = Date.now();
   
   try {
+    const token = getTessieBearerToken(env);
+    if (!token) throw new Error('Missing Tessie credential: set TESSIE_API_TOKEN (preferred) or TESSIE_API_KEY');
+
     // Get last drive timestamp to only fetch new drives
     const lastDrive = await env.DB.prepare(`
       SELECT MAX(started_at) as last_timestamp 
@@ -120,7 +127,7 @@ export async function ingestDrives(env: Env): Promise<void> {
     // Fetch drives from Tessie
     const tessieResponse = await fetch(`https://api.tessie.com/${env.VEHICLE_ID}/drives?since=${since}&per_page=100`, {
       headers: {
-        'Authorization': `Bearer ${env.TESSIE_API_KEY}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
@@ -234,6 +241,9 @@ export async function ingestCharges(env: Env): Promise<void> {
   const startTime = Date.now();
   
   try {
+    const token = getTessieBearerToken(env);
+    if (!token) throw new Error('Missing Tessie credential: set TESSIE_API_TOKEN (preferred) or TESSIE_API_KEY');
+
     // Get last charge timestamp
     const lastCharge = await env.DB.prepare(`
       SELECT MAX(started_at) as last_timestamp 
@@ -246,7 +256,7 @@ export async function ingestCharges(env: Env): Promise<void> {
     // Fetch charges from Tessie
     const tessieResponse = await fetch(`https://api.tessie.com/${env.VEHICLE_ID}/charges?since=${since}&per_page=100`, {
       headers: {
-        'Authorization': `Bearer ${env.TESSIE_API_KEY}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });

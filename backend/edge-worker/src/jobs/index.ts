@@ -1,7 +1,7 @@
 import { CronDataController } from '../cron-controller';
 
 export function buildJobs(env: any) {
-  const tessieKey = env.TESSIE_API_KEY || '';
+  const tessieKey = env.TESSIE_API_TOKEN || env.TESSIE_API_KEY || '';
   const vin = env.TESLA_VIN || '';
   const controller = new CronDataController(env.TESLA_DB, tessieKey, vin);
 

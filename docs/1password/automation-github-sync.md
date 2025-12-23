@@ -15,7 +15,7 @@ This repo supports a fully automated sync (Option C):
 
 ### Required 1Password structure
 Create a dedicated vault named `AWW` with:
- - item `prod` containing fields like `TESSIE_API_KEY`, `MAPBOX_API_TOKEN`, etc.
+ - item `prod` containing fields like `TESSIE_API_TOKEN`, `MAPBOX_API_TOKEN`, etc.
 
 Field labels become GitHub secret names (only labels matching `^[A-Z][A-Z0-9_]{1,127}$`).
 

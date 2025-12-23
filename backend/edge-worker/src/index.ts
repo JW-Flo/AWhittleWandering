@@ -127,7 +127,7 @@ app.get('/api/v1/config', async (c) => {
     mapboxToken,
     mapboxAccessToken: mapboxToken,
     features: {
-      liveTeslaData: !!c.env?.TESSIE_API_KEY,
+      liveTeslaData: !!(c.env?.TESSIE_API_TOKEN || c.env?.TESSIE_API_KEY),
       mapIntegration: !!mapboxToken,
       realtimeUpdates: true
     },
