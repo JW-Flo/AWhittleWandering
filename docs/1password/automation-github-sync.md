@@ -8,13 +8,13 @@ This repo supports a fully automated sync (Option C):
 ### How it works
 - GitHub Actions workflow: `.github/workflows/1password-sync-github-env-secrets.yml`
   - runs daily (polling) and on manual dispatch
-  - reads the `AWW` vault item `prod` by default (fields become secret names)
+  - reads the `AWW_SHARED` vault item `prod` by default (fields become secret names)
   - writes those values into GitHub **repo secrets**
   - triggers the Cloudflare sync workflow (`sync-secrets.yml`) after applying changes, passing `target={development|production}`
   - workflow dispatch uses REST with an explicit ref (defaults to `main`)
 
 ### Required 1Password structure
-Create a dedicated vault named `AWW` with:
+Create a dedicated vault named `AWW_SHARED` with:
  - item `prod` containing fields like `TESSIE_API_TOKEN`, `MAPBOX_API_TOKEN`, etc.
 
 Field labels become GitHub secret names (only labels matching `^[A-Z][A-Z0-9_]{1,127}$`).
@@ -29,8 +29,8 @@ Field labels become GitHub secret names (only labels matching `^[A-Z][A-Z0-9_]{1
    - write environment secrets
    - trigger workflows
 4. Store the GitHub App credentials in 1Password:
-   - `op://AWW/automation/1PASS_SYNC_APP_ID`
-   - `op://AWW/automation/1PASS_SYNC_PRIVATE_KEY`
+  - `op://AWW_SHARED/automation/1PASS_SYNC_APP_ID`
+  - `op://AWW_SHARED/automation/1PASS_SYNC_PRIVATE_KEY`
 
 ### Config
 See `ops/secrets/github-sync-config.json`.
