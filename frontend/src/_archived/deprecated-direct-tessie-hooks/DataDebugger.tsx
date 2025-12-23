@@ -1,61 +1,21 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useUnifiedJourneyData } from '@/hooks/useUnifiedJourneyData';
+import { useUnifiedTessieApi } from '@/hooks/useUnifiedTessieApi';
 
 interface DataDebuggerProps {
-  // API key prop removed - backend handles authentication
+  tessieApiKey?: string;
 }
 
-const DataDebugger: React.FC<DataDebuggerProps> = () => {
+const DataDebugger: React.FC<DataDebuggerProps> = ({ tessieApiKey }) => {
   const { 
-    data,
-    loading, 
+    vehicles, 
+    vehicleData, 
+    historicalDrives, 
+    historicalCharges, 
+    isLoading, 
     error 
-  } = useUnifiedJourneyData();
-
-  // Transform backend data to match component expectations
-  const vehicles = data?.journey?.currentStatus?.vehicle ? [{
-    id: 'midnight-shadow',
-    display_name: data.journey.overview?.vehicle || 'Midnight Shadow',
-    state: 'online',
-    vin: 'midnight-shadow'
-  }] : [];
-
-  const vehicleData = data?.journey?.currentStatus ? {
-    battery_level: data.journey.currentStatus.battery?.level || 0,
-    battery_range: data.journey.currentStatus.battery?.range || 0,
-    charging_state: data.journey.currentStatus.battery?.charging || 'Unknown',
-    odometer: data.journey.currentStatus.vehicle?.odometer || 0,
-    speed: data.journey.currentStatus.vehicle?.speed || 0,
-    latitude: data.journey.currentStatus.location?.coordinates?.lat || 0,
-    longitude: data.journey.currentStatus.location?.coordinates?.lng || 0,
-    timestamp: Date.now()
-  } : null;
-
-  const historicalDrives = data?.journey?.timeline?.drives?.map((drive: any) => ({
-    id: drive.id,
-    start_time: drive.date,
-    end_time: drive.date,
-    start_address: drive.startLocation,
-    end_address: drive.endLocation,
-    distance_miles: drive.distance,
-    duration_hours: drive.duration / 60,
-    start_coordinates: { lat: 0, lng: 0 },
-    end_coordinates: { lat: 0, lng: 0 }
-  })) || [];
-
-  const historicalCharges = data?.journey?.timeline?.charges?.map((charge: any) => ({
-    id: charge.id,
-    start_time: charge.date,
-    end_time: charge.date,
-    location: charge.location,
-    energy_added_kwh: charge.energyAdded,
-    cost: 0,
-    coordinates: { lat: 0, lng: 0 }
-  })) || [];
-
-  const isLoading = loading;
+  } = useUnifiedTessieApi(tessieApiKey);
 
   return (
     <Card className="w-full">
@@ -69,7 +29,7 @@ const DataDebugger: React.FC<DataDebuggerProps> = () => {
             <div className="space-y-1 text-sm">
               <div>Loading: <Badge variant={isLoading ? "destructive" : "default"}>{isLoading ? "Yes" : "No"}</Badge></div>
               <div>Error: <Badge variant={error ? "destructive" : "default"}>{error || "None"}</Badge></div>
-              <div>Backend API: <Badge variant={data ? "default" : "destructive"}>{data ? "Connected" : "Disconnected"}</Badge></div>
+              <div>API Key: <Badge variant={tessieApiKey ? "default" : "destructive"}>{tessieApiKey ? "Set" : "Missing"}</Badge></div>
             </div>
           </div>
           
