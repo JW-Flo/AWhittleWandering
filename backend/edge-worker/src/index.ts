@@ -41,6 +41,10 @@ app.use('*', analyticsLogger);
 app.use('*', rateLimit);
 app.use('*', errorHandler);
 
+// Ensure preflight requests always get a sane response.
+// CORS headers are added by `corsMiddleware` above (for allowed origins).
+app.options('*', (c) => c.body(null, 204));
+
 // In-memory latency ring buffer (lightweight; resets on deploy)
 const LAT_SAMPLES_MAX = 200;
 const latencySamples: number[] = [];
@@ -145,7 +149,7 @@ app.get('/api/v1/config', async (c) => {
   const mapboxToken = c.env?.MAPBOX_API_TOKEN || null;
 
   return c.json({
-    appName: 'Tesla Road Trip Tracker',
+    appName: 'A Whittle Wandering',
     apiVersion: '3.0.0',
     mode,
     apiBaseUrl,
