@@ -5,7 +5,7 @@ export const tripStatusRouter = new Hono();
 tripStatusRouter.get('/', async (c) => {
   return c.json({
     tripId: "continental-usa-2025",
-    tripName: `Tesla Road Trip - ${new Date().getFullYear()}`,
+    tripName: `A Whittle Wandering - ${new Date().getFullYear()}`,
     status: "active",
     timestamp: Date.now()
   });
@@ -16,7 +16,7 @@ tripStatusRouter.get('/config', async (c) => {
     // Mapbox token from environment (prefer MAPBOX_API_TOKEN if available)
     mapboxToken: c.env?.MAPBOX_API_TOKEN || null,
     apiBaseUrl: 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev',
-    appName: 'Tesla Road Trip Tracker',
+    appName: 'A Whittle Wandering',
     apiVersion: '3.0.0',
     features: {
       liveTeslaData: !!(c.env?.TESSIE_API_TOKEN || c.env?.TESSIE_API_KEY),

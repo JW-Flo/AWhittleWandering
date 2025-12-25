@@ -29,6 +29,17 @@ export interface Env {
   ADMIN_TOKEN_PREVIOUS?: string;
   JWT_SECRET?: string;
   JWT_SECRET_PREVIOUS?: string;
+
+  // User Auth + MFA + Push Notifications
+  MFA_TOTP_ENCRYPTION_KEY?: string; // base64/base64url or raw string; used to encrypt TOTP secrets at rest
+  VAPID_PUBLIC_KEY?: string;        // base64url
+  VAPID_PRIVATE_KEY?: string;       // base64url
+  PUSH_SUBJECT?: string;            // e.g. "mailto:support@awhittlewandering.com"
+  OWNER_EMAIL?: string;             // defaults in code to joe@awhittlewandering.com if unset (not a secret)
+  RECOVERY_CODE_PEPPER?: string;    // optional; if unset, uses MFA_TOTP_ENCRYPTION_KEY for hashing recovery codes
+
+  // KV Namespace for auth/session challenge state
+  AUTH_TOKENS?: KVNamespace;
   
   // Environment
   ENVIRONMENT?: string;
@@ -42,6 +53,13 @@ export interface Env {
   // AI/ML (Future)
   AI?: any;
   AI_MODEL_NAME?: string;
+}
+
+// KV types
+export interface KVNamespace {
+  get(key: string, options?: { type?: 'text' | 'json' }): Promise<any>;
+  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
+  delete(key: string): Promise<void>;
 }
 
 // Analytics Engine types

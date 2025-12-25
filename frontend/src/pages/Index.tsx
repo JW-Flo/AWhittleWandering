@@ -124,7 +124,7 @@ const Index = () => {
       return {
         mapboxToken: null,
         apiBaseUrl: api.baseUrl,
-        appName: 'Tesla Road Trip Tracker',
+        appName: 'A Whittle Wandering',
         apiVersion: '3.0.0',
         features: {
           liveTeslaData: true,
@@ -197,12 +197,15 @@ const Index = () => {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div
+        data-testid="dashboard-loading"
+        className="min-h-screen bg-background flex items-center justify-center"
+      >
         <div className="text-center">
           <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4" />
-          <p className="text-lg">Loading live Tesla data...</p>
+          <p className="text-lg">Loading live journey data...</p>
           <p className="text-sm text-muted-foreground mt-2">
-            {appConfig?.appName || 'Tesla Road Trip Tracker'}
+            {appConfig?.appName || 'A Whittle Wandering'}
           </p>
         </div>
       </div>
@@ -211,9 +214,12 @@ const Index = () => {
 
   return (
     <TeslaDataProvider>
-      <div className="min-h-screen bg-background">
+      <div data-testid="dashboard-container" className="min-h-screen bg-background">
         {/* Header */}
-        <header className="border-b border-tesla-gray-light bg-card/50 backdrop-blur-sm">
+        <header
+          data-testid="dashboard-header"
+          className="border-b border-tesla-gray-light bg-card/50 backdrop-blur-sm"
+        >
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -233,6 +239,7 @@ const Index = () => {
               <div className="flex items-center gap-4">
                 {/* Login/Register buttons */}
                 <Button
+                  data-testid="auth-login-button"
                   variant="outline"
                   size="sm"
                   onClick={() => handleAuth('login')}
@@ -242,6 +249,7 @@ const Index = () => {
                   <LogIn className="w-4 h-4" /> Login
                 </Button>
                 <Button
+                  data-testid="auth-register-button"
                   variant="outline"
                   size="sm"
                   onClick={() => handleAuth('register')}
@@ -253,6 +261,7 @@ const Index = () => {
         {/* Auth feedback message */}
         {authMessage && (
           <output
+            data-testid="auth-message"
             className="fixed top-20 right-4 z-50 bg-card border border-primary rounded-lg shadow-lg px-4 py-2 text-primary text-sm"
             aria-live="polite"
             aria-atomic="true"
@@ -261,6 +270,7 @@ const Index = () => {
           </output>
         )}
                 <Button 
+                  data-testid="coordination-link"
                   variant="outline" 
                   size="sm" 
                   onClick={() => window.location.href = '/coordination'}
@@ -284,6 +294,7 @@ const Index = () => {
                 )}
                 
                 <Button 
+                  data-testid="refresh-button"
                   variant="outline" 
                   size="sm" 
                   onClick={fetchTeslaData}
@@ -299,14 +310,15 @@ const Index = () => {
         </header>
 
         {/* Main Content */}
-        <main className="container mx-auto px-4 py-6">
+        <main data-testid="dashboard-content" className="container mx-auto px-4 py-6">
           <ProductionBanner />
           
           {error && (
-            <Card className="mb-6 border-destructive/20 bg-destructive/5">
+            <Card data-testid="error-card" className="mb-6 border-destructive/20 bg-destructive/5">
               <CardContent className="p-4">
-                <p className="text-destructive text-sm">{error}</p>
+                <p data-testid="error-message" className="text-destructive text-sm">{error}</p>
                 <Button 
+                  data-testid="retry-button"
                   variant="outline" 
                   size="sm" 
                   onClick={fetchTeslaData}
@@ -318,26 +330,26 @@ const Index = () => {
             </Card>
           )}
 
-          <Tabs defaultValue="dashboard" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 bg-tesla-gray">
-              <TabsTrigger value="dashboard" className="data-[state=active]:bg-primary">
+          <Tabs data-testid="dashboard-tabs" defaultValue="dashboard" className="space-y-6">
+            <TabsList data-testid="dashboard-tabs-list" className="grid w-full grid-cols-3 bg-tesla-gray">
+              <TabsTrigger data-testid="tab-dashboard" value="dashboard" className="data-[state=active]:bg-primary">
                 <Car className="w-4 h-4 mr-2" />
                 Live Dashboard
               </TabsTrigger>
-              <TabsTrigger value="vehicle" className="data-[state=active]:bg-primary">
+              <TabsTrigger data-testid="tab-vehicle" value="vehicle" className="data-[state=active]:bg-primary">
                 <Activity className="w-4 h-4 mr-2" />
                 Vehicle Status
               </TabsTrigger>
-              <TabsTrigger value="roadtrip" className="data-[state=active]:bg-primary">
+              <TabsTrigger data-testid="tab-roadtrip" value="roadtrip" className="data-[state=active]:bg-primary">
                 <Route className="w-4 h-4 mr-2" />
                 Road Trip Progress
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="dashboard" className="space-y-6">
+            <TabsContent data-testid="tab-content-dashboard" value="dashboard" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 h-auto lg:h-[calc(100vh-280px)]">
                 {/* Map Section - Full width on mobile */}
-                <div className="lg:col-span-2 order-1 lg:order-1">
+                <div data-testid="tesla-map-wrapper" className="lg:col-span-2 order-1 lg:order-1">
                   <Card className="h-[400px] lg:h-full border-tesla-gray-light">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
@@ -353,7 +365,7 @@ const Index = () => {
                       </div>
                     </CardHeader>
                     <CardContent className="h-[calc(100%-80px)]">
-                      <Suspense fallback={<div className="flex items-center justify-center h-full text-sm">Loading map...</div>}>
+                      <Suspense fallback={<div data-testid="map-loading" className="flex items-center justify-center h-full text-sm">Loading map...</div>}>
                         <LazyTeslaMap
                           vehicleLocation={teslaData ? {
                             latitude: teslaData.currentStatus.location.coordinates.lat,
@@ -375,7 +387,7 @@ const Index = () => {
                 </div>
 
                 {/* Stats Section - Appears below map on mobile */}
-                <div className="space-y-4 order-2 lg:order-2">
+                <div data-testid="vehicle-stats-wrapper" className="space-y-4 order-2 lg:order-2">
                   <VehicleStats
                     batteryLevel={teslaData?.currentStatus.battery.level}
                     range={teslaData?.currentStatus.battery.range}
@@ -418,11 +430,11 @@ const Index = () => {
               </div>
             </TabsContent>
 
-            <TabsContent value="vehicle" className="space-y-6">
+            <TabsContent data-testid="tab-content-vehicle" value="vehicle" className="space-y-6">
               <ConnectedVehicle />
             </TabsContent>
 
-            <TabsContent value="roadtrip" className="space-y-6">
+            <TabsContent data-testid="tab-content-roadtrip" value="roadtrip" className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Road Trip Timeline</CardTitle>

@@ -220,12 +220,12 @@ post_deployment_validation() {
     log "Waiting for deployment propagation..."
     sleep 30
     
-    # Quick health checks
-    local backend_url="https://awhittlewandering-api.kd8jc7v8cd.workers.dev"
-    local frontend_url="https://ab99ceea.awhittlewandering-frontend.pages.dev"
+    # Quick health checks (override via env for repeatable runs)
+    local backend_url="${QA_API_BASE_URL:-https://awhittlewandering-api.kd8jc7v8cd.workers.dev}"
+    local frontend_url="${QA_FRONTEND_URL:-https://awhittlewandering.pages.dev}"
     
     # Backend health check
-    if curl -s --fail "$backend_url/health" > /dev/null; then
+    if curl -s --fail "$backend_url/api/v1/health" > /dev/null; then
         log "✅ Backend health check passed"
     else
         log "❌ Backend health check failed"
@@ -240,8 +240,8 @@ post_deployment_validation() {
         return 1
     fi
     
-    # API data validation
-    if curl -s --fail "$backend_url/api/tesla-data" | jq '.battery_level' > /dev/null; then
+    # API data validation (structure only)
+    if curl -s --fail "$backend_url/api/v1/unified-data" | jq -e '.overview and .currentStatus and .currentStatus.battery and (.currentStatus.battery.level|type=="number")' > /dev/null; then
         log "✅ API data validation passed"
     else
         log "❌ API data validation failed"

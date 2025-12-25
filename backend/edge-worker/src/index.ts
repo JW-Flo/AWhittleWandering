@@ -24,6 +24,10 @@ import { metaRouter } from './routers/meta';
 import { journeysRouter } from './routers/journeys';
 import { placesRouter } from './routers/places';
 import { verifyJwtHS256 } from './utils/jwtHs256';
+import { authRouter } from './routers/auth';
+import { mfaRouter } from './routers/mfa';
+import { pushRouter } from './routers/push';
+import { notificationsRouter } from './routers/notifications';
 
 // Augment Env typing (local) for new PLATFORM_MODE variable
 declare global {
@@ -125,6 +129,10 @@ app.route('/api/v1', aiRouter); // /route/* and /journal/*
 app.route('/api/v1/meta', metaRouter);
 app.route('/api/v1/journeys', journeysRouter); // Multi-tenant journey management
 app.route('/api/v1/places', placesRouter); // Dynamic place detection + activity inference
+app.route('/api/v1/auth', authRouter);
+app.route('/api/v1/mfa', mfaRouter);
+app.route('/api/v1/push', pushRouter);
+app.route('/api/v1/notifications', notificationsRouter);
 app.use('/api/v1/admin/*', adminAuth);
 app.route('/api/v1/admin', adminRouter);
 
@@ -145,7 +153,7 @@ app.get('/api/v1/config', async (c) => {
   const mapboxToken = c.env?.MAPBOX_API_TOKEN || null;
 
   return c.json({
-    appName: 'Tesla Road Trip Tracker',
+    appName: 'A Whittle Wandering',
     apiVersion: '3.0.0',
     mode,
     apiBaseUrl,
@@ -176,7 +184,7 @@ app.get('/api/connectors', async (c) => {
 // Root endpoint
 app.get('/', async (c) => {
   return c.json({
-    service: 'A Whittle Wandering - Tesla Road Trip Tracker',
+    service: 'A Whittle Wandering',
     version: '3.0.0',
     platformMode: c.env?.PLATFORM_MODE || 'live',
     timestamp: new Date().toISOString(),
@@ -218,48 +226,7 @@ app.post('/api/joiner', async (c) => {
   return c.json({ ok: true, userId, log });
 });
 
-// Unified auth action endpoint replacing legacy /drop path
-const authBodySchema = z.object({
-  action: z.enum(['login', 'register']),
-  username: z.string().min(3).optional(),
-  password: z.string().min(6).optional()
-});
-app.post('/api/v1/auth', async (c) => {
-  let parsed;
-  try {
-    const json = await c.req.json();
-    const result = authBodySchema.safeParse(json);
-    if (!result.success) {
-      return c.json({ ok: false, error: 'Validation failed', issues: result.error.issues }, 400);
-    }
-    parsed = result.data;
-  } catch {
-    return c.json({ ok: false, error: 'Malformed JSON body' }, 400);
-  }
-  const { action } = parsed;
-  return c.json({ ok: true, action, message: `${action} successful (demo)` });
-});
-
-// Backward-compatible legacy endpoint /drop (to be removed) – delegates to new handler
-app.post('/drop', async (c) => {
-  // Emit deprecation header so clients can migrate
-  c.header('Deprecation', 'true');
-  c.header('Link', '</api/v1/auth>; rel="successor-version"');
-  // Use same validation schema as /api/v1/auth
-  let parsed;
-  try {
-    const json = await c.req.json();
-    const result = authBodySchema.safeParse(json);
-    if (!result.success) {
-      return c.json({ ok: false, error: 'Validation failed', issues: result.error.issues }, 400);
-    }
-    parsed = result.data;
-  } catch {
-    return c.json({ ok: false, error: 'Malformed JSON body' }, 400);
-  }
-  const { action } = parsed;
-  return c.json({ ok: true, action, message: `${action} successful (legacy /drop – migrate to /api/v1/auth)` });
-});
+// Legacy endpoint /drop removed: replaced by /api/v1/auth
 
 // Export for Cloudflare Workers
 export default app;

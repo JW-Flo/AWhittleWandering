@@ -425,7 +425,7 @@ CREATE INDEX IF NOT EXISTS idx_job_queue_status ON job_queue(status, scheduled_a
 INSERT OR IGNORE INTO vehicles (
   id, vin, display_name, vehicle_type, model, year, color
 ) VALUES (
-  'midnight-shadow', 'UNKNOWN_VIN', 'Midnight Shadow', 'Tesla Model Y', 'Model Y', 2023, 'Midnight Silver Metallic'
+  'midnight-shadow', '5YJYGDEE5LF027324', 'Midnight Shadow', 'Tesla Model Y', 'Model Y', 2023, 'Midnight Silver Metallic'
 );
 
 -- Insert initial journey record

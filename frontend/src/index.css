@@ -8,38 +8,41 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 220 13% 9%;
-    --foreground: 210 40% 98%;
+    /* Core palette: warm, quiet dark (journal-like, not dashboard-like) */
+    --background: 30 12% 8%;
+    --foreground: 40 22% 96%;
 
-    --card: 224 27% 11%;
-    --card-foreground: 210 40% 98%;
+    --card: 30 14% 11%;
+    --card-foreground: 40 22% 96%;
 
-    --popover: 224 27% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 30 14% 11%;
+    --popover-foreground: 40 22% 96%;
 
-    --primary: 193 100% 43%;
-    --primary-foreground: 220 13% 9%;
+    /* Accent is reserved; keep it muted and human */
+    --primary: 174 45% 44%;
+    --primary-foreground: 30 12% 8%;
 
-    --secondary: 220 13% 15%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 30 10% 16%;
+    --secondary-foreground: 40 22% 96%;
 
-    --muted: 220 13% 15%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 30 10% 16%;
+    --muted-foreground: 35 12% 70%;
 
-    --accent: 193 100% 43%;
-    --accent-foreground: 220 13% 9%;
+    --accent: 35 40% 58%;
+    --accent-foreground: 30 12% 8%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 220 13% 20%;
-    --input: 220 13% 15%;
-    --ring: 193 100% 43%;
+    --border: 30 10% 22%;
+    --input: 30 10% 16%;
+    --ring: 174 45% 44%;
 
     /* Tesla-inspired colors */
-    --tesla-blue: 193 100% 43%;
-    --tesla-blue-dark: 193 100% 35%;
-    --tesla-cyan: 180 100% 50%;
+    /* Keep existing semantic names, but shift them into the calmer palette */
+    --tesla-blue: 174 45% 44%;
+    --tesla-blue-dark: 174 45% 34%;
+    --tesla-cyan: 176 40% 54%;
     --tesla-dark: 220 13% 9%;
     --tesla-darker: 220 20% 6%;
     --tesla-gray: 220 13% 15%;
@@ -94,42 +97,25 @@ All colors MUST be HSL.
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
+  /* Optional dark class (keep consistent with the warm base theme) */
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --background: 30 14% 6%;
+    --foreground: 40 22% 96%;
+    --card: 30 14% 10%;
+    --card-foreground: 40 22% 96%;
+    --popover: 30 14% 10%;
+    --popover-foreground: 40 22% 96%;
+    --primary: 174 45% 44%;
+    --primary-foreground: 30 12% 8%;
+    --secondary: 30 10% 15%;
+    --secondary-foreground: 40 22% 96%;
+    --muted: 30 10% 15%;
+    --muted-foreground: 35 12% 70%;
+    --accent: 35 40% 58%;
+    --accent-foreground: 30 12% 8%;
+    --border: 30 10% 20%;
+    --input: 30 10% 15%;
+    --ring: 174 45% 44%;
   }
 }
 
@@ -141,6 +127,23 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "liga" 1, "kern" 1;
+  }
+}
+
+@layer components {
+  /* Typography wrapper for narrative/follower surfaces (keeps dashboard utilitarian). */
+  .journey-typography {
+    --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+      Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+    --font-serif: ui-serif, "Iowan Old Style", "Palatino", "Georgia", "Times New Roman", serif;
+    font-family: var(--font-sans);
+  }
+
+  .journey-typography h1,
+  .journey-typography h2,
+  .journey-typography h3 {
+    font-family: var(--font-serif);
+    letter-spacing: -0.01em;
   }
 }
 

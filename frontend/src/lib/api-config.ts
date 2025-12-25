@@ -1,4 +1,4 @@
-// Centralized API configuration for the Tesla Road Trip Tracker
+// Centralized API configuration for A Whittle Wandering
 // Handles all API endpoints and provides consistent error handling
 
 const getApiBaseUrl = () => {

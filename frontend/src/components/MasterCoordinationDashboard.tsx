@@ -95,7 +95,7 @@ export const MasterCoordinationDashboard: React.FC<MasterCoordinationDashboardPr
   }, []);
 
   return (
-    <div className="p-6 space-y-6">
+    <div data-testid="coordination-page" className="p-6 space-y-6">
       {/* Master Coordination Header */}
       <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
         <CardHeader>

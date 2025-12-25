@@ -291,8 +291,9 @@ npm run qa:network-test
 #### 3. E2E Tests Browser Issues
 
 ```bash
-# Install/update Puppeteer
-npm install puppeteer@latest
+# Install Chromium/Chrome for Puppeteer (deterministic)
+cd qa
+npm run browsers:install
 
 # Check browser availability
 node -e "import('puppeteer').then(p => p.default.launch().then(b => b.close()))"

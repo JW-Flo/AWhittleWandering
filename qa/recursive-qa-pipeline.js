@@ -15,6 +15,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { QADataManager } from "./qa-data-manager.js";
+import { getQAConfig } from "./src/qa-config.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,13 +27,15 @@ class RecursiveQARunner {
     this.maxIterations = options.maxIterations || 5;
     this.qaDataManager = options.qaDataManager || null;
     this.runId = null;
+    const runtime = getQAConfig();
+
     this.config = {
       backend: {
-        url: "https://awhittlewandering-api.kd8jc7v8cd.workers.dev",
+        url: runtime.apiBaseUrl || "https://awhittlewandering-api.kd8jc7v8cd.workers.dev",
         timeout: 30000,
       },
       frontend: {
-        url: "https://ab99ceea.awhittlewandering-frontend.pages.dev",
+        url: runtime.frontendUrl || "https://awhittlewandering.pages.dev",
         timeout: 30000,
       },
       tests: {
@@ -255,9 +258,10 @@ class RecursiveQARunner {
 
   async validateAPIs() {
     const apiEndpoints = [
-      { name: "Health Check", url: `${this.config.backend.url}/health` },
-      { name: "Tesla Data", url: `${this.config.backend.url}/api/tesla-data` },
-      { name: "Config", url: `${this.config.backend.url}/api/config` },
+      { name: "Health Check", url: `${this.config.backend.url}/api/v1/health` },
+      { name: "Meta Routes", url: `${this.config.backend.url}/api/v1/meta/routes` },
+      { name: "Unified Data", url: `${this.config.backend.url}/api/v1/unified-data` },
+      { name: "Config", url: `${this.config.backend.url}/api/v1/config` },
     ];
 
     const results = [];
