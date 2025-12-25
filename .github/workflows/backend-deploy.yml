@@ -30,6 +30,25 @@ jobs:
         run: bun run build
       - name: Install wrangler
         run: npm i -g wrangler
+      - name: Create Cloudflare Resources
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        working-directory: backend/edge-worker
+        run: |
+          # Create D1 database if it doesn't exist
+          echo "Checking for D1 database 'tesla-journey-tracker'..."
+          if ! wrangler d1 list | grep -q "tesla-journey-tracker"; then
+            echo "Creating D1 database 'tesla-journey-tracker'..."
+            wrangler d1 create tesla-journey-tracker
+          else
+            echo "D1 database 'tesla-journey-tracker' already exists"
+          fi
+
+          # Run D1 migrations
+          echo "Running D1 migrations..."
+          wrangler d1 migrations apply tesla-journey-tracker --local
+
       - name: Deploy to Production
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
