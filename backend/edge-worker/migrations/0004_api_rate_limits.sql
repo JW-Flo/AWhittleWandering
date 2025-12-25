@@ -27,19 +27,19 @@ CREATE INDEX IF NOT EXISTS idx_rate_limits_provider_date ON api_rate_limits(prov
 CREATE INDEX IF NOT EXISTS idx_rate_limits_date ON api_rate_limits(request_date);
 CREATE INDEX IF NOT EXISTS idx_rate_limits_provider ON api_rate_limits(provider);
 
--- Provider configurations (optional - can override defaults in code)
-CREATE TABLE IF NOT EXISTS api_provider_configs (
-  provider TEXT PRIMARY KEY,
-  monthly_limit INTEGER NOT NULL,
-  daily_limit INTEGER,
-  minute_limit INTEGER,
-  reset_day INTEGER DEFAULT 1,       -- Day of month limits reset (1-31)
-  reset_hour INTEGER DEFAULT 0,      -- Hour limits reset (0-23 UTC)
-  is_enabled INTEGER DEFAULT 1,
-  priority INTEGER DEFAULT 100,      -- Lower = higher priority
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-);
+-- Provider configurations table (temporarily removed to fix deployment)
+-- CREATE TABLE IF NOT EXISTS api_provider_configs (
+--   provider TEXT PRIMARY KEY,
+--   monthly_limit INTEGER NOT NULL,
+--   daily_limit INTEGER,
+--   minute_limit INTEGER,
+--   reset_day INTEGER DEFAULT 1,       -- Day of month limits reset (1-31)
+--   reset_hour INTEGER DEFAULT 0,      -- Hour limits reset (0-23 UTC)
+--   is_enabled INTEGER DEFAULT 1,
+--   priority INTEGER DEFAULT 100,      -- Lower = higher priority
+--   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+--   updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+-- );
 
 -- Insert default provider configs (will be added via separate migration after deployment)
 -- INSERT OR IGNORE INTO api_provider_configs (provider, monthly_limit, daily_limit, minute_limit, priority) VALUES
