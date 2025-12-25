@@ -66,3 +66,9 @@ const JourneyArc: React.FC<JourneyArcProps> = ({ daysElapsed, totalMiles, states
 export default JourneyArc;
 
 
+
+
+
+
+
+

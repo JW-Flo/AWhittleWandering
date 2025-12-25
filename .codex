@@ -13,7 +13,7 @@ Repo discipline:
 - Create missing folders/files when needed without asking.
 
 Verification:
-- Prefer deterministic checks over “should work.”
+- Prefer deterministic checks over "should work."
 - If lint/typecheck/tests exist, run or provide exact commands.
 - For behavior changes: add/update a minimal test or fixture proving correctness.
 
@@ -22,4 +22,4 @@ Response format:
 2) Plan (3–6 bullets)
 3) Patch (file paths + minimal diff blocks)
 4) Risks + rollback
-5cation commands
+5) Verification commands
