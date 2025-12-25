@@ -1,6 +1,9 @@
 import fs from "fs";
 import path from "path";
 
+// Maximum length for filesystem path segments to avoid OS path length limits
+const MAX_FILENAME_LENGTH = 120;
+
 export function nowId() {
   const d = new Date();
   const pad = (n) => String(n).padStart(2, "0");
@@ -14,7 +17,7 @@ export function sanitizeFilePart(s) {
     .trim()
     .replace(/\s+/g, "-")
     .replace(/[^a-zA-Z0-9._-]/g, "-")
-    .slice(0, 120);
+    .slice(0, MAX_FILENAME_LENGTH);
 }
 
 export function createArtifactPaths(runIdInput) {
