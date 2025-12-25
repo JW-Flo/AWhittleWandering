@@ -15,9 +15,12 @@ CREATE TABLE IF NOT EXISTS api_rate_limits (
   error_count INTEGER DEFAULT 0,
   total_latency_ms INTEGER DEFAULT 0,
   last_error_code TEXT,              -- Last error code if any (e.g., '429', 'TIMEOUT')
-  updated_at TEXT NOT NULL,
-  UNIQUE(provider, request_date, request_hour, request_minute)
+  updated_at TEXT NOT NULL
 );
+
+-- Create unique index separately to avoid column reference issues
+CREATE UNIQUE INDEX IF NOT EXISTS idx_api_rate_limits_unique
+ON api_rate_limits(provider, request_date, request_hour, request_minute);
 
 -- Indexes for common queries
 CREATE INDEX IF NOT EXISTS idx_rate_limits_provider_date ON api_rate_limits(provider, request_date);
@@ -45,4 +48,3 @@ INSERT OR IGNORE INTO api_provider_configs (provider, monthly_limit, daily_limit
   ('tavily', 1000, NULL, NULL, 30),
   ('nominatim', 30000, 1000, 1, 5),  -- OSM has strict per-minute limits
   ('cloudflare_ai', 10000, NULL, NULL, 100);
-
