@@ -41,10 +41,10 @@ CREATE TABLE IF NOT EXISTS api_provider_configs (
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert default provider configs
-INSERT OR IGNORE INTO api_provider_configs (provider, monthly_limit, daily_limit, minute_limit, priority) VALUES
-  ('serper', 2500, NULL, NULL, 10),
-  ('brave', 2000, 100, NULL, 20),
-  ('tavily', 1000, NULL, NULL, 30),
-  ('nominatim', 30000, 1000, 1, 5),  -- OSM has strict per-minute limits
-  ('cloudflare_ai', 10000, NULL, NULL, 100);
+-- Insert default provider configs (will be added via separate migration after deployment)
+-- INSERT OR IGNORE INTO api_provider_configs (provider, monthly_limit, daily_limit, minute_limit, priority) VALUES
+--   ('serper', 2500, NULL, NULL, 10),
+--   ('brave', 2000, 100, NULL, 20),
+--   ('tavily', 1000, NULL, NULL, 30),
+--   ('nominatim', 30000, 1000, 1, 5),  -- OSM has strict per-minute limits
+--   ('cloudflare_ai', 10000, NULL, NULL, 100);
