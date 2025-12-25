@@ -15,3 +15,9 @@
 {"timestamp":"2025-10-03T01:25:00Z","seq":16,"version":"0.1.15","area":"auth","type":"policy","summary":"Defer OIDC to post-patent foundation phase","details":"Updated roadmap to explicitly defer OIDC identity federation; prioritizing deterministic patent-relevant modules (CDT, Orchestration Graph, AI Policy Codex spec). Cloudflare Access remains bootstrap gate only.","files":["docs/roadmap/README.md"],"invariantsDelta":[],"followUp":"Re-evaluate OIDC after CDT + rule lattice baseline","tags":["auth","strategy","docs"]}
 
 
+
+
+
+
+
+
