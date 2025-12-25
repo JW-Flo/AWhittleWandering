@@ -1,0 +1,276 @@
+{
+  "runId": "20251223-123742",
+  "startedAt": "2025-12-23T12:37:42.043Z",
+  "apiBaseUrl": "https://awhittlewandering-api.kd8jc7v8cd.workers.dev",
+  "admin": {
+    "tokenPresent": false,
+    "allowMutations": false,
+    "requireToken": false
+  },
+  "steps": [
+    {
+      "name": "health",
+      "timestamp": "2025-12-23T12:37:42.646Z",
+      "ok": true,
+      "status": 200,
+      "elapsedMs": 593,
+      "dataSummary": {
+        "type": "object",
+        "keys": [
+          "status",
+          "timestamp",
+          "version",
+          "service",
+          "resources",
+          "ingestion",
+          "performance",
+          "warnings"
+        ]
+      }
+    },
+    {
+      "name": "meta-routes",
+      "timestamp": "2025-12-23T12:37:42.716Z",
+      "ok": false,
+      "status": 404,
+      "elapsedMs": 68,
+      "dataSummary": {
+        "type": "object",
+        "keys": [
+          "error",
+          "message",
+          "available_endpoints"
+        ]
+      },
+      "safeError": {
+        "error": "Route not found",
+        "message": "A Whittle Wandering - Unified Cloudflare Stack API",
+        "available_endpoints": [
+          "GET /api/v1/health",
+          "GET /api/v1/unified-data",
+          "GET /api/v1/trip/status",
+          "GET /api/v1/config",
+          "POST /api/v1/route/optimize",
+          "POST /api/v1/journal/generate",
+          "GET /api/docs"
+        ]
+      }
+    },
+    {
+      "name": "config",
+      "timestamp": "2025-12-23T12:37:42.790Z",
+      "ok": true,
+      "status": 200,
+      "elapsedMs": 73,
+      "dataSummary": {
+        "type": "object",
+        "keys": [
+          "mapboxToken",
+          "apiBaseUrl",
+          "appName",
+          "apiVersion",
+          "features",
+          "updateInterval"
+        ]
+      }
+    },
+    {
+      "name": "unified-data",
+      "timestamp": "2025-12-23T12:37:44.787Z",
+      "ok": false,
+      "status": 500,
+      "elapsedMs": 158,
+      "dataSummary": {
+        "type": "object",
+        "keys": [
+          "error"
+        ]
+      },
+      "safeError": {
+        "error": "unified data unavailable"
+      }
+    },
+    {
+      "name": "trip-status",
+      "timestamp": "2025-12-23T12:37:44.915Z",
+      "ok": false,
+      "status": 404,
+      "elapsedMs": 127,
+      "dataSummary": {
+        "type": "object",
+        "keys": [
+          "error",
+          "message",
+          "available_endpoints"
+        ]
+      },
+      "safeError": {
+        "error": "Route not found",
+        "message": "A Whittle Wandering - Unified Cloudflare Stack API",
+        "available_endpoints": [
+          "GET /api/v1/health",
+          "GET /api/v1/unified-data",
+          "GET /api/v1/trip/status",
+          "GET /api/v1/config",
+          "POST /api/v1/route/optimize",
+          "POST /api/v1/journal/generate",
+          "GET /api/docs"
+        ]
+      }
+    },
+    {
+      "name": "component-overview",
+      "timestamp": "2025-12-23T12:37:46.776Z",
+      "ok": false,
+      "status": 500,
+      "elapsedMs": 121,
+      "dataSummary": {
+        "type": "object",
+        "keys": [
+          "error"
+        ]
+      },
+      "safeError": {
+        "error": "Component endpoint not ready"
+      }
+    },
+    {
+      "name": "component-current-status",
+      "timestamp": "2025-12-23T12:37:48.628Z",
+      "ok": false,
+      "status": 500,
+      "elapsedMs": 129,
+      "dataSummary": {
+        "type": "object",
+        "keys": [
+          "error"
+        ]
+      },
+      "safeError": {
+        "error": "Component endpoint not ready"
+      }
+    },
+    {
+      "name": "component-states-progress",
+      "timestamp": "2025-12-23T12:37:50.514Z",
+      "ok": false,
+      "status": 500,
+      "elapsedMs": 132,
+      "dataSummary": {
+        "type": "object",
+        "keys": [
+          "error"
+        ]
+      },
+      "safeError": {
+        "error": "Component endpoint not ready"
+      }
+    },
+    {
+      "name": "component-recent-drives",
+      "timestamp": "2025-12-23T12:37:52.372Z",
+      "ok": false,
+      "status": 500,
+      "elapsedMs": 108,
+      "dataSummary": {
+        "type": "object",
+        "keys": [
+          "error"
+        ]
+      },
+      "safeError": {
+        "error": "Component endpoint not ready"
+      }
+    },
+    {
+      "name": "analytics-comprehensive",
+      "timestamp": "2025-12-23T12:37:52.442Z",
+      "ok": true,
+      "status": 200,
+      "elapsedMs": 69,
+      "dataSummary": {
+        "type": "object",
+        "keys": [
+          "success",
+          "period",
+          "analytics"
+        ]
+      }
+    },
+    {
+      "name": "analytics-efficiency",
+      "timestamp": "2025-12-23T12:37:54.330Z",
+      "ok": false,
+      "status": 500,
+      "elapsedMs": 115,
+      "dataSummary": {
+        "type": "object",
+        "keys": [
+          "error",
+          "details"
+        ]
+      },
+      "safeError": {
+        "error": "Failed to fetch efficiency data",
+        "details": "D1_ERROR: D1 database 09a6ba85-bd36-4ad3-b5a8-92e230943dcb has been deleted."
+      }
+    },
+    {
+      "name": "analytics-charging",
+      "timestamp": "2025-12-23T12:37:56.212Z",
+      "ok": false,
+      "status": 500,
+      "elapsedMs": 122,
+      "dataSummary": {
+        "type": "object",
+        "keys": [
+          "error",
+          "details"
+        ]
+      },
+      "safeError": {
+        "error": "Failed to fetch charging data",
+        "details": "D1_ERROR: D1 database 09a6ba85-bd36-4ad3-b5a8-92e230943dcb has been deleted."
+      }
+    },
+    {
+      "name": "vehicle-state-enhanced",
+      "timestamp": "2025-12-23T12:37:58.052Z",
+      "ok": false,
+      "status": 500,
+      "elapsedMs": 109,
+      "dataSummary": {
+        "type": "object",
+        "keys": [
+          "error",
+          "details"
+        ]
+      },
+      "safeError": {
+        "error": "Failed to fetch enhanced vehicle state",
+        "details": "D1_ERROR: D1 database 09a6ba85-bd36-4ad3-b5a8-92e230943dcb has been deleted."
+      }
+    },
+    {
+      "name": "admin-status:unauth",
+      "timestamp": "2025-12-23T12:37:58.115Z",
+      "ok": false,
+      "status": 404,
+      "elapsedMs": 61,
+      "dataSummary": {
+        "type": "object",
+        "keys": [
+          "error",
+          "message",
+          "available_endpoints"
+        ]
+      }
+    }
+  ],
+  "endedAt": "2025-12-23T12:37:58.115Z",
+  "summary": {
+    "total": 14,
+    "failed": 11,
+    "passed": 3
+  }
+}

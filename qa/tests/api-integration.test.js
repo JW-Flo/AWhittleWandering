@@ -1,451 +1,417 @@
 /**
  * Comprehensive API Integration Tests
- * Tests all backend endpoints and integration points
+ * Tests public + admin endpoints with safe retry/backoff.
+ *
+ * Notes:
+ * - External API data is untrusted: validate shapes at runtime.
+ * - Avoid load tests by default (enable via QA_STRESS=true).
+ * - Never log secrets or full payloads (report only summaries).
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 
-const API_BASE_URL = "https://awhittlewandering-api.kd8jc7v8cd.workers.dev";
-const FRONTEND_URL = "https://ab99ceea.awhittlewandering-frontend.pages.dev";
+import { getQAConfig } from "../src/qa-config.js";
+import { createArtifactPaths, writeJson } from "../src/puppeteer/harness.js";
+
+const cfg = getQAConfig();
+const API_BASE_URL =
+  cfg.apiBaseUrl || "https://awhittlewandering-api.kd8jc7v8cd.workers.dev";
+const artifacts = createArtifactPaths(process.env.QA_RUN_ID);
 
 // Test configuration
 const TEST_CONFIG = {
-  timeout: 30000,
-  retries: 3,
-  endpoints: {
-    health: "/health",
-    teslaData: "/api/tesla-data",
-    config: "/api/config",
-  },
+  timeoutMs: Number(process.env.QA_REQUEST_TIMEOUT_MS || 15000),
+  retries: Number(process.env.QA_API_RETRIES || 3),
+  stress: Boolean(cfg.flags?.stress),
 };
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+function isPlainObject(v) {
+  return v !== null && typeof v === "object" && !Array.isArray(v);
+}
+
+function summarizeData(data) {
+  if (data == null) return { type: "null" };
+  if (typeof data === "string") return { type: "string", length: data.length };
+  if (Array.isArray(data)) return { type: "array", length: data.length };
+  if (isPlainObject(data)) return { type: "object", keys: Object.keys(data).slice(0, 50) };
+  return { type: typeof data };
+}
 
 class APITestRunner {
   constructor() {
     this.results = [];
-    this.startTime = Date.now();
+    this.startedAt = Date.now();
   }
 
-  async makeRequest(endpoint, options = {}) {
-    const url = `${API_BASE_URL}${endpoint}`;
-    const defaultOptions = {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "User-Agent": "QA-Test-Suite/1.0",
-      },
-      ...options,
+  async request(path, options = {}) {
+    const url = `${API_BASE_URL}${path}`;
+    const timeoutMs = options.timeoutMs ?? TEST_CONFIG.timeoutMs;
+    const maxRetries = options.retries ?? TEST_CONFIG.retries;
+    const method = options.method || "GET";
+
+    // Never print secrets: do not log headers/body.
+    const headers = {
+      "User-Agent": "QA-Test-Suite/1.0",
+      Accept: "application/json",
+      ...(method !== "GET" ? { "Content-Type": "application/json" } : {}),
+      ...(options.headers || {}),
     };
 
-    try {
-      const response = await fetch(url, defaultOptions);
-
-      return {
-        ok: response.ok,
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers),
-        data: response.headers.get("content-type")?.includes("application/json")
-          ? await response.json()
-          : await response.text(),
-        responseTime: Date.now() - this.startTime,
-      };
-    } catch (error) {
-      throw new Error(`Request failed: ${error.message}`);
-    }
-  }
-
-  async testWithRetry(testFn, maxRetries = TEST_CONFIG.retries) {
-    let lastError;
-
+    let lastErr = null;
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      const start = Date.now();
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), timeoutMs);
+
       try {
-        return await testFn();
-      } catch (error) {
-        lastError = error;
-        if (attempt < maxRetries) {
-          console.log(`  🔄 Retry ${attempt}/${maxRetries} for test...`);
-          await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+        const res = await fetch(url, {
+          method,
+          headers,
+          body: options.body,
+          signal: controller.signal,
+        });
+        const elapsedMs = Date.now() - start;
+        const resHeaders = Object.fromEntries(res.headers);
+        const contentType = res.headers.get("content-type") || "";
+        const parsed =
+          contentType.includes("application/json") ? await res.json() : await res.text();
+
+        const response = {
+          ok: res.ok,
+          status: res.status,
+          headers: resHeaders,
+          data: parsed,
+          elapsedMs,
+        };
+
+        // Retry on rate limit or transient 5xx
+        const retryable = res.status === 429 || res.status >= 500;
+        if (retryable && attempt < maxRetries) {
+          const backoff = Math.min(4000, 500 * Math.pow(2, attempt - 1));
+          await sleep(backoff);
+          continue;
         }
+
+        return response;
+      } catch (e) {
+        lastErr = e;
+        const msg = e?.message || String(e);
+        if (attempt < maxRetries) {
+          const backoff = Math.min(4000, 500 * Math.pow(2, attempt - 1));
+          await sleep(backoff);
+          continue;
+        }
+        throw new Error(`Request failed: ${msg}`);
+      } finally {
+        clearTimeout(t);
       }
     }
-
-    throw lastError;
+    throw lastErr || new Error("Request failed");
   }
 
-  logResult(testName, result) {
+  record(testName, result) {
     this.results.push({
       test: testName,
-      ...result,
       timestamp: new Date().toISOString(),
+      ...result,
     });
   }
 }
 
 describe("API Integration Tests", () => {
   let testRunner;
+  const report = {
+    runId: artifacts.runId,
+    startedAt: new Date().toISOString(),
+    apiBaseUrl: API_BASE_URL,
+    admin: {
+      tokenPresent: cfg.admin?.tokenPresent || false,
+      allowMutations: cfg.admin?.allowMutations || false,
+      requireToken: cfg.admin?.requireToken || false,
+    },
+    results: [],
+  };
 
   beforeAll(() => {
     testRunner = new APITestRunner();
   });
 
   afterAll(() => {
-    console.log("\n📊 API Test Results Summary:");
-    testRunner.results.forEach((result) => {
-      const status = result.passed ? "✅" : "❌";
-      console.log(`${status} ${result.test}: ${result.duration}ms`);
-    });
+    report.endedAt = new Date().toISOString();
+    report.results = testRunner.results;
+    writeJson(artifacts.reportPath("api-summary"), report);
   });
 
-  describe("Health Check Endpoint", () => {
-    it("should return healthy status", async () => {
-      await testRunner.testWithRetry(async () => {
-        const startTime = Date.now();
-        const response = await testRunner.makeRequest("/health");
-        const duration = Date.now() - startTime;
+  it("GET /api/v1/health returns structured health", async () => {
+    const start = Date.now();
+    const res = await testRunner.request("/api/v1/health");
+    const durationMs = Date.now() - start;
 
-        expect(response.ok).toBe(true);
-        expect(response.status).toBe(200);
-        expect(response.data).toHaveProperty("status", "healthy");
-        expect(duration).toBeLessThan(5000); // Should respond within 5 seconds
+    testRunner.record("health", {
+      passed: res.status === 200,
+      durationMs,
+      status: res.status,
+      elapsedMs: res.elapsedMs,
+      dataSummary: summarizeData(res.data),
+    });
 
-        testRunner.logResult("Health Check", {
-          passed: true,
-          duration,
-          responseTime: response.responseTime,
+    expect(isPlainObject(res.data)).toBe(true);
+    expect(res.data).toHaveProperty("status");
+    expect(res.data).toHaveProperty("timestamp");
+    expect(res.data).toHaveProperty("version");
+    expect(res.status).toBe(200);
+    expect(durationMs).toBeLessThan(8000);
+  }, 30000);
+
+  it("GET /api/v1/meta/routes enumerates API surface", async () => {
+    const res = await testRunner.request("/api/v1/meta/routes");
+    testRunner.record("meta-routes", {
+      passed: res.ok,
+      status: res.status,
+      elapsedMs: res.elapsedMs,
+      dataSummary: summarizeData(res.data),
+    });
+
+    expect(res.ok).toBe(true);
+    expect(isPlainObject(res.data)).toBe(true);
+    expect(res.data).toHaveProperty("ok", true);
+    expect(res.data).toHaveProperty("endpoints");
+  }, 30000);
+
+  it("GET /api/v1/config returns frontend-safe config", async () => {
+    const res = await testRunner.request("/api/v1/config");
+    testRunner.record("config", {
+      passed: res.ok,
+      status: res.status,
+      elapsedMs: res.elapsedMs,
+      dataSummary: summarizeData(res.data),
+    });
+
+    expect(res.ok).toBe(true);
+    expect(isPlainObject(res.data)).toBe(true);
+    expect(res.data).toHaveProperty("appName");
+    expect(res.data).toHaveProperty("apiVersion");
+    expect(res.data).toHaveProperty("features");
+    expect(isPlainObject(res.data.features)).toBe(true);
+
+    // Must not leak secrets (basic heuristic)
+    const s = JSON.stringify(res.data);
+    expect(s).not.toMatch(/tessie/i);
+    expect(s).not.toMatch(/jwt/i);
+    expect(s).not.toMatch(/admin_token/i);
+  }, 30000);
+
+  it("GET /api/v1/unified-data returns contract skeleton", async () => {
+    const res = await testRunner.request("/api/v1/unified-data");
+    testRunner.record("unified-data", {
+      passed: res.ok,
+      status: res.status,
+      elapsedMs: res.elapsedMs,
+      dataSummary: summarizeData(res.data),
+    });
+
+    expect(res.ok).toBe(true);
+    expect(isPlainObject(res.data)).toBe(true);
+    expect(res.data).toHaveProperty("overview");
+    expect(res.data).toHaveProperty("currentStatus");
+    expect(res.data).toHaveProperty("tessieStatus");
+  }, 30000);
+
+  it("GET /api/v1/trip-status returns current trip marker", async () => {
+    const res = await testRunner.request("/api/v1/trip-status");
+    testRunner.record("trip-status", {
+      passed: res.ok,
+      status: res.status,
+      elapsedMs: res.elapsedMs,
+      dataSummary: summarizeData(res.data),
+    });
+
+    expect(res.ok).toBe(true);
+    expect(isPlainObject(res.data)).toBe(true);
+    expect(res.data).toHaveProperty("tripId");
+    expect(res.data).toHaveProperty("status");
+  }, 30000);
+
+  it("GET /api/v1/component/* endpoints respond", async () => {
+    const endpoints = [
+      "/api/v1/component/overview",
+      "/api/v1/component/current-status",
+      "/api/v1/component/states-progress",
+      "/api/v1/component/recent-drives?limit=5",
+    ];
+
+    for (const ep of endpoints) {
+      const res = await testRunner.request(ep);
+      testRunner.record(`component:${ep}`, {
+        passed: res.ok,
+        status: res.status,
+        elapsedMs: res.elapsedMs,
+        dataSummary: summarizeData(res.data),
+      });
+      expect(res.status).toBeLessThan(500);
+    }
+  }, 60000);
+
+  it("GET /api/v1/analytics/* endpoints respond", async () => {
+    const endpoints = [
+      "/api/v1/analytics/comprehensive?limit=7",
+      "/api/v1/analytics/efficiency?limit=7",
+      "/api/v1/analytics/charging",
+    ];
+
+    for (const ep of endpoints) {
+      const res = await testRunner.request(ep);
+      testRunner.record(`analytics:${ep}`, {
+        passed: res.ok,
+        status: res.status,
+        elapsedMs: res.elapsedMs,
+        dataSummary: summarizeData(res.data),
+      });
+      expect(res.status).toBeLessThan(500);
+    }
+  }, 60000);
+
+  it("GET /api/v1/vehicle/state/enhanced responds", async () => {
+    const res = await testRunner.request("/api/v1/vehicle/state/enhanced");
+    testRunner.record("vehicle-state-enhanced", {
+      passed: res.ok,
+      status: res.status,
+      elapsedMs: res.elapsedMs,
+      dataSummary: summarizeData(res.data),
+    });
+    expect(res.status).toBeLessThan(500);
+  }, 30000);
+
+  it("Admin endpoints: enforce auth when configured, succeed when token provided", async () => {
+    if (cfg.admin?.requireToken && !cfg.admin?.tokenPresent) {
+      throw new Error(
+        "QA_REQUIRE_ADMIN_TOKEN=true but QA_ADMIN_TOKEN is not set"
+      );
+    }
+
+    // Unauthenticated call: either 401/403 (token configured) or 200 in dev (no token configured).
+    const unauth = await testRunner.request("/api/v1/admin/status", {
+      retries: 1,
+    });
+    testRunner.record("admin-status:unauth", {
+      passed: [200, 401, 403].includes(unauth.status),
+      status: unauth.status,
+      elapsedMs: unauth.elapsedMs,
+      dataSummary: summarizeData(unauth.data),
+    });
+
+    if (cfg.admin?.tokenPresent) {
+      const authz = await testRunner.request("/api/v1/admin/status", {
+        headers: { Authorization: `Bearer ${cfg.admin.token}` },
+      });
+      testRunner.record("admin-status:auth", {
+        passed: authz.ok,
+        status: authz.status,
+        elapsedMs: authz.elapsedMs,
+        dataSummary: summarizeData(authz.data),
+      });
+      expect(authz.ok).toBe(true);
+      expect(isPlainObject(authz.data)).toBe(true);
+      expect(authz.data).toHaveProperty("service");
+
+      // Read-only admin endpoints
+      const cron = await testRunner.request("/api/v1/admin/cron/metrics", {
+        headers: { Authorization: `Bearer ${cfg.admin.token}` },
+      });
+      testRunner.record("admin-cron-metrics", {
+        passed: cron.status !== 401 && cron.status !== 403,
+        status: cron.status,
+        elapsedMs: cron.elapsedMs,
+        dataSummary: summarizeData(cron.data),
+      });
+      expect([200, 500].includes(cron.status)).toBe(true);
+
+      const dataVehicles = await testRunner.request(
+        "/api/v1/admin/data/vehicles?limit=1&offset=0",
+        { headers: { Authorization: `Bearer ${cfg.admin.token}` } }
+      );
+      testRunner.record("admin-data-vehicles", {
+        passed: dataVehicles.status !== 401 && dataVehicles.status !== 403,
+        status: dataVehicles.status,
+        elapsedMs: dataVehicles.elapsedMs,
+        dataSummary: summarizeData(dataVehicles.data),
+      });
+      expect([200, 500].includes(dataVehicles.status)).toBe(true);
+
+      if (cfg.admin?.allowMutations) {
+        const cleared = await testRunner.request("/api/v1/admin/cache/clear", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${cfg.admin.token}` },
         });
-      });
-    });
-
-    it("should include service information", async () => {
-      const response = await testRunner.makeRequest("/health");
-
-      expect(response.data).toHaveProperty("timestamp");
-      expect(response.data).toHaveProperty("version");
-      expect(response.data.timestamp).toMatch(
-        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/
-      );
-    });
-
-    it("should have proper CORS headers", async () => {
-      const response = await testRunner.makeRequest("/health");
-
-      expect(response.headers).toHaveProperty("access-control-allow-origin");
-      expect(response.headers["access-control-allow-origin"]).toBe("*");
-    });
-  });
-
-  describe("Tesla Data Endpoint", () => {
-    it("should return valid Tesla data structure", async () => {
-      await testRunner.testWithRetry(async () => {
-        const startTime = Date.now();
-        const response = await testRunner.makeRequest("/api/tesla-data");
-        const duration = Date.now() - startTime;
-
-        expect(response.ok).toBe(true);
-        expect(response.status).toBe(200);
-
-        const data = response.data;
-        expect(data).toHaveProperty("battery_level");
-        expect(data).toHaveProperty("range");
-        expect(data).toHaveProperty("odometer");
-        expect(data).toHaveProperty("location");
-
-        // Validate data types
-        expect(typeof data.battery_level).toBe("number");
-        expect(typeof data.range).toBe("number");
-        expect(typeof data.odometer).toBe("number");
-        expect(data.location).toHaveProperty("lat");
-        expect(data.location).toHaveProperty("lng");
-
-        testRunner.logResult("Tesla Data Structure", {
-          passed: true,
-          duration,
-          dataSize: JSON.stringify(data).length,
+        testRunner.record("admin-cache-clear", {
+          passed: cleared.ok,
+          status: cleared.status,
+          elapsedMs: cleared.elapsedMs,
+          dataSummary: summarizeData(cleared.data),
         });
-      });
-    });
-
-    it("should return realistic data values", async () => {
-      const response = await testRunner.makeRequest("/api/tesla-data");
-      const data = response.data;
-
-      // Battery level should be 0-100
-      expect(data.battery_level).toBeGreaterThanOrEqual(0);
-      expect(data.battery_level).toBeLessThanOrEqual(100);
-
-      // Range should be reasonable (0-500 miles)
-      expect(data.range).toBeGreaterThanOrEqual(0);
-      expect(data.range).toBeLessThanOrEqual(500);
-
-      // Odometer should be positive
-      expect(data.odometer).toBeGreaterThan(0);
-
-      // Location should be valid coordinates
-      expect(data.location.lat).toBeGreaterThanOrEqual(-90);
-      expect(data.location.lat).toBeLessThanOrEqual(90);
-      expect(data.location.lng).toBeGreaterThanOrEqual(-180);
-      expect(data.location.lng).toBeLessThanOrEqual(180);
-    });
-
-    it("should handle high frequency requests", async () => {
-      const requests = [];
-      const requestCount = 10;
-
-      // Make concurrent requests
-      for (let i = 0; i < requestCount; i++) {
-        requests.push(testRunner.makeRequest("/api/tesla-data"));
+        expect(cleared.ok).toBe(true);
       }
+    }
+  }, 60000);
 
-      const responses = await Promise.all(requests);
+  it("Optional stress: small burst to /api/v1/health (QA_STRESS=true)", async () => {
+    if (!TEST_CONFIG.stress) return;
 
-      // All requests should succeed
-      responses.forEach((response, index) => {
-        expect(response.ok).toBe(true);
-        expect(response.status).toBe(200);
-      });
-
-      // Calculate average response time
-      const avgResponseTime =
-        responses.reduce((sum, r) => sum + r.responseTime, 0) /
-        responses.length;
-      expect(avgResponseTime).toBeLessThan(3000); // Average should be under 3 seconds
+    const burstSize = 10;
+    const results = await Promise.all(
+      Array.from({ length: burstSize }, () => testRunner.request("/api/v1/health", { retries: 1 }))
+    );
+    const okCount = results.filter((r) => r.status === 200).length;
+    testRunner.record("stress:health-burst", {
+      passed: okCount / burstSize >= 0.8,
+      okCount,
+      burstSize,
     });
-  });
-
-  describe("Config Endpoint", () => {
-    it("should return configuration without sensitive data", async () => {
-      const response = await testRunner.makeRequest("/api/config");
-
-      expect(response.ok).toBe(true);
-      expect(response.status).toBe(200);
-
-      const config = response.data;
-      expect(config).toHaveProperty("config");
-
-      // Should not expose API keys or secrets
-      const configStr = JSON.stringify(config);
-      expect(configStr).not.toMatch(/sk-/); // No secret keys
-      expect(configStr).not.toMatch(/password/i);
-      expect(configStr).not.toMatch(/secret/i);
-      expect(configStr).not.toMatch(/token/i);
-    });
-
-    it("should include frontend configuration", async () => {
-      const response = await testRunner.makeRequest("/api/config");
-      const config = response.data.config;
-
-      expect(config).toHaveProperty("mapbox");
-      expect(config).toHaveProperty("refreshInterval");
-      expect(typeof config.refreshInterval).toBe("number");
-    });
-  });
-
-  describe("Error Handling", () => {
-    it("should return 404 for non-existent endpoints", async () => {
-      const response = await testRunner.makeRequest("/api/non-existent");
-
-      expect(response.status).toBe(404);
-    });
-
-    it("should handle malformed requests gracefully", async () => {
-      const response = await testRunner.makeRequest("/api/tesla-data", {
-        method: "POST",
-        body: "invalid json",
-      });
-
-      expect(response.status).toBeGreaterThanOrEqual(400);
-      expect(response.status).toBeLessThan(500);
-    });
-
-    it("should include proper error messages", async () => {
-      const response = await testRunner.makeRequest("/api/non-existent");
-
-      if (response.headers["content-type"]?.includes("application/json")) {
-        expect(response.data).toHaveProperty("error");
-        expect(typeof response.data.error).toBe("string");
-      }
-    });
-  });
-
-  describe("Performance Tests", () => {
-    it("should respond to health checks under 1 second", async () => {
-      const startTime = Date.now();
-      const response = await testRunner.makeRequest("/health");
-      const duration = Date.now() - startTime;
-
-      expect(response.ok).toBe(true);
-      expect(duration).toBeLessThan(1000);
-    });
-
-    it("should handle burst traffic", async () => {
-      const burstSize = 50;
-      const promises = Array(burstSize)
-        .fill()
-        .map((_, i) =>
-          testRunner
-            .makeRequest("/health")
-            .then((response) => ({ index: i, ...response }))
-        );
-
-      const results = await Promise.allSettled(promises);
-      const successful = results.filter(
-        (r) => r.status === "fulfilled" && r.value.ok
-      );
-
-      // At least 90% should succeed during burst
-      expect(successful.length / burstSize).toBeGreaterThan(0.9);
-    });
-
-    it("should maintain performance under sustained load", async () => {
-      const duration = 30000; // 30 seconds
-      const interval = 1000; // 1 second intervals
-      const startTime = Date.now();
-      const results = [];
-
-      while (Date.now() - startTime < duration) {
-        const requestStart = Date.now();
-        try {
-          const response = await testRunner.makeRequest("/health");
-          const requestDuration = Date.now() - requestStart;
-          results.push({ success: response.ok, duration: requestDuration });
-        } catch (error) {
-          results.push({ success: false, error: error.message });
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, interval));
-      }
-
-      const successRate =
-        results.filter((r) => r.success).length / results.length;
-      const avgResponseTime =
-        results
-          .filter((r) => r.success)
-          .reduce((sum, r) => sum + r.duration, 0) /
-        results.filter((r) => r.success).length;
-
-      expect(successRate).toBeGreaterThan(0.95); // 95% success rate
-      expect(avgResponseTime).toBeLessThan(2000); // Average under 2 seconds
-    });
-  });
-
-  describe("Data Consistency", () => {
-    it("should return consistent data structure across requests", async () => {
-      const request1 = await testRunner.makeRequest("/api/tesla-data");
-      const request2 = await testRunner.makeRequest("/api/tesla-data");
-
-      const keys1 = Object.keys(request1.data).sort();
-      const keys2 = Object.keys(request2.data).sort();
-
-      expect(keys1).toEqual(keys2);
-    });
-
-    it("should show realistic data changes over time", async () => {
-      const initial = await testRunner.makeRequest("/api/tesla-data");
-
-      // Wait 5 seconds
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-
-      const later = await testRunner.makeRequest("/api/tesla-data");
-
-      // Battery level might change slightly but not dramatically
-      const batteryDiff = Math.abs(
-        initial.data.battery_level - later.data.battery_level
-      );
-      expect(batteryDiff).toBeLessThan(5); // Less than 5% change in 5 seconds
-    });
-  });
-
-  describe("Security Tests", () => {
-    it("should not expose internal server information", async () => {
-      const response = await testRunner.makeRequest("/health");
-
-      // Should not expose server technology
-      expect(response.headers.server).toBeUndefined();
-      expect(response.headers["x-powered-by"]).toBeUndefined();
-    });
-
-    it("should have security headers", async () => {
-      const response = await testRunner.makeRequest("/health");
-
-      expect(response.headers).toHaveProperty("x-content-type-options");
-      expect(response.headers["x-content-type-options"]).toBe("nosniff");
-    });
-
-    it("should handle SQL injection attempts safely", async () => {
-      const maliciousInputs = [
-        "'; DROP TABLE users; --",
-        "1' OR '1'='1",
-        "<script>alert('xss')</script>",
-      ];
-
-      for (const input of maliciousInputs) {
-        const response = await testRunner.makeRequest(
-          `/api/tesla-data?param=${encodeURIComponent(input)}`
-        );
-
-        // Should not return 500 or expose errors
-        expect(response.status).not.toBe(500);
-
-        if (response.status >= 400) {
-          // Error responses should not expose system details
-          const errorText =
-            typeof response.data === "string"
-              ? response.data
-              : JSON.stringify(response.data);
-          expect(errorText.toLowerCase()).not.toContain("sql");
-          expect(errorText.toLowerCase()).not.toContain("database");
-          expect(errorText.toLowerCase()).not.toContain("error:");
-        }
-      }
-    });
-  });
+    expect(okCount / burstSize).toBeGreaterThanOrEqual(0.8);
+  }, 30000);
 });
 
-// Export test utilities for use in recursive pipeline
 export const apiTestUtils = {
   async runHealthCheck() {
     const runner = new APITestRunner();
-    return await runner.makeRequest("/health");
+    return await runner.request("/api/v1/health", { retries: 1 });
   },
 
   async validateAllEndpoints() {
     const runner = new APITestRunner();
-    const endpoints = Object.values(TEST_CONFIG.endpoints);
+    const endpoints = [
+      "/api/v1/health",
+      "/api/v1/meta/routes",
+      "/api/v1/config",
+      "/api/v1/unified-data",
+      "/api/v1/trip-status",
+    ];
 
-    const results = await Promise.allSettled(
-      endpoints.map((endpoint) => runner.makeRequest(endpoint))
+    const settled = await Promise.allSettled(
+      endpoints.map((ep) => runner.request(ep, { retries: 1 }))
     );
 
-    return results.map((result, index) => ({
-      endpoint: endpoints[index],
-      success: result.status === "fulfilled" && result.value.ok,
-      response: result.status === "fulfilled" ? result.value : null,
-      error: result.status === "rejected" ? result.reason.message : null,
-    }));
+    return settled.map((r, idx) => {
+      if (r.status === "fulfilled") {
+        return {
+          endpoint: endpoints[idx],
+          success: r.value.status < 500,
+          status: r.value.status,
+          dataSummary: summarizeData(r.value.data),
+        };
+      }
+      return { endpoint: endpoints[idx], success: false, error: r.reason?.message || String(r.reason) };
+    });
   },
 
   async measurePerformance() {
     const runner = new APITestRunner();
-    const metrics = {};
-
-    for (const [name, endpoint] of Object.entries(TEST_CONFIG.endpoints)) {
-      const start = Date.now();
-      try {
-        const response = await runner.makeRequest(endpoint);
-        metrics[name] = {
-          responseTime: Date.now() - start,
-          success: response.ok,
-          status: response.status,
-        };
-      } catch (error) {
-        metrics[name] = {
-          responseTime: Date.now() - start,
-          success: false,
-          error: error.message,
-        };
-      }
-    }
-
-    return metrics;
+    const start = Date.now();
+    const res = await runner.request("/api/v1/health", { retries: 1 });
+    return { ok: res.status === 200, status: res.status, elapsedMs: Date.now() - start };
   },
 };

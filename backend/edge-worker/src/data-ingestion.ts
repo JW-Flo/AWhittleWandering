@@ -99,7 +99,7 @@ export class TeslaDataIngestion {
 
   private async ensureVehicleAndJourney(): Promise<void> {
     // Ensure baseline records exist and map the configured VIN/vehicle identifier.
-    const vin = this.config.vehicleIdOrVin || 'UNKNOWN_VIN';
+    const vin = this.config.vehicleIdOrVin || '5YJYGDEE5LF027324';
     const now = new Date().toISOString();
 
     // Avoid INSERT OR REPLACE on vehicles: it can delete+reinsert and violate FKs.
@@ -240,7 +240,7 @@ export class TeslaDataIngestion {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
       `).bind(
         'midnight-shadow',
-        this.config.vehicleIdOrVin || 'UNKNOWN_VIN',
+        this.config.vehicleIdOrVin || '5YJYGDEE5LF027324',
         stateData.charge_state?.battery_level || 0,
         stateData.charge_state?.battery_range || 0,
         stateData.charge_state?.charging_state || 'Unknown',
@@ -268,7 +268,7 @@ export class TeslaDataIngestion {
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(
           'midnight-shadow',
-          this.config.vehicleIdOrVin || 'UNKNOWN_VIN',
+          this.config.vehicleIdOrVin || '5YJYGDEE5LF027324',
           stateData.charge_state?.battery_level || 0,
           stateData.charge_state?.battery_range || 0,
           stateData.charge_state?.charging_state || 'Unknown',

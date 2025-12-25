@@ -15,7 +15,7 @@ describe('dynamicConfig.getMapboxToken', () => {
         status: 200,
         statusText: 'OK',
         json: async () => ({
-          appName: 'Tesla Road Trip Tracker',
+          appName: 'A Whittle Wandering',
           apiVersion: '3.0.0',
           mapboxAccessToken: 'pk.access-token'
         })
@@ -33,7 +33,7 @@ describe('dynamicConfig.getMapboxToken', () => {
         status: 200,
         statusText: 'OK',
         json: async () => ({
-          appName: 'Tesla Road Trip Tracker',
+          appName: 'A Whittle Wandering',
           apiVersion: '3.0.0',
           mapboxToken: 'pk.legacy-token'
         })

@@ -9,6 +9,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { JourneyProvisioningService } from '../services/journeyProvisioning';
 import { logger } from '../utils/log';
+import { requireUser } from '../middleware/userAuth';
 
 interface JourneyEnv {
   TESLA_DB: D1Database;
@@ -53,6 +54,156 @@ journeysRouter.get('/', async (c) => {
     journeys,
     count: journeys.length,
   });
+});
+
+// =====================================================
+// Journey follow + per-journey notification settings (signed-in users only)
+// =====================================================
+
+const followPrefsSchema = z.object({
+  notify_waypoints: z.boolean().optional(),
+  notify_state_crossings: z.boolean().optional(),
+  notify_photos: z.boolean().optional(),
+  notify_charging: z.boolean().optional(),
+  notify_security: z.boolean().optional(),
+});
+
+journeysRouter.post('/:id/follow', requireUser, async (c) => {
+  const db = c.env?.TESLA_DB;
+  if (!db) return c.json({ ok: false, error: 'Database not configured' }, 500);
+  const user = c.get('user');
+  const journeyId = c.req.param('id');
+
+  // Ensure journey exists
+  const journey = await db.prepare(`SELECT id FROM journey_registry WHERE id = ? AND status != 'deleted'`).bind(journeyId).first<any>();
+  if (!journey?.id) return c.json({ ok: false, error: 'Journey not found' }, 404);
+
+  const followId = crypto.randomUUID();
+  await db
+    .prepare(
+      `INSERT INTO journey_follows (id, journey_id, user_id, created_at, unfollowed_at)
+       VALUES (?, ?, ?, datetime('now'), NULL)
+       ON CONFLICT(journey_id, user_id) DO UPDATE SET unfollowed_at=NULL`
+    )
+    .bind(followId, journeyId, user.id)
+    .run();
+
+  // Default prefs if missing
+  await db
+    .prepare(
+      `INSERT INTO journey_follow_notification_prefs
+        (journey_id, user_id, notify_waypoints, notify_state_crossings, notify_photos, notify_charging, notify_security, created_at, updated_at)
+       VALUES (?, ?, 1, 1, 1, 0, 1, datetime('now'), datetime('now'))
+       ON CONFLICT(journey_id, user_id) DO NOTHING`
+    )
+    .bind(journeyId, user.id)
+    .run();
+
+  return c.json({ ok: true, following: true });
+});
+
+journeysRouter.post('/:id/unfollow', requireUser, async (c) => {
+  const db = c.env?.TESLA_DB;
+  if (!db) return c.json({ ok: false, error: 'Database not configured' }, 500);
+  const user = c.get('user');
+  const journeyId = c.req.param('id');
+
+  await db
+    .prepare(`UPDATE journey_follows SET unfollowed_at = datetime('now') WHERE journey_id = ? AND user_id = ?`)
+    .bind(journeyId, user.id)
+    .run();
+  return c.json({ ok: true, following: false });
+});
+
+journeysRouter.get('/:id/follow/settings', requireUser, async (c) => {
+  const db = c.env?.TESLA_DB;
+  if (!db) return c.json({ ok: false, error: 'Database not configured' }, 500);
+  const user = c.get('user');
+  const journeyId = c.req.param('id');
+
+  const follow = await db
+    .prepare(`SELECT unfollowed_at FROM journey_follows WHERE journey_id = ? AND user_id = ? LIMIT 1`)
+    .bind(journeyId, user.id)
+    .first<any>();
+  const following = !!follow && !follow.unfollowed_at;
+
+  const prefs = await db
+    .prepare(
+      `SELECT notify_waypoints, notify_state_crossings, notify_photos, notify_charging, notify_security
+       FROM journey_follow_notification_prefs
+       WHERE journey_id = ? AND user_id = ? LIMIT 1`
+    )
+    .bind(journeyId, user.id)
+    .first<any>();
+
+  return c.json({
+    ok: true,
+    following,
+    prefs: prefs || {
+      notify_waypoints: 1,
+      notify_state_crossings: 1,
+      notify_photos: 1,
+      notify_charging: 0,
+      notify_security: 1,
+    },
+  });
+});
+
+journeysRouter.put('/:id/follow/settings', requireUser, async (c) => {
+  const db = c.env?.TESLA_DB;
+  if (!db) return c.json({ ok: false, error: 'Database not configured' }, 500);
+  const user = c.get('user');
+  const journeyId = c.req.param('id');
+
+  let body: z.infer<typeof followPrefsSchema>;
+  try {
+    body = followPrefsSchema.parse(await c.req.json());
+  } catch (e: any) {
+    return c.json({ ok: false, error: 'Validation failed', issues: e?.issues }, 400);
+  }
+
+  // Upsert with partial updates (read current then overwrite provided)
+  const existing = await db
+    .prepare(
+      `SELECT notify_waypoints, notify_state_crossings, notify_photos, notify_charging, notify_security
+       FROM journey_follow_notification_prefs
+       WHERE journey_id = ? AND user_id = ? LIMIT 1`
+    )
+    .bind(journeyId, user.id)
+    .first<any>();
+  const merged = {
+    notify_waypoints: body.notify_waypoints ?? (existing ? !!existing.notify_waypoints : true),
+    notify_state_crossings: body.notify_state_crossings ?? (existing ? !!existing.notify_state_crossings : true),
+    notify_photos: body.notify_photos ?? (existing ? !!existing.notify_photos : true),
+    notify_charging: body.notify_charging ?? (existing ? !!existing.notify_charging : false),
+    notify_security: body.notify_security ?? (existing ? !!existing.notify_security : true),
+  };
+
+  await db
+    .prepare(
+      `INSERT INTO journey_follow_notification_prefs
+        (journey_id, user_id, notify_waypoints, notify_state_crossings, notify_photos, notify_charging, notify_security, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+       ON CONFLICT(journey_id, user_id) DO UPDATE SET
+         notify_waypoints=excluded.notify_waypoints,
+         notify_state_crossings=excluded.notify_state_crossings,
+         notify_photos=excluded.notify_photos,
+         notify_charging=excluded.notify_charging,
+         notify_security=excluded.notify_security,
+         updated_at=datetime('now')`
+    )
+    .bind(
+      journeyId,
+      user.id,
+      merged.notify_waypoints ? 1 : 0,
+      merged.notify_state_crossings ? 1 : 0,
+      merged.notify_photos ? 1 : 0,
+      merged.notify_charging ? 1 : 0,
+      merged.notify_security ? 1 : 0
+    )
+    .run();
+
+  return c.json({ ok: true, prefs: merged });
 });
 
 /**

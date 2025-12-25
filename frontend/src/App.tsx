@@ -3,7 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import Landing from "./pages/Landing";
+import JourneyerDashboard from "./pages/JourneyerDashboard";
+import FollowerView from "./pages/FollowerView";
 import NotFound from "./pages/NotFound";
 import Demo from "./pages/Demo";
 import { MasterCoordinationDashboard } from "./components/MasterCoordinationDashboard";
@@ -17,8 +19,17 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<Landing />} />
+          <Route path="/journey/:id" element={<FollowerView />} />
+          <Route path="/dashboard" element={<JourneyerDashboard />} />
           <Route path="/coordination" element={
+            <MasterCoordinationDashboard 
+              currentLocation={[37.7749, -122.4194]} 
+              destination={[34.0522, -118.2437]}
+              journeyData={[]}
+            />
+          } />
+          <Route path="/dashboard/coordination" element={
             <MasterCoordinationDashboard 
               currentLocation={[37.7749, -122.4194]} 
               destination={[34.0522, -118.2437]}

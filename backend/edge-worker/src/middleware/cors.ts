@@ -5,6 +5,7 @@ function isAllowedOrigin(origin: string): boolean {
   // Local dev
   if (origin === 'http://localhost:8080') return true;
   if (origin === 'http://localhost:3000') return true;
+  if (origin === 'http://localhost:5173') return true;
 
   // Canonical production domains
   if (origin === 'https://awhittlewandering.com') return true;
@@ -15,9 +16,13 @@ function isAllowedOrigin(origin: string): boolean {
 
   // Cloudflare Pages preview/prod domains that appear in repo automation and may still be used.
   // Note: Hono's CORS middleware does not interpret '*' wildcards inside literal strings.
+  // Exact Pages prod domain (no subdomain)
+  if (origin === 'https://awhittlewandering.pages.dev') return true;
+  if (origin === 'https://awhittlewandering-frontend.pages.dev') return true;
+  if (origin === 'https://awhittlewandering-site.pages.dev') return true;
   if (/^https:\/\/[a-z0-9-]+\.awhittlewandering-frontend\.pages\.dev$/i.test(origin)) return true;
   if (/^https:\/\/[a-z0-9-]+\.awhittlewandering-site\.pages\.dev$/i.test(origin)) return true;
-  if (/^https:\/\/[a-z0-9-]+\.awhittlewandering\.pages\.dev$/i.test(origin)) return true;
+  if (/^https:\/\/([a-z0-9-]+\.)?awhittlewandering\.pages\.dev$/i.test(origin)) return true;
 
   return false;
 }

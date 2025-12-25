@@ -30,3 +30,4 @@ This file is **not** a roadmap and must not redefine stages or acceptance criter
 - `strategic_acquisition_path.md`: stable STRAT handle lifecycle (abstract signals only).
 
 
+

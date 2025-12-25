@@ -32,3 +32,4 @@ Goal: keep autonomous Actions runs minimal and intentional.
   - a doc entry in `docs/workflows/SCHEDULED_WORKFLOWS.md`
 
 
+
