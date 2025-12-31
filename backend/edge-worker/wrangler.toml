@@ -56,11 +56,11 @@ database_id = "09a6ba85-bd36-4ad3-b5a8-92e230943dcb"
 preview_database_id = "local"
 migrations_dir = "migrations"
 
-# R2 Object Storage for media files
-[[r2_buckets]]
-binding = "MEDIA_BUCKET"
-bucket_name = "awhittlewandering-media"
-preview_bucket_name = "awhittlewandering-media"
+# R2 Object Storage for media files (temporarily disabled)
+# [[r2_buckets]]
+# binding = "MEDIA_BUCKET"
+# bucket_name = "awhittlewandering-media"
+# preview_bucket_name = "awhittlewandering-media"
 
 # KV for session/auth tokens only (lightweight use)
 [[kv_namespaces]]
@@ -160,10 +160,10 @@ binding = "TESLA_DB"
 database_name = "tesla-journey-tracker"
 database_id = "09a6ba85-bd36-4ad3-b5a8-92e230943dcb"
 
-# Production R2 bucket
-[[env.production.r2_buckets]]
-binding = "MEDIA_BUCKET"
-bucket_name = "awhittlewandering-media"
+# Production R2 bucket (temporarily disabled)
+# [[env.production.r2_buckets]]
+# binding = "MEDIA_BUCKET"
+# bucket_name = "awhittlewandering-media"
 
 # Production KV for auth tokens
 [[env.production.kv_namespaces]]
