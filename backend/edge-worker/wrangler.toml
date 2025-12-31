@@ -134,6 +134,13 @@ name = "awhittlewandering-api"
 
 # Production environment variables - ZERO FAILURE API MANAGEMENT
 [env.production.vars]
+# AI Configuration - Using Cloudflare AI Gateway
+AI_GATEWAY_ID = "awhittlewandering-ai"
+AI_MODEL_NAME = "@cf/meta/llama-3.1-8b-instruct"
+
+# Cloudflare AI for production
+[env.production.ai]
+binding = "AI"
 # All API credentials are stored as SECRETS for security
 # Run ./setup-tessie-secrets.sh to configure all required APIs
 
