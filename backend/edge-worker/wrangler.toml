@@ -165,7 +165,6 @@ LOG_LEVEL = "info"
 [[env.production.d1_databases]]
 binding = "TESLA_DB"
 database_name = "tesla-journey-tracker"
-database_id = "09a6ba85-bd36-4ad3-b5a8-92e230943dcb"
 
 # Production R2 bucket (temporarily disabled)
 # [[env.production.r2_buckets]]
