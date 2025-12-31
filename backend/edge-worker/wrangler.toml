@@ -154,10 +154,10 @@ LOG_LEVEL = "info"
 # Use: npx wrangler secret put JWT_SECRET --env production
 # Use: npx wrangler secret put TESLA_VIN --env production
 
-# Production D1 Database (same as development - using single database)
-[[env.production.d1_databases]]
-binding = "TESLA_DB"
-database_name = "tesla-journey-tracker"
+# Production D1 Database (temporarily disabled - database ID issue)
+# [[env.production.d1_databases]]
+# binding = "TESLA_DB"
+# database_name = "tesla-journey-tracker"
 
 # Production R2 bucket (temporarily disabled)
 # [[env.production.r2_buckets]]
