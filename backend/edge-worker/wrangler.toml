@@ -47,14 +47,7 @@ AI_MODEL_NAME = "@cf/meta/llama-3.1-8b-instruct"
 # D1 SQL Database for Tesla data aggregation and caching
 # IMPORTANT: Production and development use SEPARATE databases to prevent data corruption
 # To create a dev database: npx wrangler d1 create tesla-journey-tracker-dev
-[[d1_databases]]
-binding = "TESLA_DB"
-database_name = "tesla-journey-tracker"
-database_id = "09a6ba85-bd36-4ad3-b5a8-92e230943dcb"
-# Preview database is used for local dev and wrangler dev --remote
-# Using local SQLite for preview to prevent accidental production writes
-preview_database_id = "local"
-migrations_dir = "migrations"
+# Database binding moved to production environment only to avoid conflicts
 
 # R2 Object Storage for media files (temporarily disabled)
 # [[r2_buckets]]
