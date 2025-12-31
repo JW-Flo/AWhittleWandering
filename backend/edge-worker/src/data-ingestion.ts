@@ -6,6 +6,7 @@
 
 import { z } from 'zod';
 import { logger } from './utils/log';
+import { detectStateFromCoordinates, updateStatesVisited } from './services/state-detection';
 
 // Cloudflare D1 Database interface
 interface D1Database {
@@ -127,40 +128,7 @@ export class TeslaDataIngestion {
     ).run();
   }
 
-  /**
-   * Normalize timestamp to ISO string format
-   * Handles Unix seconds (9-12 digits), milliseconds (13 digits), and ISO strings
-   * Returns null if timestamp cannot be parsed (instead of silently using current time)
-   */
-  private normalizeIso(ts: string | number | null | undefined): string | null {
-    if (!ts) {
-      return null;
-    }
 
-    // If already a number, convert to string for processing
-    const tsStr = String(ts);
-    
-    // Check if it's a numeric timestamp (Unix seconds or milliseconds)
-    // Match 9-13 digits (Unix seconds: 9-12, milliseconds: 13)
-    if (/^\d{9,13}$/.test(tsStr)) {
-      const tsNum = Number(tsStr);
-      // If 13 digits, it's already milliseconds; otherwise it's seconds
-      const ms = tsStr.length === 13 ? tsNum : tsNum * 1000;
-      const date = new Date(ms);
-      // Validate the date is valid
-      if (isNaN(date.getTime())) {
-        return null;
-      }
-      return date.toISOString();
-    }
-
-    // Try parsing as ISO string or other date format
-    const date = new Date(tsStr);
-    if (isNaN(date.getTime())) {
-      return null;
-    }
-    return date.toISOString();
-  }
 
   /**
    * Main ingestion orchestrator - runs all data collection
@@ -415,6 +383,53 @@ export class TeslaDataIngestion {
             drive.energy_used || 0,
             drive.outside_temp || null
           ).run();
+
+          // Update state tracking for this drive
+          try {
+            // Check start location
+            if (drive.starting_latitude && drive.starting_longitude) {
+              const startState = await detectStateFromCoordinates(
+                drive.starting_latitude,
+                drive.starting_longitude
+              );
+              if (startState) {
+                await updateStatesVisited(
+                  this.db,
+                  'continental-usa-2025',
+                  startState.code,
+                  startState.name,
+                  drive.starting_latitude,
+                  drive.starting_longitude,
+                  drive.id
+                );
+              }
+            }
+
+            // Check end location if different from start
+            if (drive.ending_latitude && drive.ending_longitude &&
+                (drive.ending_latitude !== drive.starting_latitude ||
+                 drive.ending_longitude !== drive.starting_longitude)) {
+              const endState = await detectStateFromCoordinates(
+                drive.ending_latitude,
+                drive.ending_longitude
+              );
+              if (endState) {
+                await updateStatesVisited(
+                  this.db,
+                  'continental-usa-2025',
+                  endState.code,
+                  endState.name,
+                  drive.ending_latitude,
+                  drive.ending_longitude,
+                  drive.id
+                );
+              }
+            }
+          } catch (stateError) {
+            logger.warn(`Failed to update state tracking for drive ${drive.id}`, {
+              error: extractErrorMessage(stateError)
+            });
+          }
 
           recordsProcessed++;
         } catch (driveError) {
