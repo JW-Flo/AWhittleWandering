@@ -130,7 +130,7 @@ binding = "TELEMETRY_ANALYTICS"
 binding = "AI"
 
 [env.production]
-name = "awhittlewandering-api-v2"
+name = "awhittlewandering-api"
 
 # Production environment variables - ZERO FAILURE API MANAGEMENT
 [env.production.vars]
