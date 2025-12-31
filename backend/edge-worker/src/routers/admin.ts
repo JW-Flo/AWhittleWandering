@@ -3,6 +3,7 @@ import { CacheService } from '../services/cache';
 import { persistCronRun } from '../utils/cronMetrics';
 import { z } from 'zod';
 import { signJwtHS256 } from '../utils/jwtHs256';
+import { TeslaDataIngestion } from '../data-ingestion';
 
 // Augment Env typing locally for this module
 declare global {
@@ -87,6 +88,79 @@ adminRouter.get('/status', async (c) => {
   };
 
   return c.json(status);
+});
+
+// Manual data ingestion trigger - pulls fresh data from Tessie API
+adminRouter.post('/ingest', async (c) => {
+  const env = c.env;
+  if (!env?.TESLA_DB) return c.json({ ok: false, error: 'No DB bound' }, 500);
+
+  const tessieKey = env.TESSIE_API_TOKEN || env.TESSIE_API_KEY || '';
+  if (!tessieKey) return c.json({ ok: false, error: 'No Tessie API key configured' }, 503);
+
+  // Get VIN from secrets or database
+  let vin = env.TESLA_VIN || '';
+  if (!vin) {
+    // Fallback: try to get from database
+    try {
+      const vehicle = await env.TESLA_DB.prepare(
+        'SELECT vin FROM vehicles WHERE id = ?'
+      ).bind('midnight-shadow').first<{ vin: string }>();
+      vin = vehicle?.vin || '';
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  if (!vin || vin === 'UNKNOWN_VIN') {
+    return c.json({ ok: false, error: 'VIN not configured. Set TESLA_VIN secret or update vehicles table.' }, 503);
+  }
+
+  try {
+    const ingestion = new TeslaDataIngestion(env.TESLA_DB, tessieKey, vin);
+    const result = await ingestion.ingestAllData();
+
+    // Log the manual ingestion
+    try {
+      await env.TESLA_DB.prepare(`
+        INSERT INTO ingestion_logs
+        (operation, records_processed, success, errors, duration_ms, api_calls_made, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).bind(
+        'manual_ingest',
+        result.recordsProcessed,
+        result.success,
+        JSON.stringify(result.errors),
+        0, // duration not tracked for manual
+        0,  // api calls not tracked
+        result.timestamp
+      ).run();
+    } catch (logError) {
+      // Don't fail the ingestion if logging fails
+      console.error('Failed to log manual ingestion:', logError);
+    }
+
+    return c.json({
+      ok: true,
+      operation: 'manual_ingest',
+      success: result.success,
+      recordsProcessed: result.recordsProcessed,
+      errors: result.errors,
+      timestamp: result.timestamp,
+      message: result.success
+        ? `Successfully ingested ${result.recordsProcessed} records`
+        : `Ingestion completed with ${result.errors.length} errors`
+    }, result.success ? 200 : 207); // 207 = Multi-Status for partial success
+
+  } catch (error: any) {
+    console.error('Manual ingestion failed:', error);
+    return c.json({
+      ok: false,
+      operation: 'manual_ingest',
+      error: error.message || 'Unknown error during ingestion',
+      timestamp: new Date().toISOString()
+    }, 500);
+  }
 });
 
 // Lightweight cron metrics inspection (last 25 rows) – errors tolerated
