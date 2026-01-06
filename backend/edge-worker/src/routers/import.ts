@@ -53,38 +53,10 @@ const WaypointsImportSchema = z.object({
 type Waypoint = z.infer<typeof WaypointSchema>;
 
 // =====================================================
-// AUTHENTICATION MIDDLEWARE
-// =====================================================
-
-async function verifyAuth(c: any) {
-  const authHeader = c.req.header('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return c.json({ success: false, error: 'Missing or invalid authorization header' }, 401);
-  }
-
-  // TODO: Implement proper JWT verification
-  // For now, just check that a token is present
-  const token = authHeader.substring(7);
-  if (!token) {
-    return c.json({ success: false, error: 'Invalid token' }, 401);
-  }
-
-  // In production, verify JWT here using JWT_SECRET
-  // const jwtSecret = c.env?.JWT_SECRET;
-  // if (!jwtSecret) {
-  //   return c.json({ success: false, error: 'Authentication not configured' }, 500);
-  // }
-  // const verified = await verifyJWT(token, jwtSecret);
-  // if (!verified) {
-  //   return c.json({ success: false, error: 'Invalid token' }, 403);
-  // }
-
-  return null; // Auth passed
-}
-
-// =====================================================
 // IMPORT ENDPOINTS
 // =====================================================
+// Note: All endpoints are protected by adminAuth middleware at the app level
+// See src/index.ts line 139: app.use('/api/v1/import/*', adminAuth);
 
 /**
  * POST /api/v1/import/tesla-drives
@@ -99,10 +71,6 @@ importRouter.post('/tesla-drives', async (c) => {
   if (!db) {
     return c.json({ success: false, error: 'Database not configured' }, 500);
   }
-
-  // Check authentication
-  const authError = await verifyAuth(c);
-  if (authError) return authError;
 
   try {
     // Parse multipart form data
@@ -212,10 +180,6 @@ importRouter.post('/tesla-charges', async (c) => {
     return c.json({ success: false, error: 'Database not configured' }, 500);
   }
 
-  // Check authentication
-  const authError = await verifyAuth(c);
-  if (authError) return authError;
-
   try {
     // Parse multipart form data
     const formData = await c.req.formData();
@@ -323,10 +287,6 @@ importRouter.post('/waypoints', async (c) => {
   if (!db) {
     return c.json({ success: false, error: 'Database not configured' }, 500);
   }
-
-  // Check authentication
-  const authError = await verifyAuth(c);
-  if (authError) return authError;
 
   try {
     const startTime = Date.now();
@@ -493,10 +453,6 @@ importRouter.get('/history', async (c) => {
   if (!db) {
     return c.json({ success: false, error: 'Database not configured' }, 500);
   }
-
-  // Check authentication
-  const authError = await verifyAuth(c);
-  if (authError) return authError;
 
   try {
     const journeyId = c.req.query('journeyId') || 'continental-usa-2025';
