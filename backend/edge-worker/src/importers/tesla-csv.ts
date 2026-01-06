@@ -6,7 +6,6 @@
  */
 
 import { z } from 'zod';
-import { createHash } from 'crypto';
 
 // =====================================================
 // CSV PARSING UTILITIES
@@ -182,29 +181,39 @@ export type TeslaChargeRow = z.infer<typeof TeslaChargeRowSchema>;
  * Generate deduplication key for drive segment
  * Hash of: start_time + start_lat + start_lng + end_lat + end_lng
  */
-export function generateDriveDedupeKey(
+export async function generateDriveDedupeKey(
   startTime: string,
   startLat: number,
   startLng: number,
   endLat: number,
   endLng: number
-): string {
+): Promise<string> {
   const data = `${startTime}|${startLat.toFixed(6)}|${startLng.toFixed(6)}|${endLat.toFixed(6)}|${endLng.toFixed(6)}`;
-  return createHash('sha256').update(data).digest('hex').substring(0, 32);
+  const encoder = new TextEncoder();
+  const dataBuffer = encoder.encode(data);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex.substring(0, 32);
 }
 
 /**
  * Generate deduplication key for energy event
  * Hash of: start_time + latitude + longitude + energy_added
  */
-export function generateEnergyDedupeKey(
+export async function generateEnergyDedupeKey(
   startTime: string,
   lat: number,
   lng: number,
   energyAdded: number
-): string {
+): Promise<string> {
   const data = `${startTime}|${lat.toFixed(6)}|${lng.toFixed(6)}|${energyAdded.toFixed(2)}`;
-  return createHash('sha256').update(data).digest('hex').substring(0, 32);
+  const encoder = new TextEncoder();
+  const dataBuffer = encoder.encode(data);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex.substring(0, 32);
 }
 
 // =====================================================
@@ -290,7 +299,7 @@ export async function importTeslaDrives(
           const startTime = validated['Start Time'];
 
           // Generate dedup key
-          const dedupKey = generateDriveDedupeKey(startTime, startLat, startLng, endLat, endLng);
+          const dedupKey = await generateDriveDedupeKey(startTime, startLat, startLng, endLat, endLng);
 
           // Calculate duration
           const duration = validated['Duration (minutes)']
@@ -429,7 +438,7 @@ export async function importTeslaCharges(
           const energyAdded = parseNumber(validated['Energy Added (kWh)']);
 
           // Generate dedup key
-          const dedupKey = generateEnergyDedupeKey(startTime, lat, lng, energyAdded);
+          const dedupKey = await generateEnergyDedupeKey(startTime, lat, lng, energyAdded);
 
           // Calculate duration
           const duration = validated['Duration (minutes)']
