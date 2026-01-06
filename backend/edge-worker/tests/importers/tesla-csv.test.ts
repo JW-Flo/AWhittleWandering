@@ -185,7 +185,7 @@ describe('Deduplication Keys', () => {
   });
 
   it('should handle coordinate precision correctly', async () => {
-    // Keys should be different when coordinates differ beyond 6 decimal precision
+    // Keys should be different when coordinates differ at 6 decimal precision
     const key1 = await generateDriveDedupeKey(
       '2025-06-01T10:00:00Z',
       41.878136,
