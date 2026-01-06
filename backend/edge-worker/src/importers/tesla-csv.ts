@@ -178,6 +178,19 @@ export type TeslaChargeRow = z.infer<typeof TeslaChargeRowSchema>;
 // =====================================================
 
 /**
+ * Generate SHA-256 hash using Web Crypto API
+ * Returns first 32 characters of hex-encoded hash
+ */
+async function generateHash(data: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const dataBuffer = encoder.encode(data);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex.substring(0, 32);
+}
+
+/**
  * Generate deduplication key for drive segment
  * Hash of: start_time + start_lat + start_lng + end_lat + end_lng
  */
@@ -189,12 +202,7 @@ export async function generateDriveDedupeKey(
   endLng: number
 ): Promise<string> {
   const data = `${startTime}|${startLat.toFixed(6)}|${startLng.toFixed(6)}|${endLat.toFixed(6)}|${endLng.toFixed(6)}`;
-  const encoder = new TextEncoder();
-  const dataBuffer = encoder.encode(data);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  return hashHex.substring(0, 32);
+  return generateHash(data);
 }
 
 /**
@@ -208,12 +216,7 @@ export async function generateEnergyDedupeKey(
   energyAdded: number
 ): Promise<string> {
   const data = `${startTime}|${lat.toFixed(6)}|${lng.toFixed(6)}|${energyAdded.toFixed(2)}`;
-  const encoder = new TextEncoder();
-  const dataBuffer = encoder.encode(data);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  return hashHex.substring(0, 32);
+  return generateHash(data);
 }
 
 // =====================================================
