@@ -10,6 +10,7 @@
  * - Screenshots + JSON summary written under `qa/reports/artifacts/<runId>/`
  */
 
+<<<<<<< .merge_file_pnet6i
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { getQAConfig, joinUrl } from "../src/qa-config.js";
 import {
@@ -50,6 +51,72 @@ const report = {
     requestFailures: [],
   },
 };
+=======
+import puppeteer from 'puppeteer';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+import { getQAConfig } from '../src/qa-config.js';
+
+// Get project root dynamically
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const PROJECT_ROOT = path.resolve(__dirname, '../..');
+const SCREENSHOT_DIR = path.join(PROJECT_ROOT, 'debug');
+
+// Ensure screenshot directory exists
+if (!fs.existsSync(SCREENSHOT_DIR)) {
+  fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
+}
+
+const runtime = getQAConfig();
+const FRONTEND_URL = runtime.frontendUrl || 'https://awhittlewandering.pages.dev';
+const API_URL = runtime.apiBaseUrl || 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
+
+class E2ETestRunner {
+  constructor() {
+    this.browser = null;
+    this.page = null;
+    this.errors = [];
+    this.networkRequests = [];
+    this.performanceMetrics = {};
+  }
+
+  async setup() {
+    this.browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu'
+      ]
+    });
+
+    this.page = await this.browser.newPage();
+    
+    // Set viewport for consistent testing
+    await this.page.setViewport({ width: 1200, height: 800 });
+
+    // Monitor errors and network
+    this.page.on('console', msg => {
+      if (msg.type() === 'error') {
+        this.errors.push(`Console error: ${msg.text()}`);
+      }
+    });
+
+    this.page.on('pageerror', error => {
+      this.errors.push(`Page error: ${error.message}`);
+    });
+
+    this.page.on('requestfailed', request => {
+      this.errors.push(`Failed request: ${request.url()} - ${request.failure().errorText}`);
+    });
+>>>>>>> .merge_file_TgF0hS
 
 async function recordStep(name, fn, { screenshotOnFail = true } = {}) {
   const startedAt = Date.now();
