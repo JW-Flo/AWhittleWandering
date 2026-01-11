@@ -110,15 +110,15 @@ describe('CSV to Objects', () => {
 });
 
 describe('Deduplication Keys', () => {
-  it('should generate consistent drive dedup key', () => {
-    const key1 = generateDriveDedupeKey(
+  it('should generate consistent drive dedup key', async () => {
+    const key1 = await generateDriveDedupeKey(
       '2025-06-01T10:00:00Z',
       41.8781,
       -87.6298,
       40.7128,
       -74.0060
     );
-    const key2 = generateDriveDedupeKey(
+    const key2 = await generateDriveDedupeKey(
       '2025-06-01T10:00:00Z',
       41.8781,
       -87.6298,
@@ -130,15 +130,15 @@ describe('Deduplication Keys', () => {
     expect(key1).toHaveLength(32); // SHA-256 hash truncated to 32 chars
   });
 
-  it('should generate different keys for different drives', () => {
-    const key1 = generateDriveDedupeKey(
+  it('should generate different keys for different drives', async () => {
+    const key1 = await generateDriveDedupeKey(
       '2025-06-01T10:00:00Z',
       41.8781,
       -87.6298,
       40.7128,
       -74.0060
     );
-    const key2 = generateDriveDedupeKey(
+    const key2 = await generateDriveDedupeKey(
       '2025-06-01T11:00:00Z', // Different time
       41.8781,
       -87.6298,
@@ -149,14 +149,14 @@ describe('Deduplication Keys', () => {
     expect(key1).not.toBe(key2);
   });
 
-  it('should generate consistent energy dedup key', () => {
-    const key1 = generateEnergyDedupeKey(
+  it('should generate consistent energy dedup key', async () => {
+    const key1 = await generateEnergyDedupeKey(
       '2025-06-01T10:00:00Z',
       41.8781,
       -87.6298,
       50.5
     );
-    const key2 = generateEnergyDedupeKey(
+    const key2 = await generateEnergyDedupeKey(
       '2025-06-01T10:00:00Z',
       41.8781,
       -87.6298,
@@ -167,14 +167,14 @@ describe('Deduplication Keys', () => {
     expect(key1).toHaveLength(32);
   });
 
-  it('should generate different keys for different energy events', () => {
-    const key1 = generateEnergyDedupeKey(
+  it('should generate different keys for different energy events', async () => {
+    const key1 = await generateEnergyDedupeKey(
       '2025-06-01T10:00:00Z',
       41.8781,
       -87.6298,
       50.5
     );
-    const key2 = generateEnergyDedupeKey(
+    const key2 = await generateEnergyDedupeKey(
       '2025-06-01T10:00:00Z',
       41.8781,
       -87.6298,
@@ -184,25 +184,44 @@ describe('Deduplication Keys', () => {
     expect(key1).not.toBe(key2);
   });
 
-  it('should handle coordinate precision correctly', () => {
-    // Keys should be the same even with minor floating point differences
-    const key1 = generateDriveDedupeKey(
+  it('should handle coordinate precision correctly', async () => {
+    // Keys should be different when coordinates differ at 6 decimal precision
+    const key1 = await generateDriveDedupeKey(
       '2025-06-01T10:00:00Z',
       41.878136,
       -87.629798,
       40.712775,
       -74.005973
     );
-    const key2 = generateDriveDedupeKey(
+    const key2 = await generateDriveDedupeKey(
       '2025-06-01T10:00:00Z',
-      41.878137, // Very minor difference
+      41.878137, // Different at 6th decimal
       -87.629799,
       40.712776,
       -74.005974
     );
 
-    // Should be the same due to 6 decimal precision
-    expect(key1).toBe(key2);
+    // Should be different since coordinates differ at 6 decimal precision
+    expect(key1).not.toBe(key2);
+
+    // Keys should be the same when differences are beyond 6 decimal precision
+    const key3 = await generateDriveDedupeKey(
+      '2025-06-01T10:00:00Z',
+      41.8781361111, // Extra precision beyond 6 decimals
+      -87.6297981111,
+      40.7127751111,
+      -74.0059731111
+    );
+    const key4 = await generateDriveDedupeKey(
+      '2025-06-01T10:00:00Z',
+      41.8781362222, // Different in 7th decimal, but rounds to same 6 decimals
+      -87.6297982222,
+      40.7127752222,
+      -74.0059732222
+    );
+
+    // Should be the same due to 6 decimal precision rounding
+    expect(key3).toBe(key4);
   });
 });
 
