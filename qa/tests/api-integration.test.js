@@ -11,12 +11,19 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 
 import { getQAConfig } from "../src/qa-config.js";
+<<<<<<< .merge_file_5r028X
 import { createArtifactPaths, writeJson } from "../src/puppeteer/harness.js";
 
 const cfg = getQAConfig();
 const API_BASE_URL =
   cfg.apiBaseUrl || "https://awhittlewandering-api.kd8jc7v8cd.workers.dev";
 const artifacts = createArtifactPaths(process.env.QA_RUN_ID);
+=======
+
+const runtime = getQAConfig();
+const API_BASE_URL =
+  runtime.apiBaseUrl || "https://awhittlewandering-api.kd8jc7v8cd.workers.dev";
+>>>>>>> .merge_file_vpxrg4
 
 // Test configuration
 const TEST_CONFIG = {

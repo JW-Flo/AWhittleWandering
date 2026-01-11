@@ -29,6 +29,9 @@ node_modules/
 coverage/
 .nyc_output
 
+# QA artifacts (generated)
+qa/reports/artifacts/
+
 # Production
 build/
 dist/
