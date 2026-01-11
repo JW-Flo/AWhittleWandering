@@ -2,12 +2,19 @@
 // Handles all API endpoints and provides consistent error handling
 
 const getApiBaseUrl = () => {
-  // Highest precedence: explicit env override (Vite exposes import.meta.env)
-  // Support both Vite style and fallback process.env for tests
-  const override = (import.meta as any).env?.VITE_API_BASE_URL || (process.env as any).VITE_API_BASE_URL;
-  if (override) return override;
-  if (process.env.NODE_ENV === 'development') return 'http://localhost:8787';
-  return 'https://api.awhittlewandering.com';
+  // Vite exposes `import.meta.env` at build time. Do NOT touch `process` in the browser;
+  // referencing it can throw and crash app bootstrap (blank screen).
+  const env = ((import.meta as any)?.env || {}) as Record<string, unknown>;
+
+  // Highest precedence: explicit env override
+  const override = (env.VITE_API_BASE_URL || env.VITE_BACKEND_URL) as string | undefined;
+  if (typeof override === 'string' && override.trim()) return override.trim();
+
+  // Local dev
+  if (env.DEV === true) return 'http://localhost:8787';
+
+  // Production default (Cloudflare Worker). Keep this aligned with deployments.
+  return 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
 };
 
 export const API_CONFIG = {
