@@ -46,6 +46,10 @@ app.use('*', analyticsLogger);
 app.use('*', rateLimit);
 app.use('*', errorHandler);
 
+// Ensure preflight requests always get a sane response.
+// CORS headers are added by `corsMiddleware` above (for allowed origins).
+app.options('*', (c) => c.body(null, 204));
+
 // In-memory latency ring buffer (lightweight; resets on deploy)
 const LAT_SAMPLES_MAX = 200;
 const latencySamples: number[] = [];
