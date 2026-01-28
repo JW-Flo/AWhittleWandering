@@ -45,3 +45,14 @@ dist/
 
 # Bun
 bun.lock
+
+# Large binary files (should use external storage or LFS)
+*.pkg
+*.pdf
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# Miniflare local state
+.mf/
+.wrangler/
