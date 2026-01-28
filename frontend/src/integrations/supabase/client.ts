@@ -3,7 +3,11 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 const SUPABASE_URL = "https://wlnmnzhzzgslphhpsafk.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indsbm1uemh6emdzbHBoaHBzYWZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTgyODQsImV4cCI6MjA2NTI5NDI4NH0.NvarlqeSBloP6RmsuPxWpn4xVHTlUsNTFYOs9gF31MY";
+// Supabase publishable key must be supplied via environment variables.
+// Do NOT commit real keys. Replace at build time with Vite's VITE_SUPABASE_PUBLISHABLE_KEY.
+const SUPABASE_PUBLISHABLE_KEY = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+  ? String(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY)
+  : '';
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
