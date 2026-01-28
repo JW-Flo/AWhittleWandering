@@ -1,0 +1,231 @@
+# Branch Promotion Workflow
+# Handles the dev → staging → main promotion flow
+# Each promotion has appropriate gates based on risk level
+
+name: Branch Promotion
+
+on:
+  # Trigger on PR merge to dev or staging
+  pull_request:
+    types: [closed]
+    branches: [dev, staging]
+  
+  # Manual promotion trigger
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        description: 'Source branch to promote from'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+      target_branch:
+        description: 'Target branch to promote to'
+        required: true
+        type: choice
+        options:
+          - staging
+          - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  # Determine if promotion should happen
+  check-promotion:
+    if: |
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      should_promote: ${{ steps.check.outputs.should_promote }}
+      source: ${{ steps.check.outputs.source }}
+      target: ${{ steps.check.outputs.target }}
+      risk_level: ${{ steps.check.outputs.risk_level }}
+    steps:
+      - name: Determine Promotion Path
+        id: check
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            SOURCE="${{ github.event.inputs.source_branch }}"
+            TARGET="${{ github.event.inputs.target_branch }}"
+          else
+            # Auto-promotion based on merged branch
+            MERGED_TO="${{ github.event.pull_request.base.ref }}"
+            
+            if [[ "$MERGED_TO" == "dev" ]]; then
+              SOURCE="dev"
+              TARGET="staging"
+            elif [[ "$MERGED_TO" == "staging" ]]; then
+              SOURCE="staging"
+              TARGET="main"
+            else
+              echo "should_promote=false" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+          fi
+          
+          # Validate promotion path
+          if [[ "$SOURCE" == "dev" && "$TARGET" == "staging" ]]; then
+            echo "should_promote=true" >> $GITHUB_OUTPUT
+            echo "risk_level=medium" >> $GITHUB_OUTPUT
+          elif [[ "$SOURCE" == "staging" && "$TARGET" == "main" ]]; then
+            echo "should_promote=true" >> $GITHUB_OUTPUT
+            echo "risk_level=high" >> $GITHUB_OUTPUT
+          else
+            echo "should_promote=false" >> $GITHUB_OUTPUT
+            echo "::error::Invalid promotion path: $SOURCE → $TARGET"
+            exit 1
+          fi
+          
+          echo "source=$SOURCE" >> $GITHUB_OUTPUT
+          echo "target=$TARGET" >> $GITHUB_OUTPUT
+
+  # Dev → Staging promotion (medium risk)
+  promote-to-staging:
+    needs: check-promotion
+    if: |
+      needs.check-promotion.outputs.should_promote == 'true' &&
+      needs.check-promotion.outputs.target == 'staging'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Run Full Test Suite
+        run: |
+          if [[ -f "scripts/preflight.sh" ]]; then
+            bash scripts/preflight.sh
+          fi
+
+      - name: Security Scan
+        run: |
+          if [[ -f "scripts/security-scan.sh" ]]; then
+            bash scripts/security-scan.sh
+          fi
+
+      - name: Create Promotion PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚀 Promote dev → staging',
+              head: 'dev',
+              base: 'staging',
+              body: `## Branch Promotion: dev → staging
+              
+              This PR promotes changes from \`dev\` to \`staging\`.
+              
+              ### Verification
+              - ✅ All tests passed
+              - ✅ Security scan passed
+              
+              ### Risk Level: Medium
+              
+              After merge, changes will be deployed to the staging environment.
+              `
+            });
+            
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.data.number,
+              labels: ['promotion', 'staging']
+            });
+
+  # Staging → Main promotion (high risk, requires approval)
+  promote-to-production:
+    needs: check-promotion
+    if: |
+      needs.check-promotion.outputs.should_promote == 'true' &&
+      needs.check-promotion.outputs.target == 'main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Run Full Test Suite
+        run: |
+          if [[ -f "scripts/preflight.sh" ]]; then
+            bash scripts/preflight.sh
+          fi
+
+      - name: Security Scan
+        run: |
+          if [[ -f "scripts/security-scan.sh" ]]; then
+            bash scripts/security-scan.sh
+          fi
+
+      - name: Pre-deployment Check
+        run: |
+          if [[ -f "scripts/pre-deployment-check.sh" ]]; then
+            bash scripts/pre-deployment-check.sh
+          fi
+
+      - name: Create Production PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚀 Promote staging → main (PRODUCTION)',
+              head: 'staging',
+              base: 'main',
+              body: `## Branch Promotion: staging → main
+              
+              ⚠️ **PRODUCTION DEPLOYMENT**
+              
+              This PR promotes changes from \`staging\` to \`main\` (production).
+              
+              ### Pre-merge Checklist
+              - [ ] All staging tests passed
+              - [ ] Security scan clean
+              - [ ] Staging environment manually verified
+              - [ ] Rollback plan reviewed
+              - [ ] On-call engineer notified
+              
+              ### Risk Level: HIGH
+              
+              **Requires 2 approvers including a maintainer.**
+              
+              After merge, changes will be deployed to production.
+              `
+            });
+            
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.data.number,
+              labels: ['promotion', 'production', 'requires-approval']
+            });

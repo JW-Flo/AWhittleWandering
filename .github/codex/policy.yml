@@ -1,28 +1,40 @@
+# =============================================================================
 # Codex Autonomous CI/CD Pipeline Policy
-# Version: 1.0
-# This file defines the rules and constraints for the Codex autonomous agent
+# =============================================================================
+# This file defines the complete policy for the autonomous AI pipeline,
+# including path permissions, risk classification, and auto-merge rules.
+#
+# Version: 2.0
+# =============================================================================
 
-version: "1.0"
+version: "2.0"
 
-# Path-based permissions
+# -----------------------------------------------------------------------------
+# Path Classification
+# -----------------------------------------------------------------------------
+# Defines which paths are allowed for different types of changes
+
 paths:
-  # Paths where runtime code changes are allowed
+  # Runtime code paths - where the agent can make code changes
   runtime_code:
     - "backend/"
     - "frontend/"
     - "shared/"
   
-  # Paths restricted to documentation-only changes
+  # Documentation-only paths - lower risk, can auto-merge
   docs_only:
     - "docs/"
-    - ".github/"
-    - "README.md"
-    - "QA.md"
-    - "SECURITY.md"
-    - "PRIVACY.md"
-    - "DATA_POLICY.md"
+    - "*.md"
+    - "!.ai/*.md"  # Exclude AI config from docs-only
   
-  # Paths that should never be modified by autonomous agents
+  # Configuration paths - medium risk
+  config:
+    - ".github/workflows/"
+    - ".github/codex/"
+    - "ops/"
+    - "scripts/"
+  
+  # Restricted paths - agent cannot modify
   restricted:
     - ".env*"
     - "ops/secrets/"
@@ -30,115 +42,240 @@ paths:
     - "**/credentials*"
     - "**/*.pem"
     - "**/*.key"
+    - "**/*.p12"
 
-# Label-based workflow triggers
-labels:
-  # Default autonomous mode - can create PRs and modify code
-  autonomous:
-    name: "codex:autonomous"
-    permissions:
-      - create_pr
-      - modify_code
-      - run_tests
-    restrictions:
-      - no_direct_main_push
-      - require_ci_pass
-  
-  # Runtime execution mode - can execute scripts and deploy previews
-  runtime:
-    name: "codex:run"
-    permissions:
-      - execute_scripts
-      - deploy_preview
-    restrictions:
-      - no_production_deploy
-      - require_approval
-  
-  # Documentation-only mode
-  docs:
-    name: "codex:docs-only"
-    permissions:
-      - modify_docs
-      - create_pr
-    restrictions:
-      - docs_paths_only
+# -----------------------------------------------------------------------------
+# Risk Classification Rules
+# -----------------------------------------------------------------------------
+# Determines risk level based on changed paths and patterns
 
-# Risk tier definitions
-risk_tiers:
+risk_classification:
+  # Low risk - safe for auto-merge
   low:
-    description: "Trivial changes or isolated areas"
-    auto_merge: true
-    require_approval: false
-    base_branch: "main"
+    conditions:
+      - only_docs_changed: true
+      - file_count_max: 3
+      - lines_changed_max: 100
+    actions:
+      auto_merge: true
+      require_approval: false
+      label: "codex:lite"
   
+  # Medium risk - standard review
   medium:
-    description: "Moderate complexity or broadly used components"
-    auto_merge: false
-    require_approval: true
-    approvers_required: 1
-    base_branch: "main"
+    conditions:
+      - runtime_code_changed: true
+      - file_count_max: 10
+      - lines_changed_max: 500
+      - no_security_files: true
+    actions:
+      auto_merge: false
+      require_approval: true
+      approvers_required: 1
+      label: "codex:autonomous"
   
+  # High risk - requires manual approval
   high:
-    description: "Complex or sensitive changes"
-    auto_merge: false
-    require_approval: true
-    approvers_required: 2
-    base_branch: "main"
-    require_security_review: true
+    conditions:
+      - any_of:
+          - security_files_changed: true
+          - config_files_changed: true
+          - file_count_exceeds: 10
+          - lines_changed_exceeds: 500
+          - multiple_modules_changed: true
+    actions:
+      auto_merge: false
+      require_approval: true
+      approvers_required: 2
+      require_maintainer: true
+      label: "codex:full"
 
-# Guardrails - security and quality gates
+# -----------------------------------------------------------------------------
+# Label Definitions
+# -----------------------------------------------------------------------------
+# Labels used by the pipeline for workflow control
+
+labels:
+  # Trigger labels
+  triggers:
+    - name: "ai-task"
+      description: "Triggers the task-runner workflow"
+    - name: "codex:run"
+      description: "Execute Codex on this PR/issue"
+  
+  # Risk tier labels
+  risk_tiers:
+    - name: "codex:lite"
+      description: "Low risk - auto-merge eligible"
+      color: "0e8a16"
+    - name: "codex:autonomous"
+      description: "Medium risk - standard review"
+      color: "fbca04"
+    - name: "codex:full"
+      description: "High risk - manual approval required"
+      color: "d93f0b"
+  
+  # Status labels
+  status:
+    - name: "automated"
+      description: "Generated by AI pipeline"
+    - name: "promotion"
+      description: "Branch promotion PR"
+    - name: "requires-approval"
+      description: "Needs manual approval"
+
+# -----------------------------------------------------------------------------
+# Guardrails
+# -----------------------------------------------------------------------------
+# Security and quality gates that must pass
+
 guardrails:
   security:
-    # Block commits containing secret patterns
+    # Block any commit containing secret patterns
     block_secret_patterns: true
+    patterns:
+      - 'AKIA[0-9A-Z]{16}'                    # AWS Access Key
+      - 'AIzaSy[0-9A-Za-z\-_]{35}'            # Google API Key
+      - '-----BEGIN .* PRIVATE KEY-----'      # Private keys
+      - 'sk-[A-Za-z0-9]{20,}'                 # OpenAI API Key
+      - 'xox[baprs]-[0-9A-Za-z-]{10,}'        # Slack tokens
+      - 'ghp_[A-Za-z0-9]{36}'                 # GitHub PAT
+      - 'glpat-[A-Za-z0-9\-]{20}'             # GitLab PAT
+    
     # Require security scan to pass
     require_security_scan: true
+    
     # Scan dependencies for vulnerabilities
     scan_dependencies: true
-    # Patterns to block (regex)
-    blocked_patterns:
-      - 'AKIA[0-9A-Z]{16}'
-      - 'AIzaSy[0-9A-Za-z\-_]{35}'
-      - '-----BEGIN (RSA|EC|OPENSSH|PGP) PRIVATE KEY-----'
-      - 'sk-[A-Za-z0-9]{20,}'
+    fail_on_critical: true
+    fail_on_high: false  # Warn only
   
   quality:
-    # Require lint to pass
+    # Code quality requirements
     require_lint_pass: true
-    # Require TypeScript type checking
     require_typecheck: true
-    # Require tests to pass
     require_tests: true
-    # Minimum test coverage (if coverage tooling exists)
-    min_test_coverage: 0
+    
+    # Coverage requirements (if tooling exists)
+    min_coverage: 0  # Disabled for now
+    
+    # PR requirements
+    require_description: true
+    require_linked_issue: false
   
   deployment:
-    # Require approval for production deployments
+    # Production deployment gates
+    require_staging_first: true
     require_approval_for_production: true
-    # Auto-rollback on health check failure
-    auto_rollback_on_failure: true
-    # Health check timeout in seconds
+    
+    # Health check configuration
     health_check_timeout_seconds: 300
+    health_check_retries: 3
+    
+    # Rollback configuration
+    auto_rollback_on_failure: true
+    rollback_window_minutes: 30
 
-# Human-in-the-loop triggers
-# These conditions will require human review even for low-risk tasks
+# -----------------------------------------------------------------------------
+# Human-in-the-Loop Triggers
+# -----------------------------------------------------------------------------
+# Conditions that always require human review, regardless of risk level
+
 human_review_required:
-  # Changes to API routes require review
-  - path_matches: "backend/edge-worker/src/routes/**"
-  # Changes to shared schemas require review
-  - path_matches: "shared/schemas/**"
-  # Large PRs require review
-  - file_count_exceeds: 10
-  - lines_changed_exceeds: 500
-  # Security-related changes always require review
-  - modifies_security_config: true
-  - modifies_deployment_config: true
+  # Path-based triggers
+  paths:
+    - "backend/edge-worker/src/routes/**"     # API routes
+    - "shared/schemas/**"                      # Data schemas
+    - "backend/edge-worker/src/middleware/**"  # Auth middleware
+    - ".github/workflows/**"                   # CI/CD config
+  
+  # Size-based triggers
+  thresholds:
+    file_count: 10
+    lines_changed: 500
+    new_dependencies: 1
+  
+  # Content-based triggers
+  patterns:
+    - modifies_auth: true
+    - modifies_security_config: true
+    - modifies_deployment_config: true
+    - adds_external_api_call: true
 
-# Rate limiting for cost control
+# -----------------------------------------------------------------------------
+# Rate Limits
+# -----------------------------------------------------------------------------
+# Cost and resource controls
+
 rate_limits:
-  # Maximum task executions per hour
-  tasks_per_hour: 20
-  # Maximum deployments per day
-  deployments_per_day: 50
-  # Maximum preview environments
-  max_preview_environments: 5
+  # Task execution limits
+  tasks:
+    per_hour: 20
+    per_day: 100
+  
+  # Deployment limits
+  deployments:
+    per_hour: 5
+    per_day: 20
+  
+  # Preview environment limits
+  preview_environments:
+    max_concurrent: 5
+    auto_cleanup_hours: 24
+  
+  # API call limits (for OpenAI)
+  api_calls:
+    per_minute: 30
+    per_hour: 500
+    max_tokens_per_request: 8192
+
+# -----------------------------------------------------------------------------
+# Branch Strategy
+# -----------------------------------------------------------------------------
+# Defines the branch promotion flow
+
+branches:
+  development:
+    name: "dev"
+    auto_deploy: true
+    environment: "development"
+  
+  staging:
+    name: "staging"
+    auto_deploy: true
+    environment: "staging"
+    requires_from: "dev"
+  
+  production:
+    name: "main"
+    auto_deploy: false  # Requires approval
+    environment: "production"
+    requires_from: "staging"
+    requires_approval: true
+    approvers_required: 2
+
+# -----------------------------------------------------------------------------
+# Subagent Configuration
+# -----------------------------------------------------------------------------
+# Configuration for specialized subagents
+
+subagents:
+  ci_reviewer:
+    trigger_on: "preflight_failure"
+    max_iterations: 3
+    prompt_file: ".ai/SUBAGENTS/ci-reviewer.md"
+  
+  security_linter:
+    trigger_on: "security_scan_failure"
+    max_iterations: 2
+    prompt_file: ".ai/SUBAGENTS/security-linter.md"
+    block_on_critical: true
+  
+  cloudflare_auditor:
+    trigger_on: "deployment_failure"
+    max_iterations: 2
+    prompt_file: ".ai/SUBAGENTS/cloudflare-auditor.md"
+  
+  route_verifier:
+    trigger_on: "staging_deployment"
+    prompt_file: ".ai/SUBAGENTS/route-verifier.md"
