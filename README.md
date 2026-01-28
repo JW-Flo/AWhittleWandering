@@ -29,8 +29,9 @@ npm install && npm run dev
 
 ```bash
 # Backend (.dev.vars)
-TESSIE_API_KEY=your_key
+TESSIE_API_TOKEN=your_token
 ADMIN_TOKEN=your_token
+JWT_SECRET=your_secret
 
 # Frontend (.env)  
 VITE_API_BASE_URL=https://your-worker.workers.dev
@@ -68,7 +69,7 @@ npm run qa:core              # Full QA
 npm test                     # Unit tests
 ```
 
-See [QA.md](QA.md) for details.
+See [docs/](docs/) for guides and detailed documentation.
 
 ## Tech Stack
 
@@ -87,7 +88,7 @@ See [QA.md](QA.md) for details.
 ✅ Modular architecture, real-time tracking, dashboard  
 📋 Planned: Media gallery, mobile app
 
-See [FUTURE_QUALITY.md](FUTURE_QUALITY.md) for roadmap.
+See [docs/ROADMAP.md](docs/ROADMAP.md) for roadmap.
 
 ## Archived Workers
 
