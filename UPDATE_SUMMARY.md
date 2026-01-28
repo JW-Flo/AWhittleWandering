@@ -96,7 +96,7 @@ cd backend/edge-worker
 
 ## 📚 Helpful Files
 
-- **SYNC_SECRETS_GUIDE.md** - Detailed sync instructions
+- **docs/SYNC_SECRETS_GUIDE.md** - Detailed sync instructions
 - **CREDENTIALS_STATUS.md** - Current status tracking
 - **GITHUB_SECRETS_GUIDE.md** - Complete GitHub Secrets guide
 
