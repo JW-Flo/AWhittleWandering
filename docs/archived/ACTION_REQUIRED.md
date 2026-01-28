@@ -154,6 +154,7 @@ curl https://awhittlewandering-api.kd8jc7v8cd.workers.dev/api/v1/config
 - [ ] Secrets verified: `npx wrangler secret list`
 - [ ] Backend API shows credentials available
 - [ ] External APIs work with credentials
+- [ ] No hardcoded credentials in code
 
 ---
 
@@ -193,3 +194,4 @@ curl https://awhittlewandering-api.kd8jc7v8cd.workers.dev/api/v1/unified-data
 ---
 
 **Next Step:** Commit workflow file and trigger via GitHub Web UI
+
