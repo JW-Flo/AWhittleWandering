@@ -1,35 +1,144 @@
-{
-  "runtime_code_paths": [
-    "backend/",
-    "frontend/",
-    "shared/"
-  ],
-  "docs_only_paths": [
-    "docs/",
-    ".github/",
-    "README.md",
-    "QA.md",
-    "SECURITY.md",
-    "PRIVACY.md",
-    "DATA_POLICY.md"
-  ],
-  "labels": {
-    "default": [
-      "codex:autonomous"
-    ],
-    "runtime": [
-      "codex:run"
-    ]
-  }
-}
+# Codex Autonomous CI/CD Pipeline Policy
+# Version: 1.0
+# This file defines the rules and constraints for the Codex autonomous agent
 
+version: "1.0"
 
+# Path-based permissions
+paths:
+  # Paths where runtime code changes are allowed
+  runtime_code:
+    - "backend/"
+    - "frontend/"
+    - "shared/"
+  
+  # Paths restricted to documentation-only changes
+  docs_only:
+    - "docs/"
+    - ".github/"
+    - "README.md"
+    - "QA.md"
+    - "SECURITY.md"
+    - "PRIVACY.md"
+    - "DATA_POLICY.md"
+  
+  # Paths that should never be modified by autonomous agents
+  restricted:
+    - ".env*"
+    - "ops/secrets/"
+    - "**/wrangler.toml"
+    - "**/credentials*"
+    - "**/*.pem"
+    - "**/*.key"
 
+# Label-based workflow triggers
+labels:
+  # Default autonomous mode - can create PRs and modify code
+  autonomous:
+    name: "codex:autonomous"
+    permissions:
+      - create_pr
+      - modify_code
+      - run_tests
+    restrictions:
+      - no_direct_main_push
+      - require_ci_pass
+  
+  # Runtime execution mode - can execute scripts and deploy previews
+  runtime:
+    name: "codex:run"
+    permissions:
+      - execute_scripts
+      - deploy_preview
+    restrictions:
+      - no_production_deploy
+      - require_approval
+  
+  # Documentation-only mode
+  docs:
+    name: "codex:docs-only"
+    permissions:
+      - modify_docs
+      - create_pr
+    restrictions:
+      - docs_paths_only
 
+# Risk tier definitions
+risk_tiers:
+  low:
+    description: "Trivial changes or isolated areas"
+    auto_merge: true
+    require_approval: false
+    base_branch: "main"
+  
+  medium:
+    description: "Moderate complexity or broadly used components"
+    auto_merge: false
+    require_approval: true
+    approvers_required: 1
+    base_branch: "main"
+  
+  high:
+    description: "Complex or sensitive changes"
+    auto_merge: false
+    require_approval: true
+    approvers_required: 2
+    base_branch: "main"
+    require_security_review: true
 
+# Guardrails - security and quality gates
+guardrails:
+  security:
+    # Block commits containing secret patterns
+    block_secret_patterns: true
+    # Require security scan to pass
+    require_security_scan: true
+    # Scan dependencies for vulnerabilities
+    scan_dependencies: true
+    # Patterns to block (regex)
+    blocked_patterns:
+      - 'AKIA[0-9A-Z]{16}'
+      - 'AIzaSy[0-9A-Za-z\-_]{35}'
+      - '-----BEGIN (RSA|EC|OPENSSH|PGP) PRIVATE KEY-----'
+      - 'sk-[A-Za-z0-9]{20,}'
+  
+  quality:
+    # Require lint to pass
+    require_lint_pass: true
+    # Require TypeScript type checking
+    require_typecheck: true
+    # Require tests to pass
+    require_tests: true
+    # Minimum test coverage (if coverage tooling exists)
+    min_test_coverage: 0
+  
+  deployment:
+    # Require approval for production deployments
+    require_approval_for_production: true
+    # Auto-rollback on health check failure
+    auto_rollback_on_failure: true
+    # Health check timeout in seconds
+    health_check_timeout_seconds: 300
 
+# Human-in-the-loop triggers
+# These conditions will require human review even for low-risk tasks
+human_review_required:
+  # Changes to API routes require review
+  - path_matches: "backend/edge-worker/src/routes/**"
+  # Changes to shared schemas require review
+  - path_matches: "shared/schemas/**"
+  # Large PRs require review
+  - file_count_exceeds: 10
+  - lines_changed_exceeds: 500
+  # Security-related changes always require review
+  - modifies_security_config: true
+  - modifies_deployment_config: true
 
-
-
-
-
+# Rate limiting for cost control
+rate_limits:
+  # Maximum task executions per hour
+  tasks_per_hour: 20
+  # Maximum deployments per day
+  deployments_per_day: 50
+  # Maximum preview environments
+  max_preview_environments: 5

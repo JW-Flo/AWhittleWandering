@@ -1,0 +1,254 @@
+name: Codex Autonomous Pipeline
+
+on:
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to process'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+env:
+  CODEX_BRANCH_PREFIX: "codex/"
+  MAX_ITERATIONS: 5
+
+jobs:
+  validate-trigger:
+    if: |
+      github.event.label.name == 'codex:autonomous' ||
+      github.event.label.name == 'codex:run' ||
+      (github.event_name == 'issue_comment' && 
+       contains(github.event.comment.body, '@codex')) ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      should_proceed: ${{ steps.check.outputs.proceed }}
+      risk_tier: ${{ steps.check.outputs.risk_tier }}
+      issue_number: ${{ steps.check.outputs.issue_number }}
+      issue_title: ${{ steps.check.outputs.issue_title }}
+      issue_body: ${{ steps.check.outputs.issue_body }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Load Policy
+        id: policy
+        run: |
+          if [[ -f ".github/codex/policy.yml" ]]; then
+            echo "Policy file found"
+            cat .github/codex/policy.yml
+          else
+            echo "No policy file found, using defaults"
+          fi
+      
+      - name: Extract Issue Details
+        id: extract
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            ISSUE_NUMBER="${{ github.event.inputs.issue_number }}"
+          else
+            ISSUE_NUMBER="${{ github.event.issue.number }}"
+          fi
+          
+          # Fetch issue details via GitHub API
+          ISSUE_DATA=$(gh issue view "$ISSUE_NUMBER" --json title,body)
+          ISSUE_TITLE=$(echo "$ISSUE_DATA" | jq -r '.title')
+          ISSUE_BODY=$(echo "$ISSUE_DATA" | jq -r '.body')
+          
+          echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
+          echo "issue_title=$ISSUE_TITLE" >> $GITHUB_OUTPUT
+          
+          # Store body in a file to handle multiline
+          echo "$ISSUE_BODY" > /tmp/issue_body.txt
+      
+      - name: Validate Request
+        id: check
+        run: |
+          ISSUE_BODY=$(cat /tmp/issue_body.txt)
+          
+          # Check if issue body contains restricted patterns (secrets/credentials)
+          if echo "$ISSUE_BODY" | grep -qiE "(password\s*[:=]|api[_-]?key\s*[:=]\s*['\"][^'\"]+['\"]|secret\s*[:=]\s*['\"][^'\"]+['\"])"; then
+            echo "proceed=false" >> $GITHUB_OUTPUT
+            echo "::error::Request appears to contain sensitive content - requires manual review"
+            exit 1
+          fi
+          
+          # Determine risk tier
+          RISK_TIER="Medium"
+          if echo "$ISSUE_BODY" | grep -qi "Risk Tier: High"; then
+            RISK_TIER="High"
+          elif echo "$ISSUE_BODY" | grep -qi "Risk Tier: Low"; then
+            RISK_TIER="Low"
+          fi
+          
+          echo "proceed=true" >> $GITHUB_OUTPUT
+          echo "risk_tier=$RISK_TIER" >> $GITHUB_OUTPUT
+          echo "issue_number=${{ steps.extract.outputs.issue_number }}" >> $GITHUB_OUTPUT
+          echo "issue_title=${{ steps.extract.outputs.issue_title }}" >> $GITHUB_OUTPUT
+          
+          # Encode body for output
+          ENCODED_BODY=$(cat /tmp/issue_body.txt | base64 -w 0)
+          echo "issue_body=$ENCODED_BODY" >> $GITHUB_OUTPUT
+
+  execute-task:
+    needs: validate-trigger
+    if: needs.validate-trigger.outputs.should_proceed == 'true'
+    runs-on: ubuntu-latest
+    env:
+      ISSUE_NUMBER: ${{ needs.validate-trigger.outputs.issue_number }}
+      ISSUE_TITLE: ${{ needs.validate-trigger.outputs.issue_title }}
+      RISK_TIER: ${{ needs.validate-trigger.outputs.risk_tier }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep jq
+      
+      - name: Decode Issue Body
+        run: |
+          echo "${{ needs.validate-trigger.outputs.issue_body }}" | base64 -d > /tmp/issue_body.txt
+          export ISSUE_BODY=$(cat /tmp/issue_body.txt)
+          echo "ISSUE_BODY<<EOF" >> $GITHUB_ENV
+          echo "$ISSUE_BODY" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+      
+      - name: Create Working Branch
+        id: branch
+        run: |
+          BRANCH_NAME="${{ env.CODEX_BRANCH_PREFIX }}issue-${{ env.ISSUE_NUMBER }}-$(date +%s)"
+          git checkout -b "$BRANCH_NAME"
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+      
+      - name: Install Dependencies
+        run: |
+          if [[ -f "pnpm-lock.yaml" ]]; then
+            npm install -g pnpm
+            pnpm install --frozen-lockfile || pnpm install
+          elif [[ -f "yarn.lock" ]]; then
+            yarn install --frozen-lockfile || yarn install
+          else
+            npm ci || npm install
+          fi
+      
+      - name: Run Security Scan
+        run: bash scripts/security-scan.sh
+        continue-on-error: true
+      
+      - name: Run Preflight Checks
+        id: preflight
+        run: |
+          bash scripts/preflight.sh
+        continue-on-error: true
+      
+      - name: Execute Task Runner
+        id: task
+        env:
+          GIT_USER_NAME: "Codex Bot"
+          GIT_USER_EMAIL: "codex-bot@awhittlewandering.com"
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+        run: |
+          # Export issue body for task runner
+          export ISSUE_BODY=$(cat /tmp/issue_body.txt)
+          
+          # Run the task runner script
+          bash ops/task-runner.sh
+        continue-on-error: true
+      
+      - name: Commit Changes (if any)
+        id: commit
+        run: |
+          git config user.name "Codex Bot"
+          git config user.email "codex-bot@awhittlewandering.com"
+          
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "changes_made=false" >> $GITHUB_OUTPUT
+            echo "No changes to commit"
+          else
+            git add -A
+            git commit -m "codex: implement #${{ env.ISSUE_NUMBER }} - ${{ env.ISSUE_TITLE }}"
+            git push -u origin ${{ steps.branch.outputs.branch_name }}
+            echo "changes_made=true" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Create Pull Request
+        if: steps.commit.outputs.changes_made == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Determine base branch based on risk tier
+          BASE_BRANCH="main"
+          
+          # Create PR body
+          PR_BODY=$(cat <<EOF
+          ## Automated PR from Codex Pipeline
+          
+          Closes #${{ env.ISSUE_NUMBER }}
+          
+          ### Risk Tier: ${{ env.RISK_TIER }}
+          
+          ### Changes Made
+          - Implemented requested changes via Codex autonomous pipeline
+          
+          ### Verification Checklist
+          - [ ] CI Preflight passed
+          - [ ] Security scan passed
+          - [ ] Tests passed
+          - [ ] No secrets or credentials added
+          - [ ] Input validation in place
+          
+          ---
+          *This PR was automatically generated by the Codex CI/CD pipeline.*
+          EOF
+          )
+          
+          # Create the PR
+          gh pr create \
+            --base "$BASE_BRANCH" \
+            --head "${{ steps.branch.outputs.branch_name }}" \
+            --title "codex: ${{ env.ISSUE_TITLE }}" \
+            --body "$PR_BODY" \
+            --label "codex:autonomous,automated"
+      
+      - name: Comment on Issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ "${{ steps.commit.outputs.changes_made }}" == "true" ]]; then
+            gh issue comment ${{ env.ISSUE_NUMBER }} --body "🤖 **Codex Pipeline**: PR created for this task. Branch: \`${{ steps.branch.outputs.branch_name }}\`"
+          else
+            gh issue comment ${{ env.ISSUE_NUMBER }} --body "🤖 **Codex Pipeline**: Task processed but no code changes were generated. Manual review may be needed."
+          fi
+
+  high-risk-gate:
+    needs: [validate-trigger, execute-task]
+    if: needs.validate-trigger.outputs.risk_tier == 'High'
+    runs-on: ubuntu-latest
+    environment:
+      name: high-risk-review
+    steps:
+      - name: High Risk Notification
+        run: |
+          echo "⚠️ HIGH RISK TASK COMPLETED"
+          echo "Issue #${{ needs.validate-trigger.outputs.issue_number }} requires manual review before merge"
+          echo "Risk Tier: High"
