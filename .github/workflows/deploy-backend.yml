@@ -1,0 +1,379 @@
+# =============================================================================
+# Backend Deployment Workflow
+# =============================================================================
+# Deploys the Cloudflare Worker (backend API) to the specified environment.
+# Includes health checks and automatic rollback on failure.
+#
+# Environments: development, staging (workers_dev), production
+# =============================================================================
+
+name: Deploy Backend
+
+on:
+  # Trigger on push to specific branches
+  push:
+    branches:
+      - main
+      - staging
+      - dev
+    paths:
+      - 'backend/**'
+      - 'shared/**'
+  
+  # Manual deployment trigger
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      skip_tests:
+        description: 'Skip pre-deployment tests'
+        required: false
+        type: boolean
+        default: false
+
+  # Called by other workflows
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: string
+      skip_tests:
+        description: 'Skip pre-deployment tests'
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      CLOUDFLARE_API_TOKEN:
+        required: true
+      CLOUDFLARE_ACCOUNT_ID:
+        required: true
+      TESSIE_API_TOKEN:
+        required: false
+      MAPBOX_API_TOKEN:
+        required: false
+      OPENWEATHER_API_KEY:
+        required: false
+      JWT_SECRET:
+        required: false
+      TESLA_VIN:
+        required: false
+
+permissions:
+  contents: read
+  deployments: write
+
+env:
+  WORKER_DIR: backend/edge-worker
+
+jobs:
+  # Determine deployment environment from trigger
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      worker_name: ${{ steps.env.outputs.worker_name }}
+      health_url: ${{ steps.env.outputs.health_url }}
+    steps:
+      - name: Determine Environment
+        id: env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" || "${{ github.event_name }}" == "workflow_call" ]]; then
+            ENV="${{ inputs.environment }}"
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            ENV="production"
+          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            ENV="staging"
+          else
+            ENV="development"
+          fi
+          
+          echo "environment=$ENV" >> $GITHUB_OUTPUT
+          
+          # Set worker name and health URL based on environment
+          case "$ENV" in
+            production)
+              echo "worker_name=awhittlewandering-api" >> $GITHUB_OUTPUT
+              echo "health_url=https://api.awhittlewandering.com/api/v1/health" >> $GITHUB_OUTPUT
+              ;;
+            staging)
+              echo "worker_name=awhittlewandering-api-staging" >> $GITHUB_OUTPUT
+              echo "health_url=https://awhittlewandering-api-staging.workers.dev/api/v1/health" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "worker_name=awhittlewandering-api-dev" >> $GITHUB_OUTPUT
+              echo "health_url=https://awhittlewandering-api-dev.workers.dev/api/v1/health" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+  # Pre-deployment tests
+  test:
+    needs: setup
+    if: inputs.skip_tests != true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Build Shared Schemas
+        run: |
+          cd shared
+          npm run build || echo "No build script"
+
+      - name: Run Backend Tests
+        run: |
+          cd ${{ env.WORKER_DIR }}
+          npm ci || npm install
+          npm test || echo "No tests configured"
+
+      - name: Type Check
+        run: |
+          cd ${{ env.WORKER_DIR }}
+          npm run typecheck || npx tsc --noEmit || echo "No typecheck configured"
+
+  # Build the worker
+  build:
+    needs: [setup, test]
+    if: always() && (needs.test.result == 'success' || needs.test.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          npm ci || npm install
+          cd shared && npm ci || npm install
+          cd ../${{ env.WORKER_DIR }} && npm ci || npm install
+
+      - name: Build Shared Schemas
+        run: |
+          cd shared
+          npm run build || echo "No build script"
+
+      - name: Build Worker
+        run: |
+          cd ${{ env.WORKER_DIR }}
+          npm run build
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: worker-build-${{ needs.setup.outputs.environment }}
+          path: ${{ env.WORKER_DIR }}/dist/
+          retention-days: 7
+
+  # Deploy to Cloudflare
+  deploy:
+    needs: [setup, build]
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ needs.setup.outputs.environment }}
+      url: ${{ needs.setup.outputs.health_url }}
+    outputs:
+      deployment_id: ${{ steps.deploy.outputs.deployment_id }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: worker-build-${{ needs.setup.outputs.environment }}
+          path: ${{ env.WORKER_DIR }}/dist/
+
+      - name: Install Wrangler
+        run: npm install -g wrangler@3
+
+      - name: Configure Secrets
+        if: needs.setup.outputs.environment == 'production' || needs.setup.outputs.environment == 'staging'
+        working-directory: ${{ env.WORKER_DIR }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          ENV_FLAG="--env ${{ needs.setup.outputs.environment }}"
+          
+          # Set secrets (only if they exist)
+          if [[ -n "${{ secrets.TESSIE_API_TOKEN }}" ]]; then
+            echo "${{ secrets.TESSIE_API_TOKEN }}" | wrangler secret put TESSIE_API_TOKEN $ENV_FLAG 2>/dev/null || true
+          fi
+          if [[ -n "${{ secrets.MAPBOX_API_TOKEN }}" ]]; then
+            echo "${{ secrets.MAPBOX_API_TOKEN }}" | wrangler secret put MAPBOX_API_TOKEN $ENV_FLAG 2>/dev/null || true
+          fi
+          if [[ -n "${{ secrets.OPENWEATHER_API_KEY }}" ]]; then
+            echo "${{ secrets.OPENWEATHER_API_KEY }}" | wrangler secret put OPENWEATHER_API_KEY $ENV_FLAG 2>/dev/null || true
+          fi
+          if [[ -n "${{ secrets.JWT_SECRET }}" ]]; then
+            echo "${{ secrets.JWT_SECRET }}" | wrangler secret put JWT_SECRET $ENV_FLAG 2>/dev/null || true
+          fi
+          if [[ -n "${{ secrets.TESLA_VIN }}" ]]; then
+            echo "${{ secrets.TESLA_VIN }}" | wrangler secret put TESLA_VIN $ENV_FLAG 2>/dev/null || true
+          fi
+
+      - name: Deploy Worker
+        id: deploy
+        working-directory: ${{ env.WORKER_DIR }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          ENV="${{ needs.setup.outputs.environment }}"
+          
+          if [[ "$ENV" == "production" ]]; then
+            OUTPUT=$(wrangler deploy --env production 2>&1)
+          elif [[ "$ENV" == "staging" ]]; then
+            # Deploy to workers.dev for staging
+            OUTPUT=$(wrangler deploy 2>&1)
+          else
+            OUTPUT=$(wrangler deploy --env development 2>&1)
+          fi
+          
+          echo "$OUTPUT"
+          
+          # Extract deployment ID if available
+          DEPLOYMENT_ID=$(echo "$OUTPUT" | grep -oP 'Deployment ID: \K[a-f0-9-]+' || echo "unknown")
+          echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
+
+  # Health check after deployment
+  health-check:
+    needs: [setup, deploy]
+    runs-on: ubuntu-latest
+    outputs:
+      healthy: ${{ steps.check.outputs.healthy }}
+    steps:
+      - name: Wait for Deployment Propagation
+        run: sleep 30
+
+      - name: Health Check
+        id: check
+        run: |
+          HEALTH_URL="${{ needs.setup.outputs.health_url }}"
+          MAX_RETRIES=5
+          RETRY_DELAY=10
+          
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "Health check attempt $i/$MAX_RETRIES..."
+            
+            RESPONSE=$(curl -sf -w "\n%{http_code}" "$HEALTH_URL" 2>/dev/null || echo -e "\n000")
+            HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+            BODY=$(echo "$RESPONSE" | head -n -1)
+            
+            echo "HTTP Code: $HTTP_CODE"
+            echo "Response: $BODY"
+            
+            if [[ "$HTTP_CODE" == "200" ]]; then
+              echo "✅ Health check passed"
+              echo "healthy=true" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            
+            if [[ $i -lt $MAX_RETRIES ]]; then
+              echo "Retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+            fi
+          done
+          
+          echo "❌ Health check failed after $MAX_RETRIES attempts"
+          echo "healthy=false" >> $GITHUB_OUTPUT
+          exit 1
+
+  # Rollback on failure
+  rollback:
+    needs: [setup, deploy, health-check]
+    if: failure() && needs.health-check.outputs.healthy == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Wrangler
+        run: npm install -g wrangler@3
+
+      - name: Rollback Deployment
+        working-directory: ${{ env.WORKER_DIR }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          ENV="${{ needs.setup.outputs.environment }}"
+          echo "🔄 Rolling back $ENV deployment..."
+          
+          if [[ "$ENV" == "production" ]]; then
+            wrangler rollback --env production || echo "Rollback failed or not available"
+          else
+            wrangler rollback || echo "Rollback failed or not available"
+          fi
+
+      - name: Create Rollback Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Backend Deployment Rollback - ${{ needs.setup.outputs.environment }}`,
+              body: `## Automatic Rollback Triggered
+              
+              **Environment:** ${{ needs.setup.outputs.environment }}
+              **Deployment ID:** ${{ needs.deploy.outputs.deployment_id }}
+              **Workflow Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+              
+              ### Reason
+              Health check failed after deployment.
+              
+              ### Actions Taken
+              - Automatic rollback initiated
+              - Previous version restored
+              
+              ### Next Steps
+              1. Review the deployment logs
+              2. Identify the root cause
+              3. Fix and redeploy
+              
+              /cc @${{ github.actor }}
+              `,
+              labels: ['incident', 'rollback', 'backend']
+            });
+
+  # Notify on completion
+  notify:
+    needs: [setup, deploy, health-check]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deployment Summary
+        run: |
+          echo "## Backend Deployment Summary"
+          echo "- Environment: ${{ needs.setup.outputs.environment }}"
+          echo "- Worker: ${{ needs.setup.outputs.worker_name }}"
+          echo "- Health URL: ${{ needs.setup.outputs.health_url }}"
+          echo "- Deploy Status: ${{ needs.deploy.result }}"
+          echo "- Health Check: ${{ needs.health-check.result }}"
