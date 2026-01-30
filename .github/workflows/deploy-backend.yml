@@ -58,6 +58,11 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          TESSIE_API_TOKEN: ${{ secrets.TESSIE_API_TOKEN }}
+          MAPBOX_API_TOKEN: ${{ secrets.MAPBOX_API_TOKEN }}
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          TESLA_VIN: ${{ secrets.TESLA_VIN }}
         run: |
           set -euo pipefail
 
@@ -65,20 +70,20 @@ jobs:
           ENV_FLAG="--env $ENV"
 
           # Set secrets only if provided (never echo values)
-          if [[ -n "${{ secrets.TESSIE_API_TOKEN }}" ]]; then
-            printf '%s' "${{ secrets.TESSIE_API_TOKEN }}" | wrangler secret put TESSIE_API_TOKEN $ENV_FLAG >/dev/null
+          if [[ -n "${TESSIE_API_TOKEN:-}" ]]; then
+            printf '%s' "$TESSIE_API_TOKEN" | wrangler secret put TESSIE_API_TOKEN $ENV_FLAG >/dev/null
           fi
-          if [[ -n "${{ secrets.MAPBOX_API_TOKEN }}" ]]; then
-            printf '%s' "${{ secrets.MAPBOX_API_TOKEN }}" | wrangler secret put MAPBOX_API_TOKEN $ENV_FLAG >/dev/null
+          if [[ -n "${MAPBOX_API_TOKEN:-}" ]]; then
+            printf '%s' "$MAPBOX_API_TOKEN" | wrangler secret put MAPBOX_API_TOKEN $ENV_FLAG >/dev/null
           fi
-          if [[ -n "${{ secrets.OPENWEATHER_API_KEY }}" ]]; then
-            printf '%s' "${{ secrets.OPENWEATHER_API_KEY }}" | wrangler secret put OPENWEATHER_API_KEY $ENV_FLAG >/dev/null
+          if [[ -n "${OPENWEATHER_API_KEY:-}" ]]; then
+            printf '%s' "$OPENWEATHER_API_KEY" | wrangler secret put OPENWEATHER_API_KEY $ENV_FLAG >/dev/null
           fi
-          if [[ -n "${{ secrets.JWT_SECRET }}" ]]; then
-            printf '%s' "${{ secrets.JWT_SECRET }}" | wrangler secret put JWT_SECRET $ENV_FLAG >/dev/null
+          if [[ -n "${JWT_SECRET:-}" ]]; then
+            printf '%s' "$JWT_SECRET" | wrangler secret put JWT_SECRET $ENV_FLAG >/dev/null
           fi
-          if [[ -n "${{ secrets.TESLA_VIN }}" ]]; then
-            printf '%s' "${{ secrets.TESLA_VIN }}" | wrangler secret put TESLA_VIN $ENV_FLAG >/dev/null
+          if [[ -n "${TESLA_VIN:-}" ]]; then
+            printf '%s' "$TESLA_VIN" | wrangler secret put TESLA_VIN $ENV_FLAG >/dev/null
           fi
 
       - name: Build worker
