@@ -74,12 +74,3 @@ const Moment: React.FC<MomentProps> = ({ kind, title, body, timestamp, locationL
 
 export default Moment;
 
-
-
-
-
-
-
-
-
-

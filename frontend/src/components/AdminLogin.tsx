@@ -158,7 +158,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onAuthChange }) => {
           <Alert className="border-yellow-200 bg-yellow-50">
             <AlertDescription className="text-sm text-yellow-800">
               Admin access is required to upload media files and modify journey data. 
-              Public users have read-only access to the road trip tracker.
+              Public users have read-only access to the journey.
             </AlertDescription>
           </Alert>
         </form>

@@ -1,6 +1,6 @@
 # AWhittleWandering Deployment Guide
 
-Complete deployment documentation for the Tesla road trip tracker.
+Complete deployment documentation for A Whittle Wandering.
 
 ## Architecture Overview
 

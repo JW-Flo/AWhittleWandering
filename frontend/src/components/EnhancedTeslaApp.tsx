@@ -104,7 +104,7 @@ export const EnhancedTeslaApp: React.FC<EnhancedTeslaAppProps> = ({
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Enhanced Tesla Road Trip App</h1>
+              <h1 className="text-3xl font-bold text-gray-900">Enhanced Journey Command Center</h1>
               <p className="text-gray-600 mt-1">
                 Complete AI-powered journey management and automation
               </p>

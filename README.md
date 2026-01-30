@@ -1,21 +1,21 @@
-# A Whittle Wandering - Tesla Road Trip Tracker
+# A Whittle Wandering
 
 🚗⚡ **Live:** [awhittlewandering.com](https://awhittlewandering.com)
 
-Real-time Tesla road trip tracking across 48 continental US states.
+A journey platform that turns movement into meaning—experienced by others while it’s happening and remembered afterward as a coherent narrative.
 
 ## Features
 
-- Real-time vehicle tracking (location, battery, charging)
-- Journey analytics and efficiency insights  
-- Interactive dashboard with live metrics
+- Live journey presence (where they are *in the arc*, not just on the map)
+- Narrative “moments” (photos/notes/milestones) that punctuate the trip
+- Journeyer command center (vehicle data, routing, AI assistance) without burdening the public view
 - Secure API with authentication
 
 ## Architecture
 
 - **Frontend:** React + TypeScript + Mapbox
 - **Backend:** Cloudflare Workers + Hono + D1  
-- **Integration:** Tessie Tesla API
+- **Vehicle integration:** Tessie API (Tesla)
 
 ## Quick Start
 

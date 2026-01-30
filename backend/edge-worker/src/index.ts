@@ -28,7 +28,6 @@ import { authRouter } from './routers/auth';
 import { mfaRouter } from './routers/mfa';
 import { pushRouter } from './routers/push';
 import { notificationsRouter } from './routers/notifications';
-import { importRouter } from './routers/import';
 
 // Augment Env typing (local) for new PLATFORM_MODE variable
 declare global {
@@ -45,10 +44,6 @@ app.use('*', requestLogger);
 app.use('*', analyticsLogger);
 app.use('*', rateLimit);
 app.use('*', errorHandler);
-
-// Ensure preflight requests always get a sane response.
-// CORS headers are added by `corsMiddleware` above (for allowed origins).
-app.options('*', (c) => c.body(null, 204));
 
 // In-memory latency ring buffer (lightweight; resets on deploy)
 const LAT_SAMPLES_MAX = 200;
@@ -140,8 +135,6 @@ app.route('/api/v1/push', pushRouter);
 app.route('/api/v1/notifications', notificationsRouter);
 app.use('/api/v1/admin/*', adminAuth);
 app.route('/api/v1/admin', adminRouter);
-app.use('/api/v1/import/*', adminAuth);
-app.route('/api/v1/import', importRouter);
 
 // Legacy and convenience routes
 // Provide a simple health endpoint directly

@@ -1,0 +1,116 @@
+name: AI Task
+description: Create a task for the Codex autonomous CI/CD pipeline
+title: "[Task]: "
+labels: ["ai-task"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🤖 AI Task Request
+        
+        This issue will be processed by the autonomous Codex CI/CD pipeline.
+        Fill out the fields below to define your task.
+        
+        ⚠️ **Important:** Do not include any secrets, credentials, or sensitive 
+        information. Reference them abstractly (e.g., "use API_KEY env var").
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: A concise description of what needs to be accomplished
+      placeholder: "Fix the off-by-one error in the date range filter"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: branch
+    attributes:
+      label: Target Branch
+      description: Which branch should this task target?
+      options:
+        - dev
+        - staging
+        - main
+      default: 0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: risk_level
+    attributes:
+      label: Risk Level
+      description: |
+        Estimated risk of this change:
+        - **auto**: Let the system determine based on changed paths
+        - **low**: Trivial changes, isolated areas (auto-merge eligible)
+        - **medium**: Moderate complexity, standard review
+        - **high**: Sensitive changes, requires manual approval
+      options:
+        - auto
+        - low
+        - medium
+        - high
+      default: 0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: verify_tier
+    attributes:
+      label: Verification Tier
+      description: |
+        Level of verification to run:
+        - **auto**: Based on risk level (low=lite, high=full)
+        - **lite**: Basic checks (lint, typecheck, unit tests)
+        - **full**: Comprehensive (all tests, security scan, deployment check)
+      options:
+        - auto
+        - lite
+        - full
+      default: 0
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: |
+        Any additional information that would help:
+        - Related files or modules
+        - Error messages or logs
+        - Links to related issues
+        - Expected behavior
+      placeholder: |
+        Related files: backend/edge-worker/src/routes/api.ts
+        Error: TypeError at line 42
+        Expected: Should return empty array instead of null
+    validations:
+      required: false
+
+  - type: textarea
+    id: commands
+    attributes:
+      label: Commands (Optional)
+      description: |
+        Specific sub-commands to run after implementation:
+        - `audit`: Run security audit
+        - `deploy-prod`: Prepare production deployment
+      placeholder: |
+        - audit
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Acknowledgements
+      description: Please confirm the following
+      options:
+        - label: I have not included any secrets or credentials in this task
+          required: true
+        - label: I understand this will be processed by an AI agent
+          required: true

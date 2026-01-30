@@ -35,9 +35,8 @@ export const corsMiddleware = cors({
     return isAllowedOrigin(origin) ? origin : null;
   },
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization', 'X-Client-ID', 'Accept'],
-  credentials: true,
-  maxAge: 86400
+  allowHeaders: ['Content-Type', 'Authorization', 'X-Client-ID'],
+  credentials: true
 });
 
 export async function securityHeaders(c: Context, next: Next) {

@@ -1,7 +1,7 @@
 {
 	"name": "awhittlewandering",
 	"version": "1.0.0",
-	"description": "48 Continental US Tesla Road Trip Tracker",
+	"description": "A Whittle Wandering — a journey platform for long-haul trips with narrative moments and live presence",
 	"private": true,
 	"type": "module",
 	"workspaces": [

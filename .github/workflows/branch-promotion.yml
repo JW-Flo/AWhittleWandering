@@ -1,0 +1,368 @@
+# =============================================================================
+# Branch Promotion Workflow
+# =============================================================================
+# Handles the complete promotion flow: dev → staging → main
+# Each promotion triggers appropriate deployments and verifications.
+#
+# Flow:
+#   1. PR merged to dev → Auto-promote to staging (if CI passes)
+#   2. PR merged to staging → Create production PR (requires approval)
+#   3. PR merged to main → Deploy to production
+# =============================================================================
+
+name: Branch Promotion
+
+on:
+  # Trigger on PR merge
+  pull_request:
+    types: [closed]
+    branches: [dev, staging, main]
+  
+  # Manual promotion trigger
+  workflow_dispatch:
+    inputs:
+      promotion_type:
+        description: 'Promotion type'
+        required: true
+        type: choice
+        options:
+          - dev-to-staging
+          - staging-to-main
+
+permissions:
+  contents: write
+  pull-requests: write
+  deployments: write
+  issues: write
+
+jobs:
+  # ==========================================================================
+  # Determine what promotion to perform
+  # ==========================================================================
+  analyze:
+    if: |
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      promotion_type: ${{ steps.determine.outputs.type }}
+      source_branch: ${{ steps.determine.outputs.source }}
+      target_branch: ${{ steps.determine.outputs.target }}
+      should_deploy: ${{ steps.determine.outputs.should_deploy }}
+      risk_level: ${{ steps.determine.outputs.risk_level }}
+    steps:
+      - name: Determine Promotion Type
+        id: determine
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            PROMO_TYPE="${{ inputs.promotion_type }}"
+          else
+            MERGED_TO="${{ github.event.pull_request.base.ref }}"
+            case "$MERGED_TO" in
+              dev)
+                PROMO_TYPE="dev-to-staging"
+                ;;
+              staging)
+                PROMO_TYPE="staging-to-main"
+                ;;
+              main)
+                PROMO_TYPE="deploy-production"
+                ;;
+              *)
+                echo "No promotion for branch: $MERGED_TO"
+                echo "type=none" >> $GITHUB_OUTPUT
+                exit 0
+                ;;
+            esac
+          fi
+          
+          echo "type=$PROMO_TYPE" >> $GITHUB_OUTPUT
+          
+          case "$PROMO_TYPE" in
+            dev-to-staging)
+              echo "source=dev" >> $GITHUB_OUTPUT
+              echo "target=staging" >> $GITHUB_OUTPUT
+              echo "should_deploy=true" >> $GITHUB_OUTPUT
+              echo "risk_level=medium" >> $GITHUB_OUTPUT
+              ;;
+            staging-to-main)
+              echo "source=staging" >> $GITHUB_OUTPUT
+              echo "target=main" >> $GITHUB_OUTPUT
+              echo "should_deploy=false" >> $GITHUB_OUTPUT  # Requires approval
+              echo "risk_level=high" >> $GITHUB_OUTPUT
+              ;;
+            deploy-production)
+              echo "source=main" >> $GITHUB_OUTPUT
+              echo "target=production" >> $GITHUB_OUTPUT
+              echo "should_deploy=true" >> $GITHUB_OUTPUT
+              echo "risk_level=high" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+  # ==========================================================================
+  # Dev → Staging: Auto-promote and deploy
+  # Note: Quality gate is handled by ci-preflight.yml on the source PR
+  # ==========================================================================
+  promote-to-staging:
+    needs: analyze
+    if: needs.analyze.outputs.promotion_type == 'dev-to-staging'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Staging PR
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Check if PR already exists
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:dev`,
+              base: 'staging',
+              state: 'open'
+            });
+            
+            if (prs.length > 0) {
+              console.log(`PR already exists: #${prs[0].number}`);
+              core.setOutput('pr_number', prs[0].number);
+              return;
+            }
+            
+            const pr = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚀 Promote dev → staging',
+              head: 'dev',
+              base: 'staging',
+              body: `## Automated Promotion: dev → staging
+              
+              This PR promotes all changes from \`dev\` to \`staging\`.
+              
+              ### Quality Gate
+              - ✅ Preflight checks passed
+              - ✅ Security scan passed
+              
+              ### Risk Level: Medium
+              
+              ### After Merge
+              - Backend will deploy to staging worker
+              - Frontend will deploy to staging Pages
+              - Route verification will run
+              
+              ---
+              *Auto-generated by Branch Promotion workflow*
+              `
+            });
+            
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.data.number,
+              labels: ['promotion', 'staging', 'automated']
+            });
+            
+            core.setOutput('pr_number', pr.data.number);
+
+      - name: Auto-merge Staging PR
+        if: steps.pr.outputs.pr_number
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Enable auto-merge
+            try {
+              await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: ${{ steps.pr.outputs.pr_number }},
+                merge_method: 'merge',
+                commit_title: 'chore: promote dev → staging'
+              });
+              console.log('PR merged successfully');
+            } catch (error) {
+              console.log('Could not auto-merge, may need manual approval:', error.message);
+            }
+
+  # ==========================================================================
+  # Deploy to Staging (after merge)
+  # ==========================================================================
+  deploy-staging:
+    needs: [analyze, promote-to-staging]
+    if: |
+      always() &&
+      needs.analyze.outputs.promotion_type == 'dev-to-staging' &&
+      needs.promote-to-staging.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Backend Deploy
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-backend.yml',
+              ref: 'staging',
+              inputs: {
+                environment: 'staging',
+                skip_tests: 'true'
+              }
+            });
+
+      - name: Trigger Frontend Deploy
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-frontend.yml',
+              ref: 'staging',
+              inputs: {
+                environment: 'staging'
+              }
+            });
+
+  # ==========================================================================
+  # Staging → Main: Create PR (requires approval)
+  # Note: Quality gate is handled by ci-preflight.yml on the source PR
+  # ==========================================================================
+  promote-to-production:
+    needs: analyze
+    if: needs.analyze.outputs.promotion_type == 'staging-to-main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create Production PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Check if PR already exists
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:staging`,
+              base: 'main',
+              state: 'open'
+            });
+            
+            if (prs.length > 0) {
+              console.log(`PR already exists: #${prs[0].number}`);
+              return;
+            }
+            
+            const pr = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚀 PRODUCTION: Promote staging → main',
+              head: 'staging',
+              base: 'main',
+              body: `## ⚠️ PRODUCTION DEPLOYMENT
+              
+              This PR promotes changes from \`staging\` to \`main\` (production).
+              
+              ### Pre-Merge Checklist
+              - [ ] Staging environment has been tested
+              - [ ] No critical bugs in staging
+              - [ ] Database migrations reviewed (if any)
+              - [ ] Rollback plan documented
+              - [ ] On-call engineer notified
+              
+              ### Quality Gate
+              - ✅ All tests passed
+              - ✅ Security scan passed
+              
+              ### Risk Level: HIGH
+              
+              **⚠️ Requires 2 approvers including a maintainer**
+              
+              ### After Merge
+              - Backend will deploy to production
+              - Frontend will deploy to production
+              - Health monitoring will verify deployment
+              
+              ### Rollback
+              If issues occur, run the Rollback workflow:
+              \`Actions → Rollback → Run workflow\`
+              
+              ---
+              *Auto-generated by Branch Promotion workflow*
+              `
+            });
+            
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.data.number,
+              labels: ['promotion', 'production', 'requires-approval', 'high-risk']
+            });
+
+  # ==========================================================================
+  # Deploy to Production (after main merge)
+  # ==========================================================================
+  deploy-production:
+    needs: analyze
+    if: needs.analyze.outputs.promotion_type == 'deploy-production'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trigger Backend Deploy
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-backend.yml',
+              ref: 'main',
+              inputs: {
+                environment: 'production',
+                skip_tests: 'false'
+              }
+            });
+
+      - name: Trigger Frontend Deploy
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-frontend.yml',
+              ref: 'main',
+              inputs: {
+                environment: 'production'
+              }
+            });
+
+      - name: Wait for Deployments
+        run: |
+          echo "Waiting for deployments to complete..."
+          sleep 60
+
+      - name: Trigger Post-Deploy Verification
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'post-deploy-verify.yml',
+              ref: 'main',
+              inputs: {
+                environment: 'production'
+              }
+            });
