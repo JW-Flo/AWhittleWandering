@@ -1,0 +1,162 @@
+name: auto-merge
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  assess-and-merge:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Assess risk and auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTO_MERGE_MAX_ATTEMPTS: 3
+        run: |
+          set -euo pipefail
+          IFS=$'\n\t'
+
+          log() {
+            echo "event=auto-merge $*" >&2
+          }
+
+          warn() {
+            echo "::warning::event=auto-merge $*" >&2
+          }
+
+          error() {
+            echo "::error::event=auto-merge $*" >&2
+          }
+
+          on_error() {
+            local exit_code=$?
+            error "status=error exit_code=$exit_code"
+          }
+
+          trap on_error ERR
+
+          retry() {
+            local name="$1"
+            shift
+            local attempt=1
+            local delay=2
+
+            while true; do
+              log "step=$name attempt=$attempt status=start"
+              if "$@"; then
+                log "step=$name attempt=$attempt status=success"
+                return 0
+              fi
+
+              if [[ "$attempt" -ge "${AUTO_MERGE_MAX_ATTEMPTS}" ]]; then
+                error "step=$name status=failed attempts=$attempt"
+                return 1
+              fi
+
+              warn "step=$name status=retrying next_delay=${delay}s"
+              sleep "$delay"
+              attempt=$((attempt + 1))
+              delay=$((delay * 2))
+            done
+          }
+
+          retry_capture() {
+            local name="$1"
+            shift
+            local attempt=1
+            local delay=2
+            local output=""
+
+            while true; do
+              log "step=$name attempt=$attempt status=start"
+              if output="$("$@" 2>/dev/null)"; then
+                log "step=$name attempt=$attempt status=success"
+                printf '%s' "$output"
+                return 0
+              fi
+
+              if [[ "$attempt" -ge "${AUTO_MERGE_MAX_ATTEMPTS}" ]]; then
+                error "step=$name status=failed attempts=$attempt"
+                return 1
+              fi
+
+              warn "step=$name status=retrying next_delay=${delay}s"
+              sleep "$delay"
+              attempt=$((attempt + 1))
+              delay=$((delay * 2))
+            done
+          }
+
+          repo="${{ github.repository }}"
+          pr_number="${{ github.event.pull_request.number }}"
+
+          files=""
+          if files="$(retry_capture "fetch-files" gh api "repos/$repo/pulls/$pr_number/files" --paginate --jq '.[].filename')"; then
+            :
+          else
+            warn "status=files-fetch-failed"
+          fi
+
+          risk="high"
+          file_count=0
+
+          if [[ -n "$files" ]]; then
+            risk="low"
+            while IFS= read -r file; do
+              [[ -z "$file" ]] && continue
+              file_count=$((file_count + 1))
+              if [[ "$file" =~ ^(docs/|\.github/|README\.md$|QA\.md$|SECURITY\.md$|PRIVACY\.md$|DATA_POLICY\.md$) ]]; then
+                continue
+              fi
+              if [[ "$file" =~ ^(backend/|frontend/|shared/) ]]; then
+                risk="high"
+                break
+              fi
+              risk="medium"
+            done <<< "$files"
+          fi
+
+          log "status=classified risk=$risk file_count=$file_count"
+
+          label="risk:$risk"
+          case "$risk" in
+            low)
+              label_color="0E8A16"
+              label_description="Low risk changes (docs/config only)."
+              ;;
+            medium)
+              label_color="FBCA04"
+              label_description="Medium risk changes (non-runtime code)."
+              ;;
+            high)
+              label_color="D93F0B"
+              label_description="High risk changes (runtime code)."
+              ;;
+          esac
+
+          if ! retry "get-label" gh api "repos/$repo/labels/$label" >/dev/null 2>&1; then
+            retry "create-label" gh api -X POST "repos/$repo/labels" \
+              -f name="$label" \
+              -f color="$label_color" \
+              -f description="$label_description" >/dev/null 2>&1 || \
+              warn "status=label-create-failed label=$label"
+          fi
+
+          retry "apply-label" gh api -X POST "repos/$repo/issues/$pr_number/labels" \
+            -f "labels[]=$label" >/dev/null 2>&1 || \
+            warn "status=label-apply-failed label=$label"
+
+          if [[ "$risk" == "low" ]]; then
+            if retry "auto-merge" gh pr merge "$pr_number" --merge --auto >/dev/null 2>&1; then
+              log "status=auto-merge-enabled pr=$pr_number"
+            else
+              warn "status=auto-merge-failed pr=$pr_number"
+            fi
+          else
+            log "status=auto-merge-skipped pr=$pr_number risk=$risk"
+          fi

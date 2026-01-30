@@ -1,0 +1,25 @@
+name: compound-nightly
+
+on:
+  schedule:
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: compound-nightly
+  cancel-in-progress: true
+
+jobs:
+  compound:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
+      - name: Run compound loop
+        env:
+          COMPOUND_MAX_ATTEMPTS: 3
+        run: bash scripts/compound-nightly.sh
