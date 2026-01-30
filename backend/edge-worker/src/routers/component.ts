@@ -1,8 +1,9 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { logger } from '../utils/log';
+import type { Env } from '../types/env';
 
-export const componentRouter = new Hono();
+export const componentRouter = new Hono<{ Bindings: Env }>();
 
 const JOURNEY_ID = 'continental-usa-2025';
 const VEHICLE_ID = 'midnight-shadow';

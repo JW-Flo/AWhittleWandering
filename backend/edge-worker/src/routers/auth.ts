@@ -4,6 +4,7 @@ import { logger } from '../utils/log';
 import { hashPassword, verifyPassword } from '../utils/passwordPbkdf2';
 import { signJwtHS256 } from '../utils/jwtSignHs256';
 import { requireUser } from '../middleware/userAuth';
+import type { Env } from '../types/env';
 
 type UserRow = {
   id: string;
@@ -51,7 +52,7 @@ async function issueJwt(c: any, user: { id: string; email: string; is_admin: boo
   );
 }
 
-export const authRouter = new Hono();
+export const authRouter = new Hono<{ Bindings: Env }>();
 
 /**
  * POST /api/v1/auth

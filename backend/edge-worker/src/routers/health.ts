@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import type { Env } from '../types/env';
 import { logger } from '../utils/log';
 
 // Latency snapshot accessor injected via index.ts (module augmentation pattern avoided for simplicity)

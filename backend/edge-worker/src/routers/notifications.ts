@@ -1,8 +1,9 @@
 import { Hono } from 'hono';
+import type { Env } from '../types/env';
 import { z } from 'zod';
 import { requireUser } from '../middleware/userAuth';
 
-export const notificationsRouter = new Hono();
+export const notificationsRouter = new Hono<{ Bindings: Env }>();
 
 const listSchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(25),

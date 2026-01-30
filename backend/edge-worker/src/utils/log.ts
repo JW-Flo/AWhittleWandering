@@ -81,3 +81,13 @@ export function extractError(err: unknown): { message: string; stack?: string } 
     return { message: 'Unknown error' };
   }
 }
+
+/**
+ * Simple helper to get error message from unknown error type
+ * Use in catch blocks: catch (error) { const msg = getErrorMessage(error); }
+ */
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return 'Unknown error';
+}

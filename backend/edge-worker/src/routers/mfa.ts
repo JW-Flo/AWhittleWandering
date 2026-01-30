@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import type { Env } from '../types/env';
 import { z } from 'zod';
 import { requireUser } from '../middleware/userAuth';
 import { logger } from '../utils/log';
@@ -7,7 +8,7 @@ import { openText, sealText } from '../utils/cryptoSeal';
 import { sha256B64Url } from '../utils/sha256';
 import { signJwtHS256 } from '../utils/jwtSignHs256';
 
-export const mfaRouter = new Hono();
+export const mfaRouter = new Hono<{ Bindings: Env }>();
 
 const enrollSchema = z.object({
   friendlyName: z.string().min(1).max(120).optional(),

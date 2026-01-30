@@ -2,8 +2,9 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { logger } from '../utils/log';
 import { withTimeout } from '../utils/cronMetrics';
+import type { Env } from '../types/env';
 
-export const aiRouter = new Hono();
+export const aiRouter = new Hono<{ Bindings: Env }>();
 
 const optimizeSchema = z.object({
   start: z.object({ lat: z.number(), lng: z.number() }),

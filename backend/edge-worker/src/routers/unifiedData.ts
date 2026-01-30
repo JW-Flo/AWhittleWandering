@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
+import type { Env } from '../types/env';
 import { z } from 'zod';
 import { CacheService } from '../services/cache';
 import { logger } from '../utils/log';
 
-export const unifiedDataRouter = new Hono();
+export const unifiedDataRouter = new Hono<{ Bindings: Env }>();
 
 const JOURNEY_ID = 'continental-usa-2025';
 const VEHICLE_ID = 'midnight-shadow';

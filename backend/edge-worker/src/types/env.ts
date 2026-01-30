@@ -2,9 +2,9 @@
 export interface Env {
   // D1 Database (platform registry - tracks all journeys)
   // Note: TESLA_DB is the canonical binding name in wrangler.toml
-  // DB is an alias used by some modules for brevity
+  // DB is an alias used by some modules for brevity - both point to same database
   TESLA_DB: D1Database;
-  DB?: D1Database;  // Alias for TESLA_DB (some modules use this)
+  DB: D1Database;  // Alias for TESLA_DB (required - same binding)
   
   // Cloudflare API credentials for resource provisioning
   CLOUDFLARE_ACCOUNT_ID?: string;
@@ -117,13 +117,22 @@ export interface Queue {
 // D1 Database types
 export interface D1Database {
   prepare(query: string): D1PreparedStatement;
+  exec(query: string): Promise<D1ExecResult>;
+  batch<T = unknown>(statements: D1PreparedStatement[]): Promise<D1Result<T>[]>;
+  dump(): Promise<ArrayBuffer>;
 }
 
 export interface D1PreparedStatement {
   bind(...values: unknown[]): D1PreparedStatement;
-  first<T = unknown>(): Promise<T | null>;
+  first<T = unknown>(colName?: string): Promise<T | null>;
   all<T = unknown>(): Promise<D1Result<T>>;
   run(): Promise<D1Result<unknown>>;
+  raw<T = unknown>(): Promise<T[]>;
+}
+
+export interface D1ExecResult {
+  count: number;
+  duration: number;
 }
 
 export interface D1Result<T = unknown> {

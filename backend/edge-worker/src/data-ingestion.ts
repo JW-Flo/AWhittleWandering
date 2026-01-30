@@ -306,7 +306,7 @@ export class TeslaDataIngestion {
           }
 
           let endedAt = this.normalizeIso(drive.ended_at);
-          let durationMinutes: number;
+          let durationMinutes: number | undefined;
 
           // Handle invalid ended_at timestamp
           if (!endedAt) {

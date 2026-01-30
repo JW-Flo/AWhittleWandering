@@ -11,6 +11,7 @@
  */
 
 import { Hono } from 'hono';
+import type { Env } from '../types/env';
 import { DynamicPlaceIntelligence } from '../services/dynamicPlaceIntelligence';
 import { ApiRateLimitTracker } from '../services/apiRateLimitTracker';
 import { logger } from '../utils/log';

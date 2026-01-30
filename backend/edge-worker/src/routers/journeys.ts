@@ -6,6 +6,7 @@
  */
 
 import { Hono } from 'hono';
+import type { Env } from '../types/env';
 import { z } from 'zod';
 import { JourneyProvisioningService } from '../services/journeyProvisioning';
 import { logger } from '../utils/log';

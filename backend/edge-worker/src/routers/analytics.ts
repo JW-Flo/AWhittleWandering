@@ -1,8 +1,9 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { logger } from '../utils/log';
+import type { Env } from '../types/env';
 
-export const analyticsRouter = new Hono();
+export const analyticsRouter = new Hono<{ Bindings: Env }>();
 
 const JOURNEY_ID = 'continental-usa-2025';
 
@@ -17,7 +18,7 @@ function limitOf(q: unknown, def: number) {
 }
 
 analyticsRouter.get('/comprehensive', async (c) => {
-  const db = c.env?.TESLA_DB;
+  const db = c.env.TESLA_DB;
   const limit = limitOf(c.req.query(), 90);
   if (!db) return c.json({ ok: false, error: 'Database not configured', daily: [] }, 200);
 
