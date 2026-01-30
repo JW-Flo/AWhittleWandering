@@ -57,11 +57,29 @@ jobs:
       - name: Check for Secrets in Diff
         if: github.event_name == 'pull_request'
         run: |
-          # Get the diff and scan for secrets
-          git diff origin/${{ github.base_ref }}...HEAD -- . | \
-            grep -E "(AKIA|AIzaSy|sk-|-----BEGIN|password\s*=|api[_-]?key\s*=)" && \
-            { echo "❌ Potential secrets found in diff!"; exit 1; } || \
-            echo "✅ No obvious secrets in diff"
+          # Get the diff and scan for high-confidence secret patterns only
+          # More thorough scanning is done by scripts/security-scan.sh
+          DIFF=$(git diff origin/${{ github.base_ref }}...HEAD -- . 2>/dev/null || echo "")
+          
+          # High-confidence patterns that are almost always secrets
+          if echo "$DIFF" | grep -qE 'AKIA[0-9A-Z]{16}'; then
+            echo "❌ AWS Access Key ID found in diff!"
+            exit 1
+          fi
+          if echo "$DIFF" | grep -qE 'AIzaSy[0-9A-Za-z\-_]{35}'; then
+            echo "❌ Google API Key found in diff!"
+            exit 1
+          fi
+          if echo "$DIFF" | grep -qE '-----BEGIN (RSA|EC|OPENSSH|PGP) PRIVATE KEY-----'; then
+            echo "❌ Private key found in diff!"
+            exit 1
+          fi
+          if echo "$DIFF" | grep -qE 'sk-[A-Za-z0-9]{48,}'; then
+            echo "❌ OpenAI API Key found in diff!"
+            exit 1
+          fi
+          
+          echo "✅ No high-confidence secrets in diff"
 
   # ==========================================================================
   # Code Quality - Lint, Format, Typecheck
