@@ -147,12 +147,25 @@ jobs:
               warn "status=label-create-failed label=$label"
           fi
 
+          existing_risk_labels=""
+          if existing_risk_labels="$(retry_capture "fetch-existing-labels" gh api "repos/$repo/issues/$pr_number/labels" --jq '.[].name | select(startswith("risk:"))')"; then
+            while IFS= read -r existing; do
+              [[ -z "$existing" ]] && continue
+              [[ "$existing" == "$label" ]] && continue
+              enc="$(python3 -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$existing")"
+              retry "remove-old-risk-label" gh api -X DELETE "repos/$repo/issues/$pr_number/labels/$enc" >/dev/null 2>&1 || \
+                warn "status=label-remove-failed label=$existing"
+            done <<< "$existing_risk_labels"
+          else
+            warn "status=label-fetch-failed"
+          fi
+
           retry "apply-label" gh api -X POST "repos/$repo/issues/$pr_number/labels" \
             -f "labels[]=$label" >/dev/null 2>&1 || \
             warn "status=label-apply-failed label=$label"
 
           if [[ "$risk" == "low" ]]; then
-            if retry "auto-merge" gh pr merge "$pr_number" --merge --auto >/dev/null 2>&1; then
+            if retry "auto-merge" gh pr merge "$pr_number" -R "$repo" --merge --auto >/dev/null 2>&1; then
               log "status=auto-merge-enabled pr=$pr_number"
             else
               warn "status=auto-merge-failed pr=$pr_number"
