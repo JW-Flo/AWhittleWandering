@@ -19,7 +19,18 @@
     ],
     "runtime": [
       "codex:run"
-    ]
+    ],
+    "risk": {
+      "low": [
+        "risk:low"
+      ],
+      "medium": [
+        "risk:medium"
+      ],
+      "high": [
+        "risk:high"
+      ]
+    }
   }
 }
 
