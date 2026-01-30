@@ -56,3 +56,27 @@ bun.lock
 # Miniflare local state
 .mf/
 .wrangler/
+
+# Cursor/Editor specific
+.cursor/
+*.code-workspace
+
+# OS specific
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Additional caches
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+
+# Local databases
+*.db
+*.db-journal
+
+# Temporary files
+*.tmp
+*.temp
