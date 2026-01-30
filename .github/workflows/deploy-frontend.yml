@@ -47,3 +47,17 @@ jobs:
           VITE_API_URL: ${{ inputs.environment == 'production' && 'https://api.awhittlewandering.com' || inputs.environment == 'staging' && 'https://awhittlewandering-api-staging.workers.dev' || 'https://awhittlewandering-api-dev.workers.dev' }}
         run: npm run build
 
+      - name: Install Wrangler
+        run: npm install -g wrangler@3
+
+      - name: Deploy to Cloudflare Pages
+        working-directory: ${{ env.FRONTEND_DIR }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          BRANCH="${{ inputs.environment }}"
+          if [[ "$BRANCH" == "production" ]]; then BRANCH="main"; fi
+          wrangler pages deploy dist --project-name=awhittlewandering --branch "$BRANCH"
+
