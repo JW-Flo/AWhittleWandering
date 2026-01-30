@@ -66,11 +66,11 @@ jobs:
             echo "❌ AWS Access Key ID found in diff!"
             exit 1
           fi
-          if echo "$DIFF" | grep -qE 'AIzaSy[0-9A-Za-z\-_]{35}'; then
+          if echo "$DIFF" | grep -qE 'AIzaSy[0-9A-Za-z_-]{35}'; then
             echo "❌ Google API Key found in diff!"
             exit 1
           fi
-          if echo "$DIFF" | grep -qE '-----BEGIN (RSA|EC|OPENSSH|PGP) PRIVATE KEY-----'; then
+          if echo "$DIFF" | grep -q -- '-----BEGIN.*PRIVATE KEY-----'; then
             echo "❌ Private key found in diff!"
             exit 1
           fi
