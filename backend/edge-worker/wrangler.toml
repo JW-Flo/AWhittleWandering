@@ -49,7 +49,7 @@ AI_MODEL_NAME = "@cf/meta/llama-3.1-8b-instruct"
 # Global D1 database binding (used by production)
 [[d1_databases]]
 binding = "TESLA_DB"
-database_name = "journey-prod"
+database_name = "tesla-journey-tracker"
 database_id = "889d864a-966d-4e8a-a3cd-bc60abf23688"
 
 # R2 Object Storage for media files (temporarily disabled)
@@ -58,7 +58,8 @@ database_id = "889d864a-966d-4e8a-a3cd-bc60abf23688"
 # bucket_name = "awhittlewandering-media"
 # preview_bucket_name = "awhittlewandering-media"
 
-# KV for session/auth tokens only (lightweight use)
+# KV for session/auth tokens and data caching
+# Note: The KV namespace in Cloudflare is named "UNIFIED_DATA_CACHE"
 [[kv_namespaces]]
 binding = "AUTH_TOKENS"
 id = "7838e32d8ad04855b13eb2d9aa4f9811"
