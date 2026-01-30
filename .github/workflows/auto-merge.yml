@@ -1,0 +1,103 @@
+name: auto-merge
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  assess-and-merge:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine risk tier
+        id: risk
+        run: |
+          set -euo pipefail
+          IFS=$'\n\t'
+
+          base="${{ github.event.pull_request.base.sha }}"
+          head="${{ github.sha }}"
+          files="$(git diff --name-only "$base" "$head")"
+
+          risk="low"
+          if [[ -n "$files" ]]; then
+            while IFS= read -r file; do
+              [[ -z "$file" ]] && continue
+              if [[ "$file" =~ ^(docs/|\.github/|README\.md$|QA\.md$|SECURITY\.md$|PRIVACY\.md$|DATA_POLICY\.md$) ]]; then
+                continue
+              fi
+              if [[ "$file" =~ ^(backend/|frontend/|shared/) ]]; then
+                risk="high"
+                break
+              fi
+              risk="medium"
+            done <<< "$files"
+          fi
+
+          echo "risk=$risk" >> "$GITHUB_OUTPUT"
+          echo "files<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$files" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+          echo "event=risk-assess risk=$risk"
+
+      - name: Report risk summary
+        run: |
+          set -euo pipefail
+          IFS=$'\n\t'
+          risk="${{ steps.risk.outputs.risk }}"
+          files="${{ steps.risk.outputs.files }}"
+
+          {
+            echo "### Risk assessment"
+            echo "- Risk tier: \`$risk\`"
+            echo "- Files:"
+            echo '```'
+            if [[ -n "$files" ]]; then
+              echo "$files"
+            else
+              echo "(none)"
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Enable auto-merge for low risk
+        if: steps.risk.outputs.risk == 'low' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          IFS=$'\n\t'
+
+          retry() {
+            local attempt=1
+            local delay=2
+            local max_attempts=4
+            while true; do
+              if "$@"; then
+                return 0
+              fi
+              if [[ "$attempt" -ge "$max_attempts" ]]; then
+                return 1
+              fi
+              echo "event=auto-merge status=retrying attempt=$attempt next_delay=${delay}s"
+              sleep "$delay"
+              attempt=$((attempt + 1))
+              delay=$((delay * 2))
+            done
+          }
+
+          pr_number="${{ github.event.pull_request.number }}"
+          echo "event=auto-merge action=enable pr=$pr_number"
+          if retry gh pr merge "$pr_number" --auto --squash; then
+            echo "event=auto-merge status=enabled pr=$pr_number"
+          else
+            echo "::warning::event=auto-merge status=skipped reason=enable_failed pr=$pr_number"
+          fi
