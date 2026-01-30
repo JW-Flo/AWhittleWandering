@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
+import type { Env } from '../types/env';
 import { TelemetrySchema } from '../schemas/telemetry';
 
-export const telemetryRouter = new Hono();
+export const telemetryRouter = new Hono<{ Bindings: Env }>();
 
 telemetryRouter.post('/', async (c) => {
   try {

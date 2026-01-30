@@ -8,7 +8,7 @@
  * Tessie API → Ingestion Layer → D1 Database → Component APIs → Frontend
  */
 
-import { Env, D1Database } from '../types/env';
+import { Env } from '../types/env';
 import { getTessieBearerToken } from '../utils/tessieAuth';
 
 // =====================================================
@@ -120,9 +120,9 @@ export async function ingestDrives(env: Env): Promise<void> {
       SELECT MAX(started_at) as last_timestamp 
       FROM drives 
       WHERE journey_id = ?
-    `).bind('continental-usa-2025').first();
+    `).bind('continental-usa-2025').first<{ last_timestamp: string | null }>();
 
-    const since = (lastDrive as any)?.last_timestamp || '2025-06-01T00:00:00Z';
+    const since = lastDrive?.last_timestamp || '2025-06-01T00:00:00Z';
 
     // Fetch drives from Tessie
     const tessieResponse = await fetch(`https://api.tessie.com/${env.VEHICLE_ID}/drives?since=${since}&per_page=100`, {
@@ -136,7 +136,7 @@ export async function ingestDrives(env: Env): Promise<void> {
       throw new Error(`Tessie API error: ${tessieResponse.status}`);
     }
 
-    const drivesData = await tessieResponse.json();
+    const drivesData = await tessieResponse.json() as { results?: any[] };
     let processedCount = 0;
 
     // Process each drive
@@ -226,9 +226,10 @@ export async function ingestDrives(env: Env): Promise<void> {
     // Log successful ingestion
     await logIngestion(env.DB, 'drives', processedCount, true, null, Date.now() - startTime);
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Drives ingestion failed:', error);
-    await logIngestion(env.DB, 'drives', 0, false, error.message, Date.now() - startTime);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    await logIngestion(env.DB, 'drives', 0, false, errorMessage, Date.now() - startTime);
     throw error;
   }
 }
@@ -249,12 +250,12 @@ export async function ingestCharges(env: Env): Promise<void> {
       SELECT MAX(started_at) as last_timestamp 
       FROM charges 
       WHERE journey_id = ?
-    `).bind('continental-usa-2025').first();
+    `).bind('continental-usa-2025').first<{ last_timestamp: string | null }>();
 
-    const since = (lastCharge as any)?.last_timestamp || '2025-06-01T00:00:00Z';
+    const sinceDateCharge = lastCharge?.last_timestamp || '2025-06-01T00:00:00Z';
 
     // Fetch charges from Tessie
-    const tessieResponse = await fetch(`https://api.tessie.com/${env.VEHICLE_ID}/charges?since=${since}&per_page=100`, {
+    const tessieResponse = await fetch(`https://api.tessie.com/${env.VEHICLE_ID}/charges?since=${sinceDateCharge}&per_page=100`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -265,7 +266,7 @@ export async function ingestCharges(env: Env): Promise<void> {
       throw new Error(`Tessie API error: ${tessieResponse.status}`);
     }
 
-    const chargesData = await tessieResponse.json();
+    const chargesData = await tessieResponse.json() as { results?: any[] };
     let processedCount = 0;
 
     // Process each charge
@@ -331,9 +332,10 @@ export async function ingestCharges(env: Env): Promise<void> {
     // Log successful ingestion
     await logIngestion(env.DB, 'charges', processedCount, true, null, Date.now() - startTime);
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Charges ingestion failed:', error);
-    await logIngestion(env.DB, 'charges', 0, false, error.message, Date.now() - startTime);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    await logIngestion(env.DB, 'charges', 0, false, errorMessage, Date.now() - startTime);
     throw error;
   }
 }

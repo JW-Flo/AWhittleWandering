@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import type { AppContext } from '../types/env';
 import { z } from 'zod';
 import { requireUser } from '../middleware/userAuth';
 import { logger } from '../utils/log';
@@ -7,7 +8,7 @@ import { openText, sealText } from '../utils/cryptoSeal';
 import { sha256B64Url } from '../utils/sha256';
 import { signJwtHS256 } from '../utils/jwtSignHs256';
 
-export const mfaRouter = new Hono();
+export const mfaRouter = new Hono<AppContext>();
 
 const enrollSchema = z.object({
   friendlyName: z.string().min(1).max(120).optional(),
@@ -174,7 +175,7 @@ mfaRouter.post('/challenge/verify', async (c) => {
     return c.json({ ok: false, error: 'Validation failed', issues: e?.issues }, 400);
   }
 
-  const stored = await kv.get(`mfa_challenge:${body.challengeId}`, { type: 'json' });
+  const stored = await kv.get(`mfa_challenge:${body.challengeId}`, { type: 'json' }) as { userId?: string; factorId?: string } | null;
   if (!stored?.userId || !stored?.factorId) return c.json({ ok: false, error: 'Invalid or expired challenge' }, 400);
 
   const factor = await db
@@ -185,7 +186,7 @@ mfaRouter.post('/challenge/verify', async (c) => {
        LIMIT 1`
     )
     .bind(String(stored.factorId), String(stored.userId))
-    .first<any>();
+    .first<{ secret_enc: string | null; revoked_at: string | null; verified_at: string | null }>();
   if (!factor?.secret_enc || factor.revoked_at || !factor.verified_at) {
     return c.json({ ok: false, error: 'Factor not valid' }, 400);
   }
@@ -201,7 +202,7 @@ mfaRouter.post('/challenge/verify', async (c) => {
   const userRow = await db
     .prepare(`SELECT id, email, role, is_admin FROM users WHERE id = ? LIMIT 1`)
     .bind(String(stored.userId))
-    .first<any>();
+    .first<{ id: string; email: string; role: string | null; is_admin: number | null }>();
   if (!userRow?.id || !userRow?.email) return c.json({ ok: false, error: 'User not found' }, 404);
 
   const ownerEmail = String(c.env?.OWNER_EMAIL || 'joe@awhittlewandering.com').toLowerCase().trim();

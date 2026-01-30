@@ -1,0 +1,488 @@
+# Task Runner Workflow - Codex Autonomous CI/CD Pipeline
+# This is the single workflow that handles all AI-triggered tasks
+# Triggers: Issue open (with ai-task label), issue comments, manual dispatch
+
+name: Task Runner
+
+on:
+  issues:
+    types: [opened, labeled]
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to process'
+        required: true
+        type: string
+      task_override:
+        description: 'Override task definition (JSON)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: task-${{ github.event.issue.number || github.event.inputs.issue_number }}
+  cancel-in-progress: false
+
+env:
+  MAX_ITERATIONS: 5
+  WORK_BRANCH_PREFIX: "task/"
+
+jobs:
+  # Gate job - only proceed if this is a valid AI task trigger
+  validate:
+    # Run if: issue has ai-task label, or comment contains @codex, or manual dispatch
+    if: |
+      (github.event_name == 'issues' && 
+       (github.event.action == 'opened' || github.event.action == 'labeled') &&
+       contains(github.event.issue.labels.*.name, 'ai-task')) ||
+      (github.event_name == 'issue_comment' && 
+       contains(github.event.comment.body, '@codex')) ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+      issue_number: ${{ steps.parse.outputs.issue_number }}
+      issue_title: ${{ steps.parse.outputs.issue_title }}
+      task_goal: ${{ steps.parse.outputs.goal }}
+      task_branch: ${{ steps.parse.outputs.branch }}
+      risk_level: ${{ steps.parse.outputs.risk_level }}
+      verify_tier: ${{ steps.parse.outputs.verify_tier }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Parse Task Definition
+        id: parse
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let issueNumber, issueTitle, issueBody;
+            
+            if (context.eventName === 'workflow_dispatch') {
+              issueNumber = context.payload.inputs.issue_number;
+              const issue = await github.rest.issues.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: parseInt(issueNumber)
+              });
+              issueTitle = issue.data.title;
+              issueBody = issue.data.body || '';
+            } else {
+              issueNumber = context.payload.issue.number;
+              issueTitle = context.payload.issue.title;
+              issueBody = context.payload.issue.body || '';
+            }
+            
+            // Parse YAML-like fields from issue body
+            const parseField = (body, field) => {
+              const regex = new RegExp(`^\\s*${field}\\s*:\\s*(.+)$`, 'mi');
+              const match = body.match(regex);
+              return match ? match[1].trim() : null;
+            };
+            
+            // Extract task fields
+            const goal = parseField(issueBody, 'goal') || issueTitle;
+            const branch = parseField(issueBody, 'branch') || 'dev';
+            const riskLevel = parseField(issueBody, 'risk_level') || 'auto';
+            const verifyTier = parseField(issueBody, 'verify_tier') || 'auto';
+            
+            // Determine actual risk level if 'auto'
+            let actualRisk = riskLevel;
+            if (riskLevel === 'auto') {
+              // Default to medium, could be enhanced with path analysis
+              actualRisk = 'medium';
+            }
+            
+            // Determine verify tier based on risk
+            let actualVerify = verifyTier;
+            if (verifyTier === 'auto') {
+              actualVerify = actualRisk === 'high' ? 'full' : 'lite';
+            }
+            
+            core.setOutput('issue_number', issueNumber);
+            core.setOutput('issue_title', issueTitle);
+            core.setOutput('goal', goal);
+            core.setOutput('branch', branch);
+            core.setOutput('risk_level', actualRisk);
+            core.setOutput('verify_tier', actualVerify);
+            
+            console.log(`Task parsed:
+              Issue: #${issueNumber} - ${issueTitle}
+              Goal: ${goal}
+              Branch: ${branch}
+              Risk: ${actualRisk}
+              Verify: ${actualVerify}
+            `);
+
+      - name: Validate Task
+        id: check
+        run: |
+          # Security check - ensure no secrets in task description
+          ISSUE_BODY="${{ github.event.issue.body || '' }}"
+          
+          # Check for obvious secret patterns
+          if echo "$ISSUE_BODY" | grep -qiE "(password\s*[:=]\s*['\"][^'\"]+|api[_-]?key\s*[:=]\s*['\"][^'\"]+)"; then
+            echo "::error::Task description appears to contain sensitive data"
+            echo "should_run=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          echo "should_run=true" >> $GITHUB_OUTPUT
+
+  # Main execution job
+  execute:
+    needs: validate
+    if: needs.validate.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      pr_number: ${{ steps.pr.outputs.pr_number }}
+      pr_url: ${{ steps.pr.outputs.pr_url }}
+    env:
+      ISSUE_NUMBER: ${{ needs.validate.outputs.issue_number }}
+      ISSUE_TITLE: ${{ needs.validate.outputs.issue_title }}
+      TASK_GOAL: ${{ needs.validate.outputs.task_goal }}
+      TARGET_BRANCH: ${{ needs.validate.outputs.task_branch }}
+      RISK_LEVEL: ${{ needs.validate.outputs.risk_level }}
+      VERIFY_TIER: ${{ needs.validate.outputs.verify_tier }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Environment
+        run: |
+          # Install required tools
+          sudo apt-get update && sudo apt-get install -y jq ripgrep
+          
+          # Setup Node.js
+          if [[ -f ".nvmrc" ]]; then
+            NODE_VERSION=$(cat .nvmrc)
+          else
+            NODE_VERSION="20"
+          fi
+          
+          # Install wrangler if CF worker exists
+          if [[ -f "backend/edge-worker/wrangler.toml" ]]; then
+            npm install -g wrangler@3 2>/dev/null || true
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          if [[ -f "pnpm-lock.yaml" ]]; then
+            npm install -g pnpm
+            pnpm install --frozen-lockfile || pnpm install
+          elif [[ -f "yarn.lock" ]]; then
+            yarn install --frozen-lockfile || yarn install
+          else
+            npm ci || npm install
+          fi
+
+      - name: Create Working Branch
+        id: branch
+        run: |
+          WORK_BRANCH="${{ env.WORK_BRANCH_PREFIX }}${{ env.ISSUE_NUMBER }}-$(date +%s)"
+          
+          # Fetch target branch
+          git fetch origin ${{ env.TARGET_BRANCH }} || git fetch origin main
+          
+          # Create working branch from target
+          if git rev-parse --verify origin/${{ env.TARGET_BRANCH }} >/dev/null 2>&1; then
+            git checkout -b "$WORK_BRANCH" origin/${{ env.TARGET_BRANCH }}
+          else
+            echo "::warning::Target branch '${{ env.TARGET_BRANCH }}' not found, using main"
+            git checkout -b "$WORK_BRANCH" origin/main
+          fi
+          
+          echo "work_branch=$WORK_BRANCH" >> $GITHUB_OUTPUT
+
+      - name: Comment - Task Started
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: parseInt(process.env.ISSUE_NUMBER),
+              body: `🤖 **Task Runner Started**\n\n` +
+                    `- **Goal:** ${process.env.TASK_GOAL}\n` +
+                    `- **Branch:** \`${process.env.TARGET_BRANCH}\`\n` +
+                    `- **Risk Level:** ${process.env.RISK_LEVEL}\n` +
+                    `- **Verify Tier:** ${process.env.VERIFY_TIER}\n` +
+                    `- **Working Branch:** \`${{ steps.branch.outputs.work_branch }}\`\n\n` +
+                    `Processing...`
+            });
+
+      - name: Run Task Orchestrator
+        id: orchestrator
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          # Export task context for the script
+          export WORK_BRANCH="${{ steps.branch.outputs.work_branch }}"
+          
+          # Run the task runner orchestrator
+          bash ops/task-runner.sh 2>&1 | tee /tmp/task-output.log
+          
+          # Capture exit code
+          EXIT_CODE=${PIPESTATUS[0]}
+          
+          if [[ $EXIT_CODE -eq 0 ]]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "status=failed" >> $GITHUB_OUTPUT
+          fi
+          
+          # Store output for later steps
+          echo "output_log<<EOF" >> $GITHUB_OUTPUT
+          tail -100 /tmp/task-output.log >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Run Preflight Checks
+        id: preflight
+        continue-on-error: true
+        run: |
+          echo "=== Running Preflight Checks ==="
+          bash scripts/preflight.sh 2>&1 | tee /tmp/preflight.log
+          echo "preflight_status=$?" >> $GITHUB_OUTPUT
+
+      - name: Run Security Scan
+        id: security
+        continue-on-error: true
+        run: |
+          echo "=== Running Security Scan ==="
+          bash scripts/security-scan.sh 2>&1 | tee /tmp/security.log
+          echo "security_status=$?" >> $GITHUB_OUTPUT
+
+      - name: Invoke CI-Reviewer (on preflight failure)
+        if: steps.preflight.outputs.preflight_status != '0'
+        run: |
+          echo "::warning::Preflight failed - CI-Reviewer subagent would be invoked here"
+          echo "Preflight output:"
+          cat /tmp/preflight.log
+          # In full implementation, this would call the OpenAI API with ci-reviewer.md prompt
+
+      - name: Invoke Security-Linter (on security scan failure)
+        if: steps.security.outputs.security_status != '0'
+        run: |
+          echo "::warning::Security scan found issues - Security-Linter subagent would be invoked here"
+          echo "Security scan output:"
+          cat /tmp/security.log
+          # In full implementation, this would call the OpenAI API with security-linter.md prompt
+
+      - name: Check for Changes
+        id: changes
+        run: |
+          git config user.name "Codex Bot"
+          git config user.email "codex-bot@awhittlewandering.com"
+          
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            git add -A
+            git commit -m "task(#${{ env.ISSUE_NUMBER }}): ${{ env.ISSUE_TITLE }}"
+          fi
+
+      - name: Push Changes
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          git push -u origin ${{ steps.branch.outputs.work_branch }}
+
+      - name: Create Pull Request
+        if: steps.changes.outputs.has_changes == 'true'
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const riskLevel = process.env.RISK_LEVEL;
+            const verifyTier = process.env.VERIFY_TIER;
+            
+            // Determine labels based on risk
+            const labels = ['ai-task', 'automated'];
+            if (riskLevel === 'low') labels.push('codex:lite');
+            else if (riskLevel === 'high') labels.push('codex:full');
+            else labels.push('codex:autonomous');
+            
+            // Build PR body with checklist
+            const prBody = `## 🤖 Automated PR from Task Runner
+
+            Closes #${process.env.ISSUE_NUMBER}
+
+            ### Task Details
+            - **Goal:** ${process.env.TASK_GOAL}
+            - **Risk Level:** ${riskLevel}
+            - **Verify Tier:** ${verifyTier}
+
+            ### Verification Checklist
+            - [ ] 🔒 **Secrets:** No secrets or keys exposed (✓ automated scan)
+            - [ ] ✅ **Input Validation:** All new inputs are validated
+            - [ ] 🧪 **Tests:** New code covered by tests or existing tests updated
+            - [ ] 📝 **Logging:** Added/updated logging for critical operations
+
+            ### CI Status
+            - Preflight: ${{ steps.preflight.outputs.preflight_status == '0' && '✅ Passed' || '⚠️ Issues found' }}
+            - Security: ${{ steps.security.outputs.security_status == '0' && '✅ Passed' || '⚠️ Issues found' }}
+
+            ---
+            *This PR was automatically generated by the Task Runner pipeline.*
+            `;
+
+            const pr = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `task(#${process.env.ISSUE_NUMBER}): ${process.env.ISSUE_TITLE}`,
+              head: '${{ steps.branch.outputs.work_branch }}',
+              base: process.env.TARGET_BRANCH || 'main',
+              body: prBody
+            });
+
+            // Add labels
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.data.number,
+              labels: labels
+            });
+
+            core.setOutput('pr_number', pr.data.number);
+            core.setOutput('pr_url', pr.data.html_url);
+
+      - name: Comment - Task Complete
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const hasChanges = '${{ steps.changes.outputs.has_changes }}' === 'true';
+            const prUrl = '${{ steps.pr.outputs.pr_url }}';
+            const status = '${{ steps.orchestrator.outputs.status }}';
+            
+            let body;
+            if (hasChanges && prUrl) {
+              body = `✅ **Task Runner Complete**\n\n` +
+                     `PR created: ${prUrl}\n\n` +
+                     `**Risk Level:** ${process.env.RISK_LEVEL}\n` +
+                     `**Next Steps:**\n`;
+              
+              if (process.env.RISK_LEVEL === 'low') {
+                body += `- Auto-merge eligible after CI passes`;
+              } else if (process.env.RISK_LEVEL === 'high') {
+                body += `- ⚠️ Manual review required before merge`;
+              } else {
+                body += `- Standard review process applies`;
+              }
+            } else if (status === 'success') {
+              body = `✅ **Task Runner Complete**\n\nNo code changes were generated. The task may have been informational or already resolved.`;
+            } else {
+              body = `⚠️ **Task Runner Encountered Issues**\n\nThe task could not be fully completed. Please review the workflow logs for details.`;
+            }
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: parseInt(process.env.ISSUE_NUMBER),
+              body: body
+            });
+
+  # Auto-merge job for low-risk tasks
+  auto-merge:
+    needs: [validate, execute]
+    if: |
+      needs.validate.outputs.risk_level == 'low' &&
+      needs.execute.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check CI Status
+        id: ci
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumberRaw = '${{ needs.execute.outputs.pr_number }}';
+            const prNumber = Number(prNumberRaw);
+            if (!prNumberRaw || Number.isNaN(prNumber) || prNumber <= 0) {
+              console.log('No PR created; nothing to auto-merge.');
+              core.setOutput('can_merge', 'false');
+              return;
+            }
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+
+            if (pr.state !== 'open') {
+              console.log(`PR #${prNumber} is not open (state=${pr.state}); skipping auto-merge.`);
+              core.setOutput('can_merge', 'false');
+              return;
+            }
+
+            console.log(`Low-risk task PR #${prNumber} - enabling auto-merge.`);
+            core.setOutput('can_merge', 'true');
+
+      - name: Auto-merge (if CI passes)
+        if: steps.ci.outputs.can_merge == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = Number('${{ needs.execute.outputs.pr_number }}');
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+
+            const mutation = `
+              mutation EnableAutoMerge($pullRequestId: ID!, $mergeMethod: PullRequestMergeMethod!) {
+                enablePullRequestAutoMerge(
+                  input: {
+                    pullRequestId: $pullRequestId
+                    mergeMethod: $mergeMethod
+                  }
+                ) {
+                  pullRequest { number }
+                }
+              }
+            `;
+
+            try {
+              await github.graphql(mutation, {
+                pullRequestId: pr.node_id,
+                mergeMethod: 'SQUASH'
+              });
+              console.log(`Auto-merge enabled for PR #${prNumber}.`);
+            } catch (error) {
+              console.log(`Could not enable auto-merge for PR #${prNumber}:`, error.message);
+            }
+
+  # High-risk gate - requires manual approval
+  high-risk-review:
+    needs: [validate, execute]
+    if: needs.validate.outputs.risk_level == 'high'
+    runs-on: ubuntu-latest
+    environment:
+      name: high-risk-approval
+    steps:
+      - name: Notify High Risk
+        run: |
+          echo "⚠️ HIGH RISK TASK"
+          echo "Issue #${{ needs.validate.outputs.issue_number }} requires manual review"
+          echo "Risk Level: high"
+          echo "A maintainer must approve before this can be merged to production"

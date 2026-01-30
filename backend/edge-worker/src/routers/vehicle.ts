@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
+import type { Env } from '../types/env';
 import { logger } from '../utils/log';
 
-export const vehicleRouter = new Hono();
+export const vehicleRouter = new Hono<{ Bindings: Env }>();
 
 const JOURNEY_ID = 'continental-usa-2025';
 const VEHICLE_ID = 'midnight-shadow';

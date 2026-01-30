@@ -1,0 +1,258 @@
+# =============================================================================
+# Health Monitor Workflow
+# =============================================================================
+# On-demand health monitoring for production services.
+# Creates incident issues on sustained failures.
+#
+# NOTE: Scheduled monitoring is DISABLED to avoid GitHub Actions costs.
+# For continuous monitoring, use Cloudflare's built-in health checks or
+# an external uptime service (e.g., Cloudflare Health Checks, UptimeRobot).
+#
+# This workflow can be triggered manually or by other workflows after
+# deployments to verify service health.
+# =============================================================================
+
+name: Health Monitor
+
+on:
+  # DISABLED: Scheduled monitoring consumes too many GitHub Actions minutes
+  # Uncomment only if you have sufficient Actions minutes budget
+  # schedule:
+  #   - cron: '*/5 * * * *'  # ~8,640 runs/month = 4x free tier
+  
+  # Manual trigger for testing
+  workflow_dispatch:
+    inputs:
+      force_check:
+        description: 'Force health check even if recently run'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  FRONTEND_URL: https://awhittlewandering.com
+  BACKEND_URL: https://api.awhittlewandering.com/api/v1/health
+  FAILURE_THRESHOLD: 3  # Consecutive failures before alerting
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend_healthy: ${{ steps.frontend.outputs.healthy }}
+      backend_healthy: ${{ steps.backend.outputs.healthy }}
+      overall_healthy: ${{ steps.summary.outputs.healthy }}
+    steps:
+      - name: Check Frontend Health
+        id: frontend
+        run: |
+          echo "Checking frontend: ${{ env.FRONTEND_URL }}"
+          
+          HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" \
+            --max-time 30 \
+            "${{ env.FRONTEND_URL }}" 2>/dev/null || echo "000")
+          
+          echo "Frontend HTTP Code: $HTTP_CODE"
+          
+          if [[ "$HTTP_CODE" == "200" ]]; then
+            echo "healthy=true" >> $GITHUB_OUTPUT
+            echo "✅ Frontend healthy"
+          else
+            echo "healthy=false" >> $GITHUB_OUTPUT
+            echo "❌ Frontend unhealthy (HTTP $HTTP_CODE)"
+          fi
+
+      - name: Check Backend Health
+        id: backend
+        run: |
+          echo "Checking backend: ${{ env.BACKEND_URL }}"
+          
+          RESPONSE=$(curl -sf --max-time 30 "${{ env.BACKEND_URL }}" 2>/dev/null || echo '{"status":"error"}')
+          HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 30 "${{ env.BACKEND_URL }}" 2>/dev/null || echo "000")
+          
+          echo "Backend HTTP Code: $HTTP_CODE"
+          echo "Backend Response: $RESPONSE"
+          
+          if [[ "$HTTP_CODE" == "200" ]] && echo "$RESPONSE" | grep -qE '"status"\s*:\s*"(ok|healthy)"'; then
+            echo "healthy=true" >> $GITHUB_OUTPUT
+            echo "✅ Backend healthy"
+          else
+            echo "healthy=false" >> $GITHUB_OUTPUT
+            echo "❌ Backend unhealthy"
+          fi
+
+      - name: Check API Endpoints
+        id: api
+        continue-on-error: true
+        run: |
+          BASE_URL="https://api.awhittlewandering.com/api/v1"
+          
+          # Check key endpoints
+          ENDPOINTS=(
+            "/health"
+            "/tesla/status"
+          )
+          
+          ALL_OK=true
+          for endpoint in "${ENDPOINTS[@]}"; do
+            HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 15 "${BASE_URL}${endpoint}" 2>/dev/null || echo "000")
+            if [[ "$HTTP_CODE" != "200" && "$HTTP_CODE" != "401" ]]; then
+              echo "⚠️ Endpoint ${endpoint} returned HTTP $HTTP_CODE"
+              ALL_OK=false
+            else
+              echo "✅ Endpoint ${endpoint} OK"
+            fi
+          done
+          
+          echo "all_ok=$ALL_OK" >> $GITHUB_OUTPUT
+
+      - name: Summary
+        id: summary
+        run: |
+          FRONTEND="${{ steps.frontend.outputs.healthy }}"
+          BACKEND="${{ steps.backend.outputs.healthy }}"
+          
+          if [[ "$FRONTEND" == "true" && "$BACKEND" == "true" ]]; then
+            echo "healthy=true" >> $GITHUB_OUTPUT
+            echo "✅ All systems healthy"
+          else
+            echo "healthy=false" >> $GITHUB_OUTPUT
+            echo "❌ System health issues detected"
+          fi
+
+  # Track failure count and alert if threshold exceeded
+  alert:
+    needs: health-check
+    if: needs.health-check.outputs.overall_healthy == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for Existing Incident
+        id: check-incident
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Look for open incident issues
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'incident,health-check',
+              state: 'open'
+            });
+            
+            const recentIncident = issues.find(i => {
+              const created = new Date(i.created_at);
+              const now = new Date();
+              const hoursSinceCreated = (now - created) / (1000 * 60 * 60);
+              return hoursSinceCreated < 24;  // Within last 24 hours
+            });
+            
+            if (recentIncident) {
+              core.setOutput('has_incident', 'true');
+              core.setOutput('incident_number', recentIncident.number);
+              
+              // Add comment to existing incident
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: recentIncident.number,
+                body: `## Health Check Update - ${new Date().toISOString()}
+                
+                - Frontend: ${{ needs.health-check.outputs.frontend_healthy == 'true' && '✅' || '❌' }}
+                - Backend: ${{ needs.health-check.outputs.backend_healthy == 'true' && '✅' || '❌' }}
+                
+                [Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})`
+              });
+            } else {
+              core.setOutput('has_incident', 'false');
+            }
+
+      - name: Create Incident Issue
+        if: steps.check-incident.outputs.has_incident == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Production Health Check Failure - ${new Date().toISOString().split('T')[0]}`,
+              body: `## Production Health Check Failed
+              
+              **Time:** ${new Date().toISOString()}
+              **Workflow Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+              
+              ### Status
+              | Service | Status |
+              |---------|--------|
+              | Frontend | ${{ needs.health-check.outputs.frontend_healthy == 'true' && '✅ Healthy' || '❌ Unhealthy' }} |
+              | Backend | ${{ needs.health-check.outputs.backend_healthy == 'true' && '✅ Healthy' || '❌ Unhealthy' }} |
+              
+              ### Immediate Actions
+              1. Check Cloudflare status: https://www.cloudflarestatus.com/
+              2. Review recent deployments
+              3. Check error logs in Cloudflare dashboard
+              
+              ### Rollback Commands
+              \`\`\`bash
+              # Backend rollback
+              cd backend/edge-worker
+              wrangler rollback --env production
+              
+              # Frontend rollback
+              # Use Cloudflare Dashboard → Pages → Deployments → Rollback
+              \`\`\`
+              
+              ### Auto-Resolution
+              This issue will be automatically closed when health checks pass.
+              `,
+              labels: ['incident', 'health-check', 'priority:high']
+            });
+            
+            console.log(`Created incident issue #${issue.data.number}`);
+
+  # Auto-close incident when healthy
+  auto-resolve:
+    needs: health-check
+    if: needs.health-check.outputs.overall_healthy == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close Resolved Incidents
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Find open health-check incidents
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'incident,health-check',
+              state: 'open'
+            });
+            
+            for (const issue of issues) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `## ✅ Incident Resolved
+                
+                Health checks are now passing.
+                
+                - Frontend: ✅
+                - Backend: ✅
+                
+                **Resolved at:** ${new Date().toISOString()}
+                
+                Closing this incident automatically.`
+              });
+              
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+              
+              console.log(`Closed incident #${issue.number}`);
+            }

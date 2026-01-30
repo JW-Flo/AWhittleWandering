@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
+import type { Env } from '../types/env';
 
-export const tripStatusRouter = new Hono();
+export const tripStatusRouter = new Hono<{ Bindings: Env }>();
 
 tripStatusRouter.get('/', async (c) => {
   return c.json({

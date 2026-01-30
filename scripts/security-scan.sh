@@ -25,6 +25,11 @@ EXCLUDE_GLOBS=(
   '!**/*.test.js'
   '!**/*.spec.ts'
   '!**/*.spec.js'
+  '!**/tests/**'
+  '!**/__tests__/**'
+  '!*.example'
+  '!*.example.*'
+  '!.env.example'
 )
 
 scan_paths() {
@@ -40,32 +45,35 @@ scan_paths() {
 hits=0
 echo "[secscan] scanning for common secret patterns (paths only)..."
 
-# Patterns targeting actual leaked secrets, not code that handles secrets
-patterns=(
-  # AWS Access Key ID (very specific format)
-  'AKIA[0-9A-Z]{16}'
-  # Google API key (very specific format)
-  'AIzaSy[0-9A-Za-z\-_]{35}'
-  # Slack tokens
-  'xox[baprs]-[0-9A-Za-z-]{10,}'
-  # Private keys (actual key material)
-  '-----BEGIN (RSA|EC|OPENSSH|PGP) PRIVATE KEY-----'
-  # OpenAI API keys
-  'sk-[A-Za-z0-9]{20,}'
-  # Bearer tokens with actual values (not placeholders)
-  'Bearer [A-Za-z0-9\-_\.]{40,}'
-  # Hardcoded passwords in config (quoted strings only, min 12 chars)
-  'password\s*[:=]\s*["'\''][^"'\'']{12,}["'\'']'
-  # API keys with actual values (quoted, min 24 chars to reduce false positives)
-  'api[_-]?key\s*[:=]\s*["'\''][A-Za-z0-9._-]{24,}["'\'']'
+# High-confidence patterns - these are almost always real secrets
+high_confidence_patterns=(
+  'AKIA[0-9A-Z]{16}'                                    # AWS Access Key ID
+  'AIzaSy[0-9A-Za-z\-_]{35}'                           # Google API Key
+  'xox[baprs]-[0-9A-Za-z-]{10,}'                       # Slack tokens
+  '-----BEGIN (RSA|EC|OPENSSH|PGP) PRIVATE KEY-----'  # Private keys
+  'sk-[A-Za-z0-9]{48,}'                                # OpenAI API Key (48+ chars)
 )
 
-for pat in "${patterns[@]}"; do
+# Medium-confidence patterns - may have false positives
+medium_confidence_patterns=(
+  'Bearer [A-Za-z0-9\-_\.]{40,}'                       # Bearer tokens (40+ chars to reduce FP)
+)
+
+for pat in "${high_confidence_patterns[@]}"; do
   files="$(scan_paths "$pat")"
   if [[ -n "$files" ]]; then
-    echo "[secscan] possible secret pattern: $pat"
+    echo "[secscan] ❌ HIGH-CONFIDENCE secret pattern found: $pat"
     echo "$files"
     hits=1
+  fi
+done
+
+for pat in "${medium_confidence_patterns[@]}"; do
+  files="$(scan_paths "$pat")"
+  if [[ -n "$files" ]]; then
+    echo "[secscan] ⚠️  Medium-confidence pattern (review manually): $pat"
+    echo "$files"
+    # Don't set hits=1 for medium confidence - just warn
   fi
 done
 

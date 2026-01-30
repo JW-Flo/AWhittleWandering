@@ -11,6 +11,64 @@
 import { Env } from '../types/env';
 
 // =====================================================
+// DATABASE ROW TYPES
+// =====================================================
+
+interface OverviewDataRow {
+  name: string;
+  start_date: string;
+  status: string;
+  days_elapsed: number;
+  battery_level: number;
+  battery_range: number;
+  charging_state: string;
+  current_city: string;
+  current_state: string;
+  last_update: string;
+  states_visited: number;
+  total_miles: number;
+  total_drives: number;
+  total_charges: number;
+  total_cost: number;
+}
+
+interface StatsDataRow {
+  total_drives: number;
+  total_miles: number;
+  avg_efficiency: number;
+  max_speed: number;
+  avg_drive_duration: number;
+  total_charges: number;
+  total_energy_added: number;
+  total_cost: number;
+  avg_charge_duration: number;
+  states_visited: number;
+}
+
+interface VehicleStateRow {
+  battery_level: number;
+  battery_range: number;
+  charging_state: string;
+  latitude: number;
+  longitude: number;
+  city: string;
+  state_name: string;
+  speed: number;
+  odometer: number;
+  shift_state: string;
+  inside_temp: number;
+  outside_temp: number;
+  climate_on: boolean;
+  locked: boolean;
+  timestamp: string;
+  updated_at: string;
+}
+
+interface CacheRow {
+  cache_data: string;
+}
+
+// =====================================================
 // COMPONENT READ APIs (Frontend calls these)
 // =====================================================
 
@@ -30,7 +88,11 @@ export async function getOverviewData(env: Env): Promise<OverviewResponse> {
   const result = await env.DB.prepare(`
     SELECT * FROM overview_data 
     WHERE journey_id = ?
-  `).bind('continental-usa-2025').first();
+  `).bind('continental-usa-2025').first<OverviewDataRow>();
+
+  if (!result) {
+    throw new Error('Overview data not found');
+  }
 
   const response: OverviewResponse = {
     journey: {
@@ -220,7 +282,11 @@ export async function getStatsData(env: Env): Promise<StatsResponse> {
     LEFT JOIN charges c ON c.journey_id = j.id  
     LEFT JOIN states_visited sv ON sv.journey_id = j.id
     WHERE j.id = ?
-  `).bind('continental-usa-2025').first();
+  `).bind('continental-usa-2025').first<StatsDataRow>();
+
+  if (!stats) {
+    throw new Error('Stats data not found');
+  }
 
   const response: StatsResponse = {
     driving: {
@@ -260,7 +326,7 @@ export async function getLiveVehicleState(env: Env): Promise<VehicleStateRespons
   const state = await env.DB.prepare(`
     SELECT * FROM vehicle_state 
     WHERE vehicle_id = ?
-  `).bind('midnight-shadow').first();
+  `).bind('midnight-shadow').first<VehicleStateRow>();
 
   if (!state) {
     throw new Error('Vehicle state not found');
@@ -301,14 +367,14 @@ export async function getLiveVehicleState(env: Env): Promise<VehicleStateRespons
 async function getCachedResponse(
   db: D1Database, 
   cacheKey: string, 
-  maxAgeMinutes: number
+  _maxAgeMinutes: number
 ): Promise<string | null> {
   const cached = await db.prepare(`
     SELECT cache_data FROM component_cache 
     WHERE cache_key = ? AND expires_at > datetime('now')
-  `).bind(cacheKey).first();
+  `).bind(cacheKey).first<CacheRow>();
 
-  return cached?.cache_data as string || null;
+  return cached?.cache_data ?? null;
 }
 
 async function setCacheResponse(

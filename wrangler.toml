@@ -1,0 +1,20 @@
+# =============================================================================
+# Root Wrangler Configuration - Cloudflare Pages
+# =============================================================================
+# This configuration is used by Cloudflare Pages for frontend deployment.
+# For backend Worker deployment, use backend/edge-worker/wrangler.toml
+#
+# IMPORTANT: If deploying via Cloudflare Pages dashboard, ensure the
+# deploy command is set to: npx wrangler pages deploy frontend/dist
+# NOT: npx wrangler versions upload (which is for Workers)
+# =============================================================================
+
+name = "awhittlewandering"
+compatibility_date = "2024-01-01"
+
+# Cloudflare Pages - point to frontend build output
+[assets]
+directory = "frontend/dist"
+
+# Note: Backend Worker (awhittlewandering-api) should be deployed separately
+# using: cd backend/edge-worker && npx wrangler deploy --env production

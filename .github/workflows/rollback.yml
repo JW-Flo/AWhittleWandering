@@ -1,0 +1,259 @@
+# =============================================================================
+# Rollback Workflow
+# =============================================================================
+# Manual and automatic rollback for production deployments.
+# Supports both backend (Workers) and frontend (Pages) rollback.
+# =============================================================================
+
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'What to rollback'
+        required: true
+        type: choice
+        options:
+          - backend
+          - frontend
+          - both
+      environment:
+        description: 'Environment to rollback'
+        required: true
+        type: choice
+        options:
+          - production
+          - staging
+      reason:
+        description: 'Reason for rollback'
+        required: true
+        type: string
+
+  # Can be called by other workflows
+  workflow_call:
+    inputs:
+      target:
+        description: 'What to rollback'
+        required: true
+        type: string
+      environment:
+        description: 'Environment to rollback'
+        required: true
+        type: string
+      reason:
+        description: 'Reason for rollback'
+        required: false
+        type: string
+    secrets:
+      CLOUDFLARE_API_TOKEN:
+        required: true
+      CLOUDFLARE_ACCOUNT_ID:
+        required: true
+
+permissions:
+  contents: read
+  issues: write
+  deployments: write
+
+jobs:
+  # Confirm rollback (for manual triggers)
+  confirm:
+    runs-on: ubuntu-latest
+    outputs:
+      confirmed: ${{ steps.confirm.outputs.confirmed }}
+    steps:
+      - name: Log Rollback Request
+        id: confirm
+        run: |
+          echo "🔄 Rollback Requested"
+          echo "Target: ${{ inputs.target }}"
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Reason: ${{ inputs.reason }}"
+          echo "Triggered by: ${{ github.actor }}"
+          echo "confirmed=true" >> $GITHUB_OUTPUT
+
+  # Rollback backend (Cloudflare Workers)
+  rollback-backend:
+    needs: confirm
+    if: needs.confirm.outputs.confirmed == 'true' && (inputs.target == 'backend' || inputs.target == 'both')
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}-rollback
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Wrangler
+        run: npm install -g wrangler@3
+
+      - name: Get Current Deployment Info
+        id: current
+        working-directory: backend/edge-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          ENV_FLAG=""
+          if [[ "${{ inputs.environment }}" == "production" ]]; then
+            ENV_FLAG="--env production"
+          fi
+          
+          # List recent deployments
+          echo "Recent deployments:"
+          wrangler deployments list $ENV_FLAG 2>/dev/null | head -20 || echo "Could not list deployments"
+
+      - name: Execute Rollback
+        id: rollback
+        working-directory: backend/edge-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ROLLBACK_REASON: ${{ inputs.reason }}
+        run: |
+          ENV_FLAG=""
+          if [[ "${{ inputs.environment }}" == "production" ]]; then
+            ENV_FLAG="--env production"
+          fi
+          
+          echo "🔄 Executing backend rollback..."
+          
+          if wrangler rollback $ENV_FLAG --message "Rollback: ${ROLLBACK_REASON:-no reason provided}"; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "✅ Backend rollback successful"
+          else
+            echo "status=failed" >> $GITHUB_OUTPUT
+            echo "❌ Backend rollback failed"
+            exit 1
+          fi
+
+      - name: Verify Rollback
+        run: |
+          sleep 30
+          
+          if [[ "${{ inputs.environment }}" == "production" ]]; then
+            HEALTH_URL="https://api.awhittlewandering.com/api/v1/health"
+          else
+            HEALTH_URL="https://awhittlewandering-api-staging.workers.dev/api/v1/health"
+          fi
+          
+          HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" "$HEALTH_URL" 2>/dev/null || echo "000")
+          
+          if [[ "$HTTP_CODE" == "200" ]]; then
+            echo "✅ Backend health check passed after rollback"
+          else
+            echo "⚠️ Backend health check returned HTTP $HTTP_CODE"
+          fi
+
+  # Rollback frontend (Cloudflare Pages)
+  rollback-frontend:
+    needs: confirm
+    if: needs.confirm.outputs.confirmed == 'true' && (inputs.target == 'frontend' || inputs.target == 'both')
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}-rollback
+    steps:
+      - name: Frontend Rollback Instructions
+        run: |
+          echo "⚠️ Frontend (Cloudflare Pages) Rollback"
+          echo ""
+          echo "Cloudflare Pages rollback must be done via the dashboard:"
+          echo ""
+          echo "1. Go to: https://dash.cloudflare.com"
+          echo "2. Navigate to: Pages → awhittlewandering"
+          echo "3. Click on 'Deployments'"
+          echo "4. Find the last known good deployment"
+          echo "5. Click '...' menu → 'Rollback to this deployment'"
+          echo ""
+          echo "Alternatively, use the Cloudflare API:"
+          echo ""
+          
+      - name: List Recent Deployments
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          # List recent Pages deployments via API
+          echo "Recent frontend deployments:"
+          curl -s -X GET \
+            "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/awhittlewandering/deployments" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" | \
+            jq -r '.result[:5] | .[] | "ID: \(.id) | Created: \(.created_on) | Branch: \(.deployment_trigger.metadata.branch)"' || \
+            echo "Could not list deployments"
+
+      - name: Create Rollback Reminder Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `📋 Frontend Rollback Required - ${{ inputs.environment }}`,
+              body: `## Frontend Rollback Needed
+              
+              **Environment:** ${{ inputs.environment }}
+              **Reason:** ${{ inputs.reason }}
+              **Requested by:** @${{ github.actor }}
+              
+              ### Manual Steps Required
+              
+              1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com)
+              2. Navigate to **Pages** → **awhittlewandering**
+              3. Click **Deployments**
+              4. Find the last known good deployment
+              5. Click the **...** menu → **Rollback to this deployment**
+              
+              ### Verification
+              After rollback, verify:
+              - [ ] https://awhittlewandering.com loads correctly
+              - [ ] No console errors
+              - [ ] API calls work
+              
+              Close this issue once rollback is complete.
+              `,
+              labels: ['rollback', 'frontend', 'manual-action-required']
+            });
+
+  # Create rollback record
+  record:
+    needs: [confirm, rollback-backend, rollback-frontend]
+    if: always() && needs.confirm.outputs.confirmed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Rollback Record
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const backendStatus = '${{ needs.rollback-backend.result }}' || 'skipped';
+            const frontendStatus = '${{ needs.rollback-frontend.result }}' || 'skipped';
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `📝 Rollback Record - ${{ inputs.environment }} - ${new Date().toISOString().split('T')[0]}`,
+              body: `## Rollback Executed
+              
+              **Time:** ${new Date().toISOString()}
+              **Environment:** ${{ inputs.environment }}
+              **Target:** ${{ inputs.target }}
+              **Reason:** ${{ inputs.reason }}
+              **Triggered by:** @${{ github.actor }}
+              
+              ### Results
+              | Component | Status |
+              |-----------|--------|
+              | Backend | ${backendStatus === 'success' ? '✅ Success' : backendStatus === 'skipped' ? '⏭️ Skipped' : '❌ Failed'} |
+              | Frontend | ${frontendStatus === 'success' ? '✅ Success' : frontendStatus === 'skipped' ? '⏭️ Skipped (manual required)' : '❌ Failed'} |
+              
+              ### Workflow Run
+              [View Details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+              
+              ### Post-Rollback Checklist
+              - [ ] Verify services are healthy
+              - [ ] Notify team of rollback
+              - [ ] Document root cause
+              - [ ] Plan fix for rolled-back changes
+              `,
+              labels: ['rollback', 'record', '${{ inputs.environment }}']
+            });

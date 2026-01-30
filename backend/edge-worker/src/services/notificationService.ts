@@ -88,9 +88,9 @@ export async function fanoutJourneyNotification(env: any, input: {
          AND COALESCE(jp.${prefsCol}, 0) = 1`
     )
     .bind(input.journeyId)
-    .all<any>();
+    .all();
 
-  const userIds = (recipients.results || []).map((r: any) => String(r.user_id)).filter(Boolean);
+  const userIds = ((recipients.results || []) as { user_id: string }[]).map((r) => String(r.user_id)).filter(Boolean);
   let pushesAttempted = 0;
   let pushesOk = 0;
 
@@ -111,9 +111,10 @@ export async function fanoutJourneyNotification(env: any, input: {
          WHERE user_id = ? AND revoked_at IS NULL`
       )
       .bind(userId)
-      .all<any>();
+      .all();
+    const subResults = (subs.results || []) as { id: string; endpoint: string; p256dh: string; auth: string }[];
 
-    for (const sub of subs.results || []) {
+    for (const sub of subResults) {
       pushesAttempted++;
       try {
         const delivered = await deliverWebPush(env, sub);

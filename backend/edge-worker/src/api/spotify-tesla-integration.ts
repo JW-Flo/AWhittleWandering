@@ -20,9 +20,24 @@ import { Env } from '../types/env';
  * Play Song Request Widget API
  * POST /api/play-song-for-joe
  */
+interface SongRequestBody {
+  songName: string;
+  artist: string;
+  requestedBy: string;
+  message: string;
+}
+
+interface SongRequestRow {
+  id: number;
+  song_name: string;
+  artist: string;
+  spotify_uri: string;
+  status: string;
+}
+
 export async function handleSongRequest(request: Request, env: Env): Promise<Response> {
   try {
-    const { songName, artist, requestedBy, message } = await request.json();
+    const { songName, artist, requestedBy, message } = await request.json() as SongRequestBody;
     
     // 1. Validate Tesla is available and driving
     const vehicleState = await getTeslaState(env);
@@ -235,6 +250,10 @@ async function sendJoeNotification(env: Env, notification: {
 }): Promise<void> {
   try {
     // Send push notification via WebPush or similar service
+    if (!env.NOTIFICATION_WEBHOOK) {
+      console.warn('NOTIFICATION_WEBHOOK not configured');
+      return;
+    }
     await fetch(env.NOTIFICATION_WEBHOOK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -278,12 +297,13 @@ export async function getSongQueue(env: Env): Promise<Response> {
     LIMIT 50
   `).all();
   
+  const results = (requests.results || []) as unknown as SongRequestRow[];
   return new Response(JSON.stringify({
-    queue: requests.results,
+    queue: results,
     stats: {
-      totalRequests: requests.results.length,
-      played: requests.results.filter(r => r.status === 'played').length,
-      queued: requests.results.filter(r => r.status === 'queued').length
+      totalRequests: results.length,
+      played: results.filter((r: SongRequestRow) => r.status === 'played').length,
+      queued: results.filter((r: SongRequestRow) => r.status === 'queued').length
     }
   }), { status: 200 });
 }
@@ -298,7 +318,7 @@ export async function playNextSong(env: Env): Promise<Response> {
     WHERE status = 'queued' 
     ORDER BY created_at ASC 
     LIMIT 1
-  `).first();
+  `).first<SongRequestRow>();
   
   if (!nextSong) {
     return new Response(JSON.stringify({

@@ -1,24 +1,356 @@
-name: ci-preflight
+# =============================================================================
+# CI Preflight - Quality Gate
+# =============================================================================
+# The primary quality gate for all code changes.
+# Must pass before any PR can be merged.
+#
+# Checks:
+#   - Security scan (secrets, vulnerabilities)
+#   - Code quality (lint, format, typecheck)
+#   - Tests (unit, integration)
+#   - Build verification
+# =============================================================================
+
+name: CI Preflight
+
 on:
   pull_request:
+    types: [opened, synchronize, reopened]
   push:
-    branches: [ main ]
+    branches: [main, staging, dev]
+
 permissions:
   contents: read
+  pull-requests: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  preflight:
+  # ==========================================================================
+  # Security Scan - First gate, blocks everything if secrets found
+  # ==========================================================================
+  security:
+    name: Security Scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for scanning
+
       - name: Install ripgrep
         run: sudo apt-get update && sudo apt-get install -y ripgrep
-      - name: Security scan (paths only)
-        run: bash scripts/security-scan.sh
-      - name: Preflight (if JS project)
+
+      - name: Run Security Scan
+        id: scan
         run: |
-          if [[ -f package.json ]]; then
-            bash scripts/preflight.sh
+          echo "Running security scan..."
+          if bash scripts/security-scan.sh; then
+            echo "status=pass" >> $GITHUB_OUTPUT
           else
-            echo "skip: no package.json"
+            echo "status=fail" >> $GITHUB_OUTPUT
+            exit 1
           fi
+
+      - name: Check for Secrets in Diff
+        if: github.event_name == 'pull_request'
+        run: |
+          # Get the diff and scan for high-confidence secret patterns only
+          # More thorough scanning is done by scripts/security-scan.sh
+          DIFF=$(git diff origin/${{ github.base_ref }}...HEAD -- . 2>/dev/null || echo "")
+          
+          # High-confidence patterns that are almost always secrets
+          if echo "$DIFF" | grep -qE 'AKIA[0-9A-Z]{16}'; then
+            echo "❌ AWS Access Key ID found in diff!"
+            exit 1
+          fi
+          if echo "$DIFF" | grep -qE 'AIzaSy[0-9A-Za-z_-]{35}'; then
+            echo "❌ Google API Key found in diff!"
+            exit 1
+          fi
+          if echo "$DIFF" | grep -q -- '-----BEGIN.*PRIVATE KEY-----'; then
+            echo "❌ Private key found in diff!"
+            exit 1
+          fi
+          if echo "$DIFF" | grep -qE 'sk-[A-Za-z0-9]{48,}'; then
+            echo "❌ OpenAI API Key found in diff!"
+            exit 1
+          fi
+          
+          echo "✅ No high-confidence secrets in diff"
+
+  # ==========================================================================
+  # Code Quality - Lint, Format, Typecheck
+  # ==========================================================================
+  quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Format Check
+        id: format
+        continue-on-error: true
+        run: |
+          npm run format:check --if-present
+
+      - name: Lint
+        id: lint
+        run: |
+          npm run lint --if-present
+
+      - name: Typecheck
+        id: typecheck
+        run: |
+          if node -e "const p=require('./package.json');process.exit(p.scripts && p.scripts.typecheck ? 0 : 1)"; then
+            npm run typecheck
+          elif [ -f tsconfig.json ] && npx --no-install tsc --version >/dev/null 2>&1; then
+            npx tsc --noEmit
+          else
+            echo "No typecheck configured"
+          fi
+
+  # ==========================================================================
+  # Tests - Unit and Integration
+  # ==========================================================================
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Run Tests
+        id: test
+        run: |
+          npm test --if-present
+
+      - name: Backend Tests
+        working-directory: backend/edge-worker
+        run: |
+          npm ci || npm install
+          npm test --if-present
+
+  # ==========================================================================
+  # Build Verification
+  # ==========================================================================
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          npm ci || npm install
+          cd shared && npm ci || npm install
+          cd ../frontend && npm ci || npm install
+          cd ../backend/edge-worker && npm ci || npm install
+
+      - name: Build Shared
+        working-directory: shared
+        run: npm run build || echo "No build script"
+
+      - name: Build Frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Build Backend
+        working-directory: backend/edge-worker
+        run: npm run build
+
+  # ==========================================================================
+  # PR Labeling based on changes
+  # ==========================================================================
+  label:
+    name: Auto-Label
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine Labels
+        id: labels
+        run: |
+          # Get changed files
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          
+          LABELS=""
+          
+          # Check what's changed
+          if echo "$CHANGED" | grep -q "^backend/"; then
+            LABELS="$LABELS,backend"
+          fi
+          if echo "$CHANGED" | grep -q "^frontend/"; then
+            LABELS="$LABELS,frontend"
+          fi
+          if echo "$CHANGED" | grep -q "^shared/"; then
+            LABELS="$LABELS,shared"
+          fi
+          if echo "$CHANGED" | grep -q "^docs/\|\.md$"; then
+            LABELS="$LABELS,documentation"
+          fi
+          if echo "$CHANGED" | grep -q "^\.github/"; then
+            LABELS="$LABELS,ci-cd"
+          fi
+          
+          # Determine risk level
+          FILE_COUNT=$(echo "$CHANGED" | wc -l)
+          if [[ $FILE_COUNT -gt 10 ]]; then
+            LABELS="$LABELS,codex:full"
+          elif echo "$CHANGED" | grep -qE "^(backend|frontend|shared)/"; then
+            LABELS="$LABELS,codex:autonomous"
+          else
+            LABELS="$LABELS,codex:lite"
+          fi
+          
+          # Remove leading comma
+          LABELS="${LABELS#,}"
+          echo "labels=$LABELS" >> $GITHUB_OUTPUT
+
+      - name: Apply Labels
+        if: steps.labels.outputs.labels != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = '${{ steps.labels.outputs.labels }}'.split(',').filter(l => l);
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: labels
+              });
+            }
+
+  # ==========================================================================
+  # Summary - Final status
+  # ==========================================================================
+  summary:
+    name: CI Summary
+    needs: [security, quality, test, build]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Results
+        run: |
+          echo "## CI Preflight Results"
+          echo ""
+          echo "| Check | Status |"
+          echo "|-------|--------|"
+          echo "| Security | ${{ needs.security.result == 'success' && '✅ Pass' || '❌ Fail' }} |"
+          echo "| Quality | ${{ needs.quality.result == 'success' && '✅ Pass' || '❌ Fail' }} |"
+          echo "| Tests | ${{ needs.test.result == 'success' && '✅ Pass' || '❌ Fail' }} |"
+          echo "| Build | ${{ needs.build.result == 'success' && '✅ Pass' || '❌ Fail' }} |"
+          
+          # Fail if any critical check failed
+          if [[ "${{ needs.security.result }}" != "success" ]]; then
+            echo ""
+            echo "❌ Security scan failed - PR cannot be merged"
+            exit 1
+          fi
+          
+          if [[ "${{ needs.quality.result }}" != "success" ]]; then
+            echo ""
+            echo "❌ Quality checks failed - PR cannot be merged"
+            exit 1
+          fi
+          
+          if [[ "${{ needs.test.result }}" != "success" ]]; then
+            echo ""
+            echo "❌ Tests failed - PR cannot be merged"
+            exit 1
+          fi
+          
+          if [[ "${{ needs.build.result }}" != "success" ]]; then
+            echo ""
+            echo "❌ Build failed - PR cannot be merged"
+            exit 1
+          fi
+          
+          echo ""
+          echo "✅ CI Preflight passed"
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const security = '${{ needs.security.result }}';
+            const quality = '${{ needs.quality.result }}';
+            const test = '${{ needs.test.result }}';
+            const build = '${{ needs.build.result }}';
+            
+            const allPassed = security === 'success' && quality === 'success' && test === 'success' && build === 'success';
+            
+            const body = `## CI Preflight Results
+            
+            | Check | Status |
+            |-------|--------|
+            | 🔒 Security | ${security === 'success' ? '✅ Pass' : '❌ Fail'} |
+            | 📝 Quality | ${quality === 'success' ? '✅ Pass' : '⚠️ Issues'} |
+            | 🧪 Tests | ${test === 'success' ? '✅ Pass' : '⚠️ Issues'} |
+            | 🔨 Build | ${build === 'success' ? '✅ Pass' : '❌ Fail'} |
+            
+            ${allPassed ? '### ✅ Ready for review' : '### ❌ Issues must be resolved before merge'}
+            `;
+            
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(c => 
+              c.user.type === 'Bot' && c.body.includes('CI Preflight Results')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }

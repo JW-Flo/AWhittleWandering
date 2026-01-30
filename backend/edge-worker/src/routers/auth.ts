@@ -4,6 +4,7 @@ import { logger } from '../utils/log';
 import { hashPassword, verifyPassword } from '../utils/passwordPbkdf2';
 import { signJwtHS256 } from '../utils/jwtSignHs256';
 import { requireUser } from '../middleware/userAuth';
+import type { AppContext } from '../types/env';
 
 type UserRow = {
   id: string;
@@ -23,12 +24,14 @@ const bodySchema = z.object({
   displayName: z.string().min(1).max(120).optional(),
 });
 
+interface RoleRow { role: string | null; is_admin: number | boolean | null; }
+
 async function issueJwt(c: any, user: { id: string; email: string; is_admin: boolean }, mfa: boolean) {
   const secret = String(c.env?.JWT_SECRET || '').trim();
   if (!secret) return null;
   const db = c.env?.TESLA_DB;
-  const roleRow = db
-    ? await db.prepare(`SELECT role, is_admin FROM users WHERE id = ? LIMIT 1`).bind(user.id).first<any>()
+  const roleRow: RoleRow | null = db
+    ? await db.prepare(`SELECT role, is_admin FROM users WHERE id = ? LIMIT 1`).bind(user.id).first()
     : null;
   const role = String(roleRow?.role || (user.is_admin ? 'admin' : 'user'));
   const isAdmin = !!(roleRow?.is_admin || role === 'admin' || role === 'owner');
@@ -51,7 +54,7 @@ async function issueJwt(c: any, user: { id: string; email: string; is_admin: boo
   );
 }
 
-export const authRouter = new Hono();
+export const authRouter = new Hono<AppContext>();
 
 /**
  * POST /api/v1/auth

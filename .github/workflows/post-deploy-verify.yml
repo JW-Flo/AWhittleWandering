@@ -1,0 +1,310 @@
+# =============================================================================
+# Post-Deployment Verification Workflow
+# =============================================================================
+# Runs comprehensive verification after deployments.
+# Checks routes, CORS, and frontend-backend integration.
+#
+# Note: This is distinct from health-monitor.yml which runs on a schedule
+# for ongoing monitoring. This workflow is for post-deployment verification.
+# =============================================================================
+
+name: Post-Deploy Verification
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to verify'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Environment to verify'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  STAGING_FRONTEND: https://staging.awhittlewandering.pages.dev
+  STAGING_BACKEND: https://awhittlewandering-api-staging.workers.dev
+  PROD_FRONTEND: https://awhittlewandering.com
+  PROD_BACKEND: https://api.awhittlewandering.com
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend_ok: ${{ steps.frontend.outputs.ok }}
+      backend_ok: ${{ steps.backend.outputs.ok }}
+      routes_ok: ${{ steps.routes.outputs.ok }}
+      overall_ok: ${{ steps.summary.outputs.ok }}
+    steps:
+      - name: Set URLs
+        id: urls
+        run: |
+          if [[ "${{ inputs.environment }}" == "production" ]]; then
+            echo "frontend=${{ env.PROD_FRONTEND }}" >> $GITHUB_OUTPUT
+            echo "backend=${{ env.PROD_BACKEND }}" >> $GITHUB_OUTPUT
+          else
+            echo "frontend=${{ env.STAGING_FRONTEND }}" >> $GITHUB_OUTPUT
+            echo "backend=${{ env.STAGING_BACKEND }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Verify Frontend
+        id: frontend
+        run: |
+          URL="${{ steps.urls.outputs.frontend }}"
+          echo "Verifying frontend: $URL"
+          
+          # Check main page loads
+          HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 30 "$URL" || echo "000")
+          
+          if [[ "$HTTP_CODE" == "200" ]]; then
+            echo "✅ Frontend main page OK"
+            
+            # Check for JavaScript bundle
+            CONTENT=$(curl -sf --max-time 30 "$URL" || echo "")
+            if echo "$CONTENT" | grep -q "script"; then
+              echo "✅ Frontend has script tags"
+              echo "ok=true" >> $GITHUB_OUTPUT
+            else
+              echo "⚠️ Frontend may be missing JavaScript"
+              echo "ok=true" >> $GITHUB_OUTPUT  # Still pass, might be SSR
+            fi
+          else
+            echo "❌ Frontend returned HTTP $HTTP_CODE"
+            echo "ok=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Verify Backend Health
+        id: backend
+        run: |
+          URL="${{ steps.urls.outputs.backend }}/api/v1/health"
+          echo "Verifying backend health: $URL"
+          
+          RESPONSE=$(curl -sf --max-time 30 "$URL" 2>/dev/null || echo '{"status":"error"}')
+          HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 30 "$URL" 2>/dev/null || echo "000")
+          
+          echo "HTTP Code: $HTTP_CODE"
+          echo "Response: $RESPONSE"
+          
+          if [[ "$HTTP_CODE" == "200" ]]; then
+            echo "✅ Backend health endpoint OK"
+            echo "ok=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Backend health check failed"
+            echo "ok=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Verify API Routes
+        id: routes
+        run: |
+          BASE_URL="${{ steps.urls.outputs.backend }}/api/v1"
+          echo "Verifying API routes at: $BASE_URL"
+          
+          # Define routes to check (endpoint, expected_codes)
+          declare -A ROUTES=(
+            ["/health"]="200"
+            ["/tesla/status"]="200,401,403"  # May require auth
+            ["/tesla/location"]="200,401,403"
+          )
+          
+          ALL_OK=true
+          RESULTS=""
+          
+          for route in "${!ROUTES[@]}"; do
+            EXPECTED="${ROUTES[$route]}"
+            HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 15 "${BASE_URL}${route}" 2>/dev/null || echo "000")
+            
+            # Check if HTTP code is in expected list
+            if [[ "$EXPECTED" == *"$HTTP_CODE"* ]] || [[ "$HTTP_CODE" == "200" ]]; then
+              RESULTS+="✅ ${route} → HTTP $HTTP_CODE\n"
+            else
+              RESULTS+="❌ ${route} → HTTP $HTTP_CODE (expected: $EXPECTED)\n"
+              if [[ "$HTTP_CODE" == "000" || "$HTTP_CODE" == "500" || "$HTTP_CODE" == "502" || "$HTTP_CODE" == "503" ]]; then
+                ALL_OK=false
+              fi
+            fi
+          done
+          
+          echo -e "$RESULTS"
+          
+          if $ALL_OK; then
+            echo "ok=true" >> $GITHUB_OUTPUT
+          else
+            echo "ok=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Verify CORS
+        id: cors
+        run: |
+          BACKEND="${{ steps.urls.outputs.backend }}"
+          FRONTEND="${{ steps.urls.outputs.frontend }}"
+          
+          echo "Verifying CORS configuration..."
+          
+          # Check CORS headers
+          CORS_HEADERS=$(curl -sf -I -X OPTIONS \
+            -H "Origin: $FRONTEND" \
+            -H "Access-Control-Request-Method: GET" \
+            --max-time 15 \
+            "$BACKEND/api/v1/health" 2>/dev/null || echo "")
+          
+          if echo "$CORS_HEADERS" | grep -qi "access-control-allow"; then
+            echo "✅ CORS headers present"
+          else
+            echo "⚠️ CORS headers may not be configured (or not needed)"
+          fi
+
+      - name: Verify Frontend-Backend Integration
+        id: integration
+        run: |
+          FRONTEND="${{ steps.urls.outputs.frontend }}"
+          BACKEND="${{ steps.urls.outputs.backend }}"
+          
+          echo "Verifying frontend can reach backend..."
+          
+          # This is a basic check - in production you might want to
+          # actually load the frontend and check for API calls
+          
+          # Check that backend is reachable from a browser-like request
+          HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" \
+            -H "Origin: $FRONTEND" \
+            -H "User-Agent: Mozilla/5.0" \
+            --max-time 15 \
+            "$BACKEND/api/v1/health" 2>/dev/null || echo "000")
+          
+          if [[ "$HTTP_CODE" == "200" ]]; then
+            echo "✅ Backend reachable with browser-like request"
+          else
+            echo "⚠️ Backend returned HTTP $HTTP_CODE for browser-like request"
+          fi
+
+      - name: Summary
+        id: summary
+        run: |
+          FRONTEND="${{ steps.frontend.outputs.ok }}"
+          BACKEND="${{ steps.backend.outputs.ok }}"
+          ROUTES="${{ steps.routes.outputs.ok }}"
+          
+          echo "## Verification Summary"
+          echo "- Frontend: $FRONTEND"
+          echo "- Backend: $BACKEND"
+          echo "- Routes: $ROUTES"
+          
+          if [[ "$FRONTEND" == "true" && "$BACKEND" == "true" && "$ROUTES" == "true" ]]; then
+            echo "ok=true" >> $GITHUB_OUTPUT
+            echo "✅ All verifications passed"
+          else
+            echo "ok=false" >> $GITHUB_OUTPUT
+            echo "❌ Some verifications failed"
+          fi
+
+  # Report results
+  report:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Verification Report
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const env = '${{ inputs.environment }}';
+            const frontendOk = '${{ needs.verify.outputs.frontend_ok }}' === 'true';
+            const backendOk = '${{ needs.verify.outputs.backend_ok }}' === 'true';
+            const routesOk = '${{ needs.verify.outputs.routes_ok }}' === 'true';
+            const overallOk = '${{ needs.verify.outputs.overall_ok }}' === 'true';
+            
+            const status = overallOk ? '✅ PASSED' : '❌ FAILED';
+            
+            const body = `## Post-Deployment Verification Report
+            
+            **Environment:** ${env}
+            **Status:** ${status}
+            **Time:** ${new Date().toISOString()}
+            
+            ### Results
+            | Check | Status |
+            |-------|--------|
+            | Frontend | ${frontendOk ? '✅ OK' : '❌ Failed'} |
+            | Backend Health | ${backendOk ? '✅ OK' : '❌ Failed'} |
+            | API Routes | ${routesOk ? '✅ OK' : '❌ Failed'} |
+            
+            ### Workflow
+            [View Details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            `;
+            
+            // If failed, create an issue
+            if (!overallOk) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🚨 Post-Deploy Verification Failed - ${env}`,
+                body: body + `
+                
+                ### Recommended Actions
+                1. Check the workflow logs for details
+                2. Verify Cloudflare status
+                3. Consider rolling back if critical
+                
+                ### Rollback
+                Run: \`Actions → Rollback → Run workflow\`
+                `,
+                labels: ['verification-failed', env, 'needs-attention']
+              });
+            }
+            
+            console.log(body);
+
+  # Trigger rollback if verification fails
+  auto-rollback:
+    needs: verify
+    if: needs.verify.outputs.overall_ok == 'false' && inputs.environment == 'production'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Before Rollback
+        run: |
+          echo "⚠️ Post-deployment verification failed for production"
+          echo "Auto-rollback is available but requires manual trigger for safety"
+          echo ""
+          echo "To rollback, run: Actions → Rollback → Run workflow"
+
+      - name: Create Urgent Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 URGENT: Production Verification Failed - Rollback May Be Needed`,
+              body: `## Production Deployment Verification Failed
+              
+              **Time:** ${new Date().toISOString()}
+              
+              The post-deployment verification has detected issues with the production deployment.
+              
+              ### Immediate Actions Required
+              1. **Check production manually:** https://awhittlewandering.com
+              2. **Review logs:** [Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+              3. **Consider rollback** if issues are confirmed
+              
+              ### Rollback Instructions
+              1. Go to Actions → Rollback
+              2. Click "Run workflow"
+              3. Select target: \`both\`
+              4. Select environment: \`production\`
+              5. Enter reason
+              
+              ### On-Call
+              Please acknowledge this issue by commenting.
+              `,
+              labels: ['incident', 'production', 'urgent', 'verification-failed']
+            });
