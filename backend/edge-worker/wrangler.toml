@@ -195,3 +195,13 @@ binding = "TELEMETRY_ANALYTICS"
 [[env.production.routes]]
 pattern = "api.awhittlewandering.com/*"
 zone_name = "awhittlewandering.com"
+
+# Staging Environment Configuration
+# Note: This currently inherits the top-level bindings (including D1) unless overridden.
+# Follow-up recommended: configure a separate staging D1 database to avoid sharing prod data.
+[env.staging]
+name = "awhittlewandering-api-staging"
+workers_dev = true
+
+[env.staging.vars]
+LOG_LEVEL = "info"

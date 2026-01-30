@@ -1,0 +1,106 @@
+# Deploy Backend (Cloudflare Workers)
+#
+# Fixes:
+# - Staging secrets and deploy now both use `--env staging`
+#
+name: deploy-backend
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      skip_tests:
+        description: "Skip tests/typecheck before deploy"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  WORKER_DIR: backend/edge-worker
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install deps (root + worker)
+        run: |
+          npm ci || npm install
+          cd "${{ env.WORKER_DIR }}" && npm ci || npm install
+
+      - name: Tests/typecheck (optional)
+        if: inputs.skip_tests != true
+        run: |
+          bash scripts/preflight.sh
+
+      - name: Install Wrangler
+        run: npm install -g wrangler@3
+
+      - name: Configure secrets (env-scoped)
+        working-directory: ${{ env.WORKER_DIR }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+
+          ENV="${{ inputs.environment }}"
+          ENV_FLAG=""
+          if [[ "$ENV" == "production" ]]; then ENV_FLAG="--env production"; fi
+          if [[ "$ENV" == "staging" ]]; then ENV_FLAG="--env staging"; fi
+          if [[ "$ENV" == "development" ]]; then ENV_FLAG="--env development"; fi
+
+          # Set secrets only if provided (never echo values)
+          if [[ -n "${{ secrets.TESSIE_API_TOKEN }}" ]]; then
+            printf '%s' "${{ secrets.TESSIE_API_TOKEN }}" | wrangler secret put TESSIE_API_TOKEN $ENV_FLAG >/dev/null
+          fi
+          if [[ -n "${{ secrets.MAPBOX_API_TOKEN }}" ]]; then
+            printf '%s' "${{ secrets.MAPBOX_API_TOKEN }}" | wrangler secret put MAPBOX_API_TOKEN $ENV_FLAG >/dev/null
+          fi
+          if [[ -n "${{ secrets.OPENWEATHER_API_KEY }}" ]]; then
+            printf '%s' "${{ secrets.OPENWEATHER_API_KEY }}" | wrangler secret put OPENWEATHER_API_KEY $ENV_FLAG >/dev/null
+          fi
+          if [[ -n "${{ secrets.JWT_SECRET }}" ]]; then
+            printf '%s' "${{ secrets.JWT_SECRET }}" | wrangler secret put JWT_SECRET $ENV_FLAG >/dev/null
+          fi
+          if [[ -n "${{ secrets.TESLA_VIN }}" ]]; then
+            printf '%s' "${{ secrets.TESLA_VIN }}" | wrangler secret put TESLA_VIN $ENV_FLAG >/dev/null
+          fi
+
+      - name: Build worker
+        working-directory: ${{ env.WORKER_DIR }}
+        run: npm run build
+
+      - name: Deploy worker (env-scoped)
+        working-directory: ${{ env.WORKER_DIR }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+
+          ENV="${{ inputs.environment }}"
+          case "$ENV" in
+            production) wrangler deploy --env production ;;
+            staging) wrangler deploy --env staging ;;
+            development) wrangler deploy --env development ;;
+            *) echo "Unknown environment: $ENV" >&2; exit 1 ;;
+          esac
+

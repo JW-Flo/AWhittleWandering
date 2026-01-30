@@ -1,0 +1,49 @@
+# Deploy Frontend (Cloudflare Pages)
+#
+# Fixes:
+# - Staging frontend now uses the staging backend URL
+#
+name: deploy-frontend
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        type: choice
+        options:
+          - preview
+          - staging
+          - production
+
+permissions:
+  contents: read
+
+env:
+  FRONTEND_DIR: frontend
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install deps (root + frontend)
+        run: |
+          npm ci || npm install
+          cd "${{ env.FRONTEND_DIR }}" && npm ci || npm install
+
+      - name: Build
+        working-directory: ${{ env.FRONTEND_DIR }}
+        env:
+          # Production uses the custom domain; staging points at the staging worker.
+          VITE_API_URL: ${{ inputs.environment == 'production' && 'https://api.awhittlewandering.com' || inputs.environment == 'staging' && 'https://awhittlewandering-api-staging.workers.dev' || 'https://awhittlewandering-api-dev.workers.dev' }}
+        run: npm run build
+
