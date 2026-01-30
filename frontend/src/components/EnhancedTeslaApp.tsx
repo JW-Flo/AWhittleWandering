@@ -51,7 +51,7 @@ export const EnhancedTeslaApp: React.FC<EnhancedTeslaAppProps> = ({
   };
 
   const handleChargingRecommendation = (recommendation: SmartChargingRecommendation) => {
-    setChargingRecommendations(prev => [...prev, recommendation]);
+    _setChargingRecommendations(prev => [...prev, recommendation]);
     console.warn('⚡ New charging recommendation:', recommendation);
   };
 
