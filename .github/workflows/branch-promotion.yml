@@ -174,18 +174,39 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            // Enable auto-merge
+            // Enable auto-merge (do not merge immediately)
             try {
-              await github.rest.pulls.merge({
+              const prNumber = Number('${{ steps.pr.outputs.pr_number }}');
+              const { data: pr } = await github.rest.pulls.get({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                pull_number: ${{ steps.pr.outputs.pr_number }},
-                merge_method: 'merge',
-                commit_title: 'chore: promote dev → staging'
+                pull_number: prNumber
               });
-              console.log('PR merged successfully');
+
+              const mutation = `
+                mutation EnableAutoMerge($pullRequestId: ID!, $mergeMethod: PullRequestMergeMethod!) {
+                  enablePullRequestAutoMerge(
+                    input: {
+                      pullRequestId: $pullRequestId
+                      mergeMethod: $mergeMethod
+                      commitHeadline: "chore: promote dev → staging"
+                    }
+                  ) {
+                    pullRequest {
+                      number
+                    }
+                  }
+                }
+              `;
+
+              await github.graphql(mutation, {
+                pullRequestId: pr.node_id,
+                mergeMethod: 'MERGE'
+              });
+
+              console.log('Auto-merge enabled for PR');
             } catch (error) {
-              console.log('Could not auto-merge, may need manual approval:', error.message);
+              console.log('Could not enable auto-merge, may need manual action:', error.message);
             }
 
   # ==========================================================================
