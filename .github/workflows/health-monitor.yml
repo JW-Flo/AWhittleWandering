@@ -2,9 +2,12 @@
 # Health Monitor Workflow
 # =============================================================================
 # Continuous health monitoring for production services.
-# Triggers automatic rollback on sustained failures.
+# Creates incident issues on sustained failures.
 #
 # Schedule: Every 5 minutes
+#
+# Note: This is distinct from post-deploy-verify.yml which runs comprehensive
+# verification after deployments. This workflow is for ongoing monitoring.
 # =============================================================================
 
 name: Health Monitor

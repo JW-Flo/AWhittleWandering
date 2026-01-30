@@ -10,16 +10,6 @@
 name: Deploy Backend
 
 on:
-  # Trigger on push to specific branches
-  push:
-    branches:
-      - main
-      - staging
-      - dev
-    paths:
-      - 'backend/**'
-      - 'shared/**'
-  
   # Manual deployment trigger
   workflow_dispatch:
     inputs:

@@ -28,11 +28,6 @@ on:
         options:
           - dev-to-staging
           - staging-to-main
-      skip_tests:
-        description: 'Skip pre-promotion tests'
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: write
@@ -105,48 +100,12 @@ jobs:
           esac
 
   # ==========================================================================
-  # Pre-promotion quality gate
-  # ==========================================================================
-  quality-gate:
-    needs: analyze
-    if: needs.analyze.outputs.promotion_type != 'none' && inputs.skip_tests != true
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.analyze.outputs.source_branch }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install Dependencies
-        run: npm ci || npm install
-
-      - name: Run Preflight
-        run: |
-          if [[ -f "scripts/preflight.sh" ]]; then
-            bash scripts/preflight.sh
-          fi
-
-      - name: Security Scan
-        run: |
-          if [[ -f "scripts/security-scan.sh" ]]; then
-            bash scripts/security-scan.sh
-          fi
-
-  # ==========================================================================
   # Dev → Staging: Auto-promote and deploy
+  # Note: Quality gate is handled by ci-preflight.yml on the source PR
   # ==========================================================================
   promote-to-staging:
-    needs: [analyze, quality-gate]
-    if: |
-      always() &&
-      needs.analyze.outputs.promotion_type == 'dev-to-staging' &&
-      (needs.quality-gate.result == 'success' || needs.quality-gate.result == 'skipped')
+    needs: analyze
+    if: needs.analyze.outputs.promotion_type == 'dev-to-staging'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -271,13 +230,11 @@ jobs:
 
   # ==========================================================================
   # Staging → Main: Create PR (requires approval)
+  # Note: Quality gate is handled by ci-preflight.yml on the source PR
   # ==========================================================================
   promote-to-production:
-    needs: [analyze, quality-gate]
-    if: |
-      always() &&
-      needs.analyze.outputs.promotion_type == 'staging-to-main' &&
-      (needs.quality-gate.result == 'success' || needs.quality-gate.result == 'skipped')
+    needs: analyze
+    if: needs.analyze.outputs.promotion_type == 'staging-to-main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

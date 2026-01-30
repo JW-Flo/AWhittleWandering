@@ -2,7 +2,10 @@
 # Post-Deployment Verification Workflow
 # =============================================================================
 # Runs comprehensive verification after deployments.
-# Invokes the Route Verifier subagent logic to ensure all endpoints work.
+# Checks routes, CORS, and frontend-backend integration.
+#
+# Note: This is distinct from health-monitor.yml which runs on a schedule
+# for ongoing monitoring. This workflow is for post-deployment verification.
 # =============================================================================
 
 name: Post-Deploy Verification

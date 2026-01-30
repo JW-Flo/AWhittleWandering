@@ -10,16 +10,7 @@
 name: Deploy Frontend
 
 on:
-  # Trigger on push to specific branches
-  push:
-    branches:
-      - main
-      - staging
-    paths:
-      - 'frontend/**'
-      - 'shared/**'
-  
-  # Preview deployments for PRs
+  # Preview deployments for PRs (only for previews, not production)
   pull_request:
     paths:
       - 'frontend/**'
