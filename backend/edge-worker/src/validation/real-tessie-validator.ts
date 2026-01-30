@@ -89,9 +89,10 @@ export async function validateAndIngestRealTessieData(env: Env): Promise<Validat
     
     return report;
     
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('❌ REAL DATA INGESTION FAILED:', error);
-    report.qualityIssues.push(`Ingestion failed: ${error.message}`);
+    const errMsg = error instanceof Error ? error.message : String(error);
+    report.qualityIssues.push(`Ingestion failed: ${errMsg}`);
     return report;
   }
 }
@@ -116,7 +117,7 @@ async function validateTessieConnection(env: Env): Promise<void> {
     throw new Error(`Tessie API connection failed: ${response.status} - ${response.statusText}`);
   }
   
-  const vehicles = await response.json();
+  const vehicles = await response.json() as unknown[];
   console.log(`✅ Connected to Tessie API - Found ${vehicles.length} vehicle(s)`);
 }
 
@@ -136,7 +137,7 @@ async function fetchRealVehicleState(env: Env): Promise<any> {
     throw new Error(`Failed to fetch vehicle state: ${response.status}`);
   }
   
-  const state = await response.json();
+  const state = await response.json() as { charge_state?: { battery_level?: number }; drive_state?: { latitude?: number; longitude?: number } };
   console.log(`✅ Current battery: ${state.charge_state?.battery_level}%`);
   console.log(`📍 Current location: ${state.drive_state?.latitude}, ${state.drive_state?.longitude}`);
   
@@ -164,8 +165,8 @@ async function fetchAllHistoricalDrives(env: Env, since: string): Promise<any[]>
       throw new Error(`Failed to fetch drives page ${page}: ${response.status}`);
     }
     
-    const data = await response.json();
-    const drives = data.results || data; // Handle different API response formats
+    const data = await response.json() as { results?: unknown[] } | unknown[];
+    const drives = (Array.isArray(data) ? data : data.results) || []; // Handle different API response formats
     
     if (drives.length === 0) {
       hasMore = false;
@@ -204,8 +205,8 @@ async function fetchAllHistoricalCharges(env: Env, since: string): Promise<any[]
       throw new Error(`Failed to fetch charges page ${page}: ${response.status}`);
     }
     
-    const data = await response.json();
-    const charges = data.results || data; // Handle different API response formats
+    const data = await response.json() as { results?: unknown[] } | unknown[];
+    const charges = (Array.isArray(data) ? data : data.results) || []; // Handle different API response formats
     
     if (charges.length === 0) {
       hasMore = false;

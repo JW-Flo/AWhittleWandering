@@ -51,7 +51,7 @@ Return JSON only with keys: summary, suggestedStops (array), notes.`;
 
     const model = c.env?.AI_MODEL_NAME || '@cf/meta/llama-3.1-8b-instruct';
     const result = await withTimeout(
-      c.env.AI.run(model, { prompt }),
+      c.env.AI.run(model as any, { prompt }),
       12000,
       'ai.route.optimize'
     );
@@ -85,7 +85,7 @@ Context JSON: ${JSON.stringify(parsed.data.context || {})}
 Return JSON only with keys: title, entry, bulletHighlights.`;
 
     const result = await withTimeout(
-      c.env.AI.run(model, { prompt }),
+      c.env.AI.run(model as any, { prompt }),
       12000,
       'ai.journal.generate'
     );

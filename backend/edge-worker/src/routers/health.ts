@@ -12,14 +12,7 @@ function getLatencySnapshot(): { count: number; p50: number; p95: number } | nul
   return null;
 }
 
-// Minimal Env typing for this router (mirrors bindings in wrangler.toml we actually use here)
-interface HealthEnv {
-  TESLA_DB?: D1Database;
-  MEDIA_BUCKET?: R2Bucket;
-  DATA_PROCESSOR?: any; // queue binding optional
-}
-
-export const healthRouter = new Hono<{ Bindings: HealthEnv }>();
+export const healthRouter = new Hono<{ Bindings: Env }>();
 
 healthRouter.get('/', async (c) => {
   const start = Date.now();

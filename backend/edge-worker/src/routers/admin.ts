@@ -4,21 +4,7 @@ import { persistCronRun } from '../utils/cronMetrics';
 import { z } from 'zod';
 import { signJwtHS256 } from '../utils/jwtHs256';
 import { TeslaDataIngestion } from '../data-ingestion';
-
-// Augment Env typing locally for this module
-declare global {
-  interface Env {
-    ADMIN_TOKEN?: string;
-    ADMIN_TOKEN_PREVIOUS?: string;
-    JWT_SECRET?: string;
-    JWT_SECRET_PREVIOUS?: string;
-    TESLA_DB?: any;
-    TESSIE_API_TOKEN?: string;
-    TESSIE_API_KEY?: string;
-    ENVIRONMENT?: string;
-    PLATFORM_MODE?: string;
-  }
-}
+import type { Env } from '../types/env';
 
 export const adminRouter = new Hono<{ Bindings: Env }>();
 

@@ -1,10 +1,10 @@
 import { Hono } from 'hono';
-import type { Env } from '../types/env';
+import type { AppContext } from '../types/env';
 import { z } from 'zod';
 import { requireUser } from '../middleware/userAuth';
 import { sha256B64Url } from '../utils/sha256';
 
-export const pushRouter = new Hono<{ Bindings: Env }>();
+export const pushRouter = new Hono<AppContext>();
 
 const subscribeSchema = z.object({
   endpoint: z.string().url(),

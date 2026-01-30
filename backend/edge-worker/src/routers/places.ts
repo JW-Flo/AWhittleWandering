@@ -16,16 +16,7 @@ import { DynamicPlaceIntelligence } from '../services/dynamicPlaceIntelligence';
 import { ApiRateLimitTracker } from '../services/apiRateLimitTracker';
 import { logger } from '../utils/log';
 
-interface PlacesEnv {
-  TESLA_DB: D1Database;
-  AI?: any;
-  MAPBOX_API_TOKEN?: string;
-  SERPER_API_KEY?: string;
-  BRAVE_API_KEY?: string;
-  TAVILY_API_KEY?: string;
-}
-
-export const placesRouter = new Hono<{ Bindings: PlacesEnv }>();
+export const placesRouter = new Hono<{ Bindings: Env }>();
 
 /**
  * GET /api/v1/places/providers

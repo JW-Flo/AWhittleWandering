@@ -1,4 +1,22 @@
+// Auth user type (set by requireUser middleware)
+export interface AuthUser {
+  id: string;
+  email?: string;
+  admin?: boolean;
+  mfa?: boolean;
+  role?: string;
+}
+
+// Hono Variables type for c.get('user')
+export interface Variables {
+  user: AuthUser;
+}
+
+// Combined Hono context type for routers
+export type AppContext = { Bindings: Env; Variables: Variables };
+
 // Environment types for Cloudflare Workers
+// Uses global types from @cloudflare/workers-types for D1Database, KVNamespace, R2Bucket, etc.
 export interface Env {
   // D1 Database (platform registry - tracks all journeys)
   // Note: TESLA_DB is the canonical binding name in wrangler.toml
@@ -54,6 +72,7 @@ export interface Env {
   // Environment
   ENVIRONMENT?: string;
   LOG_LEVEL?: string;
+  PLATFORM_MODE?: string;
   
   // Cloudflare Services
   TELEMETRY_ANALYTICS?: AnalyticsEngineDataset;
@@ -61,87 +80,6 @@ export interface Env {
   DATA_PROCESSOR?: Queue;
   
   // AI/ML (Future)
-  AI?: any;
+  AI?: Ai;
   AI_MODEL_NAME?: string;
-}
-
-// KV types
-export interface KVNamespace {
-  get(key: string, options?: { type?: 'text' | 'json' }): Promise<any>;
-  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
-  delete(key: string): Promise<void>;
-}
-
-// Analytics Engine types
-export interface AnalyticsEngineDataset {
-  writeDataPoint(data: {
-    blobs?: string[];
-    doubles?: number[];
-    indexes?: string[];
-  }): void;
-}
-
-// R2 Storage types
-export interface R2Bucket {
-  list(options?: { limit?: number; prefix?: string }): Promise<R2Objects>;
-  get(key: string): Promise<R2Object | null>;
-  put(key: string, value: ArrayBuffer | string, options?: R2PutOptions): Promise<R2Object>;
-  delete(key: string): Promise<void>;
-}
-
-export interface R2Objects {
-  objects: R2Object[];
-  truncated: boolean;
-}
-
-export interface R2Object {
-  key: string;
-  version: string;
-  size: number;
-  etag: string;
-  httpEtag: string;
-  uploaded: Date;
-  checksums: Record<string, string>;
-}
-
-export interface R2PutOptions {
-  httpMetadata?: Record<string, string>;
-  customMetadata?: Record<string, string>;
-}
-
-// Queue types
-export interface Queue {
-  send(message: any, options?: { delay?: number }): Promise<void>;
-}
-
-// D1 Database types
-export interface D1Database {
-  prepare(query: string): D1PreparedStatement;
-  exec(query: string): Promise<D1ExecResult>;
-  batch<T = unknown>(statements: D1PreparedStatement[]): Promise<D1Result<T>[]>;
-  dump(): Promise<ArrayBuffer>;
-}
-
-export interface D1PreparedStatement {
-  bind(...values: unknown[]): D1PreparedStatement;
-  first<T = unknown>(colName?: string): Promise<T | null>;
-  all<T = unknown>(): Promise<D1Result<T>>;
-  run(): Promise<D1Result<unknown>>;
-  raw<T = unknown>(): Promise<T[]>;
-}
-
-export interface D1ExecResult {
-  count: number;
-  duration: number;
-}
-
-export interface D1Result<T = unknown> {
-  results: T[];
-  success: boolean;
-  meta: {
-    duration: number;
-    size_after: number;
-    rows_read: number;
-    rows_written: number;
-  };
 }

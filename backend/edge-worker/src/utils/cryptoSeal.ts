@@ -29,10 +29,12 @@ export async function openText(sealed: string, secret: string): Promise<string |
   if (!parsed || parsed.v !== 1 || !parsed.iv || !parsed.ct) return null;
   const key = await keyFromString(secret);
   try {
+    const ivBytes = b64urlDecodeToBytes(parsed.iv);
+    const ctBytes = b64urlDecodeToBytes(parsed.ct);
     const pt = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv: b64urlDecodeToBytes(parsed.iv) },
+      { name: 'AES-GCM', iv: ivBytes as BufferSource },
       key,
-      b64urlDecodeToBytes(parsed.ct)
+      ctBytes as BufferSource
     );
     return new TextDecoder().decode(pt);
   } catch {

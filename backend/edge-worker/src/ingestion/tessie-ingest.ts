@@ -8,7 +8,7 @@
  * Tessie API → Ingestion Layer → D1 Database → Component APIs → Frontend
  */
 
-import { Env, D1Database } from '../types/env';
+import { Env } from '../types/env';
 import { getTessieBearerToken } from '../utils/tessieAuth';
 
 // =====================================================

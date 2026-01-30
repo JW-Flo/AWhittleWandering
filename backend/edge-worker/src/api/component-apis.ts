@@ -8,7 +8,7 @@
  * 4. Single D1 database with component-optimized queries
  */
 
-import { Env, D1Database } from '../types/env';
+import { Env } from '../types/env';
 
 // =====================================================
 // DATABASE ROW TYPES

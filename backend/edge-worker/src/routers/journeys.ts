@@ -6,20 +6,13 @@
  */
 
 import { Hono } from 'hono';
-import type { Env } from '../types/env';
+import type { AppContext } from '../types/env';
 import { z } from 'zod';
 import { JourneyProvisioningService } from '../services/journeyProvisioning';
 import { logger } from '../utils/log';
 import { requireUser } from '../middleware/userAuth';
 
-interface JourneyEnv {
-  TESLA_DB: D1Database;
-  CLOUDFLARE_ACCOUNT_ID?: string;
-  CLOUDFLARE_API_TOKEN?: string;
-  JWT_SECRET?: string;
-}
-
-export const journeysRouter = new Hono<{ Bindings: JourneyEnv }>();
+export const journeysRouter = new Hono<AppContext>();
 
 // Request validation schemas
 const createJourneySchema = z.object({

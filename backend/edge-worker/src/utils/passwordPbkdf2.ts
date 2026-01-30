@@ -18,7 +18,7 @@ async function pbkdf2(password: string, saltBytes: Uint8Array): Promise<Uint8Arr
     ['deriveBits']
   );
   const bits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt: saltBytes, iterations: ITERATIONS, hash: 'SHA-256' },
+    { name: 'PBKDF2', salt: saltBytes as BufferSource, iterations: ITERATIONS, hash: 'SHA-256' },
     keyMaterial,
     DK_LEN * 8
   );
