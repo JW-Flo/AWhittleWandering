@@ -1,7 +1,10 @@
 // Environment types for Cloudflare Workers
 export interface Env {
   // D1 Database (platform registry - tracks all journeys)
+  // Note: TESLA_DB is the canonical binding name in wrangler.toml
+  // DB is an alias used by some modules for brevity
   TESLA_DB: D1Database;
+  DB?: D1Database;  // Alias for TESLA_DB (some modules use this)
   
   // Cloudflare API credentials for resource provisioning
   CLOUDFLARE_ACCOUNT_ID?: string;
@@ -19,6 +22,13 @@ export interface Env {
   SERPER_API_KEY?: string;      // serper.dev - 2,500 free/month
   BRAVE_API_KEY?: string;       // brave.com/search/api - 2,000 free/month
   TAVILY_API_KEY?: string;      // tavily.com - 1,000 free/month (optimized for AI)
+  
+  // Spotify Integration (optional)
+  SPOTIFY_CLIENT_ID?: string;
+  SPOTIFY_CLIENT_SECRET?: string;
+  
+  // Notification Webhooks (optional)
+  NOTIFICATION_WEBHOOK?: string;
   
   // Vehicle Configuration
   VEHICLE_ID?: string;
