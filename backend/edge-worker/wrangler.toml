@@ -3,28 +3,6 @@ main = "dist/index.js"
 compatibility_date = "2023-10-30"
 workers_dev = true
 
-# =============================================================================
-# Cloudflare Workflows - Durable CI/CD Orchestration
-# =============================================================================
-# Workflows provide durable, multi-step execution with automatic retries.
-# See: https://developers.cloudflare.com/workflows/
-#
-# NOTE: Uncomment when ready to deploy workflows
-# [[workflows]]
-# name = "deployment-workflow"
-# binding = "DEPLOYMENT_WORKFLOW"
-# class_name = "DeploymentWorkflow"
-#
-# [[workflows]]
-# name = "codex-task-workflow"
-# binding = "CODEX_TASK_WORKFLOW"
-# class_name = "CodexTaskWorkflow"
-#
-# [[workflows]]
-# name = "health-monitor-workflow"
-# binding = "HEALTH_MONITOR_WORKFLOW"
-# class_name = "HealthMonitorWorkflow"
-
 # Cron Triggers for Automated Data Ingestion
 [triggers]
 crons = [

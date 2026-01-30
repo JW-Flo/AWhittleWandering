@@ -1,5 +1,14 @@
 # Cloudflare Workflows Integration for Codex CI/CD
 
+> **STATUS: PROPOSAL ONLY**
+> 
+> This document describes a **future enhancement** to the Codex CI/CD pipeline.
+> Cloudflare Workflows are NOT currently implemented. The existing GitHub Actions
+> workflows handle all CI/CD orchestration.
+>
+> **Cost Note:** Implementing this would require Cloudflare Workers Paid plan
+> for Workflows support. The free tier includes 10,000 workflow invocations/month.
+
 ## Overview
 
 [Cloudflare Workflows](https://developers.cloudflare.com/workflows/) provides durable, 
