@@ -5,6 +5,9 @@
 -- 3. Enable smart provider selection
 -- 4. Provide usage analytics
 
+-- Drop the old table structure to ensure schema matches this migration
+DROP TABLE IF EXISTS api_rate_limits;
+
 CREATE TABLE IF NOT EXISTS api_rate_limits (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   provider TEXT NOT NULL,            -- e.g., 'serper', 'brave', 'tavily', 'nominatim'
