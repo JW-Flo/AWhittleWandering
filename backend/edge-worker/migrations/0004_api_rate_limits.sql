@@ -5,6 +5,11 @@
 -- 3. Enable smart provider selection
 -- 4. Provide usage analytics
 
+-- Drop the old table structure to ensure schema matches this migration
+-- NOTE: This is a breaking change that replaces the endpoint-based rate limiting
+-- from migration 0002 with provider-based tracking. Any existing data will be lost.
+DROP TABLE IF EXISTS api_rate_limits;
+
 CREATE TABLE IF NOT EXISTS api_rate_limits (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   provider TEXT NOT NULL,            -- e.g., 'serper', 'brave', 'tavily', 'nominatim'
