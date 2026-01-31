@@ -1,0 +1,154 @@
+name: Weekly PR Review Reminder
+
+on:
+  schedule:
+    # Run every Monday at 9:00 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:  # Allow manual triggering
+
+permissions:
+  pull-requests: read
+  contents: read
+
+jobs:
+  review-reminder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate PR Review Summary
+        id: summary
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          
+          echo "# Weekly PR Review Summary" > summary.md
+          echo "" >> summary.md
+          echo "**Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> summary.md
+          echo "**Repository:** $REPO" >> summary.md
+          echo "" >> summary.md
+          
+          # Get all open PRs
+          prs=$(gh pr list -R "$REPO" --limit 100 --json number,title,author,createdAt,updatedAt,isDraft,labels,reviewDecision)
+          
+          if [ -z "$prs" ] || [ "$prs" = "[]" ]; then
+            echo "✅ No open PRs - backlog is clean!" >> summary.md
+            cat summary.md
+            cat summary.md >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          
+          # Count PRs by category
+          total_count=$(echo "$prs" | jq 'length')
+          ready_count=$(echo "$prs" | jq '[.[] | select(.isDraft == false and .reviewDecision != "APPROVED")] | length')
+          draft_count=$(echo "$prs" | jq '[.[] | select(.isDraft == true)] | length')
+          approved_count=$(echo "$prs" | jq '[.[] | select(.reviewDecision == "APPROVED")] | length')
+          
+          # Calculate stale PRs (>14 days old)
+          now=$(date +%s)
+          stale_count=$(echo "$prs" | jq --arg now "$now" '[.[] | select(
+            (($now | tonumber) - (.updatedAt | fromdateiso8601)) > (14 * 86400)
+          )] | length')
+          
+          echo "## Overview" >> summary.md
+          echo "" >> summary.md
+          echo "- **Total Open PRs:** $total_count" >> summary.md
+          echo "- **Ready for Review:** $ready_count" >> summary.md
+          echo "- **In Draft:** $draft_count" >> summary.md
+          echo "- **Approved (pending merge):** $approved_count" >> summary.md
+          echo "- **Stale (>14 days):** $stale_count" >> summary.md
+          echo "" >> summary.md
+          
+          # List PRs needing review
+          if [ "$ready_count" -gt 0 ]; then
+            echo "## 🔍 PRs Ready for Review" >> summary.md
+            echo "" >> summary.md
+            echo "$prs" | jq -r '.[] | select(.isDraft == false and .reviewDecision != "APPROVED") | 
+              "- [#\(.number)](${{ github.server_url }}/${{ github.repository }}/pull/\(.number)) - \(.title) (@\(.author.login))"' >> summary.md
+            echo "" >> summary.md
+          fi
+          
+          # List approved PRs ready to merge
+          if [ "$approved_count" -gt 0 ]; then
+            echo "## ✅ Approved PRs (Ready to Merge)" >> summary.md
+            echo "" >> summary.md
+            echo "$prs" | jq -r '.[] | select(.reviewDecision == "APPROVED") | 
+              "- [#\(.number)](${{ github.server_url }}/${{ github.repository }}/pull/\(.number)) - \(.title) (@\(.author.login))"' >> summary.md
+            echo "" >> summary.md
+          fi
+          
+          # List stale PRs
+          if [ "$stale_count" -gt 0 ]; then
+            echo "## ⏰ Stale PRs (>14 days)" >> summary.md
+            echo "" >> summary.md
+            echo "$prs" | jq -r --arg now "$now" '.[] | select(
+              (($now | tonumber) - (.updatedAt | fromdateiso8601)) > (14 * 86400)
+            ) | 
+              "- [#\(.number)](${{ github.server_url }}/${{ github.repository }}/pull/\(.number)) - \(.title) - Last updated: \(.updatedAt | fromdateiso8601 | strftime("%Y-%m-%d"))"' >> summary.md
+            echo "" >> summary.md
+            echo "💡 Consider closing stale PRs or asking authors for updates." >> summary.md
+            echo "" >> summary.md
+          fi
+          
+          # Action items
+          echo "## 📋 Action Items" >> summary.md
+          echo "" >> summary.md
+          
+          if [ "$ready_count" -gt 0 ]; then
+            echo "- [ ] Review $ready_count PRs waiting for review" >> summary.md
+          fi
+          
+          if [ "$approved_count" -gt 0 ]; then
+            echo "- [ ] Merge $approved_count approved PRs" >> summary.md
+          fi
+          
+          if [ "$stale_count" -gt 0 ]; then
+            echo "- [ ] Update or close $stale_count stale PRs" >> summary.md
+          fi
+          
+          echo "" >> summary.md
+          echo "---" >> summary.md
+          echo "" >> summary.md
+          echo "📖 See [PR Review Recommendations](docs/PR_REVIEW_RECOMMENDATIONS.md) for detailed analysis" >> summary.md
+          echo "🔧 Use [PR Management Script](scripts/manage-prs.sh) for batch operations" >> summary.md
+          echo "📚 Read [PR Automation Guide](docs/PR_AUTOMATION_GUIDE.md) for automation options" >> summary.md
+          
+          # Output summary
+          cat summary.md
+          cat summary.md >> "$GITHUB_STEP_SUMMARY"
+          
+          # Save for artifact
+          echo "total_count=$total_count" >> "$GITHUB_OUTPUT"
+          echo "ready_count=$ready_count" >> "$GITHUB_OUTPUT"
+          echo "stale_count=$stale_count" >> "$GITHUB_OUTPUT"
+
+      - name: Create Issue Comment (Optional)
+        # Uncomment to post summary as issue comment
+        # if: steps.summary.outputs.ready_count > 0 || steps.summary.outputs.stale_count > 3
+        if: false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Find or create tracking issue for PR reviews
+          TRACKING_ISSUE=$(gh issue list --label "pr-tracking" --json number --jq '.[0].number' || echo "")
+          
+          if [ -z "$TRACKING_ISSUE" ]; then
+            echo "No tracking issue found. Create one with label 'pr-tracking' to enable comments."
+          else
+            gh issue comment "$TRACKING_ISSUE" -F summary.md
+            echo "Posted summary to issue #$TRACKING_ISSUE"
+          fi
+
+      - name: Upload Summary Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-review-summary-${{ github.run_number }}
+          path: summary.md
+          retention-days: 90
+
+      - name: Notification Summary
+        run: |
+          echo "::notice::Weekly PR review summary generated"
+          echo "::notice::Total PRs: ${{ steps.summary.outputs.total_count }}"
+          echo "::notice::Ready for review: ${{ steps.summary.outputs.ready_count }}"
+          echo "::notice::Stale PRs: ${{ steps.summary.outputs.stale_count }}"

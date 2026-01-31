@@ -1,0 +1,92 @@
+name: Stale PR Management
+
+on:
+  schedule:
+    # Run daily at midnight UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:  # Allow manual triggering
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark and close stale PRs
+        uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          
+          # PR Configuration
+          days-before-pr-stale: 30
+          days-before-pr-close: 7
+          
+          # Messages
+          stale-pr-message: |
+            👋 This PR has been automatically marked as stale because it has not had recent activity.
+            
+            **What happens next:**
+            - This PR will be closed in 7 days if no further activity occurs
+            - Remove the `stale` label or add `keep-open` to prevent closure
+            - Comment on this PR to restart the timer
+            
+            **Why was this marked stale?**
+            - No activity for 30+ days
+            - May be outdated due to other merged changes
+            - May no longer be needed
+            
+            If this PR is still relevant, please:
+            - [ ] Rebase on latest main branch
+            - [ ] Resolve any merge conflicts
+            - [ ] Update the PR description if needed
+            - [ ] Add a comment explaining why this should stay open
+            
+            See [PR Automation Guide](docs/PR_AUTOMATION_GUIDE.md) for more information.
+          
+          close-pr-message: |
+            🔒 This PR has been automatically closed due to inactivity.
+            
+            **What now?**
+            - If this work is still needed, you can reopen this PR
+            - Consider creating a fresh PR rebased on current main
+            - Reference this PR number in any new PR
+            
+            **Context:**
+            - Marked stale: 7 days ago
+            - No activity: 37+ days
+            - Closed automatically to keep PR backlog manageable
+            
+            Thank you for your contribution! 🙏
+          
+          # Labels
+          stale-pr-label: 'stale'
+          close-pr-label: 'closed-by-automation'
+          
+          # Exempt labels (PRs with these labels won't be marked stale)
+          exempt-pr-labels: 'keep-open,in-progress,dependencies,security'
+          
+          # Also exempt draft PRs that have been updated recently
+          exempt-draft-pr: false
+          
+          # Additional filters
+          only-pr-labels: ''  # Empty = apply to all PRs
+          
+          # Operations per run (to avoid rate limits)
+          operations-per-run: 30
+          
+          # Enable debug output
+          debug-only: false
+          
+          # Remove stale label when PR is updated
+          remove-stale-when-updated: true
+          
+          # Ascending order (oldest first)
+          ascending: true
+
+      - name: Report Results
+        if: always()
+        run: |
+          echo "::notice::Stale PR management workflow completed"
+          echo "Check action logs for details on PRs marked or closed"
