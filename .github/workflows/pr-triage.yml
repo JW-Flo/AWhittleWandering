@@ -204,6 +204,52 @@ jobs:
           Or use GitHub's UI to resolve conflicts if preferred.
           EOF
 
+      - name: Validate Work-Agent Labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          
+          # Get all labels on the PR
+          LABELS=$(gh pr view "$PR_NUMBER" --json labels --jq '.labels[].name')
+          
+          # Find all work-agent labels
+          WORK_AGENT_LABELS=$(echo "$LABELS" | grep -E '^agent:work:' || true)
+          WORK_AGENT_COUNT=$(echo "$WORK_AGENT_LABELS" | grep -c '^agent:work:' || echo 0)
+          
+          echo "Found $WORK_AGENT_COUNT work-agent labels"
+          
+          if [ "$WORK_AGENT_COUNT" -gt 1 ]; then
+            echo "⚠️ Multiple work-agent labels detected. Only one is allowed."
+            echo "Current labels: $WORK_AGENT_LABELS"
+            
+            # Keep the first one, remove the rest
+            FIRST_LABEL=$(echo "$WORK_AGENT_LABELS" | head -n 1)
+            echo "Keeping: $FIRST_LABEL"
+            
+            echo "$WORK_AGENT_LABELS" | tail -n +2 | while read -r label; do
+              if [ -n "$label" ]; then
+                echo "Removing: $label"
+                gh pr edit "$PR_NUMBER" --remove-label "$label" || true
+              fi
+            done
+            
+            # Add a comment explaining the cleanup
+            cat << EOF | gh pr comment "$PR_NUMBER" -F - || true
+          ⚠️ **Multiple Work-Agent Labels Detected**
+          
+          This PR had multiple work-agent labels which is not allowed. 
+          The Agent Approval Gate requires exactly one work-agent label:
+          - \`agent:work:cursor\`
+          - \`agent:work:codex\`
+          - \`agent:work:copilot\`
+          
+          **Action Taken**: Kept \`$FIRST_LABEL\` and removed duplicate labels.
+          
+          If you need to change the work agent, please remove the current label before adding a new one.
+          EOF
+          fi
+
       - name: Summary
         if: always()
         run: |
