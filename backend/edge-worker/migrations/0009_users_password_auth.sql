@@ -1,0 +1,23 @@
+-- Migration: Add password authentication fields to users table
+-- Date: 2026-01-31
+-- Purpose: Historical migration for password auth columns
+-- 
+-- NOTE: This migration is a NO-OP in automated migrations.
+-- 
+-- Background:
+-- - Migration 0003 was updated to include password_hash, password_salt, password_algo, 
+--   password_updated_at, and role columns in the users table definition.
+-- - This ensures NEW database installations have these columns from the start.
+-- - For EXISTING databases that ran the original version of 0003 (without these columns),
+--   manual intervention is required.
+--
+-- Manual upgrade steps for existing databases:
+--   ALTER TABLE users ADD COLUMN password_hash TEXT;
+--   ALTER TABLE users ADD COLUMN password_salt TEXT;
+--   ALTER TABLE users ADD COLUMN password_algo TEXT DEFAULT 'pbkdf2_sha256_v1';
+--   ALTER TABLE users ADD COLUMN password_updated_at DATETIME;
+--   ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user';
+--
+-- Alternatively, existing databases can be rebuilt from scratch using the updated migrations.
+
+SELECT 1; -- Explicit no-op statement

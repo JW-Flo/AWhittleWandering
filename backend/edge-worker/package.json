@@ -3,14 +3,15 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "npx esbuild src/index.ts --bundle --format=esm --outfile=dist/index.js --external:hono --external:zod && npx esbuild src/qa/unified-contract-check.ts --bundle --format=esm --outfile=dist/qa/unified-contract-check.js --platform=node && npx esbuild src/qa/validate-unified.ts --bundle --format=esm --outfile=dist/qa/validate-unified.js --platform=node",
+    "build": "npx esbuild src/index.ts --bundle --format=esm --outfile=dist/index.js --external:hono --external:zod",
+    "build:qa": "npx esbuild src/qa/unified-contract-check.ts --bundle --format=esm --outfile=dist/qa/unified-contract-check.js --platform=node && npx esbuild src/qa/validate-unified.ts --bundle --format=esm --outfile=dist/qa/validate-unified.js --platform=node",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "test": "vitest",
     "test:run": "vitest run",
     "test:contract": "vitest run tests/contract/unifiedData.spec.ts",
     "qa:contract": "npm run test:contract",
-    "qa:schema": "vitest run tests/schema-canonical.spec.ts || echo 'Schema validation skipped - tests not found'"
+    "qa:schema": "vitest run tests/schema-canonical.spec.ts"
   },
   "dependencies": {
     "hono": "^4.1.2",
