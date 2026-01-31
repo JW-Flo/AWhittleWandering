@@ -60,6 +60,7 @@ jobs:
 
       - name: Verify Frontend
         id: frontend
+        # Allow step to complete and set outputs even on failure, so downstream jobs can access results
         continue-on-error: true
         run: |
           URL="${{ steps.urls.outputs.frontend }}"
@@ -90,6 +91,7 @@ jobs:
 
       - name: Verify Backend Health
         id: backend
+        # Allow step to complete and set outputs even on failure, so downstream jobs can access results
         continue-on-error: true
         run: |
           URL="${{ steps.urls.outputs.backend }}/api/v1/health"
@@ -114,6 +116,7 @@ jobs:
 
       - name: Verify API Routes
         id: routes
+        # Allow step to complete and set outputs even on failure, so downstream jobs can access results
         continue-on-error: true
         run: |
           BASE_URL="${{ steps.urls.outputs.backend }}/api/v1"
