@@ -2,6 +2,8 @@
 
 Complete deployment documentation for A Whittle Wandering.
 
+> 🔧 **Having deployment issues?** See [DEPLOYMENT_TROUBLESHOOTING.md](./DEPLOYMENT_TROUBLESHOOTING.md) for common problems and solutions.
+
 ## Architecture Overview
 
 ```

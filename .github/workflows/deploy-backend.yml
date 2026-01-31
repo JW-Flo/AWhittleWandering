@@ -237,16 +237,28 @@ jobs:
         run: |
           ENV="${{ needs.setup.outputs.environment }}"
           
+          # Capture output and exit code separately
+          set +e  # Temporarily disable exit on error
           if [[ "$ENV" == "production" ]]; then
             OUTPUT=$(wrangler deploy --env production 2>&1)
+            EXIT_CODE=$?
           elif [[ "$ENV" == "staging" ]]; then
             # Deploy to workers.dev for staging
             OUTPUT=$(wrangler deploy 2>&1)
+            EXIT_CODE=$?
           else
             OUTPUT=$(wrangler deploy --env development 2>&1)
+            EXIT_CODE=$?
           fi
+          set -e  # Re-enable exit on error
           
           echo "$OUTPUT"
+          
+          # Check if deployment failed
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "❌ Deployment failed with exit code $EXIT_CODE"
+            exit $EXIT_CODE
+          fi
           
           # Extract deployment ID if available
           DEPLOYMENT_ID=$(echo "$OUTPUT" | grep -oP 'Deployment ID: \K[a-f0-9-]+' || echo "unknown")
