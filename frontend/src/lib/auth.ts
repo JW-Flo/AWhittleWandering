@@ -1,7 +1,6 @@
 // Admin authentication for A Whittle Wandering
 // Provides secure admin access for media uploads and site management
 
-const ADMIN_KEY = 'awhittlewandering_admin_2025';
 const ADMIN_TOKEN_KEY = 'awhittlewandering_admin_token';
 
 interface AdminSession {
