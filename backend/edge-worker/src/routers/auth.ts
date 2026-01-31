@@ -134,6 +134,7 @@ authRouter.post('/', async (c) => {
       .bind(user.id)
       .run()
       .then(() => undefined)
+      .catch((err) => logger.error('Failed to update last_login_at', { userId: user.id, err }))
   );
 
   // Compute effective role/admin (owner override)

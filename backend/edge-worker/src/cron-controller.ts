@@ -460,6 +460,7 @@ export class CronDataController {
       FROM drives d 
       WHERE d.journey_id = 'continental-usa-2025' 
       ORDER BY started_at
+      LIMIT 10000
     `).all();
 
     // Calculate route complexity and cache result

@@ -1,11 +1,9 @@
 // Admin authentication for A Whittle Wandering
 // Provides secure admin access for media uploads and site management
 
-const ADMIN_KEY = 'awhittlewandering_admin_2025';
-const ADMIN_TOKEN_KEY = 'awhittlewandering_admin_token';
+import { API_CONFIG } from './api-config';
 
-// Simple admin password - in production, this would be more secure
-const ADMIN_PASSWORD = 'RoadTrip48States!2025';
+const ADMIN_TOKEN_KEY = 'awhittlewandering_admin_token';
 
 interface AdminSession {
   isAuthenticated: boolean;
@@ -13,9 +11,16 @@ interface AdminSession {
   sessionId: string;
 }
 
+interface MfaChallengeState {
+  challengeId: string;
+  email: string;
+  password: string;
+}
+
 export class AdminAuth {
   private static instance: AdminAuth;
   private session: AdminSession | null = null;
+  private mfaChallenge: MfaChallengeState | null = null;
 
   static getInstance(): AdminAuth {
     if (!AdminAuth.instance) {
@@ -51,17 +56,119 @@ export class AdminAuth {
     }
   }
 
-  async authenticate(password: string): Promise<boolean> {
-    if (password === ADMIN_PASSWORD) {
-      this.session = {
-        isAuthenticated: true,
-        expiresAt: Date.now() + (8 * 60 * 60 * 1000), // 8 hours
-        sessionId: this.generateSessionId()
-      };
-      this.saveSession();
-      return true;
+  async authenticate(email: string, password: string): Promise<{ success: boolean; error?: string; mfaRequired?: boolean }> {
+    try {
+      // Authenticate against backend API using shared config
+      const apiBaseUrl = API_CONFIG.BASE_URL;
+      
+      const response = await fetch(`${apiBaseUrl}/api/v1/auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'login',
+          email,
+          password,
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          return { success: false, error: 'Invalid email or password' };
+        }
+        return { success: false, error: 'Authentication failed' };
+      }
+
+      const data = await response.json();
+      
+      // Handle MFA requirement for admin users
+      if (data.ok && data.mfaRequired && data.challengeId) {
+        // Store challenge state for MFA verification
+        this.mfaChallenge = {
+          challengeId: data.challengeId,
+          email,
+          password,
+        };
+        return { success: false, mfaRequired: true };
+      }
+      
+      if (data.ok && data.token && data.user?.admin) {
+        // Only allow admin users
+        this.session = {
+          isAuthenticated: true,
+          expiresAt: Date.now() + (8 * 60 * 60 * 1000), // 8 hours
+          sessionId: data.token
+        };
+        this.saveSession();
+        this.mfaChallenge = null;
+        return { success: true };
+      }
+      
+      // User authenticated but is not an admin
+      if (data.ok && data.token) {
+        return { success: false, error: 'Admin access required. Your account does not have admin privileges.' };
+      }
+      
+      return { success: false, error: 'Invalid credentials' };
+    } catch (error) {
+      console.error('Authentication failed:', error);
+      return { success: false, error: 'Network error: Unable to connect to authentication service' };
     }
-    return false;
+  }
+
+  async verifyMfaCode(code: string): Promise<{ success: boolean; error?: string }> {
+    if (!this.mfaChallenge) {
+      return { success: false, error: 'No MFA challenge in progress' };
+    }
+
+    try {
+      const apiBaseUrl = API_CONFIG.BASE_URL;
+      
+      const response = await fetch(`${apiBaseUrl}/api/v1/mfa/challenge/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          challengeId: this.mfaChallenge.challengeId,
+          code,
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 400) {
+          return { success: false, error: 'Invalid or expired code' };
+        }
+        return { success: false, error: 'MFA verification failed' };
+      }
+
+      const data = await response.json();
+      
+      if (data.ok && data.token && data.user?.admin) {
+        this.session = {
+          isAuthenticated: true,
+          expiresAt: Date.now() + (8 * 60 * 60 * 1000), // 8 hours
+          sessionId: data.token
+        };
+        this.saveSession();
+        this.mfaChallenge = null;
+        return { success: true };
+      }
+      
+      return { success: false, error: 'MFA verification failed' };
+    } catch (error) {
+      console.error('MFA verification failed:', error);
+      return { success: false, error: 'Network error: Unable to connect to authentication service' };
+    }
+  }
+
+  hasPendingMfaChallenge(): boolean {
+    return this.mfaChallenge !== null;
+  }
+
+  cancelMfaChallenge(): void {
+    this.mfaChallenge = null;
   }
 
   isAuthenticated(): boolean {
@@ -151,13 +258,22 @@ export const useAdminAuth = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const login = async (password: string): Promise<boolean> => {
-    const success = await adminAuth.authenticate(password);
-    if (success) {
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string; mfaRequired?: boolean }> => {
+    const result = await adminAuth.authenticate(email, password);
+    if (result.success) {
       setIsAuthenticated(true);
       setSessionInfo(adminAuth.getSessionInfo());
     }
-    return success;
+    return result;
+  };
+
+  const verifyMfa = async (code: string): Promise<{ success: boolean; error?: string }> => {
+    const result = await adminAuth.verifyMfaCode(code);
+    if (result.success) {
+      setIsAuthenticated(true);
+      setSessionInfo(adminAuth.getSessionInfo());
+    }
+    return result;
   };
 
   const logout = () => {
@@ -175,8 +291,11 @@ export const useAdminAuth = () => {
     isAuthenticated,
     sessionInfo,
     login,
+    verifyMfa,
     logout,
     extendSession,
+    hasPendingMfa: adminAuth.hasPendingMfaChallenge(),
+    cancelMfa: adminAuth.cancelMfaChallenge.bind(adminAuth),
     canUploadMedia: adminAuth.canUploadMedia(),
     canModifyJourney: adminAuth.canModifyJourney(),
     canAccessAnalytics: adminAuth.canAccessAnalytics()

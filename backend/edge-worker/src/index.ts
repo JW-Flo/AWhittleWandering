@@ -274,11 +274,15 @@ export const scheduled: ExportedHandlerScheduledHandler = async (event, env, ctx
   }
   logger.info('Cron start', { cron, jobCount: selected.length });
   ctx.waitUntil((async () => {
-    for (const item of selected) {
-      await recordRun(env, cron, item.name, async () => {
-        await jobs[item.name]();
-      });
+    try {
+      for (const item of selected) {
+        await recordRun(env, cron, item.name, async () => {
+          await jobs[item.name]();
+        });
+      }
+      logger.info('Cron end', { cron });
+    } catch (err) {
+      logger.error('Cron job failed', { cron, err });
     }
-    logger.info('Cron end', { cron });
   })());
 };

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { api } from '@/lib/api-config';
 
 interface DriveData {
@@ -88,7 +88,7 @@ export const TeslaDataProvider: React.FC<TeslaDataProviderProps> = ({ children }
   const [isConnected, setIsConnected] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
-  const refreshData = async () => {
+  const refreshData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -116,7 +116,7 @@ export const TeslaDataProvider: React.FC<TeslaDataProviderProps> = ({ children }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     // Auto-load data when provider mounts
@@ -126,7 +126,7 @@ export const TeslaDataProvider: React.FC<TeslaDataProviderProps> = ({ children }
     const interval = setInterval(refreshData, 30000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [refreshData]);
 
   const value: TeslaDataContextType = {
     data,
