@@ -1,14 +1,31 @@
-name: AI Task
-description: Create a task for the Codex autonomous CI/CD pipeline
+name: "[DEPRECATED] AI Task - Use Unified Template"
+description: "⚠️ DEPRECATED: Use 'AI Task (Unified)' instead. This template redirects for backwards compatibility."
 title: "[Task]: "
-labels: ["ai-task"]
+labels: ["ai-task", "deprecated-template"]
 assignees: []
 
 body:
   - type: markdown
     attributes:
       value: |
-        ## 🤖 AI Task Request
+        ## ⚠️ DEPRECATED TEMPLATE
+        
+        This template is deprecated. Please use **"AI Task (Unified)"** instead.
+        
+        **Why the change?**
+        - All task types now in one template
+        - No confusion about which to use
+        - Handles simple to complex tasks
+        - Better auto-detection
+        
+        **What to do:**
+        1. Close this issue
+        2. Create new issue with "AI Task (Unified)" template
+        3. Copy your description there
+        
+        ---
+        
+        ## 🤖 AI Task Request (Old Template - Deprecated)
         
         This issue will be processed by the autonomous Codex CI/CD pipeline.
         Fill out the fields below to define your task.

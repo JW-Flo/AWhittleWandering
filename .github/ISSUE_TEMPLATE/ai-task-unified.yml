@@ -1,0 +1,125 @@
+name: AI Task (Unified)
+description: Submit any task - from simple fixes to complex research and analysis
+title: ""
+labels: ["ai-task"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🤖 Unified AI Task System
+        
+        This template handles **all task types** - from simple "fix typo" to complex "analyze deployment failures."
+        
+        **How it works:**
+        - Describe your task naturally (the AI adapts to complexity)
+        - System auto-detects if it's: implementation, research, review, or analysis
+        - Intelligent routing to appropriate handlers
+        
+        **Task Types Supported:**
+        - 🔧 **Implementation:** "Fix bug", "Add feature", "Update docs"
+        - 🔍 **Research:** "Research best caching strategies", "Investigate alternatives to X"
+        - 📊 **Review:** "Review deployment pipeline", "Audit security practices"
+        - 🎯 **Analysis:** "Analyze failure points", "Identify performance bottlenecks"
+        - 🎨 **Improve:** "Improve UI/UX", "Enhance error handling"
+        
+        **Examples:**
+        - Simple: "Fix typo in README"
+        - Vague: "Make the login faster"
+        - Complex: "Review the platform to identify deployment failure points"
+        - Research: "Research and improve the UI for better accessibility"
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: What do you need?
+      description: Describe your task naturally - be as specific or vague as you want
+      placeholder: |
+        Examples:
+        - "Fix the login bug"
+        - "Research best practices for API rate limiting and implement"
+        - "Review the deployment process and identify failure points"
+        - "Analyze the UI and suggest improvements for mobile users"
+        - "Learn about accessibility and improve our forms"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: task_type
+    attributes:
+      label: Task Type (optional - AI will auto-detect)
+      description: What kind of task is this? Leave as 'auto' for intelligent detection
+      options:
+        - auto (AI detects)
+        - implementation (build/fix/update)
+        - research (investigate/learn)
+        - review (analyze/audit)
+        - improve (enhance/optimize)
+        - mixed (combination)
+      default: 0
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context (optional)
+      description: |
+        Any extra info that helps:
+        - Specific areas to focus on
+        - Constraints or requirements
+        - Related issues or docs
+        - Success criteria
+        
+        **For research/review tasks:**
+        - What you want to learn
+        - What decisions need to be made
+        - Who the audience is (team, users, etc.)
+      placeholder: |
+        Context examples:
+        - "Focus on backend performance"
+        - "Need decision on using Redis vs Memcached"
+        - "Create report for engineering team"
+        - "Must maintain backwards compatibility"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: output_type
+    attributes:
+      label: What output do you need?
+      description: For research/review tasks, what deliverable do you want?
+      options:
+        - auto (AI decides)
+        - code changes (PR with implementation)
+        - report (markdown document with findings)
+        - recommendations (analysis with action items)
+        - both (code + documentation)
+      default: 0
+    validations:
+      required: false
+
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: Priority
+      description: How soon do you need this?
+      options:
+        - auto
+        - low (can wait, explore thoroughly)
+        - medium (normal timeline)
+        - high (urgent, focus on quick wins)
+      default: 0
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Acknowledgements
+      options:
+        - label: No secrets or credentials included
+          required: true
+        - label: Understand this will be processed by AI
+          required: true

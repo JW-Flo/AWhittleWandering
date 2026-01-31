@@ -132,6 +132,41 @@ parse_task() {
   log "  Risk: ${RISK_LEVEL}"
   log "  Verify: ${VERIFY_TIER:-auto}"
   
+  # Run task type classifier
+  if [[ -f "$SCRIPT_DIR/task-type-classifier.sh" ]]; then
+    log "Classifying task type..."
+    
+    if TASK_CLASSIFICATION=$(bash "$SCRIPT_DIR/task-type-classifier.sh" "$TASK_GOAL" 2>&1); then
+      log_success "Task classification complete"
+      
+      # Extract classification details
+      TASK_TYPE=$(echo "$TASK_CLASSIFICATION" | jq -r '.task_type.primary // "implementation"')
+      TASK_HANDLER=$(echo "$TASK_CLASSIFICATION" | jq -r '.routing.handler // "standard"')
+      TASK_COMPLEXITY=$(echo "$TASK_CLASSIFICATION" | jq -r '.complexity // "simple"')
+      
+      log "Task type: $TASK_TYPE"
+      log "Handler: $TASK_HANDLER"
+      log "Complexity: $TASK_COMPLEXITY"
+      
+      # Store for later use
+      export TASK_CLASSIFICATION
+      export TASK_TYPE
+      export TASK_HANDLER
+      export TASK_COMPLEXITY
+      
+      # Auto-detect risk if needed
+      if [[ "${RISK_LEVEL}" == "auto" ]]; then
+        AUTO_RISK=$(echo "$TASK_CLASSIFICATION" | jq -r '.characteristics.suggested_risk // "medium"')
+        RISK_LEVEL="$AUTO_RISK"
+        log "Auto-detected risk (via classifier): $RISK_LEVEL"
+      fi
+    else
+      log_warn "Task classification failed, using defaults"
+      export TASK_TYPE="implementation"
+      export TASK_HANDLER="standard"
+    fi
+  fi
+  
   # Run intelligent context analysis if available
   if [[ -f "$SCRIPT_DIR/intelligent-context-analyzer.sh" ]]; then
     log "Running intelligent context analysis..."
