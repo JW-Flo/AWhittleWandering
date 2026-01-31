@@ -201,6 +201,8 @@ jobs:
             echo "Health check attempt $i/$MAX_RETRIES for $URL..."
             
             HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" "$URL" 2>/dev/null || echo "000")
+            # Normalize HTTP code (curl may return 000000 instead of 000 on connection failure)
+            HTTP_CODE=${HTTP_CODE:0:3}
             
             echo "HTTP Code: $HTTP_CODE"
             
