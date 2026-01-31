@@ -11,6 +11,11 @@ CREATE TABLE IF NOT EXISTS users (
   auth_provider_id TEXT,
   is_active BOOLEAN DEFAULT TRUE,
   is_admin BOOLEAN DEFAULT FALSE,
+  password_hash TEXT,
+  password_salt TEXT,
+  password_algo TEXT DEFAULT 'pbkdf2_sha256_v1',
+  password_updated_at DATETIME,
+  role TEXT DEFAULT 'user', -- 'user'|'super_user'|'admin'|'owner' (visitor is unauthenticated)
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   last_login_at DATETIME
