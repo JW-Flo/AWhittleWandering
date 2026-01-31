@@ -35,10 +35,9 @@ const updateJourneySchema = z.object({
  * GET /api/v1/journeys
  * List all journeys for the authenticated user
  */
-journeysRouter.get('/', async (c) => {
-  // TODO: Get user_id from auth token
-  // For now, use a query param or default
-  const userId = c.req.query('user_id') || 'default-user';
+journeysRouter.get('/', requireUser, async (c) => {
+  const user = c.get('user');
+  const userId = user.id;
   
   const provisioner = new JourneyProvisioningService(c.env);
   const journeys = await provisioner.listUserJourneys(userId);
@@ -230,7 +229,7 @@ journeysRouter.get('/:id', async (c) => {
  * POST /api/v1/journeys
  * Create a new journey and provision resources
  */
-journeysRouter.post('/', async (c) => {
+journeysRouter.post('/', requireUser, async (c) => {
   // Validate request body
   let body;
   try {
@@ -259,8 +258,9 @@ journeysRouter.post('/', async (c) => {
     }, 503);
   }
 
-  // TODO: Get user_id from auth token
-  const userId = c.req.query('user_id') || 'default-user';
+  // Get user_id from authenticated token
+  const user = c.get('user');
+  const userId = user.id;
 
   // Register the journey
   const journey = await provisioner.registerJourney(userId, body.name, {

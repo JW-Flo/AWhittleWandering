@@ -12,6 +12,7 @@ interface AdminLoginProps {
 }
 
 const AdminLogin: React.FC<AdminLoginProps> = ({ onAuthChange }) => {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -34,12 +35,13 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onAuthChange }) => {
     setError('');
 
     try {
-      const success = await login(password);
+      const success = await login(email, password);
       if (success) {
+        setEmail('');
         setPassword('');
         setError('');
       } else {
-        setError('Invalid admin password. Access denied.');
+        setError('Invalid credentials or insufficient permissions. Admin access required.');
       }
     } catch {
       setError('Authentication failed. Please try again.');
@@ -50,6 +52,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onAuthChange }) => {
 
   const handleLogout = () => {
     logout();
+    setEmail('');
     setPassword('');
     setError('');
   };
@@ -129,15 +132,28 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onAuthChange }) => {
       <CardContent>
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="admin-password">Admin Password</Label>
+            <Label htmlFor="admin-email">Email</Label>
+            <Input
+              id="admin-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin@example.com"
+              disabled={isLoading}
+              autoComplete="email"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="admin-password">Password</Label>
             <Input
               id="admin-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter admin password"
+              placeholder="Enter password"
               disabled={isLoading}
-              className="font-mono"
+              autoComplete="current-password"
             />
           </div>
 
@@ -150,7 +166,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onAuthChange }) => {
           <Button 
             type="submit" 
             className="w-full" 
-            disabled={isLoading || !password.trim()}
+            disabled={isLoading || !email.trim() || !password.trim()}
           >
             {isLoading ? 'Authenticating...' : 'Login as Admin'}
           </Button>

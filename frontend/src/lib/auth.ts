@@ -4,9 +4,6 @@
 const ADMIN_KEY = 'awhittlewandering_admin_2025';
 const ADMIN_TOKEN_KEY = 'awhittlewandering_admin_token';
 
-// Simple admin password - in production, this would be more secure
-const ADMIN_PASSWORD = 'RoadTrip48States!2025';
-
 interface AdminSession {
   isAuthenticated: boolean;
   expiresAt: number;
@@ -51,17 +48,42 @@ export class AdminAuth {
     }
   }
 
-  async authenticate(password: string): Promise<boolean> {
-    if (password === ADMIN_PASSWORD) {
-      this.session = {
-        isAuthenticated: true,
-        expiresAt: Date.now() + (8 * 60 * 60 * 1000), // 8 hours
-        sessionId: this.generateSessionId()
-      };
-      this.saveSession();
-      return true;
+  async authenticate(email: string, password: string): Promise<boolean> {
+    try {
+      // Authenticate against backend API
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
+      const response = await fetch(`${apiBaseUrl}/api/v1/auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'login',
+          email,
+          password,
+        }),
+      });
+
+      if (!response.ok) {
+        return false;
+      }
+
+      const data = await response.json();
+      if (data.ok && data.token && data.user?.admin) {
+        // Only allow admin users
+        this.session = {
+          isAuthenticated: true,
+          expiresAt: Date.now() + (8 * 60 * 60 * 1000), // 8 hours
+          sessionId: data.token
+        };
+        this.saveSession();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Authentication failed:', error);
+      return false;
     }
-    return false;
   }
 
   isAuthenticated(): boolean {
@@ -151,8 +173,8 @@ export const useAdminAuth = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const login = async (password: string): Promise<boolean> => {
-    const success = await adminAuth.authenticate(password);
+  const login = async (email: string, password: string): Promise<boolean> => {
+    const success = await adminAuth.authenticate(email, password);
     if (success) {
       setIsAuthenticated(true);
       setSessionInfo(adminAuth.getSessionInfo());

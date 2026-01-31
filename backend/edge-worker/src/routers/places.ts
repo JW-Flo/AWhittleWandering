@@ -53,7 +53,7 @@ placesRouter.get('/providers', async (c) => {
   const totalFreeQueries = providers
     .filter(p => p.configured && p.name !== 'cloudflare_ai')
     .reduce((sum, p) => {
-      const num = parseInt(p.freeQuota.replace(/,/g, ''));
+      const num = parseInt(p.freeQuota.replace(/,/g, ''), 10);
       return sum + (isNaN(num) ? 0 : num);
     }, 0);
 
@@ -238,8 +238,8 @@ placesRouter.post('/correct', async (c) => {
  */
 placesRouter.get('/stops/:journeyId', async (c) => {
   const journeyId = c.req.param('journeyId');
-  const limit = parseInt(c.req.query('limit') || '50');
-  const offset = parseInt(c.req.query('offset') || '0');
+  const limit = parseInt(c.req.query('limit') || '50', 10);
+  const offset = parseInt(c.req.query('offset') || '0', 10);
 
   const result = await c.env.TESLA_DB.prepare(`
     SELECT * FROM stops 
@@ -262,7 +262,7 @@ placesRouter.get('/stops/:journeyId', async (c) => {
  */
 placesRouter.get('/stops/:journeyId/activities', async (c) => {
   const journeyId = c.req.param('journeyId');
-  const days = parseInt(c.req.query('days') || '30');
+  const days = parseInt(c.req.query('days') || '30', 10);
 
   // Get activity breakdown
   const activities = await c.env.TESLA_DB.prepare(`

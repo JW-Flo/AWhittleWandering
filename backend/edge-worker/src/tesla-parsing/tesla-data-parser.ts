@@ -226,7 +226,7 @@ export class TeslaDataParser {
       ] = parts;
 
       return {
-        timestamp: new Date(parseInt(timestamp)).toISOString(),
+        timestamp: new Date(parseInt(timestamp, 10)).toISOString(),
         speed: this.parseNumber(speed),
         odometer: this.parseNumber(odometer),
         battery_level: this.parseNumber(soc),
