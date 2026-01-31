@@ -301,9 +301,18 @@ placesRouter.get('/stops/:journeyId/activities', async (c) => {
       error: 'Invalid journey ID format'
     }, 400);
   }
-  
-  const days = parseInt(c.req.query('days') || '30', 10);
 
+  const daysParam = c.req.query('days');
+  const DEFAULT_DAYS = 30;
+  const MAX_DAYS = 365;
+
+  let days = DEFAULT_DAYS;
+  if (daysParam != null) {
+    const parsed = Number(daysParam);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      days = Math.min(Math.floor(parsed), MAX_DAYS);
+    }
+  }
   // Get activity breakdown
   const activities = await c.env.TESLA_DB.prepare(`
     SELECT 
