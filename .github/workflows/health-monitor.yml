@@ -1,21 +1,24 @@
 # =============================================================================
 # Health Monitor Workflow
 # =============================================================================
-# Continuous health monitoring for production services.
+# On-demand health monitoring for production services.
 # Creates incident issues on sustained failures.
 #
-# Schedule: Every 5 minutes
+# NOTE: Scheduled monitoring is DISABLED to avoid GitHub Actions costs.
+# For continuous monitoring, use Cloudflare's built-in health checks or
+# an external uptime service (e.g., Cloudflare Health Checks, UptimeRobot).
 #
-# Note: This is distinct from post-deploy-verify.yml which runs comprehensive
-# verification after deployments. This workflow is for ongoing monitoring.
+# This workflow can be triggered manually or by other workflows after
+# deployments to verify service health.
 # =============================================================================
 
 name: Health Monitor
 
 on:
-  schedule:
-    # Run every 5 minutes
-    - cron: '*/5 * * * *'
+  # DISABLED: Scheduled monitoring consumes too many GitHub Actions minutes
+  # Uncomment only if you have sufficient Actions minutes budget
+  # schedule:
+  #   - cron: '*/5 * * * *'  # ~8,640 runs/month = 4x free tier
   
   # Manual trigger for testing
   workflow_dispatch:

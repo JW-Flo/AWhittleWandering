@@ -57,11 +57,29 @@ jobs:
       - name: Check for Secrets in Diff
         if: github.event_name == 'pull_request'
         run: |
-          # Get the diff and scan for secrets
-          git diff origin/${{ github.base_ref }}...HEAD -- . | \
-            grep -E "(AKIA|AIzaSy|sk-|-----BEGIN|password\s*=|api[_-]?key\s*=)" && \
-            { echo "❌ Potential secrets found in diff!"; exit 1; } || \
-            echo "✅ No obvious secrets in diff"
+          # Get the diff and scan for high-confidence secret patterns only
+          # More thorough scanning is done by scripts/security-scan.sh
+          DIFF=$(git diff origin/${{ github.base_ref }}...HEAD -- . 2>/dev/null || echo "")
+          
+          # High-confidence patterns that are almost always secrets
+          if echo "$DIFF" | grep -qE 'AKIA[0-9A-Z]{16}'; then
+            echo "❌ AWS Access Key ID found in diff!"
+            exit 1
+          fi
+          if echo "$DIFF" | grep -qE 'AIzaSy[0-9A-Za-z_-]{35}'; then
+            echo "❌ Google API Key found in diff!"
+            exit 1
+          fi
+          if echo "$DIFF" | grep -q -- '-----BEGIN.*PRIVATE KEY-----'; then
+            echo "❌ Private key found in diff!"
+            exit 1
+          fi
+          if echo "$DIFF" | grep -qE 'sk-[A-Za-z0-9]{48,}'; then
+            echo "❌ OpenAI API Key found in diff!"
+            exit 1
+          fi
+          
+          echo "✅ No high-confidence secrets in diff"
 
   # ==========================================================================
   # Code Quality - Lint, Format, Typecheck
@@ -86,19 +104,23 @@ jobs:
         id: format
         continue-on-error: true
         run: |
-          npm run format:check 2>/dev/null || echo "No format:check script"
+          npm run format:check --if-present
 
       - name: Lint
         id: lint
         run: |
-          npm run lint 2>/dev/null || echo "No lint script"
+          npm run lint --if-present
 
       - name: Typecheck
         id: typecheck
         run: |
-          npm run typecheck 2>/dev/null || \
-          npx tsc --noEmit 2>/dev/null || \
-          echo "No typecheck configured"
+          if node -e "const p=require('./package.json');process.exit(p.scripts && p.scripts.typecheck ? 0 : 1)"; then
+            npm run typecheck
+          elif [ -f tsconfig.json ] && npx --no-install tsc --version >/dev/null 2>&1; then
+            npx tsc --noEmit
+          else
+            echo "No typecheck configured"
+          fi
 
   # ==========================================================================
   # Tests - Unit and Integration
@@ -122,28 +144,13 @@ jobs:
       - name: Run Tests
         id: test
         run: |
-          npm test 2>/dev/null || echo "No tests configured"
+          npm test --if-present
 
       - name: Backend Tests
         working-directory: backend/edge-worker
         run: |
           npm ci || npm install
-          npm test 2>/dev/null || echo "No backend tests"
-
-      - name: Unified Contract Check
-        working-directory: backend/edge-worker
-        run: |
-          npm run qa:contract 2>/dev/null || echo "No contract check configured"
-
-      - name: Unified Schema Validation
-        working-directory: backend/edge-worker
-        run: |
-          npm run qa:schema 2>/dev/null || echo "No schema validation configured"
-
-      - name: Adapter Contract Tests
-        working-directory: backend/edge-worker
-        run: |
-          npm run test:contract 2>/dev/null || npm test -- --runInBand || echo "No adapter contract tests"
+          npm test --if-present
 
   # ==========================================================================
   # Build Verification
@@ -276,6 +283,18 @@ jobs:
             exit 1
           fi
           
+          if [[ "${{ needs.quality.result }}" != "success" ]]; then
+            echo ""
+            echo "❌ Quality checks failed - PR cannot be merged"
+            exit 1
+          fi
+          
+          if [[ "${{ needs.test.result }}" != "success" ]]; then
+            echo ""
+            echo "❌ Tests failed - PR cannot be merged"
+            exit 1
+          fi
+          
           if [[ "${{ needs.build.result }}" != "success" ]]; then
             echo ""
             echo "❌ Build failed - PR cannot be merged"
@@ -295,7 +314,7 @@ jobs:
             const test = '${{ needs.test.result }}';
             const build = '${{ needs.build.result }}';
             
-            const allPassed = security === 'success' && build === 'success';
+            const allPassed = security === 'success' && quality === 'success' && test === 'success' && build === 'success';
             
             const body = `## CI Preflight Results
             

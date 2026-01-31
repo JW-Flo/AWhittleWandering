@@ -66,7 +66,7 @@ export async function verifyJwtHS256(token: string, secrets: string[], nowSec = 
       false,
       ["verify"]
     );
-    const ok = await crypto.subtle.verify("HMAC", key, sig, data);
+    const ok = await crypto.subtle.verify("HMAC", key, sig as BufferSource, data);
     if (!ok) continue;
 
     // Standard time claims (best-effort)

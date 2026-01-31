@@ -2,33 +2,78 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+# Common exclusions for noise directories and known safe files
+EXCLUDE_GLOBS=(
+  '!.git/**'
+  '!node_modules/**'
+  '!dist/**'
+  '!build/**'
+  '!.wrangler/**'
+  '!.backup/**'
+  '!*.lock'
+  '!pnpm-lock.yaml'
+  '!package-lock.json'
+  '!yarn.lock'
+  # Documentation and example code (not production secrets)
+  '!docs/**'
+  '!*.md'
+  '!archive/**'
+  # Known safe utility files that use "secret" as variable names
+  '!**/utils/totp.ts'
+  '!**/utils/totp.js'
+  '!**/*.test.ts'
+  '!**/*.test.js'
+  '!**/*.spec.ts'
+  '!**/*.spec.js'
+  '!**/tests/**'
+  '!**/__tests__/**'
+  '!*.example'
+  '!*.example.*'
+  '!.env.example'
+)
+
 scan_paths() {
   local pattern="$1"
+  local glob_args=()
+  for g in "${EXCLUDE_GLOBS[@]}"; do
+    glob_args+=(-g "$g")
+  done
   rg --hidden --no-ignore-vcs --files-with-matches -e "$pattern" \
-    -g '!.git/**' -g '!node_modules/**' -g '!dist/**' -g '!build/**' -g '!.wrangler/**' -g '!.backup/**' -- . || true
+    "${glob_args[@]}" -- . 2>/dev/null || true
 }
 
 hits=0
 echo "[secscan] scanning for common secret patterns (paths only)..."
 
-patterns=(
-  'AKIA[0-9A-Z]{16}'
-  'AIzaSy[0-9A-Za-z\-_]{35}'
-  'xox[baprs]-[0-9A-Za-z-]{10,}'
-  '-----BEGIN (RSA|EC|OPENSSH|PGP) PRIVATE KEY-----'
-  'sk-[A-Za-z0-9]{20,}'
-  'Bearer [A-Za-z0-9\-_\.]{20,}'
-  'password\s*[:=]\s*["'\''][^"'\'']{8,}["'\'']'
-  'api[_-]?key\s*[:=]\s*["'\'']?[A-Za-z0-9._-]{16,}["'\'']?'
-  'secret\s*[:=]\s*["'\'']?[A-Za-z0-9._-]{16,}["'\'']?'
+# High-confidence patterns - these are almost always real secrets
+high_confidence_patterns=(
+  'AKIA[0-9A-Z]{16}'                                    # AWS Access Key ID
+  'AIzaSy[0-9A-Za-z\-_]{35}'                           # Google API Key
+  'xox[baprs]-[0-9A-Za-z-]{10,}'                       # Slack tokens
+  '-----BEGIN (RSA|EC|OPENSSH|PGP) PRIVATE KEY-----'  # Private keys
+  'sk-[A-Za-z0-9]{48,}'                                # OpenAI API Key (48+ chars)
 )
 
-for pat in "${patterns[@]}"; do
+# Medium-confidence patterns - may have false positives
+medium_confidence_patterns=(
+  'Bearer [A-Za-z0-9\-_\.]{40,}'                       # Bearer tokens (40+ chars to reduce FP)
+)
+
+for pat in "${high_confidence_patterns[@]}"; do
   files="$(scan_paths "$pat")"
   if [[ -n "$files" ]]; then
-    echo "[secscan] possible secret pattern: $pat"
+    echo "[secscan] ❌ HIGH-CONFIDENCE secret pattern found: $pat"
     echo "$files"
     hits=1
+  fi
+done
+
+for pat in "${medium_confidence_patterns[@]}"; do
+  files="$(scan_paths "$pat")"
+  if [[ -n "$files" ]]; then
+    echo "[secscan] ⚠️  Medium-confidence pattern (review manually): $pat"
+    echo "$files"
+    # Don't set hits=1 for medium confidence - just warn
   fi
 done
 

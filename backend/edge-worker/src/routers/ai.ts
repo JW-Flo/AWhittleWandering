@@ -2,8 +2,9 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { logger } from '../utils/log';
 import { withTimeout } from '../utils/cronMetrics';
+import type { Env } from '../types/env';
 
-export const aiRouter = new Hono();
+export const aiRouter = new Hono<{ Bindings: Env }>();
 
 const optimizeSchema = z.object({
   start: z.object({ lat: z.number(), lng: z.number() }),
@@ -50,7 +51,7 @@ Return JSON only with keys: summary, suggestedStops (array), notes.`;
 
     const model = c.env?.AI_MODEL_NAME || '@cf/meta/llama-3.1-8b-instruct';
     const result = await withTimeout(
-      c.env.AI.run(model, { prompt }),
+      c.env.AI.run(model as any, { prompt }),
       12000,
       'ai.route.optimize'
     );
@@ -84,7 +85,7 @@ Context JSON: ${JSON.stringify(parsed.data.context || {})}
 Return JSON only with keys: title, entry, bulletHighlights.`;
 
     const result = await withTimeout(
-      c.env.AI.run(model, { prompt }),
+      c.env.AI.run(model as any, { prompt }),
       12000,
       'ai.journal.generate'
     );

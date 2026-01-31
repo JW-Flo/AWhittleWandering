@@ -4,7 +4,7 @@
 
 ## Executive Summary
 
-This document provides the implementation strategy for integrating OpenAI Codex agents into our CI/CD pipeline, enabling autonomous code generation, testing, and deployment with guardrails. The full operating roadmap and delivery phases live in `docs/ROADMAP.md`.
+This document provides the complete implementation strategy for integrating OpenAI Codex agents into our CI/CD pipeline, enabling fully autonomous code generation, testing, and deployment with appropriate guardrails and human-in-the-loop controls.
 
 ---
 
@@ -173,7 +173,6 @@ human_review_required:
 | `codex-pr-review.yml` | Auto-review Codex PRs | PR from `codex/*` branches |
 | `deploy-preview.yml` | Preview deployments | PR to `main` |
 | `deploy-production.yml` | Production with gates | Push to `main` + approval |
-| `ci-swarm.yml` | Swarm gates (contract + migration) | PR + push |
 | `rollback-monitor.yml` | Health monitoring | Scheduled + on-demand |
 
 ---

@@ -92,7 +92,7 @@ export async function detectStateFromCoordinates(
     );
 
     if (response.ok) {
-      const data = await response.json();
+      const data = await response.json() as { address?: { state?: string; region?: string; county?: string } };
 
       // Extract state information
       const address = data?.address;

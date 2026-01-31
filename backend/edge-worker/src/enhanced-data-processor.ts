@@ -3,7 +3,7 @@
  * Comprehensive data processing for all Tessie API fields with scalable architecture
  */
 
-import { D1Database } from './types/env';
+// D1Database type is provided globally by @cloudflare/workers-types
 
 interface EnhancedVehicleState {
   // Core vehicle data

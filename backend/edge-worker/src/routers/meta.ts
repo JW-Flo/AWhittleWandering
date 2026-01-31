@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
+import type { Env } from '../types/env';
 
-export const metaRouter = new Hono();
+export const metaRouter = new Hono<{ Bindings: Env }>();
 
 metaRouter.get('/routes', async (c) => {
   // Keep this static and conservative (don’t leak secrets or internal hostnames).

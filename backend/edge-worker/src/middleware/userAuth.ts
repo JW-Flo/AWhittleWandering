@@ -1,12 +1,8 @@
 import { verifyJwtHS256 } from '../utils/jwtHs256';
+import type { AuthUser } from '../types/env';
 
-export type AuthUser = {
-  id: string;
-  email?: string;
-  admin?: boolean;
-  mfa?: boolean;
-  role?: string;
-};
+// Re-export for backwards compatibility
+export type { AuthUser };
 
 export async function requireUser(c: any, next: any) {
   const jwtCur = String(c.env?.JWT_SECRET || '').trim();

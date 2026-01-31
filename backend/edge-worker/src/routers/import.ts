@@ -11,13 +11,9 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { importTeslaDrives, importTeslaCharges } from '../importers/tesla-csv';
 import { logger } from '../utils/log';
+import type { Env } from '../types/env';
 
-interface ImportEnv {
-  TESLA_DB: D1Database;
-  JWT_SECRET?: string;
-}
-
-export const importRouter = new Hono<{ Bindings: ImportEnv }>();
+export const importRouter = new Hono<{ Bindings: Env }>();
 
 // =====================================================
 // VALIDATION SCHEMAS
