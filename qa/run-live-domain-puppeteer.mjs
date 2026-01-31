@@ -18,6 +18,7 @@ import { createArtifactPaths, writeJson } from "./src/reporting/artifacts.js";
 import { getQAConfig } from "./src/qa-config.js";
 
 const artifacts = createArtifactPaths(process.env.QA_RUN_ID);
+// getQAConfig() loads from config.json with env var overrides (QA_FRONTEND_URL, QA_API_BASE_URL).
 const qaConfig = getQAConfig();
 const TARGET_URL = qaConfig.frontendUrl;
 const API_BASE = qaConfig.apiBaseUrl;
