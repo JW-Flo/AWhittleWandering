@@ -15,11 +15,12 @@ import fs from "fs";
 import path from "path";
 import { createRequire } from "module";
 import { createArtifactPaths, writeJson } from "./src/reporting/artifacts.js";
+import { getQAConfig } from "./src/qa-config.js";
 
 const artifacts = createArtifactPaths(process.env.QA_RUN_ID);
-const TARGET_URL = process.env.QA_FRONTEND_URL || "https://awhittlewandering.com";
-const API_BASE =
-  process.env.QA_API_BASE_URL || "https://awhittlewandering-api.kd8jc7v8cd.workers.dev";
+const qaConfig = getQAConfig();
+const TARGET_URL = qaConfig.frontendUrl;
+const API_BASE = qaConfig.apiBaseUrl;
 
 function exists(p) {
   try {
