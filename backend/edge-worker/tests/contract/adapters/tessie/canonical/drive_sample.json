@@ -1,0 +1,17 @@
+[
+  {
+    "type": "drive_segment",
+    "data": {
+      "eventId": "drive-12345",
+      "journeyId": "continental-usa-2025",
+      "vehicleId": "midnight-shadow",
+      "startTs": "2025-06-01T12:00:00Z",
+      "endTs": "2025-06-01T13:00:00Z",
+      "startH3": "87283472bffffff",
+      "endH3": "8729a1d2bffffff",
+      "distanceKm": 382.0,
+      "energyKwh": 120.5,
+      "avgSpeedKph": 128.0
+    }
+  }
+]

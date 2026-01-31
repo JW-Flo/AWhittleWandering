@@ -1,0 +1,14 @@
+{
+  "tessie_drive_id": 12345,
+  "vin": "TESTVIN123",
+  "started_at": "2025-06-01T12:00:00Z",
+  "ended_at": "2025-06-01T13:00:00Z",
+  "starting_latitude": 37.7749,
+  "starting_longitude": -122.4194,
+  "ending_latitude": 34.0522,
+  "ending_longitude": -118.2437,
+  "odometer_distance": 382.0,
+  "energy_used": 120.5,
+  "average_speed": 80.0,
+  "max_speed": 95.0
+}

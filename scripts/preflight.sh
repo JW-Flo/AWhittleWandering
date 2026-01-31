@@ -31,5 +31,8 @@ run_script_if_exists format:check
 run_script_if_exists lint
 run_script_if_exists typecheck
 run_script_if_exists test
+run_script_if_exists test:contract
+run_script_if_exists qa:contract
+run_script_if_exists qa:schema
 
 echo "[preflight] ✅ done"

@@ -1,5 +1,12 @@
 # Security Policy
 
+## Roadmap Alignment
+
+Security controls follow the operational roadmap in `docs/ROADMAP.md`, including:
+- Privacy-by-default (no raw GPS for public responses)
+- Rate limiting + CORS enforcement
+- Structured logging with request IDs
+
 Primary Security Contact
 
 - Email: <security@atlasit.pro> (preferred alias)

@@ -48,7 +48,7 @@ Complete deployment documentation for A Whittle Wandering.
 
 ## GitHub Actions Workflows
 
-### Frontend: `.github/workflows/frontend-pages-deploy.yml`
+### Frontend: `.github/workflows/deploy-frontend.yml`
 
 **Triggers:**
 - Push to `main` (paths: `frontend/**`)
@@ -60,7 +60,7 @@ Complete deployment documentation for A Whittle Wandering.
 3. `bun run build` (frontend)
 4. `wrangler pages deploy dist --project-name=awhittlewandering`
 
-### Backend: `.github/workflows/backend-deploy.yml`
+### Backend: `.github/workflows/deploy-backend.yml`
 
 **Triggers:**
 - Push to `main` (paths: `backend/edge-worker/**`, `shared/**`)
@@ -258,11 +258,13 @@ wrangler rollback --env production
 ```
 Push to main
     │
-    ├── frontend/** changed?
-    │   └── frontend-pages-deploy.yml
-    │       └── Deploy to Cloudflare Pages (awhittlewandering)
+    ├── CI gates
+    │   ├── ci-preflight.yml
+    │   └── ci-swarm.yml (contract + migration + build synthesis)
     │
-    └── backend/edge-worker/** changed?
-        └── backend-deploy.yml
-            └── Deploy to Cloudflare Workers (awhittlewandering-api)
+    ├── deploy-frontend.yml (Pages)
+    └── deploy-backend.yml (Workers)
+
+Post-deploy:
+    └── post-deploy-verify.yml (smoke + route checks)
 ```

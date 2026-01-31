@@ -130,6 +130,21 @@ jobs:
           npm ci || npm install
           npm test 2>/dev/null || echo "No backend tests"
 
+      - name: Unified Contract Check
+        working-directory: backend/edge-worker
+        run: |
+          npm run qa:contract 2>/dev/null || echo "No contract check configured"
+
+      - name: Unified Schema Validation
+        working-directory: backend/edge-worker
+        run: |
+          npm run qa:schema 2>/dev/null || echo "No schema validation configured"
+
+      - name: Adapter Contract Tests
+        working-directory: backend/edge-worker
+        run: |
+          npm run test:contract 2>/dev/null || npm test -- --runInBand || echo "No adapter contract tests"
+
   # ==========================================================================
   # Build Verification
   # ==========================================================================

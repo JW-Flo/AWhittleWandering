@@ -2,10 +2,21 @@
 
 This directory consolidates canonical, long-form documentation for AWhittleWandering.
 
-- **Consolidation plan**: `docs/consolidation-plan.md`
-- **Branch pruning report**: `docs/branch-prune-report.md`
-- **Operational / Secrets guides**: see `SYNC_SECRETS_GUIDE.md`, `SECRET_MANAGEMENT_SUMMARY.md` (legacy paths remain until next PR)
+## Core Docs
+- **Full operating roadmap**: `ROADMAP.md`
+- **Deployment guide**: `DEPLOYMENT.md`
+- **Security policy**: `SECURITY.md`
+- **API reference**: `API_REFERENCE.md`
+- **API documentation**: `API_DOCUMENTATION.md`
+
+## CI/CD + Operations
+- **Codex CI/CD implementation**: `CODEX_CICD_IMPLEMENTATION.md`
+- **Secrets guides**: `SYNC_SECRETS_GUIDE.md`, `SECRET_MANAGEMENT_SUMMARY.md`
+
+## Legacy / Consolidation
+- **Consolidation plan**: `consolidation-plan.md`
+- **Branch pruning report**: `branch-prune-report.md`
 
 Notes:
-- I created these files as the first step in consolidation; the next step is moving canonical copies into `docs/` and updating internal links across the repo.
+- Roadmap content is authoritative; update this index if links change.
 

@@ -8,6 +8,7 @@
     "deploy": "wrangler deploy",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:contract": "vitest run tests/contract",
     "qa:contract": "node dist/qa/unified-contract-check.js",
     "qa:schema": "node dist/qa/validate-unified.js"
   },

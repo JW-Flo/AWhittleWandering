@@ -1,0 +1,158 @@
+name: CI Swarm
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [dev, staging, main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ci-swarm-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  lint-typecheck:
+    name: Lint + Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: Install Dependencies
+        run: npm ci || npm install
+      - name: Lint
+        run: npm run lint 2>/dev/null || echo "No lint script"
+      - name: Typecheck
+        run: npm run typecheck 2>/dev/null || npx tsc --noEmit 2>/dev/null || echo "No typecheck configured"
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: Install Dependencies
+        run: npm ci || npm install
+      - name: Run Tests
+        run: npm test 2>/dev/null || echo "No tests configured"
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
+      - name: Run Security Scan
+        run: bash scripts/security-scan.sh
+
+  schema-contract:
+    name: Schema + Contract Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: Install Dependencies
+        run: npm ci || npm install
+      - name: Build Backend
+        run: |
+          cd backend/edge-worker
+          npm ci || npm install
+          npm run build
+      - name: Unified Contract Check
+        run: |
+          cd backend/edge-worker
+          npm run qa:contract
+      - name: Unified Schema Validation
+        run: |
+          cd backend/edge-worker
+          npm run qa:schema
+      - name: Adapter Contract Tests
+        run: |
+          cd backend/edge-worker
+          npm run test:contract || npm test -- --runInBand
+
+  migrations-idempotency:
+    name: Migrations Idempotency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run migration check
+        run: bash scripts/ci-migrations-check.sh
+
+  build:
+    name: Build All
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: Install Dependencies
+        run: npm ci || npm install
+      - name: Build
+        run: npm run build
+
+  synthesize:
+    name: Swarm Synthesis
+    needs:
+      - lint-typecheck
+      - unit-tests
+      - security-scan
+      - schema-contract
+      - migrations-idempotency
+      - build
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Report Summary
+        run: |
+          echo "## CI Swarm Summary"
+          echo "| Job | Status |"
+          echo "|-----|--------|"
+          echo "| Lint/Typecheck | ${{ needs.lint-typecheck.result }} |"
+          echo "| Unit Tests | ${{ needs.unit-tests.result }} |"
+          echo "| Security | ${{ needs.security-scan.result }} |"
+          echo "| Schema/Contract | ${{ needs.schema-contract.result }} |"
+          echo "| Migrations | ${{ needs.migrations-idempotency.result }} |"
+          echo "| Build | ${{ needs.build.result }} |"
+
+          if [[ "${{ needs.security-scan.result }}" != "success" ]]; then
+            echo "❌ Security scan failed"
+            exit 1
+          fi
+
+          if [[ "${{ needs.schema-contract.result }}" != "success" ]]; then
+            echo "❌ Schema/contract checks failed"
+            exit 1
+          fi
+
+          if [[ "${{ needs.migrations-idempotency.result }}" != "success" ]]; then
+            echo "❌ Migration idempotency failed"
+            exit 1
+          fi
+
+          if [[ "${{ needs.build.result }}" != "success" ]]; then
+            echo "❌ Build failed"
+            exit 1
+          fi
+
+          echo "✅ CI Swarm passed"

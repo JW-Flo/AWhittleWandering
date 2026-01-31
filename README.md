@@ -10,12 +10,13 @@ A journey platform that turns movement into meaning—experienced by others whil
 - Narrative “moments” (photos/notes/milestones) that punctuate the trip
 - Journeyer command center (vehicle data, routing, AI assistance) without burdening the public view
 - Secure API with authentication
+- Unified API model and privacy-first telemetry
 
 ## Architecture
 
 - **Frontend:** React + TypeScript + Mapbox
 - **Backend:** Cloudflare Workers + Hono + D1  
-- **Vehicle integration:** Tessie API (Tesla)
+- **Vehicle integration:** Provider adapters (Tessie/Tesla today, OEMs next)
 
 ## Quick Start
 
@@ -33,7 +34,7 @@ TESSIE_API_TOKEN=your_token
 ADMIN_TOKEN=your_token
 JWT_SECRET=your_secret
 
-# Frontend (.env)  
+# Frontend (.env)
 VITE_API_BASE_URL=https://your-worker.workers.dev
 VITE_MAPBOX_TOKEN=your_token
 ```
@@ -58,15 +59,17 @@ VITE_MAPBOX_TOKEN=your_token
 **Base:** `https://awhittlewandering-api.kd8jc7v8cd.workers.dev`
 
 - `GET /api/v1/health` - Service status
-- `GET /api/v1/unified-data` - Journey data  
-- `POST /api/v1/telemetry` - Vehicle data
-- `POST /api/v1/admin/*` - Admin ops
+- `GET /api/v1/unified-data` - Journey data (single source of truth)
+- `GET /api/v1/journeys` - Public journey list
+- `GET /api/v1/journeys/:id/stats` - Journey statistics
 
 ## Testing
 
 ```bash
-npm run qa:core              # Full QA
+npm run qa:core              # Core QA
 npm test                     # Unit tests
+npm run test:contract         # Unified contract checks
+npm run test:schema           # Schema validation
 ```
 
 See [docs/](docs/) for guides and detailed documentation.
@@ -85,10 +88,10 @@ See [docs/](docs/) for guides and detailed documentation.
 
 ## Status
 
-✅ Modular architecture, real-time tracking, dashboard  
-📋 Planned: Media gallery, mobile app
+✅ Modular architecture, real-time tracking, dashboard
+📋 Planned: Multi-OEM adapters, narratives, analytics, media
 
-See [docs/ROADMAP.md](docs/ROADMAP.md) for roadmap.
+See [docs/ROADMAP.md](docs/ROADMAP.md) for the full operating roadmap.
 
 ## Archived Workers
 
