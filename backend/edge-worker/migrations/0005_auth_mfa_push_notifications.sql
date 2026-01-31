@@ -1,22 +1,8 @@
 -- Auth + MFA + Push + Notifications (Additive)
--- Adds password auth fields, TOTP MFA storage, browser push subscriptions,
+-- Adds TOTP MFA storage, browser push subscriptions,
 -- per-journey follow notification prefs, and an in-app notifications inbox.
 
 PRAGMA foreign_keys = ON;
-
--- =====================================================
--- USERS: add password auth fields (additive)
--- =====================================================
--- NOTE: D1/SQLite supports ADD COLUMN (no IF NOT EXISTS), so keep this migration idempotent
--- by tolerating "duplicate column" errors during repeated local runs.
-
--- D1 doesn't support "ADD COLUMN IF NOT EXISTS" and will error if rerun.
--- This migration should only be applied once per database.
-ALTER TABLE users ADD COLUMN password_hash TEXT;
-ALTER TABLE users ADD COLUMN password_salt TEXT;
-ALTER TABLE users ADD COLUMN password_algo TEXT DEFAULT 'pbkdf2_sha256_v1';
-ALTER TABLE users ADD COLUMN password_updated_at DATETIME;
-ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'; -- 'user'|'super_user'|'admin'|'owner' (visitor is unauthenticated)
 
 -- =====================================================
 -- MFA (TOTP + Recovery codes)

@@ -1,7 +1,7 @@
--- Migration: Add API rate limiting table
+-- Migration: Add internal endpoint rate limiting table
 -- Date: 2025-08-07
 
-CREATE TABLE IF NOT EXISTS api_rate_limits (
+CREATE TABLE IF NOT EXISTS endpoint_rate_limits (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     endpoint TEXT NOT NULL,
     last_call_time DATETIME NOT NULL,
@@ -11,4 +11,4 @@ CREATE TABLE IF NOT EXISTS api_rate_limits (
 );
 
 -- Create unique index on endpoint
-CREATE UNIQUE INDEX IF NOT EXISTS idx_api_rate_limits_endpoint ON api_rate_limits(endpoint);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_endpoint_rate_limits_endpoint ON endpoint_rate_limits(endpoint);
