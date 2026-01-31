@@ -163,14 +163,24 @@ jobs:
         run: |
           BRANCH="${{ needs.setup.outputs.branch }}"
           
+          # Capture output and exit code separately
+          set +e  # Temporarily disable exit on error
           OUTPUT=$(wrangler pages deploy dist \
             --project-name=${{ env.PAGES_PROJECT }} \
             --branch="$BRANCH" \
             --commit-hash="${{ github.sha }}" \
             --commit-message="${{ github.event.head_commit.message || 'Manual deployment' }}" \
             2>&1)
+          EXIT_CODE=$?
+          set -e  # Re-enable exit on error
           
           echo "$OUTPUT"
+          
+          # Check if deployment failed
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "❌ Deployment failed with exit code $EXIT_CODE"
+            exit $EXIT_CODE
+          fi
           
           # Extract deployment URL
           DEPLOY_URL=$(echo "$OUTPUT" | grep -oP 'https://[^\s]+\.pages\.dev' | head -1 || echo "${{ needs.setup.outputs.url }}")
