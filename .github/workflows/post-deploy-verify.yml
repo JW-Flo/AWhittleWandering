@@ -60,6 +60,7 @@ jobs:
 
       - name: Verify Frontend
         id: frontend
+        continue-on-error: true
         run: |
           URL="${{ steps.urls.outputs.frontend }}"
           echo "Verifying frontend: $URL"
@@ -84,10 +85,12 @@ jobs:
           else
             echo "❌ Frontend returned HTTP $HTTP_CODE"
             echo "ok=false" >> $GITHUB_OUTPUT
+            exit 1
           fi
 
       - name: Verify Backend Health
         id: backend
+        continue-on-error: true
         run: |
           URL="${{ steps.urls.outputs.backend }}/api/v1/health"
           echo "Verifying backend health: $URL"
@@ -106,10 +109,12 @@ jobs:
           else
             echo "❌ Backend health check failed"
             echo "ok=false" >> $GITHUB_OUTPUT
+            exit 1
           fi
 
       - name: Verify API Routes
         id: routes
+        continue-on-error: true
         run: |
           BASE_URL="${{ steps.urls.outputs.backend }}/api/v1"
           echo "Verifying API routes at: $BASE_URL"
@@ -147,6 +152,7 @@ jobs:
             echo "ok=true" >> $GITHUB_OUTPUT
           else
             echo "ok=false" >> $GITHUB_OUTPUT
+            exit 1
           fi
 
       - name: Verify CORS
@@ -214,11 +220,13 @@ jobs:
           else
             echo "ok=false" >> $GITHUB_OUTPUT
             echo "❌ Some verifications failed"
+            exit 1
           fi
 
   # Report results
   report:
     needs: verify
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Create Verification Report
@@ -275,7 +283,7 @@ jobs:
   # Trigger rollback if verification fails
   auto-rollback:
     needs: verify
-    if: needs.verify.outputs.overall_ok == 'false' && inputs.environment == 'production'
+    if: always() && needs.verify.outputs.overall_ok == 'false' && inputs.environment == 'production'
     runs-on: ubuntu-latest
     steps:
       - name: Notify Before Rollback
