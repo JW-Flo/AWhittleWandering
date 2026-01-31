@@ -78,8 +78,10 @@ detect_task_type() {
     if echo "$goal_lower" | grep -qE '\b(workflow|github action|pr|pull request|merge|wrangler|cloudflare|deploy|ci|cd)\b'; then
         secondary_types+=("infrastructure")
         produces_code=true
+        # Don't override primary type if already set to analysis or research
         if [[ "$primary_type" == "implementation" ]]; then
-            primary_type="infrastructure"
+            # Keep as implementation but add infrastructure subagent
+            confidence="high"
         fi
     fi
     
@@ -142,14 +144,10 @@ detect_task_type() {
             if [[ " ${secondary_types[*]} " =~ " ui-ux " ]]; then
                 subagents+=("ui-ux-agent")
             fi
-            subagents+=("standard-agent")
-            ;;
-        infrastructure)
-            handler="infrastructure"
-            subagents+=("infrastructure-agent")
-            if [[ " ${secondary_types[*]} " =~ " platform " ]]; then
-                subagents+=("cloudflare-auditor")
+            if [[ " ${secondary_types[*]} " =~ " infrastructure " ]]; then
+                subagents+=("infrastructure-agent")
             fi
+            subagents+=("standard-agent")
             ;;
         implementation)
             handler="standard"

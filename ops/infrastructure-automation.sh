@@ -42,8 +42,8 @@ create_pr() {
     fi
     
     # Check if there are changes
-    if ! git diff --quiet HEAD "$base_branch"; then
-        log_error "No changes to create PR"
+    if git diff --quiet HEAD "$base_branch"; then
+        log_error "No changes to create PR from"
         return 1
     fi
     
@@ -225,7 +225,7 @@ validate_workflow() {
         return 1
     fi
     
-    if grep -q "token:" "$workflow_path" | grep -v "secrets."; then
+    if grep -E 'token:' "$workflow_path" | grep -qv 'secrets\.'; then
         log_warn "Workflow may contain hardcoded token"
     fi
     
@@ -319,7 +319,8 @@ validate_wrangler() {
     fi
     
     # Check for secrets in config (they shouldn't be there)
-    if grep -iE '(password|token|key|secret).*=.*"[^$]' "$wrangler_path" | grep -v "binding"; then
+    # Look for hardcoded values, not environment variables
+    if grep -iE '(password|token|key|secret)\s*=\s*"[^${\"]' "$wrangler_path" | grep -v "binding"; then
         log_error "Wrangler config may contain hardcoded secrets!"
         return 1
     fi

@@ -602,6 +602,6 @@ Report includes:
 5. Auto-merges after CI passes
 6. Issue closes automatically
 
-**Time from submit to done: ~5 minutes!**
+**Time from submit to done: ~5 minutes for simple changes, 10-30 minutes for complex changes!**
 
 The system can now truly manage itself end-to-end! 🎉
