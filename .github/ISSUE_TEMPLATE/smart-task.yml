@@ -1,0 +1,95 @@
+name: "[DEPRECATED] Smart AI Task - Use Unified Template"
+description: "⚠️ DEPRECATED: Use 'AI Task (Unified)' instead. All smart features are now in the unified template."
+title: ""
+labels: ["ai-task", "smart-mode", "deprecated-template"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ⚠️ DEPRECATED TEMPLATE
+        
+        This template is deprecated. Please use **"AI Task (Unified)"** instead.
+        
+        **Good news:** All smart mode features are in the unified template!
+        - Same minimal input
+        - Plus support for complex tasks
+        - Plus research & analysis
+        - Plus everything else
+        
+        **What to do:**
+        1. Close this issue
+        2. Create new issue with "AI Task (Unified)" template
+        3. Just type your goal - that's it!
+        
+        ---
+        
+        ## 🧠 Smart AI Task (Old Template - Deprecated)
+        
+        Just describe what you want in plain English - the AI will figure out:
+        - Which files to change
+        - Risk level and review requirements
+        - Target branch
+        - Related tests
+        - Implementation approach
+        
+        **Examples:**
+        - "Fix the typo in README"
+        - "Add rate limiting to the login endpoint"
+        - "Update API docs for the new user endpoints"
+        - "Fix null pointer error in date formatter"
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: What do you want?
+      description: Just describe it naturally - no need for technical details unless you want to be specific
+      placeholder: |
+        "Fix the bug where users can't login"
+        "Add dark mode to the settings page"
+        "Update the documentation for the API"
+    validations:
+      required: true
+
+  - type: textarea
+    id: hints
+    attributes:
+      label: Any hints? (Optional)
+      description: |
+        Only fill this if you want to guide the AI:
+        - Specific files you know are involved
+        - Error messages you're seeing
+        - Links to related issues
+        
+        **Leave blank for full auto-discovery!**
+      placeholder: |
+        File: backend/auth.ts
+        Error: "Cannot read property 'id' of undefined"
+        Related: #123
+    validations:
+      required: false
+
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: How urgent?
+      description: This helps prioritize and choose the right workflow
+      options:
+        - auto (let AI decide)
+        - low (can wait, safe to auto-merge if low-risk)
+        - medium (normal priority)
+        - high (urgent, needs fast review)
+      default: 0
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Quick Acknowledgements
+      options:
+        - label: No secrets/passwords included
+          required: true
+        - label: Let AI work its magic ✨
+          required: true

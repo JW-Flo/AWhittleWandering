@@ -1,0 +1,221 @@
+name: PR Triage
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Analyze PR
+        id: analyze
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_BODY="${{ github.event.pull_request.body }}"
+          PR_DRAFT="${{ github.event.pull_request.draft }}"
+          
+          echo "Analyzing PR #$PR_NUMBER"
+          
+          # Initialize checks
+          has_description=false
+          has_linked_issue=false
+          has_tests=false
+          has_conflicts=false
+          needs_rebase=false
+          
+          # Check if PR has meaningful description
+          if [ ${#PR_BODY} -gt 50 ]; then
+            has_description=true
+          fi
+          
+          # Check for linked issue (looks for #123 or fixes #123)
+          if echo "$PR_BODY" | grep -qiE '(#[0-9]+|fixes|closes|resolves)'; then
+            has_linked_issue=true
+          fi
+          
+          # Check if code changes include test changes
+          if gh pr view "$PR_NUMBER" --json files --jq '.files[].path' | grep -qE '(test|spec)\.(ts|js|tsx|jsx)$'; then
+            has_tests=true
+          fi
+          
+          # Check for conflicts
+          if gh pr view "$PR_NUMBER" --json mergeable --jq '.mergeable' | grep -q 'CONFLICTING'; then
+            has_conflicts=true
+          fi
+          
+          # Check if needs rebase (behind main)
+          BASE_SHA=$(gh pr view "$PR_NUMBER" --json baseRefOid --jq '.baseRefOid')
+          HEAD_SHA=$(gh pr view "$PR_NUMBER" --json headRefOid --jq '.headRefOid')
+          
+          if ! git merge-base --is-ancestor "$BASE_SHA" "$HEAD_SHA" 2>/dev/null; then
+            needs_rebase=true
+          fi
+          
+          # Determine status
+          labels_to_add=()
+          labels_to_remove=()
+          
+          if [ "$has_conflicts" = true ]; then
+            labels_to_add+=("needs-rebase")
+            labels_to_remove+=("ready-for-review")
+          else
+            labels_to_remove+=("needs-rebase")
+          fi
+          
+          if [ "$has_description" = false ] || [ "$has_linked_issue" = false ]; then
+            labels_to_add+=("needs-work")
+            labels_to_remove+=("ready-for-review")
+          else
+            labels_to_remove+=("needs-work")
+          fi
+          
+          # Check if code changes exist (not just docs)
+          code_changes=false
+          if gh pr view "$PR_NUMBER" --json files --jq '.files[].path' | grep -qvE '^(docs/|README|\.md$)'; then
+            code_changes=true
+          fi
+          
+          if [ "$code_changes" = true ] && [ "$has_tests" = false ]; then
+            labels_to_add+=("needs-tests")
+          else
+            labels_to_remove+=("needs-tests")
+          fi
+          
+          if [ "$PR_DRAFT" = "false" ] && [ "$has_conflicts" = false ] && [ "$has_description" = true ]; then
+            labels_to_add+=("ready-for-review")
+          fi
+          
+          # Output results
+          echo "has_description=$has_description" >> "$GITHUB_OUTPUT"
+          echo "has_linked_issue=$has_linked_issue" >> "$GITHUB_OUTPUT"
+          echo "has_tests=$has_tests" >> "$GITHUB_OUTPUT"
+          echo "has_conflicts=$has_conflicts" >> "$GITHUB_OUTPUT"
+          echo "needs_rebase=$needs_rebase" >> "$GITHUB_OUTPUT"
+          echo "code_changes=$code_changes" >> "$GITHUB_OUTPUT"
+          
+          # Convert arrays to comma-separated strings
+          echo "labels_to_add=$(IFS=,; echo "${labels_to_add[*]}")" >> "$GITHUB_OUTPUT"
+          echo "labels_to_remove=$(IFS=,; echo "${labels_to_remove[*]}")" >> "$GITHUB_OUTPUT"
+
+      - name: Add labels
+        if: steps.analyze.outputs.labels_to_add != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          LABELS="${{ steps.analyze.outputs.labels_to_add }}"
+          
+          IFS=',' read -ra LABEL_ARRAY <<< "$LABELS"
+          for label in "${LABEL_ARRAY[@]}"; do
+            if [ -n "$label" ]; then
+              echo "Adding label: $label"
+              gh pr edit "$PR_NUMBER" --add-label "$label" || true
+            fi
+          done
+
+      - name: Remove labels
+        if: steps.analyze.outputs.labels_to_remove != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          LABELS="${{ steps.analyze.outputs.labels_to_remove }}"
+          
+          IFS=',' read -ra LABEL_ARRAY <<< "$LABELS"
+          for label in "${LABEL_ARRAY[@]}"; do
+            if [ -n "$label" ]; then
+              echo "Removing label: $label"
+              gh pr edit "$PR_NUMBER" --remove-label "$label" || true
+            fi
+          done
+
+      - name: Add comment if needs work
+        if: contains(steps.analyze.outputs.labels_to_add, 'needs-work')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          
+          cat << 'EOF' > comment.md
+          👋 Thank you for your contribution!
+          
+          This PR needs some improvements before it can be reviewed:
+          
+          EOF
+          
+          if [ "${{ steps.analyze.outputs.has_description }}" = "false" ]; then
+            echo "- [ ] Add a meaningful description (what problem does this solve?)" >> comment.md
+          fi
+          
+          if [ "${{ steps.analyze.outputs.has_linked_issue }}" = "false" ]; then
+            echo "- [ ] Link to related issue (e.g., 'Fixes #123' or 'Closes #456')" >> comment.md
+          fi
+          
+          if [ "${{ steps.analyze.outputs.code_changes }}" = "true" ] && [ "${{ steps.analyze.outputs.has_tests }}" = "false" ]; then
+            echo "- [ ] Add tests for code changes" >> comment.md
+          fi
+          
+          cat << 'EOF' >> comment.md
+          
+          Please update the PR and these checks will run again automatically.
+          
+          See our [PR template](.github/PULL_REQUEST_TEMPLATE.md) for guidance.
+          EOF
+          
+          gh pr comment "$PR_NUMBER" -F comment.md || true
+
+      - name: Add comment if has conflicts
+        if: steps.analyze.outputs.has_conflicts == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          
+          cat << 'EOF' | gh pr comment "$PR_NUMBER" -F - || true
+          ⚠️ **Merge Conflicts Detected**
+          
+          This PR has conflicts with the base branch that need to be resolved.
+          
+          To resolve:
+          ```bash
+          git checkout main
+          git pull origin main
+          git checkout your-branch
+          git merge main
+          # Resolve conflicts
+          git push
+          ```
+          
+          Or use GitHub's UI to resolve conflicts if preferred.
+          EOF
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### PR Triage Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Description: ${{ steps.analyze.outputs.has_description }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Linked Issue: ${{ steps.analyze.outputs.has_linked_issue }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Has Tests: ${{ steps.analyze.outputs.has_tests }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Has Conflicts: ${{ steps.analyze.outputs.has_conflicts }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Code Changes: ${{ steps.analyze.outputs.code_changes }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          
+          if [ -n "${{ steps.analyze.outputs.labels_to_add }}" ]; then
+            echo "Labels Added: ${{ steps.analyze.outputs.labels_to_add }}" >> "$GITHUB_STEP_SUMMARY"
+          fi

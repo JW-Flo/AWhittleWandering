@@ -119,7 +119,7 @@ load_subagent_prompt() {
 }
 
 # -----------------------------------------------------------------------------
-# Task Parsing
+# Task Parsing with Intelligent Context Analysis
 # -----------------------------------------------------------------------------
 parse_task() {
   log "Parsing task definition..."
@@ -131,6 +131,81 @@ parse_task() {
   log "  Branch: ${TARGET_BRANCH}"
   log "  Risk: ${RISK_LEVEL}"
   log "  Verify: ${VERIFY_TIER:-auto}"
+  
+  # Run task type classifier
+  if [[ -f "$SCRIPT_DIR/task-type-classifier.sh" ]]; then
+    log "Classifying task type..."
+    
+    # Capture stdout and stderr separately
+    if TASK_CLASSIFICATION=$(bash "$SCRIPT_DIR/task-type-classifier.sh" "$TASK_GOAL" 2>/dev/null); then
+      log_success "Task classification complete"
+      
+      # Extract classification details
+      TASK_TYPE=$(echo "$TASK_CLASSIFICATION" | jq -r '.task_type.primary // "implementation"')
+      TASK_HANDLER=$(echo "$TASK_CLASSIFICATION" | jq -r '.routing.handler // "standard"')
+      TASK_COMPLEXITY=$(echo "$TASK_CLASSIFICATION" | jq -r '.complexity // "simple"')
+      
+      log "Task type: $TASK_TYPE"
+      log "Handler: $TASK_HANDLER"
+      log "Complexity: $TASK_COMPLEXITY"
+      
+      # Store for later use
+      export TASK_CLASSIFICATION
+      export TASK_TYPE
+      export TASK_HANDLER
+      export TASK_COMPLEXITY
+      
+      # Auto-detect risk if needed
+      if [[ "${RISK_LEVEL}" == "auto" ]]; then
+        AUTO_RISK=$(echo "$TASK_CLASSIFICATION" | jq -r '.characteristics.suggested_risk // "medium"')
+        RISK_LEVEL="$AUTO_RISK"
+        log "Auto-detected risk (via classifier): $RISK_LEVEL"
+      fi
+    else
+      log_warn "Task classification failed, using defaults"
+      export TASK_TYPE="implementation"
+      export TASK_HANDLER="standard"
+    fi
+  fi
+  
+  # Run intelligent context analysis if available
+  if [[ -f "$SCRIPT_DIR/intelligent-context-analyzer.sh" ]]; then
+    log "Running intelligent context analysis..."
+    
+    if CONTEXT_ANALYSIS=$(bash "$SCRIPT_DIR/intelligent-context-analyzer.sh" "$TASK_GOAL" 2>&1); then
+      log_success "Context analysis complete"
+      
+      # Extract auto-detected values if not already set
+      if [[ "${RISK_LEVEL}" == "auto" ]]; then
+        AUTO_RISK=$(echo "$CONTEXT_ANALYSIS" | jq -r '.risk_level // "medium"')
+        RISK_LEVEL="$AUTO_RISK"
+        log "Auto-detected risk level: $RISK_LEVEL"
+      fi
+      
+      if [[ -z "${TARGET_BRANCH:-}" ]] || [[ "${TARGET_BRANCH}" == "auto" ]]; then
+        AUTO_BRANCH=$(echo "$CONTEXT_ANALYSIS" | jq -r '.target_branch // "dev"')
+        TARGET_BRANCH="$AUTO_BRANCH"
+        log "Auto-selected branch: $TARGET_BRANCH"
+      fi
+      
+      # Store context for later use
+      export DISCOVERED_CONTEXT="$CONTEXT_ANALYSIS"
+      
+      # Log discovered files
+      local file_count=$(echo "$CONTEXT_ANALYSIS" | jq -r '.relevant_files | length')
+      if [[ "$file_count" -gt 0 ]]; then
+        log "Discovered $file_count relevant files"
+        # Use process substitution to avoid subshell issues
+        while IFS= read -r file; do
+          log "  - $file"
+        done < <(echo "$CONTEXT_ANALYSIS" | jq -r '.relevant_files[]' | head -5)
+      fi
+    else
+      log_warn "Context analysis failed, continuing with manual context"
+    fi
+  else
+    log_warn "Intelligent context analyzer not found, using manual context"
+  fi
   
   return 0
 }
@@ -420,8 +495,22 @@ main() {
     exit 1
   fi
   
-  # Step 3: Invoke main Codex agent
-  invoke_codex_agent "$TASK_GOAL"
+  # Step 3: Invoke GitHub Copilot agent
+  log "Invoking GitHub Copilot agent integration..."
+  if [[ -f "$SCRIPT_DIR/copilot-agent-integration.sh" ]]; then
+    if bash "$SCRIPT_DIR/copilot-agent-integration.sh"; then
+      log_success "Copilot agent invoked successfully"
+      # Agent will create PR directly, this workflow monitors it
+      log "Note: Agent will create PR automatically"
+      log "This workflow will continue to monitor and verify"
+    else
+      log_warn "Copilot agent invocation had issues, falling back to standard flow"
+      invoke_codex_agent "$TASK_GOAL"
+    fi
+  else
+    log_warn "Copilot integration script not found, using standard agent"
+    invoke_codex_agent "$TASK_GOAL"
+  fi
   
   # Step 4: Run verification loop
   # This handles preflight, security, and subagent recovery
