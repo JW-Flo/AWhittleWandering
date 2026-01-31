@@ -23,6 +23,11 @@ const qaConfig = getQAConfig();
 const TARGET_URL = qaConfig.frontendUrl;
 const API_BASE = qaConfig.apiBaseUrl;
 
+if (!TARGET_URL || !API_BASE) {
+  throw new Error(
+    "QA config is missing required URLs. Ensure 'frontendUrl' and 'apiBaseUrl' are set via qa-config.json or environment variables (QA_FRONTEND_URL, QA_API_BASE_URL)."
+  );
+}
 function exists(p) {
   try {
     return fs.existsSync(p);
