@@ -228,16 +228,15 @@ app.post('/api/joiner', async (c) => {
 
 // Legacy endpoint /drop: proxies to /api/v1/auth for backward compatibility
 app.post('/drop', async (c) => {
-  // Parse body and forward to auth router
+  // Forward original request to auth router
   try {
-    const body = await c.req.json();
-    // Create a new request to /api/v1/auth
     const authUrl = new URL(c.req.url);
     authUrl.pathname = '/api/v1/auth';
+    // Clone the original request to preserve body and headers
     const authReq = new Request(authUrl.toString(), {
       method: 'POST',
       headers: c.req.raw.headers,
-      body: JSON.stringify(body),
+      body: c.req.raw.body,
     });
     // Forward to the auth endpoint
     return await app.fetch(authReq, c.env, c.executionCtx);
