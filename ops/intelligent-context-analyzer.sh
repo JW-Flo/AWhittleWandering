@@ -97,7 +97,7 @@ search_relevant_files() {
     # If file hints provided, use them
     if [ ${#file_hints[@]} -gt 0 ]; then
         for hint in "${file_hints[@]}"; do
-            if find "$REPO_ROOT" -name "$hint" 2>/dev/null | grep -q .; then
+            if [ -n "$hint" ] && find "$REPO_ROOT" -name "$hint" 2>/dev/null | grep -q .; then
                 relevant_paths+=($(find "$REPO_ROOT" -name "$hint" 2>/dev/null | head -5))
             fi
         done
@@ -155,13 +155,19 @@ analyze_recent_changes() {
     # Get recently changed files related to component
     case "$component" in
         api)
-            recent_files=($(git log --since="1 month ago" --name-only --pretty=format: | grep -E '(routes|api)/' | sort -u | head -10))
+            if git log --since="1 month ago" --name-only --pretty=format: | grep -qE '(routes|api)/'; then
+                recent_files=($(git log --since="1 month ago" --name-only --pretty=format: | grep -E '(routes|api)/' | sort -u | head -10))
+            fi
             ;;
         auth)
-            recent_files=($(git log --since="1 month ago" --name-only --pretty=format: | grep -E 'auth' | sort -u | head -10))
+            if git log --since="1 month ago" --name-only --pretty=format: | grep -qE 'auth'; then
+                recent_files=($(git log --since="1 month ago" --name-only --pretty=format: | grep -E 'auth' | sort -u | head -10))
+            fi
             ;;
         *)
-            recent_files=($(git log --since="1 week ago" --name-only --pretty=format: | grep -vE '^$' | sort -u | head -20))
+            if git log --since="1 week ago" --name-only --pretty=format: | grep -qvE '^$'; then
+                recent_files=($(git log --since="1 week ago" --name-only --pretty=format: | grep -vE '^$' | sort -u | head -20))
+            fi
             ;;
     esac
     
@@ -224,7 +230,7 @@ auto_detect_risk_level() {
     if [[ "$component" == "docs" ]]; then
         risk="low"
     elif [[ "$action" == "fix" ]] && [[ "$has_error" == "true" ]]; then
-        # Bug fixes are often medium risk
+        # Bug fixes with identified errors are often medium risk (requires testing)
         risk="medium"
     elif echo "$relevant_files" | grep -qE '(auth|security|migration)'; then
         # Security-related changes are high risk

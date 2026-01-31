@@ -159,9 +159,10 @@ parse_task() {
       local file_count=$(echo "$CONTEXT_ANALYSIS" | jq -r '.relevant_files | length')
       if [[ "$file_count" -gt 0 ]]; then
         log "Discovered $file_count relevant files"
-        echo "$CONTEXT_ANALYSIS" | jq -r '.relevant_files[]' | head -5 | while read -r file; do
+        # Use process substitution to avoid subshell issues
+        while IFS= read -r file; do
           log "  - $file"
-        done
+        done < <(echo "$CONTEXT_ANALYSIS" | jq -r '.relevant_files[]' | head -5)
       fi
     else
       log_warn "Context analysis failed, continuing with manual context"
