@@ -24,6 +24,7 @@ if (!fs.existsSync(SCREENSHOT_DIR)) {
 const runtime = getQAConfig();
 const FRONTEND_URL = runtime.frontendUrl || 'https://awhittlewandering.pages.dev';
 const API_URL = runtime.apiBaseUrl || 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
+const UNIFIED_DATA_PATH = runtime.endpoints?.api?.unifiedData || '/api/v1/unified-data';
 
 class E2ETestRunner {
   constructor() {
@@ -267,7 +268,7 @@ describe('End-to-End Tests', () => {
       await e2eRunner.page.setRequestInterception(true);
       
       e2eRunner.page.on('request', (request) => {
-        if (request.url().includes('/api/tesla-data')) {
+        if (request.url().includes(UNIFIED_DATA_PATH)) {
           request.abort();
         } else {
           request.continue();
@@ -293,7 +294,7 @@ describe('End-to-End Tests', () => {
       
       // Count initial API requests
       const initialRequests = e2eRunner.networkRequests.filter(req => 
-        req.url.includes('/api/tesla-data')
+        req.url.includes(UNIFIED_DATA_PATH)
       ).length;
       
       // Wait for auto-refresh (30 seconds + buffer)
@@ -301,7 +302,7 @@ describe('End-to-End Tests', () => {
       
       // Count requests after wait
       const finalRequests = e2eRunner.networkRequests.filter(req => 
-        req.url.includes('/api/tesla-data')
+        req.url.includes(UNIFIED_DATA_PATH)
       ).length;
       
       expect(finalRequests).toBeGreaterThan(initialRequests);
@@ -314,7 +315,7 @@ describe('End-to-End Tests', () => {
       await e2eRunner.waitForElement('[data-testid="refresh-button"]');
       
       const initialRequests = e2eRunner.networkRequests.filter(req => 
-        req.url.includes('/api/tesla-data')
+        req.url.includes(UNIFIED_DATA_PATH)
       ).length;
       
       // Click refresh button
@@ -324,7 +325,7 @@ describe('End-to-End Tests', () => {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       const finalRequests = e2eRunner.networkRequests.filter(req => 
-        req.url.includes('/api/tesla-data')
+        req.url.includes(UNIFIED_DATA_PATH)
       ).length;
       
       expect(finalRequests).toBeGreaterThan(initialRequests);
