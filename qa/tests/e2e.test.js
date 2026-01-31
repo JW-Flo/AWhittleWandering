@@ -24,7 +24,7 @@ if (!fs.existsSync(SCREENSHOT_DIR)) {
 const runtime = getQAConfig();
 const FRONTEND_URL = runtime.frontendUrl || 'https://awhittlewandering.pages.dev';
 const API_URL = runtime.apiBaseUrl || 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
-const UNIFIED_DATA_PATH = runtime.endpoints.api.unifiedData || '/api/v1/unified-data';
+const UNIFIED_DATA_PATH = runtime.endpoints?.api?.unifiedData || '/api/v1/unified-data';
 
 class E2ETestRunner {
   constructor() {
