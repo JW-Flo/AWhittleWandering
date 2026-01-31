@@ -15,12 +15,19 @@ import fs from "fs";
 import path from "path";
 import { createRequire } from "module";
 import { createArtifactPaths, writeJson } from "./src/reporting/artifacts.js";
+import { getQAConfig } from "./src/qa-config.js";
 
 const artifacts = createArtifactPaths(process.env.QA_RUN_ID);
-const TARGET_URL = process.env.QA_FRONTEND_URL || "https://awhittlewandering.com";
-const API_BASE =
-  process.env.QA_API_BASE_URL || "https://awhittlewandering-api.kd8jc7v8cd.workers.dev";
+// getQAConfig() loads from config.json with env var overrides (QA_FRONTEND_URL, QA_API_BASE_URL).
+const qaConfig = getQAConfig();
+const TARGET_URL = qaConfig.frontendUrl;
+const API_BASE = qaConfig.apiBaseUrl;
 
+if (!TARGET_URL || !API_BASE) {
+  throw new Error(
+    "QA config is missing required URLs. Ensure 'frontendUrl' and 'apiBaseUrl' are set via qa-config.json or environment variables (QA_FRONTEND_URL, QA_API_BASE_URL)."
+  );
+}
 function exists(p) {
   try {
     return fs.existsSync(p);
