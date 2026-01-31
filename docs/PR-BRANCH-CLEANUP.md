@@ -6,6 +6,7 @@ This document explains the repository cleanup process for closing all PRs and de
 
 As of the cleanup task:
 - **Total PRs**: 30 (7 open, 23 closed)
+- **Open PRs (including this cleanup PR)**: 7
 - **Open PRs to close**: 6 (excluding PR #128 which is the cleanup PR itself)
 - **Branches**: 30+ branches identified for potential cleanup
 
