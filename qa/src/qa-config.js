@@ -27,13 +27,6 @@ export function normalizeBaseUrl(url) {
   return String(url).trim().replace(/\/+$/, "");
 }
 
-export function joinUrl(baseUrl, pathname) {
-  const base = normalizeBaseUrl(baseUrl);
-  if (!pathname) return base;
-  const pathPart = String(pathname).startsWith("/") ? pathname : `/${pathname}`;
-  return `${base}${pathPart}`;
-}
-
 function readJsonFile(filePath) {
   const raw = fs.readFileSync(filePath, "utf8");
   return JSON.parse(raw);
