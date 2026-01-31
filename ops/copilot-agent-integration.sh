@@ -117,11 +117,12 @@ wait_for_agent_response() {
     
     while [ $elapsed -lt $max_wait_seconds ]; do
         # Check if agent has responded (look for bot comments)
+        # GitHub Copilot bot can use different login names: copilot, github-copilot[bot], copilot[bot]
         if gh issue view "${issue_number}" \
             --repo "${REPO_OWNER}/${REPO_NAME}" \
             --json comments \
-            --jq '.comments[] | select(.author.login == "copilot") | .body' \
-            | grep -q "I'll work on this"; then
+            --jq '.comments[] | select(.author.login | test("copilot|github-copilot"; "i")) | .body' \
+            | grep -qi "work\|processing\|implement\|started"; then
             log_success "Agent acknowledged the task"
             return 0
         fi
@@ -131,7 +132,7 @@ wait_for_agent_response() {
         log "Waiting... (${elapsed}/${max_wait_seconds}s)"
     done
     
-    log_warn "Timeout waiting for agent response"
+    log_warn "Timeout waiting for agent response (this is OK, agent may still be processing)"
     return 1
 }
 
@@ -145,22 +146,27 @@ check_for_agent_pr() {
     log "Checking for PR created by Copilot agent..."
     
     # Look for PRs that reference this issue
-    local pr_number
-    pr_number=$(gh pr list \
-        --repo "${REPO_OWNER}/${REPO_NAME}" \
-        --search "in:body #${issue_number}" \
-        --author copilot \
-        --state open \
-        --json number \
-        --jq '.[0].number' 2>/dev/null || echo "")
+    # Try multiple bot usernames as GitHub may use different identifiers
+    local pr_number=""
+    local bot_names=("copilot" "github-copilot[bot]" "copilot[bot]" "github-actions[bot]")
     
-    if [ -n "$pr_number" ] && [ "$pr_number" != "null" ]; then
-        log_success "Found agent PR: #${pr_number}"
-        echo "$pr_number"
-        return 0
-    fi
+    for bot_name in "${bot_names[@]}"; do
+        pr_number=$(gh pr list \
+            --repo "${REPO_OWNER}/${REPO_NAME}" \
+            --search "in:body #${issue_number}" \
+            --author "$bot_name" \
+            --state open \
+            --json number \
+            --jq '.[0].number' 2>/dev/null || echo "")
+        
+        if [ -n "$pr_number" ] && [ "$pr_number" != "null" ]; then
+            log_success "Found agent PR #${pr_number} (author: ${bot_name})"
+            echo "$pr_number"
+            return 0
+        fi
+    done
     
-    log "No agent PR found yet"
+    log "No agent PR found yet (tried: ${bot_names[*]})"
     return 1
 }
 
