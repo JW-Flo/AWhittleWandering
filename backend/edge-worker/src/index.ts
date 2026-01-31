@@ -226,7 +226,25 @@ app.post('/api/joiner', async (c) => {
   return c.json({ ok: true, userId, log });
 });
 
-// Legacy endpoint /drop removed: replaced by /api/v1/auth
+// Legacy endpoint /drop: proxies to /api/v1/auth for backward compatibility
+app.post('/drop', async (c) => {
+  // Parse body and forward to auth router
+  try {
+    const body = await c.req.json();
+    // Create a new request to /api/v1/auth
+    const authUrl = new URL(c.req.url);
+    authUrl.pathname = '/api/v1/auth';
+    const authReq = new Request(authUrl.toString(), {
+      method: 'POST',
+      headers: c.req.raw.headers,
+      body: JSON.stringify(body),
+    });
+    // Forward to the auth endpoint
+    return await app.fetch(authReq, c.env, c.executionCtx);
+  } catch (e: any) {
+    return c.json({ ok: false, error: 'Invalid request', message: String(e?.message || e) }, 400);
+  }
+});
 
 // Export for Cloudflare Workers
 export default app;

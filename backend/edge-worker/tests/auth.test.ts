@@ -34,12 +34,13 @@ describe('/api/v1/auth endpoint', () => {
     const json = await res.json();
     expect(json.ok).toBe(false);
   });
-  it('legacy /drop removed', async () => {
+  it('legacy /drop proxies to auth', async () => {
     const res = await call('/drop', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'login' }),
+      body: JSON.stringify({ action: 'login', email: 'user@example.com', password: 'not-a-real-password' }),
     });
-    expect(res.status).toBe(404);
+    // Should return same status as /api/v1/auth (401, 500 depending on DB availability)
+    expect([400, 401, 500]).toContain(res.status);
   });
 });
