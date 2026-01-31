@@ -97,21 +97,20 @@ After implementation, run:
 Please proceed with the implementation.
 EOF
     
-    # Safely substitute variables after HEREDOC using printf for safer handling
-    # This prevents injection even if variables contain special characters
-    local safe_task_goal
-    safe_task_goal=$(printf '%s' "$task_goal")
-    agent_prompt="${agent_prompt//TASK_GOAL_PLACEHOLDER/$safe_task_goal}"
+    # Use sed for safer variable substitution that properly handles special characters
+    # This approach is more robust against injection attempts
+    agent_prompt=$(echo "$agent_prompt" | sed "s|TASK_GOAL_PLACEHOLDER|$(echo "$task_goal" | sed 's/[&/\]/\\&/g')|g")
     
     if [ -n "$context_info" ]; then
-        local safe_context_info
-        safe_context_info=$(printf '%s' "$context_info")
         local context_section="**Auto-Discovered Context:**
-$safe_context_info
+$context_info
 "
-        agent_prompt="${agent_prompt//CONTEXT_INFO_PLACEHOLDER/$context_section}"
+        # Escape special characters in context_info for sed
+        local escaped_context
+        escaped_context=$(echo "$context_section" | sed 's/[&/\]/\\&/g')
+        agent_prompt=$(echo "$agent_prompt" | sed "s|CONTEXT_INFO_PLACEHOLDER|$escaped_context|g")
     else
-        agent_prompt="${agent_prompt//CONTEXT_INFO_PLACEHOLDER/}"
+        agent_prompt=$(echo "$agent_prompt" | sed 's/CONTEXT_INFO_PLACEHOLDER//g')
     fi
 
     # Post the comment to trigger Copilot

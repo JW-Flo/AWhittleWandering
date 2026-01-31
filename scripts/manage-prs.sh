@@ -78,12 +78,25 @@ show_status() {
         ([.labels[].name] | join(","))' | \
     while IFS='|' read -r num title draft created updated labels; do
         # Portable date calculation that works on both Linux and macOS
+        local age_days=0
+        local now_seconds
+        local created_seconds
+        
         if date --version >/dev/null 2>&1; then
             # GNU date (Linux)
-            age_days=$(( ($(date +%s) - $(date -d "$created" +%s)) / 86400 ))
+            now_seconds=$(date +%s)
+            created_seconds=$(date -d "$created" +%s)
+            age_days=$(( (now_seconds - created_seconds) / 86400 ))
         else
-            # BSD date (macOS)
-            age_days=$(( ($(date +%s) - $(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$created" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%S" "${created%Z}" +%s)) / 86400 ))
+            # BSD date (macOS) - try multiple date formats
+            now_seconds=$(date +%s)
+            # Try ISO format with Z
+            created_seconds=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$created" +%s 2>/dev/null)
+            if [ -z "$created_seconds" ]; then
+                # Try ISO format without Z
+                created_seconds=$(date -j -f "%Y-%m-%dT%H:%M:%S" "${created%Z}" +%s 2>/dev/null || echo "$now_seconds")
+            fi
+            age_days=$(( (now_seconds - created_seconds) / 86400 ))
         fi
         
         status="Ready"
