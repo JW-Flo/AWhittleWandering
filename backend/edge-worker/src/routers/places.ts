@@ -19,6 +19,21 @@ import { logger } from '../utils/log';
 export const placesRouter = new Hono<{ Bindings: Env }>();
 
 /**
+ * Validates journey ID format to prevent injection attacks and ensure data integrity.
+ * 
+ * Valid journey IDs must:
+ * - Contain only alphanumeric characters, hyphens, and underscores
+ * - Be between 1 and 100 characters long
+ * - Examples: "continental-usa-2025", "europe_tour_2024", "journey123"
+ * 
+ * @param journeyId - The journey ID to validate
+ * @returns true if the journey ID is valid, false otherwise
+ */
+function validateJourneyId(journeyId: string | undefined): boolean {
+  return !!journeyId && /^[a-zA-Z0-9_-]{1,100}$/.test(journeyId);
+}
+
+/**
  * GET /api/v1/places/providers
  * Check which search providers are configured
  */
@@ -239,8 +254,8 @@ placesRouter.post('/correct', async (c) => {
 placesRouter.get('/stops/:journeyId', async (c) => {
   const journeyId = c.req.param('journeyId');
   
-  // Validate journey ID format (alphanumeric, hyphens, underscores only, 1-100 chars)
-  if (!journeyId || !/^[a-zA-Z0-9_-]{1,100}$/.test(journeyId)) {
+  // Validate journey ID format
+  if (!validateJourneyId(journeyId)) {
     return c.json({
       success: false,
       error: 'Invalid journey ID format'
@@ -272,8 +287,8 @@ placesRouter.get('/stops/:journeyId', async (c) => {
 placesRouter.get('/stops/:journeyId/activities', async (c) => {
   const journeyId = c.req.param('journeyId');
   
-  // Validate journey ID format (alphanumeric, hyphens, underscores only, 1-100 chars)
-  if (!journeyId || !/^[a-zA-Z0-9_-]{1,100}$/.test(journeyId)) {
+  // Validate journey ID format
+  if (!validateJourneyId(journeyId)) {
     return c.json({
       success: false,
       error: 'Invalid journey ID format'

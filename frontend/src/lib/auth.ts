@@ -48,10 +48,15 @@ export class AdminAuth {
     }
   }
 
-  async authenticate(email: string, password: string): Promise<boolean> {
+  async authenticate(email: string, password: string): Promise<{ success: boolean; error?: string }> {
     try {
       // Authenticate against backend API
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+      if (!apiBaseUrl) {
+        console.error('VITE_API_BASE_URL environment variable is not set');
+        return { success: false, error: 'Configuration error: API URL not set' };
+      }
+      
       const response = await fetch(`${apiBaseUrl}/api/v1/auth`, {
         method: 'POST',
         headers: {
@@ -65,7 +70,10 @@ export class AdminAuth {
       });
 
       if (!response.ok) {
-        return false;
+        if (response.status === 401) {
+          return { success: false, error: 'Invalid email or password' };
+        }
+        return { success: false, error: 'Authentication failed' };
       }
 
       const data = await response.json();
@@ -77,12 +85,18 @@ export class AdminAuth {
           sessionId: data.token
         };
         this.saveSession();
-        return true;
+        return { success: true };
       }
-      return false;
+      
+      // User authenticated but is not an admin
+      if (data.ok && data.token) {
+        return { success: false, error: 'Admin access required. Your account does not have admin privileges.' };
+      }
+      
+      return { success: false, error: 'Invalid credentials' };
     } catch (error) {
       console.error('Authentication failed:', error);
-      return false;
+      return { success: false, error: 'Network error: Unable to connect to authentication service' };
     }
   }
 
@@ -173,13 +187,13 @@ export const useAdminAuth = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    const success = await adminAuth.authenticate(email, password);
-    if (success) {
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    const result = await adminAuth.authenticate(email, password);
+    if (result.success) {
       setIsAuthenticated(true);
       setSessionInfo(adminAuth.getSessionInfo());
     }
-    return success;
+    return result;
   };
 
   const logout = () => {

@@ -35,16 +35,16 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onAuthChange }) => {
     setError('');
 
     try {
-      const success = await login(email, password);
-      if (success) {
+      const result = await login(email, password);
+      if (result.success) {
         setEmail('');
         setPassword('');
         setError('');
       } else {
-        setError('Invalid credentials or insufficient permissions. Admin access required.');
+        setError(result.error || 'Authentication failed. Please try again.');
       }
-    } catch {
-      setError('Authentication failed. Please try again.');
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
