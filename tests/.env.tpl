@@ -19,6 +19,8 @@ ADMIN_TOKEN=op://AWW_SHARED/prod/ADMIN_TOKEN
 TESLA_VIN=op://AWW_SHARED/prod/TESLA_VIN
 
 # Optional Services
+# Note: These secrets are documented but not yet integrated into workflows
+# They are available for future use when additional integrations are implemented
 NOTIFICATION_WEBHOOK=op://AWW_SHARED/prod/NOTIFICATION_WEBHOOK
 SPOTIFY_CLIENT_ID=op://AWW_SHARED/prod/SPOTIFY_CLIENT_ID
 SPOTIFY_CLIENT_SECRET=op://AWW_SHARED/prod/SPOTIFY_CLIENT_SECRET
