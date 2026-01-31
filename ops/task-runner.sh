@@ -420,8 +420,22 @@ main() {
     exit 1
   fi
   
-  # Step 3: Invoke main Codex agent
-  invoke_codex_agent "$TASK_GOAL"
+  # Step 3: Invoke GitHub Copilot agent
+  log "Invoking GitHub Copilot agent integration..."
+  if [[ -f "$SCRIPT_DIR/copilot-agent-integration.sh" ]]; then
+    if bash "$SCRIPT_DIR/copilot-agent-integration.sh"; then
+      log_success "Copilot agent invoked successfully"
+      # Agent will create PR directly, this workflow monitors it
+      log "Note: Agent will create PR automatically"
+      log "This workflow will continue to monitor and verify"
+    else
+      log_warn "Copilot agent invocation had issues, falling back to standard flow"
+      invoke_codex_agent "$TASK_GOAL"
+    fi
+  else
+    log_warn "Copilot integration script not found, using standard agent"
+    invoke_codex_agent "$TASK_GOAL"
+  fi
   
   # Step 4: Run verification loop
   # This handles preflight, security, and subagent recovery
