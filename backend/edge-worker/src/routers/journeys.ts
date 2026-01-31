@@ -321,8 +321,9 @@ journeysRouter.post('/', requireUser, async (c) => {
  * PATCH /api/v1/journeys/:id
  * Update journey configuration
  */
-journeysRouter.patch('/:id', async (c) => {
+journeysRouter.patch('/:id', requireUser, async (c) => {
   const journeyId = c.req.param('id');
+  const user = c.get('user');
   
   let body;
   try {
@@ -345,6 +346,11 @@ journeysRouter.patch('/:id', async (c) => {
   
   if (!journey) {
     return c.json({ success: false, error: 'Journey not found' }, 404);
+  }
+
+  // Verify user owns this journey
+  if (journey.user_id !== user.id) {
+    return c.json({ success: false, error: 'Unauthorized to modify this journey' }, 403);
   }
 
   // Build update query
@@ -390,15 +396,21 @@ journeysRouter.patch('/:id', async (c) => {
  * DELETE /api/v1/journeys/:id
  * Delete a journey and its resources
  */
-journeysRouter.delete('/:id', async (c) => {
+journeysRouter.delete('/:id', requireUser, async (c) => {
   const journeyId = c.req.param('id');
   const forceDelete = c.req.query('force') === 'true';
+  const user = c.get('user');
   
   const provisioner = new JourneyProvisioningService(c.env);
   const journey = await provisioner.getJourney(journeyId);
   
   if (!journey) {
     return c.json({ success: false, error: 'Journey not found' }, 404);
+  }
+
+  // Verify user owns this journey
+  if (journey.user_id !== user.id) {
+    return c.json({ success: false, error: 'Unauthorized to delete this journey' }, 403);
   }
 
   if (journey.status === 'deleted') {
