@@ -5,7 +5,9 @@
   "scripts": {
     "build": "npm run build:main && npm run build:qa",
     "build:main": "npx esbuild src/index.ts --bundle --format=esm --outfile=dist/index.js --external:hono --external:zod",
-    "build:qa": "npx esbuild src/qa/unified-contract-check.ts --bundle --format=esm --outfile=dist/qa/unified-contract-check.js --platform=node && npx esbuild src/qa/validate-unified.ts --bundle --format=esm --outfile=dist/qa/validate-unified.js --platform=node --loader:.json=json",
+    "build:qa": "npm run build:qa:contract && npm run build:qa:schema",
+    "build:qa:contract": "npx esbuild src/qa/unified-contract-check.ts --bundle --format=esm --outfile=dist/qa/unified-contract-check.js --platform=node",
+    "build:qa:schema": "npx esbuild src/qa/validate-unified.ts --bundle --format=esm --outfile=dist/qa/validate-unified.js --platform=node --loader:.json=json",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "test": "vitest",
