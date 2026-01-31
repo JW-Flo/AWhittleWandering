@@ -238,6 +238,15 @@ placesRouter.post('/correct', async (c) => {
  */
 placesRouter.get('/stops/:journeyId', async (c) => {
   const journeyId = c.req.param('journeyId');
+  
+  // Validate journey ID format (alphanumeric, hyphens, underscores only, 1-100 chars)
+  if (!journeyId || !/^[a-zA-Z0-9_-]{1,100}$/.test(journeyId)) {
+    return c.json({
+      success: false,
+      error: 'Invalid journey ID format'
+    }, 400);
+  }
+  
   const limit = parseInt(c.req.query('limit') || '50', 10);
   const offset = parseInt(c.req.query('offset') || '0', 10);
 
@@ -262,6 +271,15 @@ placesRouter.get('/stops/:journeyId', async (c) => {
  */
 placesRouter.get('/stops/:journeyId/activities', async (c) => {
   const journeyId = c.req.param('journeyId');
+  
+  // Validate journey ID format (alphanumeric, hyphens, underscores only, 1-100 chars)
+  if (!journeyId || !/^[a-zA-Z0-9_-]{1,100}$/.test(journeyId)) {
+    return c.json({
+      success: false,
+      error: 'Invalid journey ID format'
+    }, 400);
+  }
+  
   const days = parseInt(c.req.query('days') || '30', 10);
 
   // Get activity breakdown

@@ -178,6 +178,9 @@ mfaRouter.post('/challenge/verify', async (c) => {
   const stored = await kv.get(`mfa_challenge:${body.challengeId}`, { type: 'json' }) as { userId?: string; factorId?: string } | null;
   if (!stored?.userId || !stored?.factorId) return c.json({ ok: false, error: 'Invalid or expired challenge' }, 400);
 
+  // Delete challenge immediately to prevent race condition (single-use)
+  await kv.delete(`mfa_challenge:${body.challengeId}`);
+
   const factor = await db
     .prepare(
       `SELECT secret_enc, revoked_at, verified_at
@@ -195,9 +198,6 @@ mfaRouter.post('/challenge/verify', async (c) => {
   if (!secretBase32) return c.json({ ok: false, error: 'Failed to decrypt secret' }, 500);
   const ok = await verifyTotpCode(secretBase32, body.code);
   if (!ok) return c.json({ ok: false, error: 'Invalid code' }, 400);
-
-  // One-time use challenge
-  await kv.delete(`mfa_challenge:${body.challengeId}`);
 
   const userRow = await db
     .prepare(`SELECT id, email, role, is_admin FROM users WHERE id = ? LIMIT 1`)
