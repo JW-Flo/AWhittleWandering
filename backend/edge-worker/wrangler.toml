@@ -197,8 +197,7 @@ pattern = "api.awhittlewandering.com/*"
 zone_name = "awhittlewandering.com"
 
 # Staging Environment Configuration
-# Note: This currently inherits the top-level bindings (including D1) unless overridden.
-# Follow-up recommended: configure a separate staging D1 database to avoid sharing prod data.
+# Uses a separate D1 database (journey-staging) to isolate from production data.
 [env.staging]
 name = "awhittlewandering-api-staging"
 workers_dev = true
@@ -207,6 +206,15 @@ workers_dev = true
 LOG_LEVEL = "info"
 AI_GATEWAY_ID = "awhittlewandering-ai"
 AI_MODEL_NAME = "@cf/meta/llama-3.1-8b-instruct"
+
+# Staging D1 Database - separate from production to prevent data corruption
+# Create a staging database first: npx wrangler d1 create journey-staging
+# Then replace the database_id below with the actual ID from the creation output
+# Finally, run migrations for the staging DB: npx wrangler d1 migrations apply journey-staging --env staging
+[[env.staging.d1_databases]]
+binding = "TESLA_DB"
+database_name = "journey-staging"
+database_id = "REPLACE_WITH_STAGING_DATABASE_ID"
 
 [env.staging.triggers]
 crons = []
