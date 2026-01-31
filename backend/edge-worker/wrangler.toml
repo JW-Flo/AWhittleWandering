@@ -208,10 +208,12 @@ AI_GATEWAY_ID = "awhittlewandering-ai"
 AI_MODEL_NAME = "@cf/meta/llama-3.1-8b-instruct"
 
 # Staging D1 Database - separate from production to prevent data corruption
+# Create a staging database first: npx wrangler d1 create journey-staging
+# Then replace the database_id below with the actual ID from the creation output
 [[env.staging.d1_databases]]
 binding = "TESLA_DB"
 database_name = "journey-staging"
-database_id = "staging"
+database_id = "REPLACE_WITH_STAGING_DATABASE_ID"
 
 [env.staging.triggers]
 crons = []
