@@ -37,7 +37,7 @@ describe('Platform surface area (no bindings)', () => {
 
   it('frontend trip-status alias exists', async () => {
     const res = await call('/api/v1/trip/status');
-    expect(res.status).toBe(308);
+    expect(res.status).toBe(301);
     expect(res.headers.get('location')).toBe('/api/v1/trip-status');
   });
 

@@ -136,13 +136,13 @@ app.route('/api/v1/notifications', notificationsRouter);
 app.use('/api/v1/admin/*', adminAuth);
 app.route('/api/v1/admin', adminRouter);
 
-// Legacy and convenience routes
+// Legacy and convenience routes (permanent redirects for backward compatibility)
 // Provide a simple health endpoint directly
 app.get('/health', async (c) => c.json({ ok: true, status: 'healthy', timestamp: new Date().toISOString() }));
-app.get('/unified-data', async (c) => c.redirect('/api/v1/unified-data', 308));
-app.get('/trip-status', async (c) => c.redirect('/api/v1/trip-status', 308));
+app.get('/unified-data', async (c) => c.redirect('/api/v1/unified-data', 301));
+app.get('/trip-status', async (c) => c.redirect('/api/v1/trip-status', 301));
 // Frontend expects this path (older config)
-app.get('/api/v1/trip/status', async (c) => c.redirect('/api/v1/trip-status', 308));
+app.get('/api/v1/trip/status', async (c) => c.redirect('/api/v1/trip-status', 301));
 // Provide a config endpoint directly for demo
 app.get('/api/v1/config', async (c) => {
   const mode = c.env?.PLATFORM_MODE || 'live';

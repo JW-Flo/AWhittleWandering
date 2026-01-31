@@ -11,17 +11,39 @@
     }
   ],
   "tags": [
-    { "name": "core" },
-    { "name": "health" },
-    { "name": "telemetry" },
-    { "name": "unified" },
-    { "name": "trip" },
-    { "name": "component" },
-    { "name": "analytics" },
-    { "name": "vehicle" },
-    { "name": "ai" },
-    { "name": "admin" },
-    { "name": "meta" }
+    {
+      "name": "core"
+    },
+    {
+      "name": "health"
+    },
+    {
+      "name": "telemetry"
+    },
+    {
+      "name": "unified"
+    },
+    {
+      "name": "trip"
+    },
+    {
+      "name": "component"
+    },
+    {
+      "name": "analytics"
+    },
+    {
+      "name": "vehicle"
+    },
+    {
+      "name": "ai"
+    },
+    {
+      "name": "admin"
+    },
+    {
+      "name": "meta"
+    }
   ],
   "components": {
     "securitySchemes": {
@@ -34,63 +56,122 @@
       "ErrorResponse": {
         "type": "object",
         "properties": {
-          "ok": { "type": "boolean" },
-          "success": { "type": "boolean" },
-          "error": { "type": "string" },
-          "message": { "type": "string" },
-          "timestamp": { "type": "string" }
+          "ok": {
+            "type": "boolean"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          }
         },
         "additionalProperties": true
       },
       "AuthRequest": {
         "type": "object",
-        "required": ["action"],
+        "required": [
+          "action"
+        ],
         "properties": {
-          "action": { "type": "string", "enum": ["login", "register"] },
-          "username": { "type": "string", "minLength": 3 },
-          "password": { "type": "string", "minLength": 6 }
+          "action": {
+            "type": "string",
+            "enum": [
+              "login",
+              "register"
+            ]
+          },
+          "username": {
+            "type": "string",
+            "minLength": 3
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6
+          }
         },
         "additionalProperties": false
       },
       "TelemetryRequest": {
         "type": "object",
-        "required": ["vin", "timestamp", "location", "battery"],
+        "required": [
+          "vin",
+          "timestamp",
+          "location",
+          "battery"
+        ],
         "properties": {
-          "vin": { "type": "string" },
-          "timestamp": { "type": "string" },
+          "vin": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          },
           "location": {
             "type": "object",
-            "required": ["latitude", "longitude"],
+            "required": [
+              "latitude",
+              "longitude"
+            ],
             "properties": {
-              "latitude": { "type": "number" },
-              "longitude": { "type": "number" }
+              "latitude": {
+                "type": "number"
+              },
+              "longitude": {
+                "type": "number"
+              }
             },
             "additionalProperties": false
           },
           "battery": {
             "type": "object",
-            "required": ["level", "range"],
+            "required": [
+              "level",
+              "range"
+            ],
             "properties": {
-              "level": { "type": "number" },
-              "range": { "type": "number" }
+              "level": {
+                "type": "number"
+              },
+              "range": {
+                "type": "number"
+              }
             },
             "additionalProperties": false
           },
           "charging": {
             "type": "object",
-            "required": ["state"],
+            "required": [
+              "state"
+            ],
             "properties": {
-              "state": { "type": "string" },
-              "power": { "type": "number" }
+              "state": {
+                "type": "string"
+              },
+              "power": {
+                "type": "number"
+              }
             },
             "additionalProperties": false
           },
           "vehicle": {
             "type": "object",
-            "required": ["state"],
+            "required": [
+              "state"
+            ],
             "properties": {
-              "state": { "type": "string" },
-              "odometer": { "type": "number" }
+              "state": {
+                "type": "string"
+              },
+              "odometer": {
+                "type": "number"
+              }
             },
             "additionalProperties": false
           }
@@ -99,13 +180,22 @@
       },
       "AiOptimizeRequest": {
         "type": "object",
-        "required": ["start", "end"],
+        "required": [
+          "start",
+          "end"
+        ],
         "properties": {
-          "start": { "$ref": "#/components/schemas/LatLng" },
-          "end": { "$ref": "#/components/schemas/LatLng" },
+          "start": {
+            "$ref": "#/components/schemas/LatLng"
+          },
+          "end": {
+            "$ref": "#/components/schemas/LatLng"
+          },
           "waypoints": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/LatLng" }
+            "items": {
+              "$ref": "#/components/schemas/LatLng"
+            }
           },
           "constraints": {
             "type": "object",
@@ -117,59 +207,117 @@
       "AiJournalRequest": {
         "type": "object",
         "properties": {
-          "date": { "type": "string" },
-          "highlights": { "type": "array", "items": { "type": "string" } },
-          "context": { "type": "object", "additionalProperties": true }
+          "date": {
+            "type": "string"
+          },
+          "highlights": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "context": {
+            "type": "object",
+            "additionalProperties": true
+          }
         },
         "additionalProperties": false
       },
       "LatLng": {
         "type": "object",
-        "required": ["lat", "lng"],
+        "required": [
+          "lat",
+          "lng"
+        ],
         "properties": {
-          "lat": { "type": "number" },
-          "lng": { "type": "number" }
+          "lat": {
+            "type": "number"
+          },
+          "lng": {
+            "type": "number"
+          }
         },
         "additionalProperties": false
       },
       "PlacesIdentifyRequest": {
         "type": "object",
-        "required": ["latitude", "longitude"],
+        "required": [
+          "latitude",
+          "longitude"
+        ],
         "properties": {
-          "latitude": { "type": "number" },
-          "longitude": { "type": "number" }
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          }
         },
         "additionalProperties": true
       },
       "PlacesAnalyzeStopRequest": {
         "type": "object",
-        "required": ["latitude", "longitude"],
+        "required": [
+          "latitude",
+          "longitude"
+        ],
         "properties": {
-          "latitude": { "type": "number" },
-          "longitude": { "type": "number" },
-          "duration_minutes": { "type": "number" },
-          "arrived_at": { "type": "string" },
-          "departed_at": { "type": "string" }
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          },
+          "duration_minutes": {
+            "type": "number"
+          },
+          "arrived_at": {
+            "type": "string"
+          },
+          "departed_at": {
+            "type": "string"
+          }
         },
         "additionalProperties": true
       },
       "PlacesCorrectRequest": {
         "type": "object",
-        "required": ["latitude", "longitude"],
+        "required": [
+          "latitude",
+          "longitude"
+        ],
         "properties": {
-          "latitude": { "type": "number" },
-          "longitude": { "type": "number" },
-          "name": { "type": "string" },
-          "place_type": { "type": "string" },
-          "place_description": { "type": "string" }
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "place_type": {
+            "type": "string"
+          },
+          "place_description": {
+            "type": "string"
+          }
         },
         "additionalProperties": true
       },
       "PlacesBatchAnalyzeRequest": {
         "type": "object",
-        "required": ["stops"],
+        "required": [
+          "stops"
+        ],
         "properties": {
-          "stops": { "type": "array", "items": { "type": "object", "additionalProperties": true } }
+          "stops": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
         },
         "additionalProperties": true
       }
@@ -178,321 +326,640 @@
   "paths": {
     "/": {
       "get": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Root service info",
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/health": {
       "get": {
-        "tags": ["health"],
+        "tags": [
+          "health"
+        ],
         "summary": "Simple health (legacy)",
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/unified-data": {
       "get": {
-        "tags": ["unified"],
+        "tags": [
+          "unified"
+        ],
         "summary": "Legacy redirect to unified data",
-        "responses": { "308": { "description": "Redirect" } }
+        "responses": {
+          "308": {
+            "description": "Redirect"
+          }
+        }
       }
     },
     "/trip-status": {
       "get": {
-        "tags": ["trip"],
+        "tags": [
+          "trip"
+        ],
         "summary": "Legacy redirect to trip status",
-        "responses": { "308": { "description": "Redirect" } }
+        "responses": {
+          "308": {
+            "description": "Redirect"
+          }
+        }
       }
     },
     "/api/v1/trip/status": {
       "get": {
-        "tags": ["trip"],
+        "tags": [
+          "trip"
+        ],
         "summary": "Legacy alias redirect to trip status",
-        "responses": { "308": { "description": "Redirect" } }
+        "responses": {
+          "308": {
+            "description": "Redirect"
+          }
+        }
       }
     },
     "/api/v1/config": {
       "get": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Frontend config",
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/connectors": {
       "get": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Demo connectors list",
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/joiner": {
       "post": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Demo joiner flow (no request body)",
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/v1/auth": {
       "post": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Unified auth action",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/AuthRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/AuthRequest"
+              }
             }
           }
         },
         "responses": {
-          "200": { "description": "OK" },
-          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
         }
       }
     },
     "/api/v1/auth/me": {
       "get": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Authenticated user profile",
-        "security": [{ "bearerAuth": [] }],
-        "responses": { "200": { "description": "OK" }, "401": { "description": "Unauthorized" } }
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
       }
     },
     "/api/v1/health": {
       "get": {
-        "tags": ["health"],
+        "tags": [
+          "health"
+        ],
         "summary": "Comprehensive health",
         "responses": {
-          "200": { "description": "OK" },
-          "503": { "description": "Unhealthy" }
+          "200": {
+            "description": "OK"
+          },
+          "503": {
+            "description": "Unhealthy"
+          }
         }
       }
     },
     "/api/v1/health/simple": {
       "get": {
-        "tags": ["health"],
+        "tags": [
+          "health"
+        ],
         "summary": "Simple health",
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/v1/telemetry": {
       "post": {
-        "tags": ["telemetry"],
+        "tags": [
+          "telemetry"
+        ],
         "summary": "Submit telemetry",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/TelemetryRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/TelemetryRequest"
+              }
             }
           }
         },
         "responses": {
-          "200": { "description": "OK" },
-          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
         }
       }
     },
     "/api/v1/telemetry/status": {
       "get": {
-        "tags": ["telemetry"],
+        "tags": [
+          "telemetry"
+        ],
         "summary": "Telemetry ingestion status",
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/v1/unified-data": {
       "get": {
-        "tags": ["unified"],
+        "tags": [
+          "unified"
+        ],
         "summary": "Unified frontend data",
         "parameters": [
           {
             "name": "revalidate",
             "in": "query",
             "required": false,
-            "schema": { "type": "string", "enum": ["true", "false"] }
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
           },
           {
             "name": "limit",
             "in": "query",
             "required": false,
-            "schema": { "type": "string", "pattern": "^\\d+$" }
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            }
           }
         ],
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/v1/trip-status": {
       "get": {
-        "tags": ["trip"],
+        "tags": [
+          "trip"
+        ],
         "summary": "Trip status",
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/v1/trip-status/config": {
       "get": {
-        "tags": ["trip"],
+        "tags": [
+          "trip"
+        ],
         "summary": "Trip config",
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/v1/component/overview": {
-      "get": { "tags": ["component"], "summary": "Trip overview", "responses": { "200": { "description": "OK" } } }
+      "get": {
+        "tags": [
+          "component"
+        ],
+        "summary": "Trip overview",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     },
     "/api/v1/component/current-status": {
-      "get": { "tags": ["component"], "summary": "Current vehicle status", "responses": { "200": { "description": "OK" } } }
+      "get": {
+        "tags": [
+          "component"
+        ],
+        "summary": "Current vehicle status",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     },
     "/api/v1/component/states-progress": {
-      "get": { "tags": ["component"], "summary": "States progress", "responses": { "200": { "description": "OK" } } }
+      "get": {
+        "tags": [
+          "component"
+        ],
+        "summary": "States progress",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     },
     "/api/v1/component/recent-drives": {
       "get": {
-        "tags": ["component"],
+        "tags": [
+          "component"
+        ],
         "summary": "Recent drives",
         "parameters": [
           {
             "name": "limit",
             "in": "query",
             "required": false,
-            "schema": { "type": "string", "pattern": "^\\d+$" }
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            }
           }
         ],
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/v1/analytics/comprehensive": {
       "get": {
-        "tags": ["analytics"],
+        "tags": [
+          "analytics"
+        ],
         "summary": "Comprehensive analytics",
         "parameters": [
           {
             "name": "limit",
             "in": "query",
             "required": false,
-            "schema": { "type": "string", "pattern": "^\\d+$" }
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            }
           }
         ],
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/v1/analytics/efficiency": {
       "get": {
-        "tags": ["analytics"],
+        "tags": [
+          "analytics"
+        ],
         "summary": "Efficiency analytics",
         "parameters": [
           {
             "name": "limit",
             "in": "query",
             "required": false,
-            "schema": { "type": "string", "pattern": "^\\d+$" }
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            }
           }
         ],
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/v1/analytics/charging": {
       "get": {
-        "tags": ["analytics"],
+        "tags": [
+          "analytics"
+        ],
         "summary": "Charging analytics",
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/v1/vehicle/state/enhanced": {
       "get": {
-        "tags": ["vehicle"],
+        "tags": [
+          "vehicle"
+        ],
         "summary": "Enhanced vehicle state",
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/v1/route/optimize": {
       "post": {
-        "tags": ["ai"],
+        "tags": [
+          "ai"
+        ],
         "summary": "AI route optimization",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/AiOptimizeRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/AiOptimizeRequest"
+              }
             }
           }
         },
         "responses": {
-          "200": { "description": "OK" },
-          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-          "503": { "description": "AI not configured" }
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "AI not configured"
+          }
         }
       }
     },
     "/api/v1/journal/generate": {
       "post": {
-        "tags": ["ai"],
+        "tags": [
+          "ai"
+        ],
         "summary": "AI journal generation",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/AiJournalRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/AiJournalRequest"
+              }
             }
           }
         },
         "responses": {
-          "200": { "description": "OK" },
-          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-          "503": { "description": "AI not configured" }
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "AI not configured"
+          }
         }
       }
     },
     "/api/v1/meta/routes": {
       "get": {
-        "tags": ["meta"],
+        "tags": [
+          "meta"
+        ],
         "summary": "List public endpoints (static)",
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/v1/admin/status": {
       "get": {
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "summary": "Admin status",
-        "security": [{ "bearerAuth": [] }],
-        "responses": { "200": { "description": "OK" }, "401": { "description": "Unauthorized" } }
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
       }
     },
     "/api/v1/admin/auth/token": {
       "post": {
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "summary": "Issue admin JWT",
-        "security": [{ "bearerAuth": [] }],
-        "responses": { "200": { "description": "OK" }, "503": { "description": "Not configured" } }
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
       }
     },
     "/api/v1/admin/ingest": {
       "post": {
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "summary": "Manual data ingestion",
-        "security": [{ "bearerAuth": [] }],
-        "responses": { "200": { "description": "OK" }, "207": { "description": "Multi-Status" }, "503": { "description": "Not configured" } }
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "207": {
+            "description": "Multi-Status"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
       }
     },
     "/api/v1/admin/cache/clear": {
       "post": {
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "summary": "Clear caches",
-        "security": [{ "bearerAuth": [] }],
-        "responses": { "200": { "description": "OK" }, "401": { "description": "Unauthorized" } }
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
       }
     },
     "/api/v1/admin/cron/metrics": {
       "get": {
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "summary": "Cron metrics (last 25)",
-        "security": [{ "bearerAuth": [] }],
-        "responses": { "200": { "description": "OK" }, "401": { "description": "Unauthorized" } }
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
       }
     },
     "/api/v1/admin/data/{resource}": {
       "get": {
-        "tags": ["admin"],
+        "tags": [
+          "admin"
+        ],
         "summary": "Admin data export (allowlisted)",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "resource",
@@ -520,288 +987,740 @@
             "name": "limit",
             "in": "query",
             "required": false,
-            "schema": { "type": "string", "pattern": "^\\d+$" }
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            }
           },
           {
             "name": "offset",
             "in": "query",
             "required": false,
-            "schema": { "type": "string", "pattern": "^\\d+$" }
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            }
           }
         ],
         "responses": {
-          "200": { "description": "OK" },
-          "400": { "description": "Bad request" },
-          "401": { "description": "Unauthorized" }
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
         }
       }
     },
     "/api/v1/places/providers": {
       "get": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Configured search/AI providers for Places",
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/v1/places/identify": {
       "post": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Identify a place at coordinates",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/PlacesIdentifyRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/PlacesIdentifyRequest"
+              }
             }
           }
         },
-        "responses": { "200": { "description": "OK" }, "400": { "description": "Bad request" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        }
       }
     },
     "/api/v1/places/analyze-stop": {
       "post": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Analyze a stop and infer activity",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/PlacesAnalyzeStopRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/PlacesAnalyzeStopRequest"
+              }
             }
           }
         },
-        "responses": { "200": { "description": "OK" }, "400": { "description": "Bad request" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        }
       }
     },
     "/api/v1/places/correct": {
       "post": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Correct a place classification",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/PlacesCorrectRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/PlacesCorrectRequest"
+              }
             }
           }
         },
-        "responses": { "200": { "description": "OK" }, "400": { "description": "Bad request" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        }
       }
     },
     "/api/v1/places/stops/{journeyId}": {
       "get": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "List stops for a journey",
         "parameters": [
-          { "name": "journeyId", "in": "path", "required": true, "schema": { "type": "string" } },
-          { "name": "limit", "in": "query", "required": false, "schema": { "type": "string", "pattern": "^\\d+$" } },
-          { "name": "offset", "in": "query", "required": false, "schema": { "type": "string", "pattern": "^\\d+$" } }
+          {
+            "name": "journeyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            }
+          }
         ],
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/v1/places/stops/{journeyId}/activities": {
       "get": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Activity summary for a journey",
         "parameters": [
-          { "name": "journeyId", "in": "path", "required": true, "schema": { "type": "string" } },
-          { "name": "days", "in": "query", "required": false, "schema": { "type": "string", "pattern": "^\\d+$" } }
+          {
+            "name": "journeyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            }
+          }
         ],
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/v1/places/batch-analyze": {
       "post": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Analyze multiple stops (batch)",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/PlacesBatchAnalyzeRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/PlacesBatchAnalyzeRequest"
+              }
             }
           }
         },
-        "responses": { "200": { "description": "OK" }, "400": { "description": "Bad request" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        }
       }
     },
     "/api/v1/places/rate-limits": {
       "get": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Places rate limits",
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/v1/places/rate-limits/{provider}": {
       "get": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Places rate limits for provider",
         "parameters": [
-          { "name": "provider", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "OK" }, "404": { "description": "Not found" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
       }
     },
     "/api/v1/journeys": {
       "get": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "List journeys",
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       },
       "post": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Create journey",
-        "responses": { "201": { "description": "Created" }, "400": { "description": "Bad request" }, "503": { "description": "Not configured" } }
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "503": {
+            "description": "Not configured"
+          }
+        }
       }
     },
     "/api/v1/journeys/{id}": {
       "get": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Get journey",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "OK" }, "404": { "description": "Not found" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
       },
       "patch": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Update journey",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "OK" }, "400": { "description": "Bad request" }, "404": { "description": "Not found" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
       },
       "delete": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Delete journey",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "OK" }, "400": { "description": "Bad request" }, "404": { "description": "Not found" }, "410": { "description": "Gone" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "410": {
+            "description": "Gone"
+          }
+        }
       }
     },
     "/api/v1/journeys/{id}/provision": {
       "post": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Provision journey resources",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "OK" }, "400": { "description": "Bad request" }, "404": { "description": "Not found" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
       }
     },
     "/api/v1/journeys/{id}/status": {
       "get": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Journey provisioning status",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "OK" }, "404": { "description": "Not found" } }
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
       }
     },
     "/api/v1/journeys/{id}/follow": {
       "post": {
-        "tags": ["core"],
-        "summary": "Follow journey",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        "tags": [
+          "core"
         ],
-        "responses": { "200": { "description": "OK" }, "404": { "description": "Not found" } }
+        "summary": "Follow journey",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
       }
     },
     "/api/v1/journeys/{id}/unfollow": {
       "post": {
-        "tags": ["core"],
-        "summary": "Unfollow journey",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        "tags": [
+          "core"
         ],
-        "responses": { "200": { "description": "OK" } }
+        "summary": "Unfollow journey",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/v1/journeys/{id}/follow/settings": {
       "get": {
-        "tags": ["core"],
-        "summary": "Get journey follow settings",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        "tags": [
+          "core"
         ],
-        "responses": { "200": { "description": "OK" }, "404": { "description": "Not found" } }
+        "summary": "Get journey follow settings",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
       },
       "put": {
-        "tags": ["core"],
-        "summary": "Update journey follow settings",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        "tags": [
+          "core"
         ],
-        "responses": { "200": { "description": "OK" }, "400": { "description": "Bad request" } }
+        "summary": "Update journey follow settings",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        }
       }
     },
     "/api/v1/mfa/totp/enroll": {
       "post": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Enroll TOTP",
-        "security": [{ "bearerAuth": [] }],
-        "responses": { "200": { "description": "OK" }, "400": { "description": "Bad request" } }
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        }
       }
     },
     "/api/v1/mfa/totp/verify": {
       "post": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Verify TOTP",
-        "security": [{ "bearerAuth": [] }],
-        "responses": { "200": { "description": "OK" }, "400": { "description": "Bad request" } }
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        }
       }
     },
     "/api/v1/mfa/challenge/verify": {
       "post": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Verify MFA challenge",
-        "security": [{ "bearerAuth": [] }],
-        "responses": { "200": { "description": "OK" }, "400": { "description": "Bad request" } }
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        }
       }
     },
     "/api/v1/push/subscribe": {
       "post": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Subscribe to push",
-        "security": [{ "bearerAuth": [] }],
-        "responses": { "200": { "description": "OK" }, "400": { "description": "Bad request" } }
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        }
       }
     },
     "/api/v1/push/unsubscribe": {
       "post": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "Unsubscribe from push",
-        "security": [{ "bearerAuth": [] }],
-        "responses": { "200": { "description": "OK" }, "400": { "description": "Bad request" } }
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        }
       }
     },
     "/api/v1/notifications": {
       "get": {
-        "tags": ["core"],
+        "tags": [
+          "core"
+        ],
         "summary": "List notifications",
-        "security": [{ "bearerAuth": [] }],
-        "responses": { "200": { "description": "OK" }, "401": { "description": "Unauthorized" } }
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
       }
     },
     "/api/v1/notifications/{id}/read": {
       "post": {
-        "tags": ["core"],
-        "summary": "Mark notification read",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        "tags": [
+          "core"
         ],
-        "responses": { "200": { "description": "OK" }, "404": { "description": "Not found" } }
+        "summary": "Mark notification read",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/drop": {
+      "post": {
+        "tags": [
+          "legacy"
+        ],
+        "summary": "Legacy auth endpoint (proxies to /api/v1/auth)",
+        "description": "Backward compatibility endpoint that forwards to /api/v1/auth",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
       }
     }
   }
 }
-
