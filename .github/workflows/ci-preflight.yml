@@ -257,6 +257,38 @@ jobs:
             }
 
   # ==========================================================================
+  # Label Validation - Ensure only one work-agent label
+  # ==========================================================================
+  validate-labels:
+    name: Validate Labels
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Work-Agent Labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              core.info("No PR payload; skipping validation.");
+              return;
+            }
+            
+            const labels = (pr.labels || []).map(l => l.name);
+            const workAgentLabels = labels.filter(l => l.startsWith('agent:work:'));
+            
+            core.info(`Found ${workAgentLabels.length} work-agent labels: ${workAgentLabels.join(', ')}`);
+            
+            if (workAgentLabels.length > 1) {
+              core.setFailed(
+                `❌ Multiple work-agent labels detected: ${workAgentLabels.join(', ')}\n\n` +
+                `Only one work-agent label is allowed (agent:work:cursor, agent:work:codex, or agent:work:copilot).\n` +
+                `The PR Triage workflow should have cleaned this up automatically. ` +
+                `Please manually remove the duplicate labels or wait for the next PR update to trigger cleanup.`
+              );
+            }
+
+  # ==========================================================================
   # Summary - Final status
   # ==========================================================================
   summary:
