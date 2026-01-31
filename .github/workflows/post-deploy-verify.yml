@@ -65,7 +65,7 @@ jobs:
           echo "Verifying frontend: $URL"
           
           # Check main page loads
-          HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 30 "$URL" 2>/dev/null || echo "000")
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$URL" 2>/dev/null || echo "000")
           
           # Normalize: curl may return 000000 on connection failure
           if [[ "$HTTP_CODE" =~ ^0+$ ]]; then
@@ -76,7 +76,7 @@ jobs:
             echo "✅ Frontend main page OK"
             
             # Check for JavaScript bundle
-            CONTENT=$(curl -sf --max-time 30 "$URL" || echo "")
+            CONTENT=$(curl -s --max-time 30 "$URL" || echo "")
             if echo "$CONTENT" | grep -q "script"; then
               echo "✅ Frontend has script tags"
               echo "ok=true" >> $GITHUB_OUTPUT
@@ -95,8 +95,8 @@ jobs:
           URL="${{ steps.urls.outputs.backend }}/api/v1/health"
           echo "Verifying backend health: $URL"
           
-          RESPONSE=$(curl -sf --max-time 30 "$URL" 2>/dev/null || echo '{"status":"error"}')
-          HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 30 "$URL" 2>/dev/null || echo "000")
+          RESPONSE=$(curl -s --max-time 30 "$URL" 2>/dev/null || echo '{"status":"error"}')
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$URL" 2>/dev/null || echo "000")
           
           # Normalize: curl may return 000000 on connection failure
           if [[ "$HTTP_CODE" =~ ^0+$ ]]; then
@@ -132,7 +132,7 @@ jobs:
           
           for route in "${!ROUTES[@]}"; do
             EXPECTED="${ROUTES[$route]}"
-            HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 15 "${BASE_URL}${route}" 2>/dev/null || echo "000")
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "${BASE_URL}${route}" 2>/dev/null || echo "000")
             
             # Normalize: curl may return 000000 on connection failure
             if [[ "$HTTP_CODE" =~ ^0+$ ]]; then
@@ -167,7 +167,7 @@ jobs:
           echo "Verifying CORS configuration..."
           
           # Check CORS headers
-          CORS_HEADERS=$(curl -sf -I -X OPTIONS \
+          CORS_HEADERS=$(curl -s -I -X OPTIONS \
             -H "Origin: $FRONTEND" \
             -H "Access-Control-Request-Method: GET" \
             --max-time 15 \
@@ -191,7 +191,7 @@ jobs:
           # actually load the frontend and check for API calls
           
           # Check that backend is reachable from a browser-like request
-          HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" \
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Origin: $FRONTEND" \
             -H "User-Agent: Mozilla/5.0" \
             --max-time 15 \
