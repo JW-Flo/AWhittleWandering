@@ -50,20 +50,31 @@ invoke_copilot_agent() {
         return 1
     fi
     
+    # Get discovered context if available
+    local context_info=""
+    if [ -n "${DISCOVERED_CONTEXT:-}" ]; then
+        log "Using auto-discovered context..."
+        context_info=$(echo "$DISCOVERED_CONTEXT" | jq -r '.context_summary // ""')
+    fi
+    
     # The GitHub Copilot agent can be triggered in multiple ways:
     # 1. Via @copilot mention in issue comments
     # 2. Via GitHub Copilot workspace integration
     # 3. Via direct API calls (when available)
     
     # For now, we use the issue comment method as it's most reliable
-    log "Posting agent trigger comment to issue #${issue_number}..."
+    log "Posting enhanced agent trigger comment to issue #${issue_number}..."
     
-    # Create a comprehensive prompt for the agent
+    # Create a comprehensive prompt for the agent with auto-discovered context
     local agent_prompt
     read -r -d '' agent_prompt <<EOF || true
 @copilot Please implement the following task:
 
 **Goal:** ${task_goal}
+
+${context_info:+**Auto-Discovered Context:**
+$context_info
+}
 
 **Instructions:**
 1. Analyze the codebase to understand the relevant components
@@ -91,7 +102,7 @@ EOF
     if gh issue comment "${issue_number}" \
         --repo "${REPO_OWNER}/${REPO_NAME}" \
         --body "${agent_prompt}"; then
-        log_success "Agent prompt posted to issue #${issue_number}"
+        log_success "Enhanced agent prompt posted to issue #${issue_number}"
     else
         log_error "Failed to post agent prompt"
         return 1

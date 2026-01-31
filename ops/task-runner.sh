@@ -119,7 +119,7 @@ load_subagent_prompt() {
 }
 
 # -----------------------------------------------------------------------------
-# Task Parsing
+# Task Parsing with Intelligent Context Analysis
 # -----------------------------------------------------------------------------
 parse_task() {
   log "Parsing task definition..."
@@ -131,6 +131,44 @@ parse_task() {
   log "  Branch: ${TARGET_BRANCH}"
   log "  Risk: ${RISK_LEVEL}"
   log "  Verify: ${VERIFY_TIER:-auto}"
+  
+  # Run intelligent context analysis if available
+  if [[ -f "$SCRIPT_DIR/intelligent-context-analyzer.sh" ]]; then
+    log "Running intelligent context analysis..."
+    
+    if CONTEXT_ANALYSIS=$(bash "$SCRIPT_DIR/intelligent-context-analyzer.sh" "$TASK_GOAL" 2>&1); then
+      log_success "Context analysis complete"
+      
+      # Extract auto-detected values if not already set
+      if [[ "${RISK_LEVEL}" == "auto" ]]; then
+        AUTO_RISK=$(echo "$CONTEXT_ANALYSIS" | jq -r '.risk_level // "medium"')
+        RISK_LEVEL="$AUTO_RISK"
+        log "Auto-detected risk level: $RISK_LEVEL"
+      fi
+      
+      if [[ -z "${TARGET_BRANCH:-}" ]] || [[ "${TARGET_BRANCH}" == "auto" ]]; then
+        AUTO_BRANCH=$(echo "$CONTEXT_ANALYSIS" | jq -r '.target_branch // "dev"')
+        TARGET_BRANCH="$AUTO_BRANCH"
+        log "Auto-selected branch: $TARGET_BRANCH"
+      fi
+      
+      # Store context for later use
+      export DISCOVERED_CONTEXT="$CONTEXT_ANALYSIS"
+      
+      # Log discovered files
+      local file_count=$(echo "$CONTEXT_ANALYSIS" | jq -r '.relevant_files | length')
+      if [[ "$file_count" -gt 0 ]]; then
+        log "Discovered $file_count relevant files"
+        echo "$CONTEXT_ANALYSIS" | jq -r '.relevant_files[]' | head -5 | while read -r file; do
+          log "  - $file"
+        done
+      fi
+    else
+      log_warn "Context analysis failed, continuing with manual context"
+    fi
+  else
+    log_warn "Intelligent context analyzer not found, using manual context"
+  fi
   
   return 0
 }
