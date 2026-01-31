@@ -65,7 +65,12 @@ jobs:
           echo "Verifying frontend: $URL"
           
           # Check main page loads
-          HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 30 "$URL" || echo "000")
+          HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 30 "$URL" 2>/dev/null || echo "000")
+          
+          # Normalize: curl may return 000000 on connection failure
+          if [[ "$HTTP_CODE" =~ ^0+$ ]]; then
+            HTTP_CODE="000"
+          fi
           
           if [[ "$HTTP_CODE" == "200" ]]; then
             echo "✅ Frontend main page OK"
@@ -92,6 +97,11 @@ jobs:
           
           RESPONSE=$(curl -sf --max-time 30 "$URL" 2>/dev/null || echo '{"status":"error"}')
           HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 30 "$URL" 2>/dev/null || echo "000")
+          
+          # Normalize: curl may return 000000 on connection failure
+          if [[ "$HTTP_CODE" =~ ^0+$ ]]; then
+            HTTP_CODE="000"
+          fi
           
           echo "HTTP Code: $HTTP_CODE"
           echo "Response: $RESPONSE"
@@ -123,6 +133,11 @@ jobs:
           for route in "${!ROUTES[@]}"; do
             EXPECTED="${ROUTES[$route]}"
             HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 15 "${BASE_URL}${route}" 2>/dev/null || echo "000")
+            
+            # Normalize: curl may return 000000 on connection failure
+            if [[ "$HTTP_CODE" =~ ^0+$ ]]; then
+              HTTP_CODE="000"
+            fi
             
             # Check if HTTP code is in expected list
             if [[ "$EXPECTED" == *"$HTTP_CODE"* ]] || [[ "$HTTP_CODE" == "200" ]]; then
@@ -181,6 +196,11 @@ jobs:
             -H "User-Agent: Mozilla/5.0" \
             --max-time 15 \
             "$BACKEND/api/v1/health" 2>/dev/null || echo "000")
+          
+          # Normalize: curl may return 000000 on connection failure
+          if [[ "$HTTP_CODE" =~ ^0+$ ]]; then
+            HTTP_CODE="000"
+          fi
           
           if [[ "$HTTP_CODE" == "200" ]]; then
             echo "✅ Backend reachable with browser-like request"
