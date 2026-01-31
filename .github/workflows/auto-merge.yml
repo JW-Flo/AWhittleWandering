@@ -68,6 +68,41 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Disable auto-merge for medium/high risk
+        if: steps.risk.outputs.risk != 'low' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          IFS=$'\n\t'
+
+          retry() {
+            local attempt=1
+            local delay=2
+            local max_attempts=4
+            while true; do
+              if "$@"; then
+                return 0
+              fi
+              if [[ "$attempt" -ge "$max_attempts" ]]; then
+                return 1
+              fi
+              echo "event=auto-merge status=retrying attempt=$attempt next_delay=${delay}s"
+              sleep "$delay"
+              attempt=$((attempt + 1))
+              delay=$((delay * 2))
+            done
+          }
+
+          pr_number="${{ github.event.pull_request.number }}"
+          risk="${{ steps.risk.outputs.risk }}"
+          echo "event=auto-merge action=disable pr=$pr_number risk=$risk"
+          if retry gh pr merge "$pr_number" --disable-auto; then
+            echo "event=auto-merge status=disabled pr=$pr_number"
+          else
+            echo "::warning::event=auto-merge status=skipped reason=disable_failed pr=$pr_number"
+          fi
+
       - name: Enable auto-merge for low risk
         if: steps.risk.outputs.risk == 'low' && github.event.pull_request.head.repo.full_name == github.repository
         env:
