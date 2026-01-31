@@ -42,8 +42,9 @@ jobs:
 
       - name: Install deps (root + worker)
         run: |
+          set -euo pipefail
           npm ci || npm install
-          cd "${{ env.WORKER_DIR }}" && npm ci || npm install
+          cd "${{ env.WORKER_DIR }}" && (npm ci || npm install)
 
       - name: Tests/typecheck (optional)
         if: inputs.skip_tests != true
