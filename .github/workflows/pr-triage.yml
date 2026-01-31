@@ -21,12 +21,12 @@ jobs:
         id: analyze
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           set -euo pipefail
           
           PR_NUMBER="${{ github.event.pull_request.number }}"
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          PR_BODY="${{ github.event.pull_request.body }}"
           PR_DRAFT="${{ github.event.pull_request.draft }}"
           
           echo "Analyzing PR #$PR_NUMBER"

@@ -1,18 +1,21 @@
 # =============================================================================
-# Root Wrangler Configuration - Cloudflare Pages
+# Root Wrangler Configuration - Workers with Static Assets
 # =============================================================================
-# This configuration is used by Cloudflare Pages for frontend deployment.
+# This configuration is for Cloudflare Workers deployments with static assets.
+# It is NOT used for Cloudflare Pages deployments.
+#
+# For Cloudflare Pages frontend deployment, use frontend/wrangler.toml
 # For backend Worker deployment, use backend/edge-worker/wrangler.toml
 #
-# IMPORTANT: If deploying via Cloudflare Pages dashboard, ensure the
-# deploy command is set to: npx wrangler pages deploy frontend/dist
-# NOT: npx wrangler versions upload (which is for Workers)
+# The [assets] section below is for Workers static assets serving only.
+# Pages deployments use frontend/wrangler.toml with pages_build_output_dir.
 # =============================================================================
 
 name = "awhittlewandering"
 compatibility_date = "2024-01-01"
 
-# Cloudflare Pages - point to frontend build output
+# Workers static assets - point to frontend build output
+# Note: This [assets] section is for Workers, not Pages
 [assets]
 directory = "frontend/dist"
 
