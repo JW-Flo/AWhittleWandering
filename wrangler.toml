@@ -11,6 +11,7 @@
 
 name = "awhittlewandering"
 compatibility_date = "2024-01-01"
+# Required by Cloudflare Pages when deploying from repo root.
 pages_build_output_dir = "frontend/dist"
 
 # Cloudflare Pages - point to frontend build output
