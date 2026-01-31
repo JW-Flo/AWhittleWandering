@@ -97,7 +97,7 @@ The **Unified Task System** consolidates all task submission into a single, inte
 
 When you submit a task, the system:
 
-1. **Analyzes your goal** using NLP
+1. **Analyzes your goal** using keyword detection and pattern matching
 2. **Detects task type** (implementation, research, review, improve)
 3. **Classifies complexity** (simple, moderate, complex)
 4. **Routes to handlers** (standard agent, research agent, analyst, UI/UX specialist)

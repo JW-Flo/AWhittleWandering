@@ -136,7 +136,8 @@ parse_task() {
   if [[ -f "$SCRIPT_DIR/task-type-classifier.sh" ]]; then
     log "Classifying task type..."
     
-    if TASK_CLASSIFICATION=$(bash "$SCRIPT_DIR/task-type-classifier.sh" "$TASK_GOAL" 2>&1); then
+    # Capture stdout and stderr separately
+    if TASK_CLASSIFICATION=$(bash "$SCRIPT_DIR/task-type-classifier.sh" "$TASK_GOAL" 2>/dev/null); then
       log_success "Task classification complete"
       
       # Extract classification details

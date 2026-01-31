@@ -161,16 +161,26 @@ detect_task_type() {
     fi
     
     # Output as JSON
+    local secondary_json="[]"
+    if [ ${#secondary_types[@]} -gt 0 ] && [ -n "${secondary_types[0]}" ]; then
+        secondary_json=$(printf '%s\n' "${secondary_types[@]}" | jq -R . | jq -s .)
+    fi
+    
+    local subagents_json="[]"
+    if [ ${#subagents[@]} -gt 0 ] && [ -n "${subagents[0]}" ]; then
+        subagents_json=$(printf '%s\n' "${subagents[@]}" | jq -R . | jq -s .)
+    fi
+    
     jq -n \
         --arg primary "$primary_type" \
-        --argjson secondary "$(printf '%s\n' "${secondary_types[@]}" | jq -R . | jq -s . || echo '[]')" \
+        --argjson secondary "$secondary_json" \
         --arg confidence "$confidence" \
         --argjson research "$requires_research" \
         --argjson analysis "$requires_analysis" \
         --argjson code "$produces_code" \
         --argjson docs "$produces_docs" \
         --arg handler "$handler" \
-        --argjson subagents "$(printf '%s\n' "${subagents[@]}" | jq -R . | jq -s . || echo '[]')" \
+        --argjson subagents "$subagents_json" \
         --arg output "$output_type" \
         --arg strategy "$execution_strategy" \
         --argjson vague "$is_vague" \
@@ -215,7 +225,7 @@ score_complexity() {
     local score=1  # base score
     
     # Length indicates complexity
-    local word_count=$(echo "$goal" | wc -w)
+    local word_count=$(wc -w <<< "$goal")
     if [ "$word_count" -gt 20 ]; then
         ((score++))
     fi
@@ -224,13 +234,13 @@ score_complexity() {
     fi
     
     # Multiple verbs indicate multi-step
-    local verb_count=$(echo "$goal" | grep -oiE '\b(fix|add|update|research|review|analyze|improve)\b' | wc -l)
+    local verb_count=$(grep -oiE '\b(fix|add|update|research|review|analyze|improve)\b' <<< "$goal" | wc -l)
     if [ "$verb_count" -gt 2 ]; then
         ((score++))
     fi
     
     # Explicit phases
-    if echo "$goal" | grep -qiE '\b(then|after|next|finally|first|second)\b'; then
+    if grep -qiE '\b(then|after|next|finally|first|second)\b' <<< "$goal"; then
         ((score++))
     fi
     
