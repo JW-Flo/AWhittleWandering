@@ -262,9 +262,16 @@ placesRouter.get('/stops/:journeyId', async (c) => {
     }, 400);
   }
   
-  const limit = parseInt(c.req.query('limit') || '50', 10);
-  const offset = parseInt(c.req.query('offset') || '0', 10);
+  const rawLimit = parseInt(c.req.query('limit') || '50', 10);
+  const rawOffset = parseInt(c.req.query('offset') || '0', 10);
 
+  // Clamp pagination parameters to prevent expensive or invalid queries
+  const limit = Number.isFinite(rawLimit) && rawLimit > 0
+    ? Math.min(rawLimit, 100)
+    : 50;
+  const offset = Number.isFinite(rawOffset) && rawOffset >= 0
+    ? rawOffset
+    : 0;
   const result = await c.env.TESLA_DB.prepare(`
     SELECT * FROM stops 
     WHERE journey_id = ?
