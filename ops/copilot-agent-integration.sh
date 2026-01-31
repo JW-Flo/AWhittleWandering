@@ -97,11 +97,17 @@ After implementation, run:
 Please proceed with the implementation.
 EOF
     
-    # Safely substitute variables after HEREDOC
-    agent_prompt="${agent_prompt//TASK_GOAL_PLACEHOLDER/$task_goal}"
+    # Safely substitute variables after HEREDOC using printf for safer handling
+    # This prevents injection even if variables contain special characters
+    local safe_task_goal
+    safe_task_goal=$(printf '%s' "$task_goal")
+    agent_prompt="${agent_prompt//TASK_GOAL_PLACEHOLDER/$safe_task_goal}"
+    
     if [ -n "$context_info" ]; then
+        local safe_context_info
+        safe_context_info=$(printf '%s' "$context_info")
         local context_section="**Auto-Discovered Context:**
-$context_info
+$safe_context_info
 "
         agent_prompt="${agent_prompt//CONTEXT_INFO_PLACEHOLDER/$context_section}"
     else
