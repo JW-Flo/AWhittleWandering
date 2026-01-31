@@ -67,14 +67,13 @@ invoke_copilot_agent() {
     
     # Create a comprehensive prompt for the agent with auto-discovered context
     local agent_prompt
-    read -r -d '' agent_prompt <<EOF || true
+    # Use quoted EOF to prevent variable expansion and injection attacks
+    read -r -d '' agent_prompt <<'EOF' || true
 @copilot Please implement the following task:
 
-**Goal:** ${task_goal}
+**Goal:** TASK_GOAL_PLACEHOLDER
 
-${context_info:+**Auto-Discovered Context:**
-$context_info
-}
+CONTEXT_INFO_PLACEHOLDER
 
 **Instructions:**
 1. Analyze the codebase to understand the relevant components
@@ -86,9 +85,9 @@ $context_info
 
 **Verification:**
 After implementation, run:
-- \`npm run lint\` (if applicable)
-- \`npm run typecheck\` (if applicable)
-- \`npm test\` (if applicable)
+- `npm run lint` (if applicable)
+- `npm run typecheck` (if applicable)
+- `npm test` (if applicable)
 
 **Security:**
 - Do NOT include any secrets or credentials
@@ -97,6 +96,17 @@ After implementation, run:
 
 Please proceed with the implementation.
 EOF
+    
+    # Safely substitute variables after HEREDOC
+    agent_prompt="${agent_prompt//TASK_GOAL_PLACEHOLDER/$task_goal}"
+    if [ -n "$context_info" ]; then
+        local context_section="**Auto-Discovered Context:**
+$context_info
+"
+        agent_prompt="${agent_prompt//CONTEXT_INFO_PLACEHOLDER/$context_section}"
+    else
+        agent_prompt="${agent_prompt//CONTEXT_INFO_PLACEHOLDER/}"
+    fi
 
     # Post the comment to trigger Copilot
     if gh issue comment "${issue_number}" \
@@ -158,8 +168,10 @@ check_for_agent_pr() {
     
     # Look for PRs that reference this issue
     # Try multiple bot usernames as GitHub may use different identifiers
+    # Note: GitHub Copilot typically uses "github-actions[bot]" or "copilot[bot]"
+    # The actual username depends on how the GitHub App is configured
     local pr_number=""
-    local bot_names=("copilot" "github-copilot[bot]" "copilot[bot]" "github-actions[bot]")
+    local bot_names=("github-actions[bot]" "copilot[bot]" "github-copilot[bot]" "copilot")
     
     for bot_name in "${bot_names[@]}"; do
         pr_number=$(gh pr list \

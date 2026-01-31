@@ -47,15 +47,15 @@ create_pr() {
         return 1
     fi
     
-    # Build gh pr create command
-    local pr_cmd="gh pr create --title \"$title\" --body \"$body\" --base \"$base_branch\""
+    # Build gh pr create command using array to avoid eval and injection risks
+    local pr_cmd=(gh pr create --title "$title" --body "$body" --base "$base_branch")
     
     if [ -n "$labels" ]; then
-        pr_cmd="$pr_cmd --label \"$labels\""
+        pr_cmd+=(--label "$labels")
     fi
     
     # Create PR
-    if eval "$pr_cmd"; then
+    if "${pr_cmd[@]}"; then
         log_success "PR created successfully"
         return 0
     else
@@ -281,14 +281,28 @@ update_wrangler() {
             local new_name="${args[0]}"
             log "Updating worker name: $new_name"
             
-            sed -i "s/^name = .*/name = \"$new_name\"/" "$wrangler_path"
+            # Use portable sed that works on both Linux and macOS
+            if sed --version >/dev/null 2>&1; then
+                # GNU sed (Linux)
+                sed -i "s/^name = .*/name = \"$new_name\"/" "$wrangler_path"
+            else
+                # BSD sed (macOS)
+                sed -i '' "s/^name = .*/name = \"$new_name\"/" "$wrangler_path"
+            fi
             ;;
         
         update-compat-date)
             local new_date="${args[0]}"
             log "Updating compatibility_date: $new_date"
             
-            sed -i "s/^compatibility_date = .*/compatibility_date = \"$new_date\"/" "$wrangler_path"
+            # Use portable sed that works on both Linux and macOS
+            if sed --version >/dev/null 2>&1; then
+                # GNU sed (Linux)
+                sed -i "s/^compatibility_date = .*/compatibility_date = \"$new_date\"/" "$wrangler_path"
+            else
+                # BSD sed (macOS)
+                sed -i '' "s/^compatibility_date = .*/compatibility_date = \"$new_date\"/" "$wrangler_path"
+            fi
             ;;
         
         *)

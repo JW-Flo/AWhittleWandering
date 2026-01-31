@@ -77,7 +77,14 @@ show_status() {
         "\(.number)|\(.title)|\(.isDraft)|\(.createdAt)|\(.updatedAt)|" + 
         ([.labels[].name] | join(","))' | \
     while IFS='|' read -r num title draft created updated labels; do
-        age_days=$(( ($(date +%s) - $(date -d "$created" +%s)) / 86400 ))
+        # Portable date calculation that works on both Linux and macOS
+        if date --version >/dev/null 2>&1; then
+            # GNU date (Linux)
+            age_days=$(( ($(date +%s) - $(date -d "$created" +%s)) / 86400 ))
+        else
+            # BSD date (macOS)
+            age_days=$(( ($(date +%s) - $(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$created" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%S" "${created%Z}" +%s)) / 86400 ))
+        fi
         
         status="Ready"
         if [ "$draft" = "true" ]; then
