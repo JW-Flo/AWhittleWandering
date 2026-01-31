@@ -54,6 +54,8 @@ jobs:
           HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" \
             --max-time 30 \
             "${{ env.FRONTEND_URL }}" 2>/dev/null || echo "000")
+          # Normalize HTTP code (curl may return 000000 instead of 000 on connection failure)
+          HTTP_CODE=${HTTP_CODE:0:3}
           
           echo "Frontend HTTP Code: $HTTP_CODE"
           
@@ -72,6 +74,8 @@ jobs:
           
           RESPONSE=$(curl -sf --max-time 30 "${{ env.BACKEND_URL }}" 2>/dev/null || echo '{"status":"error"}')
           HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 30 "${{ env.BACKEND_URL }}" 2>/dev/null || echo "000")
+          # Normalize HTTP code (curl may return 000000 instead of 000 on connection failure)
+          HTTP_CODE=${HTTP_CODE:0:3}
           
           echo "Backend HTTP Code: $HTTP_CODE"
           echo "Backend Response: $RESPONSE"
@@ -99,6 +103,8 @@ jobs:
           ALL_OK=true
           for endpoint in "${ENDPOINTS[@]}"; do
             HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 15 "${BASE_URL}${endpoint}" 2>/dev/null || echo "000")
+            # Normalize HTTP code (curl may return 000000 instead of 000 on connection failure)
+            HTTP_CODE=${HTTP_CODE:0:3}
             if [[ "$HTTP_CODE" != "200" && "$HTTP_CODE" != "401" ]]; then
               echo "⚠️ Endpoint ${endpoint} returned HTTP $HTTP_CODE"
               ALL_OK=false

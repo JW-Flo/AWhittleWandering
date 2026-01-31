@@ -138,6 +138,8 @@ jobs:
           fi
           
           HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" "$HEALTH_URL" 2>/dev/null || echo "000")
+          # Normalize HTTP code (curl may return 000000 instead of 000 on connection failure)
+          HTTP_CODE=${HTTP_CODE:0:3}
           
           if [[ "$HTTP_CODE" == "200" ]]; then
             echo "✅ Backend health check passed after rollback"

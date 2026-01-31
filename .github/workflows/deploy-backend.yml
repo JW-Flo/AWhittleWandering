@@ -274,6 +274,8 @@ jobs:
             
             RESPONSE=$(curl -sf -w "\n%{http_code}" "$HEALTH_URL" 2>/dev/null || echo -e "\n000")
             HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+            # Normalize HTTP code (curl may return 000000 instead of 000 on connection failure)
+            HTTP_CODE=${HTTP_CODE:0:3}
             BODY=$(echo "$RESPONSE" | head -n -1)
             
             echo "HTTP Code: $HTTP_CODE"
