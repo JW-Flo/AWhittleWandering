@@ -1,6 +1,6 @@
 # 1Password Environment Template
 # This file is used by the 1Password load-secrets-action to load secrets
-# Syntax: VARIABLE_NAME=op://vault/${VAULT_ENV}/field
+# Syntax: VARIABLE_NAME=op://vault/${VAULT_ENV}/field_name
 # Note: ${VAULT_ENV} should be set to "dev" for development or "prod" for production
 
 # Core API Secrets
