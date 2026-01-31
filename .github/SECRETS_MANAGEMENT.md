@@ -84,16 +84,17 @@ The workflow runs automatically daily at 3 AM UTC. If validation fails:
 
 1. Add the secret definition to `.github/secrets-config.yml`:
 ```yaml
-- name: NEW_SECRET_NAME
-  source: 1password
-  vault: AWW_SHARED
-  environments:
-    production: prod
-    development: dev
-  required: true
-  validation:
-    type: token
-    min_length: 32
+secrets:
+  - name: NEW_SECRET_NAME
+    source: 1password
+    vault: AWW_SHARED
+    environments:
+      production: prod
+      development: dev
+    required: true
+    validation:
+      type: token
+      min_length: 32
 ```
 
 2. Manually add the secret to 1Password vault

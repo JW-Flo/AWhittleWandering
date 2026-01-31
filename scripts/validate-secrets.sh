@@ -155,6 +155,8 @@ try:
             # Get environment-specific item
             if '$environment' in envs:
                 item = envs['$environment']
+            elif environment in envs:
+                item = envs[environment]
             else:
                 item = envs.get('production', 'prod')  # Default to prod
             
