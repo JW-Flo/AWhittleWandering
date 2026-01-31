@@ -210,12 +210,9 @@ jobs:
         run: |
           PR_NUMBER="${{ github.event.pull_request.number }}"
           
-          # Get all labels on the PR
-          LABELS=$(gh pr view "$PR_NUMBER" --json labels --jq '.labels[].name')
-          
-          # Find all work-agent labels
-          WORK_AGENT_LABELS=$(echo "$LABELS" | grep -E '^agent:work:' || true)
-          WORK_AGENT_COUNT=$(echo "$WORK_AGENT_LABELS" | grep -c '^agent:work:' || echo 0)
+          # Get all work-agent labels on the PR (agent:work:*)
+          WORK_AGENT_LABELS=$(gh pr view "$PR_NUMBER" --json labels --jq '.labels[].name' | grep -E '^agent:work:' || true)
+          WORK_AGENT_COUNT=$(echo "$WORK_AGENT_LABELS" | grep -v '^$' | wc -l)
           
           echo "Found $WORK_AGENT_COUNT work-agent labels"
           
