@@ -182,7 +182,7 @@ jobs:
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
           
           # Extract deployment ID if available
-          DEPLOYMENT_ID=$(echo "$OUTPUT" | grep -oP '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}' | head -1 || echo "unknown")
+          DEPLOYMENT_ID=$(echo "$OUTPUT" | grep -oP '[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}' | head -1 || echo "unknown")
           echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
           
           # Exit with wrangler's exit code

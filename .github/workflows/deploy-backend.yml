@@ -256,7 +256,7 @@ jobs:
           echo "$OUTPUT"
           
           # Extract deployment ID if available
-          DEPLOYMENT_ID=$(echo "$OUTPUT" | grep -oP 'Deployment ID: \K[a-f0-9-]+' || echo "unknown")
+          DEPLOYMENT_ID=$(echo "$OUTPUT" | grep -oP 'Deployment ID: \K[a-fA-F0-9-]+' || echo "unknown")
           echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
           
           # Exit with wrangler's exit code
