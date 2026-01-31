@@ -74,6 +74,15 @@ detect_task_type() {
         produces_code=true
     fi
     
+    # Infrastructure/automation specific
+    if echo "$goal_lower" | grep -qE '\b(workflow|github action|pr|pull request|merge|wrangler|cloudflare|deploy|ci|cd)\b'; then
+        secondary_types+=("infrastructure")
+        produces_code=true
+        if [[ "$primary_type" == "implementation" ]]; then
+            primary_type="infrastructure"
+        fi
+    fi
+    
     # Implementation indicators (explicit)
     if echo "$goal_lower" | grep -qE '\b(fix|add|implement|create|build|update|refactor|remove|delete)\b'; then
         if [[ "$primary_type" != "research" ]] && [[ "$primary_type" != "analysis" ]]; then
@@ -88,6 +97,11 @@ detect_task_type() {
     if echo "$goal_lower" | grep -qE '\b(deploy|deployment|pipeline|ci|cd|platform|infrastructure|failure)\b'; then
         secondary_types+=("platform")
         requires_analysis=true
+    fi
+    
+    # PR/Git management specific
+    if echo "$goal_lower" | grep -qE '\b(pr|pull request|merge|branch|git|github)\b'; then
+        secondary_types+=("git-ops")
     fi
     
     # Vague request detection
@@ -130,10 +144,20 @@ detect_task_type() {
             fi
             subagents+=("standard-agent")
             ;;
+        infrastructure)
+            handler="infrastructure"
+            subagents+=("infrastructure-agent")
+            if [[ " ${secondary_types[*]} " =~ " platform " ]]; then
+                subagents+=("cloudflare-auditor")
+            fi
+            ;;
         implementation)
             handler="standard"
             if [[ " ${secondary_types[*]} " =~ " ui-ux " ]]; then
                 subagents+=("ui-ux-agent")
+            fi
+            if [[ " ${secondary_types[*]} " =~ " infrastructure " ]]; then
+                subagents+=("infrastructure-agent")
             fi
             ;;
     esac
