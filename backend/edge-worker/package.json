@@ -9,7 +9,7 @@
     "deploy": "wrangler deploy",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:contract": "vitest run tests/contract/unifiedData.spec.ts",
+    "test:contract": "vitest run tests/contract",
     "qa:contract": "npm run test:contract",
     "qa:schema": "vitest run tests/schema-canonical.spec.ts"
   },
