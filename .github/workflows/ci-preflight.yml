@@ -143,6 +143,10 @@ jobs:
       - name: Install Dependencies
         run: npm ci || npm install
 
+      - name: Build Shared
+        working-directory: shared
+        run: npm run build
+
       - name: Run Tests
         id: test
         run: |
@@ -308,6 +312,10 @@ jobs:
 
       - name: Install Dependencies
         run: npm ci || npm install
+
+      - name: Build Shared
+        working-directory: shared
+        run: npm run build
 
       - name: Build Backend
         working-directory: backend/edge-worker

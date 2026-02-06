@@ -27,6 +27,7 @@
 		"dev:frontend": "cd frontend && npm run dev",
 		"tesla:import": "npm run scripts/import-tesla-data.ts",
 		"qa:core": "cd backend/edge-worker && npm test",
+		"pretest": "npm run build:shared",
 		"test": "cd backend/edge-worker && npm test",
 		"test:contract": "cd backend/edge-worker && npm run qa:contract",
 		"test:schema": "cd backend/edge-worker && npm run qa:schema",

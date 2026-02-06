@@ -1,0 +1,24 @@
+description = "Apply D1 database migrations with backup"
+formula = "db-migrate"
+version = 1
+
+[vars.env]
+description = "Target environment (staging or production)"
+required = true
+
+[[steps]]
+id = "backup-db"
+title = "Backup D1 database"
+description = "Run wrangler d1 export DB --remote --env {{env}} --output backups/{{env}}-$(date +%Y%m%d-%H%M).sql"
+
+[[steps]]
+id = "apply-migrations"
+title = "Apply D1 migrations"
+description = "Run wrangler d1 migrations apply DB --remote --env {{env}}"
+needs = ["backup-db"]
+
+[[steps]]
+id = "verify"
+title = "Verify migration success"
+description = "Run wrangler d1 execute DB --remote --env {{env}} --command 'SELECT name FROM sqlite_master WHERE type=\"table\" ORDER BY name'"
+needs = ["apply-migrations"]
