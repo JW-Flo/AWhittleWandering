@@ -41,6 +41,18 @@ describe('Platform surface area (no bindings)', () => {
     expect(res.headers.get('location')).toBe('/api/v1/trip-status');
   });
 
+  it('legacy /unified-data redirects permanently', async () => {
+    const res = await call('/unified-data');
+    expect(res.status).toBe(301);
+    expect(res.headers.get('location')).toBe('/api/v1/unified-data');
+  });
+
+  it('legacy /trip-status redirects permanently', async () => {
+    const res = await call('/trip-status');
+    expect(res.status).toBe(301);
+    expect(res.headers.get('location')).toBe('/api/v1/trip-status');
+  });
+
   it('component and analytics endpoints return 200 (degraded mode)', async () => {
     const comp = await call('/api/v1/component/overview');
     expect(comp.status).toBe(200);
