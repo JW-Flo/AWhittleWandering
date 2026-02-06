@@ -97,7 +97,7 @@ To verify that the settings file hasn't been modified:
 This security model prevents several attack vectors:
 
 1. **Permission Escalation**: Agent cannot remove deny rules
-2. **Secret Exposure**: Agent cannot modify settings to read `.env*` or `secrets/**`
+2. **Secret Exposure**: Agent cannot modify settings to read `.env*` or `**/secrets/**`
 3. **CI/CD Tampering**: Agent cannot alter workflows to bypass checks
 4. **Credential Theft**: Blocks access to sensitive configuration
 
