@@ -4,7 +4,6 @@
       "Read(**)",
       "Write(CLAUDE.md)",
       "Write(.mcp.json)",
-      "Write(.claude/**)",
       "Write(backend/**)",
       "Write(frontend/**)",
       "Write(shared/**)",
@@ -21,6 +20,7 @@
     "deny": [
       "Read(.env*)",
       "Read(**/secrets/**)",
+      "Write(.claude/**)",
       "Write(.github/workflows/**)",
       "Bash(curl * | bash)",
       "Bash(rm -rf *)"
