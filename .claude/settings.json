@@ -26,10 +26,10 @@
       "Read(**/secrets/**)",
       "Write(.github/workflows/**)",
       "Write(.github/secrets*)",
-      "Bash(*|*bash*)",
-      "Bash(*|*sh*)",
-      "Bash(rm -rf *)",
-      "Bash(*rm *-rf*)"
+      "Bash(* | bash)",
+      "Bash(* | sh)",
+      "Bash(*rm*-rf*)",
+      "Bash(*rm*-fr*)"
     ]
   }
 }
