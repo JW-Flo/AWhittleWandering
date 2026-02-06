@@ -1,12 +1,59 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { API_CONFIG } from "@/lib/api-config";
+
+type HealthStatus = "checking" | "ok" | "error";
 
 const Landing: React.FC = () => {
+  const [healthStatus, setHealthStatus] = useState<HealthStatus>("checking");
+  const [healthDetail, setHealthDetail] = useState<string>("");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`${API_CONFIG.BASE_URL}/health`, { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        setHealthStatus("ok");
+        setHealthDetail(data.status ?? "healthy");
+      })
+      .catch((err) => {
+        if (err.name !== "AbortError") {
+          setHealthStatus("error");
+          setHealthDetail(String(err.message ?? err));
+        }
+      });
+    return () => controller.abort();
+  }, []);
+
   return (
     <div className="journey-typography min-h-screen bg-background text-foreground">
       <header className="container mx-auto px-4 pt-8">
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-between">
+          <div
+            className="flex items-center gap-2 rounded-full border px-3 py-1 text-xs"
+            title={healthDetail}
+          >
+            <span
+              className={`inline-block h-2 w-2 rounded-full ${
+                healthStatus === "ok"
+                  ? "bg-green-500"
+                  : healthStatus === "error"
+                  ? "bg-red-500"
+                  : "bg-yellow-500 animate-pulse"
+              }`}
+            />
+            <span className="text-muted-foreground">
+              {healthStatus === "ok"
+                ? "API OK"
+                : healthStatus === "error"
+                ? "API unreachable"
+                : "Checking API..."}
+            </span>
+          </div>
           <Button asChild variant="ghost" className="text-muted-foreground">
             <Link to="/dashboard">Journeyer dashboard</Link>
           </Button>

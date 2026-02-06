@@ -4,7 +4,7 @@ const getApiBaseUrl = () => {
   const override = (env.VITE_API_BASE_URL || env.VITE_BACKEND_URL) as string | undefined;
   if (typeof override === 'string' && override.trim()) return override.trim();
   if (env.DEV === true) return 'http://localhost:8787';
-  return 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
+  return 'https://api.awhittlewandering.com';
 };
 
 export const API_CONFIG = {

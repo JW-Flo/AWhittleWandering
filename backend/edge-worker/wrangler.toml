@@ -158,10 +158,11 @@ LOG_LEVEL = "info"
 # Use: npx wrangler secret put JWT_SECRET --env production
 # Use: npx wrangler secret put TESLA_VIN --env production
 
-# Production D1 Database (temporarily disabled - database ID issue)
-# [[env.production.d1_databases]]
-# binding = "TESLA_DB"
-# database_name = "tesla-journey-tracker"
+# Production D1 Database (re-enabled — uses same database_id as global binding)
+[[env.production.d1_databases]]
+binding = "TESLA_DB"
+database_name = "tesla-journey-tracker"
+database_id = "889d864a-966d-4e8a-a3cd-bc60abf23688"
 
 # Production R2 bucket (temporarily disabled)
 # [[env.production.r2_buckets]]
@@ -195,4 +196,38 @@ binding = "TELEMETRY_ANALYTICS"
 # Production domain routing
 [[env.production.routes]]
 pattern = "api.awhittlewandering.com/*"
+zone_name = "awhittlewandering.com"
+
+# =============================================================================
+# Staging Environment Configuration
+# =============================================================================
+[env.staging]
+name = "awhittlewandering-api-staging"
+
+[env.staging.vars]
+AI_GATEWAY_ID = "awhittlewandering-ai"
+AI_MODEL_NAME = "@cf/meta/llama-3.1-8b-instruct"
+LOG_LEVEL = "debug"
+
+[env.staging.ai]
+binding = "AI"
+
+# Staging D1 Database (uses production database for now — create a dedicated staging DB when ready)
+[[env.staging.d1_databases]]
+binding = "TESLA_DB"
+database_name = "tesla-journey-tracker"
+database_id = "889d864a-966d-4e8a-a3cd-bc60abf23688"
+
+# Staging KV (shares namespace with production — create a dedicated staging namespace when ready)
+[[env.staging.kv_namespaces]]
+binding = "AUTH_TOKENS"
+id = "7838e32d8ad04855b13eb2d9aa4f9811"
+
+# Staging Analytics Engine
+[[env.staging.analytics_engine_datasets]]
+binding = "TELEMETRY_ANALYTICS"
+
+# Staging domain routing
+[[env.staging.routes]]
+pattern = "api-staging.awhittlewandering.com/*"
 zone_name = "awhittlewandering.com"

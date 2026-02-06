@@ -120,8 +120,8 @@ jobs:
       - name: Build Frontend
         working-directory: ${{ env.FRONTEND_DIR }}
         env:
-          # Set environment-specific variables
-          VITE_API_URL: ${{ needs.setup.outputs.environment == 'production' && 'https://api.awhittlewandering.com' || 'https://awhittlewandering-api.workers.dev' }}
+          # Set environment-specific API base URL (must match VITE_API_BASE_URL used in frontend code)
+          VITE_API_BASE_URL: ${{ needs.setup.outputs.environment == 'production' && 'https://api.awhittlewandering.com' || 'https://api-staging.awhittlewandering.com' }}
         run: npm run build
 
       - name: Upload Build Artifact

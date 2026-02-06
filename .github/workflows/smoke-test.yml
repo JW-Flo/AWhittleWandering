@@ -1,0 +1,141 @@
+# =============================================================================
+# Smoke Test — Release Gate
+# =============================================================================
+# Runs after deployment to verify the frontend and backend are operational.
+# Can also be triggered manually or on push to main/staging.
+#
+# Provides a single PASS/FAIL signal for release readiness.
+# =============================================================================
+
+name: Smoke Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to test'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+  # Run on push to main/staging after deploy completes
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Environment to test'
+        required: true
+        type: string
+
+  # Also run on push to main for post-merge verification
+  push:
+    branches: [main, staging]
+
+permissions:
+  contents: read
+
+env:
+  PROD_FRONTEND_URL: https://awhittlewandering.com
+  PROD_API_URL: https://api.awhittlewandering.com
+  STAGING_FRONTEND_URL: https://staging.awhittlewandering.pages.dev
+  STAGING_API_URL: https://api-staging.awhittlewandering.com
+
+jobs:
+  smoke:
+    name: Smoke Test (${{ inputs.environment || 'staging' }})
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine URLs
+        id: urls
+        run: |
+          ENV="${{ inputs.environment || 'staging' }}"
+          if [[ "${{ github.ref }}" == "refs/heads/main" && -z "${{ inputs.environment }}" ]]; then
+            ENV="production"
+          fi
+
+          if [[ "$ENV" == "production" ]]; then
+            echo "frontend=${{ env.PROD_FRONTEND_URL }}" >> $GITHUB_OUTPUT
+            echo "api=${{ env.PROD_API_URL }}" >> $GITHUB_OUTPUT
+          else
+            echo "frontend=${{ env.STAGING_FRONTEND_URL }}" >> $GITHUB_OUTPUT
+            echo "api=${{ env.STAGING_API_URL }}" >> $GITHUB_OUTPUT
+          fi
+          echo "env=$ENV" >> $GITHUB_OUTPUT
+
+      - name: Check API Health
+        id: api_health
+        run: |
+          API_URL="${{ steps.urls.outputs.api }}"
+          echo "Testing API health: ${API_URL}/health"
+
+          HTTP_CODE=$(curl -sf -o /tmp/health.json -w "%{http_code}" --max-time 30 "${API_URL}/health" 2>/dev/null || echo "000")
+          HTTP_CODE=${HTTP_CODE:0:3}
+
+          echo "HTTP status: $HTTP_CODE"
+          if [ -f /tmp/health.json ]; then
+            echo "Response:"
+            cat /tmp/health.json || true
+          fi
+
+          if [[ "$HTTP_CODE" == "200" ]]; then
+            echo "result=pass" >> $GITHUB_OUTPUT
+          else
+            echo "result=fail" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check Frontend
+        id: frontend_check
+        run: |
+          FRONTEND_URL="${{ steps.urls.outputs.frontend }}"
+          echo "Testing frontend: ${FRONTEND_URL}"
+
+          HTTP_CODE=$(curl -sf -o /tmp/frontend.html -w "%{http_code}" --max-time 30 "${FRONTEND_URL}" 2>/dev/null || echo "000")
+          HTTP_CODE=${HTTP_CODE:0:3}
+
+          echo "HTTP status: $HTTP_CODE"
+
+          if [[ "$HTTP_CODE" == "200" ]]; then
+            echo "result=pass" >> $GITHUB_OUTPUT
+          else
+            echo "result=fail" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check CORS Headers
+        id: cors_check
+        run: |
+          API_URL="${{ steps.urls.outputs.api }}"
+          FRONTEND_URL="${{ steps.urls.outputs.frontend }}"
+          echo "Testing CORS: ${API_URL}/health with Origin: ${FRONTEND_URL}"
+
+          HEADERS=$(curl -sf -I -X OPTIONS \
+            -H "Origin: ${FRONTEND_URL}" \
+            -H "Access-Control-Request-Method: GET" \
+            --max-time 15 \
+            "${API_URL}/health" 2>/dev/null || echo "")
+
+          if echo "$HEADERS" | grep -qi "access-control-allow-origin"; then
+            echo "result=pass" >> $GITHUB_OUTPUT
+            echo "CORS headers present"
+          else
+            echo "result=warn" >> $GITHUB_OUTPUT
+            echo "CORS headers not detected (may be OK for non-browser requests)"
+          fi
+
+      - name: Summary
+        run: |
+          echo "## Smoke Test Results (${{ steps.urls.outputs.env }})"
+          echo ""
+          echo "| Check           | Result |"
+          echo "|-----------------|--------|"
+          echo "| API Health      | ${{ steps.api_health.outputs.result == 'pass' && 'PASS' || 'FAIL' }} |"
+          echo "| Frontend Load   | ${{ steps.frontend_check.outputs.result == 'pass' && 'PASS' || 'FAIL' }} |"
+          echo "| CORS Headers    | ${{ steps.cors_check.outputs.result == 'pass' && 'PASS' || steps.cors_check.outputs.result == 'warn' && 'WARN' || 'FAIL' }} |"
+          echo ""
+
+          if [[ "${{ steps.api_health.outputs.result }}" != "pass" ]] || [[ "${{ steps.frontend_check.outputs.result }}" != "pass" ]]; then
+            echo "SMOKE TEST: FAIL"
+            exit 1
+          else
+            echo "SMOKE TEST: PASS"
+          fi
