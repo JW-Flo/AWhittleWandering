@@ -9,6 +9,8 @@
 #   - Code quality (lint, format, typecheck)
 #   - Tests (unit, integration)
 #   - Build verification
+#   - Schema & contract validation
+#   - Migrations idempotency
 # =============================================================================
 
 name: CI Preflight
@@ -289,11 +291,61 @@ jobs:
             }
 
   # ==========================================================================
+  # Schema & Contract Validation
+  # ==========================================================================
+  schema-contract:
+    name: Schema & Contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Build Backend
+        working-directory: backend/edge-worker
+        run: |
+          npm ci || npm install
+          npm run build
+
+      - name: Contract Check
+        working-directory: backend/edge-worker
+        run: npm run qa:contract
+
+      - name: Schema Validation
+        working-directory: backend/edge-worker
+        run: npm run qa:schema
+
+      - name: Adapter Contract Tests
+        working-directory: backend/edge-worker
+        run: npm run test:contract || npm test -- --runInBand
+
+  # ==========================================================================
+  # Migrations Idempotency
+  # ==========================================================================
+  migrations:
+    name: Migrations
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check Migrations
+        run: bash scripts/ci-migrations-check.sh
+
+  # ==========================================================================
   # Summary - Final status
   # ==========================================================================
   summary:
     name: CI Summary
-    needs: [security, quality, test, build]
+    needs: [security, quality, test, build, schema-contract, migrations]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -307,6 +359,8 @@ jobs:
           echo "| Quality | ${{ needs.quality.result == 'success' && '✅ Pass' || '❌ Fail' }} |"
           echo "| Tests | ${{ needs.test.result == 'success' && '✅ Pass' || '❌ Fail' }} |"
           echo "| Build | ${{ needs.build.result == 'success' && '✅ Pass' || '❌ Fail' }} |"
+          echo "| Schema/Contract | ${{ needs.schema-contract.result == 'success' && '✅ Pass' || '❌ Fail' }} |"
+          echo "| Migrations | ${{ needs.migrations.result == 'success' && '✅ Pass' || '❌ Fail' }} |"
           
           # Fail if any critical check failed
           if [[ "${{ needs.security.result }}" != "success" ]]; then
@@ -333,6 +387,18 @@ jobs:
             exit 1
           fi
           
+          if [[ "${{ needs.schema-contract.result }}" != "success" ]]; then
+            echo ""
+            echo "❌ Schema/Contract validation failed - PR cannot be merged"
+            exit 1
+          fi
+          
+          if [[ "${{ needs.migrations.result }}" != "success" ]]; then
+            echo ""
+            echo "❌ Migration checks failed - PR cannot be merged"
+            exit 1
+          fi
+          
           echo ""
           echo "✅ CI Preflight passed"
 
@@ -345,8 +411,12 @@ jobs:
             const quality = '${{ needs.quality.result }}';
             const test = '${{ needs.test.result }}';
             const build = '${{ needs.build.result }}';
+            const schema = '${{ needs.schema-contract.result }}';
+            const migrations = '${{ needs.migrations.result }}';
             
-            const allPassed = security === 'success' && quality === 'success' && test === 'success' && build === 'success';
+            const allPassed = security === 'success' && quality === 'success' && 
+                             test === 'success' && build === 'success' && 
+                             schema === 'success' && migrations === 'success';
             
             const body = `## CI Preflight Results
             
@@ -356,6 +426,8 @@ jobs:
             | 📝 Quality | ${quality === 'success' ? '✅ Pass' : '⚠️ Issues'} |
             | 🧪 Tests | ${test === 'success' ? '✅ Pass' : '⚠️ Issues'} |
             | 🔨 Build | ${build === 'success' ? '✅ Pass' : '❌ Fail'} |
+            | 📋 Schema/Contract | ${schema === 'success' ? '✅ Pass' : '❌ Fail'} |
+            | 🗄️ Migrations | ${migrations === 'success' ? '✅ Pass' : '❌ Fail'} |
             
             ${allPassed ? '### ✅ Ready for review' : '### ❌ Issues must be resolved before merge'}
             `;
