@@ -37,7 +37,19 @@ describe('Platform surface area (no bindings)', () => {
 
   it('frontend trip-status alias exists', async () => {
     const res = await call('/api/v1/trip/status');
-    expect(res.status).toBe(308);
+    expect(res.status).toBe(301);
+    expect(res.headers.get('location')).toBe('/api/v1/trip-status');
+  });
+
+  it('legacy /unified-data redirects permanently', async () => {
+    const res = await call('/unified-data');
+    expect(res.status).toBe(301);
+    expect(res.headers.get('location')).toBe('/api/v1/unified-data');
+  });
+
+  it('legacy /trip-status redirects permanently', async () => {
+    const res = await call('/trip-status');
+    expect(res.status).toBe(301);
     expect(res.headers.get('location')).toBe('/api/v1/trip-status');
   });
 
