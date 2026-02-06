@@ -82,13 +82,13 @@ shared/
 7. Create PR via `gh pr create --fill`
 8. CI deploys preview, runs smoke tests
 9. Human reviews PR on GitHub Mobile
-10. Merge triggers staging → production pipeline
+10. Merge triggers development → production pipeline
 
 ## D1 Migration Rules
 - Migrations are FORWARD-ONLY (no down migrations)
 - Migrations live in backend/edge-worker/migrations/
 - ALWAYS run `wrangler d1 export DB --remote --output backup.sql` before migrating
-- ALWAYS test migration on staging before production
+- ALWAYS test migration on development before production
 - Use D1 Time Travel for emergency recovery (30-day window)
 
 ## Error Recovery
