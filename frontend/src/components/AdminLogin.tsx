@@ -12,7 +12,10 @@ interface AdminLoginProps {
 }
 
 const AdminLogin: React.FC<AdminLoginProps> = ({ onAuthChange }) => {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
+  const [showMfa, setShowMfa] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
@@ -20,13 +23,21 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onAuthChange }) => {
     isAuthenticated, 
     sessionInfo, 
     login, 
+    verifyMfa,
     logout, 
-    extendSession 
+    extendSession,
+    hasPendingMfa,
+    cancelMfa
   } = useAdminAuth();
 
   React.useEffect(() => {
     onAuthChange?.(isAuthenticated);
   }, [isAuthenticated, onAuthChange]);
+
+  React.useEffect(() => {
+    // Update MFA UI based on pending challenge
+    setShowMfa(hasPendingMfa);
+  }, [hasPendingMfa]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,23 +45,60 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onAuthChange }) => {
     setError('');
 
     try {
-      const success = await login(password);
-      if (success) {
+      const result = await login(email, password);
+      if (result.success) {
+        setEmail('');
         setPassword('');
         setError('');
+      } else if (result.mfaRequired) {
+        setShowMfa(true);
+        setError('');
       } else {
-        setError('Invalid admin password. Access denied.');
+        setError(result.error || 'Authentication failed. Please try again.');
       }
-    } catch {
-      setError('Authentication failed. Please try again.');
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleMfaVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const result = await verifyMfa(mfaCode);
+      if (result.success) {
+        setEmail('');
+        setPassword('');
+        setMfaCode('');
+        setShowMfa(false);
+        setError('');
+      } else {
+        setError(result.error || 'Invalid code. Please try again.');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancelMfa = () => {
+    cancelMfa();
+    setShowMfa(false);
+    setMfaCode('');
+    setError('');
+  };
+
   const handleLogout = () => {
     logout();
+    setEmail('');
     setPassword('');
+    setMfaCode('');
+    setShowMfa(false);
     setError('');
   };
 
@@ -118,6 +166,70 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onAuthChange }) => {
     );
   }
 
+  // Show MFA verification form
+  if (showMfa) {
+    return (
+      <Card className="admin-login border-muted">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="w-5 h-5" />
+            Two-Factor Authentication
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleMfaVerify} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="mfa-code">Authenticator Code</Label>
+              <Input
+                id="mfa-code"
+                type="text"
+                value={mfaCode}
+                onChange={(e) => setMfaCode(e.target.value)}
+                placeholder="Enter 6-digit code"
+                disabled={isLoading}
+                autoComplete="one-time-code"
+                maxLength={6}
+                pattern="[0-9]*"
+              />
+            </div>
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            <div className="flex gap-2">
+              <Button 
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={handleCancelMfa}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                className="flex-1" 
+                disabled={isLoading || mfaCode.length !== 6}
+              >
+                {isLoading ? 'Verifying...' : 'Verify'}
+              </Button>
+            </div>
+
+            <Alert className="border-blue-200 bg-blue-50">
+              <AlertDescription className="text-sm text-blue-800">
+                Enter the 6-digit code from your authenticator app.
+              </AlertDescription>
+            </Alert>
+          </form>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show login form
   return (
     <Card className="admin-login border-muted">
       <CardHeader>
@@ -129,15 +241,28 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onAuthChange }) => {
       <CardContent>
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="admin-password">Admin Password</Label>
+            <Label htmlFor="admin-email">Email</Label>
+            <Input
+              id="admin-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin@example.com"
+              disabled={isLoading}
+              autoComplete="email"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="admin-password">Password</Label>
             <Input
               id="admin-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter admin password"
+              placeholder="Enter password"
               disabled={isLoading}
-              className="font-mono"
+              autoComplete="current-password"
             />
           </div>
 
@@ -150,7 +275,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onAuthChange }) => {
           <Button 
             type="submit" 
             className="w-full" 
-            disabled={isLoading || !password.trim()}
+            disabled={isLoading || !email.trim() || !password.trim()}
           >
             {isLoading ? 'Authenticating...' : 'Login as Admin'}
           </Button>

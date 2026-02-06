@@ -19,6 +19,21 @@ import { logger } from '../utils/log';
 export const placesRouter = new Hono<{ Bindings: Env }>();
 
 /**
+ * Validates journey ID format to prevent injection attacks and ensure data integrity.
+ * 
+ * Valid journey IDs must:
+ * - Contain only alphanumeric characters, hyphens, and underscores
+ * - Be between 1 and 100 characters long
+ * - Examples: "continental-usa-2025", "europe_tour_2024", "journey123"
+ * 
+ * @param journeyId - The journey ID to validate
+ * @returns true if the journey ID is valid, false otherwise
+ */
+function validateJourneyId(journeyId: string | undefined): boolean {
+  return !!journeyId && /^[a-zA-Z0-9_-]{1,100}$/.test(journeyId);
+}
+
+/**
  * GET /api/v1/places/providers
  * Check which search providers are configured
  */
@@ -53,7 +68,7 @@ placesRouter.get('/providers', async (c) => {
   const totalFreeQueries = providers
     .filter(p => p.configured && p.name !== 'cloudflare_ai')
     .reduce((sum, p) => {
-      const num = parseInt(p.freeQuota.replace(/,/g, ''));
+      const num = parseInt(p.freeQuota.replace(/,/g, ''), 10);
       return sum + (isNaN(num) ? 0 : num);
     }, 0);
 
@@ -238,9 +253,25 @@ placesRouter.post('/correct', async (c) => {
  */
 placesRouter.get('/stops/:journeyId', async (c) => {
   const journeyId = c.req.param('journeyId');
-  const limit = parseInt(c.req.query('limit') || '50');
-  const offset = parseInt(c.req.query('offset') || '0');
+  
+  // Validate journey ID format
+  if (!validateJourneyId(journeyId)) {
+    return c.json({
+      success: false,
+      error: 'Invalid journey ID format'
+    }, 400);
+  }
+  
+  const rawLimit = parseInt(c.req.query('limit') || '50', 10);
+  const rawOffset = parseInt(c.req.query('offset') || '0', 10);
 
+  // Clamp pagination parameters to prevent expensive or invalid queries
+  const limit = Number.isFinite(rawLimit) && rawLimit > 0
+    ? Math.min(rawLimit, 100)
+    : 50;
+  const offset = Number.isFinite(rawOffset) && rawOffset >= 0
+    ? rawOffset
+    : 0;
   const result = await c.env.TESLA_DB.prepare(`
     SELECT * FROM stops 
     WHERE journey_id = ?
@@ -262,8 +293,26 @@ placesRouter.get('/stops/:journeyId', async (c) => {
  */
 placesRouter.get('/stops/:journeyId/activities', async (c) => {
   const journeyId = c.req.param('journeyId');
-  const days = parseInt(c.req.query('days') || '30');
+  
+  // Validate journey ID format
+  if (!validateJourneyId(journeyId)) {
+    return c.json({
+      success: false,
+      error: 'Invalid journey ID format'
+    }, 400);
+  }
 
+  const daysParam = c.req.query('days');
+  const DEFAULT_DAYS = 30;
+  const MAX_DAYS = 365;
+
+  let days = DEFAULT_DAYS;
+  if (daysParam != null) {
+    const parsed = Number(daysParam);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      days = Math.min(Math.floor(parsed), MAX_DAYS);
+    }
+  }
   // Get activity breakdown
   const activities = await c.env.TESLA_DB.prepare(`
     SELECT 
