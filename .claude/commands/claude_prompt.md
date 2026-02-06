@@ -1,4 +1,4 @@
-# PR6 Prompt — “Grand Finale” Deployable AWhittleWandering (Option A)
+# PR6 Prompt — “Grand Finale” Deployable AWhittleWandering
 
 ## Role + Constraints
 You are acting as the release engineer for AWhittleWandering. Your mission is to ship a **resolvable, functional website** (UI can be ugly) with a **working frontend ↔ backend** path by end of day.
