@@ -11,12 +11,7 @@ function isAllowedOrigin(origin: string): boolean {
   if (origin === 'https://awhittlewandering.com') return true;
   if (origin === 'https://www.awhittlewandering.com') return true;
 
-  // Any subdomain under awhittlewandering.com (e.g., admin.*), if used
-  if (/^https:\/\/[a-z0-9-]+\.awhittlewandering\.com$/i.test(origin)) return true;
-
-  // Cloudflare Pages preview/prod domains that appear in repo automation and may still be used.
-  // Note: Hono's CORS middleware does not interpret '*' wildcards inside literal strings.
-  // Exact Pages prod domain (no subdomain)
+  // Cloudflare Pages preview/prod domains
   if (origin === 'https://awhittlewandering.pages.dev') return true;
   if (origin === 'https://awhittlewandering-frontend.pages.dev') return true;
   if (origin === 'https://awhittlewandering-site.pages.dev') return true;

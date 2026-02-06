@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useUnifiedJourneyData } from '../hooks/useUnifiedJourneyData';
 import AdminLogin from './AdminLogin';
-import { isAdminDomain } from '../utils/adminAccess';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 
@@ -13,25 +12,7 @@ const AdminPortal: React.FC = () => {
     isConnected
   } = useUnifiedJourneyData();
 
-  useEffect(() => {
-    // Check if we're on admin domain
-    if (!isAdminDomain()) {
-      window.location.href = 'https://awhittlewandering.com';
-      return;
-    }
-  }, []);
-
-  if (!isAdminDomain()) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-center text-white">
-          <h1 className="text-2xl font-bold mb-4">Redirecting to Public Site...</h1>
-          <p>Admin portal is only accessible from admin domain.</p>
-        </div>
-      </div>
-    );
-  }
-
+  // Authentication-based access control - no domain restriction
   if (!isAuthenticated) {
     return <AdminLogin onAuthChange={(authenticated) => setIsAuthenticated(authenticated)} />;
   }

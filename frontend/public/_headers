@@ -10,6 +10,6 @@
 
 # API requests - allow CORS for the custom domain
 /api/*
-  Access-Control-Allow-Origin: https://awhittlewandering.com, https://admin.awhittlewandering.com
+  Access-Control-Allow-Origin: https://awhittlewandering.com
   Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
   Access-Control-Allow-Headers: Content-Type, Authorization
