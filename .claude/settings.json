@@ -12,7 +12,6 @@
       "Write(scripts/**)",
       "Write(tests/**)",
       "Write(docs/**)",
-      "Write(.github/workflows/ci.yml)",
       "Bash(git *)",
       "Bash(node *)",
       "Bash(npm *)"
