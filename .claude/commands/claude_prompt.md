@@ -34,6 +34,19 @@ If validation surfaces bugs or failures that **do not block framework progressio
 
 If a failure **does block validation**, fix only what is required to unblock and continue.
 
+## Framework Document Updates (Strictly Controlled)
+You may update `mobile_cloud_framework.md` **only if** validation or implementation reveals:
+- a requirement that is incorrect, incomplete, or no longer feasible in practice, or
+- a missing rule that is necessary for the framework to be self-validating or autonomous.
+
+When making such a change:
+- Modify the **minimum necessary text** only.
+- Add an entry to a clearly marked **“Change Log / Annotations”** section within the same document including:
+  - date (ISO-8601)
+  - reason for change
+  - PR or commit reference
+- Do **not** rewrite or reformat the document wholesale.
+
 ## PR3 Scope
 After PR0–PR2 are validated:
 - Proceed to PR3 as defined by `mobile_cloud_framework.md`.
@@ -42,7 +55,7 @@ After PR0–PR2 are validated:
 
 ## Operating Mode
 - Be efficient and surgical.
-- Avoid documentation-heavy output except for required bug annotations.
+- Avoid documentation-heavy output except for required annotations.
 - Do not refactor unrelated code.
 - Keep commits minimal and conventional.
 
@@ -51,3 +64,4 @@ Work is complete when:
 - PR0–PR2 validate cleanly or are properly annotated
 - PR3 framework work is implemented and validated
 - Any non-blocking issues are documented for follow-on agents
+- Any necessary framework changes are explicitly annotated and traceable
