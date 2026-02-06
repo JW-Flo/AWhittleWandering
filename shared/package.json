@@ -12,6 +12,10 @@
     "./schemas/canonical/event-types": {
       "types": "./dist/schemas/canonical/event-types.d.ts",
       "default": "./dist/schemas/canonical/event-types.js"
+    },
+    "./providers/provider-interface": {
+      "types": "./dist/providers/provider-interface.d.ts",
+      "default": "./dist/providers/provider-interface.js"
     }
   },
   "scripts": {
