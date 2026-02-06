@@ -56,6 +56,34 @@ This framework enables **full-stack cloud application development** from Android
 └──────────────────────────────────────────────────────────┘
 ```
 
+## Cognitive Guidance Layer (Copilot Custom Agents)
+
+Purpose: improve PR review quality and indirectly drive CI/CD hardening through advisory-only guidance.
+
+### Capabilities
+- Provide high-signal PR review feedback on security, CI safety, release readiness, and incident preparedness.
+- Identify CI/CD risks, gaps, or misconfigurations based on diffs and provided artifacts.
+- Recommend targeted, minimal changes that improve determinism and auditability.
+
+### Explicit Non-Capabilities
+- Do not execute code, run tests, or trigger workflows.
+- Do not enforce policy, gate merges, or act as an approval mechanism.
+- Do not modify CI/CD orchestration, runtime behavior, or architecture boundaries.
+
+### Architecture Diagram
+```
+Human / PR
+      ↓
+Copilot Custom Agents (Guidance Only)
+      ↓
+GitHub Actions / Bots (Execution & Enforcement)
+      ↓
+External Agents / Orchestrators
+```
+
+### Design Principle
+Copilot agents are stateless, advisory, and never the source of truth.
+
 ### Why Gastown
 
 | Problem                            | Without Gastown           | With Gastown                          |
