@@ -12,9 +12,13 @@
       "Write(scripts/**)",
       "Write(tests/**)",
       "Write(docs/**)",
-      "Write(.github/workflows/ci.yml)",
       "Bash(git *)",
-      "Bash(node *)"
+      "Bash(node *)",
+      "Bash(npm *)",
+      "Bash(./scripts/*)",
+      "Bash(bash scripts/*)",
+      "Bash(wrangler *)",
+      "Bash(npx wrangler *)"
     ],
 
     "deny": [
@@ -22,8 +26,10 @@
       "Read(**/secrets/**)",
       "Write(.github/workflows/**)",
       "Write(.github/secrets*)",
-      "Bash(curl * | bash)",
-      "Bash(rm -rf *)"
+      "Bash(*curl*|*bash*)",
+      "Bash(*wget*|*bash*)",
+      "Bash(rm -rf*)",
+      "Bash(*rm*-rf*)"
     ]
   }
 }
