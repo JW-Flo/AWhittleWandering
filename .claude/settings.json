@@ -23,7 +23,10 @@
       "Read(.dev.vars)",
       "Write(.github/workflows/**)",
       "Bash(curl * | bash)",
-      "Bash(rm -rf /)"
+      "Bash(rm -rf /)",
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf ~)",
+      "Bash(rm -rf ~/)"
     ]
   }
 }
