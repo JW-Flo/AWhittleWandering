@@ -86,9 +86,16 @@ provision_d1_database() {
     # Check if database already exists
     if wrangler d1 list 2>/dev/null | grep -q "$db_name"; then
         log_warn "D1 database already exists: $db_name"
-        local db_id=$(wrangler d1 list 2>/dev/null | grep "$db_name" | awk '{print $1}')
-        echo "$db_id"
-        return 0
+        # Try JSON format first (more reliable)
+        local db_id=$(wrangler d1 list --json 2>/dev/null | jq -r '.[] | select(.name=="'"$db_name"'") | .uuid' 2>/dev/null || echo "")
+        if [ -z "$db_id" ]; then
+            # Fallback to text parsing
+            db_id=$(wrangler d1 list 2>/dev/null | grep "$db_name" | awk '{print $1}')
+        fi
+        if [ -n "$db_id" ]; then
+            echo "$db_id"
+            return 0
+        fi
     fi
     
     # Create D1 database
@@ -109,22 +116,20 @@ provision_d1_database() {
 }
 
 provision_kv_namespace() {
+    # Note: KV namespace name follows convention: awhittlewandering-auth-{env}
+    # This naming is specific to this project's authentication token storage
     local kv_name="awhittlewandering-auth-${ENV_NAME}"
     
     log "Provisioning KV namespace: $kv_name"
     
     # Check if KV namespace already exists
-    if wrangler kv:namespace list 2>/dev/null | grep -q "$kv_name"; then
+    # Try JSON format first (more reliable)
+    local kv_id=$(wrangler kv:namespace list --json 2>/dev/null | jq -r '.[] | select(.title=="'"$kv_name"'") | .id' 2>/dev/null || echo "")
+    
+    if [ -n "$kv_id" ]; then
         log_warn "KV namespace already exists: $kv_name"
-        local kv_id=$(wrangler kv:namespace list 2>/dev/null | grep "$kv_name" | grep -oP 'id\s*=\s*\K\w+' || echo "")
-        if [ -z "$kv_id" ]; then
-            # Try alternate format
-            kv_id=$(wrangler kv:namespace list 2>/dev/null | jq -r ".[] | select(.title==\"$kv_name\") | .id" 2>/dev/null || echo "")
-        fi
-        if [ -n "$kv_id" ]; then
-            echo "$kv_id"
-            return 0
-        fi
+        echo "$kv_id"
+        return 0
     fi
     
     # Create KV namespace

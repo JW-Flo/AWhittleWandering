@@ -153,11 +153,11 @@ ENVIRONMENT = "staging"
 [[env.staging.d1_databases]]
 binding = "TESLA_DB"
 database_name = "tesla-journey-tracker-staging"
-database_id = "PROVISION_REQUIRED"  # Run: bash scripts/provision-environment.sh staging
+database_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"  # Run: bash scripts/provision-environment.sh staging
 
 [[env.staging.kv_namespaces]]
 binding = "AUTH_TOKENS"
-id = "PROVISION_REQUIRED"  # Run: bash scripts/provision-environment.sh staging
+id = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  # Run: bash scripts/provision-environment.sh staging
 
 [[env.staging.analytics_engine_datasets]]
 binding = "TELEMETRY_ANALYTICS"

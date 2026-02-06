@@ -365,7 +365,7 @@ For issues with infrastructure provisioning:
 1. Check the [troubleshooting section](#troubleshooting) above
 2. Review [DEPLOYMENT_TROUBLESHOOTING.md](./DEPLOYMENT_TROUBLESHOOTING.md)
 3. Open a GitHub issue with the `infrastructure` label
-4. Contact DevOps team via email: <joe@awhittlewandering.com>
+4. Contact DevOps team: Open a GitHub issue or discussion
 
 ## References
 
