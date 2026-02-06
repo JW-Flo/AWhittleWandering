@@ -1,3 +1,7 @@
+# D1 backup files (framework: Security Model > Mandatory Guardrails)
+backups/
+*.sql.bak
+
 # Secrets and credentials
 jwt-secret-generated.txt
 generated-secrets.txt

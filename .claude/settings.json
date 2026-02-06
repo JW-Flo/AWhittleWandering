@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Write(src/**)",
+      "Write(test/**)",
+      "Write(tests/**)",
+      "Write(backend/**)",
+      "Write(frontend/src/**)",
+      "Write(shared/**)",
+      "Write(migrations/**)",
+      "Bash(npm run *)",
+      "Bash(npx vitest *)",
+      "Bash(wrangler *)",
+      "Bash(gt *)",
+      "Bash(bd *)",
+      "Bash(gh pr *)",
+      "Bash(git *)"
+    ],
+    "deny": [
+      "Read(.env*)",
+      "Read(**/secrets/**)",
+      "Read(.dev.vars)",
+      "Write(.github/workflows/**)",
+      "Bash(curl * | bash)",
+      "Bash(rm -rf /)"
+    ]
+  }
+}
