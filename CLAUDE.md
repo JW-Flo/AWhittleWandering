@@ -27,12 +27,11 @@ cd frontend
 npm run dev              # vite dev server
 npm run build            # vite build
 npm run lint             # eslint
-npm run typecheck        # tsc --noEmit
 
 # Deployment
 npm run deploy:frontend  # wrangler pages deploy
-wrangler deploy --env staging     # backend to staging
-wrangler deploy --env production  # backend to production
+wrangler deploy --env development  # backend to development
+wrangler deploy --env production   # backend to production
 wrangler d1 migrations apply DB --remote  # apply migrations
 ```
 
