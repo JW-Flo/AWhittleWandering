@@ -5,7 +5,7 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Detect platform and set appropriate SHA256 command
 if command -v sha256sum >/dev/null 2>&1; then
