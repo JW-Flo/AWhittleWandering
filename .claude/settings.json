@@ -21,6 +21,9 @@
       "Read(.env*)",
       "Read(**/secrets/**)",
       "Write(.claude/**)",
+      "Write(.ai/**)",
+      "Write(.cline/**)",
+      "Write(.clinerules/**)",
       "Write(.github/workflows/**)",
       "Bash(curl * | bash)",
       "Bash(rm -rf *)"

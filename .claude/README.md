@@ -1,27 +1,40 @@
-# Claude Settings Security
+# AI Agent Configuration Security
 
-This directory contains the Claude AI agent configuration with built-in security controls.
+This directory contains the Claude AI agent configuration with built-in security controls. The same security model is applied to all AI agent configuration directories (`.claude`, `.ai`, `.cline`, `.clinerules`).
 
 ## Security Model
 
-The `.claude/settings.json` file defines permissions for the Claude agent. To prevent the agent from modifying its own permissions (which would defeat security controls), we implement **SHA-256 integrity verification**.
+The `.claude/settings.json` file defines permissions for the Claude agent. To prevent the agent from modifying its own permissions or any AI agent configurations (which would defeat security controls), we implement **SHA-256 integrity verification**.
 
 ### Key Security Features
 
-1. **Immutable Permissions**: The agent is **denied** write access to `.claude/**` (see line 23 in `settings.json`)
-2. **SHA-256 Verification**: A cryptographic hash ensures the settings file hasn't been tampered with
+1. **Immutable Permissions**: The agent is **denied** write access to:
+   - `.claude/**` - Claude agent settings
+   - `.ai/**` - AI system commands and subagents
+   - `.cline/**` - Cline agent configuration
+   - `.clinerules/**` - Cline agent hooks and rules
+2. **SHA-256 Verification**: Cryptographic hashes ensure configuration files haven't been tampered with
 3. **Human-Only Updates**: Only authorized humans can update settings through git commits
 
 ## Files
 
 - `settings.json` - Claude agent permissions configuration
 - `settings.json.sha256` - SHA-256 hash for integrity verification
-- `verify-settings.sh` - Script to verify settings integrity
+- `verify-settings.sh` - Script to verify Claude settings integrity
 - `README.md` - This file
+
+## Repository-Wide AI Configuration Protection
+
+All AI agent configurations are protected:
+- **Manifest**: `/.ai-configs.manifest.sha256` - Contains hashes for all 33+ AI config files
+- **Generate**: `/scripts/generate-ai-manifest.sh` - Regenerate the manifest
+- **Verify**: `/scripts/verify-ai-manifest.sh` - Verify all AI configurations at once
 
 ## Verifying Settings Integrity
 
-To verify that the settings file hasn't been modified:
+### Verify Claude Settings Only
+
+To verify that the Claude settings file hasn't been modified:
 
 ```bash
 ./.claude/verify-settings.sh
@@ -30,11 +43,22 @@ To verify that the settings file hasn't been modified:
 ✓ Success output: `Claude settings integrity verified successfully`  
 ✗ Failure output: Security warning with restore instructions
 
+### Verify All AI Configurations
+
+To verify all AI agent configurations at once:
+
+```bash
+bash scripts/verify-ai-manifest.sh
+```
+
+✓ Success output: `All 33 AI configuration files verified successfully`  
+✗ Failure output: Lists which files failed verification
+
 ## Updating Settings (Authorized Personnel Only)
 
 **IMPORTANT**: Settings can only be updated by authorized team members through pull requests.
 
-### Step-by-Step Update Process
+### Step-by-Step Update Process (Claude Settings)
 
 1. **Make your changes** to `.claude/settings.json`
    ```bash
@@ -72,6 +96,27 @@ To verify that the settings file hasn't been modified:
    - Tag security reviewers
    - Wait for approval before merging
 
+### Updating Other AI Configurations (.ai, .cline, .clinerules)
+
+When updating any AI agent configuration files:
+
+1. **Make your changes** to files in `.ai`, `.cline`, or `.clinerules`
+2. **Review changes carefully**
+3. **Regenerate the manifest**
+   ```bash
+   bash scripts/generate-ai-manifest.sh
+   ```
+4. **Verify the manifest**
+   ```bash
+   bash scripts/verify-ai-manifest.sh
+   ```
+5. **Commit all changes together**
+   ```bash
+   git add .ai .cline .clinerules .ai-configs.manifest.sha256
+   git commit -m "Update AI agent configurations"
+   ```
+6. **Create Pull Request** for review
+
 ## Permissions Explained
 
 ### Allowed Operations
@@ -82,14 +127,17 @@ To verify that the settings file hasn't been modified:
 ### Denied Operations
 - **Read(`.env*`)**: No access to environment files with secrets
 - **Read(`**/secrets/**`)**: No access to secrets directories
-- **Write(`.claude/**`)**: Cannot modify its own permissions
+- **Write(`.claude/**`)**: Cannot modify Claude agent configuration
+- **Write(`.ai/**`)**: Cannot modify AI system commands and subagents
+- **Write(`.cline/**`)**: Cannot modify Cline agent configuration
+- **Write(`.clinerules/**`)**: Cannot modify Cline agent hooks and rules
 - **Write(`.github/workflows/**`)**: Cannot modify CI/CD workflows (note: `.github/workflows/ci.yml` is explicitly allowed via an allow rule that overrides this deny rule)
 - **Bash(`curl * | bash`)**: Blocked dangerous piped execution
 - **Bash(`rm -rf *`)**: Blocked destructive commands
 
 ### Important Security Notes
 
-**Git Command Bypass:** The agent has `Bash(git *)` permission which could theoretically be used to modify `.claude/settings.json` via commands like `git checkout`, `git apply`, or `git reset`. However:
+**Git Command Bypass:** The agent has `Bash(git *)` permission which could theoretically be used to modify AI configuration files via commands like `git checkout`, `git apply`, or `git reset`. However:
 1. The SHA-256 verification will detect any such tampering
 2. Git operations are logged in the repository history
 3. The verification script should be run before any agent operations to detect unauthorized changes
