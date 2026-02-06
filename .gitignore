@@ -10,6 +10,7 @@ generated-secrets.txt
 .env
 .env.local
 .env.*.local
+.env.*.resources
 .dev.vars
 config/dev-secrets-config.env
 

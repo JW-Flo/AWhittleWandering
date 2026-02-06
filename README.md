@@ -72,6 +72,25 @@ npm run test:contract         # Unified contract checks
 npm run test:schema           # Schema validation
 ```
 
+## Infrastructure & Scaling
+
+To provision new environments (staging, customer instances):
+
+```bash
+# Provision staging environment
+bash scripts/provision-environment.sh staging
+
+# Provision customer environment
+bash scripts/provision-environment.sh customer-acme
+```
+
+See [docs/INFRASTRUCTURE_SCALING.md](docs/INFRASTRUCTURE_SCALING.md) for complete guide on:
+- Multi-environment setup
+- Customer onboarding process
+- Resource provisioning automation
+- Deployment pipelines
+- Monitoring and troubleshooting
+
 See [docs/](docs/) for guides and detailed documentation.
 
 ## Tech Stack

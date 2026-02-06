@@ -127,6 +127,13 @@ binding = "TELEMETRY_ANALYTICS"
 binding = "AI"
 
 # Staging Environment Configuration
+# ============================================================================
+# To provision staging resources, run:
+#   bash scripts/provision-environment.sh staging
+#
+# This will create D1 database and KV namespace, then provide the IDs to add here.
+# See docs/INFRASTRUCTURE_SCALING.md for detailed instructions.
+# ============================================================================
 [env.staging]
 name = "awhittlewandering-api-staging"
 
@@ -136,14 +143,21 @@ AI_MODEL_NAME = "@cf/meta/llama-3.1-8b-instruct"
 LOG_LEVEL = "info"
 ENVIRONMENT = "staging"
 
+# ⚠️  BEFORE DEPLOYING TO STAGING:
+# 1. Run: bash scripts/provision-environment.sh staging
+# 2. Copy the generated D1 database_id and KV namespace id below
+# 3. Set secrets with: wrangler secret put <SECRET_NAME> --env staging
+# 4. Apply migrations: wrangler d1 migrations apply TESLA_DB --env staging --remote
+# 5. Deploy: wrangler deploy --env staging
+
 [[env.staging.d1_databases]]
 binding = "TESLA_DB"
 database_name = "tesla-journey-tracker-staging"
-database_id = "STAGING_DB_ID"  # Replace with actual staging D1 database ID
+database_id = "PROVISION_REQUIRED"  # Run: bash scripts/provision-environment.sh staging
 
 [[env.staging.kv_namespaces]]
 binding = "AUTH_TOKENS"
-id = "STAGING_KV_ID"  # Replace with actual staging KV namespace ID
+id = "PROVISION_REQUIRED"  # Run: bash scripts/provision-environment.sh staging
 
 [[env.staging.analytics_engine_datasets]]
 binding = "TELEMETRY_ANALYTICS"
@@ -154,6 +168,55 @@ binding = "AI"
 [[env.staging.routes]]
 pattern = "api-staging.awhittlewandering.com/*"
 zone_name = "awhittlewandering.com"
+
+# ============================================================================
+# Customer Environment Example
+# ============================================================================
+# For customer onboarding, create isolated environments:
+#
+# 1. Provision resources:
+#    bash scripts/provision-environment.sh customer-acme
+#
+# 2. Add configuration block (uncomment and update):
+#
+# [env.customer-acme]
+# name = "awhittlewandering-api-customer-acme"
+#
+# [env.customer-acme.vars]
+# AI_GATEWAY_ID = "awhittlewandering-ai"
+# AI_MODEL_NAME = "@cf/meta/llama-3.1-8b-instruct"
+# LOG_LEVEL = "info"
+# ENVIRONMENT = "customer-acme"
+#
+# [[env.customer-acme.d1_databases]]
+# binding = "TESLA_DB"
+# database_name = "tesla-journey-tracker-customer-acme"
+# database_id = "<generated-by-provisioning-script>"
+#
+# [[env.customer-acme.kv_namespaces]]
+# binding = "AUTH_TOKENS"
+# id = "<generated-by-provisioning-script>"
+#
+# [[env.customer-acme.analytics_engine_datasets]]
+# binding = "TELEMETRY_ANALYTICS"
+#
+# [env.customer-acme.ai]
+# binding = "AI"
+#
+# [[env.customer-acme.routes]]
+# pattern = "api-acme.awhittlewandering.com/*"
+# zone_name = "awhittlewandering.com"
+#
+# 3. Set customer secrets:
+#    wrangler secret put TESSIE_API_TOKEN --env customer-acme
+#    wrangler secret put TESLA_VIN --env customer-acme
+#    # ... other secrets
+#
+# 4. Deploy:
+#    wrangler deploy --env customer-acme
+#
+# See docs/INFRASTRUCTURE_SCALING.md for complete guide.
+# ============================================================================
 
 [env.production]
 name = "awhittlewandering-api"

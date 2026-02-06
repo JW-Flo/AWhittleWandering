@@ -1,0 +1,54 @@
+description = "Provision new environment with D1 and KV resources"
+formula = "provision-environment"
+version = 1
+
+[vars.env]
+description = "Environment name (e.g., staging, customer-acme)"
+required = true
+
+[[steps]]
+id = "validate"
+title = "Validate prerequisites"
+description = "Check wrangler is installed and authenticated"
+
+[[steps]]
+id = "provision-resources"
+title = "Provision D1 and KV resources"
+description = "Run bash scripts/provision-environment.sh {{env}}"
+needs = ["validate"]
+
+[[steps]]
+id = "save-config"
+title = "Save resource configuration"
+description = "Review .env.{{env}}.resources file with generated IDs"
+needs = ["provision-resources"]
+
+[[steps]]
+id = "update-wrangler"
+title = "Update wrangler.toml"
+description = "Add the generated [env.{{env}}] configuration block to backend/edge-worker/wrangler.toml"
+needs = ["save-config"]
+
+[[steps]]
+id = "set-secrets"
+title = "Set environment secrets"
+description = "Run wrangler secret put commands for TESSIE_API_TOKEN, JWT_SECRET, etc. with --env {{env}}"
+needs = ["update-wrangler"]
+
+[[steps]]
+id = "apply-migrations"
+title = "Apply D1 migrations"
+description = "Run wrangler d1 migrations apply TESLA_DB --remote --env {{env}}"
+needs = ["set-secrets"]
+
+[[steps]]
+id = "deploy"
+title = "Deploy to new environment"
+description = "Run wrangler deploy --env {{env}}"
+needs = ["apply-migrations"]
+
+[[steps]]
+id = "verify"
+title = "Verify deployment"
+description = "Run curl https://awhittlewandering-api-{{env}}.workers.dev/api/v1/health"
+needs = ["deploy"]
