@@ -49,7 +49,11 @@ To verify that the settings file hasn't been modified:
 
 3. **Generate new SHA-256 hash**
    ```bash
-   sha256sum .claude/settings.json > .claude/settings.json.sha256
+   # On Linux:
+   cd .claude && sha256sum settings.json > settings.json.sha256
+   
+   # On macOS:
+   cd .claude && shasum -a 256 settings.json > settings.json.sha256
    ```
 
 4. **Verify the new hash**
@@ -79,9 +83,17 @@ To verify that the settings file hasn't been modified:
 - **Read(`.env*`)**: No access to environment files with secrets
 - **Read(`**/secrets/**`)**: No access to secrets directories
 - **Write(`.claude/**`)**: Cannot modify its own permissions
-- **Write(`.github/workflows/**`)**: Cannot modify CI/CD (except ci.yml)
+- **Write(`.github/workflows/**`)**: Cannot modify CI/CD workflows (note: `.github/workflows/ci.yml` is explicitly allowed via an allow rule that overrides this deny rule)
 - **Bash(`curl * | bash`)**: Blocked dangerous piped execution
 - **Bash(`rm -rf *`)**: Blocked destructive commands
+
+### Important Security Notes
+
+**Git Command Bypass:** The agent has `Bash(git *)` permission which could theoretically be used to modify `.claude/settings.json` via commands like `git checkout`, `git apply`, or `git reset`. However:
+1. The SHA-256 verification will detect any such tampering
+2. Git operations are logged in the repository history
+3. The verification script should be run before any agent operations to detect unauthorized changes
+4. In practice, the permission system monitors direct file writes, and git commands would still trigger the file modification timestamps
 
 ## Security Rationale
 
@@ -107,8 +119,10 @@ The verification script can be integrated into CI pipelines:
 
 ```yaml
 - name: Verify Claude Settings Integrity
-  run: ./.claude/verify-settings.sh
+  run: bash ./.claude/verify-settings.sh
 ```
+
+Note: The script is executable, but using `bash` explicitly ensures it works across all CI environments.
 
 This ensures settings haven't been tampered with before allowing agent operations.
 
@@ -121,7 +135,9 @@ If you see a security warning about modified settings:
 1. **Check git status**: `git status .claude/`
 2. **Review changes**: `git diff .claude/settings.json`
 3. **If unauthorized**, restore: `git checkout HEAD -- .claude/settings.json`
-4. **If authorized**, regenerate hash: `sha256sum .claude/settings.json > .claude/settings.json.sha256`
+4. **If authorized**, regenerate hash:
+   - Linux: `cd .claude && sha256sum settings.json > settings.json.sha256`
+   - macOS: `cd .claude && shasum -a 256 settings.json > settings.json.sha256`
 
 ### Hash mismatch in CI
 
@@ -129,6 +145,8 @@ If CI fails with hash mismatch:
 - Ensure both `settings.json` and `settings.json.sha256` are committed together
 - Verify the hash was generated from the correct file version
 - Check for line ending issues (CRLF vs LF)
+- Ensure the hash file was generated from within the `.claude` directory (path must be relative: `settings.json` not `.claude/settings.json`)
+- The verification script automatically detects and uses the correct command (`sha256sum` on Linux, `shasum` on macOS)
 
 ## Additional Security
 
