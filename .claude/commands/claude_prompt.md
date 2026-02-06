@@ -8,54 +8,46 @@ Before making **any changes**, locate, read, and internalize the project’s can
 - `mobile_cloud_framework.md` (root of repo)
 - `CLAUDE.md` and `AGENTS.md` (if present)
 
-These documents are the source of truth for:
-- architecture
-- CI/CD expectations
-- autonomy boundaries
-- what constitutes “done”
-
+These documents are the source of truth for architecture, CI/CD expectations, autonomy boundaries, and what constitutes “done.”  
 If instructions conflict, defer to `mobile_cloud_framework.md`.
 
-## Operating Mode
-- Be efficient and surgical.
-- Prefer high-leverage work (framework primitives, CI/CD, deploy paths).
-- Do not waste time on minor refactors, formatting, or cosmetic changes.
-- Assume Codex and Copilot will handle small or repetitive fixes later.
-
-## Validation Before Construction
-Before implementing new framework work:
-1. Validate PR0 and PR1 by running fast, targeted checks:
+## Review Gate (PR0–PR2)
+Before proceeding further:
+1. Review PR0, PR1, and PR2 as implemented in `main`.
+2. Re-run fast validation:
    - deterministic install
    - lint / typecheck / tests (if present)
    - build
    - minimal Worker smoke test (`/health` or equivalent)
-2. If validation passes, proceed immediately.
-3. If validation fails, fix only what blocks validation.
 
-No reports. No essays. Validation is binary: pass or fail.
+Validation remains binary: pass or fail.
 
-## PR2 Scope
-PR2 exists solely to complete the Mobile Cloud Framework as defined in
-`mobile_cloud_framework.md`.
+## Bug / Failure Handling (Non-Blocking)
+If validation surfaces bugs or failures that **do not block framework progression**:
+- Do **not** fix them immediately.
+- Capture them in a single consolidated markdown file (e.g. `docs/validation_findings.md`) containing:
+  - failing suite or check
+  - error summary
+  - likely cause (if obvious)
+  - recommended follow-up (agent type or area)
+- Keep this factual and concise. No speculation, no long analysis.
 
-Implement only missing or incomplete framework primitives, such as:
-- CI gating
-- staging + production deploy automation
-- agent safety constraints
-- drift prevention / verification scripts
+If a failure **does block validation**, fix only what is required to unblock and continue.
 
-Do not re-implement things that already work.
+## PR3 Scope
+After PR0–PR2 are validated:
+- Proceed to PR3 as defined by `mobile_cloud_framework.md`.
+- Focus on the next missing or incomplete framework primitives only.
+- Prefer CI/CD enforcement, orchestration, and autonomy guarantees over application logic.
 
-## Constraints
-- Do not add or print secrets.
-- Do not read `.env*` files.
-- Do not change unrelated application logic.
+## Operating Mode
+- Be efficient and surgical.
+- Avoid documentation-heavy output except for required bug annotations.
+- Do not refactor unrelated code.
 - Keep commits minimal and conventional.
-- Prefer adding new files over rewriting existing ones.
 
 ## Completion Criteria
 Work is complete when:
-- Framework-required tests pass
-- CI enforces correctness
-- Deploy paths are automated and gated
-- The repo can validate itself without human babysitting.
+- PR0–PR2 validate cleanly or are properly annotated
+- PR3 framework work is implemented and validated
+- Any non-blocking issues are documented for follow-on agents
