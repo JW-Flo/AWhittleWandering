@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Write(CLAUDE.md)",
+      "Write(.mcp.json)",
+      "Write(.claude/**)",
+      "Write(backend/**)",
+      "Write(frontend/**)",
+      "Write(shared/**)",
+      "Write(ops/**)",
+      "Write(scripts/**)",
+      "Write(tests/**)",
+      "Write(docs/**)",
+      "Write(.github/workflows/ci.yml)",
+      "Bash(git *)",
+      "Bash(node *)",
+      "Bash(npm *)"
+    ],
+
+    "deny": [
+      "Read(.env*)",
+      "Read(**/secrets/**)",
+      "Write(.github/workflows/**)",
+      "Bash(curl * | bash)",
+      "Bash(rm -rf *)"
+    ]
+  }
+}
