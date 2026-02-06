@@ -1,0 +1,42 @@
+description = "Production deploy with approval gate"
+formula = "deploy-production"
+version = 1
+
+[vars.version]
+description = "Semantic version tag (e.g., 1.2.0)"
+required = true
+
+[[steps]]
+id = "confirm-staging"
+title = "Confirm staging is green"
+description = "Run curl -sf https://api.staging.awhittlewandering.com/api/v1/health | jq -e '.status == \"ok\"'"
+
+[[steps]]
+id = "backup-prod-db"
+title = "Backup production D1"
+description = "Run wrangler d1 export DB --remote --env production --output backups/prod-$(date +%Y%m%d-%H%M).sql"
+needs = ["confirm-staging"]
+
+[[steps]]
+id = "migrate-prod"
+title = "Apply production migrations"
+description = "Run wrangler d1 migrations apply DB --remote --env production"
+needs = ["backup-prod-db"]
+
+[[steps]]
+id = "deploy-prod"
+title = "Deploy to production"
+description = "Run wrangler deploy --env production"
+needs = ["migrate-prod"]
+
+[[steps]]
+id = "health-check"
+title = "Production health check"
+description = "Run curl -sf https://api.awhittlewandering.com/api/v1/health | jq -e '.status == \"ok\"'"
+needs = ["deploy-prod"]
+
+[[steps]]
+id = "tag-release"
+title = "Tag release"
+description = "Run git tag -a v{{version}} -m 'Release v{{version}}' && git push --tags"
+needs = ["health-check"]

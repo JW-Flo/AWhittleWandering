@@ -12,6 +12,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["schemas/**/*"],
+  "include": ["schemas/**/*", "providers/**/*"],
   "exclude": ["node_modules", "dist"]
 }

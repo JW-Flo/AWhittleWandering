@@ -19,7 +19,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
   push:
-    branches: [main, staging, dev]
+    branches: [main, staging, dev, 'agent/*', 'feature/*', 'claude/*']
 
 permissions:
   contents: read

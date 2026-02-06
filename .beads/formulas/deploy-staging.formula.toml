@@ -1,0 +1,38 @@
+description = "Deploy to staging with migration"
+formula = "deploy-staging"
+version = 1
+
+[[steps]]
+id = "lint-test"
+title = "Lint and test"
+description = "Run npm test && npm run build"
+
+[[steps]]
+id = "backup-db"
+title = "Backup staging D1"
+description = "Run wrangler d1 export DB --remote --env staging --output backups/staging-$(date +%Y%m%d-%H%M).sql"
+needs = ["lint-test"]
+
+[[steps]]
+id = "migrate"
+title = "Apply D1 migrations"
+description = "Run wrangler d1 migrations apply DB --remote --env staging"
+needs = ["backup-db"]
+
+[[steps]]
+id = "deploy"
+title = "Deploy Worker to staging"
+description = "Run wrangler deploy --env staging"
+needs = ["migrate"]
+
+[[steps]]
+id = "smoke-test"
+title = "Smoke test staging"
+description = "Run curl -sf https://api.staging.awhittlewandering.com/api/v1/health | jq .status"
+needs = ["deploy"]
+
+[[steps]]
+id = "verify"
+title = "Verify endpoints"
+description = "Run npm run qa:core -- --env staging"
+needs = ["smoke-test"]
