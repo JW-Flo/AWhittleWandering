@@ -1,67 +1,62 @@
-# Claude Code – Primary Execution Prompt
+You are Claude Code operating inside the JW-Flo/AWhittleWandering repository.
 
-You are Claude Code operating on this repository.
+Immediately read:
+- mobile_cloud_framework.md (repo root)
+- docs/validation_findings.md (if present)
 
-## First Obligation (Mandatory)
-Before making **any changes**, locate, read, and internalize the project’s canonical roadmap and operating rules:
+This prompt is authoritative. Do not reinterpret, debate, or replace decisions.
 
-- `mobile_cloud_framework.md` (root of repo)
-- `CLAUDE.md` and `AGENTS.md` (if present)
+## Fixed Decisions (Non-Negotiable)
+- Production API hostname: api.awhittlewandering.com
+- Staging API hostname: api-staging.awhittlewandering.com
+- This convention is final and must be enforced everywhere without exception.
 
-These documents are the source of truth for architecture, CI/CD expectations, autonomy boundaries, and what constitutes “done.”  
-If instructions conflict, defer to `mobile_cloud_framework.md`.
+## Objective (PR4)
+Stabilize and fully wire Cloudflare runtime configuration so staging and production behave deterministically.
 
-## Review Gate (PR0–PR2)
-Before proceeding further:
-1. Review PR0, PR1, and PR2 as implemented in `main`.
-2. Re-run fast validation:
-   - deterministic install
-   - lint / typecheck / tests (if present)
-   - build
-   - minimal Worker smoke test (`/health` or equivalent)
+## Tasks
+1) **Enforce canonical hostnames**
+   - Replace all occurrences of non-canonical variants (e.g., api.staging.*) with:
+     - api.awhittlewandering.com (production)
+     - api-staging.awhittlewandering.com (staging)
+   - Apply across:
+     - backend/edge-worker/wrangler.toml
+     - env-specific configs
+     - deploy/smoke-test formulas
+     - frontend environment configuration
+     - documentation
 
-Validation remains binary: pass or fail.
+2) **Bind Cloudflare resources**
+   - Ensure KV namespaces and D1 databases are correctly bound in wrangler config for BOTH:
+     - production
+     - staging
+   - Use stable, explicit binding names (no generic “KV”).
+   - Do not invent IDs. If an ID is missing, document it.
 
-## Bug / Failure Handling (Non-Blocking)
-If validation surfaces bugs or failures that **do not block framework progression**:
-- Do **not** fix them immediately.
-- Capture them in a single consolidated markdown file (e.g. `docs/validation_findings.md`) containing:
-  - failing suite or check
-  - error summary
-  - likely cause (if obvious)
-  - recommended follow-up (agent type or area)
-- Keep this factual and concise. No speculation, no long analysis.
+3) **Routes verification**
+   - Verify worker routes exist for:
+     - api.awhittlewandering.com/*
+     - api-staging.awhittlewandering.com/*
+   - If a route cannot be verified from repo context, document required Cloudflare dashboard action.
 
-If a failure **does block validation**, fix only what is required to unblock and continue.
+4) **Runtime Bindings Matrix**
+   - Add a concise document mapping:
+     env → worker → route → KV bindings → D1 bindings
+   - Keep it short and mechanical.
 
-## Framework Document Updates (Strictly Controlled)
-You may update `mobile_cloud_framework.md` **only if** validation or implementation reveals:
-- a requirement that is incorrect, incomplete, or no longer feasible in practice, or
-- a missing rule that is necessary for the framework to be self-validating or autonomous.
+## Constraints
+- No Terraform in this PR.
+- No Cloudflare UI automation.
+- No secrets printed or read from .env files.
+- Fix only what blocks correctness or validation.
 
-When making such a change:
-- Modify the **minimum necessary text** only.
-- Add an entry to a clearly marked **“Change Log / Annotations”** section within the same document including:
-  - date (ISO-8601)
-  - reason for change
-  - PR or commit reference
-- Do **not** rewrite or reformat the document wholesale.
+## Validation
+- Deterministic install
+- Build
+- Tests (if present)
+- Wrangler config resolves without ambiguity
 
-## PR3 Scope
-After PR0–PR2 are validated:
-- Proceed to PR3 as defined by `mobile_cloud_framework.md`.
-- Focus on the next missing or incomplete framework primitives only.
-- Prefer CI/CD enforcement, orchestration, and autonomy guarantees over application logic.
-
-## Operating Mode
-- Be efficient and surgical.
-- Avoid documentation-heavy output except for required annotations.
-- Do not refactor unrelated code.
-- Keep commits minimal and conventional.
-
-## Completion Criteria
-Work is complete when:
-- PR0–PR2 validate cleanly or are properly annotated
-- PR3 framework work is implemented and validated
-- Any non-blocking issues are documented for follow-on agents
-- Any necessary framework changes are explicitly annotated and traceable
+## Output Rules
+- Minimal commits.
+- Update docs/validation_findings.md only for unresolved blockers.
+- No commentary beyond commit messages and required docs.
