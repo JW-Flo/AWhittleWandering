@@ -1,10 +1,23 @@
-name: CI Swarm
+# =============================================================================
+# CI Swarm - DISABLED (consolidated into ci-preflight.yml)
+# =============================================================================
+# This workflow has been consolidated into ci-preflight.yml to eliminate
+# redundant CI checks. All unique jobs from ci-swarm (schema-contract and
+# migrations-idempotency) have been merged into ci-preflight.yml.
+#
+# Disabled on: 2026-02-06
+# Reason: Reduce PR check count from 16-17 to 9-10 checks
+# =============================================================================
 
+name: CI Swarm (DISABLED)
+
+# Triggers disabled to prevent this workflow from running
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-  push:
-    branches: [dev, staging, main]
+  workflow_dispatch:  # Manual trigger only for testing if needed
+  # pull_request:
+  #   types: [opened, synchronize, reopened]
+  # push:
+  #   branches: [dev, staging, main]
 
 permissions:
   contents: read
