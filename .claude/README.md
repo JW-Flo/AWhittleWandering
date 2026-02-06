@@ -71,17 +71,17 @@ To verify that the settings file hasn't been modified:
 ## Permissions Explained
 
 ### Allowed Operations
-- **Read(\\*\\*)**: Agent can read any file (needed for code analysis)
+- **Read(`**`)**: Agent can read any file (needed for code analysis)
 - **Write(specific paths)**: Agent can write to approved directories only
 - **Bash(specific commands)**: Agent can run approved shell commands
 
 ### Denied Operations
-- **Read(.env\\*)**: No access to environment files with secrets
-- **Read(\\*\\*/secrets/\\*\\*)**: No access to secrets directories
-- **Write(.claude/\\*\\*)**: Cannot modify its own permissions
-- **Write(.github/workflows/\\*\\*)**: Cannot modify CI/CD (except ci.yml)
-- **Bash(curl \\* | bash)**: Blocked dangerous piped execution
-- **Bash(rm -rf \\*)**: Blocked destructive commands
+- **Read(`.env*`)**: No access to environment files with secrets
+- **Read(`**/secrets/**`)**: No access to secrets directories
+- **Write(`.claude/**`)**: Cannot modify its own permissions
+- **Write(`.github/workflows/**`)**: Cannot modify CI/CD (except ci.yml)
+- **Bash(`curl * | bash`)**: Blocked dangerous piped execution
+- **Bash(`rm -rf *`)**: Blocked destructive commands
 
 ## Security Rationale
 
