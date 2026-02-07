@@ -1,0 +1,89 @@
+# =============================================================================
+# E2E Smoke Tests (Playwright)
+# =============================================================================
+# Runs Playwright smoke tests against the frontend.
+#
+# Two modes:
+#   1. Local preview — builds frontend, starts vite preview, runs tests.
+#   2. Deployed preview — pass E2E_BASE_URL to test a live Pages preview URL.
+#
+# Artifacts on failure: screenshots, traces.
+# =============================================================================
+
+name: E2E Smoke
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - 'shared/**'
+      - '.github/workflows/e2e-smoke.yml'
+
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Deployed preview URL (leave empty for local preview)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Playwright Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          npm ci || npm install
+          cd shared && (npm ci || npm install) && (npm run build || true)
+          cd ../frontend && (npm ci || npm install)
+
+      - name: Install Playwright Browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Build Frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Remove _redirects from build output
+        working-directory: frontend
+        run: rm -f dist/_redirects
+
+      - name: Run Playwright Tests
+        working-directory: frontend
+        env:
+          E2E_BASE_URL: ${{ inputs.base_url || '' }}
+        run: npx playwright test --reporter=github
+
+      - name: Upload Playwright Report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.run_number }}
+          path: frontend/playwright-report/
+          retention-days: 14
+
+      - name: Upload Playwright Traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces-${{ github.run_number }}
+          path: frontend/test-results/
+          retention-days: 14

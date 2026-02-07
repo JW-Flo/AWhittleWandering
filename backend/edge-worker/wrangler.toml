@@ -88,6 +88,31 @@ binding = "AI"
 # pattern = "api.awhittlewandering.com/*"
 # zone_name = "awhittlewandering.com"
 
+# Staging Environment Configuration
+[env.staging]
+name = "awhittlewandering-api-staging"
+workers_dev = true
+
+[env.staging.vars]
+AI_GATEWAY_ID = "awhittlewandering-ai"
+AI_MODEL_NAME = "@cf/meta/llama-3.1-8b-instruct"
+LOG_LEVEL = "info"
+
+[[env.staging.d1_databases]]
+binding = "TESLA_DB"
+database_name = "tesla-journey-tracker"
+database_id = "889d864a-966d-4e8a-a3cd-bc60abf23688"
+
+[[env.staging.kv_namespaces]]
+binding = "AUTH_TOKENS"
+id = "7838e32d8ad04855b13eb2d9aa4f9811"
+
+[[env.staging.analytics_engine_datasets]]
+binding = "TELEMETRY_ANALYTICS"
+
+[env.staging.ai]
+binding = "AI"
+
 # Development Environment Configuration
 [env.development]
 name = "awhittlewandering-api-dev"
