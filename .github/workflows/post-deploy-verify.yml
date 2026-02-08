@@ -344,12 +344,14 @@ jobs:
 
             `;
 
+              const docsUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/docs/DEPLOYMENT.md#custom-domain-setup`;
+
               if (frontendWarning === 'custom-domain-not-configured') {
-                warningsSection += `- **Frontend Custom Domain Not Configured**: Frontend is accessible via ${frontendUrl} but custom domain is not configured. See [custom domain setup guide](../docs/DEPLOYMENT.md#custom-domain-setup)\n`;
+                warningsSection += `- **Frontend Custom Domain Not Configured**: Frontend is accessible via ${frontendUrl} but custom domain is not configured. See [custom domain setup guide](${docsUrl})\n`;
               }
 
               if (backendWarning === 'custom-domain-not-configured') {
-                warningsSection += `- **Backend Custom Domain Not Configured**: Backend is accessible via ${backendUrl} but custom domain is not configured. See [custom domain setup guide](../docs/DEPLOYMENT.md#custom-domain-setup)\n`;
+                warningsSection += `- **Backend Custom Domain Not Configured**: Backend is accessible via ${backendUrl} but custom domain is not configured. See [custom domain setup guide](${docsUrl})\n`;
               }
             }
 
