@@ -45,6 +45,10 @@
       "name": "meta"
     },
     {
+      "name": "media",
+      "description": "Media upload and retrieval via R2"
+    },
+    {
       "name": "legacy",
       "description": "Legacy endpoints maintained for backward compatibility"
     }
@@ -756,6 +760,134 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/summary": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Analytics summary with computed metrics",
+        "parameters": [
+          {
+            "name": "journeyId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/media": {
+      "get": {
+        "tags": [
+          "media"
+        ],
+        "summary": "List media for a journey",
+        "parameters": [
+          {
+            "name": "journeyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        }
+      }
+    },
+    "/api/v1/media/upload": {
+      "post": {
+        "tags": [
+          "media"
+        ],
+        "summary": "Upload media to R2",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "journeyId": {
+                    "type": "string"
+                  },
+                  "caption": {
+                    "type": "string"
+                  }
+                },
+                "required": ["file", "journeyId"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "503": {
+            "description": "Storage not configured"
+          }
+        }
+      }
+    },
+    "/api/v1/media/{journeyId}/{filename}": {
+      "get": {
+        "tags": [
+          "media"
+        ],
+        "summary": "Get media file from R2",
+        "parameters": [
+          {
+            "name": "journeyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filename",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "503": {
+            "description": "Storage not configured"
           }
         }
       }

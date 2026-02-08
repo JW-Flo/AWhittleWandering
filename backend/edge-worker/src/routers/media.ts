@@ -75,12 +75,12 @@ mediaRouter.post('/upload', async (c) => {
   }
 });
 
-// Get media file from R2
-mediaRouter.get('/:key{.+}', async (c) => {
+// Get media file from R2 (journeyId/filename format)
+mediaRouter.get('/:journeyId/:filename', async (c) => {
   const bucket = c.env?.MEDIA_BUCKET;
   if (!bucket) return c.json({ ok: false, error: 'Media storage not configured' }, 503);
 
-  const key = c.req.param('key');
+  const key = `${c.req.param('journeyId')}/${c.req.param('filename')}`;
 
   try {
     const object = await bucket.get(key);
