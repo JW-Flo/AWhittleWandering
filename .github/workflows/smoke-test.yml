@@ -43,16 +43,13 @@ env:
 
 jobs:
   smoke:
-    name: Smoke Test (${{ inputs.environment || 'staging' }})
+    name: Smoke Test (${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || github.event_name == 'workflow_call' && inputs.environment || github.ref == 'refs/heads/main' && 'production' || 'staging' }})
     runs-on: ubuntu-latest
     steps:
       - name: Determine URLs
         id: urls
         run: |
-          ENV="${{ inputs.environment || 'staging' }}"
-          if [[ "${{ github.ref }}" == "refs/heads/main" && -z "${{ inputs.environment }}" ]]; then
-            ENV="production"
-          fi
+          ENV="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || github.event_name == 'workflow_call' && inputs.environment || github.ref == 'refs/heads/main' && 'production' || 'staging' }}"
 
           if [[ "$ENV" == "production" ]]; then
             echo "frontend=${{ env.PROD_FRONTEND_URL }}" >> $GITHUB_OUTPUT
