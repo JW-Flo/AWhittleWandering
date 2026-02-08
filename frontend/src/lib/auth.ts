@@ -1,6 +1,7 @@
 // Admin authentication for A Whittle Wandering
 // Provides secure admin access for media uploads and site management
 
+import React from 'react';
 import { API_CONFIG } from './api-config';
 
 const ADMIN_TOKEN_KEY = 'awhittlewandering_admin_token';
@@ -14,7 +15,6 @@ interface AdminSession {
 interface MfaChallengeState {
   challengeId: string;
   email: string;
-  password: string;
 }
 
 export class AdminAuth {
@@ -35,7 +35,7 @@ export class AdminAuth {
 
   private loadSession() {
     try {
-      const stored = localStorage.getItem(ADMIN_TOKEN_KEY);
+      const stored = sessionStorage.getItem(ADMIN_TOKEN_KEY);
       if (stored) {
         const session = JSON.parse(stored) as AdminSession;
         if (session.expiresAt > Date.now()) {
@@ -52,7 +52,7 @@ export class AdminAuth {
 
   private saveSession() {
     if (this.session) {
-      localStorage.setItem(ADMIN_TOKEN_KEY, JSON.stringify(this.session));
+      sessionStorage.setItem(ADMIN_TOKEN_KEY, JSON.stringify(this.session));
     }
   }
 
@@ -88,7 +88,6 @@ export class AdminAuth {
         this.mfaChallenge = {
           challengeId: data.challengeId,
           email,
-          password,
         };
         return { success: false, mfaRequired: true };
       }
@@ -182,7 +181,7 @@ export class AdminAuth {
 
   logout() {
     this.session = null;
-    localStorage.removeItem(ADMIN_TOKEN_KEY);
+    sessionStorage.removeItem(ADMIN_TOKEN_KEY);
   }
 
   getAuthToken(): string | null {
@@ -298,5 +297,3 @@ export const useAdminAuth = () => {
   };
 };
 
-// Import React for the hook
-import React from 'react';
