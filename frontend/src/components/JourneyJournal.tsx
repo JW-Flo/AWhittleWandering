@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { backendApi } from '@/services/backendApi';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 
@@ -240,30 +241,42 @@ export default function JourneyJournal({
         {isAddingEntry && (
           <div className="p-4 border-b bg-muted/30">
             <form onSubmit={handleSubmit} className="space-y-3">
-              <Input
-                placeholder="Entry title..."
-                value={newEntry.title}
-                onChange={(e) =>
-                  setNewEntry((prev) => ({ ...prev, title: e.target.value }))
-                }
-                autoFocus
-              />
-              <Textarea
-                placeholder="What happened on your journey?"
-                value={newEntry.content}
-                onChange={(e) =>
-                  setNewEntry((prev) => ({ ...prev, content: e.target.value }))
-                }
-                rows={3}
-                className="resize-none"
-              />
-              <Input
-                placeholder="Location (optional)"
-                value={newEntry.location}
-                onChange={(e) =>
-                  setNewEntry((prev) => ({ ...prev, location: e.target.value }))
-                }
-              />
+              <div>
+                <Label htmlFor="journal-title" className="sr-only">Entry title</Label>
+                <Input
+                  id="journal-title"
+                  placeholder="Entry title..."
+                  value={newEntry.title}
+                  onChange={(e) =>
+                    setNewEntry((prev) => ({ ...prev, title: e.target.value }))
+                  }
+                  autoFocus
+                />
+              </div>
+              <div>
+                <Label htmlFor="journal-content" className="sr-only">Entry content</Label>
+                <Textarea
+                  id="journal-content"
+                  placeholder="What happened on your journey?"
+                  value={newEntry.content}
+                  onChange={(e) =>
+                    setNewEntry((prev) => ({ ...prev, content: e.target.value }))
+                  }
+                  rows={3}
+                  className="resize-none"
+                />
+              </div>
+              <div>
+                <Label htmlFor="journal-location" className="sr-only">Location</Label>
+                <Input
+                  id="journal-location"
+                  placeholder="Location (optional)"
+                  value={newEntry.location}
+                  onChange={(e) =>
+                    setNewEntry((prev) => ({ ...prev, location: e.target.value }))
+                  }
+                />
+              </div>
               <div className="flex gap-2">
                 <Button type="submit" className="flex-1">
                   Save Entry

@@ -242,6 +242,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
               accept=".jpg,.jpeg,.png,.heic,.heif,.mp4,.mov"
               onChange={handleFileInput}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              aria-label="Upload photos and videos"
               disabled={isProcessing}
             />
             
@@ -290,7 +291,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
                     {media.type === 'image' ? (
                       <img
                         src={media.preview}
-                        alt="Uploaded media"
+                        alt={media.file.name}
                         className="w-full h-full object-cover"
                       />
                     ) : (

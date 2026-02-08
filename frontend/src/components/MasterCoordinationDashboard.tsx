@@ -128,7 +128,7 @@ export const MasterCoordinationDashboard: React.FC<MasterCoordinationDashboardPr
 
       {/* Main Dashboard Tabs */}
       <Tabs value={activeTrack} onValueChange={setActiveTrack}>
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <Activity className="h-4 w-4" />
             Overview

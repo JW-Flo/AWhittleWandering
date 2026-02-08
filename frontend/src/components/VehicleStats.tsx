@@ -45,12 +45,12 @@ const VehicleStats = ({
       {[1, 2, 3].map((i) => (
         <Card key={i} className="border-tesla-gray-light">
           <CardHeader className="pb-3">
-            <div className="h-5 bg-gray-200 rounded animate-pulse" />
+            <div className="h-5 bg-muted rounded animate-pulse" />
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <div className="h-4 bg-gray-200 rounded animate-pulse" />
-              <div className="h-3 bg-gray-200 rounded animate-pulse" />
+              <div className="h-4 bg-muted rounded animate-pulse" />
+              <div className="h-3 bg-muted rounded animate-pulse" />
             </div>
           </CardContent>
         </Card>

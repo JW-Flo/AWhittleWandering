@@ -128,7 +128,7 @@ const JourneyerDashboardInner: React.FC = () => {
         )}
 
         <Tabs defaultValue="live" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 bg-secondary/40">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 bg-secondary/40">
             <TabsTrigger value="live" className="data-[state=active]:bg-card">
               <Activity className="w-4 h-4 mr-2" />
               Live
