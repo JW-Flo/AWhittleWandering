@@ -25,9 +25,9 @@ export const EnhancedMapFeatures: React.FC<EnhancedMapProps> = ({
   onChargingRecommendation: _onChargingRecommendation
 }) => {
   const [isOptimizing, setIsOptimizing] = useState(false);
-  const [_recommendations, _setRecommendations] = useState<TripRecommendation[]>([]);
+  const [recommendations, _setRecommendations] = useState<TripRecommendation[]>([]);
   const [routeOptimization, setRouteOptimization] = useState<RouteOptimization | null>(null);
-  const [_chargingStations, _setChargingStations] = useState<SmartChargingRecommendation[]>([]);
+  const [chargingStations, _setChargingStations] = useState<SmartChargingRecommendation[]>([]);
 
   // This will be implemented by phi3 model
   const optimizeRoute = useCallback(async () => {
