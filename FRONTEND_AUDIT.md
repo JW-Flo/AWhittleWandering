@@ -33,8 +33,10 @@ The component signature at line 52-55 destructures `tripData` (renamed `_tripDat
 
 **File**: `frontend/src/pages/FollowerView.tsx`
 
-**Line 58**: The `useEffect` has an empty dependency array `[]` but the component reads `id` from `useParams()`. Add `id` to the dependency array so navigating between `/journey/abc` and `/journey/xyz` re-fetches data.
+**Line 58**: The `useEffect` currently fetches from `/api/v1/unified-data` with an empty dependency array `[]` while the component also reads `id` from `useParams()`. Decide which behavior is correct and update the code accordingly:
 
+- If follower data should be scoped to the specific journey, change the fetch to call an ID-specific endpoint (for example: `/api/v1/unified-data/${id}` or an equivalent route that uses `id`) and add `id` to the dependency array so navigating between `/journey/abc` and `/journey/xyz` re-fetches the correct data.
+- If `/api/v1/unified-data` is intentionally global and independent of the route, leave the fetch as-is but document in the component that the route param `id` is only used for follow actions/display and does not affect this data fetch; in that case, adding `id` to the dependency array alone will not change what data is loaded.
 ---
 
 ## 2. HIGH — API Configuration (fix second)
