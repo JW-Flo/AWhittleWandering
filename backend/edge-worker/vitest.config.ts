@@ -9,7 +9,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@awhittlewandering/shared': path.resolve(__dirname, '../../shared/dist'),
+      '@awhittlewandering/shared': path.resolve(__dirname, '../../shared'),
     },
   },
 });
