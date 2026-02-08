@@ -39,13 +39,6 @@ const VehicleStats = ({
     }
   };
 
-  const getBatteryColor = () => {
-    if (batteryLevel > 50) return 'bg-tesla-cyan';
-    if (batteryLevel > 20) return 'bg-yellow-500';
-    return 'bg-destructive';
-  };
-  void getBatteryColor;
-
   // Loading state component
   const LoadingSkeleton = () => (
     <div className="space-y-4">

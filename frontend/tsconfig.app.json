@@ -26,5 +26,5 @@
     }
   },
   "include": ["src"],
-  "exclude": ["src/_archived", "src/test", "src/**/*.test.tsx", "src/**/*.test.ts", "src/pages/Index.tsx", "src/pages/Index.temp.tsx", "src/pages/SimpleTest.tsx", "src/pages/TestIndex.tsx"]
+  "exclude": ["src/test", "src/**/*.test.tsx", "src/**/*.test.ts"]
 }
