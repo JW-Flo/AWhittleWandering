@@ -110,7 +110,6 @@ const FollowerView: React.FC = () => {
                   <Badge variant="outline">Battery {Math.round(data.currentStatus.battery.level)}%</Badge>
                 )}
                 {lastUpdate && <Badge variant="outline">Updated {lastUpdate}</Badge>}
-                <Badge variant="outline">Journey ID: {id}</Badge>
               </div>
               <div className="mt-6">
                 <FollowButton journeyId={id || "live"} apiBaseUrl={api.baseUrl} />

@@ -89,7 +89,7 @@ const Demo: React.FC = () => {
         {/* CTAs */}
         <section className="flex flex-col sm:flex-row gap-3">
           <Button asChild className="h-11 px-6">
-            <Link to="/journey/continental-usa-2025">
+            <Link to="/journey/1">
               View live journey <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
           </Button>

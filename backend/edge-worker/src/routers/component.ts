@@ -2,11 +2,9 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { logger } from '../utils/log';
 import type { Env } from '../types/env';
+import { DEFAULT_JOURNEY_ID, DEFAULT_VEHICLE_ID } from '../utils/resolveJourney';
 
 export const componentRouter = new Hono<{ Bindings: Env }>();
-
-const DEFAULT_JOURNEY_ID = 'continental-usa-2025';
-const DEFAULT_VEHICLE_ID = 'midnight-shadow';
 
 const querySchema = z.object({
   limit: z.string().regex(/^\d+$/).optional(),

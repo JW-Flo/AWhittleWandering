@@ -1,12 +1,25 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import type { Env } from '../types/env';
+import { DEFAULT_JOURNEY_ID } from '../utils/resolveJourney';
 
 export const tripStatusRouter = new Hono<{ Bindings: Env }>();
 
 tripStatusRouter.get('/', async (c: Context) => {
+  // Look up the active journey's public_id if DB is available
+  let publicId: number | null = null;
+  const db = (c.env as any)?.TESLA_DB;
+  if (db) {
+    try {
+      const row = await db.prepare(
+        'SELECT public_id FROM journeys WHERE id = ? LIMIT 1'
+      ).bind(DEFAULT_JOURNEY_ID).first();
+      publicId = (row as any)?.public_id ?? null;
+    } catch { /* soft-fail */ }
+  }
+
   return c.json({
-    tripId: "continental-usa-2025",
+    tripId: publicId ?? DEFAULT_JOURNEY_ID,
     tripName: `A Whittle Wandering - ${new Date().getFullYear()}`,
     status: "active",
     timestamp: Date.now()
