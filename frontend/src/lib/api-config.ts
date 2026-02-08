@@ -9,8 +9,8 @@ const getApiBaseUrl = (): string => {
   // Dev mode (Vite sets this)
   if (viteEnv?.DEV) return 'http://localhost:8787';
 
-  // Production: use the deployed backend worker URL
-  return 'https://api.awhittlewandering.com';
+  // Production: use the workers.dev URL until custom domain DNS is configured
+  return 'https://awhittlewandering-api.workers.dev';
 };
 
 export const API_CONFIG = {

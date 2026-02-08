@@ -90,7 +90,7 @@ jobs:
           case "$ENV" in
             production)
               echo "worker_name=awhittlewandering-api" >> $GITHUB_OUTPUT
-              echo "health_url=https://api.awhittlewandering.com/api/v1/health" >> $GITHUB_OUTPUT
+              echo "health_url=https://awhittlewandering-api.workers.dev/api/v1/health" >> $GITHUB_OUTPUT
               ;;
             staging)
               echo "worker_name=awhittlewandering-api-staging" >> $GITHUB_OUTPUT
