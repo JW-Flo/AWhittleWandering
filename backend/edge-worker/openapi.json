@@ -614,6 +614,29 @@
         }
       }
     },
+    "/api/v1/unified-data/{journeyRef}": {
+      "get": {
+        "tags": [
+          "unified"
+        ],
+        "summary": "Unified frontend data by journey reference (numeric public_id or text slug)",
+        "parameters": [
+          {
+            "name": "journeyRef",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/v1/trip-status": {
       "get": {
         "tags": [

@@ -30,12 +30,17 @@ export async function resolveJourneyRef(
   const trimmed = ref.trim();
   if (!trimmed) return fallback;
 
-  // Numeric → look up by public_id
+  // Numeric → look up by public_id in journey_public_ids table
   const asNum = Number(trimmed);
   if (Number.isInteger(asNum) && asNum > 0) {
     try {
       const row = await db
-        .prepare('SELECT id, vehicle_id FROM journeys WHERE public_id = ? LIMIT 1')
+        .prepare(
+          `SELECT j.id, j.vehicle_id
+           FROM journey_public_ids p
+           JOIN journeys j ON j.id = p.journey_id
+           WHERE p.public_id = ? LIMIT 1`
+        )
         .bind(asNum)
         .first();
       if (row) {

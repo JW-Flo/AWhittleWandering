@@ -12,7 +12,7 @@ tripStatusRouter.get('/', async (c: Context) => {
   if (db) {
     try {
       const row = await db.prepare(
-        'SELECT public_id FROM journeys WHERE id = ? LIMIT 1'
+        'SELECT public_id FROM journey_public_ids WHERE journey_id = ? LIMIT 1'
       ).bind(DEFAULT_JOURNEY_ID).first();
       publicId = (row as any)?.public_id ?? null;
     } catch { /* soft-fail */ }

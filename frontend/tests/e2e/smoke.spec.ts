@@ -61,7 +61,7 @@ test.describe('Dashboard', () => {
 test.describe('Coordination', () => {
   test('loads and renders stable content', async ({ page }) => {
     const getErrors = trackConsoleErrors(page);
-    await page.goto('/coordination');
+    await page.goto('/dashboard/coordination');
     // Wait for stable render — look for heading or card
     await expect(
       page.locator('h1, h2, [data-testid]').first(),
@@ -78,16 +78,16 @@ test.describe('Coordination', () => {
 // Demo
 // ---------------------------------------------------------------------------
 test.describe('Demo', () => {
-  test('renders expected heading and button', async ({ page }) => {
+  test('renders expected heading and content', async ({ page }) => {
     const getErrors = trackConsoleErrors(page);
     await page.goto('/demo');
     // The Demo page should have a heading
     await expect(page.locator('h1')).toBeVisible({ timeout: 10_000 });
     const heading = await page.locator('h1').textContent();
-    expect(heading).toContain('Joiner Demo');
-    // The "Simulate Joiner" button should be present
+    expect(heading).toContain('Platform Demo');
+    // The "View live journey" link should be present
     await expect(
-      page.locator('button', { hasText: /Simulate Joiner/i }),
+      page.locator('a', { hasText: /View live journey/i }),
     ).toBeVisible();
     const errors = getErrors().filter(
       (e) => !e.includes('Failed to fetch') && !e.includes('net::ERR_'),
