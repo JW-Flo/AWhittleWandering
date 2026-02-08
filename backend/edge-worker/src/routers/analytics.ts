@@ -5,21 +5,77 @@ import type { Env } from '../types/env';
 
 export const analyticsRouter = new Hono<{ Bindings: Env }>();
 
-const JOURNEY_ID = 'continental-usa-2025';
+const DEFAULT_JOURNEY_ID = 'continental-usa-2025';
 
 const querySchema = z.object({
-  limit: z.string().regex(/^\d+$/).optional()
+  limit: z.string().regex(/^\d+$/).optional(),
+  journeyId: z.string().min(1).optional(),
 });
 
-function limitOf(q: unknown, def: number) {
+function parseQuery(q: unknown, defaultLimit: number) {
   const parsed = querySchema.safeParse(q);
-  const n = parsed.success ? Number(parsed.data.limit || def) : def;
-  return Math.min(365, Math.max(1, n));
+  if (!parsed.success) return { journeyId: DEFAULT_JOURNEY_ID, limit: defaultLimit };
+  return {
+    journeyId: parsed.data.journeyId || DEFAULT_JOURNEY_ID,
+    limit: Math.min(365, Math.max(1, Number(parsed.data.limit || defaultLimit))),
+  };
 }
+
+// Computed summary endpoint for the frontend analytics dashboard
+analyticsRouter.get('/summary', async (c) => {
+  const db = c.env?.TESLA_DB;
+  const { journeyId } = parseQuery(c.req.query(), 90);
+  if (!db) return c.json({ ok: false, error: 'Database not configured' }, 200);
+
+  try {
+    const driveStats = await db.prepare(
+      `SELECT COUNT(*) as total_drives,
+              COALESCE(SUM(distance_miles), 0) as total_distance,
+              COALESCE(SUM(energy_used_kwh), 0) as total_energy
+       FROM drives WHERE journey_id = ?`
+    ).bind(journeyId).first();
+
+    const chargeStats = await db.prepare(
+      `SELECT COUNT(*) as total_charges,
+              COALESCE(SUM(energy_added_kwh), 0) as total_energy_added,
+              COALESCE(SUM(cost_usd), 0) as total_cost
+       FROM charges WHERE journey_id = ?`
+    ).bind(journeyId).first();
+
+    const totalDistance = Number((driveStats as any)?.total_distance || 0);
+    const totalEnergy = Number((driveStats as any)?.total_energy || 0);
+    const totalCost = Number((chargeStats as any)?.total_cost || 0);
+    const avgEfficiency = totalEnergy > 0 ? totalDistance / totalEnergy : 0;
+    // Approximate: avg ICE = $0.12/mi, EV actual cost per mile
+    const costPerMile = totalDistance > 0 ? totalCost / totalDistance : 0;
+    const gasCostEquivalent = totalDistance * 0.12;
+    const costSavings = gasCostEquivalent - totalCost;
+    // ~0.92 lbs CO2 per mile for avg ICE vehicle
+    const carbonSaved = totalDistance * 0.92;
+
+    return c.json({
+      ok: true,
+      journeyId,
+      totalDistance,
+      totalEnergy,
+      averageEfficiency: Math.round(avgEfficiency * 100) / 100,
+      totalCost: Math.round(totalCost * 100) / 100,
+      costPerMile: Math.round(costPerMile * 1000) / 1000,
+      costSavings: Math.round(costSavings * 100) / 100,
+      carbonSaved: Math.round(carbonSaved),
+      totalDrives: Number((driveStats as any)?.total_drives || 0),
+      totalCharges: Number((chargeStats as any)?.total_charges || 0),
+      totalEnergyAdded: Number((chargeStats as any)?.total_energy_added || 0),
+    });
+  } catch (err: any) {
+    logger.error('analytics.summary.error', { error: err?.message });
+    return c.json({ ok: false, error: 'Failed to compute analytics summary' }, 200);
+  }
+});
 
 analyticsRouter.get('/comprehensive', async (c) => {
   const db = c.env.TESLA_DB;
-  const limit = limitOf(c.req.query(), 90);
+  const { journeyId, limit } = parseQuery(c.req.query(), 90);
   if (!db) return c.json({ ok: false, error: 'Database not configured', daily: [] }, 200);
 
   try {
@@ -31,7 +87,7 @@ analyticsRouter.get('/comprehensive', async (c) => {
        WHERE journey_id = ?
        ORDER BY date DESC
        LIMIT ?`
-    ).bind(JOURNEY_ID, limit).all();
+    ).bind(journeyId, limit).all();
 
     return c.json({ ok: true, daily: (rows as any)?.results || [] });
   } catch (err: any) {
@@ -42,7 +98,7 @@ analyticsRouter.get('/comprehensive', async (c) => {
 
 analyticsRouter.get('/efficiency', async (c) => {
   const db = c.env?.TESLA_DB;
-  const limit = limitOf(c.req.query(), 120);
+  const { journeyId, limit } = parseQuery(c.req.query(), 120);
   if (!db) return c.json({ ok: false, error: 'Database not configured', efficiency: [] }, 200);
 
   try {
@@ -52,7 +108,7 @@ analyticsRouter.get('/efficiency', async (c) => {
        WHERE journey_id = ?
        ORDER BY date DESC
        LIMIT ?`
-    ).bind(JOURNEY_ID, limit).all();
+    ).bind(journeyId, limit).all();
 
     return c.json({ ok: true, efficiency: (rows as any)?.results || [] });
   } catch (err: any) {
@@ -63,6 +119,7 @@ analyticsRouter.get('/efficiency', async (c) => {
 
 analyticsRouter.get('/charging', async (c) => {
   const db = c.env?.TESLA_DB;
+  const { journeyId } = parseQuery(c.req.query(), 90);
   if (!db) return c.json({ ok: false, error: 'Database not configured', byChargerType: [] }, 200);
 
   try {
@@ -76,7 +133,7 @@ analyticsRouter.get('/charging', async (c) => {
        WHERE journey_id = ?
        GROUP BY charger_type
        ORDER BY session_count DESC`
-    ).bind(JOURNEY_ID).all();
+    ).bind(journeyId).all();
 
     return c.json({ ok: true, byChargerType: (rows as any)?.results || [] });
   } catch (err: any) {
@@ -84,4 +141,3 @@ analyticsRouter.get('/charging', async (c) => {
     return c.json({ ok: false, error: 'Failed to fetch charging analytics', byChargerType: [] }, 200);
   }
 });
-

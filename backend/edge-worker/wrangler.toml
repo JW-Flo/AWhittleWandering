@@ -52,11 +52,11 @@ binding = "TESLA_DB"
 database_name = "tesla-journey-tracker"
 database_id = "889d864a-966d-4e8a-a3cd-bc60abf23688"
 
-# R2 Object Storage for media files (temporarily disabled)
-# [[r2_buckets]]
-# binding = "MEDIA_BUCKET"
-# bucket_name = "awhittlewandering-media"
-# preview_bucket_name = "awhittlewandering-media"
+# R2 Object Storage for media files
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "awhittlewandering-media"
+preview_bucket_name = "awhittlewandering-media-preview"
 
 # KV for session/auth tokens and data caching
 # Note: The KV namespace in Cloudflare is named "UNIFIED_DATA_CACHE"
@@ -140,10 +140,10 @@ binding = "TESLA_DB"
 database_name = "tesla-journey-tracker-dev"
 database_id = "local"
 
-# Development R2 bucket (temporarily disabled)
-# [[env.development.r2_buckets]]
-# binding = "MEDIA_BUCKET"
-# bucket_name = "awhittlewandering-media"
+# Development R2 bucket
+[[env.development.r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "awhittlewandering-media-dev"
 
 # Development KV for auth tokens
 [[env.development.kv_namespaces]]
@@ -190,15 +190,16 @@ LOG_LEVEL = "info"
 # Use: npx wrangler secret put JWT_SECRET --env production
 # Use: npx wrangler secret put TESLA_VIN --env production
 
-# Production D1 Database (temporarily disabled - database ID issue)
-# [[env.production.d1_databases]]
-# binding = "TESLA_DB"
-# database_name = "tesla-journey-tracker"
+# Production D1 Database
+[[env.production.d1_databases]]
+binding = "TESLA_DB"
+database_name = "tesla-journey-tracker"
+database_id = "889d864a-966d-4e8a-a3cd-bc60abf23688"
 
-# Production R2 bucket (temporarily disabled)
-# [[env.production.r2_buckets]]
-# binding = "MEDIA_BUCKET"
-# bucket_name = "awhittlewandering-media"
+# Production R2 bucket
+[[env.production.r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "awhittlewandering-media"
 
 # Production KV for auth tokens
 [[env.production.kv_namespaces]]

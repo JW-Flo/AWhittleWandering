@@ -5,40 +5,47 @@ import type { Env } from '../types/env';
 
 export const componentRouter = new Hono<{ Bindings: Env }>();
 
-const JOURNEY_ID = 'continental-usa-2025';
-const VEHICLE_ID = 'midnight-shadow';
+const DEFAULT_JOURNEY_ID = 'continental-usa-2025';
+const DEFAULT_VEHICLE_ID = 'midnight-shadow';
 
-const limitSchema = z.object({
-  limit: z.string().regex(/^\d+$/).optional()
+const querySchema = z.object({
+  limit: z.string().regex(/^\d+$/).optional(),
+  journeyId: z.string().min(1).optional(),
+  vehicleId: z.string().min(1).optional(),
 });
 
-function safeLimit(q: unknown, def = 25) {
-  const parsed = limitSchema.safeParse(q);
-  const n = parsed.success ? Number(parsed.data.limit || def) : def;
-  return Math.min(100, Math.max(1, n));
+function parseQuery(q: unknown) {
+  const parsed = querySchema.safeParse(q);
+  if (!parsed.success) return { journeyId: DEFAULT_JOURNEY_ID, vehicleId: DEFAULT_VEHICLE_ID, limit: 25 };
+  return {
+    journeyId: parsed.data.journeyId || DEFAULT_JOURNEY_ID,
+    vehicleId: parsed.data.vehicleId || DEFAULT_VEHICLE_ID,
+    limit: Math.min(100, Math.max(1, Number(parsed.data.limit || 25))),
+  };
 }
 
 componentRouter.get('/overview', async (c) => {
   const db = c.env?.TESLA_DB;
   if (!db) return c.json({ ok: false, error: 'Database not configured' }, 200);
+  const { journeyId, vehicleId } = parseQuery(c.req.query());
 
   try {
     const journey = await db.prepare(
       `SELECT id, name, start_date, target_states, total_miles, total_drives, total_charges, status
        FROM journeys WHERE id = ? LIMIT 1`
-    ).bind(JOURNEY_ID).first();
+    ).bind(journeyId).first();
 
     const vs = await db.prepare(
       `SELECT odometer FROM vehicle_state WHERE vehicle_id = ? LIMIT 1`
-    ).bind(VEHICLE_ID).first();
+    ).bind(vehicleId).first();
 
     return c.json({
       ok: true,
-      journeyId: JOURNEY_ID,
+      journeyId,
       tripName: (journey as any)?.name || 'A Whittle Wandering - Continental USA',
       startDate: (journey as any)?.start_date || '2025-06-01',
       totalStates: Number((journey as any)?.target_states || 48),
-      statesVisited: Number((await db.prepare(`SELECT COUNT(*) as cnt FROM states_visited WHERE journey_id = ?`).bind(JOURNEY_ID).first() as any)?.cnt || 0),
+      statesVisited: Number((await db.prepare(`SELECT COUNT(*) as cnt FROM states_visited WHERE journey_id = ?`).bind(journeyId).first() as any)?.cnt || 0),
       totalMiles: Number((journey as any)?.total_miles || 0),
       totalDrives: Number((journey as any)?.total_drives || 0),
       totalCharges: Number((journey as any)?.total_charges || 0),
@@ -55,13 +62,14 @@ componentRouter.get('/overview', async (c) => {
 componentRouter.get('/current-status', async (c) => {
   const db = c.env?.TESLA_DB;
   if (!db) return c.json({ ok: false, error: 'Database not configured' }, 200);
+  const { vehicleId } = parseQuery(c.req.query());
 
   try {
     const vs = await db.prepare(
       `SELECT battery_level, battery_range, charging_state, latitude, longitude, heading, speed, odometer,
               inside_temp, outside_temp, timestamp, state_name, city
        FROM vehicle_state WHERE vehicle_id = ? LIMIT 1`
-    ).bind(VEHICLE_ID).first();
+    ).bind(vehicleId).first();
 
     if (!vs) return c.json({ ok: false, error: 'No vehicle state' }, 200);
 
@@ -94,13 +102,14 @@ componentRouter.get('/current-status', async (c) => {
 componentRouter.get('/states-progress', async (c) => {
   const db = c.env?.TESLA_DB;
   if (!db) return c.json({ ok: false, error: 'Database not configured', states: [] }, 200);
+  const { journeyId } = parseQuery(c.req.query());
 
   try {
     const rows = await db.prepare(
       `SELECT state_name, state_code, first_visited_date, visit_count, total_miles_in_state, is_current_state
        FROM states_visited WHERE journey_id = ?
        ORDER BY first_visited_date ASC, state_name ASC`
-    ).bind(JOURNEY_ID).all();
+    ).bind(journeyId).all();
 
     return c.json({ ok: true, states: (rows as any)?.results || [] });
   } catch (err: any) {
@@ -111,7 +120,7 @@ componentRouter.get('/states-progress', async (c) => {
 
 componentRouter.get('/recent-drives', async (c) => {
   const db = c.env?.TESLA_DB;
-  const limit = safeLimit(c.req.query(), 10);
+  const { journeyId, limit } = parseQuery(c.req.query());
   if (!db) return c.json({ ok: false, error: 'Database not configured', drives: [] }, 200);
 
   try {
@@ -120,7 +129,7 @@ componentRouter.get('/recent-drives', async (c) => {
        FROM drives WHERE journey_id = ?
        ORDER BY started_at DESC
        LIMIT ?`
-    ).bind(JOURNEY_ID, limit).all();
+    ).bind(journeyId, limit).all();
 
     return c.json({ ok: true, drives: (rows as any)?.results || [] });
   } catch (err: any) {
@@ -128,4 +137,3 @@ componentRouter.get('/recent-drives', async (c) => {
     return c.json({ ok: false, error: 'Failed to fetch recent drives', drives: [] }, 200);
   }
 });
-

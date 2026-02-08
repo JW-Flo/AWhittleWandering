@@ -13,8 +13,41 @@ import {
   Route,
   DollarSign,
   Leaf,
-  Battery
+  Battery,
+  Loader2
 } from 'lucide-react';
+import { backendApi } from '@/services/backendApi';
+
+interface AnalyticsSummary {
+  ok: boolean;
+  totalDistance: number;
+  totalEnergy: number;
+  averageEfficiency: number;
+  totalCost: number;
+  costPerMile: number;
+  costSavings: number;
+  carbonSaved: number;
+  totalDrives: number;
+  totalCharges: number;
+  totalEnergyAdded: number;
+}
+
+interface EfficiencyRow {
+  date: string;
+  miles_driven: number;
+  energy_consumed_kwh: number;
+  efficiency_miles_per_kwh: number;
+  avg_outside_temp_f: number;
+  avg_speed_mph: number;
+}
+
+interface ChargingRow {
+  charger_type: string;
+  session_count: number;
+  total_energy_added_kwh: number;
+  avg_cost_per_kwh: number;
+  avg_duration_minutes: number;
+}
 
 interface AnalyticsDashboardProps {
   timeRange?: '7d' | '30d' | '90d' | '1y';
@@ -26,48 +59,82 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   onInsightGenerated
 }) => {
   const [insights, setInsights] = useState<JourneyInsights | null>(null);
+  const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
+  const [efficiency, setEfficiency] = useState<EfficiencyRow[]>([]);
+  const [charging, setCharging] = useState<ChargingRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedMetric, setSelectedMetric] = useState<'efficiency' | 'cost' | 'carbon'>('efficiency');
 
-  // This will be implemented by gemma3 model
-  const generateJourneyInsights = useCallback(async () => {
-    console.warn('🤖 Delegating journey analytics to gemma3...');
-    
-    // Placeholder insights - will be replaced by AI analysis
-    const mockInsights: JourneyInsights = {
-      totalDistance: 2847.5,
-      totalEnergy: 856.2,
-      averageEfficiency: 3.33,
-      carbonSaved: 1247.8,
-      costSavings: 523.40,
-      favoriteRoutes: [],
-      chargingPatterns: [],
-      seasonalTrends: []
-    };
-    
-    setInsights(mockInsights);
-    onInsightGenerated?.(mockInsights);
-  }, [onInsightGenerated]);
+  const limitForRange: Record<string, number> = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 };
 
-  // This will be implemented by gemma3 model
-  const analyzeEnergyEfficiency = async () => {
-    console.warn('🤖 Delegating efficiency analysis to gemma3...');
-    // TODO: Implement comprehensive efficiency analysis
-  };
+  const fetchAnalytics = useCallback(async () => {
+    setLoading(true);
+    try {
+      const limit = limitForRange[timeRange] || 30;
 
-  // This will be implemented by gemma3 model
-  const generateTripComparisons = async () => {
-    console.warn('🤖 Delegating trip comparison analysis to gemma3...');
-    // TODO: Implement intelligent trip comparison and optimization suggestions
-  };
+      const [summaryRes, efficiencyRes, chargingRes] = await Promise.allSettled([
+        fetch(`${backendApi.baseUrl}/api/v1/analytics/summary?limit=${limit}`).then(r => r.json()),
+        backendApi.getAnalyticsEfficiency(),
+        backendApi.getAnalyticsCharging(),
+      ]);
+
+      const summaryData = summaryRes.status === 'fulfilled' ? summaryRes.value as AnalyticsSummary : null;
+      const effData = efficiencyRes.status === 'fulfilled' ? efficiencyRes.value as { efficiency?: EfficiencyRow[] } : null;
+      const chargeData = chargingRes.status === 'fulfilled' ? chargingRes.value as { byChargerType?: ChargingRow[] } : null;
+
+      if (summaryData?.ok) {
+        setSummary(summaryData);
+        const mapped: JourneyInsights = {
+          totalDistance: summaryData.totalDistance,
+          totalEnergy: summaryData.totalEnergy,
+          averageEfficiency: summaryData.averageEfficiency,
+          carbonSaved: summaryData.carbonSaved,
+          costSavings: summaryData.costSavings,
+          favoriteRoutes: [],
+          chargingPatterns: [],
+          seasonalTrends: [],
+        };
+        setInsights(mapped);
+        onInsightGenerated?.(mapped);
+      }
+
+      if (effData?.efficiency) setEfficiency(effData.efficiency);
+      if (chargeData?.byChargerType) setCharging(chargeData.byChargerType);
+    } catch (err) {
+      console.error('Failed to fetch analytics', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [timeRange, onInsightGenerated]);
 
   useEffect(() => {
-    generateJourneyInsights();
-    analyzeEnergyEfficiency();
-    generateTripComparisons();
-  }, [timeRange, generateJourneyInsights]); // Added generateJourneyInsights to dependencies
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
   const formatDistance = (miles: number) => `${miles.toLocaleString()} mi`;
+
+  // Compute efficiency stats from real data
+  const recentEfficiency = efficiency.slice(0, 7);
+  const avgEfficiency7d = recentEfficiency.length
+    ? recentEfficiency.reduce((s, r) => s + r.efficiency_miles_per_kwh, 0) / recentEfficiency.length
+    : 0;
+  const bestEfficiency = efficiency.length
+    ? Math.max(...efficiency.map(r => r.efficiency_miles_per_kwh))
+    : 0;
+
+  // Compute charging stats
+  const totalChargingCost = summary?.totalCost ?? 0;
+  const costPerMile = summary?.costPerMile ?? 0;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <span className="ml-3 text-muted-foreground">Loading analytics...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -86,7 +153,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
             </div>
             <div className="mt-2">
               <Badge variant="secondary" className="text-xs">
-                +12% vs last period
+                {summary?.totalDrives ?? 0} drives
               </Badge>
             </div>
           </CardContent>
@@ -104,7 +171,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
               <Zap className="h-8 w-8 text-green-500" />
             </div>
             <div className="mt-2">
-              <Progress value={75} className="h-2" />
+              <Progress value={insights ? Math.min(100, (insights.averageEfficiency / 4.5) * 100) : 0} className="h-2" />
             </div>
           </CardContent>
         </Card>
@@ -141,7 +208,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
             </div>
             <div className="mt-2">
               <Badge variant="outline" className="text-xs">
-                CO₂ equivalent
+                CO2 equivalent
               </Badge>
             </div>
           </CardContent>
@@ -173,16 +240,16 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Current Trip</span>
-                        <span className="font-medium">3.8 mi/kWh</span>
+                        <span className="text-sm text-gray-600">Overall Average</span>
+                        <span className="font-medium">{insights?.averageEfficiency.toFixed(2) ?? '---'} mi/kWh</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">7-day Average</span>
-                        <span className="font-medium">3.5 mi/kWh</span>
+                        <span className="font-medium">{avgEfficiency7d ? avgEfficiency7d.toFixed(2) : '---'} mi/kWh</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Personal Best</span>
-                        <span className="font-medium text-green-600">4.2 mi/kWh</span>
+                        <span className="font-medium text-green-600">{bestEfficiency ? bestEfficiency.toFixed(2) : '---'} mi/kWh</span>
                       </div>
                     </div>
                   </CardContent>
@@ -190,22 +257,21 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Efficiency Factors</CardTitle>
+                    <CardTitle className="text-lg">Recent Efficiency</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Weather Impact</span>
-                        <Badge variant="secondary">-8%</Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Driving Style</span>
-                        <Badge variant="default">+12%</Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Route Selection</span>
-                        <Badge variant="default">+5%</Badge>
-                      </div>
+                      {recentEfficiency.length === 0 && (
+                        <p className="text-sm text-muted-foreground">No efficiency data yet.</p>
+                      )}
+                      {recentEfficiency.slice(0, 5).map((row) => (
+                        <div key={row.date} className="flex items-center justify-between">
+                          <span className="text-sm">{row.date}</span>
+                          <Badge variant={row.efficiency_miles_per_kwh >= (insights?.averageEfficiency ?? 0) ? 'default' : 'secondary'}>
+                            {row.efficiency_miles_per_kwh.toFixed(2)} mi/kWh
+                          </Badge>
+                        </div>
+                      ))}
                     </div>
                   </CardContent>
                 </Card>
@@ -218,8 +284,8 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                   <CardContent className="p-6">
                     <div className="text-center">
                       <p className="text-sm text-gray-600">Charging Cost</p>
-                      <p className="text-2xl font-bold">{formatCurrency(124.60)}</p>
-                      <p className="text-xs text-green-600">-15% vs avg</p>
+                      <p className="text-2xl font-bold">{formatCurrency(totalChargingCost)}</p>
+                      <p className="text-xs text-muted-foreground">{summary?.totalCharges ?? 0} sessions</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -227,7 +293,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                   <CardContent className="p-6">
                     <div className="text-center">
                       <p className="text-sm text-gray-600">Cost per Mile</p>
-                      <p className="text-2xl font-bold">$0.044</p>
+                      <p className="text-2xl font-bold">${costPerMile.toFixed(3)}</p>
                       <p className="text-xs text-green-600">vs $0.12 gas</p>
                     </div>
                   </CardContent>
@@ -235,13 +301,31 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                 <Card>
                   <CardContent className="p-6">
                     <div className="text-center">
-                      <p className="text-sm text-gray-600">Monthly Savings</p>
-                      <p className="text-2xl font-bold">{formatCurrency(247.80)}</p>
+                      <p className="text-sm text-gray-600">Total Savings</p>
+                      <p className="text-2xl font-bold">{formatCurrency(insights?.costSavings ?? 0)}</p>
                       <p className="text-xs text-gray-600">vs ICE vehicle</p>
                     </div>
                   </CardContent>
                 </Card>
               </div>
+              {charging.length > 0 && (
+                <Card>
+                  <CardHeader><CardTitle className="text-lg">Charging by Type</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {charging.map((row) => (
+                        <div key={row.charger_type} className="flex items-center justify-between">
+                          <span className="text-sm">{row.charger_type || 'Unknown'}</span>
+                          <div className="flex gap-2">
+                            <Badge variant="secondary">{row.session_count} sessions</Badge>
+                            <Badge variant="outline">{Number(row.total_energy_added_kwh).toFixed(1)} kWh</Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             <TabsContent value="carbon" className="space-y-4 mt-6">
@@ -253,16 +337,16 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">CO₂ Avoided</span>
-                        <span className="font-medium">{insights?.carbonSaved.toFixed(0)} lbs</span>
+                        <span className="text-sm text-gray-600">CO2 Avoided</span>
+                        <span className="font-medium">{insights?.carbonSaved.toFixed(0) ?? '---'} lbs</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Equivalent Trees</span>
-                        <span className="font-medium">14.2 trees/year</span>
+                        <span className="font-medium">{insights ? (insights.carbonSaved / 48).toFixed(1) : '---'} trees/year</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Grid Efficiency</span>
-                        <span className="font-medium">72% renewable</span>
+                        <span className="text-sm text-gray-600">Total Energy</span>
+                        <span className="font-medium">{insights ? `${insights.totalEnergy.toFixed(1)} kWh` : '---'}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -313,7 +397,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                 <div>
                   <h4 className="font-medium">Efficiency Opportunity</h4>
                   <p className="text-sm text-gray-600 mt-1">
-                    Your efficiency improves by 18% when departing before 9 AM. 
+                    Your efficiency improves by 18% when departing before 9 AM.
                     Consider adjusting departure times for longer trips.
                   </p>
                 </div>
@@ -328,7 +412,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                 <div>
                   <h4 className="font-medium">Cost Optimization</h4>
                   <p className="text-sm text-gray-600 mt-1">
-                    Switching to off-peak charging could save you an additional $23/month 
+                    Switching to off-peak charging could save you an additional $23/month
                     based on your driving patterns.
                   </p>
                 </div>
@@ -343,7 +427,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                 <div>
                   <h4 className="font-medium">Charging Pattern</h4>
                   <p className="text-sm text-gray-600 mt-1">
-                    Your battery health could improve by maintaining charge between 20-80% 
+                    Your battery health could improve by maintaining charge between 20-80%
                     for daily use, reserving 100% for road trips.
                   </p>
                 </div>

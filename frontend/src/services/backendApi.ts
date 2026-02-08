@@ -13,6 +13,7 @@ export interface BackendApiClient {
   getCurrentStatus: () => Promise<any>;
   getStatesProgress: () => Promise<any>;
   getRecentDrives: () => Promise<any>;
+  getAnalyticsSummary: () => Promise<any>;
   getAnalyticsComprehensive: () => Promise<any>;
   getAnalyticsEfficiency: () => Promise<any>;
   getAnalyticsCharging: () => Promise<any>;
@@ -22,7 +23,7 @@ export interface BackendApiClient {
 }
 
 class BackendApiService implements BackendApiClient {
-  private baseUrl: string;
+  public readonly baseUrl: string;
 
   constructor(baseUrl: string = BACKEND_BASE_URL) {
     this.baseUrl = baseUrl;
@@ -83,6 +84,10 @@ class BackendApiService implements BackendApiClient {
   }
 
   // Analytics Endpoints
+  async getAnalyticsSummary() {
+    return this.request('/api/v1/analytics/summary');
+  }
+
   async getAnalyticsComprehensive() {
     return this.request('/api/v1/analytics/comprehensive');
   }

@@ -1,11 +1,26 @@
 import { Hono } from 'hono';
+import { z } from 'zod';
 import type { Env } from '../types/env';
 import { logger } from '../utils/log';
 
 export const vehicleRouter = new Hono<{ Bindings: Env }>();
 
-const JOURNEY_ID = 'continental-usa-2025';
-const VEHICLE_ID = 'midnight-shadow';
+const DEFAULT_JOURNEY_ID = 'continental-usa-2025';
+const DEFAULT_VEHICLE_ID = 'midnight-shadow';
+
+const querySchema = z.object({
+  journeyId: z.string().min(1).optional(),
+  vehicleId: z.string().min(1).optional(),
+});
+
+function parseQuery(q: unknown) {
+  const parsed = querySchema.safeParse(q);
+  if (!parsed.success) return { journeyId: DEFAULT_JOURNEY_ID, vehicleId: DEFAULT_VEHICLE_ID };
+  return {
+    journeyId: parsed.data.journeyId || DEFAULT_JOURNEY_ID,
+    vehicleId: parsed.data.vehicleId || DEFAULT_VEHICLE_ID,
+  };
+}
 
 function ageSeconds(ts?: string | null) {
   if (!ts) return null;
@@ -17,29 +32,30 @@ function ageSeconds(ts?: string | null) {
 vehicleRouter.get('/state/enhanced', async (c) => {
   const db = c.env?.TESLA_DB;
   if (!db) return c.json({ ok: false, error: 'Database not configured' }, 200);
+  const { journeyId, vehicleId } = parseQuery(c.req.query());
 
   try {
     const vs = await db.prepare(
       `SELECT * FROM vehicle_state WHERE vehicle_id = ? LIMIT 1`
-    ).bind(VEHICLE_ID).first();
+    ).bind(vehicleId).first();
 
     const lastDrive = await db.prepare(
       `SELECT id, started_at, ended_at, start_address, end_address, distance_miles
        FROM drives WHERE journey_id = ?
        ORDER BY started_at DESC LIMIT 1`
-    ).bind(JOURNEY_ID).first();
+    ).bind(journeyId).first();
 
     const lastCharge = await db.prepare(
       `SELECT id, started_at, ended_at, location, energy_added_kwh
        FROM charges WHERE journey_id = ?
        ORDER BY started_at DESC LIMIT 1`
-    ).bind(JOURNEY_ID).first();
+    ).bind(journeyId).first();
 
     const ts = (vs as any)?.timestamp as string | undefined;
 
     return c.json({
       ok: true,
-      vehicleId: VEHICLE_ID,
+      vehicleId,
       timestamp: new Date().toISOString(),
       state: vs || null,
       freshness: {
@@ -56,4 +72,3 @@ vehicleRouter.get('/state/enhanced', async (c) => {
     return c.json({ ok: false, error: 'Failed to fetch enhanced vehicle state' }, 200);
   }
 });
-
