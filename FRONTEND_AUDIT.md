@@ -105,19 +105,19 @@ Then fix all resulting type errors. This will surface many of the bugs from Sect
 
 ### 4.1 Admin token in localStorage
 
-**File**: `src/lib/auth.ts:55` — session token in `localStorage` is XSS-exfiltrable. Move to `sessionStorage` at minimum.
+**File**: `frontend/src/lib/auth.ts:55` — session token in `localStorage` is XSS-exfiltrable. Move to `sessionStorage` at minimum.
 
 ### 4.2 Password in MFA challenge state
 
-**File**: `src/lib/auth.ts:88-93` — `this.mfaChallenge` stores the plaintext `password`. Remove the password field; the backend should not need it after the initial auth request returns a challenge ID.
+**File**: `frontend/src/lib/auth.ts:88-93` — `this.mfaChallenge` stores the plaintext `password`. Remove the password field; the backend should not need it after the initial auth request returns a challenge ID.
 
 ### 4.3 Debug endpoints in production client
 
-**File**: `src/services/backendApi.ts:125-131` — `getTessieSample()` and `getDrivesCheck()` methods call `/api/v1/debug/*`. Remove these from the production client.
+**File**: `frontend/src/services/backendApi.ts:125-131` — `getTessieSample()` and `getDrivesCheck()` methods call `/api/v1/debug/*`. Remove these from the production client.
 
 ### 4.4 Fix import ordering in auth.ts
 
-**File**: `src/lib/auth.ts:306` — `import React from 'react'` is at the bottom of the file, after all the code that uses `React.useState` and `React.useEffect`. Move it to the top with the other imports.
+**File**: `frontend/src/lib/auth.ts:306` — `import React from 'react'` is at the bottom of the file, after all the code that uses `React.useState` and `React.useEffect`. Move it to the top with the other imports.
 
 ---
 
