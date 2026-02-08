@@ -1,256 +1,228 @@
-# Frontend Audit Report
+# Frontend Audit — Fix These 69 Issues
 
-**Site**: https://awhittlewandering.pages.dev
-**Date**: 2026-02-08
-**Scope**: Complete frontend codebase audit
+You are picking up a comprehensive frontend audit of **A Whittle Wandering** (React/Vite SPA on Cloudflare Pages). This document contains every issue found. Work through them in the priority order at the bottom. After each fix, run `npm run build` from `frontend/` to verify. Commit after each logical group of fixes using Conventional Commits.
 
----
-
-## Summary
-
-69 issues identified across 7 categories. 10 are runtime bugs that will cause crashes or broken behavior in production.
-
-| Severity | Count |
-|----------|-------|
-| CRITICAL (runtime bugs) | 10 |
-| HIGH (data/config/security) | 12 |
-| MEDIUM (UX/a11y/SEO) | 20 |
-| LOW (dead code/cleanup) | 14 |
-| INFO (style nits) | 13 |
+**Dev site**: https://awhittlewandering.pages.dev/dashboard
 
 ---
 
-## 1. CRITICAL — Runtime Bugs
+## 1. CRITICAL — Runtime Bugs (fix these first)
 
-### 1.1 JourneyJournal: Multiple broken references crash the component
+### 1.1 JourneyJournal.tsx is severely broken (7 issues)
 
 **File**: `frontend/src/components/JourneyJournal.tsx`
 
-| Line | Issue |
-|------|-------|
-| 52-55 | Destructures `tripData` (as `_tripData`) but `JourneyJournalProps` has no `tripData` field. The interface defines `entries`, `onAddEntry`, `currentLocation`, `isAutoGenerating` — none of which are destructured. |
-| 120 | `newEntry.title.trim()` — `newEntry` is `Partial<JournalEntry>`, so `title` can be `undefined`. Calling `.trim()` on `undefined` throws a `TypeError`. |
-| 128-132 | References `currentLocation` variable that was never destructured from props. Always evaluates to `undefined`, so every manual entry gets "Unknown Location". |
-| 135 | Calls `onAddEntry?.(entry)` but `onAddEntry` is not destructured from props — created entries are silently discarded. |
-| 186 | Reads `isAutoGenerating` in JSX but it was not destructured from props — always `undefined`, so the "AI writing entry..." indicator never shows. |
-| 59-67 | `newEntry` initial state includes `style`, `tags`, `distance` — fields that don't exist on `JournalEntry`. Type errors (hidden by `strict: false`). |
-| 401-408 | Quick template buttons reference undeclared `currentLocation`. |
+The component signature at line 52-55 destructures `tripData` (renamed `_tripData`) and `onGenerateEntry` from props, but the `JourneyJournalProps` interface (line 44-50) defines `entries`, `onAddEntry`, `currentLocation`, and `isAutoGenerating` — none of which are actually destructured. Fix all of these:
 
-### 1.2 EnhancedMapFeatures: Undeclared variable references
+1. **Line 52-55**: Destructure all needed props from the interface: `entries`, `onAddEntry`, `currentLocation`, `isAutoGenerating`, `onGenerateEntry`. Remove the phantom `tripData`.
+2. **Line 120**: `newEntry.title.trim()` crashes because `newEntry` is `Partial<JournalEntry>` so `title` can be `undefined`. Add a null check: `newEntry.title?.trim()`.
+3. **Lines 128-132**: References `currentLocation` which is never in scope because it wasn't destructured. Wire it up from props.
+4. **Line 135**: Calls `onAddEntry?.(entry)` but `onAddEntry` was never destructured. Wire it up from props.
+5. **Line 186**: Reads `isAutoGenerating` in JSX but it was never destructured. Wire it up from props.
+6. **Lines 59-67**: `newEntry` initial state includes `style`, `tags`, `distance` which don't exist on `JournalEntry`. Remove them or extend the type.
+7. **Lines 401-408**: Quick template buttons reference `currentLocation` — same scoping fix as #3.
+
+### 1.2 EnhancedMapFeatures.tsx — undeclared variable references
 
 **File**: `frontend/src/components/EnhancedMapFeatures.tsx`
 
-| Line | Issue |
-|------|-------|
-| 172 | References `chargingStations` but line 30 declares it as `_chargingStations`. Runtime `ReferenceError`. |
-| 206 | References `recommendations` but line 28 declares it as `_recommendations`. Runtime `ReferenceError`. |
+1. **Line 172**: References `chargingStations` but line 30 declares it as `_chargingStations`. Rename back to `chargingStations` (remove underscore prefix) since it IS used.
+2. **Line 206**: References `recommendations` but line 28 declares it as `_recommendations`. Same fix — remove underscore prefix.
 
-### 1.3 FollowerView: Route parameter ignored
+### 1.3 FollowerView.tsx — route param ignored
 
 **File**: `frontend/src/pages/FollowerView.tsx`
 
-| Line | Issue |
-|------|-------|
-| 58 | `useEffect` dependency array is `[]` (empty) but uses `id` from `useParams()`. Navigating between `/journey/abc` and `/journey/xyz` does not re-fetch data. The `id` is displayed in a badge but the fetch always hits the same endpoint regardless. |
+**Line 58**: The `useEffect` has an empty dependency array `[]` but the component reads `id` from `useParams()`. Add `id` to the dependency array so navigating between `/journey/abc` and `/journey/xyz` re-fetches data.
 
 ---
 
-## 2. HIGH — API & Data Flow Issues
+## 2. HIGH — API Configuration (fix second)
 
-### 2.1 Three conflicting API configurations
+### 2.1 Three conflicting API configs — consolidate to one
+
+There are three files that define API base URLs with different production values:
 
 | File | Production URL | Used by |
 |------|---------------|---------|
 | `src/lib/api-config.ts` | `https://api.awhittlewandering.com` | TeslaDataContext, FollowerView, useUnifiedApiData |
-| `src/lib/api.ts` | `https://awhittlewandering-api.kd8jc7v8cd.workers.dev` | Nothing (legacy, still exported) |
-| `src/services/backendApi.ts` | `http://localhost:8787` (no prod fallback!) | JourneyJournal, ConsolidatedRouteOptimizer, AdvancedAnalyticsDashboard |
+| `src/lib/api.ts` | `https://awhittlewandering-api.kd8jc7v8cd.workers.dev` | Nothing (legacy) |
+| `src/services/backendApi.ts` | `http://localhost:8787` (NO prod fallback!) | JourneyJournal, ConsolidatedRouteOptimizer, AdvancedAnalyticsDashboard |
 
-**Impact**: `backendApi.ts` defaults to `localhost:8787` in production unless `VITE_BACKEND_URL` env var is set. This means the Navigation tab, Analytics tab, and Journal AI generation all make requests to `localhost` on the user's machine in production — they silently fail.
+**The critical problem**: `backendApi.ts` defaults to `http://localhost:8787` in production. The Navigation tab, Analytics tab, and Journal AI generation all silently fail for real users.
+
+**Fix**: Make `backendApi.ts` import its base URL from `api-config.ts` instead of defining its own. Delete `src/lib/api.ts` (legacy). There should be exactly one source of truth for the API base URL.
 
 ### 2.2 Inconsistent endpoint paths in backendApi.ts
 
-| Method | Calls | Should be |
-|--------|-------|-----------|
+| Method | Currently calls | Should call |
+|--------|----------------|-------------|
 | `health()` | `/health` | `/api/v1/health` |
 | `getTripStatus()` | `/trip-status` | `/api/v1/trip/status` |
 
 ### 2.3 No type safety on API responses
 
-`backendApi.ts` — all 14 methods return `Promise<any>`. API response shapes are never validated. Runtime shape mismatches will cause silent data corruption or crashes downstream.
+`backendApi.ts` — all 14 methods return `Promise<any>`. Add proper return types based on the actual API response shapes.
 
-### 2.4 Duplicate endpoint definitions
+### 2.4 Duplicate endpoint alias
 
-`api-config.ts` line 17: `TIMELINE` and `UNIFIED_DATA` both point to `/api/v1/unified-data`.
+`api-config.ts` line 17: `TIMELINE` and `UNIFIED_DATA` both point to `/api/v1/unified-data`. Either remove the duplicate or point `TIMELINE` to its own endpoint if one exists.
 
 ---
 
-## 3. HIGH — Build & Configuration Issues
+## 3. HIGH — Build & Config (fix third)
 
-### 3.1 TypeScript strict mode disabled
+### 3.1 Enable TypeScript strict mode
 
-**File**: `frontend/tsconfig.app.json:18-22`
+**File**: `frontend/tsconfig.app.json`
+
+Change these settings to match the project standard ("TypeScript strict mode in all workspaces"):
 
 ```json
-"strict": false,
-"noUnusedLocals": false,
-"noUnusedParameters": false,
-"noImplicitAny": false,
-"noFallthroughCasesInSwitch": false
+"strict": true,
+"noUnusedLocals": true,
+"noUnusedParameters": true,
+"noFallthroughCasesInSwitch": true
 ```
 
-This directly violates the project standard: "TypeScript strict mode in all workspaces" (CLAUDE.md line 7). Many of the bugs in this report (undefined `.trim()`, missing prop destructuring) would be caught by the compiler with `strict: true`.
+Then fix all resulting type errors. This will surface many of the bugs from Section 1 at compile time.
 
-### 3.2 ESLint is broken
+### 3.2 Fix ESLint
 
-`npm run lint` fails with:
-```
-Cannot find package '@eslint/js' imported from eslint.config.js
-```
-The linter cannot run at all. No code quality checks are enforced.
+`npm run lint` fails: `Cannot find package '@eslint/js'`. Fix the dependency or the config so linting works again. Run `npm run lint` to verify.
 
-### 3.3 EXIF library loaded twice
+### 3.3 Remove duplicate EXIF library loading
 
-`index.html:19` loads `exif-js@2.3.0` from CDN as a global script. `package.json` also lists `exif-js` as a dependency. The code in `MediaUpload.tsx` accesses `window.EXIF` with `@ts-expect-error` comments (6 occurrences). The CDN script should be removed and the npm package imported properly.
+`index.html:19` loads `exif-js` from CDN as a global `<script>`. The same library is also in `package.json`. Remove the CDN script tag and `import EXIF from 'exif-js'` properly in `MediaUpload.tsx`, eliminating the 6 `@ts-expect-error` hacks.
 
-### 3.4 Manual chunks reference possibly stale files
+### 3.4 Clean up vite.config.ts manual chunks
 
-`vite.config.ts:36-38` — `manualChunks` references `AdminPortal.tsx` and `TeslaMap.tsx`. These exist but `AdminPortal` is not imported in any route — it gets bundled but is unreachable.
+`vite.config.ts:36-38` — `manualChunks` references `AdminPortal.tsx` (not imported in any route) and `TeslaMap.tsx`. Verify these are needed or remove the stale entries.
 
 ---
 
-## 4. HIGH — Security Concerns
+## 4. HIGH — Security
 
 ### 4.1 Admin token in localStorage
 
-**File**: `src/lib/auth.ts:55`
+**File**: `src/lib/auth.ts:55` — session token in `localStorage` is XSS-exfiltrable. Move to `sessionStorage` at minimum.
 
-Session token stored under `awhittlewandering_admin_token` in `localStorage`. Any XSS vulnerability would allow token exfiltration. Consider `httpOnly` cookies or `sessionStorage` at minimum.
+### 4.2 Password in MFA challenge state
 
-### 4.2 Password stored in MFA challenge state
+**File**: `src/lib/auth.ts:88-93` — `this.mfaChallenge` stores the plaintext `password`. Remove the password field; the backend should not need it after the initial auth request returns a challenge ID.
 
-**File**: `src/lib/auth.ts:88-93`
+### 4.3 Debug endpoints in production client
 
-```typescript
-this.mfaChallenge = {
-  challengeId: data.challengeId,
-  email,
-  password,  // ← plaintext password held in memory
-};
-```
+**File**: `src/services/backendApi.ts:125-131` — `getTessieSample()` and `getDrivesCheck()` methods call `/api/v1/debug/*`. Remove these from the production client.
 
-The user's password is retained in the singleton's state until MFA is completed or cancelled.
+### 4.4 Fix import ordering in auth.ts
 
-### 4.3 Debug endpoints in production API client
-
-**File**: `src/services/backendApi.ts:125-131`
-
-`getTessieSample()` and `getDrivesCheck()` call `/api/v1/debug/*` endpoints. These methods exist in the production client, even if the backend gates them.
-
-### 4.4 Import ordering in auth.ts
-
-**File**: `src/lib/auth.ts:306`
-
-`import React from 'react'` appears at the very bottom of the file, after all code that uses `React.useState` and `React.useEffect`. Module hoisting makes this work, but it's fragile and non-standard.
+**File**: `src/lib/auth.ts:306` — `import React from 'react'` is at the bottom of the file, after all the code that uses `React.useState` and `React.useEffect`. Move it to the top with the other imports.
 
 ---
 
-## 5. MEDIUM — Accessibility Issues
+## 5. MEDIUM — Accessibility
 
-| # | File:Line | Issue |
-|---|-----------|-------|
-| 5.1 | `NotFound.tsx:15` | Uses hardcoded light-theme colors (`bg-gray-100`, `text-gray-600`, `text-blue-500`). On the dark-themed site this page renders as a jarring white rectangle. |
-| 5.2 | `NotFound.tsx:19` | `<a href="/">` instead of `<Link to="/">` — causes full page reload, breaks SPA navigation. |
-| 5.3 | `JourneyJournal.tsx:243-258` | Form inputs use only `placeholder` for labeling. No `<label>` elements — screen readers can't identify the fields. |
-| 5.4 | `MediaUpload.tsx:245-251` | Hidden file input has no accessible label or `aria-label`. |
-| 5.5 | `MediaUpload.tsx:299` | `alt="Uploaded media"` is generic. Should describe the image or use the filename. |
-| 5.6 | `VehicleStats.tsx:55` | Loading skeleton uses `bg-gray-200` (hardcoded light color) instead of design system token. |
-| 5.7 | No skip-to-content link on any page. |
-| 5.8 | No React error boundary — unhandled errors show a white screen with no recovery option. |
-| 5.9 | `JourneyerDashboard.tsx:131` — 5-tab grid (`grid-cols-5`) truncates labels on mobile. |
-| 5.10 | `MasterCoordinationDashboard.tsx:131` — 6-tab grid (`grid-cols-6`) unreadable on mobile. |
+| # | File | Fix |
+|---|------|-----|
+| 5.1 | `NotFound.tsx:15` | Replace hardcoded light-theme colors (`bg-gray-100`, `text-gray-600`, `text-blue-500`) with design system tokens (`bg-background`, `text-muted-foreground`, `text-primary`). |
+| 5.2 | `NotFound.tsx:19` | Replace `<a href="/">` with `<Link to="/">` for SPA navigation. |
+| 5.3 | `JourneyJournal.tsx:243-258` | Add `<Label>` elements to form inputs. Placeholders alone are not accessible. |
+| 5.4 | `MediaUpload.tsx:245-251` | Add `aria-label="Upload photos and videos"` to the hidden file input. |
+| 5.5 | `MediaUpload.tsx:299` | Replace `alt="Uploaded media"` with the actual filename: `alt={media.file.name}`. |
+| 5.6 | `VehicleStats.tsx:55` | Replace `bg-gray-200` in skeleton with `bg-muted`. |
+| 5.7 | All pages | Add a skip-to-content link in the app shell. |
+| 5.8 | `App.tsx` | Wrap routes in a React error boundary component with a user-friendly fallback UI. |
+| 5.9 | `JourneyerDashboard.tsx:131` | Change 5-col tab grid to responsive: `grid-cols-2 sm:grid-cols-3 lg:grid-cols-5`. |
+| 5.10 | `MasterCoordinationDashboard.tsx:131` | Change 6-col tab grid to responsive or use a scrollable `TabsList`. |
 
 ---
 
-## 6. MEDIUM — SEO Issues
+## 6. MEDIUM — SEO
 
-| # | Issue |
-|---|-------|
-| 6.1 | Missing `og:image` — social shares show no preview image. |
-| 6.2 | Missing `og:url` and `<link rel="canonical">`. |
-| 6.3 | `twitter:card` set to `summary_large_image` but no image specified. |
-| 6.4 | No dynamic meta tags — every route shows title "A Whittle Wandering" and the same description. No `react-helmet` or equivalent. |
-| 6.5 | No `robots.txt` in `public/`. |
-| 6.6 | No `sitemap.xml`. |
-| 6.7 | No structured data (JSON-LD / schema.org). |
+| # | Fix |
+|---|-----|
+| 6.1 | Add `<meta property="og:image" content="...">` to `index.html`. Create or reference a social share image. |
+| 6.2 | Add `<meta property="og:url">` and `<link rel="canonical">` to `index.html`. |
+| 6.3 | The `twitter:card` is `summary_large_image` but has no image — either add one or change to `summary`. |
+| 6.4 | Install `react-helmet-async` and set per-route titles and descriptions in each page component. |
+| 6.5 | Add `public/robots.txt` with basic rules. |
+| 6.6 | Add `public/sitemap.xml` listing the public routes. |
+| 6.7 | Add JSON-LD structured data for the journey (schema.org `Event` or `Trip`). |
 
 ---
 
 ## 7. MEDIUM — Design System Violations
 
-Multiple components bypass the design system's HSL custom properties and use hardcoded Tailwind color classes. On the warm dark theme, these render as clashing light-mode patches.
+These components use hardcoded Tailwind colors that clash with the warm dark theme. Replace with design system tokens from `index.css`:
 
-| File | Hardcoded classes |
-|------|-------------------|
-| `NotFound.tsx` | `bg-gray-100`, `text-gray-600`, `text-blue-500`, `text-blue-700` |
-| `VehicleStats.tsx` | `bg-gray-200` (skeleton) |
-| `ConsolidatedRouteOptimizer.tsx` | `bg-blue-50`, `text-blue-700`, `bg-red-50`, `text-red-700`, `bg-slate-50` |
-| `AdvancedAnalyticsDashboard.tsx` | `text-gray-600` (18 occurrences), `bg-blue-50`, `bg-green-50`, `bg-purple-50` |
-| `MediaUpload.tsx` | `bg-blue-50`, `border-gray-300`, `text-gray-400`, `text-gray-500`, `bg-gray-100` |
-| `EnhancedMapFeatures.tsx` | `text-green-600`, `text-blue-600`, `text-gray-600` |
-| `Demo.tsx` | Entirely inline styles with light-theme hex colors |
-
----
-
-## 8. LOW — Dead Code & Cleanup
-
-| # | Item | Action |
-|---|------|--------|
-| 8.1 | `src/_archived/` — 14 deprecated files | Delete entire directory |
-| 8.2 | `src/pages/Index.tsx` | Delete (unreferenced) |
-| 8.3 | `src/pages/Index.temp.tsx` | Delete (unreferenced) |
-| 8.4 | `src/pages/SimpleTest.tsx` | Delete (unreferenced, has hardcoded worker URL) |
-| 8.5 | `src/pages/TestIndex.tsx` | Delete (unreferenced) |
-| 8.6 | `src/lib/config.ts` | Delete (deprecated, only emits console.warn) |
-| 8.7 | `src/lib/api.ts` | Delete (superseded by `api-config.ts`, uses wrong production URL) |
-| 8.8 | Duplicate toast systems | Remove either `@radix-ui/react-toast` Toaster or `sonner` Sonner from `App.tsx` |
-| 8.9 | `next-themes` in dependencies | Remove — `ThemeProvider` is not used in `App.tsx` |
-| 8.10 | `VehicleStats.tsx:43-47` | `_getBatteryColor()` — defined, never called |
-| 8.11 | `auth.ts:192-193` | `generateSessionId()` — defined, never called |
-| 8.12 | Large unused dependencies | `leaflet`, `react-leaflet`, `papaparse`, `recharts`, `embla-carousel-react`, `cmdk`, `vaul`, `react-resizable-panels`, `react-day-picker`, `react-hook-form`, `@hookform/resolvers`, `input-otp` — verify usage or remove |
-| 8.13 | `backendApi.ts:125-131` | Debug endpoint methods — remove from production client |
-| 8.14 | No `.env.example` file | Add one documenting `VITE_API_BASE_URL`, `VITE_BACKEND_URL`, `VITE_MAPBOX_TOKEN` |
+| File | Hardcoded | Replace with |
+|------|-----------|--------------|
+| `NotFound.tsx` | `bg-gray-100` | `bg-background` |
+| `VehicleStats.tsx` | `bg-gray-200` | `bg-muted` |
+| `ConsolidatedRouteOptimizer.tsx` | `bg-blue-50`, `text-blue-700`, `bg-red-50`, `bg-slate-50` | `bg-primary/10`, `text-primary`, `bg-destructive/10`, `bg-secondary` |
+| `AdvancedAnalyticsDashboard.tsx` | `text-gray-600` (18x), `bg-blue-50`, `bg-green-50`, `bg-purple-50` | `text-muted-foreground`, `bg-primary/10`, `bg-accent/10`, `bg-secondary/10` |
+| `MediaUpload.tsx` | `bg-blue-50`, `border-gray-300`, `text-gray-400`, `text-gray-500`, `bg-gray-100` | Design system equivalents |
+| `EnhancedMapFeatures.tsx` | `text-green-600`, `text-blue-600`, `text-gray-600` | `text-primary`, `text-muted-foreground` |
+| `Demo.tsx` | All inline styles with light-theme hex colors | Use Tailwind design system classes |
 
 ---
 
-## 9. INFO — UX Observations
+## 8. LOW — Dead Code Cleanup
+
+Delete these files and references:
+
+| # | Item |
+|---|------|
+| 8.1 | `src/_archived/` — entire directory (14 deprecated files) |
+| 8.2 | `src/pages/Index.tsx` (unreferenced) |
+| 8.3 | `src/pages/Index.temp.tsx` (unreferenced) |
+| 8.4 | `src/pages/SimpleTest.tsx` (unreferenced, has hardcoded worker URL) |
+| 8.5 | `src/pages/TestIndex.tsx` (unreferenced) |
+| 8.6 | `src/lib/config.ts` (deprecated, only emits console.warn) |
+| 8.7 | `src/lib/api.ts` (superseded by `api-config.ts`, wrong prod URL) |
+| 8.8 | Remove either `@radix-ui/react-toast` Toaster OR `sonner` Sonner from `App.tsx` — pick one toast system |
+| 8.9 | Remove `next-themes` from `package.json` — `ThemeProvider` is never used |
+| 8.10 | `VehicleStats.tsx:43-47` — delete `_getBatteryColor()` (unused) |
+| 8.11 | `auth.ts:192-193` — delete `generateSessionId()` (unused) |
+| 8.12 | Audit these deps and remove if unused: `leaflet`, `react-leaflet`, `papaparse`, `recharts`, `embla-carousel-react`, `cmdk`, `vaul`, `react-resizable-panels`, `react-day-picker`, `react-hook-form`, `@hookform/resolvers`, `input-otp` |
+| 8.13 | `backendApi.ts:125-131` — remove debug endpoint methods |
+| 8.14 | Add `frontend/.env.example` documenting `VITE_API_BASE_URL`, `VITE_BACKEND_URL`, `VITE_MAPBOX_TOKEN` |
+
+---
+
+## 9. INFO — UX Polish (address if time permits)
 
 | # | Issue |
 |---|-------|
-| 9.1 | Landing page: Two CTA buttons ("Follow the journey" / "Preview follower view") link to the same URL (`/journey/live`). Confusing — merge or differentiate. |
-| 9.2 | `MasterCoordinationDashboard` uses entirely mock/hardcoded data (battery 78%, temp 72F, fake AI model progress bars). Not connected to real data. |
-| 9.3 | `AdvancedAnalyticsDashboard:392-435` — "AI-Powered Insights" section is three hardcoded paragraphs, not generated from actual data. |
-| 9.4 | Demo page says "AtlasIT Joiner Demo" — different branding. Publicly accessible at `/demo`. |
-| 9.5 | JourneyJournal entries are local state only — lost on page refresh. No persistence to backend or localStorage. |
-| 9.6 | `MediaUpload.tsx:188` — `URL.createObjectURL()` called during EXIF extraction but never revoked. Memory leak on repeated uploads. |
-| 9.7 | No loading indicator for the initial app shell (blank page until React mounts). |
-| 9.8 | `App.tsx` — Coordination dashboard mounted at both `/coordination` and `/dashboard/coordination` (duplicate routes). |
-| 9.9 | `useUnifiedApiData.ts:107-116` — Logs full API response summaries with emoji via `console.warn` on every 30-second poll. Stripped in production via terser but noisy in dev. |
-| 9.10 | `TeslaDataContext.tsx:109` — CORS error detection checks `err.message.includes('cors')` but fetch CORS errors typically don't include "cors" in the message. |
-| 9.11 | No CSRF protection on state-changing API calls (follow/unfollow, journal generate, route optimize). |
-| 9.12 | `ConsolidatedRouteOptimizer` — no loading skeleton; shows nothing while optimizing. |
-| 9.13 | No favicon specified in `index.html`. |
+| 9.1 | Landing page: two CTA buttons link to the same URL (`/journey/live`). Merge or differentiate. |
+| 9.2 | `MasterCoordinationDashboard` is all mock data. Either connect to real data or add a clear "demo/prototype" banner. |
+| 9.3 | `AdvancedAnalyticsDashboard:392-435` — "AI-Powered Insights" is hardcoded static text. Either generate from data or label as example. |
+| 9.4 | Demo page says "AtlasIT Joiner Demo" — wrong branding. Update or hide behind auth. |
+| 9.5 | JourneyJournal entries are local state only — lost on refresh. Consider persisting to backend. |
+| 9.6 | `MediaUpload.tsx:188` — `URL.createObjectURL()` during EXIF extraction is never revoked. Add cleanup. |
+| 9.7 | No loading indicator for initial app shell (blank page until React mounts). Add a spinner to `index.html`. |
+| 9.8 | `App.tsx` — Coordination dashboard at both `/coordination` and `/dashboard/coordination`. Remove the duplicate. |
+| 9.9 | `useUnifiedApiData.ts:107-116` — emoji `console.warn` on every 30s poll. Clean up or reduce to debug level. |
+| 9.10 | `TeslaDataContext.tsx:109` — CORS detection `err.message.includes('cors')` doesn't work. Fetch CORS errors don't include "cors" in the message. |
+| 9.11 | No CSRF protection on state-changing API calls. |
+| 9.12 | `ConsolidatedRouteOptimizer` — no loading skeleton during optimization. |
+| 9.13 | No favicon in `index.html`. |
 
 ---
 
-## Recommended Priority Order
+## Execution Order
 
-1. **Fix runtime bugs** (Section 1) — these cause crashes for users right now
-2. **Consolidate API configuration** (2.1) — `backendApi.ts` hitting localhost in prod
-3. **Enable TypeScript strict mode** (3.1) — prevents most of the bugs in Section 1
-4. **Fix ESLint** (3.2) — restore linting capability
-5. **Add React error boundary** (5.8) — prevent white-screen crashes
-6. **Fix accessibility violations** (Section 5) — legal/compliance risk
-7. **Delete dead code** (Section 8) — reduce maintenance burden
-8. **Design system consistency** (Section 7) — visual coherence
-9. **SEO improvements** (Section 6) — discoverability
-10. **Security hardening** (Section 4) — defense in depth
+Work through these in order. Each numbered section is a commit-worthy unit:
+
+1. **Section 1** — Fix all runtime bugs. Commit: `fix: resolve runtime crashes in JourneyJournal, EnhancedMapFeatures, FollowerView`
+2. **Section 2** — Consolidate API config. Commit: `fix: consolidate API configuration, fix backendApi production URL`
+3. **Section 3** — Enable strict mode, fix ESLint, clean EXIF. Commit: `build: enable TypeScript strict mode, fix ESLint, clean EXIF loading`
+4. **Section 4** — Security fixes. Commit: `fix: harden auth token storage and remove debug endpoints`
+5. **Section 8** — Delete dead code. Commit: `chore: remove archived files, unused pages, and legacy configs`
+6. **Section 5** — Accessibility. Commit: `fix: accessibility improvements (labels, error boundary, responsive tabs)`
+7. **Section 7** — Design system. Commit: `style: replace hardcoded colors with design system tokens`
+8. **Section 6** — SEO. Commit: `feat: add SEO meta tags, robots.txt, and sitemap`
+9. **Section 9** — UX polish. Commit: `fix: UX polish (deduplicate routes, cleanup console, add favicon)`
+
+After each commit, run `cd frontend && npm run build` to verify no regressions.
