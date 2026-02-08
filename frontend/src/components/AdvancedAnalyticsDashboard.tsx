@@ -385,6 +385,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
             AI-Powered Insights
+            <span className="ml-2 text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">Example</span>
           </CardTitle>
         </CardHeader>
         <CardContent>

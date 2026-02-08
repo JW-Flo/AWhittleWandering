@@ -101,14 +101,11 @@ export const TeslaDataProvider: React.FC<TeslaDataProviderProps> = ({ children }
       console.error('Failed to fetch Tesla data:', err);
       
       let errorMessage = 'Failed to connect to Tesla data';
-      if (err instanceof Error) {
-        if (err.message.includes('fetch')) {
-          errorMessage = 'Network error: Unable to reach backend API. Please check your connection.';
-        } else if (err.message.includes('cors')) {
-          errorMessage = 'CORS error: Cross-origin request blocked. Please refresh the page.';
-        } else {
-          errorMessage = err.message;
-        }
+      if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
+        // TypeError: Failed to fetch covers both network errors and CORS blocks
+        errorMessage = 'Network error: Unable to reach backend API. This may be a CORS or connectivity issue.';
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
       }
       
       setError(errorMessage);

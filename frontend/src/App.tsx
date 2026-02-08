@@ -69,13 +69,6 @@ const App = () => (
               <Route path="/" element={<Landing />} />
               <Route path="/journey/:id" element={<FollowerView />} />
               <Route path="/dashboard" element={<JourneyerDashboard />} />
-              <Route path="/coordination" element={
-                <MasterCoordinationDashboard
-                  currentLocation={[37.7749, -122.4194]}
-                  destination={[34.0522, -118.2437]}
-                  journeyData={[]}
-                />
-              } />
               <Route path="/dashboard/coordination" element={
                 <MasterCoordinationDashboard
                   currentLocation={[37.7749, -122.4194]}

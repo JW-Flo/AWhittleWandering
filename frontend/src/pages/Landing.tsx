@@ -38,13 +38,13 @@ const Landing: React.FC = () => {
                 <Button asChild className="h-12 px-6 justify-between">
                   <Link to="/journey/live">
                     <span>Follow the journey</span>
-                    <span className="text-primary-foreground/70">→</span>
+                    <span className="text-primary-foreground/70">&rarr;</span>
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="h-12 px-6 justify-between">
-                  <Link to="/journey/live">
-                    <span>Preview follower view</span>
-                    <span className="text-muted-foreground">→</span>
+                  <Link to="/demo">
+                    <span>See a demo</span>
+                    <span className="text-muted-foreground">&rarr;</span>
                   </Link>
                 </Button>
               </div>

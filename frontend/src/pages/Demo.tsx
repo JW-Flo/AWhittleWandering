@@ -23,8 +23,8 @@ const Demo: React.FC = () => {
 
   return (
     <div className="max-w-xl mx-auto mt-8 p-6 border border-border rounded-lg">
-      <h1>AtlasIT Joiner Demo</h1>
-      <p>This demo simulates a joiner flow via the backend Worker.</p>
+      <h1>A Whittle Wandering — API Demo</h1>
+      <p>This demo simulates a backend API call via the edge Worker.</p>
       <button onClick={handleJoiner} disabled={loading} className="px-4 py-2 text-base">
         {loading ? 'Running...' : 'Simulate Joiner'}
       </button>
