@@ -236,20 +236,20 @@ generate_secrets_checklist() {
 # Run these commands to set required secrets:
 # ============================================================================
 
-wrangler secret put TESSIE_API_TOKEN --env $env_name
-wrangler secret put MAPBOX_API_TOKEN --env $env_name
-wrangler secret put OPENWEATHER_API_KEY --env $env_name
-wrangler secret put JWT_SECRET --env $env_name
-wrangler secret put TESLA_VIN --env $env_name
+wrangler --config backend/edge-worker/wrangler.toml secret put TESSIE_API_TOKEN --env $env_name
+wrangler --config backend/edge-worker/wrangler.toml secret put MAPBOX_API_TOKEN --env $env_name
+wrangler --config backend/edge-worker/wrangler.toml secret put OPENWEATHER_API_KEY --env $env_name
+wrangler --config backend/edge-worker/wrangler.toml secret put JWT_SECRET --env $env_name
+wrangler --config backend/edge-worker/wrangler.toml secret put TESLA_VIN --env $env_name
 
 # ============================================================================
 # Verification
 # ============================================================================
 # List secrets (without values):
-wrangler secret list --env $env_name
+wrangler --config backend/edge-worker/wrangler.toml secret list --env $env_name
 
 # Deploy to this environment:
-wrangler deploy --env $env_name
+wrangler --config backend/edge-worker/wrangler.toml deploy --env $env_name
 
 # Test health endpoint:
 curl https://api-${env_name}.awhittlewandering.com/api/v1/health
