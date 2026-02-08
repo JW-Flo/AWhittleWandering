@@ -39,10 +39,10 @@ const ConnectedTeslaData: React.FC<ConnectedTeslaDataProps> = ({
     
     try {
       // Use the backend API that already has the Tessie API key
-      const data = await api.getUnifiedData();
+      const data = await api.getUnifiedData() as any;
       setUnifiedData(data);
       setIsConnected(true);
-      
+
       if (onDataUpdate) {
         onDataUpdate({
           vehicle: data.currentStatus,

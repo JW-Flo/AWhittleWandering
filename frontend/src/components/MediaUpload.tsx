@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import EXIF from 'exif-js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -138,54 +139,47 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
       }
 
       const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
       img.onload = () => {
         try {
-          // @ts-expect-error - EXIF library types may not be available
-          window.EXIF?.getData(img, function() {
-            // @ts-expect-error - EXIF library global types
-            const lat = window.EXIF.getTag(this, "GPSLatitude");
-            // @ts-expect-error - EXIF library global types
-            const lon = window.EXIF.getTag(this, "GPSLongitude");
-            // @ts-expect-error - EXIF library global types
-            const latRef = window.EXIF.getTag(this, "GPSLatitudeRef");
-            // @ts-expect-error - EXIF library global types
-            const lonRef = window.EXIF.getTag(this, "GPSLongitudeRef");
-            // @ts-expect-error - EXIF library global types
-            const dateTime = window.EXIF.getTag(this, "DateTime");
+          (EXIF as any).getData(img, function (this: any) {
+            const lat = EXIF.getTag(this, "GPSLatitude");
+            const lon = EXIF.getTag(this, "GPSLongitude");
+            const latRef = EXIF.getTag(this, "GPSLatitudeRef");
+            const lonRef = EXIF.getTag(this, "GPSLongitudeRef");
+            const dateTime = EXIF.getTag(this, "DateTime");
 
             let location;
             if (lat && lon) {
-              const latitude = (latRef === "S" ? -1 : 1) * (lat[0] + lat[1]/60 + lat[2]/3600);
-              const longitude = (lonRef === "W" ? -1 : 1) * (lon[0] + lon[1]/60 + lon[2]/3600);
+              const latitude = (latRef === "S" ? -1 : 1) * (lat[0] + lat[1] / 60 + lat[2] / 3600);
+              const longitude = (lonRef === "W" ? -1 : 1) * (lon[0] + lon[1] / 60 + lon[2] / 3600);
               location = { lat: latitude, lng: longitude };
             }
 
             let timestamp = new Date(file.lastModified);
             if (dateTime) {
               try {
-                try {
                 timestamp = new Date(dateTime.replace(/:/g, '-').replace(' ', 'T'));
-              } catch {
-                console.warn('Could not parse EXIF date:', dateTime);
-              }
               } catch {
                 // EXIF date parsing failed, using file modification date
               }
             }
 
+            URL.revokeObjectURL(objectUrl);
             resolve({ location, timestamp });
           });
         } catch {
-          // EXIF extraction failed, using default timestamp
+          URL.revokeObjectURL(objectUrl);
           resolve({ timestamp: new Date(file.lastModified) });
         }
       };
-      
+
       img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
         resolve({ timestamp: new Date(file.lastModified) });
       };
-      
-      img.src = URL.createObjectURL(file);
+
+      img.src = objectUrl;
     });
   };
 
@@ -221,7 +215,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
         <CardContent>
           {/* Current Location Display */}
           {currentLocation && (
-            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <div className="mb-4 p-3 bg-primary/10 dark:bg-blue-900/20 rounded-lg">
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-blue-600" />
                 <span className="text-sm font-medium">Current Location: {currentLocation.state}</span>
@@ -234,8 +228,8 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
             className={cn(
               "relative border-2 border-dashed rounded-lg p-8 text-center transition-colors",
               dragActive 
-                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" 
-                : "border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                ? "border-blue-500 bg-primary/10 dark:bg-blue-900/20" 
+                : "border-border dark:border-gray-600 hover:border-gray-400"
             )}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -248,17 +242,18 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
               accept=".jpg,.jpeg,.png,.heic,.heif,.mp4,.mov"
               onChange={handleFileInput}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              aria-label="Upload photos and videos"
               disabled={isProcessing}
             />
             
             <div className="space-y-4">
               <div className="flex justify-center">
-                <Upload className="w-12 h-12 text-gray-400" />
+                <Upload className="w-12 h-12 text-muted-foreground/60" />
               </div>
               
               <div>
                 <p className="text-lg font-medium">Drop your photos and videos here</p>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   or click to browse files
                 </p>
               </div>
@@ -292,16 +287,16 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {uploadedMedia.map((media) => (
                 <div key={media.id} className="relative group">
-                  <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                  <div className="aspect-square rounded-lg overflow-hidden bg-muted dark:bg-gray-800">
                     {media.type === 'image' ? (
                       <img
                         src={media.preview}
-                        alt="Uploaded media"
+                        alt={media.file.name}
                         className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Video className="w-8 h-8 text-gray-400" />
+                        <Video className="w-8 h-8 text-muted-foreground/60" />
                       </div>
                     )}
                   </div>

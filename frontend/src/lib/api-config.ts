@@ -14,7 +14,6 @@ export const API_CONFIG = {
   BASE_URL: getApiBaseUrl(),
   ENDPOINTS: {
     UNIFIED_DATA: '/api/v1/unified-data',
-    TIMELINE: '/api/v1/unified-data', // Use unified data for timeline
     LIVE_STATUS: '/api/v1/trip/status', // Use trip status for live status
     TELEMETRY: '/api/v1/telemetry',
     HEALTH: '/api/v1/health',
@@ -56,7 +55,6 @@ export async function apiRequest<T>(endpoint: string, options: RequestInit = {})
 export const api = {
   baseUrl: getApiBaseUrl(),
   getUnifiedData: () => apiRequest(API_CONFIG.ENDPOINTS.UNIFIED_DATA),
-  getTimeline: () => apiRequest(API_CONFIG.ENDPOINTS.TIMELINE),
   getLiveStatus: () => apiRequest(API_CONFIG.ENDPOINTS.LIVE_STATUS),
   getHealth: () => apiRequest(API_CONFIG.ENDPOINTS.HEALTH),
   getConfig: () => apiRequest(API_CONFIG.ENDPOINTS.CONFIG),

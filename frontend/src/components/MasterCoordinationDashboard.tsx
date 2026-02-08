@@ -96,6 +96,11 @@ export const MasterCoordinationDashboard: React.FC<MasterCoordinationDashboardPr
 
   return (
     <div data-testid="coordination-page" className="p-6 space-y-6">
+      {/* Prototype Banner */}
+      <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200">
+        Prototype — data on this page is simulated. Connect to live backend for real-time coordination.
+      </div>
+
       {/* Master Coordination Header */}
       <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
         <CardHeader>
@@ -128,7 +133,7 @@ export const MasterCoordinationDashboard: React.FC<MasterCoordinationDashboardPr
 
       {/* Main Dashboard Tabs */}
       <Tabs value={activeTrack} onValueChange={setActiveTrack}>
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <Activity className="h-4 w-4" />
             Overview

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Battery, MapPin, Thermometer, Lock, Unlock, Car, Zap } from 'lucide-react';
 import { useRealtimeStatus } from '../hooks/useRealtimeStatus';
 

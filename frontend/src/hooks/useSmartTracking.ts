@@ -158,7 +158,7 @@ class SmartJourneyTracker {
     return 'Camping/Short stay'; // 6-7.5 hours
   }
 
-  private guessStopReason(location: LocationData, duration: number): string {
+  private guessStopReason(_location: LocationData, duration: number): string {
     // In production, could use nearby points of interest
     if (duration > 120) return 'Sightseeing/Hiking';
     if (duration > 60) return 'Meal/Rest stop';

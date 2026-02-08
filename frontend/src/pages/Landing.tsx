@@ -1,8 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 const Landing: React.FC = () => {
+  useDocumentTitle("Home");
   return (
     <div className="journey-typography min-h-screen bg-background text-foreground">
       <header className="container mx-auto px-4 pt-8">
@@ -36,13 +38,13 @@ const Landing: React.FC = () => {
                 <Button asChild className="h-12 px-6 justify-between">
                   <Link to="/journey/live">
                     <span>Follow the journey</span>
-                    <span className="text-primary-foreground/70">→</span>
+                    <span className="text-primary-foreground/70">&rarr;</span>
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="h-12 px-6 justify-between">
-                  <Link to="/journey/live">
-                    <span>Preview follower view</span>
-                    <span className="text-muted-foreground">→</span>
+                  <Link to="/demo">
+                    <span>See a demo</span>
+                    <span className="text-muted-foreground">&rarr;</span>
                   </Link>
                 </Button>
               </div>

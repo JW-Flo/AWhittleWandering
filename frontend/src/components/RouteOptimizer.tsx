@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { 
   Route, 
   Zap, 
@@ -79,8 +79,15 @@ export default function RouteOptimizer({ vehicleData: _vehicleData, onRouteOptim
     }
   });
 
+  const [optimizationResult, setOptimizationResult] = useState<{
+    success: boolean;
+    error: string | null;
+    route: any | null;
+  } | null>(null);
+  void optimizationResult;
+
   const handleOptimizeRoute = async () => {
-    if (!routeForm.startLocation || !routeForm.endLocation) {
+    if (!formData.origin.name || !formData.destination.name) {
       setOptimizationResult({
         success: false,
         error: 'Please provide both start and end locations',
@@ -93,24 +100,23 @@ export default function RouteOptimizer({ vehicleData: _vehicleData, onRouteOptim
     try {
       // Call backend API for route optimization
       const response = await backendApi.optimizeRoute({
-        startLocation: routeForm.startLocation,
-        endLocation: routeForm.endLocation,
-        preferences: routeForm.preferences
+        origin: formData.origin.name,
+        destination: formData.destination.name,
       });
 
-      if (response.success) {
+      if (response.ok) {
         setOptimizationResult({
           success: true,
           error: null,
-          route: response.route
+          route: response.result
         });
       } else {
-        throw new Error(response.error || 'Route optimization failed');
+        throw new Error('Route optimization failed');
       }
     } catch (error) {
       console.error('Route optimization failed:', error);
       // Fallback to mock data for development
-      const mockResult = generateMockRouteData(routeForm.startLocation, routeForm.endLocation);
+      const mockResult = generateMockRouteData(formData.origin.name, formData.destination.name);
       setOptimizationResult({
         success: true,
         error: null,

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 // Dynamic mapbox-gl loading to shrink initial bundle. Only loads when token present & component mounted.
 let mapboxModulePromise: Promise<any> | null = null;
 async function getMapbox() {
@@ -33,6 +33,7 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<any>(null);
   const vehicleMarker = useRef<any>(null);
+  const mapboxglRef = useRef<any>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(propsToken || null);
   const [isLoadingToken, setIsLoadingToken] = useState(false);
 
@@ -51,11 +52,13 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
         </div>
       `;
 
-      const marker = new mapboxgl.Marker(el)
+      const mb = mapboxglRef.current;
+      if (!mb) return;
+      const marker = new mb.Marker(el)
         .setLngLat([location.lng, location.lat])
         .addTo(map.current!);
 
-      const popup = new mapboxgl.Popup({ 
+      const popup = new mb.Popup({
         offset: 25,
         closeButton: true,
         className: 'journey-popup'
@@ -158,6 +161,7 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
       if (!mapContainer.current || !mapboxToken) return;
       const mapboxgl = await getMapbox();
       if (cancelled) return;
+      mapboxglRef.current = mapboxgl;
       mapboxgl.accessToken = mapboxToken;
       map.current = new mapboxgl.Map({
         container: mapContainer.current,

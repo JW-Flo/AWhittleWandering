@@ -104,16 +104,19 @@ export function calculateTripStatistics(data: any[]) {
   });
 
   totalMiles = maxOdometer - minOdometer;
-  const daysElapsed = startDate && endDate 
-    ? Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+  // TypeScript doesn't track reassignment inside forEach callbacks — re-assert types
+  const start = startDate as Date | null;
+  const end = endDate as Date | null;
+  const daysElapsed = start && end
+    ? Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
     : 0;
 
   return {
     statesDetected: Array.from(states),
     totalRecords: data.length,
     totalMiles: Math.round(totalMiles),
-    startDate: startDate?.toLocaleDateString(),
-    endDate: endDate?.toLocaleDateString(),
+    startDate: start?.toLocaleDateString(),
+    endDate: end?.toLocaleDateString(),
     daysElapsed,
     averageMilesPerDay: daysElapsed > 0 ? Math.round(totalMiles / daysElapsed) : 0
   };

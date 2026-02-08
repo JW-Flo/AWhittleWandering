@@ -65,22 +65,24 @@ const AdvancedTeslaMap: React.FC<AdvancedTeslaMapProps> = ({
       maxPitch: 60, // Allow some 3D tilt for better route visualization
     });
 
+    const mapInstance = map.current!;
+
     // Add enhanced navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl({
+    mapInstance.addControl(new mapboxgl.NavigationControl({
       visualizePitch: true,
       showCompass: true
     }), 'top-right');
 
     // Add fullscreen control
-    map.current.addControl(new mapboxgl.FullscreenControl(), 'top-right');
+    mapInstance.addControl(new mapboxgl.FullscreenControl(), 'top-right');
 
     // Add scale control
-    map.current.addControl(new mapboxgl.ScaleControl({
+    mapInstance.addControl(new mapboxgl.ScaleControl({
       maxWidth: 80,
       unit: 'imperial'
     }), 'bottom-left');
 
-    map.current.on('load', () => {
+    mapInstance.on('load', () => {
       setIsMapLoaded(true);
       
       // Add terrain data source for elevation
@@ -106,7 +108,7 @@ const AdvancedTeslaMap: React.FC<AdvancedTeslaMapProps> = ({
     });
 
     // Handle map clicks
-    map.current.on('click', (e) => {
+    mapInstance.on('click', (e) => {
       if (onLocationClick) {
         onLocationClick({
           lat: e.lngLat.lat,
@@ -211,7 +213,8 @@ const AdvancedTeslaMap: React.FC<AdvancedTeslaMapProps> = ({
 
     // Add route segments with speed-based coloring
     if (segments.length > 0) {
-      const segmentFeatures = segments.map(segment => ({
+      // Segment features computed for future use (e.g. speed-based layer coloring)
+      const _segmentFeatures = segments.map(segment => ({
         type: 'Feature' as const,
         properties: {
           speed: segment.averageSpeed,
@@ -226,6 +229,7 @@ const AdvancedTeslaMap: React.FC<AdvancedTeslaMapProps> = ({
           ]
         }
       }));
+      void _segmentFeatures;
     }
 
     // Add waypoint clusters if enabled

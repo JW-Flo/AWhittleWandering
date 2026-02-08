@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -117,23 +117,20 @@ export default function AIJourneyManager({
     
     try {
       const requestData = {
-        date: currentEntry.date,
-        location: currentEntry.location || currentLocation,
-        mileage: currentEntry.mileage || currentMileage,
-        weather: 'sunny', // Would be fetched from weather API
-        context: 'tesla_road_trip'
+        date: currentEntry.date || new Date().toISOString().split('T')[0],
+        location: currentEntry.location || currentLocation || '',
+        events: ['tesla_road_trip']
       };
 
-      const result = await backendApi.generateJournalEntry(requestData);
-      
-      if (result.success) {
+      const result = await backendApi.generateJournal(requestData);
+
+      if (result.success && result.entry) {
         const generatedEntry: JournalEntry = {
           id: `entry-${Date.now()}`,
-          date: result.entry.date,
-          title: result.entry.title,
+          date: requestData.date,
+          title: 'AI Generated Journal Entry',
           content: result.entry.content,
           location: result.entry.location,
-          weather: result.entry.weather,
           mileage: currentEntry.mileage,
           mood: 'excited' // Default mood
         };

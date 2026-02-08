@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +27,7 @@ const formatDate = (iso?: string) => {
 };
 
 const FollowerView: React.FC = () => {
+  useDocumentTitle("Journey");
   const { id } = useParams();
   const [data, setData] = useState<UnifiedData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,7 +40,7 @@ const FollowerView: React.FC = () => {
       setError(null);
       try {
         // Note: today this may fail if backend CORS isn't configured; we treat it as degraded mode.
-        const res = await fetch(`${api.baseUrl}/api/v1/unified-data`, { method: "GET" });
+        const res = await fetch(`${api.baseUrl}/api/v1/unified-data${id ? `/${id}` : ''}`, { method: "GET" });
         if (!res.ok) throw new Error(`Unable to load journey (${res.status})`);
         const json = (await res.json()) as unknown;
         if (cancelled) return;
@@ -55,7 +57,7 @@ const FollowerView: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [id]);
 
   const journeyTitle = data?.overview?.tripName || "A Whittle Wandering";
   const locationLabel = data?.currentStatus?.location?.state;

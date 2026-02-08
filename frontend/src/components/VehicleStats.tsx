@@ -1,4 +1,3 @@
-import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -40,24 +39,18 @@ const VehicleStats = ({
     }
   };
 
-  const _getBatteryColor = () => {
-    if (batteryLevel > 50) return 'bg-tesla-cyan';
-    if (batteryLevel > 20) return 'bg-yellow-500';
-    return 'bg-destructive';
-  };
-
   // Loading state component
   const LoadingSkeleton = () => (
     <div className="space-y-4">
       {[1, 2, 3].map((i) => (
         <Card key={i} className="border-tesla-gray-light">
           <CardHeader className="pb-3">
-            <div className="h-5 bg-gray-200 rounded animate-pulse" />
+            <div className="h-5 bg-muted rounded animate-pulse" />
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <div className="h-4 bg-gray-200 rounded animate-pulse" />
-              <div className="h-3 bg-gray-200 rounded animate-pulse" />
+              <div className="h-4 bg-muted rounded animate-pulse" />
+              <div className="h-3 bg-muted rounded animate-pulse" />
             </div>
           </CardContent>
         </Card>

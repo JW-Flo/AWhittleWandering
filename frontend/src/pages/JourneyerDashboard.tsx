@@ -12,6 +12,7 @@ import MediaUpload from "@/components/MediaUpload";
 import ConsolidatedRouteOptimizer from "@/components/ConsolidatedRouteOptimizer";
 import { AdvancedAnalyticsDashboard } from "@/components/AdvancedAnalyticsDashboard";
 import { Activity, Compass, Route, PenLine, Server, RefreshCw } from "lucide-react";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 const LazyTeslaMap = lazy(() => import("@/components/LazyTeslaMap"));
 
@@ -34,6 +35,7 @@ type AppConfig = {
 };
 
 const JourneyerDashboardInner: React.FC = () => {
+  useDocumentTitle("Dashboard");
   const ctx = useContext(TeslaDataContext);
   const data = ctx?.data ?? null;
   const isLoading = ctx?.isLoading ?? false;
@@ -128,7 +130,7 @@ const JourneyerDashboardInner: React.FC = () => {
         )}
 
         <Tabs defaultValue="live" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 bg-secondary/40">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 bg-secondary/40">
             <TabsTrigger value="live" className="data-[state=active]:bg-card">
               <Activity className="w-4 h-4 mr-2" />
               Live

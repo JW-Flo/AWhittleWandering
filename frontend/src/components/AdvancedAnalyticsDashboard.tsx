@@ -144,7 +144,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Distance</p>
+                <p className="text-sm font-medium text-muted-foreground">Total Distance</p>
                 <p className="text-2xl font-bold">
                   {insights ? formatDistance(insights.totalDistance) : '---'}
                 </p>
@@ -163,7 +163,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Energy Efficiency</p>
+                <p className="text-sm font-medium text-muted-foreground">Energy Efficiency</p>
                 <p className="text-2xl font-bold">
                   {insights ? `${insights.averageEfficiency.toFixed(2)} mi/kWh` : '---'}
                 </p>
@@ -180,7 +180,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Cost Savings</p>
+                <p className="text-sm font-medium text-muted-foreground">Cost Savings</p>
                 <p className="text-2xl font-bold">
                   {insights ? formatCurrency(insights.costSavings) : '---'}
                 </p>
@@ -199,7 +199,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Carbon Saved</p>
+                <p className="text-sm font-medium text-muted-foreground">Carbon Saved</p>
                 <p className="text-2xl font-bold">
                   {insights ? `${insights.carbonSaved.toFixed(0)} lbs` : '---'}
                 </p>
@@ -240,15 +240,15 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Overall Average</span>
+                        <span className="text-sm text-muted-foreground">Overall Average</span>
                         <span className="font-medium">{insights?.averageEfficiency.toFixed(2) ?? '---'} mi/kWh</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">7-day Average</span>
+                        <span className="text-sm text-muted-foreground">7-day Average</span>
                         <span className="font-medium">{avgEfficiency7d ? avgEfficiency7d.toFixed(2) : '---'} mi/kWh</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Personal Best</span>
+                        <span className="text-sm text-muted-foreground">Personal Best</span>
                         <span className="font-medium text-green-600">{bestEfficiency ? bestEfficiency.toFixed(2) : '---'} mi/kWh</span>
                       </div>
                     </div>
@@ -283,7 +283,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                 <Card>
                   <CardContent className="p-6">
                     <div className="text-center">
-                      <p className="text-sm text-gray-600">Charging Cost</p>
+                      <p className="text-sm text-muted-foreground">Charging Cost</p>
                       <p className="text-2xl font-bold">{formatCurrency(totalChargingCost)}</p>
                       <p className="text-xs text-muted-foreground">{summary?.totalCharges ?? 0} sessions</p>
                     </div>
@@ -292,7 +292,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                 <Card>
                   <CardContent className="p-6">
                     <div className="text-center">
-                      <p className="text-sm text-gray-600">Cost per Mile</p>
+                      <p className="text-sm text-muted-foreground">Cost per Mile</p>
                       <p className="text-2xl font-bold">${costPerMile.toFixed(3)}</p>
                       <p className="text-xs text-green-600">vs $0.12 gas</p>
                     </div>
@@ -301,9 +301,9 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                 <Card>
                   <CardContent className="p-6">
                     <div className="text-center">
-                      <p className="text-sm text-gray-600">Total Savings</p>
+                      <p className="text-sm text-muted-foreground">Total Savings</p>
                       <p className="text-2xl font-bold">{formatCurrency(insights?.costSavings ?? 0)}</p>
-                      <p className="text-xs text-gray-600">vs ICE vehicle</p>
+                      <p className="text-xs text-muted-foreground">vs ICE vehicle</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -337,15 +337,15 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">CO2 Avoided</span>
+                        <span className="text-sm text-muted-foreground">CO2 Avoided</span>
                         <span className="font-medium">{insights?.carbonSaved.toFixed(0) ?? '---'} lbs</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Equivalent Trees</span>
+                        <span className="text-sm text-muted-foreground">Equivalent Trees</span>
                         <span className="font-medium">{insights ? (insights.carbonSaved / 48).toFixed(1) : '---'} trees/year</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Total Energy</span>
+                        <span className="text-sm text-muted-foreground">Total Energy</span>
                         <span className="font-medium">{insights ? `${insights.totalEnergy.toFixed(1)} kWh` : '---'}</span>
                       </div>
                     </div>
@@ -385,18 +385,19 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
             AI-Powered Insights
+            <span className="ml-2 text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">Example</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="p-4 bg-blue-50 rounded-lg border">
+            <div className="p-4 bg-primary/10 rounded-lg border">
               <div className="flex items-start gap-3">
                 <div className="p-1 bg-blue-100 rounded">
                   <Zap className="h-4 w-4 text-blue-600" />
                 </div>
                 <div>
                   <h4 className="font-medium">Efficiency Opportunity</h4>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     Your efficiency improves by 18% when departing before 9 AM.
                     Consider adjusting departure times for longer trips.
                   </p>
@@ -404,14 +405,14 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
               </div>
             </div>
 
-            <div className="p-4 bg-green-50 rounded-lg border">
+            <div className="p-4 bg-accent/10 rounded-lg border">
               <div className="flex items-start gap-3">
                 <div className="p-1 bg-green-100 rounded">
                   <DollarSign className="h-4 w-4 text-green-600" />
                 </div>
                 <div>
                   <h4 className="font-medium">Cost Optimization</h4>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     Switching to off-peak charging could save you an additional $23/month
                     based on your driving patterns.
                   </p>
@@ -419,14 +420,14 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
               </div>
             </div>
 
-            <div className="p-4 bg-purple-50 rounded-lg border">
+            <div className="p-4 bg-secondary/10 rounded-lg border">
               <div className="flex items-start gap-3">
                 <div className="p-1 bg-purple-100 rounded">
                   <Battery className="h-4 w-4 text-purple-600" />
                 </div>
                 <div>
                   <h4 className="font-medium">Charging Pattern</h4>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     Your battery health could improve by maintaining charge between 20-80%
                     for daily use, reserving 100% for road trips.
                   </p>

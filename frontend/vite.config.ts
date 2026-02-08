@@ -32,9 +32,6 @@ export default defineConfig({
           'ui-vendor': ['lucide-react', '@radix-ui/react-slot', 'class-variance-authority', 'clsx', 'tailwind-merge'],
           // Removed monolithic 'map-vendor' to allow Rollup to tree-shake and split mapbox submodules further
           // App chunks
-          'components': [
-            './src/components/AdminPortal.tsx'
-          ],
           'map-component': ['./src/components/TeslaMap.tsx'],
           'hooks-utils': [
             './src/hooks/useUnifiedApiData.ts',
