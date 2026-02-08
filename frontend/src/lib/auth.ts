@@ -189,10 +189,6 @@ export class AdminAuth {
     return this.isAuthenticated() ? this.session?.sessionId || null : null;
   }
 
-  private generateSessionId(): string {
-    return `admin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  }
-
   // Admin capabilities check
   canUploadMedia(): boolean {
     return this.isAuthenticated();

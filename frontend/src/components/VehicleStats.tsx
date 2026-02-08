@@ -1,4 +1,3 @@
-import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -40,11 +39,12 @@ const VehicleStats = ({
     }
   };
 
-  const _getBatteryColor = () => {
+  const getBatteryColor = () => {
     if (batteryLevel > 50) return 'bg-tesla-cyan';
     if (batteryLevel > 20) return 'bg-yellow-500';
     return 'bg-destructive';
   };
+  void getBatteryColor;
 
   // Loading state component
   const LoadingSkeleton = () => (

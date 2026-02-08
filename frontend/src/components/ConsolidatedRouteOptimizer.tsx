@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { 
   Route, 
   Zap, 
@@ -151,11 +151,12 @@ export default function ConsolidatedRouteOptimizer({
 
       const result = await backendApi.optimizeRoute(routeRequest);
       
-      if (result.success) {
-        setOptimizedRoute(result.data);
-        onRouteOptimized?.(result.data);
+      if (result.ok) {
+        const routeData = result.result as unknown as RouteData;
+        setOptimizedRoute(routeData);
+        onRouteOptimized?.(routeData);
       } else {
-        setError(result.error || 'Failed to optimize route');
+        setError('Failed to optimize route');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to optimize route');

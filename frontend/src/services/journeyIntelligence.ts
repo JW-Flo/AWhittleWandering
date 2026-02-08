@@ -229,7 +229,7 @@ export class JourneyIntelligenceEngine {
   /**
    * Intelligent determination of journey-related charges
    */
-  private isJourneyRelatedCharge(location: any, rawCharge: any): boolean {
+  private isJourneyRelatedCharge(_location: any, rawCharge: any): boolean {
     // Journey charges are typically away from home base
     const energyAdded = rawCharge.energy_added_kwh || 0;
     const duration = rawCharge.duration_min || 0;

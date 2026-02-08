@@ -69,7 +69,8 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
   const [selectedType, setSelectedType] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'size' | 'state'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [_selectedMedia, _setSelectedMedia] = useState<MediaItem | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
+  void selectedMedia;
 
   // Update filtered media when filters change
   useEffect(() => {

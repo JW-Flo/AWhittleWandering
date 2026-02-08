@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import EXIF from 'exif-js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -138,54 +139,47 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
       }
 
       const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
       img.onload = () => {
         try {
-          // @ts-expect-error - EXIF library types may not be available
-          window.EXIF?.getData(img, function() {
-            // @ts-expect-error - EXIF library global types
-            const lat = window.EXIF.getTag(this, "GPSLatitude");
-            // @ts-expect-error - EXIF library global types
-            const lon = window.EXIF.getTag(this, "GPSLongitude");
-            // @ts-expect-error - EXIF library global types
-            const latRef = window.EXIF.getTag(this, "GPSLatitudeRef");
-            // @ts-expect-error - EXIF library global types
-            const lonRef = window.EXIF.getTag(this, "GPSLongitudeRef");
-            // @ts-expect-error - EXIF library global types
-            const dateTime = window.EXIF.getTag(this, "DateTime");
+          (EXIF as any).getData(img, function (this: any) {
+            const lat = EXIF.getTag(this, "GPSLatitude");
+            const lon = EXIF.getTag(this, "GPSLongitude");
+            const latRef = EXIF.getTag(this, "GPSLatitudeRef");
+            const lonRef = EXIF.getTag(this, "GPSLongitudeRef");
+            const dateTime = EXIF.getTag(this, "DateTime");
 
             let location;
             if (lat && lon) {
-              const latitude = (latRef === "S" ? -1 : 1) * (lat[0] + lat[1]/60 + lat[2]/3600);
-              const longitude = (lonRef === "W" ? -1 : 1) * (lon[0] + lon[1]/60 + lon[2]/3600);
+              const latitude = (latRef === "S" ? -1 : 1) * (lat[0] + lat[1] / 60 + lat[2] / 3600);
+              const longitude = (lonRef === "W" ? -1 : 1) * (lon[0] + lon[1] / 60 + lon[2] / 3600);
               location = { lat: latitude, lng: longitude };
             }
 
             let timestamp = new Date(file.lastModified);
             if (dateTime) {
               try {
-                try {
                 timestamp = new Date(dateTime.replace(/:/g, '-').replace(' ', 'T'));
-              } catch {
-                console.warn('Could not parse EXIF date:', dateTime);
-              }
               } catch {
                 // EXIF date parsing failed, using file modification date
               }
             }
 
+            URL.revokeObjectURL(objectUrl);
             resolve({ location, timestamp });
           });
         } catch {
-          // EXIF extraction failed, using default timestamp
+          URL.revokeObjectURL(objectUrl);
           resolve({ timestamp: new Date(file.lastModified) });
         }
       };
-      
+
       img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
         resolve({ timestamp: new Date(file.lastModified) });
       };
-      
-      img.src = URL.createObjectURL(file);
+
+      img.src = objectUrl;
     });
   };
 

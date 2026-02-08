@@ -36,11 +36,7 @@ const EnhancedRoadTripTracker: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const _extractStateFromAddress = (_address: string): string | null => {
-    const stateRegex = /, ([A-Z][a-z]+(?:\s[A-Z][a-z]+)*) \d/;
-    const match = _address.match(stateRegex);
-    return match ? match[1] : null;
-  };
+  // extractStateFromAddress removed — state detection now handled by backend
 
   const formatDuration = (start: string, end: string): string => {
     const duration = new Date(end).getTime() - new Date(start).getTime();

@@ -1,5 +1,5 @@
 import type { HistoricalDrive } from '@/types/tessie';
-import { driveAnalysisService, JourneySegment, JourneyStatistics, TimelineEntry } from './driveAnalysisService';
+import { driveAnalysisService, JourneySegment, JourneyStatistics } from './driveAnalysisService';
 
 export interface AdvancedJourneyInsights {
   totalStatesVisited: number;
@@ -79,7 +79,7 @@ export class JourneyTimelineProcessor {
     console.warn('🚀 Processing advanced journey timeline...', { totalDrives: drives.length });
 
     // First get basic analysis from drive service
-    const { segments, statistics, timeline } = driveAnalysisService.analyzeJourneyFromDrives(drives);
+    const { segments, statistics } = driveAnalysisService.analyzeJourneyFromDrives(drives);
 
     // Analyze journey phases based on geographical patterns
     const journeyPhases = this.analyzeJourneyPhases(segments);

@@ -15,16 +15,16 @@
     "jsx": "react-jsx",
 
     /* Linting */
-    "strict": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noImplicitAny": false,
-    "noFallthroughCasesInSwitch": false,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
 
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/_archived", "src/test", "src/**/*.test.tsx", "src/**/*.test.ts", "src/pages/Index.tsx", "src/pages/Index.temp.tsx", "src/pages/SimpleTest.tsx", "src/pages/TestIndex.tsx"]
 }

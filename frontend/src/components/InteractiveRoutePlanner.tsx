@@ -286,8 +286,8 @@ const InteractiveRoutePlanner: React.FC<InteractiveRoutePlannerProps> = ({
   };
 
   // Find nearest Supercharger
-  const findNearestSupercharger = (location: RoutePoint) => {
-    let nearest = null;
+  const findNearestSupercharger = (location: RoutePoint): { name: string; lat: number; lng: number; state: string } | null => {
+    let nearest: { name: string; lat: number; lng: number; state: string } | null = null;
     let minDistance = Infinity;
 
     superchargerLocations.forEach(charger => {

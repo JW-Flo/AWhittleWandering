@@ -5,7 +5,10 @@ import { ErrorMessage } from '../common/ErrorMessage';
 import VehicleStats from '@/components/VehicleStats';
 
 export const Dashboard: React.FC = () => {
-  const { data, isLoading, error } = useContext(TeslaDataContext);
+  const ctx = useContext(TeslaDataContext);
+  const data = ctx?.data;
+  const isLoading = ctx?.isLoading;
+  const error = ctx?.error;
 
   if (isLoading) {
     return <LoadingSpinner message="Loading Tesla data..." />;

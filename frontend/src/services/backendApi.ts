@@ -344,6 +344,4 @@ class BackendApiService implements BackendApiClient {
 // Export singleton instance
 export const backendApi = new BackendApiService();
 
-// Export types
-export type { BackendApiClient };
 export default BackendApiService;

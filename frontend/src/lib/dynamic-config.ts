@@ -21,7 +21,6 @@ interface BackendConfig {
 
 class DynamicConfigService {
   private config: BackendConfig | null = null;
-  private loading = false;
   private loadPromise: Promise<BackendConfig> | null = null;
 
   async getConfig(): Promise<BackendConfig> {
@@ -36,15 +35,12 @@ class DynamicConfigService {
     }
 
     // Start loading config
-    this.loading = true;
     this.loadPromise = this.fetchConfig();
 
     try {
       this.config = await this.loadPromise;
-      this.loading = false;
       return this.config;
     } catch (error) {
-      this.loading = false;
       this.loadPromise = null;
       throw error;
     }
