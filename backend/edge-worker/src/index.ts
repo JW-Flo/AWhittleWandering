@@ -28,6 +28,7 @@ import { authRouter } from './routers/auth';
 import { mfaRouter } from './routers/mfa';
 import { pushRouter } from './routers/push';
 import { notificationsRouter } from './routers/notifications';
+import { mediaRouter } from './routers/media';
 
 // Augment Env typing (local) for new PLATFORM_MODE variable
 declare global {
@@ -133,6 +134,7 @@ app.route('/api/v1/auth', authRouter);
 app.route('/api/v1/mfa', mfaRouter);
 app.route('/api/v1/push', pushRouter);
 app.route('/api/v1/notifications', notificationsRouter);
+app.route('/api/v1/media', mediaRouter);
 app.use('/api/v1/admin/*', adminAuth);
 app.route('/api/v1/admin', adminRouter);
 

@@ -6,12 +6,14 @@ import { logger } from '../utils/log';
 
 export const unifiedDataRouter = new Hono<{ Bindings: Env }>();
 
-const JOURNEY_ID = 'continental-usa-2025';
-const VEHICLE_ID = 'midnight-shadow';
+const DEFAULT_JOURNEY_ID = 'continental-usa-2025';
+const DEFAULT_VEHICLE_ID = 'midnight-shadow';
 
 const querySchema = z.object({
   revalidate: z.union([z.literal('true'), z.literal('false')]).optional(),
-  limit: z.string().regex(/^\d+$/).optional()
+  limit: z.string().regex(/^\d+$/).optional(),
+  journeyId: z.string().min(1).optional(),
+  vehicleId: z.string().min(1).optional(),
 });
 
 function isoToDateOnly(iso?: string | null) {
@@ -38,7 +40,7 @@ function freshnessFromAgeSec(ageSec: number | null): 'live' | 'cached' | 'unknow
   return 'cached';
 }
 
-async function buildUnifiedData(c: any, limit: number) {
+async function buildUnifiedData(c: any, limit: number, journeyId: string, vehicleId: string) {
   const db = c.env?.TESLA_DB;
 
   // Soft-fail skeleton (always matches frontend contract)
@@ -85,7 +87,7 @@ async function buildUnifiedData(c: any, limit: number) {
        FROM journeys j
        LEFT JOIN vehicles v ON v.id = j.vehicle_id
        WHERE j.id = ? LIMIT 1`
-    ).bind(JOURNEY_ID).first();
+    ).bind(journeyId).first();
 
     const startDate = (journeyRow as any)?.start_date || skeleton.overview.startDate;
     skeleton.overview.tripName = (journeyRow as any)?.name || skeleton.overview.tripName;
@@ -101,7 +103,7 @@ async function buildUnifiedData(c: any, limit: number) {
        FROM vehicle_state
        WHERE vehicle_id = ?
        LIMIT 1`
-    ).bind(VEHICLE_ID).first();
+    ).bind(vehicleId).first();
 
     const vsTs = (vs as any)?.timestamp as string | undefined;
     const ageSec = vsTs ? Math.round((Date.now() - new Date(vsTs).getTime()) / 1000) : null;
@@ -155,13 +157,13 @@ async function buildUnifiedData(c: any, limit: number) {
     const driveStats = await db.prepare(
       `SELECT COUNT(*) as total_drives, COALESCE(SUM(distance_miles), 0) as total_miles
        FROM drives WHERE journey_id = ?`
-    ).bind(JOURNEY_ID).first();
+    ).bind(journeyId).first();
     const chargeStats = await db.prepare(
       `SELECT COUNT(*) as total_charges FROM charges WHERE journey_id = ?`
-    ).bind(JOURNEY_ID).first();
+    ).bind(journeyId).first();
     const statesCount = await db.prepare(
       `SELECT COUNT(*) as cnt FROM states_visited WHERE journey_id = ?`
-    ).bind(JOURNEY_ID).first();
+    ).bind(journeyId).first();
 
     const computedMiles = Number((driveStats as any)?.total_miles || 0);
     skeleton.overview.totalMiles = computedMiles || Number((journeyRow as any)?.total_miles || 0);
@@ -175,7 +177,7 @@ async function buildUnifiedData(c: any, limit: number) {
        WHERE journey_id = ?
        ORDER BY started_at DESC
        LIMIT ?`
-    ).bind(JOURNEY_ID, limit).all();
+    ).bind(journeyId, limit).all();
 
     const charges = await db.prepare(
       `SELECT id, started_at, ended_at, location, energy_added_kwh, duration_minutes
@@ -183,7 +185,7 @@ async function buildUnifiedData(c: any, limit: number) {
        WHERE journey_id = ?
        ORDER BY started_at DESC
        LIMIT ?`
-    ).bind(JOURNEY_ID, limit).all();
+    ).bind(journeyId, limit).all();
 
     const driveRows = (drives as any)?.results || [];
     const chargeRows = (charges as any)?.results || [];
@@ -224,14 +226,16 @@ unifiedDataRouter.get('/', async (c) => {
     const parsed = querySchema.safeParse(c.req.query());
     const limit = Math.min(50, Math.max(1, Number(parsed.success ? (parsed.data.limit || '20') : 20)));
     const revalidate = parsed.success && parsed.data.revalidate === 'true';
+    const journeyId = (parsed.success && parsed.data.journeyId) || DEFAULT_JOURNEY_ID;
+    const vehicleId = (parsed.success && parsed.data.vehicleId) || DEFAULT_VEHICLE_ID;
 
-    const cacheKey = `unified_data_v3:limit=${limit}`;
+    const cacheKey = `unified_data_v3:j=${journeyId}:v=${vehicleId}:limit=${limit}`;
     if (!revalidate) {
       const cached = await CacheService.get(c, cacheKey);
       if (cached) return c.json(cached);
     }
 
-    const unified = await buildUnifiedData(c, limit);
+    const unified = await buildUnifiedData(c, limit, journeyId, vehicleId);
     await CacheService.set(c, cacheKey, unified, 15);
     return c.json(unified);
   } catch (err: any) {
