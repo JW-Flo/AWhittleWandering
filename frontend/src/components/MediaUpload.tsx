@@ -215,7 +215,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
         <CardContent>
           {/* Current Location Display */}
           {currentLocation && (
-            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <div className="mb-4 p-3 bg-primary/10 dark:bg-blue-900/20 rounded-lg">
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-blue-600" />
                 <span className="text-sm font-medium">Current Location: {currentLocation.state}</span>
@@ -228,8 +228,8 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
             className={cn(
               "relative border-2 border-dashed rounded-lg p-8 text-center transition-colors",
               dragActive 
-                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" 
-                : "border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                ? "border-blue-500 bg-primary/10 dark:bg-blue-900/20" 
+                : "border-border dark:border-gray-600 hover:border-gray-400"
             )}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -248,12 +248,12 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
             
             <div className="space-y-4">
               <div className="flex justify-center">
-                <Upload className="w-12 h-12 text-gray-400" />
+                <Upload className="w-12 h-12 text-muted-foreground/60" />
               </div>
               
               <div>
                 <p className="text-lg font-medium">Drop your photos and videos here</p>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   or click to browse files
                 </p>
               </div>
@@ -287,7 +287,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {uploadedMedia.map((media) => (
                 <div key={media.id} className="relative group">
-                  <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                  <div className="aspect-square rounded-lg overflow-hidden bg-muted dark:bg-gray-800">
                     {media.type === 'image' ? (
                       <img
                         src={media.preview}
@@ -296,7 +296,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Video className="w-8 h-8 text-gray-400" />
+                        <Video className="w-8 h-8 text-muted-foreground/60" />
                       </div>
                     )}
                   </div>

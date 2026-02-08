@@ -1,8 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 const Landing: React.FC = () => {
+  useDocumentTitle("Home");
   return (
     <div className="journey-typography min-h-screen bg-background text-foreground">
       <header className="container mx-auto px-4 pt-8">

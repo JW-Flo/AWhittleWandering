@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +27,7 @@ const formatDate = (iso?: string) => {
 };
 
 const FollowerView: React.FC = () => {
+  useDocumentTitle("Journey");
   const { id } = useParams();
   const [data, setData] = useState<UnifiedData | null>(null);
   const [isLoading, setIsLoading] = useState(true);

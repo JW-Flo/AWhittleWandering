@@ -141,22 +141,22 @@ export const EnhancedMapFeatures: React.FC<EnhancedMapProps> = ({
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-2xl font-bold text-primary">
                   {routeOptimization.energySavings.toFixed(1)}%
                 </div>
-                <div className="text-sm text-gray-600">Energy Savings</div>
+                <div className="text-sm text-muted-foreground">Energy Savings</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
+                <div className="text-2xl font-bold text-primary">
                   {routeOptimization.timeSavings.toFixed(0)}min
                 </div>
-                <div className="text-sm text-gray-600">Time Saved</div>
+                <div className="text-sm text-muted-foreground">Time Saved</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-purple-600">
                   {routeOptimization.chargingStops.length}
                 </div>
-                <div className="text-sm text-gray-600">Charging Stops</div>
+                <div className="text-sm text-muted-foreground">Charging Stops</div>
               </div>
               <div className="text-center">
                 <Badge variant="secondary" className="text-xs">
@@ -185,7 +185,7 @@ export const EnhancedMapFeatures: React.FC<EnhancedMapProps> = ({
                     <MapPin className="h-4 w-4 text-blue-500" />
                     <div>
                       <div className="font-medium">Station {index + 1}</div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-muted-foreground">
                         {station.chargingTime}min • ${station.cost}
                       </div>
                     </div>
@@ -218,7 +218,7 @@ export const EnhancedMapFeatures: React.FC<EnhancedMapProps> = ({
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="font-medium">{trip.title}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{trip.description}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{trip.description}</p>
                       <div className="flex items-center gap-4 mt-2 text-sm">
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />

@@ -174,7 +174,7 @@ export default function ConsolidatedRouteOptimizer({
               <Route className="w-5 h-5 text-blue-500" />
               Intelligent Route Optimizer
             </CardTitle>
-            <Badge variant="outline" className="bg-blue-50 text-blue-700">
+            <Badge variant="outline" className="bg-primary/10 text-primary">
               AI-Powered
             </Badge>
           </div>
@@ -248,7 +248,7 @@ export default function ConsolidatedRouteOptimizer({
 
               {/* Vehicle Status */}
               {vehicleData && (
-                <Card className="bg-slate-50">
+                <Card className="bg-secondary">
                   <CardContent className="pt-4">
                     <div className="grid grid-cols-3 gap-4 text-center">
                       <div>
@@ -487,7 +487,7 @@ export default function ConsolidatedRouteOptimizer({
 
           {/* Error Display */}
           {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+            <div className="mt-4 p-3 bg-destructive/10 border border-red-200 rounded text-red-700 text-sm">
               {error}
             </div>
           )}
