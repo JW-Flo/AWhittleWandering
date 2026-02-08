@@ -45,13 +45,13 @@ There are three files that define API base URLs with different production values
 
 | File | Production URL | Used by |
 |------|---------------|---------|
-| `src/lib/api-config.ts` | `https://api.awhittlewandering.com` | TeslaDataContext, FollowerView, useUnifiedApiData |
-| `src/lib/api.ts` | `https://awhittlewandering-api.kd8jc7v8cd.workers.dev` | Nothing (legacy) |
-| `src/services/backendApi.ts` | `http://localhost:8787` (NO prod fallback!) | JourneyJournal, ConsolidatedRouteOptimizer, AdvancedAnalyticsDashboard |
+| `frontend/src/lib/api-config.ts` | `https://api.awhittlewandering.com` | TeslaDataContext, FollowerView, useUnifiedApiData |
+| `frontend/src/lib/api.ts` | `https://awhittlewandering-api.kd8jc7v8cd.workers.dev` | `useRealtimeStatus` hook (via `RealtimeStatusCard`) |
+| `frontend/src/services/backendApi.ts` | `http://localhost:8787` (NO prod fallback!) | JourneyJournal, ConsolidatedRouteOptimizer, AdvancedAnalyticsDashboard |
 
 **The critical problem**: `backendApi.ts` defaults to `http://localhost:8787` in production. The Navigation tab, Analytics tab, and Journal AI generation all silently fail for real users.
 
-**Fix**: Make `backendApi.ts` import its base URL from `api-config.ts` instead of defining its own. Delete `src/lib/api.ts` (legacy). There should be exactly one source of truth for the API base URL.
+**Fix**: Make `frontend/src/services/backendApi.ts` import its base URL from `frontend/src/lib/api-config.ts` instead of defining its own. Migrate `frontend/src/hooks/useRealtimeStatus.ts` (and therefore `RealtimeStatusCard`) off `frontend/src/lib/api.ts` to use the consolidated configuration, then delete `frontend/src/lib/api.ts` once it is no longer referenced. There should be exactly one source of truth for the API base URL.
 
 ### 2.2 Inconsistent endpoint paths in backendApi.ts
 
@@ -89,7 +89,7 @@ Then fix all resulting type errors. This will surface many of the bugs from Sect
 
 ### 3.2 Fix ESLint
 
-`npm run lint` fails: `Cannot find package '@eslint/js'`. Fix the dependency or the config so linting works again. Run `npm run lint` to verify.
+`npm run lint` fails with "eslint: not found". The `eslint` binary is missing from `node_modules/.bin/`. Run `npm install` to reinstall dependencies, then verify with `npm run lint`.
 
 ### 3.3 Remove duplicate EXIF library loading
 
@@ -103,7 +103,7 @@ Then fix all resulting type errors. This will surface many of the bugs from Sect
 
 ## 4. HIGH — Security
 
-### 4.1 Admin token in localStorage
+### 4.1 Session token in localStorage
 
 **File**: `frontend/src/lib/auth.ts:55` — session token in `localStorage` is XSS-exfiltrable. Move to `sessionStorage` at minimum.
 
@@ -174,20 +174,20 @@ Delete these files and references:
 
 | # | Item |
 |---|------|
-| 8.1 | `src/_archived/` — entire directory (14 deprecated files) |
-| 8.2 | `src/pages/Index.tsx` (unreferenced) |
-| 8.3 | `src/pages/Index.temp.tsx` (unreferenced) |
-| 8.4 | `src/pages/SimpleTest.tsx` (unreferenced, has hardcoded worker URL) |
-| 8.5 | `src/pages/TestIndex.tsx` (unreferenced) |
-| 8.6 | `src/lib/config.ts` (deprecated, only emits console.warn) |
-| 8.7 | `src/lib/api.ts` (superseded by `api-config.ts`, wrong prod URL) |
+| 8.1 | `frontend/src/_archived/` — entire directory (14 deprecated files) |
+| 8.2 | `frontend/src/pages/Index.tsx` (unreferenced) |
+| 8.3 | `frontend/src/pages/Index.temp.tsx` (unreferenced) |
+| 8.4 | `frontend/src/pages/SimpleTest.tsx` (unreferenced, has hardcoded worker URL) |
+| 8.5 | `frontend/src/pages/TestIndex.tsx` (unreferenced) |
+| 8.6 | `frontend/src/lib/config.ts` (deprecated, only emits console.warn) |
+| 8.7 | `frontend/src/lib/api.ts` (superseded by `api-config.ts`, migrate `useRealtimeStatus` first) |
 | 8.8 | Remove either `@radix-ui/react-toast` Toaster OR `sonner` Sonner from `App.tsx` — pick one toast system |
-| 8.9 | Remove `next-themes` from `package.json` — `ThemeProvider` is never used |
+| 8.9 | Remove `next-themes` from `package.json` — `ThemeProvider` is never used; before removal, update `frontend/src/components/ui/sonner.tsx` to stop importing `useTheme` from `next-themes` (or remove Sonner entirely per 8.8) so the build does not break. |
 | 8.10 | `VehicleStats.tsx:43-47` — delete `_getBatteryColor()` (unused) |
 | 8.11 | `auth.ts:192-193` — delete `generateSessionId()` (unused) |
 | 8.12 | Audit these deps and remove if unused: `leaflet`, `react-leaflet`, `papaparse`, `recharts`, `embla-carousel-react`, `cmdk`, `vaul`, `react-resizable-panels`, `react-day-picker`, `react-hook-form`, `@hookform/resolvers`, `input-otp` |
 | 8.13 | `backendApi.ts:125-131` — remove debug endpoint methods |
-| 8.14 | Add `frontend/.env.example` documenting `VITE_API_BASE_URL`, `VITE_BACKEND_URL`, `VITE_MAPBOX_TOKEN` |
+| 8.14 | Edit and expand existing `frontend/.env.example` to document `VITE_API_BASE_URL`, `VITE_BACKEND_URL`, `VITE_MAPBOX_TOKEN` (and ensure naming matches `backendApi.ts`) |
 
 ---
 
