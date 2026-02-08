@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { API_CONFIG } from '../lib/api';
+import { API_CONFIG } from '@/lib/api-config';
 
 export interface RealtimeVehicleStatus {
   timestamp: number;
@@ -52,7 +52,7 @@ export function useRealtimeStatus(options: UseRealtimeStatusOptions = {}) {
       setIsLoading(true);
       setError(null);
       
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.REALTIME_STATUS}`);
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LIVE_STATUS}`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch status: ${response.status}`);
