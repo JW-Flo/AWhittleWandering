@@ -13,8 +13,7 @@
       "Write(docs/**)",
       "Write(.github/workflows/ci.yml)",
       "Bash(git *)",
-      "Bash(node *)",
-      "Bash(npm *)"
+      "Bash(node *)"
     ],
 
     "deny": [
@@ -25,6 +24,7 @@
       "Write(.cline/**)",
       "Write(.clinerules/**)",
       "Write(.github/workflows/**)",
+      "Write(.github/secrets*)",
       "Bash(curl * | bash)",
       "Bash(rm -rf *)"
     ]
