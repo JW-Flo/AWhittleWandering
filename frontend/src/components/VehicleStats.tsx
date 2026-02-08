@@ -17,17 +17,18 @@ interface VehicleStatsProps {
 }
 
 const VehicleStats = ({
-  batteryLevel = 0,
-  range = 0,
+  batteryLevel,
+  range,
   chargingState = 'disconnected',
   temperature,
   odometer,
-  speed = 0,
+  speed,
   location,
   lastUpdate,
   isLoading = false,
   error = null
 }: VehicleStatsProps) => {
+  const hasData = batteryLevel != null || range != null || speed != null;
   const getChargingBadge = () => {
     switch (chargingState) {
       case 'charging':
@@ -79,6 +80,19 @@ const VehicleStats = ({
     return <ErrorState />;
   }
 
+  // No data yet — show waiting state instead of misleading zeros
+  if (!hasData) {
+    return (
+      <Card className="border-border/60">
+        <CardContent className="p-6 text-center">
+          <Battery className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+          <p className="text-sm text-muted-foreground">Waiting for vehicle data...</p>
+          <p className="text-xs text-muted-foreground mt-1">Stats will appear once the backend connects.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* Battery & Range */}
@@ -93,10 +107,10 @@ const VehicleStats = ({
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Battery Level</span>
-              <span className="text-2xl font-bold text-primary">{batteryLevel}%</span>
+              <span className="text-2xl font-bold text-primary">{batteryLevel ?? 0}%</span>
             </div>
-            <Progress 
-              value={batteryLevel} 
+            <Progress
+              value={batteryLevel ?? 0}
               className="h-3"
               style={{
                 background: 'hsl(var(--tesla-gray-light))'
@@ -108,7 +122,7 @@ const VehicleStats = ({
               <Zap className="w-4 h-4 text-tesla-cyan" />
               <span className="text-sm">Range</span>
             </div>
-            <span className="text-lg font-semibold">{range} mi</span>
+            <span className="text-lg font-semibold">{range ?? 0} mi</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm">Charging</span>
@@ -132,7 +146,7 @@ const VehicleStats = ({
                 <Gauge className="w-4 h-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">Speed</span>
               </div>
-              <span className="text-xl font-bold">{speed} mph</span>
+              <span className="text-xl font-bold">{speed ?? 0} mph</span>
             </div>
             {temperature !== undefined && (
               <div className="space-y-1">

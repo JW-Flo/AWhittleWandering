@@ -12,7 +12,7 @@ export type NarrativeUnifiedData = {
   currentStatus?: {
     location?: { state?: string; lastUpdate?: string };
   };
-  timeline?: { drives?: Array<{ id: number; date: string; endLocation: string; distance: number }> };
+  timeline?: { drives?: Array<{ id: number; date: string; startLocation?: string; endLocation: string; distance: number }> };
 };
 
 const safeDate = (iso?: string) => {
@@ -50,15 +50,25 @@ const JourneyNarrative: React.FC<{ data: NarrativeUnifiedData | null }> = ({ dat
       <div>
         <h2 className="text-sm font-medium text-muted-foreground">Moments</h2>
         <div className="mt-4 space-y-4">
-          {drives.slice(0, 6).map((d) => (
-            <Moment
-              key={d.id}
-              kind="segment"
-              title={d.endLocation}
-              timestamp={d.date}
-              body={`A meaningful segment: ${Number.isFinite(d.distance) ? Math.round(d.distance) : "—"} miles.`}
-            />
-          ))}
+          {drives.slice(0, 8).map((d) => {
+            const miles = Number.isFinite(d.distance) ? Math.round(d.distance) : null;
+            const from = d.startLocation;
+            const to = d.endLocation;
+            const body = from && to
+              ? `${from} to ${to}${miles ? ` — ${miles} miles` : ""}.`
+              : miles
+                ? `${miles} miles through the landscape.`
+                : "A chapter in the journey.";
+            return (
+              <Moment
+                key={d.id}
+                kind="segment"
+                title={to || "On the road"}
+                timestamp={d.date}
+                body={body}
+              />
+            );
+          })}
 
           {drives.length === 0 && (
             <Moment
