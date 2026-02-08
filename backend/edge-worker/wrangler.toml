@@ -160,6 +160,7 @@ binding = "AI"
 
 [env.production]
 name = "awhittlewandering-api"
+workers_dev = true
 
 # Production environment variables - ZERO FAILURE API MANAGEMENT
 [env.production.vars]
