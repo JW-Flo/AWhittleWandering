@@ -9,7 +9,7 @@ required = true
 [[steps]]
 id = "backup-db"
 title = "Backup D1 database"
-description = "Run wrangler d1 export DB --remote --env {{env}} --output backups/{{env}}-$(date +%Y%m%d-%H%M).sql"
+description = "Run bash -lc 'wrangler d1 export DB --remote --env {{env}} --output backups/{{env}}-$(date +%Y%m%d-%H%M).sql'"
 
 [[steps]]
 id = "apply-migrations"
