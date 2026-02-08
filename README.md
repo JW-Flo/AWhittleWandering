@@ -1,6 +1,6 @@
 # A Whittle Wandering
 
-🚗⚡ **Live:** [awhittlewandering.com](https://awhittlewandering.com)
+🚗⚡ **Live:** [www.awhittlewandering.com](https://www.awhittlewandering.com)
 
 A journey platform that turns movement into meaning—experienced by others while it’s happening and remembered afterward as a coherent narrative.
 
