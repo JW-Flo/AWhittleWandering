@@ -82,31 +82,7 @@ This document explains the purpose and usage of each hook in the `frontend/src/h
 
 ---
 
-### 7. `useUnifiedApiData.ts`
-**Purpose:** Backend API data fetching  
-**Status:** Check file for details
-
----
-
-### 8. `useMasterData.ts`
-**Purpose:** Master data coordination  
-**Status:** File appears empty - needs review
-
----
-
-### 9. `useRobustData.ts`
-**Purpose:** Robust data fetching with error handling  
-**Status:** Check file for details
-
----
-
-### 10. `useSmartTracking.ts`
-**Purpose:** Smart tracking features  
-**Status:** Check file for details
-
----
-
-### 11. `useRealtimeStatus.ts`
+### 7. `useRealtimeStatus.ts`
 **Purpose:** Real-time status updates  
 **Status:** Check file for details
 

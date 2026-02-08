@@ -7,7 +7,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Camera, Upload, MapPin, Clock, FileImage, Video, X, Shield, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAdminAuth } from '@/lib/auth';
-import AdminLogin from './AdminLogin';
 
 interface MediaFile {
   id: string;
@@ -120,12 +119,13 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onMediaUploaded, currentLocat
           <Alert className="border-yellow-200 bg-yellow-50">
             <AlertTriangle className="w-4 h-4" />
             <AlertDescription className="text-yellow-800">
-              <strong>Security Notice:</strong> Media uploads can affect the journey tracking experience. 
+              <strong>Security Notice:</strong> Media uploads can affect the journey tracking experience.
               Only authorized administrators can upload photos and videos to maintain content integrity.
             </AlertDescription>
           </Alert>
-          
-          <AdminLogin onAuthChange={() => {}} />
+          <p className="text-sm text-muted-foreground">
+            Sign in from the dashboard settings to enable media uploads.
+          </p>
         </CardContent>
       </Card>
     );
