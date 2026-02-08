@@ -8,7 +8,7 @@ How deploy failures are captured, surfaced, and resolved in AWhittleWandering CI
 |---|---|---|
 | `backend-deploy-logs-{run}` | Deploy Backend | 14 days |
 | `frontend-deploy-logs-{run}` | Deploy Frontend | 14 days |
-| `playwright-report-{run}` | E2E Smoke | 14 days |
+| E2E test results (traces + screenshots from `frontend/test-results/`) | E2E Smoke | 14 days |
 | `playwright-traces-{run}` | E2E Smoke (failures only) | 14 days |
 
 Download from **Actions → Run → Artifacts** in the GitHub UI.
