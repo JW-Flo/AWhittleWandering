@@ -183,20 +183,73 @@ wrangler secret put TESLA_VIN --env production
 
 ## Custom Domain Setup
 
+Custom domains are optional but recommended for production. If not configured, the application will use Cloudflare's default domains:
+- Frontend: `https://awhittlewandering.pages.dev`
+- Backend: `https://awhittlewandering-api.workers.dev`
+
+### Prerequisites
+
+1. Domain registered and added to Cloudflare
+2. DNS managed by Cloudflare (nameservers pointing to Cloudflare)
+3. SSL/TLS encryption mode set to "Full" or "Full (strict)"
+
 ### Frontend (awhittlewandering.com)
 
-1. Cloudflare Dashboard → Pages → `awhittlewandering`
-2. Custom domains → Add `awhittlewandering.com`
-3. DNS verification automatic if zone is in same account
+**Via Cloudflare Dashboard:**
+
+1. Go to **Cloudflare Dashboard** → **Workers & Pages**
+2. Select your Pages project: `awhittlewandering`
+3. Go to **Custom domains** tab
+4. Click **Set up a custom domain**
+5. Enter `awhittlewandering.com` (or your domain)
+6. Cloudflare will automatically:
+   - Create/update DNS records
+   - Provision SSL certificate
+   - Configure routing
+
+**Verification:**
+```bash
+curl -I https://awhittlewandering.com
+# Should return HTTP/2 200
+```
 
 ### Backend (api.awhittlewandering.com)
 
-Configured in `backend/edge-worker/wrangler.toml`:
+**Step 1: Configure wrangler.toml**
+
+The route is already configured in `backend/edge-worker/wrangler.toml`:
 
 ```toml
 [[env.production.routes]]
 pattern = "api.awhittlewandering.com/*"
 zone_name = "awhittlewandering.com"
+```
+
+**Step 2: Add DNS Record (if not automatic)**
+
+If the DNS record isn't created automatically after deployment:
+
+1. Go to **Cloudflare Dashboard** → **DNS** → **Records**
+2. Add an **A** or **CNAME** record:
+   - **Type**: CNAME
+   - **Name**: `api`
+   - **Target**: `awhittlewandering-api.workers.dev`
+   - **Proxy status**: Proxied (orange cloud)
+3. Or use an A record pointing to any Cloudflare IP (e.g., `192.0.2.1`) with Proxy enabled
+
+**Step 3: Deploy with Route**
+
+```bash
+cd backend/edge-worker
+wrangler deploy --env production
+```
+
+Wrangler will bind the worker to the custom domain route.
+
+**Verification:**
+```bash
+curl https://api.awhittlewandering.com/api/v1/health
+# Should return: {"status":"ok",...}
 ```
 
 ## Health Checks
@@ -251,9 +304,33 @@ wrangler rollback --env production
 
 ### Custom Domain Issues
 
-1. Verify DNS is proxied through Cloudflare
-2. Check SSL certificate is issued
-3. Wait 5-15 minutes for propagation
+**Domain not resolving (HTTP 000 error):**
+
+1. **Check DNS records**: Ensure DNS records exist and are proxied (orange cloud)
+   ```bash
+   dig awhittlewandering.com
+   dig api.awhittlewandering.com
+   ```
+
+2. **Verify zone configuration**: The domain's zone must be active in Cloudflare
+   - Go to **Cloudflare Dashboard** → Select your domain
+   - Ensure status is "Active" (not "Pending")
+
+3. **Check SSL certificate**: 
+   - Go to **SSL/TLS** → **Edge Certificates**
+   - Verify certificate is active for your domain
+   - Wait up to 15 minutes for certificate issuance
+
+4. **Test with fallback URLs**: If custom domains aren't working, the app still works on:
+   - Frontend: `https://awhittlewandering.pages.dev`
+   - Backend: `https://awhittlewandering-api.workers.dev`
+
+5. **Worker route binding**: For backend custom domain
+   - Deploy must succeed: `wrangler deploy --env production`
+   - Check routes in dashboard: **Workers & Pages** → **awhittlewandering-api** → **Settings** → **Triggers** → **Routes**
+   - Ensure route `api.awhittlewandering.com/*` is listed
+
+6. **Propagation time**: Wait 5-15 minutes after DNS changes
 
 ## CI/CD Pipeline Summary
 

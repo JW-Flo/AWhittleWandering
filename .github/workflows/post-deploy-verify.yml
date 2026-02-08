@@ -35,8 +35,12 @@ permissions:
 env:
   STAGING_FRONTEND: https://staging.awhittlewandering.pages.dev
   STAGING_BACKEND: https://awhittlewandering-api-staging.workers.dev
+  # Custom domains (preferred for production)
   PROD_FRONTEND: https://awhittlewandering.com
   PROD_BACKEND: https://api.awhittlewandering.com
+  # Fallback to workers.dev domains if custom domains not configured
+  PROD_FRONTEND_FALLBACK: https://awhittlewandering.pages.dev
+  PROD_BACKEND_FALLBACK: https://awhittlewandering-api.workers.dev
 
 jobs:
   verify:
@@ -46,6 +50,10 @@ jobs:
       backend_ok: ${{ steps.backend.outputs.ok }}
       routes_ok: ${{ steps.routes.outputs.ok }}
       overall_ok: ${{ steps.summary.outputs.ok }}
+      frontend_warning: ${{ steps.frontend.outputs.warning }}
+      backend_warning: ${{ steps.backend.outputs.warning }}
+      frontend_url: ${{ steps.frontend.outputs.url }}
+      backend_url: ${{ steps.backend.outputs.url }}
     steps:
       - name: Set URLs
         id: urls
@@ -53,9 +61,13 @@ jobs:
           if [[ "${{ inputs.environment }}" == "production" ]]; then
             echo "frontend=${{ env.PROD_FRONTEND }}" >> $GITHUB_OUTPUT
             echo "backend=${{ env.PROD_BACKEND }}" >> $GITHUB_OUTPUT
+            echo "frontend_fallback=${{ env.PROD_FRONTEND_FALLBACK }}" >> $GITHUB_OUTPUT
+            echo "backend_fallback=${{ env.PROD_BACKEND_FALLBACK }}" >> $GITHUB_OUTPUT
           else
             echo "frontend=${{ env.STAGING_FRONTEND }}" >> $GITHUB_OUTPUT
             echo "backend=${{ env.STAGING_BACKEND }}" >> $GITHUB_OUTPUT
+            echo "frontend_fallback=${{ env.STAGING_FRONTEND }}" >> $GITHUB_OUTPUT
+            echo "backend_fallback=${{ env.STAGING_BACKEND }}" >> $GITHUB_OUTPUT
           fi
 
       - name: Verify Frontend
@@ -63,25 +75,50 @@ jobs:
         # Allow step to complete and set outputs even on failure, so downstream jobs can access results
         continue-on-error: true
         run: |
-          URL="${{ steps.urls.outputs.frontend }}"
-          echo "Verifying frontend: $URL"
-          
+          PRIMARY_URL="${{ steps.urls.outputs.frontend }}"
+          FALLBACK_URL="${{ steps.urls.outputs.frontend_fallback }}"
+
+          echo "Verifying frontend: $PRIMARY_URL"
+
           # Check main page loads
-          HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 30 "$URL" || echo "000")
+          HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 30 "$PRIMARY_URL" || echo "000")
           # Normalize HTTP code (curl may return 000000 instead of 000 on connection failure)
           HTTP_CODE=${HTTP_CODE:0:3}
-          
+
+          DOMAIN_WARNING=""
+
+          # If primary domain fails and we have a fallback, try it
+          if [[ "$HTTP_CODE" != "200" ]] && [[ "$PRIMARY_URL" != "$FALLBACK_URL" ]]; then
+            echo "⚠️ Custom domain not accessible, trying fallback: $FALLBACK_URL"
+            HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 30 "$FALLBACK_URL" || echo "000")
+            HTTP_CODE=${HTTP_CODE:0:3}
+
+            if [[ "$HTTP_CODE" == "200" ]]; then
+              DOMAIN_WARNING="custom-domain-not-configured"
+              echo "url=$FALLBACK_URL" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "url=$PRIMARY_URL" >> $GITHUB_OUTPUT
+          fi
+
           if [[ "$HTTP_CODE" == "200" ]]; then
             echo "✅ Frontend main page OK"
-            
-            # Check for JavaScript bundle
-            CONTENT=$(curl -sf --max-time 30 "$URL" || echo "")
+
+            # Check for JavaScript bundle - use the URL that worked
+            ACTIVE_URL="$PRIMARY_URL"
+            if [[ -n "$DOMAIN_WARNING" ]]; then
+              ACTIVE_URL="$FALLBACK_URL"
+            fi
+
+            CONTENT=$(curl -sf --max-time 30 "$ACTIVE_URL" || echo "")
             if echo "$CONTENT" | grep -q "script"; then
               echo "✅ Frontend has script tags"
               echo "ok=true" >> $GITHUB_OUTPUT
+              echo "warning=$DOMAIN_WARNING" >> $GITHUB_OUTPUT
             else
               echo "⚠️ Frontend may be missing JavaScript"
               echo "ok=true" >> $GITHUB_OUTPUT  # Still pass, might be SSR
+              echo "warning=$DOMAIN_WARNING" >> $GITHUB_OUTPUT
             fi
           else
             echo "❌ Frontend returned HTTP $HTTP_CODE"
@@ -94,20 +131,40 @@ jobs:
         # Allow step to complete and set outputs even on failure, so downstream jobs can access results
         continue-on-error: true
         run: |
-          URL="${{ steps.urls.outputs.backend }}/api/v1/health"
-          echo "Verifying backend health: $URL"
-          
-          RESPONSE=$(curl -sf --max-time 30 "$URL" 2>/dev/null || echo '{"status":"error"}')
-          HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 30 "$URL" 2>/dev/null || echo "000")
+          PRIMARY_URL="${{ steps.urls.outputs.backend }}/api/v1/health"
+          FALLBACK_URL="${{ steps.urls.outputs.backend_fallback }}/api/v1/health"
+
+          echo "Verifying backend health: $PRIMARY_URL"
+
+          RESPONSE=$(curl -sf --max-time 30 "$PRIMARY_URL" 2>/dev/null || echo '{"status":"error"}')
+          HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 30 "$PRIMARY_URL" 2>/dev/null || echo "000")
           # Normalize HTTP code (curl may return 000000 instead of 000 on connection failure)
           HTTP_CODE=${HTTP_CODE:0:3}
-          
+
+          DOMAIN_WARNING=""
+
+          # If primary domain fails and we have a fallback, try it
+          if [[ "$HTTP_CODE" != "200" ]] && [[ "$PRIMARY_URL" != "$FALLBACK_URL" ]]; then
+            echo "⚠️ Custom domain not accessible, trying fallback: $FALLBACK_URL"
+            RESPONSE=$(curl -sf --max-time 30 "$FALLBACK_URL" 2>/dev/null || echo '{"status":"error"}')
+            HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 30 "$FALLBACK_URL" 2>/dev/null || echo "000")
+            HTTP_CODE=${HTTP_CODE:0:3}
+
+            if [[ "$HTTP_CODE" == "200" ]]; then
+              DOMAIN_WARNING="custom-domain-not-configured"
+              echo "url=$FALLBACK_URL" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "url=$PRIMARY_URL" >> $GITHUB_OUTPUT
+          fi
+
           echo "HTTP Code: $HTTP_CODE"
           echo "Response: $RESPONSE"
-          
+
           if [[ "$HTTP_CODE" == "200" ]]; then
             echo "✅ Backend health endpoint OK"
             echo "ok=true" >> $GITHUB_OUTPUT
+            echo "warning=$DOMAIN_WARNING" >> $GITHUB_OUTPUT
           else
             echo "❌ Backend health check failed"
             echo "ok=false" >> $GITHUB_OUTPUT
@@ -119,25 +176,38 @@ jobs:
         # Allow step to complete and set outputs even on failure, so downstream jobs can access results
         continue-on-error: true
         run: |
-          BASE_URL="${{ steps.urls.outputs.backend }}/api/v1"
+          # Use the working backend URL from the health check
+          BASE_URL="${{ steps.backend.outputs.url }}"
+          if [[ -z "$BASE_URL" ]]; then
+            # Backend check didn't set URL, use fallback
+            BASE_URL="${{ steps.urls.outputs.backend_fallback }}/api/v1"
+          elif [[ "$BASE_URL" == */api/v1/health ]]; then
+            # Remove /api/v1/health suffix and add /api/v1
+            BASE_URL="${BASE_URL%/api/v1/health}/api/v1"
+          else
+            # URL doesn't match expected format, try to construct it
+            # Remove any trailing path and add /api/v1
+            BASE_URL="${BASE_URL%%/api/*}/api/v1"
+          fi
+
           echo "Verifying API routes at: $BASE_URL"
-          
+
           # Define routes to check (endpoint, expected_codes)
           declare -A ROUTES=(
             ["/health"]="200"
             ["/tesla/status"]="200,401,403"  # May require auth
             ["/tesla/location"]="200,401,403"
           )
-          
+
           ALL_OK=true
           RESULTS=""
-          
+
           for route in "${!ROUTES[@]}"; do
             EXPECTED="${ROUTES[$route]}"
             HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time 15 "${BASE_URL}${route}" 2>/dev/null || echo "000")
             # Normalize HTTP code (curl may return 000000 instead of 000 on connection failure)
             HTTP_CODE=${HTTP_CODE:0:3}
-            
+
             # Check if HTTP code is in expected list
             if [[ "$EXPECTED" == *"$HTTP_CODE"* ]] || [[ "$HTTP_CODE" == "200" ]]; then
               RESULTS+="✅ ${route} → HTTP $HTTP_CODE\n"
@@ -148,9 +218,9 @@ jobs:
               fi
             fi
           done
-          
+
           echo -e "$RESULTS"
-          
+
           if $ALL_OK; then
             echo "ok=true" >> $GITHUB_OUTPUT
           else
@@ -161,18 +231,28 @@ jobs:
       - name: Verify CORS
         id: cors
         run: |
-          BACKEND="${{ steps.urls.outputs.backend }}"
-          FRONTEND="${{ steps.urls.outputs.frontend }}"
-          
+          BACKEND_URL="${{ steps.backend.outputs.url }}"
+          FRONTEND_URL="${{ steps.frontend.outputs.url }}"
+
+          # If URLs weren't set (shouldn't happen), use originals
+          if [[ -z "$BACKEND_URL" ]]; then
+            BACKEND_URL="${{ steps.urls.outputs.backend }}/api/v1/health"
+          fi
+          if [[ -z "$FRONTEND_URL" ]]; then
+            FRONTEND_URL="${{ steps.urls.outputs.frontend }}"
+          fi
+
           echo "Verifying CORS configuration..."
-          
+          echo "Backend: $BACKEND_URL"
+          echo "Frontend: $FRONTEND_URL"
+
           # Check CORS headers
           CORS_HEADERS=$(curl -sf -I -X OPTIONS \
-            -H "Origin: $FRONTEND" \
+            -H "Origin: $FRONTEND_URL" \
             -H "Access-Control-Request-Method: GET" \
             --max-time 15 \
-            "$BACKEND/api/v1/health" 2>/dev/null || echo "")
-          
+            "$BACKEND_URL" 2>/dev/null || echo "")
+
           if echo "$CORS_HEADERS" | grep -qi "access-control-allow"; then
             echo "✅ CORS headers present"
           else
@@ -182,23 +262,33 @@ jobs:
       - name: Verify Frontend-Backend Integration
         id: integration
         run: |
-          FRONTEND="${{ steps.urls.outputs.frontend }}"
-          BACKEND="${{ steps.urls.outputs.backend }}"
-          
+          FRONTEND_URL="${{ steps.frontend.outputs.url }}"
+          BACKEND_URL="${{ steps.backend.outputs.url }}"
+
+          # If URLs weren't set (shouldn't happen), use originals
+          if [[ -z "$BACKEND_URL" ]]; then
+            BACKEND_URL="${{ steps.urls.outputs.backend }}/api/v1/health"
+          fi
+          if [[ -z "$FRONTEND_URL" ]]; then
+            FRONTEND_URL="${{ steps.urls.outputs.frontend }}"
+          fi
+
           echo "Verifying frontend can reach backend..."
-          
+          echo "Frontend: $FRONTEND_URL"
+          echo "Backend: $BACKEND_URL"
+
           # This is a basic check - in production you might want to
           # actually load the frontend and check for API calls
-          
+
           # Check that backend is reachable from a browser-like request
           HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" \
-            -H "Origin: $FRONTEND" \
+            -H "Origin: $FRONTEND_URL" \
             -H "User-Agent: Mozilla/5.0" \
             --max-time 15 \
-            "$BACKEND/api/v1/health" 2>/dev/null || echo "000")
+            "$BACKEND_URL" 2>/dev/null || echo "000")
           # Normalize HTTP code (curl may return 000000 instead of 000 on connection failure)
           HTTP_CODE=${HTTP_CODE:0:3}
-          
+
           if [[ "$HTTP_CODE" == "200" ]]; then
             echo "✅ Backend reachable with browser-like request"
           else
@@ -211,12 +301,12 @@ jobs:
           FRONTEND="${{ steps.frontend.outputs.ok }}"
           BACKEND="${{ steps.backend.outputs.ok }}"
           ROUTES="${{ steps.routes.outputs.ok }}"
-          
+
           echo "## Verification Summary"
           echo "- Frontend: $FRONTEND"
           echo "- Backend: $BACKEND"
           echo "- Routes: $ROUTES"
-          
+
           if [[ "$FRONTEND" == "true" && "$BACKEND" == "true" && "$ROUTES" == "true" ]]; then
             echo "ok=true" >> $GITHUB_OUTPUT
             echo "✅ All verifications passed"
@@ -241,26 +331,52 @@ jobs:
             const backendOk = '${{ needs.verify.outputs.backend_ok }}' === 'true';
             const routesOk = '${{ needs.verify.outputs.routes_ok }}' === 'true';
             const overallOk = '${{ needs.verify.outputs.overall_ok }}' === 'true';
-            
+            const frontendWarning = '${{ needs.verify.outputs.frontend_warning }}';
+            const backendWarning = '${{ needs.verify.outputs.backend_warning }}';
+            const frontendUrl = '${{ needs.verify.outputs.frontend_url }}';
+            const backendUrl = '${{ needs.verify.outputs.backend_url }}';
+
             const status = overallOk ? '✅ PASSED' : '❌ FAILED';
-            
+
+            // Build warnings section
+            let warningsSection = '';
+            const hasCustomDomainWarning = frontendWarning === 'custom-domain-not-configured' ||
+                                          backendWarning === 'custom-domain-not-configured';
+
+            if (hasCustomDomainWarning) {
+              warningsSection = `
+            ### ⚠️ Warnings
+
+            `;
+
+              const docsUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/docs/DEPLOYMENT.md#custom-domain-setup`;
+
+              if (frontendWarning === 'custom-domain-not-configured') {
+                warningsSection += `- **Frontend Custom Domain Not Configured**: Frontend is accessible via ${frontendUrl} but custom domain is not configured. See [custom domain setup guide](${docsUrl})\n`;
+              }
+
+              if (backendWarning === 'custom-domain-not-configured') {
+                warningsSection += `- **Backend Custom Domain Not Configured**: Backend is accessible via ${backendUrl} but custom domain is not configured. See [custom domain setup guide](${docsUrl})\n`;
+              }
+            }
+
             const body = `## Post-Deployment Verification Report
-            
+
             **Environment:** ${env}
             **Status:** ${status}
             **Time:** ${new Date().toISOString()}
-            
+
             ### Results
             | Check | Status |
             |-------|--------|
             | Frontend | ${frontendOk ? '✅ OK' : '❌ Failed'} |
             | Backend Health | ${backendOk ? '✅ OK' : '❌ Failed'} |
             | API Routes | ${routesOk ? '✅ OK' : '❌ Failed'} |
-            
+            ${warningsSection}
             ### Workflow
             [View Details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             `;
-            
+
             // If failed, create an issue
             if (!overallOk) {
               await github.rest.issues.create({
@@ -268,19 +384,19 @@ jobs:
                 repo: context.repo.repo,
                 title: `🚨 Post-Deploy Verification Failed - ${env}`,
                 body: body + `
-                
+
                 ### Recommended Actions
                 1. Check the workflow logs for details
                 2. Verify Cloudflare status
                 3. Consider rolling back if critical
-                
+
                 ### Rollback
                 Run: \`Actions → Rollback → Run workflow\`
                 `,
                 labels: ['verification-failed', env, 'needs-attention']
               });
             }
-            
+
             console.log(body);
 
   # Trigger rollback if verification fails
@@ -305,23 +421,23 @@ jobs:
               repo: context.repo.repo,
               title: `🚨 URGENT: Production Verification Failed - Rollback May Be Needed`,
               body: `## Production Deployment Verification Failed
-              
+
               **Time:** ${new Date().toISOString()}
-              
+
               The post-deployment verification has detected issues with the production deployment.
-              
+
               ### Immediate Actions Required
               1. **Check production manually:** https://awhittlewandering.com
               2. **Review logs:** [Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
               3. **Consider rollback** if issues are confirmed
-              
+
               ### Rollback Instructions
               1. Go to Actions → Rollback
               2. Click "Run workflow"
               3. Select target: \`both\`
               4. Select environment: \`production\`
               5. Enter reason
-              
+
               ### On-Call
               Please acknowledge this issue by commenting.
               `,
