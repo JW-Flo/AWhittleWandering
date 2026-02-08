@@ -106,12 +106,14 @@ Reviewed 13 open pull requests. Key findings:
 Some PRs are stacked (one depends on another):
 ```
 main
- ├─ #170 (PR3 framework primitives)
- │   └─ base: #170's branch (claude/read-claude-prompt-DuPp3)
- │       └─ #171 (infrastructure provisioning) ← BUILD FAILED
- ├─ #172 (health path)
- └─ #173 (deploy diagnostics)
+ ├─ #170 (PR3 framework primitives) - base: main
+ │   └─ #171 (infrastructure provisioning) - base: claude/read-claude-prompt-DuPp3 (#170's branch) ← BUILD FAILED
+ ├─ #172 (health path) - base: main
+ └─ #173 (deploy diagnostics) - base: main
 ```
+
+Note: PR #170 targets `main` and creates branch `claude/read-claude-prompt-DuPp3`.  
+PR #171 targets `claude/read-claude-prompt-DuPp3` (PR #170's branch), making it dependent on #170 being merged first.
 
 ## Action Plan
 
