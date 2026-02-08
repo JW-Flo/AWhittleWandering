@@ -89,7 +89,7 @@ Then fix all resulting type errors. This will surface many of the bugs from Sect
 
 ### 3.2 Fix ESLint
 
-`npm run lint` fails with "eslint: not found". The `eslint` binary is missing from `node_modules/.bin/`. Run `npm install` to reinstall dependencies, then verify with `npm run lint`.
+`npm run lint` currently fails with "eslint: not found". Since `frontend/package.json` includes `eslint` and `@eslint/js` in `devDependencies`, this usually means devDependencies were not installed (for example, running `npm ci --omit=dev` or setting `NODE_ENV=production`). From `frontend/`, run `npm install` (or `npm ci` without omitting devDependencies) to install workspace dependencies, then run `npm run lint` again. If it still fails, investigate ESLint configuration or version conflicts rather than assuming the binary is missing from `node_modules/.bin/`.
 
 ### 3.3 Remove duplicate EXIF library loading
 
@@ -103,9 +103,9 @@ Then fix all resulting type errors. This will surface many of the bugs from Sect
 
 ## 4. HIGH — Security
 
-### 4.1 Session token in localStorage
+### 4.1 Admin session token in localStorage
 
-**File**: `frontend/src/lib/auth.ts:55` — session token in `localStorage` is XSS-exfiltrable. Move to `sessionStorage` at minimum.
+**File**: `frontend/src/lib/auth.ts:55` — admin session token in `localStorage` is XSS-exfiltrable. Move to `sessionStorage` at minimum.
 
 ### 4.2 Password in MFA challenge state
 
@@ -183,10 +183,10 @@ Delete these files and references:
 | 8.7 | `frontend/src/lib/api.ts` (superseded by `api-config.ts`, migrate `useRealtimeStatus` first) |
 | 8.8 | Remove either `@radix-ui/react-toast` Toaster OR `sonner` Sonner from `App.tsx` — pick one toast system |
 | 8.9 | Remove `next-themes` from `package.json` — `ThemeProvider` is never used; before removal, update `frontend/src/components/ui/sonner.tsx` to stop importing `useTheme` from `next-themes` (or remove Sonner entirely per 8.8) so the build does not break. |
-| 8.10 | `VehicleStats.tsx:43-47` — delete `_getBatteryColor()` (unused) |
-| 8.11 | `auth.ts:192-193` — delete `generateSessionId()` (unused) |
+| 8.10 | `frontend/src/components/VehicleStats.tsx:43-47` — delete `_getBatteryColor()` (unused) |
+| 8.11 | `frontend/src/lib/auth.ts:192-193` — delete `generateSessionId()` (unused) |
 | 8.12 | Audit these deps and remove if unused: `leaflet`, `react-leaflet`, `papaparse`, `recharts`, `embla-carousel-react`, `cmdk`, `vaul`, `react-resizable-panels`, `react-day-picker`, `react-hook-form`, `@hookform/resolvers`, `input-otp` |
-| 8.13 | `backendApi.ts:125-131` — remove debug endpoint methods |
+| 8.13 | `frontend/src/services/backendApi.ts:125-131` — remove debug endpoint methods |
 | 8.14 | Edit and expand existing `frontend/.env.example` to document `VITE_API_BASE_URL`, `VITE_BACKEND_URL`, `VITE_MAPBOX_TOKEN` (and ensure naming matches `backendApi.ts`) |
 
 ---
