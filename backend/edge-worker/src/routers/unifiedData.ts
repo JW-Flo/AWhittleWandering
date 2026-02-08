@@ -3,11 +3,9 @@ import type { Env } from '../types/env';
 import { z } from 'zod';
 import { CacheService } from '../services/cache';
 import { logger } from '../utils/log';
+import { resolveJourneyRef, DEFAULT_JOURNEY_ID, DEFAULT_VEHICLE_ID } from '../utils/resolveJourney';
 
 export const unifiedDataRouter = new Hono<{ Bindings: Env }>();
-
-const DEFAULT_JOURNEY_ID = 'continental-usa-2025';
-const DEFAULT_VEHICLE_ID = 'midnight-shadow';
 
 const querySchema = z.object({
   revalidate: z.union([z.literal('true'), z.literal('false')]).optional(),
@@ -221,13 +219,18 @@ async function buildUnifiedData(c: any, limit: number, journeyId: string, vehicl
   }
 }
 
-unifiedDataRouter.get('/', async (c) => {
+// Shared handler for both query-param and path-param routes
+async function handleUnifiedData(c: any, journeyRef?: string) {
   try {
     const parsed = querySchema.safeParse(c.req.query());
     const limit = Math.min(50, Math.max(1, Number(parsed.success ? (parsed.data.limit || '20') : 20)));
     const revalidate = parsed.success && parsed.data.revalidate === 'true';
-    const journeyId = (parsed.success && parsed.data.journeyId) || DEFAULT_JOURNEY_ID;
-    const vehicleId = (parsed.success && parsed.data.vehicleId) || DEFAULT_VEHICLE_ID;
+
+    // Resolve journey: path param takes priority, then query param, then default
+    const ref = journeyRef || (parsed.success && parsed.data.journeyId) || undefined;
+    const resolved = await resolveJourneyRef(c.env?.TESLA_DB, ref);
+    const journeyId = resolved.journeyId;
+    const vehicleId = (parsed.success && parsed.data.vehicleId) || resolved.vehicleId;
 
     const cacheKey = `unified_data_v3:j=${journeyId}:v=${vehicleId}:limit=${limit}`;
     if (!revalidate) {
@@ -240,7 +243,6 @@ unifiedDataRouter.get('/', async (c) => {
     return c.json(unified);
   } catch (err: any) {
     logger.error('unified.endpoint.error', { error: err?.message, stack: err?.stack });
-    // Return skeleton with error instead of throwing
     const skeleton = {
       overview: { tripName: 'Error', vehicle: 'Error', startDate: new Date().toISOString().slice(0, 10), daysElapsed: 0, totalMiles: 0, currentOdometer: 0, statesVisited: 0, totalStates: 48 },
       currentStatus: { battery: { level: 0, range: 0, charging: 'Unknown' }, location: { coordinates: { lat: 0, lng: 0 }, city: 'Unknown', state: 'Unknown', lastUpdate: new Date().toISOString() }, vehicle: { odometer: 0, speed: 0, heading: 0, temperature: { inside: undefined, outside: undefined } } },
@@ -250,4 +252,13 @@ unifiedDataRouter.get('/', async (c) => {
     };
     return c.json(skeleton, 200);
   }
+}
+
+// Query-param route: GET /api/v1/unified-data?journeyId=...
+unifiedDataRouter.get('/', async (c) => handleUnifiedData(c));
+
+// Path-param route: GET /api/v1/unified-data/:journeyRef (numeric public_id or text slug)
+unifiedDataRouter.get('/:journeyRef', async (c) => {
+  const journeyRef = c.req.param('journeyRef');
+  return handleUnifiedData(c, journeyRef);
 });

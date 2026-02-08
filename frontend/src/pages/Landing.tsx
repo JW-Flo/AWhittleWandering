@@ -1,10 +1,41 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { api } from "@/lib/api-config";
+
+type TripHeartbeat = {
+  state?: string;
+  daysElapsed?: number;
+  statesVisited?: number;
+  totalStates?: number;
+};
 
 const Landing: React.FC = () => {
   useDocumentTitle("Home");
+  const [heartbeat, setHeartbeat] = useState<TripHeartbeat | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${api.baseUrl}/api/v1/unified-data`, { method: "GET" });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled) return;
+        setHeartbeat({
+          state: data?.currentStatus?.location?.state,
+          daysElapsed: data?.overview?.daysElapsed,
+          statesVisited: data?.overview?.statesVisited,
+          totalStates: data?.overview?.totalStates,
+        });
+      } catch {
+        // Silent — landing works without heartbeat
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   return (
     <div className="journey-typography min-h-screen bg-background text-foreground">
       <header className="container mx-auto px-4 pt-8">
@@ -34,9 +65,19 @@ const Landing: React.FC = () => {
                 real time, and held afterward as a narrative.
               </p>
 
+              {heartbeat?.state && (
+                <p className="mt-4 text-sm text-foreground/70">
+                  <span className="inline-block w-2 h-2 rounded-full bg-primary mr-2 animate-pulse" />
+                  Day {heartbeat.daysElapsed ?? "—"} — currently in {heartbeat.state}
+                  {typeof heartbeat.statesVisited === "number" && typeof heartbeat.totalStates === "number"
+                    ? ` (${heartbeat.statesVisited} of ${heartbeat.totalStates} states)`
+                    : ""}
+                </p>
+              )}
+
               <div className="mt-10 flex flex-col sm:flex-row gap-3">
                 <Button asChild className="h-12 px-6 justify-between">
-                  <Link to="/journey/live">
+                  <Link to="/journey/1">
                     <span>Follow the journey</span>
                     <span className="text-primary-foreground/70">&rarr;</span>
                   </Link>
@@ -62,5 +103,3 @@ const Landing: React.FC = () => {
 };
 
 export default Landing;
-
-

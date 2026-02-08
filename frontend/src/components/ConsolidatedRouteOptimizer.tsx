@@ -171,7 +171,7 @@ export default function ConsolidatedRouteOptimizer({
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <Route className="w-5 h-5 text-blue-500" />
+              <Route className="w-5 h-5 text-primary" />
               Intelligent Route Optimizer
             </CardTitle>
             <Badge variant="outline" className="bg-primary/10 text-primary">
@@ -252,17 +252,17 @@ export default function ConsolidatedRouteOptimizer({
                   <CardContent className="pt-4">
                     <div className="grid grid-cols-3 gap-4 text-center">
                       <div>
-                        <Battery className="w-4 h-4 mx-auto mb-1 text-green-600" />
+                        <Battery className="w-4 h-4 mx-auto mb-1 text-primary" />
                         <p className="text-sm text-muted-foreground">Battery</p>
                         <p className="font-semibold">{vehicleData.batteryLevel}%</p>
                       </div>
                       <div>
-                        <Navigation className="w-4 h-4 mx-auto mb-1 text-blue-600" />
+                        <Navigation className="w-4 h-4 mx-auto mb-1 text-primary" />
                         <p className="text-sm text-muted-foreground">Range</p>
                         <p className="font-semibold">{vehicleData.range} mi</p>
                       </div>
                       <div>
-                        <TrendingUp className="w-4 h-4 mx-auto mb-1 text-purple-600" />
+                        <TrendingUp className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
                         <p className="text-sm text-muted-foreground">Efficiency</p>
                         <p className="font-semibold">{vehicleData.efficiency} mi/kWh</p>
                       </div>
@@ -346,7 +346,7 @@ export default function ConsolidatedRouteOptimizer({
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
-                        <Target className="w-5 h-5 text-green-500" />
+                        <Target className="w-5 h-5 text-primary" />
                         Optimized Route Summary
                       </CardTitle>
                     </CardHeader>
@@ -376,7 +376,7 @@ export default function ConsolidatedRouteOptimizer({
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
-                        <Leaf className="w-5 h-5 text-green-500" />
+                        <Leaf className="w-5 h-5 text-primary" />
                         Environmental Impact
                       </CardTitle>
                     </CardHeader>
@@ -384,7 +384,7 @@ export default function ConsolidatedRouteOptimizer({
                       <div className="grid grid-cols-3 gap-4">
                         <div className="text-center">
                           <p className="text-sm text-muted-foreground">Carbon Saved</p>
-                          <p className="text-lg font-semibold text-green-600">
+                          <p className="text-lg font-semibold text-primary">
                             {optimizedRoute.environmental.carbonSaved}
                           </p>
                         </div>
@@ -409,7 +409,7 @@ export default function ConsolidatedRouteOptimizer({
                     <Card>
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                          <Zap className="w-5 h-5 text-yellow-500" />
+                          <Zap className="w-5 h-5 text-primary" />
                           Charging Stops ({optimizedRoute.route.chargingStops.length})
                         </CardTitle>
                       </CardHeader>
@@ -438,7 +438,7 @@ export default function ConsolidatedRouteOptimizer({
                     <Card>
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                          <Brain className="w-5 h-5 text-purple-500" />
+                          <Brain className="w-5 h-5 text-muted-foreground" />
                           AI Optimization Tips
                         </CardTitle>
                       </CardHeader>
@@ -446,7 +446,7 @@ export default function ConsolidatedRouteOptimizer({
                         <ul className="space-y-2">
                           {optimizedRoute.route.tips.map((tip, index) => (
                             <li key={index} className="flex items-start gap-2">
-                              <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                              <AlertCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                               <span className="text-sm">{tip}</span>
                             </li>
                           ))}
@@ -487,7 +487,7 @@ export default function ConsolidatedRouteOptimizer({
 
           {/* Error Display */}
           {error && (
-            <div className="mt-4 p-3 bg-destructive/10 border border-red-200 rounded text-red-700 text-sm">
+            <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded text-destructive text-sm">
               {error}
             </div>
           )}

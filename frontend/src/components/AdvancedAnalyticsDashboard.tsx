@@ -149,7 +149,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                   {insights ? formatDistance(insights.totalDistance) : '---'}
                 </p>
               </div>
-              <Route className="h-8 w-8 text-blue-500" />
+              <Route className="h-8 w-8 text-primary" />
             </div>
             <div className="mt-2">
               <Badge variant="secondary" className="text-xs">
@@ -168,7 +168,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                   {insights ? `${insights.averageEfficiency.toFixed(2)} mi/kWh` : '---'}
                 </p>
               </div>
-              <Zap className="h-8 w-8 text-green-500" />
+              <Zap className="h-8 w-8 text-primary" />
             </div>
             <div className="mt-2">
               <Progress value={insights ? Math.min(100, (insights.averageEfficiency / 4.5) * 100) : 0} className="h-2" />
@@ -185,7 +185,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                   {insights ? formatCurrency(insights.costSavings) : '---'}
                 </p>
               </div>
-              <DollarSign className="h-8 w-8 text-emerald-500" />
+              <DollarSign className="h-8 w-8 text-primary" />
             </div>
             <div className="mt-2">
               <Badge variant="default" className="text-xs">
@@ -204,7 +204,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                   {insights ? `${insights.carbonSaved.toFixed(0)} lbs` : '---'}
                 </p>
               </div>
-              <Leaf className="h-8 w-8 text-green-600" />
+              <Leaf className="h-8 w-8 text-primary" />
             </div>
             <div className="mt-2">
               <Badge variant="outline" className="text-xs">
@@ -249,7 +249,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Personal Best</span>
-                        <span className="font-medium text-green-600">{bestEfficiency ? bestEfficiency.toFixed(2) : '---'} mi/kWh</span>
+                        <span className="font-medium text-primary">{bestEfficiency ? bestEfficiency.toFixed(2) : '---'} mi/kWh</span>
                       </div>
                     </div>
                   </CardContent>
@@ -294,7 +294,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                     <div className="text-center">
                       <p className="text-sm text-muted-foreground">Cost per Mile</p>
                       <p className="text-2xl font-bold">${costPerMile.toFixed(3)}</p>
-                      <p className="text-xs text-green-600">vs $0.12 gas</p>
+                      <p className="text-xs text-primary">vs $0.12 gas</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -392,8 +392,8 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
           <div className="space-y-4">
             <div className="p-4 bg-primary/10 rounded-lg border">
               <div className="flex items-start gap-3">
-                <div className="p-1 bg-blue-100 rounded">
-                  <Zap className="h-4 w-4 text-blue-600" />
+                <div className="p-1 bg-primary/10 rounded">
+                  <Zap className="h-4 w-4 text-primary" />
                 </div>
                 <div>
                   <h4 className="font-medium">Efficiency Opportunity</h4>
@@ -407,8 +407,8 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
 
             <div className="p-4 bg-accent/10 rounded-lg border">
               <div className="flex items-start gap-3">
-                <div className="p-1 bg-green-100 rounded">
-                  <DollarSign className="h-4 w-4 text-green-600" />
+                <div className="p-1 bg-accent/10 rounded">
+                  <DollarSign className="h-4 w-4 text-primary" />
                 </div>
                 <div>
                   <h4 className="font-medium">Cost Optimization</h4>
@@ -422,8 +422,8 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
 
             <div className="p-4 bg-secondary/10 rounded-lg border">
               <div className="flex items-start gap-3">
-                <div className="p-1 bg-purple-100 rounded">
-                  <Battery className="h-4 w-4 text-purple-600" />
+                <div className="p-1 bg-secondary/20 rounded">
+                  <Battery className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div>
                   <h4 className="font-medium">Charging Pattern</h4>

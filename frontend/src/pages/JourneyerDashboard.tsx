@@ -97,7 +97,7 @@ const JourneyerDashboardInner: React.FC = () => {
 
             <div className="flex items-center gap-2">
               <Button asChild variant="outline" size="sm">
-                <Link to="/journey/live">Public view</Link>
+                <Link to="/journey/1">Public view</Link>
               </Button>
               <Button asChild variant="ghost" size="sm">
                 <Link to="/dashboard/coordination">Coordination</Link>
@@ -154,6 +154,11 @@ const JourneyerDashboardInner: React.FC = () => {
           </TabsList>
 
           <TabsContent value="live" className="space-y-6">
+            {!isConnected && !isLoading && (
+              <div className="rounded-lg border border-border/60 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+                Backend offline — showing last known data. Vehicle status may be stale.
+              </div>
+            )}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
               <div className="lg:col-span-2">
                 <Card className="border-border/60">
@@ -264,26 +269,68 @@ const JourneyerDashboardInner: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="system" className="space-y-6">
-            <Card className="border-border/60">
-              <CardHeader>
-                <CardTitle className="text-base font-medium text-muted-foreground">
-                  System & tools
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Power tools live here so the public journey experience stays calm.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <Button asChild variant="outline" size="sm">
-                    <Link to="/dashboard/coordination">Open coordination dashboard</Link>
-                  </Button>
-                  <Button asChild variant="ghost" size="sm">
-                    <Link to="/demo">Demo</Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card className="border-border/60">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-medium text-muted-foreground">
+                    Connection status
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Backend API</span>
+                    <Badge variant={isConnected ? "default" : "destructive"}>
+                      {isConnected ? "Connected" : "Offline"}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Data freshness</span>
+                    <span className="text-muted-foreground font-mono text-xs">
+                      {data?.tessieStatus?.dataFreshness ?? "—"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Last sync</span>
+                    <span className="text-muted-foreground font-mono text-xs">
+                      {data?.tessieStatus?.lastUpdate ?? "—"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Mapbox token</span>
+                    <Badge variant={appConfig?.mapboxToken ? "default" : "outline"}>
+                      {appConfig?.mapboxToken ? "Configured" : "Not set"}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span>API version</span>
+                    <span className="text-muted-foreground font-mono text-xs">
+                      v{appConfig?.apiVersion ?? "—"}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/60">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-medium text-muted-foreground">
+                    Tools
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Power tools live here so the public journey experience stays calm.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button asChild variant="outline" size="sm">
+                      <Link to="/dashboard/coordination">Open coordination dashboard</Link>
+                    </Button>
+                    <Button asChild variant="ghost" size="sm">
+                      <Link to="/demo">Demo</Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </main>

@@ -110,7 +110,6 @@ const FollowerView: React.FC = () => {
                   <Badge variant="outline">Battery {Math.round(data.currentStatus.battery.level)}%</Badge>
                 )}
                 {lastUpdate && <Badge variant="outline">Updated {lastUpdate}</Badge>}
-                <Badge variant="outline">Journey ID: {id}</Badge>
               </div>
               <div className="mt-6">
                 <FollowButton journeyId={id || "live"} apiBaseUrl={api.baseUrl} />
@@ -132,26 +131,48 @@ const FollowerView: React.FC = () => {
           </Card>
         </section>
 
-        {/* Degraded mode message */}
-        {(isLoading || error) && (
+        {/* Loading skeleton */}
+        {isLoading && (
+          <section className="mb-10 space-y-4">
+            <Card className="story-card animate-pulse">
+              <CardContent className="p-6 space-y-3">
+                <div className="h-4 w-2/3 bg-muted rounded" />
+                <div className="h-3 w-full bg-muted rounded" />
+                <div className="h-3 w-5/6 bg-muted rounded" />
+              </CardContent>
+            </Card>
+            <Card className="story-card animate-pulse">
+              <CardContent className="p-6 space-y-3">
+                <div className="h-4 w-1/2 bg-muted rounded" />
+                <div className="h-20 w-full bg-muted rounded" />
+              </CardContent>
+            </Card>
+          </section>
+        )}
+
+        {/* Error state */}
+        {!isLoading && error && (
+          <section className="mb-10">
+            <Card className="story-card border-destructive/20">
+              <CardContent className="p-6 space-y-3">
+                <p className="text-sm font-medium">This journey is temporarily unavailable.</p>
+                <p className="text-xs text-muted-foreground">{error}</p>
+                <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+                  Try again
+                </Button>
+              </CardContent>
+            </Card>
+          </section>
+        )}
+
+        {/* Empty data state — backend returned skeleton data */}
+        {!isLoading && !error && data && data.overview?.totalMiles === 0 && data.overview?.statesVisited === 0 && (
           <section className="mb-10">
             <Card className="story-card">
               <CardContent className="p-6">
-                {isLoading ? (
-                  <p className="text-sm text-muted-foreground">Loading the journey…</p>
-                ) : (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      This journey is temporarily unavailable.
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {error}
-                    </p>
-                    <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
-                      Try again
-                    </Button>
-                  </div>
-                )}
+                <p className="text-sm text-muted-foreground">
+                  The journey hasn't started yet. When the traveler sets out, the arc and moments will appear here.
+                </p>
               </CardContent>
             </Card>
           </section>

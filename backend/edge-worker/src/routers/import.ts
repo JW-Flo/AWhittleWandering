@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { importTeslaDrives, importTeslaCharges } from '../importers/tesla-csv';
 import { logger } from '../utils/log';
 import type { Env } from '../types/env';
+import { DEFAULT_JOURNEY_ID } from '../utils/resolveJourney';
 
 export const importRouter = new Hono<{ Bindings: Env }>();
 
@@ -43,7 +44,7 @@ const WaypointSchema = z.object({
 
 const WaypointsImportSchema = z.object({
   waypoints: z.array(WaypointSchema),
-  journeyId: z.string().default('continental-usa-2025'),
+  journeyId: z.string().default(DEFAULT_JOURNEY_ID),
 });
 
 type Waypoint = z.infer<typeof WaypointSchema>;

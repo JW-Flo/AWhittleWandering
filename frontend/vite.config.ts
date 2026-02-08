@@ -34,7 +34,6 @@ export default defineConfig({
           // App chunks
           'map-component': ['./src/components/TeslaMap.tsx'],
           'hooks-utils': [
-            './src/hooks/useUnifiedApiData.ts',
             './src/utils/temperature.ts',
             './src/utils/dateHelpers.ts'
           ]
