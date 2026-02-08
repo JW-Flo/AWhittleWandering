@@ -1,12 +1,15 @@
 // Centralized API configuration for A Whittle Wandering
 // Handles all API endpoints and provides consistent error handling
 
-const getApiBaseUrl = () => {
+const getApiBaseUrl = (): string => {
   // Highest precedence: explicit env override (Vite exposes import.meta.env)
-  // Support both Vite style and fallback process.env for tests
-  const override = (import.meta as any).env?.VITE_API_BASE_URL || (process.env as any).VITE_API_BASE_URL;
-  if (override) return override;
-  if (process.env.NODE_ENV === 'development') return 'http://localhost:8787';
+  const viteEnv = (import.meta as any).env;
+  if (viteEnv?.VITE_API_BASE_URL) return viteEnv.VITE_API_BASE_URL;
+
+  // Dev mode (Vite sets this)
+  if (viteEnv?.DEV) return 'http://localhost:8787';
+
+  // Production: use the deployed backend worker URL
   return 'https://api.awhittlewandering.com';
 };
 
