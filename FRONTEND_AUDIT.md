@@ -60,7 +60,7 @@ There are three files that define API base URLs with different production values
 | Method | Currently calls | Should call |
 |--------|----------------|-------------|
 | `health()` | `/health` | `/api/v1/health` |
-| `getTripStatus()` | `/trip-status` | `/api/v1/trip/status` |
+| `getTripStatus()` | `/trip-status` | `/api/v1/trip-status` |
 
 ### 2.3 No type safety on API responses
 
