@@ -104,8 +104,8 @@ jobs:
           if [[ "$HTTP_CODE" == "200" ]]; then
             echo "✅ Frontend main page OK"
 
-            # Check for JavaScript bundle
-            ACTIVE_URL="${{ steps.urls.outputs.frontend }}"
+            # Check for JavaScript bundle - use the URL that worked
+            ACTIVE_URL="$PRIMARY_URL"
             if [[ -n "$DOMAIN_WARNING" ]]; then
               ACTIVE_URL="$FALLBACK_URL"
             fi
@@ -179,10 +179,15 @@ jobs:
           # Use the working backend URL from the health check
           BASE_URL="${{ steps.backend.outputs.url }}"
           if [[ -z "$BASE_URL" ]]; then
-            BASE_URL="${{ steps.urls.outputs.backend }}/api/v1"
-          else
+            # Backend check didn't set URL, use fallback
+            BASE_URL="${{ steps.urls.outputs.backend_fallback }}/api/v1"
+          elif [[ "$BASE_URL" == */api/v1/health ]]; then
             # Remove /api/v1/health suffix and add /api/v1
             BASE_URL="${BASE_URL%/api/v1/health}/api/v1"
+          else
+            # URL doesn't match expected format, try to construct it
+            # Remove any trailing path and add /api/v1
+            BASE_URL="${BASE_URL%%/api/*}/api/v1"
           fi
 
           echo "Verifying API routes at: $BASE_URL"
