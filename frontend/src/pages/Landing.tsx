@@ -11,7 +11,9 @@ const Landing: React.FC = () => {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(`${API_CONFIG.BASE_URL}/health`, { signal: controller.signal })
+    fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.HEALTH}`, {
+      signal: controller.signal,
+    })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
