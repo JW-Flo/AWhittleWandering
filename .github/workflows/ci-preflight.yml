@@ -173,9 +173,7 @@ jobs:
       - name: Install Dependencies
         run: |
           npm ci || npm install
-          cd shared && npm ci || npm install
-          cd ../frontend && npm ci || npm install
-          cd ../backend/edge-worker && npm ci || npm install
+          cd shared && (npm run build || true)
 
       - name: Build Shared
         working-directory: shared
