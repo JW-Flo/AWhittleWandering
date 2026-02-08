@@ -128,7 +128,7 @@ binding = "AI"
 
 # Staging Environment Configuration
 # ============================================================================
-# To provision staging resources, run:
+# To provision staging resources, run from repo root:
 #   bash scripts/provision-environment.sh staging
 #
 # This will create D1 database and KV namespace, then provide the IDs to add here.
@@ -144,7 +144,7 @@ LOG_LEVEL = "info"
 ENVIRONMENT = "staging"
 
 # ⚠️  BEFORE DEPLOYING TO STAGING:
-# 1. Run: bash scripts/provision-environment.sh staging
+# 1. Run from repo root: bash scripts/provision-environment.sh staging
 # 2. Copy the generated D1 database_id and KV namespace id below
 # 3. Set secrets with: wrangler secret put <SECRET_NAME> --env staging
 # 4. Apply migrations: wrangler d1 migrations apply TESLA_DB --env staging --remote
@@ -153,11 +153,11 @@ ENVIRONMENT = "staging"
 [[env.staging.d1_databases]]
 binding = "TESLA_DB"
 database_name = "tesla-journey-tracker-staging"
-database_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"  # Run: bash scripts/provision-environment.sh staging
+database_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"  # Run from repo root: bash scripts/provision-environment.sh staging
 
 [[env.staging.kv_namespaces]]
 binding = "AUTH_TOKENS"
-id = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  # Run: bash scripts/provision-environment.sh staging
+id = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  # Run from repo root: bash scripts/provision-environment.sh staging
 
 [[env.staging.analytics_engine_datasets]]
 binding = "TELEMETRY_ANALYTICS"

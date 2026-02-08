@@ -247,9 +247,26 @@ curl https://api-{env}.awhittlewandering.com/api/v1/health
 Expected response:
 ```json
 {
-  "status": "healthy",
-  "environment": "staging",
-  "timestamp": "2026-02-06T16:00:00Z"
+  "status": "ok",
+  "timestamp": "2026-02-06T16:00:00.000Z",
+  "version": "3.0.0",
+  "service": "A Whittle Wandering - Unified Cloudflare Stack",
+  "resources": {
+    "d1_database": "operational",
+    "r2_storage": "unknown",
+    "analytics_engine": "assumed",
+    "queue_system": "not_configured"
+  },
+  "ingestion": {
+    "vehicleState": { "lastUpdate": "2026-02-06T15:30:00.000Z", "ageSeconds": 1800 },
+    "drives": { "lastUpdate": "2026-02-06T12:00:00.000Z", "ageSeconds": 14400, "total": 42 },
+    "charges": { "lastUpdate": "2026-02-06T08:00:00.000Z", "ageSeconds": 28800, "total": 15 },
+    "statesVisited": 8
+  },
+  "performance": {
+    "responseTimeMs": 45
+  },
+  "warnings": []
 }
 ```
 

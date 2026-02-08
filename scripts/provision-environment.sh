@@ -37,15 +37,33 @@ log_warn() { echo -e "${YELLOW}[provision] ⚠️${NC} $*"; }
 validate_prerequisites() {
     log "Validating prerequisites..."
     
-    # Check if wrangler is installed
-    if ! command -v wrangler &>/dev/null; then
-        log_error "wrangler CLI not found. Install with: npm install -g wrangler"
+    # Resolve wrangler command: prefer local, then global, then npx
+    WRANGLER=""
+    
+    if [ -x "$REPO_ROOT/backend/edge-worker/node_modules/.bin/wrangler" ]; then
+        WRANGLER="$REPO_ROOT/backend/edge-worker/node_modules/.bin/wrangler"
+    elif command -v wrangler &>/dev/null; then
+        WRANGLER="$(command -v wrangler)"
+    elif command -v npx &>/dev/null; then
+        WRANGLER="npx wrangler"
+    else
+        log_error "wrangler CLI not found.
+
+This repository vendors wrangler as a devDependency for the edge worker.
+Ensure dependencies are installed (e.g., 'npm install' in backend/edge-worker)
+or install wrangler globally (e.g., 'npm install -g wrangler')."
         exit 1
     fi
     
     # Check if authenticated
-    if ! wrangler whoami &>/dev/null; then
-        log_error "Not authenticated with Cloudflare. Run: wrangler login"
+    if ! $WRANGLER whoami &>/dev/null; then
+        log_error "Not authenticated with Cloudflare. Run: $WRANGLER login"
+        exit 1
+    fi
+    
+    # Check if jq is installed (required for idempotent provisioning)
+    if ! command -v jq &>/dev/null; then
+        log_error "jq is required but was not found on PATH. Please install jq from https://stedolan.github.io/jq/ or your package manager."
         exit 1
     fi
     
@@ -83,27 +101,28 @@ provision_d1_database() {
     
     log "Provisioning D1 database: $db_name"
     
-    # Check if database already exists
-    if wrangler d1 list 2>/dev/null | grep -q "$db_name"; then
+    # Check if database already exists using exact JSON match
+    local d1_list_json
+    if ! d1_list_json=$($WRANGLER d1 list --json 2>/dev/null); then
+        log_error "Failed to list existing D1 databases with wrangler; cannot verify if ${db_name} already exists."
+        exit 1
+    fi
+    
+    local db_id
+    db_id=$(echo "$d1_list_json" | jq -r --arg name "$db_name" '.[] | select(.name == $name) | .uuid' 2>/dev/null || true)
+    
+    if [ -n "$db_id" ] && [ "$db_id" != "null" ]; then
         log_warn "D1 database already exists: $db_name"
-        # Try JSON format first (more reliable)
-        local db_id=$(wrangler d1 list --json 2>/dev/null | jq -r '.[] | select(.name=="'"$db_name"'") | .uuid' 2>/dev/null || echo "")
-        if [ -z "$db_id" ]; then
-            # Fallback to text parsing
-            db_id=$(wrangler d1 list 2>/dev/null | grep "$db_name" | awk '{print $1}')
-        fi
-        if [ -n "$db_id" ]; then
-            echo "$db_id"
-            return 0
-        fi
+        echo "$db_id"
+        return 0
     fi
     
     # Create D1 database
     log "Creating D1 database: $db_name"
-    local output=$(wrangler d1 create "$db_name" 2>&1)
+    local output=$($WRANGLER d1 create "$db_name" 2>&1)
     
-    # Extract database ID from output
-    local db_id=$(echo "$output" | grep -oP 'database_id\s*=\s*"\K[^"]+' || echo "")
+    # Extract database ID from output using portable sed
+    local db_id=$(echo "$output" | sed -n 's/.*database_id[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p')
     
     if [ -z "$db_id" ]; then
         log_error "Failed to create D1 database or extract ID"
@@ -122,11 +141,17 @@ provision_kv_namespace() {
     
     log "Provisioning KV namespace: $kv_name"
     
-    # Check if KV namespace already exists
-    # Try JSON format first (more reliable)
-    local kv_id=$(wrangler kv:namespace list --json 2>/dev/null | jq -r '.[] | select(.title=="'"$kv_name"'") | .id' 2>/dev/null || echo "")
+    # Check if KV namespace already exists using JSON
+    local kv_list_json
+    if ! kv_list_json=$($WRANGLER kv:namespace list --json 2>/dev/null); then
+        log_error "Failed to list existing KV namespaces; cannot verify if ${kv_name} already exists."
+        exit 1
+    fi
     
-    if [ -n "$kv_id" ]; then
+    local kv_id
+    kv_id=$(echo "$kv_list_json" | jq -r --arg name "$kv_name" '.[] | select(.title == $name) | .id' 2>/dev/null || true)
+    
+    if [ -n "$kv_id" ] && [ "$kv_id" != "null" ]; then
         log_warn "KV namespace already exists: $kv_name"
         echo "$kv_id"
         return 0
@@ -134,10 +159,10 @@ provision_kv_namespace() {
     
     # Create KV namespace
     log "Creating KV namespace: $kv_name"
-    local output=$(wrangler kv:namespace create "$kv_name" 2>&1)
+    local output=$($WRANGLER kv:namespace create "$kv_name" 2>&1)
     
-    # Extract namespace ID from output
-    local kv_id=$(echo "$output" | grep -oP 'id\s*=\s*"\K[^"]+' || echo "")
+    # Extract namespace ID from output using portable sed
+    local kv_id=$(echo "$output" | sed -n 's/.*id[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p')
     
     if [ -z "$kv_id" ]; then
         log_error "Failed to create KV namespace or extract ID"
@@ -147,28 +172,6 @@ provision_kv_namespace() {
     
     log_success "KV namespace created: $kv_name (ID: $kv_id)"
     echo "$kv_id"
-}
-
-apply_migrations() {
-    local env_name="$1"
-    
-    log "Applying D1 migrations for environment: $env_name"
-    
-    # Check if migrations directory exists
-    local migrations_dir="$REPO_ROOT/backend/edge-worker/migrations"
-    if [ ! -d "$migrations_dir" ] || [ -z "$(ls -A "$migrations_dir" 2>/dev/null)" ]; then
-        log_warn "No migrations found in $migrations_dir"
-        return 0
-    fi
-    
-    # Apply migrations
-    log "Running: wrangler d1 migrations apply TESLA_DB --env $env_name --remote"
-    if wrangler d1 migrations apply TESLA_DB --env "$env_name" --remote; then
-        log_success "Migrations applied successfully"
-    else
-        log_warn "Migration application failed or not supported yet"
-        log "You may need to apply migrations manually after updating wrangler.toml"
-    fi
 }
 
 # =============================================================================
@@ -233,23 +236,24 @@ generate_secrets_checklist() {
 # ============================================================================
 # Secrets Checklist for Environment: $env_name
 # ============================================================================
-# Run these commands to set required secrets:
+# Run these commands to set required secrets (from backend/edge-worker directory):
 # ============================================================================
 
-wrangler --config backend/edge-worker/wrangler.toml secret put TESSIE_API_TOKEN --env $env_name
-wrangler --config backend/edge-worker/wrangler.toml secret put MAPBOX_API_TOKEN --env $env_name
-wrangler --config backend/edge-worker/wrangler.toml secret put OPENWEATHER_API_KEY --env $env_name
-wrangler --config backend/edge-worker/wrangler.toml secret put JWT_SECRET --env $env_name
-wrangler --config backend/edge-worker/wrangler.toml secret put TESLA_VIN --env $env_name
+cd backend/edge-worker
+wrangler secret put TESSIE_API_TOKEN --env $env_name
+wrangler secret put MAPBOX_API_TOKEN --env $env_name
+wrangler secret put OPENWEATHER_API_KEY --env $env_name
+wrangler secret put JWT_SECRET --env $env_name
+wrangler secret put TESLA_VIN --env $env_name
 
 # ============================================================================
 # Verification
 # ============================================================================
 # List secrets (without values):
-wrangler --config backend/edge-worker/wrangler.toml secret list --env $env_name
+wrangler secret list --env $env_name
 
 # Deploy to this environment:
-wrangler --config backend/edge-worker/wrangler.toml deploy --env $env_name
+wrangler deploy --env $env_name
 
 # Test health endpoint:
 curl https://api-${env_name}.awhittlewandering.com/api/v1/health
@@ -268,7 +272,8 @@ generate_deployment_commands() {
 
 # 1. Update wrangler.toml with the configuration above
 
-# 2. Apply D1 migrations:
+# 2. Apply D1 migrations (from backend/edge-worker directory):
+cd backend/edge-worker
 wrangler d1 migrations apply TESLA_DB --env $env_name --remote
 
 # 3. Set secrets (see checklist above)
