@@ -1,23 +1,25 @@
 # =============================================================================
-# Root Wrangler Configuration - Workers with Static Assets
+# Root Wrangler Configuration - Workers with Static Assets + SPA Fallback
 # =============================================================================
 # This configuration is for Cloudflare Workers deployments with static assets.
-# It is NOT used for Cloudflare Pages deployments.
+# SPA routing is handled by src/spa-worker.ts (replaces _redirects to avoid
+# Cloudflare error 10021 infinite redirect loop).
 #
 # For Cloudflare Pages frontend deployment, use frontend/wrangler.toml
 # For backend Worker deployment, use backend/edge-worker/wrangler.toml
-#
-# The [assets] section below is for Workers static assets serving only.
-# Pages deployments use frontend/wrangler.toml with pages_build_output_dir.
 # =============================================================================
 
 name = "awhittlewandering"
+main = "src/spa-worker.ts"
 compatibility_date = "2024-01-01"
 
-# Workers static assets - point to frontend build output
-# Note: This [assets] section is for Workers, not Pages
+# Workers static assets configuration
+# binding = "ASSETS" gives the Worker access to env.ASSETS.fetch()
+# not_found_handling = "none" ensures 404s reach our Worker for SPA fallback
 [assets]
 directory = "frontend/dist"
+binding = "ASSETS"
+not_found_handling = "none"
 
 # Note: Backend Worker (awhittlewandering-api) should be deployed separately
 # using: cd backend/edge-worker && npx wrangler deploy --env production

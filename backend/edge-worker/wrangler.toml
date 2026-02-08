@@ -88,6 +88,38 @@ binding = "AI"
 # pattern = "api.awhittlewandering.com/*"
 # zone_name = "awhittlewandering.com"
 
+# Staging Environment Configuration
+# IMPORTANT: Provision dedicated staging D1/KV resources before enabling
+# write-path endpoints. The IDs below are placeholders — do NOT reuse
+# production database_id or KV id, as staging writes would corrupt prod data.
+[env.staging]
+name = "awhittlewandering-api-staging"
+workers_dev = true
+
+[env.staging.vars]
+AI_GATEWAY_ID = "awhittlewandering-ai"
+AI_MODEL_NAME = "@cf/meta/llama-3.1-8b-instruct"
+LOG_LEVEL = "info"
+
+# Staging D1 — create with: npx wrangler d1 create tesla-journey-tracker-staging
+# Then replace the database_id below with the real staging ID.
+# [[env.staging.d1_databases]]
+# binding = "TESLA_DB"
+# database_name = "tesla-journey-tracker-staging"
+# database_id = "<STAGING_D1_ID>"
+
+# Staging KV — create with: npx wrangler kv namespace create AUTH_TOKENS --env staging
+# Then replace the id below with the real staging namespace ID.
+# [[env.staging.kv_namespaces]]
+# binding = "AUTH_TOKENS"
+# id = "<STAGING_KV_ID>"
+
+[[env.staging.analytics_engine_datasets]]
+binding = "TELEMETRY_ANALYTICS"
+
+[env.staging.ai]
+binding = "AI"
+
 # Development Environment Configuration
 [env.development]
 name = "awhittlewandering-api-dev"

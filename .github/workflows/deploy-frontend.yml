@@ -124,6 +124,14 @@ jobs:
           VITE_API_URL: ${{ needs.setup.outputs.environment == 'production' && 'https://api.awhittlewandering.com' || 'https://awhittlewandering-api.workers.dev' }}
         run: npm run build
 
+      - name: Remove _redirects from build output
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: |
+          # SPA fallback is handled in Worker code (src/spa-worker.ts).
+          # Shipping _redirects causes Cloudflare error 10021 (infinite loop).
+          rm -f dist/_redirects
+          echo "Cleaned _redirects from build output"
+
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -162,7 +170,9 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           BRANCH="${{ needs.setup.outputs.branch }}"
-          
+          LOG_DIR="${RUNNER_TEMP}/wrangler-logs"
+          mkdir -p "$LOG_DIR"
+
           # Capture output and exit code separately
           set +e  # Temporarily disable exit on error
           OUTPUT=$(wrangler pages deploy dist \
@@ -173,22 +183,45 @@ jobs:
             2>&1)
           EXIT_CODE=$?
           set -e  # Re-enable exit on error
-          
+
+          # Persist full log (redact tokens)
+          echo "$OUTPUT" | sed -E 's/(Bearer |token=|CLOUDFLARE_API_TOKEN=)[^ ]*/\1[REDACTED]/g' > "$LOG_DIR/deploy-frontend.log"
+          echo "log_dir=$LOG_DIR" >> $GITHUB_OUTPUT
+
           echo "$OUTPUT"
-          
+
           # Check if deployment failed
           if [ $EXIT_CODE -ne 0 ]; then
             echo "❌ Deployment failed with exit code $EXIT_CODE"
+
+            # Emit GitHub annotations for known error patterns
+            echo "$OUTPUT" | grep -n "10021" && echo "::error file=frontend/wrangler.toml::Cloudflare error 10021: _redirects infinite loop. Remove _redirects and use Worker SPA fallback."
+            echo "$OUTPUT" | grep -ni "authentication" && echo "::error::Cloudflare authentication failure. Check CLOUDFLARE_API_TOKEN secret."
+            echo "$OUTPUT" | grep -ni "missing binding" && echo "::error::Missing Cloudflare binding. Check wrangler.toml configuration."
+            echo "$OUTPUT" | grep -ni "rate limit" && echo "::warning::Cloudflare rate limit hit. Retry in a few minutes."
+
+            # Print last 200 lines for quick diagnosis
+            echo "--- Last 200 lines of deploy log ---"
+            tail -200 "$LOG_DIR/deploy-frontend.log"
+
             exit $EXIT_CODE
           fi
-          
+
           # Extract deployment URL
           DEPLOY_URL=$(echo "$OUTPUT" | grep -oP 'https://[^\s]+\.pages\.dev' | head -1 || echo "${{ needs.setup.outputs.url }}")
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
-          
+
           # Extract deployment ID if available
           DEPLOYMENT_ID=$(echo "$OUTPUT" | grep -oP '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}' | head -1 || echo "unknown")
           echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
+
+      - name: Upload deploy logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-deploy-logs-${{ github.run_number }}
+          path: ${{ steps.deploy.outputs.log_dir || runner.temp }}/wrangler-logs/
+          retention-days: 14
 
   # Health check
   health-check:
