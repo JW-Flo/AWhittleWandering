@@ -452,6 +452,17 @@ No `.env.example` or similar template exists to document required environment va
 
 The ROADMAP specifies "Migration + ETL idempotency checks" in CI, but no migration testing is visible in the test suite.
 
+### M23. `create_1password_secret()` Non-Zero Returns Abort Validation Script
+**File:** `scripts/validate-secrets.sh`
+**Severity:** MEDIUM
+
+`create_1password_secret()` returns non-zero (`return 1`) in several normal branches (e.g., item missing, field already exists). Because the script runs with `set -e` and the caller invokes `create_1password_secret` without guarding the return code, these `return 1` paths terminate the entire validation run early — potentially skipping remaining validations and the summary.
+
+**Remediation:**
+- Return 0 for the "skip to prevent overwriting" path (expected behavior, not an error)
+- Guard calls at the call site: `create_1password_secret ... || true` and track failures in a counter
+- Or unify on a pattern where only truly fatal errors return non-zero
+
 ---
 
 ## LOW Findings (P3 — Backlog)
@@ -544,6 +555,7 @@ The public token is exposed at `/api/v1/config`. While Mapbox public tokens are 
 13. Add CI concurrency controls (M14)
 14. Enforce `tsc --noEmit` in CI for all workspaces (M15)
 15. Pin third-party actions to SHAs (M16)
+16. Fix `create_1password_secret()` early-exit under `set -e` (M23)
 
 ### Phase D: Polish & Future Development (Backlog)
 1. Audit and prune unused Radix UI packages (M17)
@@ -632,3 +644,4 @@ Once security and CI are solid:
 | H7 | `frontend/package.json` (missing script) |
 | H8 | `backend/edge-worker/src/middleware/requestLogger.ts:52-68` |
 | H12 | `backend/edge-worker/src/jobs/index.ts:4`, `src/routers/admin.ts:84` |
+| M23 | `scripts/validate-secrets.sh` |
