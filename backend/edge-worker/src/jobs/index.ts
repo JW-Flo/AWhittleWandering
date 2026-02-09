@@ -20,7 +20,6 @@ export function buildJobs(env: any) {
   }
 
   return {
-    quick_state_update: async () => { await runAndAssertOk(controller.quickStateUpdate(), 'quick_state_update'); },
     full_sync: async () => { await runAndAssertOk(controller.fullDataSync(), 'full_sync'); },
     historical_backfill: async () => { await runAndAssertOk(controller.historicalBackfill(), 'historical_backfill'); },
     data_quality_check: async () => { await runAndAssertOk(controller.dataQualityCheck(), 'data_quality_check'); },

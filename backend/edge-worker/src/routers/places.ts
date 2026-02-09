@@ -1,16 +1,18 @@
 /**
  * Dynamic Places API Router
- * 
+ *
  * Identifies places and infers activities using:
  * 1. Reverse geocoding (OpenStreetMap)
  * 2. Web search when needed (Serper/Google)
  * 3. AI classification (Cloudflare AI)
- * 
+ *
  * No hardcoded categories - learns dynamically.
  * Rate limit aware - tracks usage and skips exhausted providers.
  */
 
 import { Hono } from 'hono';
+import { z } from 'zod';
+import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../types/env';
 import { DynamicPlaceIntelligence } from '../services/dynamicPlaceIntelligence';
 import { ApiRateLimitTracker } from '../services/apiRateLimitTracker';
@@ -18,16 +20,41 @@ import { logger } from '../utils/log';
 
 export const placesRouter = new Hono<{ Bindings: Env }>();
 
+// --- Zod schemas ---
+
+const identifySchema = z.object({
+  latitude: z.number(),
+  longitude: z.number(),
+});
+
+const analyzeStopSchema = z.object({
+  latitude: z.number(),
+  longitude: z.number(),
+  duration_minutes: z.number().optional(),
+  arrived_at: z.string().optional(),
+  departed_at: z.string().optional(),
+});
+
+const correctSchema = z.object({
+  latitude: z.number(),
+  longitude: z.number(),
+  name: z.string().optional(),
+  place_type: z.string().optional(),
+  place_description: z.string().optional(),
+});
+
+const batchAnalyzeSchema = z.object({
+  stops: z.array(z.object({
+    latitude: z.number(),
+    longitude: z.number(),
+    duration_minutes: z.number().optional(),
+    arrived_at: z.string().optional(),
+    departed_at: z.string().optional(),
+  })).max(20),
+});
+
 /**
  * Validates journey ID format to prevent injection attacks and ensure data integrity.
- * 
- * Valid journey IDs must:
- * - Contain only alphanumeric characters, hyphens, and underscores
- * - Be between 1 and 100 characters long
- * - Examples: "continental-usa-2025", "europe_tour_2024", "journey123"
- * 
- * @param journeyId - The journey ID to validate
- * @returns true if the journey ID is valid, false otherwise
  */
 function validateJourneyId(journeyId: string | undefined): boolean {
   return !!journeyId && /^[a-zA-Z0-9_-]{1,100}$/.test(journeyId);
@@ -39,26 +66,26 @@ function validateJourneyId(journeyId: string | undefined): boolean {
  */
 placesRouter.get('/providers', async (c) => {
   const providers = [
-    { 
-      name: 'serper', 
+    {
+      name: 'serper',
       configured: !!c.env.SERPER_API_KEY,
       freeQuota: '2,500/month',
       docs: 'https://serper.dev/',
     },
-    { 
-      name: 'brave', 
+    {
+      name: 'brave',
       configured: !!c.env.BRAVE_API_KEY,
       freeQuota: '2,000/month',
       docs: 'https://brave.com/search/api/',
     },
-    { 
-      name: 'tavily', 
+    {
+      name: 'tavily',
       configured: !!c.env.TAVILY_API_KEY,
       freeQuota: '1,000/month',
       docs: 'https://tavily.com/',
     },
-    { 
-      name: 'cloudflare_ai', 
+    {
+      name: 'cloudflare_ai',
       configured: !!c.env.AI,
       freeQuota: 'Included with Workers',
       docs: 'https://developers.cloudflare.com/workers-ai/',
@@ -87,11 +114,11 @@ placesRouter.get('/providers', async (c) => {
  */
 placesRouter.get('/rate-limits', async (c) => {
   const tracker = new ApiRateLimitTracker(c.env.TESLA_DB);
-  
+
   try {
     const statuses = await tracker.getAllProviderStatuses();
     const analytics = await tracker.getUsageAnalytics(30);
-    
+
     // Find best available provider
     const bestProvider = await tracker.getBestAvailableProvider([
       'serper', 'brave', 'tavily', 'cloudflare_ai'
@@ -108,8 +135,8 @@ placesRouter.get('/rate-limits', async (c) => {
     });
   } catch (error) {
     logger.error('Failed to get rate limit status', { error });
-    return c.json({ 
-      success: false, 
+    return c.json({
+      success: false,
       error: 'Failed to get rate limit status',
       message: 'Rate limit table may not exist - run migrations',
     }, 500);
@@ -123,7 +150,7 @@ placesRouter.get('/rate-limits', async (c) => {
 placesRouter.get('/rate-limits/:provider', async (c) => {
   const provider = c.req.param('provider');
   const tracker = new ApiRateLimitTracker(c.env.TESLA_DB);
-  
+
   try {
     const status = await tracker.getProviderStatus(provider);
     const prediction = await tracker.predictQuotaExhaustion(provider);
@@ -145,18 +172,8 @@ placesRouter.get('/rate-limits/:provider', async (c) => {
  * POST /api/v1/places/identify
  * Identify a place at given coordinates
  */
-placesRouter.post('/identify', async (c) => {
-  let body;
-  try {
-    body = await c.req.json();
-  } catch {
-    return c.json({ success: false, error: 'Invalid JSON body' }, 400);
-  }
-
-  const { latitude, longitude } = body;
-  if (latitude === undefined || longitude === undefined) {
-    return c.json({ success: false, error: 'latitude and longitude required' }, 400);
-  }
+placesRouter.post('/identify', zValidator('json', identifySchema), async (c) => {
+  const { latitude, longitude } = c.req.valid('json');
 
   const intelligence = new DynamicPlaceIntelligence(c.env);
   const place = await intelligence.identifyPlace(latitude, longitude);
@@ -171,26 +188,17 @@ placesRouter.post('/identify', async (c) => {
  * POST /api/v1/places/analyze-stop
  * Analyze a stop and infer activity
  */
-placesRouter.post('/analyze-stop', async (c) => {
-  let body;
-  try {
-    body = await c.req.json();
-  } catch {
-    return c.json({ success: false, error: 'Invalid JSON body' }, 400);
-  }
-
+placesRouter.post('/analyze-stop', zValidator('json', analyzeStopSchema), async (c) => {
+  const body = c.req.valid('json');
   const { latitude, longitude, duration_minutes, arrived_at, departed_at } = body;
-  
-  if (latitude === undefined || longitude === undefined) {
-    return c.json({ success: false, error: 'latitude and longitude required' }, 400);
-  }
+
   if (!duration_minutes && !arrived_at) {
     return c.json({ success: false, error: 'duration_minutes or arrived_at required' }, 400);
   }
 
   const arrivedAtDate = arrived_at ? new Date(arrived_at) : new Date();
   const departedAtDate = departed_at ? new Date(departed_at) : undefined;
-  const duration = duration_minutes || 
+  const duration = duration_minutes ||
     (departedAtDate ? (departedAtDate.getTime() - arrivedAtDate.getTime()) / (1000 * 60) : 60);
 
   const intelligence = new DynamicPlaceIntelligence(c.env);
@@ -220,19 +228,8 @@ placesRouter.post('/analyze-stop', async (c) => {
  * POST /api/v1/places/correct
  * Correct a place classification (user feedback)
  */
-placesRouter.post('/correct', async (c) => {
-  let body;
-  try {
-    body = await c.req.json();
-  } catch {
-    return c.json({ success: false, error: 'Invalid JSON body' }, 400);
-  }
-
-  const { latitude, longitude, name, place_type, place_description } = body;
-  
-  if (latitude === undefined || longitude === undefined) {
-    return c.json({ success: false, error: 'latitude and longitude required' }, 400);
-  }
+placesRouter.post('/correct', zValidator('json', correctSchema), async (c) => {
+  const { latitude, longitude, name, place_type, place_description } = c.req.valid('json');
 
   const intelligence = new DynamicPlaceIntelligence(c.env);
   await intelligence.correctPlace(latitude, longitude, {
@@ -253,7 +250,7 @@ placesRouter.post('/correct', async (c) => {
  */
 placesRouter.get('/stops/:journeyId', async (c) => {
   const journeyId = c.req.param('journeyId');
-  
+
   // Validate journey ID format
   if (!validateJourneyId(journeyId)) {
     return c.json({
@@ -261,7 +258,7 @@ placesRouter.get('/stops/:journeyId', async (c) => {
       error: 'Invalid journey ID format'
     }, 400);
   }
-  
+
   const rawLimit = parseInt(c.req.query('limit') || '50', 10);
   const rawOffset = parseInt(c.req.query('offset') || '0', 10);
 
@@ -273,7 +270,7 @@ placesRouter.get('/stops/:journeyId', async (c) => {
     ? rawOffset
     : 0;
   const result = await c.env.TESLA_DB.prepare(`
-    SELECT * FROM stops 
+    SELECT * FROM stops
     WHERE journey_id = ?
     ORDER BY arrived_at DESC
     LIMIT ? OFFSET ?
@@ -293,7 +290,7 @@ placesRouter.get('/stops/:journeyId', async (c) => {
  */
 placesRouter.get('/stops/:journeyId/activities', async (c) => {
   const journeyId = c.req.param('journeyId');
-  
+
   // Validate journey ID format
   if (!validateJourneyId(journeyId)) {
     return c.json({
@@ -315,7 +312,7 @@ placesRouter.get('/stops/:journeyId/activities', async (c) => {
   }
   // Get activity breakdown
   const activities = await c.env.TESLA_DB.prepare(`
-    SELECT 
+    SELECT
       inferred_activity,
       place_type,
       place_name,
@@ -332,7 +329,7 @@ placesRouter.get('/stops/:journeyId/activities', async (c) => {
 
   // Get unique places visited
   const places = await c.env.TESLA_DB.prepare(`
-    SELECT 
+    SELECT
       place_name,
       place_type,
       city,
@@ -362,23 +359,13 @@ placesRouter.get('/stops/:journeyId/activities', async (c) => {
  * POST /api/v1/places/batch-analyze
  * Analyze multiple stops at once (for backfill)
  */
-placesRouter.post('/batch-analyze', async (c) => {
-  let body;
-  try {
-    body = await c.req.json();
-  } catch {
-    return c.json({ success: false, error: 'Invalid JSON body' }, 400);
-  }
-
-  const { stops } = body;
-  if (!Array.isArray(stops)) {
-    return c.json({ success: false, error: 'stops array required' }, 400);
-  }
+placesRouter.post('/batch-analyze', zValidator('json', batchAnalyzeSchema), async (c) => {
+  const { stops } = c.req.valid('json');
 
   const intelligence = new DynamicPlaceIntelligence(c.env);
   const results = [];
 
-  for (const stop of stops.slice(0, 20)) { // Limit to 20 per request
+  for (const stop of stops) {
     try {
       const analysis = await intelligence.analyzeStop(
         stop.latitude,
@@ -405,4 +392,3 @@ placesRouter.post('/batch-analyze', async (c) => {
     processed: results.length,
   });
 });
-

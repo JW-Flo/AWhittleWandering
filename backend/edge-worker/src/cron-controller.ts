@@ -47,15 +47,51 @@ export class CronDataController {
   }
 
   /**
+   * Check if any journey is currently active.
+   * Tessie API calls should only fire when a journey is in progress.
+   */
+  private async hasActiveJourney(): Promise<boolean> {
+    try {
+      const row = await this.db.prepare(
+        `SELECT 1 FROM journeys WHERE status = 'active' LIMIT 1`
+      ).first();
+      return row !== null;
+    } catch {
+      // If DB query fails, assume active to avoid silently dropping data
+      return true;
+    }
+  }
+
+  /**
+   * Build a "skipped" response for jobs that bail out due to no active journey.
+   */
+  private skippedResponse(operation: string): Response {
+    return new Response(JSON.stringify({
+      success: true,
+      operation,
+      skipped: true,
+      reason: 'no_active_journey',
+      scheduledBy: 'cron',
+      timestamp: new Date().toISOString()
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  /**
    * Full data sync - runs every 30 minutes
-   * Comprehensive update of all Tesla data
+   * Comprehensive update of all Tesla data.
+   * Skips Tessie API calls when no journey is active.
    */
   async fullDataSync(): Promise<Response> {
     const startTime = Date.now();
-    
+
     try {
+      if (!await this.hasActiveJourney()) {
+        logger.info('full_sync skipped: no active journey');
+        return this.skippedResponse('full_sync');
+      }
+
       logger.info('Starting scheduled full data sync');
-      
+
       const result = await this.ingestion.ingestAllData();
       const duration = Date.now() - startTime;
 
@@ -99,67 +135,21 @@ export class CronDataController {
   }
 
   /**
-   * Quick vehicle state update - runs every 5 minutes
-   * Updates current location, battery, etc.
-   */
-  async quickStateUpdate(): Promise<Response> {
-    const startTime = Date.now();
-    
-    try {
-      logger.info('Starting quick vehicle state update');
-      
-      const result = await this.ingestion.ingestVehicleState();
-      const duration = Date.now() - startTime;
-
-      // Log the operation
-      await this.logIngestionOperation('vehicle_state', result, duration);
-
-      return new Response(JSON.stringify({
-        success: result.success,
-        operation: 'quick_state_update',
-        recordsProcessed: result.recordsProcessed,
-        duration: `${duration}ms`,
-        errors: result.errors,
-        timestamp: result.timestamp,
-        scheduledBy: 'cron'
-      }), {
-        status: result.success ? 200 : 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-    } catch (error) {
-      const duration = Date.now() - startTime;
-
-      await this.logIngestionOperation('vehicle_state', {
-        success: false,
-        recordsProcessed: 0,
-        errors: [error instanceof Error ? error.message : 'Unknown error'],
-        timestamp: new Date().toISOString()
-      }, duration);
-      
-      return new Response(JSON.stringify({
-        success: false,
-        operation: 'quick_state_update',
-        error: error instanceof Error ? error.message : 'Unknown error',
-        duration: `${duration}ms`,
-        scheduledBy: 'cron'
-      }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-  }
-
-  /**
    * Historical data backfill - runs daily
-   * Ensures we have complete historical data
+   * Ensures we have complete historical data.
+   * Skips Tessie API calls when no journey is active.
    */
   async historicalBackfill(): Promise<Response> {
     const startTime = Date.now();
-    
+
     try {
+      if (!await this.hasActiveJourney()) {
+        logger.info('historical_backfill skipped: no active journey');
+        return this.skippedResponse('historical_backfill');
+      }
+
       logger.info('Starting historical data backfill');
-      
+
       const drivesResult = await this.ingestion.ingestHistoricalDrives();
       const chargesResult = await this.ingestion.ingestHistoricalCharges();
       

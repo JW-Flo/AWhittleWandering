@@ -63,14 +63,25 @@ interface IngestionResult {
 export class TeslaDataIngestion {
   private config: TessieConfig;
   private db: D1Database;
+  private rateLimitTracker: { recordRequest(provider: string, success: boolean, latencyMs: number, errorCode?: string): Promise<void> } | null;
 
   constructor(db: D1Database, tessieApiKey: string, vehicleIdOrVin: string) {
     this.db = db;
+    this.rateLimitTracker = null;
     this.config = {
       apiKey: tessieApiKey,
       baseUrl: 'https://api.tessie.com',
       vehicleIdOrVin
     };
+
+    // Wire into ApiRateLimitTracker if DB is available (best-effort)
+    try {
+      // Lazy-import to avoid circular dependency; tracker uses same D1 table.
+      const { ApiRateLimitTracker } = require('./services/apiRateLimitTracker');
+      this.rateLimitTracker = new ApiRateLimitTracker(db);
+    } catch {
+      // Tracker unavailable — continue without usage recording
+    }
   }
 
   private normalizeIso(ts: unknown): string | null {
@@ -634,14 +645,19 @@ export class TeslaDataIngestion {
 
     let lastErr: unknown;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const callStart = Date.now();
       const controller = new AbortController();
       const to = setTimeout(() => controller.abort(), timeoutMs);
       try {
         const res = await fetch(url, { headers, signal: controller.signal });
         clearTimeout(to);
+        const latencyMs = Date.now() - callStart;
 
         // Retry on rate limiting / transient upstream errors
         if (!res.ok) {
+          // Record the failed call
+          await this.rateLimitTracker?.recordRequest('tessie', false, latencyMs, String(res.status)).catch(() => {});
+
           const shouldRetry = res.status === 429 || (res.status >= 500 && res.status <= 599);
           if (shouldRetry && attempt < maxAttempts) {
             let retryAfterMs = 0;
@@ -656,6 +672,10 @@ export class TeslaDataIngestion {
           const body = await res.text().catch(() => '');
           throw new Error(`Tessie API error: ${res.status} ${res.statusText}${body ? `: ${body.slice(0, 500)}` : ''}`);
         }
+
+        // Record successful call
+        const successLatency = Date.now() - callStart;
+        await this.rateLimitTracker?.recordRequest('tessie', true, successLatency).catch(() => {});
 
         const json = await res.json();
 
