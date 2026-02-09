@@ -100,9 +100,10 @@ op item create --category=password \
 
 # 2. Run validation with auto-create enabled
 cd /home/runner/work/AWhittleWandering/AWhittleWandering
-AUTO_CREATE=true \
-OP_SERVICE_ACCOUNT_TOKEN=<your_token> \
-./scripts/validate-secrets.sh .github/secrets-config.yml production
+# Ensure OP_SERVICE_ACCOUNT_TOKEN is already set securely in your environment
+# (e.g., via a .env file or secret store). Avoid pasting real tokens directly
+# into shell commands to prevent them from being stored in shell history.
+AUTO_CREATE=true ./scripts/validate-secrets.sh .github/secrets-config.yml production
 
 # 3. Verify the original value is preserved
 op read "op://AWW_SHARED/test_item/test_field"
