@@ -83,8 +83,12 @@ const adminAuth = async (c: any, next: any) => {
   const jwtCur = String(c.env?.JWT_SECRET || '').trim();
   const jwtPrev = String(c.env?.JWT_SECRET_PREVIOUS || '').trim();
 
-  // If nothing is configured, skip enforcement (dev).
-  if (!secret && !prev && !jwtCur && !jwtPrev) return next();
+  // If nothing is configured, only allow in development; fail closed otherwise.
+  if (!secret && !prev && !jwtCur && !jwtPrev) {
+    const env = String(c.env?.ENVIRONMENT || '').toLowerCase();
+    if (env === 'development') return next();
+    return c.json({ ok: false, error: 'Admin auth not configured' }, 503);
+  }
 
   const authz = c.req.header('Authorization') || '';
   if (!authz.startsWith('Bearer ')) {

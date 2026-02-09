@@ -15,40 +15,18 @@
 		"build:shared": "cd shared && npm run build",
 		"build:backend": "cd backend/edge-worker && npm run build",
 		"build:frontend": "cd frontend && npm run build",
-		"deploy": "npm run predeploy && npm run build && ./scripts/deploy.sh && npm run postdeploy",
-		"deploy:major": "npm run qa:major-deployment && npm run deploy",
+		"deploy": "npm run build && cd backend/edge-worker && npm run deploy",
 		"deploy:frontend": "cd frontend && npm run build && wrangler pages deploy dist --project-name=awhittlewandering",
 		"deploy:frontend:quick": "cd frontend && wrangler pages deploy dist --project-name=awhittlewandering",
-		"predeploy": "cd qa && node major-deployment-qa.js",
-		"postdeploy": "cd qa && node -e \"import('./qa-data-manager.js').then(m => new m.QADataManager().logComponentActivity('deployment', 'deployment-complete', 'info', 'Deployment completed successfully', { timestamp: new Date().toISOString() }))\"",
 		"dev": "npm run dev:backend & npm run dev:frontend",
 		"dev:worker": "cd backend/edge-worker && npm run dev",
 		"dev:backend": "cd backend/edge-worker && npm run dev",
 		"dev:frontend": "cd frontend && npm run dev",
-		"tesla:import": "npm run scripts/import-tesla-data.ts",
-		"qa:core": "cd backend/edge-worker && npm test",
 		"test": "cd backend/edge-worker && npm test",
 		"test:contract": "cd backend/edge-worker && npm run qa:contract",
 		"test:schema": "cd backend/edge-worker && npm run qa:schema",
-		"qa": "cd qa && node recursive-qa-pipeline.js",
-		"qa:cloud": "cd qa && node cloud-qa-runner.js",
-		"qa:full": "cd qa && node recursive-qa-pipeline.js --iterations=10 --cloud-storage=true",
-		"qa:major-deployment": "cd qa && node major-deployment-qa.js",
-		"qa:force-major": "cd qa && node major-deployment-qa.js --force-major",
-		"qa:dashboard": "cd qa && node -e \"import('./cloud-qa-runner.js').then(m => m.CloudQARunner).then(C => new C().getQADashboard()).then(console.log)\"",
-		"qa:tessie-health": "cd qa && node -e \"import('./major-deployment-qa.js').then(m => new m.MajorDeploymentQA().checkTessieApiHealth()).then(console.log)\"",
-		"cloud:setup": "cd qa && npx wrangler d1 create qa-pipeline-db && npx wrangler d1 execute qa-pipeline-db --file=cloudflare-d1-setup.sql --remote",
-		"cloud:deploy": "cd qa && npx wrangler deploy",
-		"cloud:status": "cd qa && npx wrangler d1 info qa-pipeline-db",
-		"cloud:update-schema": "cd qa && npx wrangler d1 execute qa-pipeline-db --file=cloudflare-d1-updates.sql --remote",
-		"api:audit": "node api-management-system.js audit",
-		"api:fix": "node api-management-system.js fix",
-		"api:health": "node api-management-system.js health",
 		"test:connectivity": "bash scripts/test-connectivity.sh",
-		"fix:bindings": "bash scripts/fix-bindings-wrangler.sh",
-		"pre-deploy": "./pre-deploy-api-check.sh",
-		"shell:integrate": "bash ./scripts/install-shell-integration.sh",
-		"webapp:qa": "bash ./scripts/webapp-qa.sh"
+		"fix:bindings": "bash scripts/fix-bindings-wrangler.sh"
 	},
 	"devDependencies": {
 		"@types/node": "^20.0.0",
@@ -59,8 +37,6 @@
 		"esbuild": "^0.27.2"
 	},
 	"dependencies": {
-		"node-fetch": "^2.7.0",
-		"puppeteer": "^24.15.0",
 		"zod": "^3.22.0"
 	}
 }
