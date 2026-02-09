@@ -128,7 +128,6 @@ jobs:
       - name: Run Backend Tests
         run: |
           cd ${{ env.WORKER_DIR }}
-          npm ci || npm install
           npm test || echo "No tests configured"
 
       - name: Type Check
@@ -152,10 +151,7 @@ jobs:
           cache: 'npm'
 
       - name: Install Dependencies
-        run: |
-          npm ci || npm install
-          cd shared && npm ci || npm install
-          cd ../${{ env.WORKER_DIR }} && npm ci || npm install
+        run: npm ci || npm install
 
       - name: Build Shared Schemas
         run: |
@@ -198,6 +194,9 @@ jobs:
         with:
           name: worker-build-${{ needs.setup.outputs.environment }}
           path: ${{ env.WORKER_DIR }}/dist/
+
+      - name: Install Dependencies
+        run: npm ci || npm install
 
       - name: Install Wrangler
         run: npm install -g wrangler@3
