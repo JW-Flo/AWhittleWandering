@@ -68,23 +68,32 @@ create_1password_secret() {
     
     log_info "Attempting to create secret: $secret_name in vault: $vault/$item"
     
+    # Check if item exists
+    if ! op item get "$item" --vault "$vault" &> /dev/null; then
+        log_warn "Item $item does not exist in vault $vault - manual creation required"
+        ((FAILED_VALIDATIONS++))
+        return 1
+    fi
+    
+    # Check if field already exists (prevent overwriting existing secrets)
+    local secret_path="op://$vault/$item/$field"
+    if op read "$secret_path" &> /dev/null; then
+        log_warn "✗ Field $field already exists in item $item - skipping to prevent overwriting existing secret"
+        log_warn "  If you need to update this secret, please do so manually in 1Password"
+        ((FAILED_VALIDATIONS++))
+        return 1
+    fi
+    
     # Generate a secure random value
     local secret_value=$(openssl rand -base64 48)
     
-    # Try to add field to existing item, or create new item
-    if op item get "$item" --vault "$vault" &> /dev/null; then
-        # Item exists, add field
-        if op item edit "$item" --vault "$vault" "$field[password]=$secret_value" &> /dev/null; then
-            log_info "✓ Added field $field to existing item $item"
-            ((CREATED_SECRETS++))
-            return 0
-        else
-            log_error "Failed to add field to item"
-            ((FAILED_VALIDATIONS++))
-            return 1
-        fi
+    # Add field to existing item (field doesn't exist, so this is safe)
+    if op item edit "$item" --vault "$vault" "$field[password]=$secret_value" &> /dev/null; then
+        log_info "✓ Added new field $field to item $item"
+        ((CREATED_SECRETS++))
+        return 0
     else
-        log_warn "Item $item does not exist in vault $vault - manual creation required"
+        log_error "Failed to add field to item"
         ((FAILED_VALIDATIONS++))
         return 1
     fi
@@ -224,7 +233,7 @@ main() {
                         vault=$(echo "$path" | cut -d'/' -f3)
                         item=$(echo "$path" | cut -d'/' -f4)
                         field=$(echo "$path" | cut -d'/' -f5)
-                        create_1password_secret "$vault" "$item" "$field" "$name" "$auto_create"
+                        create_1password_secret "$vault" "$item" "$field" "$name" "$auto_create" || true
                     fi
                 else
                     log_warn "  Optional secret missing: $name (skipping)"
