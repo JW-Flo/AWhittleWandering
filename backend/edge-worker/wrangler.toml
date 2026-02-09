@@ -4,13 +4,12 @@ compatibility_date = "2023-10-30"
 workers_dev = true
 
 # Cron Triggers for Automated Data Ingestion
+# Free plan limit: 5 cron triggers per account
 [triggers]
 crons = [
-  "*/15 6-23 * * *",  # Quick state updates (reduced from every 5m to 15m)
   "*/30 * * * *",     # Full sync every 30 minutes
   "0 2 * * *",        # Historical backfill at 2 AM daily
-  "5 * * * *",        # Data quality check hourly (offset minute 5)
-  "10 */6 * * *"      # AI/ML processing every 6 hours (offset minute 10)
+  "5 * * * *"         # Data quality check hourly (offset minute 5)
 ]
 
 # Environment Variables - ZERO FAILURE API MANAGEMENT
