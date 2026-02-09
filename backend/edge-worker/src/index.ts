@@ -256,17 +256,18 @@ export default app;
 
 // Cron handler (required by wrangler [triggers].crons). Performs lightweight housekeeping.
 export const scheduled: ExportedHandlerScheduledHandler = async (event, env, ctx) => {
-  // Consolidated cron strategy:
-  // 1) Every 15 minutes (active hours) → quick_state_update
-  // 2) Every 30 minutes → full_sync (already covers state but ensures deeper ingestion)
-  // 3) 02:00 daily → historical_backfill
-  // 4) Hourly at minute 5 → data_quality_check (offset to avoid overlap with top-of-hour full_sync)
-  // 5) Every 6 hours at minute 10 → ai_data_processing (offset further)
+  // Consolidated cron strategy (4 triggers, 1 slot free):
+  // 1) Every 30 minutes → full_sync (includes vehicle state + drives + charges)
+  // 2) 02:00 daily → historical_backfill
+  // 3) Hourly at minute 5 → data_quality_check (offset to avoid overlap with full_sync)
+  // 4) Every 6 hours at minute 10 → ai_data_processing (offset further)
+  //
+  // quick_state_update removed: full_sync already calls ingestVehicleState(),
+  // so the every-15-min cron was redundant and wasted ~72 Tessie API calls/day.
   const cron = event.cron;
   const jobs = buildJobs(env);
 
   const mapping: Record<string, { name: keyof ReturnType<typeof buildJobs>; description: string }[]> = {
-    '*/15 6-23 * * *': [ { name: 'quick_state_update', description: 'Quick vehicle state update' } ],
     '*/30 * * * *': [ { name: 'full_sync', description: 'Comprehensive data sync' } ],
     '0 2 * * *': [ { name: 'historical_backfill', description: 'Historical data backfill' } ],
     '5 * * * *': [ { name: 'data_quality_check', description: 'Data quality validation' } ],

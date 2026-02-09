@@ -7,8 +7,7 @@ workers_dev = true
 # Free plan limit: 5 cron triggers per account
 [triggers]
 crons = [
-  "*/15 6-23 * * *",  # Quick vehicle state update every 15 min (active hours)
-  "*/30 * * * *",     # Full sync every 30 minutes
+  "*/30 * * * *",     # Full sync every 30 minutes (includes vehicle state)
   "0 2 * * *",        # Historical backfill at 2 AM daily
   "5 * * * *",        # Data quality check hourly (offset minute 5)
   "10 */6 * * *"      # AI/ML aggregation processing every 6 hours
