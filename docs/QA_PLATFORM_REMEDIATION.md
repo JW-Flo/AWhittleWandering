@@ -719,3 +719,126 @@ Once security and CI are solid:
 | H8 | `backend/edge-worker/src/middleware/requestLogger.ts:52-68` |
 | H12 | `backend/edge-worker/src/jobs/index.ts:4`, `src/routers/admin.ts:84` |
 | M23 | `scripts/validate-secrets.sh` |
+
+---
+
+## Appendix C: Vehicle Data Provider Comparison (Multi-OEM Readiness)
+
+Researched 2026-02-09. Sources linked per provider.
+
+### Provider Matrix
+
+| Provider | Type | Brands | Auth | Real-Time Data | Drives/Charges | Pricing | Status |
+|----------|------|--------|------|----------------|----------------|---------|--------|
+| **Tessie** | Proxy/Mirror | Tesla only | Bearer token | Yes (state, location, battery) | Yes (drives, charges history) | $6.99/vehicle/mo | **Active** — currently wired |
+| **Tesla Fleet API** | Direct OEM | Tesla only | OAuth2 + keypair | Yes (streaming telemetry or REST) | Yes (via REST endpoints) | Pay-per-use (see below) | Candidate — direct, no middleman |
+| **Smartcar** | Aggregator | 40+ brands (GM, Ford, BMW, Toyota, Hyundai, Tesla, etc.) | OAuth2 (user consent) | Partial (battery, location, odometer) | No (no drive/charge history) | Free: 1 vehicle; Build: $1.99/vehicle/mo | Candidate — broadest coverage |
+| **Rivian API** | Unofficial/Reverse-eng. | Rivian only | Unknown (reverse-engineered) | Yes (vehicle state, charging) | Partial (charging sessions) | Free (unofficial) | **Not recommended** — can break anytime |
+| **CarsXE** | Static Data | All (VIN decode) | API key | No | No | $99/mo + per-call | Supplemental only — specs/history, not live |
+
+### Tesla Fleet API (Direct) — Detailed
+
+[Source: developer.tesla.com](https://developer.tesla.com/docs/fleet-api/getting-started/what-is-fleet-api), [Billing](https://developer.tesla.com/docs/fleet-api/billing-and-limits), [Teslemetry analysis](https://teslemetry.com/blog/tesla-fleet-api-pay-per-use)
+
+**Per-Request Costs:**
+| Category | Cost | Notes |
+|----------|------|-------|
+| Streaming signal (Fleet Telemetry) | $0.0001/signal | ~1,000 signals/hr = $0.007/hr |
+| Vehicle data (REST) | $0.002/request | Polling: $0.12/hr at 1 req/min |
+| Vehicle command | $0.001/request | Lock, unlock, climate, etc. |
+| Wake-up | $0.02/request | Expensive — minimize these |
+| Vehicle specs | $0.10/result | One-time lookup |
+
+**Rate Limits (per device, per account):**
+- Realtime data: 60 requests/minute
+- Wake-ups: 3 requests/minute
+- Commands: 30 requests/minute
+
+**Monthly discount:** $10 (covers ~2 vehicles basic use). **Removed September 1, 2025.**
+
+**Auth:** OAuth2 with public/private keypair. Public key hosted at `/.well-known/appspecific/com.tesla.3p.public-key.pem`. Per-region registration required.
+
+**Key insight:** Fleet Telemetry (streaming) is **18x cheaper** than REST polling. For our use case (~48 data polls/day via cron), REST cost = ~$0.096/day = ~$2.88/month per vehicle. Viable alternative to Tessie's $6.99/month with no middleman dependency.
+
+### Tessie (Current Provider) — Detailed
+
+[Source: tessie.com/developers](https://tessie.com/developers), [developer.tessie.com](https://developer.tessie.com/reference/about)
+
+**Pricing:** $6.99/vehicle/month for "unlimited & free data polling" (mirrors Tesla Fleet API).
+
+**Rate Limits:** No published limits. Enforced dynamically via HTTP 429 + `Retry-After` header. Our conservative config: `dailyLimit: 500, minuteLimit: 10, monthlyLimit: 15000`.
+
+**Available data:** Vehicle state, drives, charges, location, battery, charging sessions, historical data (30-day window via `from`/`to` params).
+
+**Auth:** Bearer token (API key from tessie.com dashboard).
+
+**Risk:** Third-party dependency. If Tessie changes pricing, rate limits, or shuts down, all ingestion stops. No SLA.
+
+### Smartcar — Detailed
+
+[Source: smartcar.com/pricing](https://smartcar.com/pricing), [API limits](https://smartcar.com/docs/help/api-limits), [GM support](https://smartcar.com/brand/gm)
+
+**Pricing:**
+| Plan | Cost | Vehicles | API Calls/Vehicle/Mo | Commands/Mo |
+|------|------|----------|---------------------|-------------|
+| Free | $0 | 1 | 500 | — |
+| Build | $1.99/vehicle/mo | Up to 100 | Configurable | 100 |
+| Custom | Contact sales | 500+ | Custom | Custom |
+
+**Rate Limits:**
+- Application-wide: 120-request bucket, refills at 2 req/min
+- Per-vehicle: Varies by manufacturer (set by Smartcar to protect OEM upstream limits)
+- Upstream OEM limits: Uncontrollable — some manufacturers throttle aggressively
+
+**Available endpoints:** Battery level, charge status, charge limit (read/write), start/stop charge, location, odometer, lock/unlock, fuel tank, tire pressure, oil life, VIN, vehicle attributes, diagnostic trouble codes, service history.
+
+**Missing for our use case:** No drive history, no charge session history. Only current state. Would need to build history by polling and accumulating in D1 ourselves.
+
+**Supported brands (40+):** GM (Chevrolet, Cadillac, GMC, Buick — via OnStar), Ford/Lincoln, BMW/MINI, Toyota/Lexus, Hyundai/Kia/Genesis, Tesla, Volkswagen/Audi/Porsche, Mercedes-Benz, Nissan/Infiniti, Honda/Acura, Rivian, Lucid, Polestar, Volvo, Subaru, Jaguar/Land Rover, and more.
+
+**Auth:** OAuth2 — vehicle owner authenticates through their OEM account (OnStar, FordPass, Tesla, etc.). User-consent model.
+
+**Key insight:** Best option for **multi-manufacturer support**. The 500 calls/vehicle/month free tier is tight for 30-min polling (48 calls/day = ~1,440/month), but Build tier at $1.99/vehicle/month is reasonable. Biggest gap: no historical drives/charges — we'd build history via periodic polling.
+
+### Rivian API (Unofficial) — Detailed
+
+[Source: rivian-api.kaedenb.org](https://rivian-api.kaedenb.org)
+
+**Status: NOT RECOMMENDED for production use.**
+
+This is a community-maintained, reverse-engineered documentation of Rivian's internal app API. The site explicitly warns: *"This information is not maintained by Rivian, and things could change or break at any moment."*
+
+**Available endpoints:** Vehicle state, charging sessions, trip planning, vehicle controls, OTA updates. Covers `/app/vehicle-info/vehicle-state/`, `/app/charging/sessions/`, `/app/trip-planning/saved-trips/`.
+
+**Auth:** Unknown/undocumented (likely session tokens from Rivian app).
+
+**Verdict:** For Rivian owners, use **Smartcar** instead (Rivian is a supported brand) for a stable, documented API with proper OAuth consent flow. The unofficial API is useful for understanding Rivian's data model but should not be used in production.
+
+### CarsXE — Detailed
+
+[Source: api.carsxe.com](https://api.carsxe.com/docs/v1)
+
+**Type:** Static vehicle data only — VIN decoding, specs, market value, recall history, vehicle images.
+
+**No live/real-time data.** No location, battery, drives, or charging. Not a vehicle telematics provider.
+
+**Pricing:** Starting at $99/month + per-API-call fees. 7-day free trial.
+
+**Useful for:** Enriching vehicle records with specs (year, model, trim, MSRP), checking recalls, getting vehicle images. Supplemental to a telematics provider, not a replacement.
+
+### Recommended Provider Strategy
+
+```
+Priority 1 (Current):  Tessie → Tesla vehicles (already wired)
+Priority 2 (Near-term): Tesla Fleet API direct → eliminate Tessie dependency, cheaper for our polling pattern
+Priority 3 (Multi-OEM):  Smartcar → GM, Ford, BMW, Toyota, Hyundai, etc.
+Supplemental:           CarsXE → VIN decode / vehicle specs enrichment
+Do NOT use:             Rivian unofficial API (use Smartcar for Rivian)
+```
+
+**Architecture implication:** The `IngestionProvider` interface needs to handle two patterns:
+1. **History-based** (Tessie, Tesla Fleet API): Provider has drive/charge history endpoints. Poll periodically for new records.
+2. **State-based** (Smartcar): Provider only has current state. Must poll at intervals and accumulate history in D1 ourselves.
+
+The `journey_registry.provider_type` column should support: `tessie`, `tesla_fleet`, `smartcar`, `carsxe` (static-only).
+
