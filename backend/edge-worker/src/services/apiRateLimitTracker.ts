@@ -1,22 +1,31 @@
 /**
  * API Rate Limit Tracker
- * 
+ *
  * Tracks API usage across providers to:
  * 1. Skip providers that are at capacity (avoid wasted latency)
  * 2. Know when rate limits reset
  * 3. Provide usage analytics
  * 4. Enable smart provider selection based on remaining quota
+ *
+ * Source-of-truth for limits (verified against provider docs 2026-02):
+ *   Serper     – 2,500/mo free, 300 req/s, resets 1st of month
+ *   Brave      – 2,000/mo free, no daily cap, ~50 req/s, resets 1st of month
+ *   Tavily     – 1,000 credits/mo free (1 credit = basic search), 100 RPM dev, resets 1st of month
+ *   Nominatim  – 1 req/sec (policy, not quota), no monthly cap, requires custom User-Agent
+ *   Workers AI – 10,000 neurons/day, resets daily 00:00 UTC, ~100 neurons per short LLM call
+ *   Tessie     – No published limits; enforced via 429 + Retry-After; conservative empirical defaults
  */
 
 import { logger } from '../utils/log';
 
 export interface RateLimitConfig {
   provider: string;
-  monthlyLimit: number;
-  dailyLimit?: number;
-  minuteLimit?: number;
-  resetDay?: number;        // Day of month limits reset (1-31, default 1)
-  resetHour?: number;       // Hour limits reset (0-23, default 0 UTC)
+  monthlyLimit?: number;       // Monthly cap (omit if daily-only or policy-based)
+  dailyLimit?: number;         // Daily cap
+  minuteLimit?: number;        // Per-minute cap
+  resetDay?: number;           // Day of month limits reset (1-31, default 1)
+  resetHour?: number;          // Hour limits reset (0-23, default 0 UTC)
+  resetCycle?: 'monthly' | 'daily'; // 'daily' = resets every day at resetHour UTC
 }
 
 export interface ProviderStatus {
@@ -44,31 +53,48 @@ export interface UsageRecord {
   errorCode?: string;
 }
 
-// Default rate limit configs for known providers
+// ── Verified default configs ──────────────────────────────────────────
+// Sources documented in file header comment.
 const DEFAULT_CONFIGS: RateLimitConfig[] = [
-  { provider: 'serper', monthlyLimit: 2500, resetDay: 1 },
-  { provider: 'brave', monthlyLimit: 2000, dailyLimit: 100, resetDay: 1 },
-  { provider: 'tavily', monthlyLimit: 1000, resetDay: 1 },
-  { provider: 'nominatim', dailyLimit: 1000, minuteLimit: 1, monthlyLimit: 30000 }, // OSM rate limits
-  { provider: 'cloudflare_ai', monthlyLimit: 10000, resetDay: 1 }, // Workers AI has generous limits
+  // Serper: 2,500 free searches/month, 300 req/s burst, resets 1st of month.
+  { provider: 'serper', monthlyLimit: 2500, resetDay: 1, resetCycle: 'monthly' },
+
+  // Brave Search: 2,000 queries/month free. No documented daily cap.
+  { provider: 'brave', monthlyLimit: 2000, resetDay: 1, resetCycle: 'monthly' },
+
+  // Tavily: 1,000 credits/month free (basic search = 1 credit, advanced = 2).
+  // Dev environment: 100 RPM hard limit.
+  { provider: 'tavily', monthlyLimit: 1000, minuteLimit: 100, resetDay: 1, resetCycle: 'monthly' },
+
+  // Nominatim (OSM): Usage-policy, NOT quota.  1 req/sec absolute max on public API.
+  // No monthly number exists — we use a generous ceiling for dashboard display only.
+  { provider: 'nominatim', minuteLimit: 60, dailyLimit: 5000, monthlyLimit: 100000, resetCycle: 'daily' },
+
+  // Cloudflare Workers AI: 10,000 neurons/day (free), resets daily at 00:00 UTC.
+  // ~100 neurons per short LLM call (llama-3.1-8b, <200 tokens).
+  { provider: 'cloudflare_ai', dailyLimit: 10000, monthlyLimit: 300000, resetCycle: 'daily', resetHour: 0 },
+
+  // Tessie: No published limits. Enforced via 429 + Retry-After.
+  // Conservative empirical defaults; adjust after observing real 429 patterns.
+  { provider: 'tessie', dailyLimit: 500, monthlyLimit: 15000, minuteLimit: 10, resetCycle: 'monthly', resetDay: 1 },
 ];
 
 export class ApiRateLimitTracker {
   private db: D1Database;
   private configs: Map<string, RateLimitConfig>;
-  
+
   // In-memory cache for hot path (minute-level tracking)
   private minuteCache: Map<string, { count: number; windowStart: number }> = new Map();
 
   constructor(db: D1Database, customConfigs?: RateLimitConfig[]) {
     this.db = db;
     this.configs = new Map();
-    
+
     // Load default configs
     for (const config of DEFAULT_CONFIGS) {
       this.configs.set(config.provider, config);
     }
-    
+
     // Override with custom configs
     if (customConfigs) {
       for (const config of customConfigs) {
@@ -87,10 +113,10 @@ export class ApiRateLimitTracker {
     errorCode?: string
   ): Promise<void> {
     const now = new Date();
-    
+
     // Update minute cache
     this.updateMinuteCache(provider);
-    
+
     // Record to database
     try {
       await this.db.prepare(`
@@ -142,6 +168,7 @@ export class ApiRateLimitTracker {
       provider,
       monthlyLimit: 1000,
       resetDay: 1,
+      resetCycle: 'monthly' as const,
     };
 
     const now = new Date();
@@ -154,7 +181,7 @@ export class ApiRateLimitTracker {
       FROM api_rate_limits
       WHERE provider = ? AND request_date LIKE ?
     `).bind(provider, `${currentMonth}%`).first<{ total: number }>();
-    
+
     const monthlyUsed = monthlyResult?.total || 0;
 
     // Get daily usage
@@ -163,7 +190,7 @@ export class ApiRateLimitTracker {
       FROM api_rate_limits
       WHERE provider = ? AND request_date = ?
     `).bind(provider, currentDate).first<{ total: number }>();
-    
+
     const dailyUsed = dailyResult?.total || 0;
 
     // Get minute usage from cache
@@ -179,21 +206,21 @@ export class ApiRateLimitTracker {
     // Calculate next reset
     const nextReset = this.calculateNextReset(config);
 
-    // Determine availability
-    const monthlyRemaining = config.monthlyLimit - monthlyUsed;
+    // Determine availability — check daily limit for daily-cycle providers
+    const effectiveMonthlyLimit = config.monthlyLimit ?? Infinity;
+    const monthlyRemaining = effectiveMonthlyLimit - monthlyUsed;
     const dailyRemaining = config.dailyLimit ? config.dailyLimit - dailyUsed : null;
     const minuteRemaining = config.minuteLimit ? config.minuteLimit - minuteUsed : null;
 
-    const isAvailable = 
+    const isAvailable =
       monthlyRemaining > 0 &&
       (dailyRemaining === null || dailyRemaining > 0) &&
       (minuteRemaining === null || minuteRemaining > 0);
 
     // Estimate days remaining at current usage rate
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
     const dayOfMonth = now.getDate();
-    const avgDailyUsage = monthlyUsed / dayOfMonth;
-    const estimatedDaysRemaining = avgDailyUsage > 0 
+    const avgDailyUsage = monthlyUsed / Math.max(dayOfMonth, 1);
+    const estimatedDaysRemaining = avgDailyUsage > 0
       ? Math.floor(monthlyRemaining / avgDailyUsage)
       : null;
 
@@ -201,8 +228,8 @@ export class ApiRateLimitTracker {
       provider,
       isAvailable,
       monthlyUsed,
-      monthlyLimit: config.monthlyLimit,
-      monthlyRemaining,
+      monthlyLimit: effectiveMonthlyLimit === Infinity ? 0 : effectiveMonthlyLimit,
+      monthlyRemaining: effectiveMonthlyLimit === Infinity ? 0 : monthlyRemaining,
       dailyUsed,
       dailyLimit: config.dailyLimit || null,
       dailyRemaining,
@@ -210,7 +237,9 @@ export class ApiRateLimitTracker {
       minuteLimit: config.minuteLimit || null,
       lastRequestAt: lastRequest?.last_at || null,
       nextResetAt: nextReset.toISOString(),
-      percentUsed: Math.round((monthlyUsed / config.monthlyLimit) * 100),
+      percentUsed: effectiveMonthlyLimit !== Infinity && effectiveMonthlyLimit > 0
+        ? Math.round((monthlyUsed / effectiveMonthlyLimit) * 100)
+        : (config.dailyLimit ? Math.round((dailyUsed / config.dailyLimit) * 100) : 0),
       estimatedDaysRemaining,
     };
   }
@@ -262,7 +291,7 @@ export class ApiRateLimitTracker {
 
     // By provider
     const byProviderResult = await this.db.prepare(`
-      SELECT 
+      SELECT
         provider,
         SUM(success_count) as success,
         SUM(error_count) as errors,
@@ -275,7 +304,7 @@ export class ApiRateLimitTracker {
 
     // By day
     const byDayResult = await this.db.prepare(`
-      SELECT 
+      SELECT
         request_date as date,
         SUM(success_count + error_count) as total
       FROM api_rate_limits
@@ -317,7 +346,7 @@ export class ApiRateLimitTracker {
     recommendation: string;
   }> {
     const status = await this.getProviderStatus(provider);
-    
+
     if (status.estimatedDaysRemaining === null) {
       return {
         willExhaust: false,
@@ -332,7 +361,7 @@ export class ApiRateLimitTracker {
     const daysUntilReset = Math.ceil((resetDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
     const willExhaust = status.estimatedDaysRemaining < daysUntilReset;
-    
+
     let exhaustionDate: string | null = null;
     if (willExhaust && status.estimatedDaysRemaining > 0) {
       const exhaustDate = new Date();
@@ -384,17 +413,30 @@ export class ApiRateLimitTracker {
 
   private calculateNextReset(config: RateLimitConfig): Date {
     const now = new Date();
-    const resetDay = config.resetDay || 1;
     const resetHour = config.resetHour || 0;
 
-    // Calculate next monthly reset
+    // Daily-cycle providers reset tomorrow at resetHour UTC
+    if (config.resetCycle === 'daily') {
+      const todayReset = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        resetHour, 0, 0
+      ));
+      if (now < todayReset) return todayReset;
+      // Already past today's reset → next one is tomorrow
+      const tomorrow = new Date(todayReset);
+      tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+      return tomorrow;
+    }
+
+    // Monthly-cycle providers reset on resetDay at resetHour UTC
+    const resetDay = config.resetDay || 1;
     let nextReset = new Date(Date.UTC(
       now.getUTCFullYear(),
       now.getUTCMonth(),
       resetDay,
-      resetHour,
-      0,
-      0
+      resetHour, 0, 0
     ));
 
     // If we're past the reset day this month, move to next month
@@ -403,9 +445,7 @@ export class ApiRateLimitTracker {
         now.getUTCFullYear(),
         now.getUTCMonth() + 1,
         resetDay,
-        resetHour,
-        0,
-        0
+        resetHour, 0, 0
       ));
     }
 
@@ -434,4 +474,3 @@ CREATE TABLE IF NOT EXISTS api_rate_limits (
 CREATE INDEX IF NOT EXISTS idx_rate_limits_provider_date ON api_rate_limits(provider, request_date);
 CREATE INDEX IF NOT EXISTS idx_rate_limits_date ON api_rate_limits(request_date);
 `;
-

@@ -7,9 +7,10 @@ workers_dev = true
 # Free plan limit: 5 cron triggers per account
 [triggers]
 crons = [
-  "*/30 * * * *",     # Full sync every 30 minutes
+  "*/30 * * * *",     # Full sync every 30 minutes (includes vehicle state)
   "0 2 * * *",        # Historical backfill at 2 AM daily
-  "5 * * * *"         # Data quality check hourly (offset minute 5)
+  "5 * * * *",        # Data quality check hourly (offset minute 5)
+  "10 */6 * * *"      # AI/ML aggregation processing every 6 hours
 ]
 
 # Environment Variables - ZERO FAILURE API MANAGEMENT
@@ -96,6 +97,7 @@ name = "awhittlewandering-api-staging"
 workers_dev = true
 
 [env.staging.vars]
+ENVIRONMENT = "staging"
 AI_GATEWAY_ID = "awhittlewandering-ai"
 AI_MODEL_NAME = "@cf/meta/llama-3.1-8b-instruct"
 LOG_LEVEL = "info"
@@ -125,6 +127,7 @@ name = "awhittlewandering-api-dev"
 
 # Development environment variables
 [env.development.vars]
+ENVIRONMENT = "development"
 # All API credentials are stored as SECRETS for security in development
 # Run ./setup-tessie-secrets.sh to configure all required APIs
 
@@ -145,9 +148,12 @@ binding = "MEDIA_BUCKET"
 bucket_name = "awhittlewandering-media-dev"
 
 # Development KV for auth tokens
+# IMPORTANT: Uses the preview namespace to avoid corrupting production data.
+# Create a dedicated dev namespace with: npx wrangler kv namespace create AUTH_TOKENS --env development
+# Then replace this ID with the real dev namespace ID.
 [[env.development.kv_namespaces]]
 binding = "AUTH_TOKENS"
-id = "7838e32d8ad04855b13eb2d9aa4f9811"
+id = "8063c164a211473498118c9beb57a9b7"
 
 # Development Analytics Engine
 [[env.development.analytics_engine_datasets]]
@@ -163,6 +169,7 @@ workers_dev = true
 
 # Production environment variables - ZERO FAILURE API MANAGEMENT
 [env.production.vars]
+ENVIRONMENT = "production"
 # AI Configuration - Using Cloudflare AI Gateway
 AI_GATEWAY_ID = "awhittlewandering-ai"
 AI_MODEL_NAME = "@cf/meta/llama-3.1-8b-instruct"

@@ -1,6 +1,6 @@
 /**
  * Journey Management API Router
- * 
+ *
  * Handles journey creation, provisioning, and management.
  * Each journey gets its own D1 database and R2 bucket.
  */
@@ -8,6 +8,7 @@
 import { Hono } from 'hono';
 import type { AppContext } from '../types/env';
 import { z } from 'zod';
+import { zValidator } from '@hono/zod-validator';
 import { JourneyProvisioningService } from '../services/journeyProvisioning';
 import { logger } from '../utils/log';
 import { requireUser } from '../middleware/userAuth';
@@ -31,6 +32,18 @@ const updateJourneySchema = z.object({
   tessie_api_key: z.string().min(10).optional(),
 });
 
+const followPrefsSchema = z.object({
+  notify_waypoints: z.boolean().optional(),
+  notify_state_crossings: z.boolean().optional(),
+  notify_photos: z.boolean().optional(),
+  notify_charging: z.boolean().optional(),
+  notify_security: z.boolean().optional(),
+});
+
+const idParamSchema = z.object({
+  id: z.string().min(1),
+});
+
 /**
  * GET /api/v1/journeys
  * List all journeys for the authenticated user
@@ -38,10 +51,10 @@ const updateJourneySchema = z.object({
 journeysRouter.get('/', requireUser, async (c) => {
   const user = c.get('user');
   const userId = user.id;
-  
+
   const provisioner = new JourneyProvisioningService(c.env);
   const journeys = await provisioner.listUserJourneys(userId);
-  
+
   return c.json({
     success: true,
     journeys,
@@ -52,14 +65,6 @@ journeysRouter.get('/', requireUser, async (c) => {
 // =====================================================
 // Journey follow + per-journey notification settings (signed-in users only)
 // =====================================================
-
-const followPrefsSchema = z.object({
-  notify_waypoints: z.boolean().optional(),
-  notify_state_crossings: z.boolean().optional(),
-  notify_photos: z.boolean().optional(),
-  notify_charging: z.boolean().optional(),
-  notify_security: z.boolean().optional(),
-});
 
 journeysRouter.post('/:id/follow', requireUser, async (c) => {
   const db = c.env?.TESLA_DB;
@@ -142,62 +147,61 @@ journeysRouter.get('/:id/follow/settings', requireUser, async (c) => {
   });
 });
 
-journeysRouter.put('/:id/follow/settings', requireUser, async (c) => {
-  const db = c.env?.TESLA_DB;
-  if (!db) return c.json({ ok: false, error: 'Database not configured' }, 500);
-  const user = c.get('user');
-  const journeyId = c.req.param('id');
+journeysRouter.put(
+  '/:id/follow/settings',
+  requireUser,
+  zValidator('json', followPrefsSchema),
+  async (c) => {
+    const db = c.env?.TESLA_DB;
+    if (!db) return c.json({ ok: false, error: 'Database not configured' }, 500);
+    const user = c.get('user');
+    const journeyId = c.req.param('id');
+    const body = c.req.valid('json');
 
-  let body: z.infer<typeof followPrefsSchema>;
-  try {
-    body = followPrefsSchema.parse(await c.req.json());
-  } catch (e: any) {
-    return c.json({ ok: false, error: 'Validation failed', issues: e?.issues }, 400);
+    // Upsert with partial updates (read current then overwrite provided)
+    const existing = await db
+      .prepare(
+        `SELECT notify_waypoints, notify_state_crossings, notify_photos, notify_charging, notify_security
+         FROM journey_follow_notification_prefs
+         WHERE journey_id = ? AND user_id = ? LIMIT 1`
+      )
+      .bind(journeyId, user.id)
+      .first<any>();
+    const merged = {
+      notify_waypoints: body.notify_waypoints ?? (existing ? !!existing.notify_waypoints : true),
+      notify_state_crossings: body.notify_state_crossings ?? (existing ? !!existing.notify_state_crossings : true),
+      notify_photos: body.notify_photos ?? (existing ? !!existing.notify_photos : true),
+      notify_charging: body.notify_charging ?? (existing ? !!existing.notify_charging : false),
+      notify_security: body.notify_security ?? (existing ? !!existing.notify_security : true),
+    };
+
+    await db
+      .prepare(
+        `INSERT INTO journey_follow_notification_prefs
+          (journey_id, user_id, notify_waypoints, notify_state_crossings, notify_photos, notify_charging, notify_security, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+         ON CONFLICT(journey_id, user_id) DO UPDATE SET
+           notify_waypoints=excluded.notify_waypoints,
+           notify_state_crossings=excluded.notify_state_crossings,
+           notify_photos=excluded.notify_photos,
+           notify_charging=excluded.notify_charging,
+           notify_security=excluded.notify_security,
+           updated_at=datetime('now')`
+      )
+      .bind(
+        journeyId,
+        user.id,
+        merged.notify_waypoints ? 1 : 0,
+        merged.notify_state_crossings ? 1 : 0,
+        merged.notify_photos ? 1 : 0,
+        merged.notify_charging ? 1 : 0,
+        merged.notify_security ? 1 : 0
+      )
+      .run();
+
+    return c.json({ ok: true, prefs: merged });
   }
-
-  // Upsert with partial updates (read current then overwrite provided)
-  const existing = await db
-    .prepare(
-      `SELECT notify_waypoints, notify_state_crossings, notify_photos, notify_charging, notify_security
-       FROM journey_follow_notification_prefs
-       WHERE journey_id = ? AND user_id = ? LIMIT 1`
-    )
-    .bind(journeyId, user.id)
-    .first<any>();
-  const merged = {
-    notify_waypoints: body.notify_waypoints ?? (existing ? !!existing.notify_waypoints : true),
-    notify_state_crossings: body.notify_state_crossings ?? (existing ? !!existing.notify_state_crossings : true),
-    notify_photos: body.notify_photos ?? (existing ? !!existing.notify_photos : true),
-    notify_charging: body.notify_charging ?? (existing ? !!existing.notify_charging : false),
-    notify_security: body.notify_security ?? (existing ? !!existing.notify_security : true),
-  };
-
-  await db
-    .prepare(
-      `INSERT INTO journey_follow_notification_prefs
-        (journey_id, user_id, notify_waypoints, notify_state_crossings, notify_photos, notify_charging, notify_security, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-       ON CONFLICT(journey_id, user_id) DO UPDATE SET
-         notify_waypoints=excluded.notify_waypoints,
-         notify_state_crossings=excluded.notify_state_crossings,
-         notify_photos=excluded.notify_photos,
-         notify_charging=excluded.notify_charging,
-         notify_security=excluded.notify_security,
-         updated_at=datetime('now')`
-    )
-    .bind(
-      journeyId,
-      user.id,
-      merged.notify_waypoints ? 1 : 0,
-      merged.notify_state_crossings ? 1 : 0,
-      merged.notify_photos ? 1 : 0,
-      merged.notify_charging ? 1 : 0,
-      merged.notify_security ? 1 : 0
-    )
-    .run();
-
-  return c.json({ ok: true, prefs: merged });
-});
+);
 
 /**
  * GET /api/v1/journeys/:id
@@ -205,20 +209,20 @@ journeysRouter.put('/:id/follow/settings', requireUser, async (c) => {
  */
 journeysRouter.get('/:id', async (c) => {
   const journeyId = c.req.param('id');
-  
+
   const provisioner = new JourneyProvisioningService(c.env);
   const journey = await provisioner.getJourney(journeyId);
-  
+
   if (!journey) {
     return c.json({ success: false, error: 'Journey not found' }, 404);
   }
-  
+
   // Mask sensitive data
   const sanitized = {
     ...journey,
     tessie_api_key: journey.tessie_api_key ? '***' + journey.tessie_api_key.slice(-4) : null,
   };
-  
+
   return c.json({
     success: true,
     journey: sanitized,
@@ -229,168 +233,147 @@ journeysRouter.get('/:id', async (c) => {
  * POST /api/v1/journeys
  * Create a new journey and provision resources
  */
-journeysRouter.post('/', requireUser, async (c) => {
-  // Validate request body
-  let body;
-  try {
-    const json = await c.req.json();
-    const result = createJourneySchema.safeParse(json);
-    if (!result.success) {
-      return c.json({ 
-        success: false, 
-        error: 'Validation failed', 
-        issues: result.error.issues 
-      }, 400);
+journeysRouter.post(
+  '/',
+  requireUser,
+  zValidator('json', createJourneySchema),
+  async (c) => {
+    const body = c.req.valid('json');
+    const provisioner = new JourneyProvisioningService(c.env);
+
+    // Check if provisioning is configured
+    if (!provisioner.isConfigured()) {
+      return c.json({
+        success: false,
+        error: 'Resource provisioning not configured. Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN secrets.',
+        code: 'PROVISIONING_NOT_CONFIGURED'
+      }, 503);
     }
-    body = result.data;
-  } catch {
-    return c.json({ success: false, error: 'Invalid JSON body' }, 400);
-  }
 
-  const provisioner = new JourneyProvisioningService(c.env);
-  
-  // Check if provisioning is configured
-  if (!provisioner.isConfigured()) {
-    return c.json({ 
-      success: false, 
-      error: 'Resource provisioning not configured. Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN secrets.',
-      code: 'PROVISIONING_NOT_CONFIGURED'
-    }, 503);
-  }
+    // Get user_id from authenticated token
+    const user = c.get('user');
+    const userId = user.id;
 
-  // Get user_id from authenticated token
-  const user = c.get('user');
-  const userId = user.id;
+    // Register the journey
+    const journey = await provisioner.registerJourney(userId, body.name, {
+      description: body.description,
+      vehicleVin: body.vehicle_vin,
+      tessieApiKey: body.tessie_api_key,
+    });
 
-  // Register the journey
-  const journey = await provisioner.registerJourney(userId, body.name, {
-    description: body.description,
-    vehicleVin: body.vehicle_vin,
-    tessieApiKey: body.tessie_api_key,
-  });
+    if (!journey) {
+      return c.json({
+        success: false,
+        error: 'Failed to register journey'
+      }, 500);
+    }
 
-  if (!journey) {
-    return c.json({ 
-      success: false, 
-      error: 'Failed to register journey' 
-    }, 500);
-  }
+    // Provision resources (D1 + R2)
+    const provisionResult = await provisioner.provisionJourney(journey.id);
 
-  // Provision resources (D1 + R2)
-  const provisionResult = await provisioner.provisionJourney(journey.id);
-
-  // Log the action
-  await logAuditEvent(c.env.TESLA_DB, {
-    user_id: userId,
-    journey_id: journey.id,
-    action: 'create_journey',
-    details: JSON.stringify({
-      name: body.name,
-      provisioning_success: provisionResult.success,
-      d1_created: !!provisionResult.d1_database_id,
-      r2_created: !!provisionResult.r2_bucket_name,
-    }),
-  });
-
-  if (!provisionResult.success) {
-    return c.json({
-      success: false,
-      error: 'Journey created but resource provisioning failed',
+    // Log the action
+    await logAuditEvent(c.env.TESLA_DB, {
+      user_id: userId,
       journey_id: journey.id,
-      provisioning_errors: provisionResult.errors,
-    }, 207); // Multi-Status
-  }
+      action: 'create_journey',
+      details: JSON.stringify({
+        name: body.name,
+        provisioning_success: provisionResult.success,
+        d1_created: !!provisionResult.d1_database_id,
+        r2_created: !!provisionResult.r2_bucket_name,
+      }),
+    });
 
-  return c.json({
-    success: true,
-    journey: {
-      id: journey.id,
-      name: journey.name,
-      status: 'active',
-      resources: {
-        d1_database_id: provisionResult.d1_database_id,
-        d1_database_name: provisionResult.d1_database_name,
-        r2_bucket_name: provisionResult.r2_bucket_name,
+    if (!provisionResult.success) {
+      return c.json({
+        success: false,
+        error: 'Journey created but resource provisioning failed',
+        journey_id: journey.id,
+        provisioning_errors: provisionResult.errors,
+      }, 207); // Multi-Status
+    }
+
+    return c.json({
+      success: true,
+      journey: {
+        id: journey.id,
+        name: journey.name,
+        status: 'active',
+        resources: {
+          d1_database_id: provisionResult.d1_database_id,
+          d1_database_name: provisionResult.d1_database_name,
+          r2_bucket_name: provisionResult.r2_bucket_name,
+        },
       },
-    },
-    message: 'Journey created and resources provisioned successfully',
-  }, 201);
-});
+      message: 'Journey created and resources provisioned successfully',
+    }, 201);
+  }
+);
 
 /**
  * PATCH /api/v1/journeys/:id
  * Update journey configuration
  */
-journeysRouter.patch('/:id', requireUser, async (c) => {
-  const journeyId = c.req.param('id');
-  const user = c.get('user');
-  
-  let body;
-  try {
-    const json = await c.req.json();
-    const result = updateJourneySchema.safeParse(json);
-    if (!result.success) {
-      return c.json({ 
-        success: false, 
-        error: 'Validation failed', 
-        issues: result.error.issues 
-      }, 400);
+journeysRouter.patch(
+  '/:id',
+  requireUser,
+  zValidator('json', updateJourneySchema),
+  async (c) => {
+    const journeyId = c.req.param('id');
+    const user = c.get('user');
+    const body = c.req.valid('json');
+
+    const provisioner = new JourneyProvisioningService(c.env);
+    const journey = await provisioner.getJourney(journeyId);
+
+    if (!journey) {
+      return c.json({ success: false, error: 'Journey not found' }, 404);
     }
-    body = result.data;
-  } catch {
-    return c.json({ success: false, error: 'Invalid JSON body' }, 400);
-  }
 
-  const provisioner = new JourneyProvisioningService(c.env);
-  const journey = await provisioner.getJourney(journeyId);
-  
-  if (!journey) {
-    return c.json({ success: false, error: 'Journey not found' }, 404);
-  }
+    // Verify user owns this journey
+    if (journey.user_id !== user.id) {
+      return c.json({ success: false, error: 'Unauthorized to modify this journey' }, 403);
+    }
 
-  // Verify user owns this journey
-  if (journey.user_id !== user.id) {
-    return c.json({ success: false, error: 'Unauthorized to modify this journey' }, 403);
-  }
+    // Build update query
+    const updates: string[] = [];
+    const values: any[] = [];
 
-  // Build update query
-  const updates: string[] = [];
-  const values: any[] = [];
-  
-  if (body.name) {
-    updates.push('name = ?');
-    values.push(body.name);
-  }
-  if (body.description !== undefined) {
-    updates.push('description = ?');
-    values.push(body.description);
-  }
-  if (body.vehicle_vin) {
-    updates.push('vehicle_vin = ?');
-    values.push(body.vehicle_vin);
-  }
-  if (body.tessie_api_key) {
-    updates.push('tessie_api_key = ?');
-    values.push(body.tessie_api_key);
-  }
-  
-  if (updates.length === 0) {
-    return c.json({ success: false, error: 'No fields to update' }, 400);
-  }
-  
-  updates.push('updated_at = ?');
-  values.push(new Date().toISOString());
-  values.push(journeyId);
+    if (body.name) {
+      updates.push('name = ?');
+      values.push(body.name);
+    }
+    if (body.description !== undefined) {
+      updates.push('description = ?');
+      values.push(body.description);
+    }
+    if (body.vehicle_vin) {
+      updates.push('vehicle_vin = ?');
+      values.push(body.vehicle_vin);
+    }
+    if (body.tessie_api_key) {
+      updates.push('tessie_api_key = ?');
+      values.push(body.tessie_api_key);
+    }
 
-  await c.env.TESLA_DB.prepare(`
-    UPDATE journey_registry SET ${updates.join(', ')} WHERE id = ?
-  `).bind(...values).run();
+    if (updates.length === 0) {
+      return c.json({ success: false, error: 'No fields to update' }, 400);
+    }
 
-  return c.json({
-    success: true,
-    message: 'Journey updated',
-  });
-});
+    updates.push('updated_at = ?');
+    values.push(new Date().toISOString());
+    values.push(journeyId);
+
+    await c.env.TESLA_DB.prepare(`
+      UPDATE journey_registry SET ${updates.join(', ')} WHERE id = ?
+    `).bind(...values).run();
+
+    return c.json({
+      success: true,
+      message: 'Journey updated',
+    });
+  }
+);
 
 /**
  * DELETE /api/v1/journeys/:id
@@ -400,10 +383,10 @@ journeysRouter.delete('/:id', requireUser, async (c) => {
   const journeyId = c.req.param('id');
   const forceDelete = c.req.query('force') === 'true';
   const user = c.get('user');
-  
+
   const provisioner = new JourneyProvisioningService(c.env);
   const journey = await provisioner.getJourney(journeyId);
-  
+
   if (!journey) {
     return c.json({ success: false, error: 'Journey not found' }, 404);
   }
@@ -419,8 +402,8 @@ journeysRouter.delete('/:id', requireUser, async (c) => {
 
   // Require force flag for active journeys
   if (journey.status === 'active' && !forceDelete) {
-    return c.json({ 
-      success: false, 
+    return c.json({
+      success: false,
       error: 'Journey is active. Use ?force=true to delete.',
       code: 'ACTIVE_JOURNEY'
     }, 400);
@@ -448,17 +431,17 @@ journeysRouter.delete('/:id', requireUser, async (c) => {
  */
 journeysRouter.post('/:id/provision', async (c) => {
   const journeyId = c.req.param('id');
-  
+
   const provisioner = new JourneyProvisioningService(c.env);
   const journey = await provisioner.getJourney(journeyId);
-  
+
   if (!journey) {
     return c.json({ success: false, error: 'Journey not found' }, 404);
   }
 
   if (journey.status === 'active') {
-    return c.json({ 
-      success: false, 
+    return c.json({
+      success: false,
       error: 'Journey already provisioned',
       resources: {
         d1_database_id: journey.d1_database_id,
@@ -487,10 +470,10 @@ journeysRouter.post('/:id/provision', async (c) => {
  */
 journeysRouter.get('/:id/status', async (c) => {
   const journeyId = c.req.param('id');
-  
+
   const provisioner = new JourneyProvisioningService(c.env);
   const journey = await provisioner.getJourney(journeyId);
-  
+
   if (!journey) {
     return c.json({ success: false, error: 'Journey not found' }, 404);
   }
@@ -539,4 +522,3 @@ async function logAuditEvent(
     logger.warn('Failed to log audit event', { error, action: event.action });
   }
 }
-

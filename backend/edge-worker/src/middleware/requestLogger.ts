@@ -4,12 +4,18 @@ import { logger, setCorrelationId } from '../utils/log';
 export async function requestLogger(c: Context, next: Next) {
   const cid = crypto.randomUUID();
   setCorrelationId(cid);
+
+  // Store requestId in Hono context so other middleware (e.g. errorHandler) can read it
+  c.set('requestId', cid);
+
   const start = Date.now();
-  
+
   logger.info('request.start', { correlationId: cid, method: c.req.method, path: c.req.path });
 
   try {
     await next();
+    // Attach X-Request-ID header to every response
+    c.header('X-Request-ID', cid);
     logger.info('request.end', { correlationId: cid, status: c.res.status, durationMs: Date.now() - start });
   } catch (err) {
     logger.error('request.error', { correlationId: cid, error: (err as any)?.message });
