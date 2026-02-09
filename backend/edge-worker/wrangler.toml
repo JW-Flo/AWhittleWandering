@@ -226,7 +226,7 @@ binding = "TELEMETRY_ANALYTICS"
 # max_batch_size = 10
 # max_batch_timeout = 5
 
-# Production domain routing
+# Production custom domain — Cloudflare auto-creates DNS records + SSL certs
 [[env.production.routes]]
-pattern = "api.awhittlewandering.com/*"
-zone_name = "awhittlewandering.com"
+pattern = "api.awhittlewandering.com"
+custom_domain = true
