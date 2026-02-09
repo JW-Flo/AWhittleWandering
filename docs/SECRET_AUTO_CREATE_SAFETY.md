@@ -53,7 +53,8 @@ create_1password_secret() {
     fi
     
     # 4. Safe to create - field doesn't exist
-    op item edit "$item" --vault "$vault" "$field[password]=<generated-secret-value>"
+    local secret_value=$(openssl rand -base64 48)
+    op item edit "$item" --vault "$vault" "$field[password]=$secret_value"
 }
 ```
 

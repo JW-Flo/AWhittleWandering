@@ -233,7 +233,7 @@ main() {
                         vault=$(echo "$path" | cut -d'/' -f3)
                         item=$(echo "$path" | cut -d'/' -f4)
                         field=$(echo "$path" | cut -d'/' -f5)
-                        create_1password_secret "$vault" "$item" "$field" "$name" "$auto_create"
+                        create_1password_secret "$vault" "$item" "$field" "$name" "$auto_create" || true
                     fi
                 else
                     log_warn "  Optional secret missing: $name (skipping)"
