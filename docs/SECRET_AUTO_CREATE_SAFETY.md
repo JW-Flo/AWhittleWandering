@@ -176,7 +176,7 @@ op item delete test_item --vault=AWW_SHARED
 
 ## Security Considerations
 
-- Auto-generated secrets use `openssl rand -base64 48` (256-bit entropy)
+- Auto-generated secrets use `openssl rand -base64 48` (384-bit entropy)
 - Secrets are never logged or printed to console
 - All 1Password operations use secure service account authentication
 - Field type is set to `[password]` for secure storage
