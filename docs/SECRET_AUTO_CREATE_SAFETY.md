@@ -124,16 +124,20 @@ op item create --category=password \
     --vault=AWW_SHARED \
     --title=test_item
 
-# 2. Run validation with auto-create
+# 2. Ensure OP_SERVICE_ACCOUNT_TOKEN is set securely in your environment
+#    (e.g., via a .env file or secret store). Avoid pasting real tokens directly
+#    into shell commands to prevent them from being stored in shell history.
+# export OP_SERVICE_ACCOUNT_TOKEN="<your_token>"
+
+# 3. Run validation with auto-create
 AUTO_CREATE=true \
-OP_SERVICE_ACCOUNT_TOKEN=<your_token> \
 ./scripts/validate-secrets.sh .github/secrets-config.yml production
 
-# 3. Verify new field was created
+# 4. Verify new field was created
 op read "op://AWW_SHARED/test_item/test_field"
 # Should show newly generated value
 
-# 4. Cleanup
+# 5. Cleanup
 op item delete test_item --vault=AWW_SHARED
 ```
 
