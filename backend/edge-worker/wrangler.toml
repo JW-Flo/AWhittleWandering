@@ -197,10 +197,12 @@ binding = "TESLA_DB"
 database_name = "tesla-journey-tracker"
 database_id = "889d864a-966d-4e8a-a3cd-bc60abf23688"
 
-# Production R2 bucket
-[[env.production.r2_buckets]]
-binding = "MEDIA_BUCKET"
-bucket_name = "awhittlewandering-media"
+# Production R2 bucket — disabled until R2 is enabled in Cloudflare dashboard
+# Enable R2 at: https://dash.cloudflare.com → R2 Object Storage → Get Started
+# Then uncomment these lines:
+# [[env.production.r2_buckets]]
+# binding = "MEDIA_BUCKET"
+# bucket_name = "awhittlewandering-media"
 
 # Production KV for auth tokens
 [[env.production.kv_namespaces]]
