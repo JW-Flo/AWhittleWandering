@@ -2,8 +2,9 @@ import { cors } from 'hono/cors';
 import { Context, Next } from 'hono';
 
 function isAllowedOrigin(origin: string): boolean {
-  // Local dev
+  // Local dev (8081 = Vite frontend, 8787 = Wrangler backend, others = common dev ports)
   if (origin === 'http://localhost:8080') return true;
+  if (origin === 'http://localhost:8081') return true;
   if (origin === 'http://localhost:3000') return true;
   if (origin === 'http://localhost:5173') return true;
 

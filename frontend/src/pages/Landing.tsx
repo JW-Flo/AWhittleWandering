@@ -77,7 +77,7 @@ const Landing: React.FC = () => {
 
               <div className="mt-10 flex flex-col sm:flex-row gap-3">
                 <Button asChild className="h-12 px-6 justify-between">
-                  <Link to="/journey/1">
+                  <Link to="/journey/live">
                     <span>Follow the journey</span>
                     <span className="text-primary-foreground/70">&rarr;</span>
                   </Link>

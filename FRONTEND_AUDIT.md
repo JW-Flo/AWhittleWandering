@@ -4,6 +4,20 @@ You are picking up a comprehensive frontend audit of **A Whittle Wandering** (Re
 
 **Dev site**: https://awhittlewandering.pages.dev/dashboard
 
+### Resolution Status (updated 2026-02-10)
+
+| Section | Status | Notes |
+|---------|--------|-------|
+| 1. Runtime Bugs | 🔶 Partial | 1.2 EnhancedMapFeatures DELETED (orphan). 1.3 FollowerView fixed (uses id param + live alias). 1.1 JourneyJournal still has issues. |
+| 2. API Config | ✅ Done | Single source of truth in `lib/api-config.ts`. Correct prod URL. `lib/api.ts` deleted. `backendApi.ts` consolidated. |
+| 3. Build & Config | 🔶 Partial | 3.3 exif CDN removed (prior session). 3.4 manualChunks stale AdminPortal ref already gone. 3.1 Strict mode & 3.2 ESLint still TODO. |
+| 4. Security | 🔶 Partial | 4.3 debug endpoint methods — backendApi.ts no longer has them. Others still TODO. |
+| 5. Accessibility | 🔶 Partial | 5.7 skip-to-content link added. 5.8 error boundary added. 5.9 responsive tabs done. |
+| 6. SEO | ✅ Done | og:image created, twitter:card updated, robots.txt exists, JSON-LD exists. |
+| 7. Design System | ⬜ TODO | Hardcoded colors still need replacement. |
+| 8. Dead Code | ✅ Done | All listed files deleted. 6,907 lines removed. Deps cleaned. |
+| 9. UX Polish | 🔶 Partial | 9.1 CTA fixed. 9.4 Demo branding still wrong. 9.7 Loading spinner in index.html. |
+
 ---
 
 ## 1. CRITICAL — Runtime Bugs (fix these first)

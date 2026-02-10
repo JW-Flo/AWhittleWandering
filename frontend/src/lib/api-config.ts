@@ -6,11 +6,12 @@ const getApiBaseUrl = (): string => {
   const viteEnv = (import.meta as any).env;
   if (viteEnv?.VITE_API_BASE_URL) return viteEnv.VITE_API_BASE_URL;
 
-  // Dev mode (Vite sets this)
-  if (viteEnv?.DEV) return 'http://localhost:8787';
+  // Dev mode: use empty string so requests go through Vite's /api proxy (vite.config.ts)
+  if (viteEnv?.DEV) return '';
 
-  // Production: use the workers.dev URL until custom domain DNS is configured
-  return 'https://awhittlewandering-api.workers.dev';
+  // Production: workers.dev URL (includes account subdomain).
+  // When custom domain DNS is configured, api.awhittlewandering.com routes to the same worker.
+  return 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
 };
 
 export const API_CONFIG = {

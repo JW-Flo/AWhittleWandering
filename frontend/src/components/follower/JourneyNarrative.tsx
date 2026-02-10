@@ -12,7 +12,18 @@ export type NarrativeUnifiedData = {
   currentStatus?: {
     location?: { state?: string; lastUpdate?: string };
   };
-  timeline?: { drives?: Array<{ id: number; date: string; startLocation?: string; endLocation: string; distance: number }> };
+  timeline?: {
+    drives?: Array<{
+      id: number;
+      date: string;
+      startLocation?: string;
+      endLocation: string;
+      distance: number;
+      startState?: string;
+      endState?: string;
+      durationMinutes?: number;
+    }>;
+  };
 };
 
 const safeDate = (iso?: string) => {
@@ -20,6 +31,14 @@ const safeDate = (iso?: string) => {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return undefined;
   return d;
+};
+
+const formatDuration = (minutes?: number) => {
+  if (typeof minutes !== "number" || !Number.isFinite(minutes)) return undefined;
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
 };
 
 const JourneyNarrative: React.FC<{ data: NarrativeUnifiedData | null }> = ({ data }) => {
@@ -34,7 +53,7 @@ const JourneyNarrative: React.FC<{ data: NarrativeUnifiedData | null }> = ({ dat
         <p className="mt-2 text-lg leading-relaxed max-w-2xl">
           {locationLabel
             // Intentionally non-precise language.
-            ? `Moving through ${locationLabel}. The details don’t need to be loud to be meaningful—this is a chapter in motion.`
+            ? `Moving through ${locationLabel}. The details don't need to be loud to be meaningful—this is a chapter in motion.`
             : `The journey is in motion. When the next meaningful segment arrives, it will appear here as a chapter.`}
         </p>
         {lastUpdate && <p className="mt-2 text-xs text-muted-foreground">Last update: {lastUpdate}</p>}
@@ -50,22 +69,38 @@ const JourneyNarrative: React.FC<{ data: NarrativeUnifiedData | null }> = ({ dat
       <div>
         <h2 className="text-sm font-medium text-muted-foreground">Moments</h2>
         <div className="mt-4 space-y-4">
-          {drives.slice(0, 8).map((d) => {
+          {drives.slice(0, 12).map((d) => {
             const miles = Number.isFinite(d.distance) ? Math.round(d.distance) : null;
+            const duration = formatDuration(d.durationMinutes);
             const from = d.startLocation;
             const to = d.endLocation;
-            const body = from && to
-              ? `${from} to ${to}${miles ? ` — ${miles} miles` : ""}.`
-              : miles
-                ? `${miles} miles through the landscape.`
-                : "A chapter in the journey.";
+
+            // Build a richer body with from/to, distance, and duration
+            const parts: string[] = [];
+            if (from && to) {
+              parts.push(`${from} to ${to}`);
+            } else if (to) {
+              parts.push(`Arriving in ${to}`);
+            }
+            if (miles) parts.push(`${miles} miles`);
+            if (duration) parts.push(duration);
+            const body = parts.length > 0
+              ? parts.join(" — ") + "."
+              : "A chapter in the journey.";
+
+            // Location label from state info (e.g. "TX → NM")
+            const stateLabel = d.startState && d.endState && d.startState !== d.endState
+              ? `${d.startState} → ${d.endState}`
+              : d.endState || d.startState || undefined;
+
             return (
               <Moment
                 key={d.id}
-                kind="segment"
+                kind={d.startState !== d.endState && d.startState && d.endState ? "milestone" : "segment"}
                 title={to || "On the road"}
                 timestamp={d.date}
                 body={body}
+                locationLabel={stateLabel}
               />
             );
           })}
@@ -84,5 +119,3 @@ const JourneyNarrative: React.FC<{ data: NarrativeUnifiedData | null }> = ({ dat
 };
 
 export default JourneyNarrative;
-
-
