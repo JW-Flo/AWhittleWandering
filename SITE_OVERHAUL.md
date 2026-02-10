@@ -93,7 +93,12 @@ Every screen a user can reach must either (a) show **real data** from the backen
 > See "Phase 2 deliverables" above.
 > **Remaining items for future sessions:**
 > - 2.3: Verify backend endpoints return real data (requires live backend access)
-> - 2.4: Seed D1 if database is empty (deferred — backend-side task)
+>
+> **Data architecture decision:** Journey data is pulled in real time from the
+> vehicle (Tessie API → cron ingestion → D1). The user indicates a start date and
+> data is stored compressed for the journey duration. There is NO seed/mock data
+> step — empty states in the UI must gracefully handle "no data yet" until real
+> telemetry arrives. Phase 2.4 (seed script) is **cancelled**.
 
 ---
 
