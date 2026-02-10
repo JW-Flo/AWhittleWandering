@@ -97,7 +97,7 @@ const JourneyerDashboardInner: React.FC = () => {
 
             <div className="flex items-center gap-2">
               <Button asChild variant="outline" size="sm">
-                <Link to="/journey/1">Public view</Link>
+                <Link to="/journey/live">Public view</Link>
               </Button>
               <Button asChild variant="ghost" size="sm">
                 <Link to="/dashboard/coordination">Coordination</Link>

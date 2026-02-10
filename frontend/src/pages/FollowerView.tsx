@@ -39,8 +39,10 @@ const FollowerView: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        // Note: today this may fail if backend CORS isn't configured; we treat it as degraded mode.
-        const res = await fetch(`${api.baseUrl}/api/v1/unified-data${id ? `/${id}` : ''}`, { method: "GET" });
+        // "live" is a virtual alias for the default active journey — omit it from the URL
+        // so the backend returns the default journey data.
+        const suffix = id && id !== "live" ? `/${id}` : "";
+        const res = await fetch(`${api.baseUrl}/api/v1/unified-data${suffix}`, { method: "GET" });
         if (!res.ok) throw new Error(`Unable to load journey (${res.status})`);
         const json = (await res.json()) as unknown;
         if (cancelled) return;
