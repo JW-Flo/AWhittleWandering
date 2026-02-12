@@ -27,9 +27,10 @@ interface TeslaMapProps {
   mapboxToken?: string;
   onTokenChange?: (token: string) => void;
   routeLocations?: Array<{lat: number, lng: number, timestamp: string}>;
+  mapStyle?: string;
 }
 
-const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _onTokenChange, routeLocations }: TeslaMapProps) => {
+const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _onTokenChange, routeLocations, mapStyle }: TeslaMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<any>(null);
   const vehicleMarker = useRef<any>(null);
@@ -165,7 +166,7 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
       mapboxgl.accessToken = mapboxToken;
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/dark-v11',
+        style: mapStyle || 'mapbox://styles/mapbox/dark-v11',
         center: [-98.5795, 39.8283],
         zoom: 3.5,
         pitch: 0

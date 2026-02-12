@@ -18,6 +18,7 @@ interface LazyTeslaMapProps {
   onTokenChange?: (token: string) => void;
   routeLocations?: Array<{lat: number, lng: number, timestamp: string}>;
   routePoints?: Array<{lat: number, lng: number, timestamp: string}>;
+  mapStyle?: string;
 }
 
 const MapLoadingFallback = () => (
