@@ -46,7 +46,17 @@ class DynamicConfigService {
     }
   }
 
+  private getEnvMapboxToken(): string {
+    try {
+      return (import.meta as any).env?.VITE_MAPBOX_TOKEN ?? '';
+    } catch {
+      return '';
+    }
+  }
+
   private async fetchConfig(): Promise<BackendConfig> {
+    const envToken = this.getEnvMapboxToken();
+
     try {
       const raw = await api.getConfig();
       const parsed = BackendConfigResponseSchema.safeParse(raw);
@@ -55,19 +65,17 @@ class DynamicConfigService {
         throw new Error('Invalid backend config response');
       }
 
-      const token = parsed.data.mapboxAccessToken ?? parsed.data.mapboxToken ?? '';
+      const backendToken = parsed.data.mapboxAccessToken ?? parsed.data.mapboxToken ?? '';
       return {
-        mapboxAccessToken: token,
+        mapboxAccessToken: backendToken || envToken,
         appName: parsed.data.appName ?? 'A Whittle Wandering',
         apiVersion: parsed.data.apiVersion ?? '3.0.0'
       };
     } catch (error) {
       console.error('Failed to fetch backend configuration:', error);
-      
-      // For development and fallback, provide a minimal config
-      // In production, the backend should always be available
+
       return {
-        mapboxAccessToken: '', // Will trigger the map setup UI if needed
+        mapboxAccessToken: envToken,
         appName: 'A Whittle Wandering',
         apiVersion: '3.0.0'
       };

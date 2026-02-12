@@ -232,14 +232,16 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
         <CardContent className="max-w-md p-6">
           <CardHeader className="text-center p-0 mb-6">
             <MapPin className="w-12 h-12 text-primary mx-auto mb-4" />
-            <CardTitle>Map Configuration Issue</CardTitle>
+            <CardTitle>Mapbox Token Required</CardTitle>
             <CardDescription>
-              Unable to load map configuration from backend. Please try refreshing the page.
+              No Mapbox token found. Set <code className="bg-secondary/60 px-1.5 py-0.5 rounded text-xs font-mono">VITE_MAPBOX_TOKEN</code> in{' '}
+              <code className="bg-secondary/60 px-1.5 py-0.5 rounded text-xs font-mono">frontend/.env.local</code>{' '}
+              or configure <code className="bg-secondary/60 px-1.5 py-0.5 rounded text-xs font-mono">MAPBOX_API_TOKEN</code> as a Wrangler secret.
             </CardDescription>
           </CardHeader>
           <div className="space-y-4">
-            <Button 
-              onClick={() => window.location.reload()} 
+            <Button
+              onClick={() => window.location.reload()}
               className="w-full"
             >
               <Navigation className="w-4 h-4 mr-2" />
