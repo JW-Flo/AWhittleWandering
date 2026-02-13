@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
 import { CacheService } from '../services/cache';
 import { persistCronRun } from '../utils/cronMetrics';
 import { z } from 'zod';
@@ -188,7 +189,7 @@ const RESOURCES: Record<string, ResourceDef> = {
   // Deliberately exclude analytics_events (contains IP/user-agent) from generic export.
 };
 
-adminRouter.get('/data/:resource', async (c) => {
+adminRouter.get('/data/:resource', zValidator('query', dataQuerySchema), async (c) => {
   const env = c.env;
   if (!env?.TESLA_DB) return c.json({ ok: false, error: 'No DB bound' }, 500);
 
@@ -196,9 +197,9 @@ adminRouter.get('/data/:resource', async (c) => {
   const def = RESOURCES[resource];
   if (!def) return c.json({ ok: false, error: 'Unknown resource', allowed: Object.keys(RESOURCES) }, 400);
 
-  const parsed = dataQuerySchema.safeParse(c.req.query());
-  const limit = Math.min(200, Math.max(1, Number(parsed.success ? (parsed.data.limit || '50') : 50)));
-  const offset = Math.max(0, Number(parsed.success ? (parsed.data.offset || '0') : 0));
+  const query = c.req.valid('query');
+  const limit = Math.min(200, Math.max(1, Number(query.limit || '50')));
+  const offset = Math.max(0, Number(query.offset || '0'));
 
   try {
     const rows = await env.TESLA_DB.prepare(`${def.sql} LIMIT ? OFFSET ?`).bind(limit, offset).all();

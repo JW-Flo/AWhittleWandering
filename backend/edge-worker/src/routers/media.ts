@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../types/env';
 import { logger } from '../utils/log';
 
@@ -19,6 +20,10 @@ const metadataSchema = z.object({
   lat: z.number().optional(),
   lng: z.number().optional(),
   takenAt: z.string().optional(),
+});
+
+const listQuerySchema = z.object({
+  journeyId: z.string().min(1),
 });
 
 // Upload media to R2
@@ -99,12 +104,12 @@ mediaRouter.get('/:journeyId/:filename', async (c) => {
 });
 
 // List media for a journey
-mediaRouter.get('/', async (c) => {
+mediaRouter.get('/', zValidator('query', listQuerySchema), async (c) => {
   const bucket = c.env?.MEDIA_BUCKET;
   if (!bucket) return c.json({ ok: false, error: 'Media storage not configured' }, 503);
 
-  const journeyId = c.req.query('journeyId');
-  if (!journeyId) return c.json({ ok: false, error: 'journeyId required' }, 400);
+  const query = c.req.valid('query');
+  const journeyId = query.journeyId;
 
   try {
     const listed = await bucket.list({ prefix: `${journeyId}/`, limit: 100 });

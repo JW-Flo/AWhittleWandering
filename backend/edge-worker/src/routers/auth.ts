@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { zValidator } from '@hono/zod-validator';
 import { logger } from '../utils/log';
 import { hashPassword, verifyPassword } from '../utils/passwordPbkdf2';
 import { signJwtHS256 } from '../utils/jwtSignHs256';
@@ -65,17 +66,11 @@ export const authRouter = new Hono<AppContext>();
  * - Non-admin users can login without MFA, but MFA may be enforced on specific endpoints
  *   (admins, and journey owners) via middleware.
  */
-authRouter.post('/', async (c) => {
+authRouter.post('/', zValidator('json', bodySchema), async (c) => {
   const db = c.env?.TESLA_DB;
   if (!db) return c.json({ ok: false, error: 'Database not configured' }, 500);
 
-  let body: z.infer<typeof bodySchema>;
-  try {
-    body = bodySchema.parse(await c.req.json());
-  } catch (e: any) {
-    return c.json({ ok: false, error: 'Validation failed', issues: e?.issues }, 400);
-  }
-
+  const body = c.req.valid('json');
   const email = body.email.toLowerCase().trim();
 
   if (body.action === 'register') {

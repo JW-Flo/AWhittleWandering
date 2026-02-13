@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../types/env';
 import { logger } from '../utils/log';
 import { DEFAULT_JOURNEY_ID, DEFAULT_VEHICLE_ID } from '../utils/resolveJourney';
@@ -11,15 +12,6 @@ const querySchema = z.object({
   vehicleId: z.string().min(1).optional(),
 });
 
-function parseQuery(q: unknown) {
-  const parsed = querySchema.safeParse(q);
-  if (!parsed.success) return { journeyId: DEFAULT_JOURNEY_ID, vehicleId: DEFAULT_VEHICLE_ID };
-  return {
-    journeyId: parsed.data.journeyId || DEFAULT_JOURNEY_ID,
-    vehicleId: parsed.data.vehicleId || DEFAULT_VEHICLE_ID,
-  };
-}
-
 function ageSeconds(ts?: string | null) {
   if (!ts) return null;
   const ms = new Date(ts).getTime();
@@ -27,10 +19,13 @@ function ageSeconds(ts?: string | null) {
   return Math.round((Date.now() - ms) / 1000);
 }
 
-vehicleRouter.get('/state/enhanced', async (c) => {
+vehicleRouter.get('/state/enhanced', zValidator('query', querySchema), async (c) => {
   const db = c.env?.TESLA_DB;
   if (!db) return c.json({ ok: false, error: 'Database not configured' }, 200);
-  const { journeyId, vehicleId } = parseQuery(c.req.query());
+
+  const query = c.req.valid('query');
+  const journeyId = query.journeyId || DEFAULT_JOURNEY_ID;
+  const vehicleId = query.vehicleId || DEFAULT_VEHICLE_ID;
 
   try {
     const vs = await db.prepare(

@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { zValidator } from '@hono/zod-validator';
 import { logger } from '../utils/log';
 import type { Env } from '../types/env';
 import { DEFAULT_JOURNEY_ID } from '../utils/resolveJourney';
@@ -11,20 +12,13 @@ const querySchema = z.object({
   journeyId: z.string().min(1).optional(),
 });
 
-function parseQuery(q: unknown, defaultLimit: number) {
-  const parsed = querySchema.safeParse(q);
-  if (!parsed.success) return { journeyId: DEFAULT_JOURNEY_ID, limit: defaultLimit };
-  return {
-    journeyId: parsed.data.journeyId || DEFAULT_JOURNEY_ID,
-    limit: Math.min(365, Math.max(1, Number(parsed.data.limit || defaultLimit))),
-  };
-}
-
 // Computed summary endpoint for the frontend analytics dashboard
-analyticsRouter.get('/summary', async (c) => {
+analyticsRouter.get('/summary', zValidator('query', querySchema), async (c) => {
   const db = c.env?.TESLA_DB;
-  const { journeyId } = parseQuery(c.req.query(), 90);
   if (!db) return c.json({ ok: false, error: 'Database not configured' }, 200);
+
+  const query = c.req.valid('query');
+  const journeyId = query.journeyId || DEFAULT_JOURNEY_ID;
 
   try {
     const driveStats = await db.prepare(
@@ -72,10 +66,13 @@ analyticsRouter.get('/summary', async (c) => {
   }
 });
 
-analyticsRouter.get('/comprehensive', async (c) => {
+analyticsRouter.get('/comprehensive', zValidator('query', querySchema), async (c) => {
   const db = c.env.TESLA_DB;
-  const { journeyId, limit } = parseQuery(c.req.query(), 90);
   if (!db) return c.json({ ok: false, error: 'Database not configured', daily: [] }, 200);
+
+  const query = c.req.valid('query');
+  const journeyId = query.journeyId || DEFAULT_JOURNEY_ID;
+  const limit = Math.min(365, Math.max(1, Number(query.limit || 90)));
 
   try {
     const rows = await db.prepare(
@@ -95,10 +92,13 @@ analyticsRouter.get('/comprehensive', async (c) => {
   }
 });
 
-analyticsRouter.get('/efficiency', async (c) => {
+analyticsRouter.get('/efficiency', zValidator('query', querySchema), async (c) => {
   const db = c.env?.TESLA_DB;
-  const { journeyId, limit } = parseQuery(c.req.query(), 120);
   if (!db) return c.json({ ok: false, error: 'Database not configured', efficiency: [] }, 200);
+
+  const query = c.req.valid('query');
+  const journeyId = query.journeyId || DEFAULT_JOURNEY_ID;
+  const limit = Math.min(365, Math.max(1, Number(query.limit || 120)));
 
   try {
     const rows = await db.prepare(
@@ -116,10 +116,12 @@ analyticsRouter.get('/efficiency', async (c) => {
   }
 });
 
-analyticsRouter.get('/charging', async (c) => {
+analyticsRouter.get('/charging', zValidator('query', querySchema), async (c) => {
   const db = c.env?.TESLA_DB;
-  const { journeyId } = parseQuery(c.req.query(), 90);
   if (!db) return c.json({ ok: false, error: 'Database not configured', byChargerType: [] }, 200);
+
+  const query = c.req.valid('query');
+  const journeyId = query.journeyId || DEFAULT_JOURNEY_ID;
 
   try {
     const rows = await db.prepare(
