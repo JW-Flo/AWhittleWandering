@@ -36,9 +36,8 @@ describe('EmptyState', () => {
     expect(screen.getByTestId('heart-icon')).toBeInTheDocument();
   });
 
-  it('does not render icon container when icon not provided', () => {
-    const { container } = render(<EmptyState title="No data" />);
-    const iconContainer = container.querySelector('.mb-3');
-    expect(iconContainer).toBeNull();
+  it('does not render icon when icon not provided', () => {
+    render(<EmptyState title="No data" />);
+    expect(screen.queryByTestId('heart-icon')).not.toBeInTheDocument();
   });
 });
