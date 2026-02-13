@@ -28,7 +28,7 @@ describe('EmptyState', () => {
   });
 
   it('renders icon when provided', () => {
-    const { container } = render(
+    render(
       <EmptyState
         title="No favorites"
         icon={<Heart data-testid="heart-icon" className="h-8 w-8" />}
