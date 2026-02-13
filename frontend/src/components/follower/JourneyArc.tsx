@@ -18,7 +18,11 @@ const safePercent = (num?: number, den?: number) => {
 
 const JourneyArc: React.FC<JourneyArcProps> = ({ daysElapsed, totalMiles, statesVisited, totalStates }) => {
   const pct = useMemo(() => safePercent(statesVisited, totalStates), [statesVisited, totalStates]);
-  const hasData = typeof statesVisited === "number" && statesVisited > 0;
+  // Show stats if we have any data (days, miles, or states)
+  const hasData =
+    (typeof daysElapsed === "number" && daysElapsed > 0) ||
+    (typeof totalMiles === "number" && totalMiles > 0) ||
+    (typeof statesVisited === "number" && statesVisited >= 0);
 
   return (
     <Card className="story-card">

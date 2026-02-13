@@ -83,7 +83,7 @@ export const MasterCoordinationDashboard: React.FC<MasterCoordinationDashboardPr
     if (lower.includes('r2 not configured')) {
       return { message: 'Media storage: Not enabled (optional)', severity: 'info' };
     }
-    if (lower.includes('no vehicle data')) {
+    if (lower.includes('no vehicle state data')) {
       return { message: 'Vehicle data: Waiting for first sync (expected for new journeys)', severity: 'info' };
     }
     if (lower.includes('tessie') && lower.includes('not configured')) {
