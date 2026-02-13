@@ -18,16 +18,6 @@ function createMockD1() {
   };
 }
 
-// Helper to create mock KV namespace
-function createMockKV() {
-  return {
-    get: vi.fn().mockResolvedValue(null),
-    put: vi.fn().mockResolvedValue(undefined),
-    delete: vi.fn().mockResolvedValue(undefined),
-    list: vi.fn().mockResolvedValue({ keys: [] }),
-  };
-}
-
 // Helper to create mock R2 bucket
 function createMockR2() {
   return {
