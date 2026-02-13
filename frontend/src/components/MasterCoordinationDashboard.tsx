@@ -79,7 +79,8 @@ export const MasterCoordinationDashboard: React.FC<MasterCoordinationDashboardPr
     const lower = warning.toLowerCase();
 
     // Expected/optional states - show as info
-    if (lower.includes('r2 not configured') || lower.includes('r2') && lower.includes('not')) {
+    // Only match exact "R2 not configured" to avoid hiding real storage failures
+    if (lower.includes('r2 not configured')) {
       return { message: 'Media storage: Not enabled (optional)', severity: 'info' };
     }
     if (lower.includes('no vehicle data')) {
