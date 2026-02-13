@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { backendApi } from '@/services/backendApi';
 
+const limitForRange: Record<string, number> = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 };
+
 interface AnalyticsSummary {
   ok: boolean;
   totalDistance: number;
@@ -64,8 +66,6 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   const [charging, setCharging] = useState<ChargingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMetric, setSelectedMetric] = useState<'efficiency' | 'cost' | 'carbon'>('efficiency');
-
-  const limitForRange: Record<string, number> = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 };
 
   const fetchAnalytics = useCallback(async () => {
     setLoading(true);

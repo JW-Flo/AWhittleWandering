@@ -1,7 +1,7 @@
 # Cloudflare Workers local development variables (example)
 # Copy to `.dev.vars` (not committed) and fill in values.
 
-TESSIE_API_KEY=your_tessie_api_key
+TESSIE_API_TOKEN=your_tessie_api_token
 TESLA_VIN=your_vehicle_vin
 JWT_SECRET=replace_with_random_32_plus_chars
 MAPBOX_ACCESS_TOKEN=pk.your_mapbox_public_token

@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import type mapboxgl from 'mapbox-gl';
+
 // Dynamic mapbox-gl loading to shrink initial bundle. Only loads when token present & component mounted.
-let mapboxModulePromise: Promise<any> | null = null;
-async function getMapbox() {
+let mapboxModulePromise: Promise<typeof mapboxgl> | null = null;
+async function getMapbox(): Promise<typeof mapboxgl> {
   if (!mapboxModulePromise) {
     mapboxModulePromise = import('mapbox-gl').then(m => {
       import('mapbox-gl/dist/mapbox-gl.css'); // side-effect CSS load
@@ -32,9 +34,9 @@ interface TeslaMapProps {
 
 const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _onTokenChange, routeLocations, mapStyle }: TeslaMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<any>(null);
-  const vehicleMarker = useRef<any>(null);
-  const mapboxglRef = useRef<any>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const vehicleMarker = useRef<mapboxgl.Marker | null>(null);
+  const mapboxglRef = useRef<typeof mapboxgl | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(propsToken || null);
   const [isLoadingToken, setIsLoadingToken] = useState(false);
 
@@ -178,7 +180,7 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
       });
     })();
     return () => { cancelled = true; if (map.current) map.current.remove(); };
-  }, [mapboxToken, addJourneyRoute, addJourneyWaypoints]); // Include all dependencies
+  }, [mapboxToken, mapStyle, addJourneyRoute, addJourneyWaypoints]); // Include all dependencies
 
   useEffect(() => {
     if (!map.current || !vehicleLocation) return;
@@ -196,9 +198,11 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
     `;
 
   // Add new marker (mapbox already loaded when map created)
-  vehicleMarker.current = new (map.current as any).Marker(el)
-      .setLngLat([vehicleLocation.longitude, vehicleLocation.latitude])
-      .addTo(map.current);
+  if (mapboxglRef.current) {
+    vehicleMarker.current = new mapboxglRef.current.Marker(el)
+        .setLngLat([vehicleLocation.longitude, vehicleLocation.latitude])
+        .addTo(map.current);
+  }
 
     // Only center on vehicle if it's the first time or user opts in
     if (!map.current.getSource('journey-route')) {

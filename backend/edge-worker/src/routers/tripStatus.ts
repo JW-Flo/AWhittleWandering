@@ -35,7 +35,7 @@ tripStatusRouter.get('/config', async (c: Context) => {
     appName: 'A Whittle Wandering',
     apiVersion: '3.0.0',
     features: {
-      liveTeslaData: Boolean(c.env?.TESSIE_API_TOKEN || c.env?.TESSIE_API_KEY),
+      liveTeslaData: Boolean(c.env?.TESSIE_API_TOKEN),
       mapIntegration: Boolean(c.env?.MAPBOX_API_TOKEN),
       realtimeUpdates: true
     },

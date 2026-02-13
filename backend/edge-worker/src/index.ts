@@ -1,8 +1,9 @@
-import { Hono } from 'hono';
+import { Hono, type Context, type Next } from 'hono';
 import { z } from 'zod';
 import { buildJobs } from './jobs';
 import { recordRun } from './utils/cronMetrics';
 import { logger } from './utils/log';
+import type { Env } from './types/env';
 
 // Middleware
 import { corsMiddleware, securityHeaders } from './middleware/cors';
@@ -77,7 +78,7 @@ app.use('*', async (c, next) => {
 });
 
 // Admin auth middleware (non-invasive; only enforces if ADMIN_TOKEN configured)
-const adminAuth = async (c: any, next: any) => {
+const adminAuth = async (c: Context<{ Bindings: Env }>, next: Next) => {
   const secret = String(c.env?.ADMIN_TOKEN || '').trim();
   const prev = String(c.env?.ADMIN_TOKEN_PREVIOUS || '').trim();
   const jwtCur = String(c.env?.JWT_SECRET || '').trim();
@@ -107,7 +108,7 @@ const adminAuth = async (c: any, next: any) => {
   if (jwtSecrets.length) {
     const verified = await verifyJwtHS256(token, jwtSecrets);
     if (verified.ok) {
-      const p: any = verified.payload;
+      const p = verified.payload as Record<string, unknown>;
       const isAdmin =
         p?.admin === true ||
         p?.role === 'admin' ||
@@ -169,7 +170,7 @@ app.get('/api/v1/config', async (c) => {
     mapboxToken,
     mapboxAccessToken: mapboxToken,
     features: {
-      liveTeslaData: !!(c.env?.TESSIE_API_TOKEN || c.env?.TESSIE_API_KEY),
+      liveTeslaData: !!c.env?.TESSIE_API_TOKEN,
       mapIntegration: !!mapboxToken,
       realtimeUpdates: true
     },
