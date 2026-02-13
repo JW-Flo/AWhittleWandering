@@ -241,18 +241,29 @@ async function buildUnifiedData(c: any, limit: number, journeyId: string, vehicl
     const routePathRows = await db.prepare(
       `SELECT start_latitude, start_longitude, end_latitude, end_longitude, started_at
        FROM drives
-       WHERE journey_id = ? AND start_latitude IS NOT NULL AND end_latitude IS NOT NULL
-         AND start_latitude != 0 AND end_latitude != 0
+       WHERE journey_id = ?
+         AND (
+           (start_latitude IS NOT NULL AND start_longitude IS NOT NULL AND start_latitude != 0 AND start_longitude != 0)
+           OR
+           (end_latitude   IS NOT NULL AND end_longitude   IS NOT NULL AND end_latitude   != 0 AND end_longitude   != 0)
+         )
        ORDER BY started_at ASC`
     ).bind(journeyId).all();
     const rpRows = (routePathRows as any)?.results || [];
     const routeCoords: Array<{ lat: number; lng: number; timestamp: string }> = [];
     for (const r of rpRows) {
+      const points: Array<{ lat: number; lng: number; timestamp: string }> = [];
       if (r.start_latitude && r.start_longitude) {
-        routeCoords.push({ lat: Number(r.start_latitude), lng: Number(r.start_longitude), timestamp: r.started_at });
+        points.push({ lat: Number(r.start_latitude), lng: Number(r.start_longitude), timestamp: r.started_at });
       }
       if (r.end_latitude && r.end_longitude) {
-        routeCoords.push({ lat: Number(r.end_latitude), lng: Number(r.end_longitude), timestamp: r.started_at });
+        points.push({ lat: Number(r.end_latitude), lng: Number(r.end_longitude), timestamp: r.started_at });
+      }
+      for (const pt of points) {
+        const last = routeCoords[routeCoords.length - 1];
+        if (!last || last.lat !== pt.lat || last.lng !== pt.lng) {
+          routeCoords.push(pt);
+        }
       }
     }
     skeleton.routePath = routeCoords;

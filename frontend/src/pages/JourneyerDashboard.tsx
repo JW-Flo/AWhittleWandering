@@ -71,7 +71,7 @@ const JourneyerDashboardInner: React.FC = () => {
     // Prefer the pre-built routePath (full ordered path from all drives)
     if (data?.routePath && data.routePath.length > 0) {
       return data.routePath.filter(
-        (p) => typeof p.lat === "number" && typeof p.lng === "number" && (p.lat !== 0 || p.lng !== 0)
+        (p) => typeof p.lat === "number" && typeof p.lng === "number" && p.lat !== 0 && p.lng !== 0
       );
     }
     // Fallback: build from drive endpoints
@@ -190,7 +190,7 @@ const JourneyerDashboardInner: React.FC = () => {
                     >
                       <LazyTeslaMap
                         vehicleLocation={
-                          currentLocation && currentLocation.coordinates.lat !== 0
+                          currentLocation && currentLocation.coordinates && currentLocation.coordinates.lat !== 0
                             ? {
                                 latitude: currentLocation.coordinates.lat,
                                 longitude: currentLocation.coordinates.lng,

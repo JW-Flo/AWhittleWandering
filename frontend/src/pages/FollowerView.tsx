@@ -93,7 +93,7 @@ const FollowerView: React.FC = () => {
   const routeLocations = useMemo(() => {
     if (data?.routePath && data.routePath.length > 0) {
       return data.routePath.filter(
-        (p) => typeof p.lat === "number" && typeof p.lng === "number" && (p.lat !== 0 || p.lng !== 0)
+        (p) => typeof p.lat === "number" && typeof p.lng === "number" && p.lat !== 0 && p.lng !== 0
       );
     }
     return [];

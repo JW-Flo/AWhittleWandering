@@ -54,7 +54,7 @@ const JourneyNarrative: React.FC<{ data: NarrativeUnifiedData | null }> = ({ dat
   const city = data?.currentStatus?.location?.city;
   const locationLabel = city && city !== "Unknown" && state && state !== "Unknown"
     ? `${city}, ${state}`
-    : (state && state !== "Unknown" ? state : null);
+    : ((state && state !== "Unknown") ? state : null);
   const lastUpdate = safeDate(data?.currentStatus?.location?.lastUpdate)?.toLocaleString();
   const drives = data?.timeline?.drives || [];
 

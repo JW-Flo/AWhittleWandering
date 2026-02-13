@@ -209,7 +209,7 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
           <div class="w-3 h-3 bg-background rounded-full"></div>
         </div>
         <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[5px] border-r-[5px] border-b-[8px] border-l-transparent border-r-transparent border-b-primary"
-             style="transform: translateX(-50%) rotate(${rotation}deg); transform-origin: center bottom;"></div>
+             style="transform: rotate(${rotation}deg); transform-origin: center top;"></div>
       </div>
     `;
 

@@ -412,8 +412,12 @@ export class TeslaDataIngestion {
               }
             }
             // If end state is null but start state is known, use start state
+            // Only apply this fallback for short drives where a state crossing is unlikely
             if (!endStateName && startStateName) {
-              endStateName = startStateName;
+              const distanceMiles = drive.odometer_distance || 0;
+              if (distanceMiles <= 10) {
+                endStateName = startStateName;
+              }
             }
           } catch (stateError) {
             logger.warn(`Failed to update state tracking for drive ${drive.id}`, {
