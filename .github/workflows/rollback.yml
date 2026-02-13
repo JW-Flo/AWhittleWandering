@@ -82,7 +82,7 @@ jobs:
       name: ${{ inputs.environment }}-rollback
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
 
       - name: Install Wrangler
         run: npm install -g wrangler@3
@@ -185,7 +185,7 @@ jobs:
             echo "Could not list deployments"
 
       - name: Create Rollback Reminder Issue
-        uses: actions/github-script@v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           script: |
             await github.rest.issues.create({
@@ -224,7 +224,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Create Rollback Record
-        uses: actions/github-script@v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           script: |
             const backendStatus = '${{ needs.rollback-backend.result }}' || 'skipped';
