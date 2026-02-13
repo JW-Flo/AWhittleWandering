@@ -1,8 +1,10 @@
 name: compound-nightly
 
 on:
-  schedule:
-    - cron: '30 2 * * *'
+  # Schedule disabled — ci-preflight.yml runs the same security scan + quality gate on every push,
+  # and Dependabot handles dependency vulnerability alerts. Nightly adds no value.
+  # schedule:
+  #   - cron: '30 2 * * *'
   workflow_dispatch:
 
 permissions:
