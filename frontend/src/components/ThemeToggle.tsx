@@ -11,8 +11,8 @@ export function ThemeToggle() {
       // If currently system, switch to opposite of current resolved theme
       setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
     } else {
-      // If explicitly set, toggle between light and dark
-      setTheme(theme === 'dark' ? 'light' : 'dark');
+      // If explicitly set to light or dark, return to following system preference
+      setTheme('system');
     }
   };
 
