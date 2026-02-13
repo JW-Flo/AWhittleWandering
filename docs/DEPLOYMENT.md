@@ -83,7 +83,7 @@ Configure these in GitHub → Settings → Secrets and variables → Actions:
 |-------------|-------------|---------|
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account identifier | Both |
 | `CLOUDFLARE_API_TOKEN` | API token with Workers/Pages edit | Both |
-| `TESSIE_API_KEY` | Tessie API key for Tesla data | Backend |
+| `TESSIE_API_TOKEN` | Tessie API key for Tesla data | Backend |
 | `MAPBOX_ACCESS_TOKEN` | Mapbox access token | Backend |
 | `OPENWEATHER_API_KEY` | OpenWeatherMap API key | Backend |
 | `JWT_SECRET` | JWT signing secret (min 32 chars) | Backend |
@@ -119,7 +119,7 @@ wrangler deploy --env production
 ### D1 Database
 
 - **Name**: `tesla-journey-tracker`
-- **ID**: `09a6ba85-bd36-4ad3-b5a8-92e230943dcb`
+- **ID**: `889d864a-966d-4e8a-a3cd-bc60abf23688`
 - **Binding**: `TESLA_DB`
 
 ### R2 Bucket
@@ -166,7 +166,7 @@ See full config in file. Key settings:
 ### Frontend (Pages)
 
 ```bash
-wrangler secret put TESSIE_API_KEY --project-name awhittlewandering
+wrangler secret put TESSIE_API_TOKEN --project-name awhittlewandering
 wrangler secret put MAPBOX_ACCESS_TOKEN --project-name awhittlewandering
 wrangler secret put JWT_SECRET --project-name awhittlewandering
 ```
@@ -174,7 +174,7 @@ wrangler secret put JWT_SECRET --project-name awhittlewandering
 ### Backend (Workers)
 
 ```bash
-wrangler secret put TESSIE_API_KEY --env production
+wrangler secret put TESSIE_API_TOKEN --env production
 wrangler secret put MAPBOX_ACCESS_TOKEN --env production
 wrangler secret put OPENWEATHER_API_KEY --env production
 wrangler secret put JWT_SECRET --env production

@@ -60,7 +60,7 @@ async function buildUnifiedData(c: any, limit: number, journeyId: string, vehicl
     },
     timeline: { drives: [] as any[], charges: [] as any[] },
     liveData: { timestamp: Date.now(), vehicleState: {}, recentActivity: {} as any },
-    tessieStatus: { connected: !!(c.env?.TESSIE_API_TOKEN || c.env?.TESSIE_API_KEY), lastUpdate: new Date().toISOString(), dataFreshness: 'unknown' as 'live' | 'cached' | 'unknown', error: undefined as string | undefined }
+    tessieStatus: { connected: !!c.env?.TESSIE_API_TOKEN, lastUpdate: new Date().toISOString(), dataFreshness: 'unknown' as 'live' | 'cached' | 'unknown', error: undefined as string | undefined }
   };
 
   if (!db) {

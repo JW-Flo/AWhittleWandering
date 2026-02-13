@@ -16,7 +16,6 @@
   "dependencies": {
     "@hono/zod-validator": "^0.7.6",
     "hono": "^4.11.7",
-    "vite": "^6.4.1",
     "zod": "^3.22.0"
   },
   "devDependencies": {
@@ -25,6 +24,7 @@
     "esbuild": "^0.27.2",
     "miniflare": "^4.20251217.0",
     "typescript": "^5.4.2",
+    "vite": "^6.4.1",
     "vitest": "^2.1.9",
     "wrangler": "^4.59.1"
   }

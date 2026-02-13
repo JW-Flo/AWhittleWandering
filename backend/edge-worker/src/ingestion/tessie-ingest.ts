@@ -24,7 +24,7 @@ export async function ingestVehicleState(env: Env): Promise<void> {
   
   try {
     const token = getTessieBearerToken(env);
-    if (!token) throw new Error('Missing Tessie credential: set TESSIE_API_TOKEN (preferred) or TESSIE_API_KEY');
+    if (!token) throw new Error('Missing Tessie credential: set TESSIE_API_TOKEN');
 
     // Fetch current state from Tessie
     const tessieResponse = await fetch(`https://api.tessie.com/${env.VEHICLE_ID}/state`, {
@@ -113,7 +113,7 @@ export async function ingestDrives(env: Env): Promise<void> {
   
   try {
     const token = getTessieBearerToken(env);
-    if (!token) throw new Error('Missing Tessie credential: set TESSIE_API_TOKEN (preferred) or TESSIE_API_KEY');
+    if (!token) throw new Error('Missing Tessie credential: set TESSIE_API_TOKEN');
 
     // Get last drive timestamp to only fetch new drives
     const lastDrive = await env.DB.prepare(`
@@ -243,7 +243,7 @@ export async function ingestCharges(env: Env): Promise<void> {
   
   try {
     const token = getTessieBearerToken(env);
-    if (!token) throw new Error('Missing Tessie credential: set TESSIE_API_TOKEN (preferred) or TESSIE_API_KEY');
+    if (!token) throw new Error('Missing Tessie credential: set TESSIE_API_TOKEN');
 
     // Get last charge timestamp
     const lastCharge = await env.DB.prepare(`

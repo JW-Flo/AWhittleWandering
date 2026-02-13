@@ -133,10 +133,10 @@ export const MasterCoordinationDashboard: React.FC<MasterCoordinationDashboardPr
             ) : (
               <>
                 <JourneyArc
-                  daysElapsed={(unified as any)?.overview?.daysElapsed}
-                  totalMiles={(unified as any)?.overview?.totalMiles}
-                  statesVisited={(unified as any)?.overview?.statesVisited}
-                  totalStates={(unified as any)?.overview?.totalStates}
+                  daysElapsed={unified?.overview?.daysElapsed}
+                  totalMiles={unified?.overview?.totalMiles}
+                  statesVisited={unified?.overview?.statesVisited}
+                  totalStates={unified?.overview?.totalStates}
                 />
 
                 {/* Recent drives */}
@@ -146,13 +146,13 @@ export const MasterCoordinationDashboard: React.FC<MasterCoordinationDashboardPr
                   </CardHeader>
                   <CardContent>
                     {(() => {
-                      const drives = (unified as any)?.timeline?.drives || [];
+                      const drives = unified?.timeline?.drives || [];
                       if (drives.length === 0) {
                         return <p className="text-sm text-muted-foreground">No drives recorded yet.</p>;
                       }
                       return (
                         <div className="space-y-2">
-                          {drives.slice(0, 8).map((d: any) => (
+                          {drives.slice(0, 8).map((d) => (
                             <div key={d.id} className="flex items-center justify-between text-sm border-b border-border/40 pb-2 last:border-0">
                               <div className="min-w-0">
                                 <p className="truncate font-medium">{d.endLocation || d.end_address || 'Unknown'}</p>

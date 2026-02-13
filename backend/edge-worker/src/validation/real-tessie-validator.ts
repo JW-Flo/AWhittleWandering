@@ -104,7 +104,7 @@ export async function validateAndIngestRealTessieData(env: Env): Promise<Validat
 async function validateTessieConnection(env: Env): Promise<void> {
   console.log('🔍 Validating Tessie API connection...');
   const token = getTessieBearerToken(env);
-  if (!token) throw new Error('Missing Tessie credential: set TESSIE_API_TOKEN (preferred) or TESSIE_API_KEY');
+  if (!token) throw new Error('Missing Tessie credential: set TESSIE_API_TOKEN');
   
   const response = await fetch('https://api.tessie.com/vehicles', {
     headers: {
@@ -124,7 +124,7 @@ async function validateTessieConnection(env: Env): Promise<void> {
 async function fetchRealVehicleState(env: Env): Promise<any> {
   console.log('🔴 Fetching REAL-TIME vehicle state from Tessie...');
   const token = getTessieBearerToken(env);
-  if (!token) throw new Error('Missing Tessie credential: set TESSIE_API_TOKEN (preferred) or TESSIE_API_KEY');
+  if (!token) throw new Error('Missing Tessie credential: set TESSIE_API_TOKEN');
   
   const response = await fetch(`https://api.tessie.com/${env.VEHICLE_ID}/state`, {
     headers: {
@@ -147,7 +147,7 @@ async function fetchRealVehicleState(env: Env): Promise<any> {
 async function fetchAllHistoricalDrives(env: Env, since: string): Promise<any[]> {
   console.log(`🚗 Fetching ALL historical drives since ${since}...`);
   const token = getTessieBearerToken(env);
-  if (!token) throw new Error('Missing Tessie credential: set TESSIE_API_TOKEN (preferred) or TESSIE_API_KEY');
+  if (!token) throw new Error('Missing Tessie credential: set TESSIE_API_TOKEN');
   
   let allDrives: any[] = [];
   let page = 1;
@@ -187,7 +187,7 @@ async function fetchAllHistoricalDrives(env: Env, since: string): Promise<any[]>
 async function fetchAllHistoricalCharges(env: Env, since: string): Promise<any[]> {
   console.log(`🔋 Fetching ALL historical charges since ${since}...`);
   const token = getTessieBearerToken(env);
-  if (!token) throw new Error('Missing Tessie credential: set TESSIE_API_TOKEN (preferred) or TESSIE_API_KEY');
+  if (!token) throw new Error('Missing Tessie credential: set TESSIE_API_TOKEN');
   
   let allCharges: any[] = [];
   let page = 1;

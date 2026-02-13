@@ -68,7 +68,7 @@ adminRouter.get('/status', async (c) => {
     timestamp: new Date().toISOString(),
     adminTokenConfigured: !!env?.ADMIN_TOKEN,
     dbAvailable: !!env?.TESLA_DB,
-    tessieConfigured: !!(env?.TESSIE_API_TOKEN || env?.TESSIE_API_KEY),
+    tessieConfigured: !!env?.TESSIE_API_TOKEN,
     environment: env?.ENVIRONMENT || 'unknown',
     platformMode: env?.PLATFORM_MODE || 'live'
   };
@@ -81,8 +81,8 @@ adminRouter.post('/ingest', async (c) => {
   const env = c.env;
   if (!env?.TESLA_DB) return c.json({ ok: false, error: 'No DB bound' }, 500);
 
-  const tessieKey = env.TESSIE_API_TOKEN || env.TESSIE_API_KEY || '';
-  if (!tessieKey) return c.json({ ok: false, error: 'No Tessie API key configured' }, 503);
+  const tessieKey = env.TESSIE_API_TOKEN || '';
+  if (!tessieKey) return c.json({ ok: false, error: 'No Tessie API token configured' }, 503);
 
   // Get VIN from secrets or database
   let vin = env.TESLA_VIN || '';

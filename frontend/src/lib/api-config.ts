@@ -1,9 +1,16 @@
 // Centralized API configuration for A Whittle Wandering
 // Handles all API endpoints and provides consistent error handling
 
+interface ViteImportMeta {
+  env: Record<string, string | undefined> & {
+    VITE_API_BASE_URL?: string;
+    DEV?: boolean;
+  };
+}
+
 const getApiBaseUrl = (): string => {
   // Highest precedence: explicit env override (Vite exposes import.meta.env)
-  const viteEnv = (import.meta as any).env;
+  const viteEnv = (import.meta as ViteImportMeta).env;
   if (viteEnv?.VITE_API_BASE_URL) return viteEnv.VITE_API_BASE_URL;
 
   // Dev mode: use empty string so requests go through Vite's /api proxy (vite.config.ts)
@@ -62,11 +69,11 @@ export const api = {
   getLiveStatus: () => apiRequest(API_CONFIG.ENDPOINTS.LIVE_STATUS),
   getHealth: () => apiRequest(API_CONFIG.ENDPOINTS.HEALTH),
   getConfig: () => apiRequest(API_CONFIG.ENDPOINTS.CONFIG),
-  optimizeRoute: (data: any) => apiRequest(API_CONFIG.ENDPOINTS.ROUTE_OPTIMIZE, {
+  optimizeRoute: (data: Record<string, unknown>) => apiRequest(API_CONFIG.ENDPOINTS.ROUTE_OPTIMIZE, {
     method: 'POST',
     body: JSON.stringify(data)
   }),
-  generateJournal: (data: any) => apiRequest(API_CONFIG.ENDPOINTS.JOURNAL_GENERATE, {
+  generateJournal: (data: Record<string, unknown>) => apiRequest(API_CONFIG.ENDPOINTS.JOURNAL_GENERATE, {
     method: 'POST',
     body: JSON.stringify(data)
   }),
