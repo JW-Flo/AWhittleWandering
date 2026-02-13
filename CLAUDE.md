@@ -82,7 +82,7 @@ shared/
 6. IF tests pass: git commit (Conventional Commits), push
 7. Create PR via `gh pr create --fill`
 8. CI deploys preview, runs smoke tests
-9. Human reviews PR on GitHub Mobile
+9. AI agent (Copilot) reviews PR; human review required only for significant platform changes
 10. Merge triggers staging → production pipeline
 
 ## D1 Migration Rules
@@ -102,5 +102,5 @@ shared/
 - No secrets in repo. No credentials hard-coded.
 - Least privilege, zero trust.
 - Pre-commit: secret scanning enforced.
-- Branch protection: PR review required, CI must pass, no force-push to main.
+- Branch protection: CI must pass, AI agent review required, human review for significant platform changes only, no force-push to main.
 - Production deploys require human approval.
