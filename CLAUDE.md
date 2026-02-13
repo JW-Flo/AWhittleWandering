@@ -95,6 +95,22 @@ Common API endpoints (relative to `https://api.github.com/repos/JW-Flo/AWhittleW
 
 Automated reviewer login: `"copilot"` (GitHub Copilot pull-request reviewer bot).
 
+### Retry Pattern for Token Contention
+
+**The GitHub API is always the best solution** — it just may need retry-with-backoff for rate limits or token contention. The retry pattern handles transient failures reliably:
+
+```bash
+# Retry up to 4 times with exponential backoff (2s, 4s, 8s, 16s)
+for attempt in {1..4}; do
+  if curl -sS --fail-with-body -H "Authorization: Bearer ${TOKEN}" ...; then
+    break
+  fi
+  sleep $((2 ** attempt))
+done
+```
+
+If API calls fail with 403, 429, or 5xx errors, wait a few seconds and retry. The retry-with-backoff pattern handled the `GH_PAT` token contention — just needed persistence.
+
 ## PR Workflow
 
 1. **Branch**: Create/checkout feature branch from main
