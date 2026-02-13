@@ -192,6 +192,7 @@ describe('/api/v1/auth endpoint', () => {
     expect(json.user).toBeDefined();
     expect(json.user.email).toBe('newuser@example.com');
     expect(json.token).toBeDefined();
+    expect(json.token).toMatch(/^[\w-]+\.[\w-]+\.[\w-]+$/);
   });
 
   it('returns 400 for duplicate registration', async () => {
