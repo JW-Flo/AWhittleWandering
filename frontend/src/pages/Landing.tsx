@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { api } from "@/lib/api-config";
 
@@ -39,7 +40,8 @@ const Landing: React.FC = () => {
   return (
     <div className="journey-typography min-h-screen bg-background text-foreground">
       <header className="container mx-auto px-4 pt-8">
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-end gap-2">
+          <ThemeToggle />
           <Button asChild variant="ghost" className="text-muted-foreground">
             <Link to="/dashboard">Journeyer dashboard</Link>
           </Button>
