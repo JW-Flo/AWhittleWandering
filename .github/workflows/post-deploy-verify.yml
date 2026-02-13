@@ -377,24 +377,36 @@ jobs:
             [View Details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             `;
 
-            // If failed, create an issue
+            // If failed, create an issue (but only if no open duplicate exists)
             if (!overallOk) {
-              await github.rest.issues.create({
+              const existingIssues = await github.rest.issues.listForRepo({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                title: `🚨 Post-Deploy Verification Failed - ${env}`,
-                body: body + `
-
-                ### Recommended Actions
-                1. Check the workflow logs for details
-                2. Verify Cloudflare status
-                3. Consider rolling back if critical
-
-                ### Rollback
-                Run: \`Actions → Rollback → Run workflow\`
-                `,
-                labels: ['verification-failed', env, 'needs-attention']
+                state: 'open',
+                labels: `verification-failed,${env},needs-attention`,
+                per_page: 5
               });
+
+              if (existingIssues.data.length === 0) {
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: `🚨 Post-Deploy Verification Failed - ${env}`,
+                  body: body + `
+
+                  ### Recommended Actions
+                  1. Check the workflow logs for details
+                  2. Verify Cloudflare status
+                  3. Consider rolling back if critical
+
+                  ### Rollback
+                  Run: \`Actions → Rollback → Run workflow\`
+                  `,
+                  labels: ['verification-failed', env, 'needs-attention']
+                });
+              } else {
+                console.log(`Skipping issue creation — open issue #${existingIssues.data[0].number} already exists`);
+              }
             }
 
             console.log(body);
@@ -416,6 +428,20 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            // Check for existing open urgent production verification issue
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'incident,production,urgent,verification-failed',
+              per_page: 5
+            });
+
+            if (existingIssues.data.length > 0) {
+              console.log(`Skipping urgent issue creation — open issue #${existingIssues.data[0].number} already exists`);
+              return;
+            }
+
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
