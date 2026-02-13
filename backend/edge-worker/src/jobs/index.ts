@@ -24,6 +24,15 @@ export function buildJobs(env: Env) {
     full_sync: async () => { await runAndAssertOk(controller.fullDataSync(), 'full_sync'); },
     historical_backfill: async () => { await runAndAssertOk(controller.historicalBackfill(), 'historical_backfill'); },
     data_quality_check: async () => { await runAndAssertOk(controller.dataQualityCheck(), 'data_quality_check'); },
-    ai_data_processing: async () => { await runAndAssertOk(controller.aiDataProcessing(), 'ai_data_processing'); }
+    ai_data_processing: async () => { await runAndAssertOk(controller.aiDataProcessing(), 'ai_data_processing'); },
+    purge_old_analytics: async () => {
+      // Purge analytics_events older than 30 days
+      if (!env.TESLA_DB) return;
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      await env.TESLA_DB.prepare(`
+        DELETE FROM analytics_events
+        WHERE created_at < ?
+      `).bind(thirtyDaysAgo).run();
+    }
   } as const;
 }

@@ -257,11 +257,12 @@ export default app;
 
 // Cron handler (required by wrangler [triggers].crons). Performs lightweight housekeeping.
 export const scheduled: ExportedHandlerScheduledHandler = async (event, env, ctx) => {
-  // Consolidated cron strategy (4 triggers, 1 slot free):
+  // Consolidated cron strategy (5 triggers total):
   // 1) Every 30 minutes → full_sync (includes vehicle state + drives + charges)
   // 2) 02:00 daily → historical_backfill
   // 3) Hourly at minute 5 → data_quality_check (offset to avoid overlap with full_sync)
   // 4) Every 6 hours at minute 10 → ai_data_processing (offset further)
+  // 5) 03:00 daily → purge_old_analytics (purge analytics_events older than 30 days)
   //
   // quick_state_update removed: full_sync already calls ingestVehicleState(),
   // so the every-15-min cron was redundant and wasted ~72 Tessie API calls/day.
@@ -272,7 +273,8 @@ export const scheduled: ExportedHandlerScheduledHandler = async (event, env, ctx
     '*/30 * * * *': [ { name: 'full_sync', description: 'Comprehensive data sync' } ],
     '0 2 * * *': [ { name: 'historical_backfill', description: 'Historical data backfill' } ],
     '5 * * * *': [ { name: 'data_quality_check', description: 'Data quality validation' } ],
-    '10 */6 * * *': [ { name: 'ai_data_processing', description: 'AI/ML aggregation processing' } ]
+    '10 */6 * * *': [ { name: 'ai_data_processing', description: 'AI/ML aggregation processing' } ],
+    '0 3 * * *': [ { name: 'purge_old_analytics', description: 'Purge old analytics events (>30 days)' } ]
   };
 
   const selected = mapping[cron];

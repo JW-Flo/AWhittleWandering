@@ -10,7 +10,8 @@ crons = [
   "*/30 * * * *",     # Full sync every 30 minutes (includes vehicle state)
   "0 2 * * *",        # Historical backfill at 2 AM daily
   "5 * * * *",        # Data quality check hourly (offset minute 5)
-  "10 */6 * * *"      # AI/ML aggregation processing every 6 hours
+  "10 */6 * * *",     # AI/ML aggregation processing every 6 hours
+  "0 3 * * *"         # Purge old analytics events (>30 days) at 3 AM daily
 ]
 
 # Environment Variables - ZERO FAILURE API MANAGEMENT

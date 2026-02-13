@@ -25,15 +25,26 @@ export async function requestLogger(c: Context, next: Next) {
   }
 }
 
+/**
+ * Hash IP address with SHA-256 before storing
+ */
+async function hashIp(ip: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(ip);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 export async function analyticsLogger(c: Context, next: Next) {
   const start = Date.now();
   const ip = c.req.header('CF-Connecting-IP') || 'unknown';
   const userAgent = c.req.header('User-Agent') || 'unknown';
-  
+
   await next();
-  
+
   const duration = Date.now() - start;
-  
+
   // Write to Analytics Engine if available
   try {
     if (c.env?.TELEMETRY_ANALYTICS) {
@@ -52,28 +63,33 @@ export async function analyticsLogger(c: Context, next: Next) {
   } catch (error) {
     logger.warn('analytics.write.failed', { error: (error as any)?.message });
   }
-  
-  // Also log to D1 if available
-  try {
-    if (c.env?.TESLA_DB) {
-      await c.env.TESLA_DB.prepare(`
-        INSERT INTO analytics_events 
-        (event_type, event_data, user_ip, user_agent, processing_time_ms, status_code)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `).bind(
-        'api_call',
-        JSON.stringify({
-          method: c.req.method,
-          path: new URL(c.req.url).pathname,
-          query: new URL(c.req.url).search
-        }),
-        ip,
-        userAgent,
-        duration,
-        c.res.status
-      ).run();
-    }
-  } catch (error) {
-    logger.warn('analytics.d1.failed', { error: (error as any)?.message });
+
+  // Batch D1 write using waitUntil() - doesn't block response
+  if (c.env?.TESLA_DB && c.executionCtx?.waitUntil) {
+    c.executionCtx.waitUntil(
+      (async () => {
+        try {
+          const hashedIp = await hashIp(ip);
+          await c.env.TESLA_DB.prepare(`
+            INSERT INTO analytics_events
+            (event_type, event_data, user_ip, user_agent, processing_time_ms, status_code)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `).bind(
+            'api_call',
+            JSON.stringify({
+              method: c.req.method,
+              path: new URL(c.req.url).pathname,
+              query: new URL(c.req.url).search
+            }),
+            hashedIp,
+            userAgent,
+            duration,
+            c.res.status
+          ).run();
+        } catch (error) {
+          logger.warn('analytics.d1.failed', { error: (error as any)?.message });
+        }
+      })()
+    );
   }
 }
