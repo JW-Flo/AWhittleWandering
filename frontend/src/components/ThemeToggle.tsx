@@ -17,27 +17,29 @@ export function ThemeToggle() {
   };
 
   // Determine what action will happen when clicked
-  const getAriaLabel = () => {
+  const getNextTheme = () => {
     if (theme === 'system') {
-      return resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+      return resolvedTheme === 'dark' ? 'light' : 'dark';
     }
-    return 'Switch to system theme';
+    return 'system';
   };
 
-  const getTitle = () => {
-    if (theme === 'system') {
-      return `Following system (${resolvedTheme}). Click to switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode.`;
-    }
-    return `${theme} mode. Click to follow system preference.`;
-  };
+  const nextTheme = getNextTheme();
+  const ariaLabel = nextTheme === 'system' 
+    ? 'Switch to system theme' 
+    : `Switch to ${nextTheme} mode`;
+
+  const title = theme === 'system'
+    ? `Following system (${resolvedTheme}). Click to switch to ${nextTheme} mode.`
+    : `${theme} mode. Click to follow system preference.`;
 
   return (
     <Button
       variant="ghost"
       size="icon"
       onClick={toggleTheme}
-      aria-label={getAriaLabel()}
-      title={getTitle()}
+      aria-label={ariaLabel}
+      title={title}
     >
       {resolvedTheme === 'dark' ? (
         <Sun className="h-5 w-5" />

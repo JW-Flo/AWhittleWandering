@@ -94,8 +94,9 @@ describe('Rate Limiter Middleware', () => {
   it('blocks request when rate limit exceeded', async () => {
     const now = Date.now();
     const mockKV = {
-      get: vi.fn((key: string, type?: string) => {
+      get: vi.fn((_key: string, type?: string) => {
         // KV.get with 'json' type parameter auto-parses the stored JSON
+        // Note: key is unused as this mock always returns the same data
         const data = {
           tokens: 0,
           expiresAt: now + 60000,
