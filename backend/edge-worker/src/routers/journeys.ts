@@ -97,7 +97,14 @@ journeysRouter.post('/:id/follow', requireUser, async (c) => {
     .bind(journeyId, user.id)
     .run();
 
-  return c.json({ ok: true, following: true });
+  // Get follower count
+  const countResult = await db
+    .prepare(`SELECT COUNT(*) as count FROM journey_follows WHERE journey_id = ? AND unfollowed_at IS NULL`)
+    .bind(journeyId)
+    .first<{ count: number }>();
+  const followerCount = countResult?.count ?? 0;
+
+  return c.json({ ok: true, following: true, followerCount });
 });
 
 journeysRouter.post('/:id/unfollow', requireUser, async (c) => {
@@ -110,7 +117,15 @@ journeysRouter.post('/:id/unfollow', requireUser, async (c) => {
     .prepare(`UPDATE journey_follows SET unfollowed_at = datetime('now') WHERE journey_id = ? AND user_id = ?`)
     .bind(journeyId, user.id)
     .run();
-  return c.json({ ok: true, following: false });
+
+  // Get follower count
+  const countResult = await db
+    .prepare(`SELECT COUNT(*) as count FROM journey_follows WHERE journey_id = ? AND unfollowed_at IS NULL`)
+    .bind(journeyId)
+    .first<{ count: number }>();
+  const followerCount = countResult?.count ?? 0;
+
+  return c.json({ ok: true, following: false, followerCount });
 });
 
 journeysRouter.get('/:id/follow/settings', requireUser, async (c) => {
@@ -134,9 +149,17 @@ journeysRouter.get('/:id/follow/settings', requireUser, async (c) => {
     .bind(journeyId, user.id)
     .first<any>();
 
+  // Get follower count
+  const countResult = await db
+    .prepare(`SELECT COUNT(*) as count FROM journey_follows WHERE journey_id = ? AND unfollowed_at IS NULL`)
+    .bind(journeyId)
+    .first<{ count: number }>();
+  const followerCount = countResult?.count ?? 0;
+
   return c.json({
     ok: true,
     following,
+    followerCount,
     prefs: prefs || {
       notify_waypoints: 1,
       notify_state_crossings: 1,

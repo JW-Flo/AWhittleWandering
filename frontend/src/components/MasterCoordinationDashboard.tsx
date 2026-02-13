@@ -15,12 +15,14 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
+  Car,
 } from 'lucide-react';
 import { AdvancedAnalyticsDashboard } from './AdvancedAnalyticsDashboard';
 import ConsolidatedRouteOptimizer from './ConsolidatedRouteOptimizer';
 import JourneyArc from './follower/JourneyArc';
 import { backendApi, type HealthResponse, type UnifiedDataResponse } from '@/services/backendApi';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import EmptyState from '@/components/common/EmptyState';
 
 interface MasterCoordinationDashboardProps {
   journeyData?: unknown[];
@@ -71,6 +73,26 @@ export const MasterCoordinationDashboard: React.FC<MasterCoordinationDashboardPr
 
   const StatusIcon = ({ ok }: { ok: boolean }) =>
     ok ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <XCircle className="h-4 w-4 text-destructive" />;
+
+  // Transform backend warnings into user-friendly messages
+  const formatWarning = (warning: string): { message: string; severity: 'info' | 'warning' } => {
+    const lower = warning.toLowerCase();
+
+    // Expected/optional states - show as info
+    // Only match exact "R2 not configured" to avoid hiding real storage failures
+    if (lower.includes('r2 not configured')) {
+      return { message: 'Media storage: Not enabled (optional)', severity: 'info' };
+    }
+    if (lower.includes('no vehicle state data')) {
+      return { message: 'Vehicle data: Waiting for first sync (expected for new journeys)', severity: 'info' };
+    }
+    if (lower.includes('tessie') && lower.includes('not configured')) {
+      return { message: 'Tesla data provider: Not configured (configure in journey settings)', severity: 'info' };
+    }
+
+    // Unexpected states - show as warning
+    return { message: warning, severity: 'warning' };
+  };
 
   return (
     <div data-testid="coordination-page" className="min-h-screen bg-background text-foreground">
@@ -148,7 +170,13 @@ export const MasterCoordinationDashboard: React.FC<MasterCoordinationDashboardPr
                     {(() => {
                       const drives = unified?.timeline?.drives || [];
                       if (drives.length === 0) {
-                        return <p className="text-sm text-muted-foreground">No drives recorded yet.</p>;
+                        return (
+                          <EmptyState
+                            icon={<Car className="h-8 w-8" />}
+                            title="Waiting for first data sync"
+                            description="Drive records will appear once the backend syncs with your vehicle."
+                          />
+                        );
                       }
                       return (
                         <div className="space-y-2">
@@ -275,20 +303,44 @@ export const MasterCoordinationDashboard: React.FC<MasterCoordinationDashboardPr
                   </Card>
                 )}
 
-                {health.warnings && health.warnings.length > 0 && (
-                  <Card className="border-yellow-500/20 bg-yellow-500/5">
-                    <CardHeader>
-                      <CardTitle className="text-base font-medium text-yellow-600">Warnings</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-1">
-                        {health.warnings.map((w, i) => (
-                          <li key={i} className="text-sm text-yellow-700">{w}</li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                )}
+                {health.warnings && health.warnings.length > 0 && (() => {
+                  const formatted = health.warnings.map(formatWarning);
+                  const hasWarnings = formatted.some(f => f.severity === 'warning');
+                  const hasInfo = formatted.some(f => f.severity === 'info');
+
+                  return (
+                    <>
+                      {hasInfo && (
+                        <Card className="border-border/60">
+                          <CardHeader>
+                            <CardTitle className="text-base font-medium text-muted-foreground">System Notes</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <ul className="space-y-2">
+                              {formatted.filter(f => f.severity === 'info').map((f, i) => (
+                                <li key={i} className="text-sm text-muted-foreground">{f.message}</li>
+                              ))}
+                            </ul>
+                          </CardContent>
+                        </Card>
+                      )}
+                      {hasWarnings && (
+                        <Card className="border-yellow-500/20 bg-yellow-500/5">
+                          <CardHeader>
+                            <CardTitle className="text-base font-medium text-yellow-600">Warnings</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <ul className="space-y-2">
+                              {formatted.filter(f => f.severity === 'warning').map((f, i) => (
+                                <li key={i} className="text-sm text-yellow-700">{f.message}</li>
+                              ))}
+                            </ul>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             ) : null}
           </TabsContent>
