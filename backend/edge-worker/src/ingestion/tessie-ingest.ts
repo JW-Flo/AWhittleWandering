@@ -174,6 +174,11 @@ export async function ingestDrives(env: Env): Promise<void> {
         efficiency_miles_per_kwh: 0 // Will be calculated by trigger
       };
 
+      // Calculate efficiency if we have data
+      if (driveRecord.distance_miles > 0 && driveRecord.energy_used_kwh > 0) {
+        driveRecord.efficiency_miles_per_kwh = driveRecord.distance_miles / driveRecord.energy_used_kwh;
+      }
+
       // Insert drive (ignore if already exists)
       await env.DB.prepare(`
         INSERT OR IGNORE INTO drives (

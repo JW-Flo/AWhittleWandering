@@ -25,6 +25,7 @@ describe('Platform surface area (no bindings)', () => {
     expect(json.currentStatus).toHaveProperty('location');
     expect(Array.isArray(json.timeline?.drives)).toBe(true);
     expect(Array.isArray(json.timeline?.charges)).toBe(true);
+    expect(Array.isArray(json.routePath)).toBe(true);
   });
 
   it('/api/v1/meta/routes is available', async () => {

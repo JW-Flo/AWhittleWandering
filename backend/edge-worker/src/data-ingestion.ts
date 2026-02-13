@@ -367,43 +367,18 @@ export class TeslaDataIngestion {
             );
           }
           
-          await this.db.prepare(`
-            INSERT OR REPLACE INTO drives (
-              tessie_id, journey_id, vehicle_id, started_at, ended_at,
-              start_address, end_address, start_latitude, start_longitude,
-              end_latitude, end_longitude, distance_miles, duration_minutes,
-              start_battery_level, end_battery_level, energy_used_kwh,
-              outside_temp_avg
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `).bind(
-            drive.id,
-            'continental-usa-2025',
-            'midnight-shadow',
-            startedAt,
-            endedAt,
-            drive.starting_location || 'Unknown',
-            drive.ending_location || 'Unknown',
-            drive.starting_latitude || 0,
-            drive.starting_longitude || 0,
-            drive.ending_latitude || 0,
-            drive.ending_longitude || 0,
-            drive.odometer_distance || 0,
-            durationMinutes,
-            drive.starting_battery || 0,
-            drive.ending_battery || 0,
-            drive.energy_used || 0,
-            drive.outside_temp || null
-          ).run();
+          // Detect states for start and end locations
+          let startStateName: string | null = null;
+          let endStateName: string | null = null;
 
-          // Update state tracking for this drive
           try {
-            // Check start location
             if (drive.starting_latitude && drive.starting_longitude) {
               const startState = await detectStateFromCoordinates(
                 drive.starting_latitude,
                 drive.starting_longitude
               );
               if (startState) {
+                startStateName = startState.name;
                 await updateStatesVisited(
                   this.db,
                   'continental-usa-2025',
@@ -416,7 +391,6 @@ export class TeslaDataIngestion {
               }
             }
 
-            // Check end location if different from start
             if (drive.ending_latitude && drive.ending_longitude &&
                 (drive.ending_latitude !== drive.starting_latitude ||
                  drive.ending_longitude !== drive.starting_longitude)) {
@@ -425,6 +399,7 @@ export class TeslaDataIngestion {
                 drive.ending_longitude
               );
               if (endState) {
+                endStateName = endState.name;
                 await updateStatesVisited(
                   this.db,
                   'continental-usa-2025',
@@ -436,11 +411,46 @@ export class TeslaDataIngestion {
                 );
               }
             }
+            // If end state is null but start state is known, use start state
+            if (!endStateName && startStateName) {
+              endStateName = startStateName;
+            }
           } catch (stateError) {
             logger.warn(`Failed to update state tracking for drive ${drive.id}`, {
               error: extractErrorMessage(stateError)
             });
           }
+
+          await this.db.prepare(`
+            INSERT OR REPLACE INTO drives (
+              tessie_id, journey_id, vehicle_id, started_at, ended_at,
+              start_address, end_address, start_latitude, start_longitude,
+              end_latitude, end_longitude, start_state, end_state,
+              distance_miles, duration_minutes,
+              start_battery_level, end_battery_level, energy_used_kwh,
+              outside_temp_avg
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).bind(
+            drive.id,
+            'continental-usa-2025',
+            'midnight-shadow',
+            startedAt,
+            endedAt,
+            drive.starting_location || 'Unknown',
+            drive.ending_location || 'Unknown',
+            drive.starting_latitude || 0,
+            drive.starting_longitude || 0,
+            drive.ending_latitude || 0,
+            drive.ending_longitude || 0,
+            startStateName,
+            endStateName,
+            drive.odometer_distance || 0,
+            durationMinutes,
+            drive.starting_battery || 0,
+            drive.ending_battery || 0,
+            drive.energy_used || 0,
+            drive.outside_temp || null
+          ).run();
 
           recordsProcessed++;
         } catch (driveError) {
