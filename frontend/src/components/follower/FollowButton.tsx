@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Check, Loader2, UserMinus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 type FollowButtonProps = {
   journeyId: string;
@@ -23,12 +25,12 @@ const FollowButton: React.FC<FollowButtonProps> = ({ journeyId, apiBaseUrl }) =>
   const safeId = useMemo(() => safeJourneyId(journeyId), [journeyId]);
   const [following, setFollowing] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [isHovered, setIsHovered] = useState<boolean>(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
-      setMessage(null);
       try {
         const res = await fetch(
           `${apiBaseUrl}/api/v1/journeys/${encodeURIComponent(safeId)}/follow/settings`,
@@ -55,50 +57,104 @@ const FollowButton: React.FC<FollowButtonProps> = ({ journeyId, apiBaseUrl }) =>
   }, [apiBaseUrl, safeId]);
 
   const toggleFollow = async () => {
+    const wasFollowing = following;
     setIsLoading(true);
-    setMessage(null);
+
+    // Optimistic update
+    setFollowing(!wasFollowing);
+
     try {
-      const path = following ? "unfollow" : "follow";
+      const path = wasFollowing ? "unfollow" : "follow";
       const res = await fetch(
         `${apiBaseUrl}/api/v1/journeys/${encodeURIComponent(safeId)}/${path}`,
         { method: "POST" }
       );
 
       if (res.status === 401 || res.status === 403) {
-        setMessage("Sign in to follow this journey (notifications require an account).");
+        // Revert optimistic update
+        setFollowing(wasFollowing);
+        toast({
+          title: "Sign in required",
+          description: "Sign in to follow this journey (notifications require an account).",
+          variant: "destructive",
+        });
         return;
       }
 
       if (!res.ok) {
-        setMessage(`Unable to ${following ? "unfollow" : "follow"} right now.`);
+        // Revert optimistic update
+        setFollowing(wasFollowing);
+        toast({
+          title: "Something went wrong",
+          description: `Unable to ${wasFollowing ? "unfollow" : "follow"} right now. Please try again.`,
+          variant: "destructive",
+        });
         return;
       }
 
-      setFollowing(!following);
-      setMessage(following ? "Unfollowed." : "Following—updates will appear here as moments are posted.");
+      // Success toast
+      toast({
+        title: wasFollowing ? "Unfollowed" : "Following",
+        description: wasFollowing
+          ? "You've unfollowed this journey."
+          : "You're now following this journey — updates will appear as moments are posted.",
+      });
     } catch {
-      setMessage("Network error. Please try again.");
+      // Revert optimistic update
+      setFollowing(wasFollowing);
+      toast({
+        title: "Network error",
+        description: "Could not reach the server. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
+  const showUnfollow = following && isHovered && !isLoading;
+
+  const buttonVariant = showUnfollow
+    ? "destructive"
+    : following
+      ? "outline"
+      : "default";
+
+  const buttonLabel = isLoading
+    ? following
+      ? "Following"
+      : "Follow"
+    : showUnfollow
+      ? "Unfollow"
+      : following
+        ? "Following"
+        : "Follow";
+
   return (
-    <div className="flex flex-col items-start gap-2">
-      <div className="flex items-center gap-2">
-        <Button size="sm" variant={following ? "outline" : "default"} onClick={toggleFollow} disabled={isLoading}>
-          {following ? "Following" : "Follow"}
-        </Button>
-        {following && <Badge variant="outline">Notifications enabled</Badge>}
-      </div>
-      {message && (
-        <output className="text-xs text-muted-foreground" aria-live="polite" aria-atomic="true">
-          {message}
-        </output>
+    <div className="flex items-center gap-2">
+      <Button
+        size="sm"
+        variant={buttonVariant}
+        onClick={toggleFollow}
+        disabled={isLoading}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="min-w-[110px] transition-colors"
+      >
+        {isLoading ? (
+          <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+        ) : showUnfollow ? (
+          <UserMinus className="w-4 h-4 mr-1.5" />
+        ) : following ? (
+          <Check className="w-4 h-4 mr-1.5" />
+        ) : null}
+        {buttonLabel}
+      </Button>
+      {following && !showUnfollow && (
+        <Badge variant="outline">Notifications enabled</Badge>
       )}
     </div>
   );
 };
 
 export default FollowButton;
-
