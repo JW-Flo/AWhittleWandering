@@ -6,6 +6,7 @@ function isAllowedOrigin(origin: string): boolean {
   if (origin === 'http://localhost:8080') return true;
   if (origin === 'http://localhost:8081') return true;
   if (origin === 'http://localhost:3000') return true;
+  if (origin === 'http://localhost:4173') return true;
   if (origin === 'http://localhost:5173') return true;
 
   // Canonical production domains
