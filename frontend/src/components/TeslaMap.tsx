@@ -208,6 +208,7 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
         <div class="w-8 h-8 bg-primary rounded-full border-2 border-background shadow-lg flex items-center justify-center animate-pulse">
           <div class="w-3 h-3 bg-background rounded-full"></div>
         </div>
+        <!-- Heading indicator arrow (translateX handled by Tailwind class above) -->
         <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[5px] border-r-[5px] border-b-[8px] border-l-transparent border-r-transparent border-b-primary"
              style="transform: rotate(${rotation}deg); transform-origin: center top;"></div>
       </div>

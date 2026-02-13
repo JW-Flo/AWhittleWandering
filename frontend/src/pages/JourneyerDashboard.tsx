@@ -190,7 +190,7 @@ const JourneyerDashboardInner: React.FC = () => {
                     >
                       <LazyTeslaMap
                         vehicleLocation={
-                          currentLocation && currentLocation.coordinates && currentLocation.coordinates.lat !== 0
+                          currentLocation?.coordinates?.lat !== 0
                             ? {
                                 latitude: currentLocation.coordinates.lat,
                                 longitude: currentLocation.coordinates.lng,
