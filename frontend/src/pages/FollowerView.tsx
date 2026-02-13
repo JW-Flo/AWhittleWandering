@@ -70,7 +70,7 @@ const FollowerView: React.FC = () => {
   const lastUpdate = formatDate(data?.currentStatus?.location?.lastUpdate);
 
   return (
-    <div className="journey-typography min-h-screen bg-background text-foreground">
+    <div className="journey-typography min-h-screen bg-background text-foreground overflow-y-auto">
       <header className="container mx-auto px-4 pt-10 pb-6">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
@@ -100,7 +100,7 @@ const FollowerView: React.FC = () => {
               </CardTitle>
               <p className="mt-3 text-sm md:text-base text-foreground/80 leading-relaxed max-w-2xl">
                 Orientation, not surveillance. This view is here to help you feel present—where the traveler
-                is in the arc of the trip, what’s unfolding, and what moments matter.
+                is in the arc of the trip, what's unfolding, and what moments matter.
               </p>
               <div className="mt-5 flex flex-wrap items-center gap-2">
                 {typeof statesVisited === "number" && typeof totalStates === "number" && (
@@ -188,5 +188,3 @@ const FollowerView: React.FC = () => {
 };
 
 export default FollowerView;
-
-

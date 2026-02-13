@@ -1,17 +1,18 @@
 import { useState } from 'react';
-import { 
-  Route, 
-  Zap, 
+import {
+  Route,
+  Zap,
   TrendingUp,
   Brain,
-  Settings,
   Navigation,
   AlertCircle,
   Leaf,
   Target,
   Plus,
   Trash2,
-  Battery
+  Battery,
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 import { backendApi } from '@/services/backendApi';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -80,10 +81,10 @@ interface ConsolidatedRouteOptimizerProps {
   className?: string;
 }
 
-export default function ConsolidatedRouteOptimizer({ 
-  vehicleData, 
-  onRouteOptimized, 
-  className 
+export default function ConsolidatedRouteOptimizer({
+  vehicleData,
+  onRouteOptimized,
+  className
 }: ConsolidatedRouteOptimizerProps) {
   // Route planning state
   const [origin, setOrigin] = useState('');
@@ -97,10 +98,19 @@ export default function ConsolidatedRouteOptimizer({
     maximizeRange: true
   });
 
+  // Validation state
+  const [originTouched, setOriginTouched] = useState(false);
+  const [destinationTouched, setDestinationTouched] = useState(false);
+
   // Results state
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizedRoute, setOptimizedRoute] = useState<RouteData | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Validation
+  const originError = originTouched && !origin.trim() ? 'Origin is required' : null;
+  const destinationError = destinationTouched && !destination.trim() ? 'Destination is required' : null;
+  const canSubmit = origin.trim().length > 0 && destination.trim().length > 0;
 
   // Add waypoint
   const addWaypoint = () => {
@@ -128,7 +138,10 @@ export default function ConsolidatedRouteOptimizer({
 
   // Handle route optimization
   const handleOptimizeRoute = async () => {
-    if (!origin || !destination) {
+    setOriginTouched(true);
+    setDestinationTouched(true);
+
+    if (!canSubmit) {
       setError('Please provide both origin and destination');
       return;
     }
@@ -150,16 +163,25 @@ export default function ConsolidatedRouteOptimizer({
       };
 
       const result = await backendApi.optimizeRoute(routeRequest);
-      
+
       if (result.ok) {
         const routeData = result.result as unknown as RouteData;
         setOptimizedRoute(routeData);
         onRouteOptimized?.(routeData);
       } else {
-        setError('Failed to optimize route');
+        setError('Failed to optimize route. The AI service may be temporarily unavailable.');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to optimize route');
+      const message = err instanceof Error ? err.message : 'Failed to optimize route';
+      if (message.includes('503')) {
+        setError('Route optimization is currently unavailable. The AI service is not configured.');
+      } else if (message.includes('502')) {
+        setError('The AI service encountered an error processing your request. Please try again.');
+      } else if (message.includes('timeout') || message.includes('408')) {
+        setError('Route optimization timed out. Please try again with a simpler route.');
+      } else {
+        setError(message);
+      }
     } finally {
       setIsOptimizing(false);
     }
@@ -197,7 +219,12 @@ export default function ConsolidatedRouteOptimizer({
                     placeholder="Enter starting location"
                     value={origin}
                     onChange={(e) => setOrigin(e.target.value)}
+                    onBlur={() => setOriginTouched(true)}
+                    className={originError ? 'border-destructive' : ''}
                   />
+                  {originError && (
+                    <p className="mt-1 text-xs text-destructive">{originError}</p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="destination">Destination</Label>
@@ -206,7 +233,12 @@ export default function ConsolidatedRouteOptimizer({
                     placeholder="Enter destination"
                     value={destination}
                     onChange={(e) => setDestination(e.target.value)}
+                    onBlur={() => setDestinationTouched(true)}
+                    className={destinationError ? 'border-destructive' : ''}
                   />
+                  {destinationError && (
+                    <p className="mt-1 text-xs text-destructive">{destinationError}</p>
+                  )}
                 </div>
               </div>
 
@@ -214,17 +246,17 @@ export default function ConsolidatedRouteOptimizer({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>Waypoints</Label>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={addWaypoint}
                   >
                     <Plus className="w-4 h-4 mr-1" />
                     Add Waypoint
                   </Button>
                 </div>
-                
+
                 {waypoints.map((waypoint, index) => (
                   <div key={waypoint.id} className="flex items-center gap-2 p-2 border rounded">
                     <span className="text-sm font-medium">{index + 1}</span>
@@ -276,12 +308,12 @@ export default function ConsolidatedRouteOptimizer({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-3">
                   <Label className="text-base font-medium">Route Preferences</Label>
-                  
+
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="prioritizeCharging"
                       checked={preferences.prioritizeCharging}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setPreferences({ ...preferences, prioritizeCharging: !!checked })
                       }
                     />
@@ -292,7 +324,7 @@ export default function ConsolidatedRouteOptimizer({
                     <Checkbox
                       id="avoidTolls"
                       checked={preferences.avoidTolls}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setPreferences({ ...preferences, avoidTolls: !!checked })
                       }
                     />
@@ -303,7 +335,7 @@ export default function ConsolidatedRouteOptimizer({
                     <Checkbox
                       id="preferScenic"
                       checked={preferences.preferScenic}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setPreferences({ ...preferences, preferScenic: !!checked })
                       }
                     />
@@ -313,12 +345,12 @@ export default function ConsolidatedRouteOptimizer({
 
                 <div className="space-y-3">
                   <Label className="text-base font-medium">Optimization Goals</Label>
-                  
+
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="minimizeTime"
                       checked={preferences.minimizeTime}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setPreferences({ ...preferences, minimizeTime: !!checked })
                       }
                     />
@@ -329,7 +361,7 @@ export default function ConsolidatedRouteOptimizer({
                     <Checkbox
                       id="maximizeRange"
                       checked={preferences.maximizeRange}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setPreferences({ ...preferences, maximizeRange: !!checked })
                       }
                     />
@@ -340,7 +372,38 @@ export default function ConsolidatedRouteOptimizer({
             </TabsContent>
 
             <TabsContent value="results" className="space-y-4">
-              {optimizedRoute ? (
+              {/* Loading state */}
+              {isOptimizing && (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <Loader2 className="w-10 h-10 mb-4 text-primary animate-spin" />
+                  <p className="text-sm font-medium">Generating optimized route...</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    AI is analyzing charging stops, terrain, and efficiency factors.
+                  </p>
+                </div>
+              )}
+
+              {/* Error state with retry */}
+              {!isOptimizing && error && !optimizedRoute && (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <AlertCircle className="w-10 h-10 mb-4 text-destructive" />
+                  <p className="text-sm font-medium text-destructive">Route optimization failed</p>
+                  <p className="mt-1 text-xs text-muted-foreground text-center max-w-sm">{error}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4"
+                    onClick={handleOptimizeRoute}
+                    disabled={!canSubmit}
+                  >
+                    <RefreshCw className="w-4 h-4 mr-1.5" />
+                    Try again
+                  </Button>
+                </div>
+              )}
+
+              {/* Success: optimized route */}
+              {!isOptimizing && optimizedRoute ? (
                 <div className="space-y-4">
                   {/* Route Summary */}
                   <Card>
@@ -456,25 +519,27 @@ export default function ConsolidatedRouteOptimizer({
                   )}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <Route className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">No optimized route yet. Plan your route in the first tab.</p>
-                </div>
+                !isOptimizing && !error && (
+                  <div className="text-center py-8">
+                    <Route className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground">No optimized route yet. Plan your route in the first tab.</p>
+                  </div>
+                )
               )}
             </TabsContent>
           </Tabs>
 
           {/* Optimize Button */}
           <div className="mt-6 flex gap-3">
-            <Button 
-              onClick={handleOptimizeRoute} 
-              disabled={isOptimizing || !origin || !destination}
+            <Button
+              onClick={handleOptimizeRoute}
+              disabled={isOptimizing || !canSubmit}
               className="flex-1"
             >
               {isOptimizing ? (
                 <>
-                  <Settings className="w-4 h-4 mr-2 animate-spin" />
-                  Optimizing Route...
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Generating optimized route...
                 </>
               ) : (
                 <>
@@ -485,10 +550,22 @@ export default function ConsolidatedRouteOptimizer({
             </Button>
           </div>
 
-          {/* Error Display */}
+          {/* Inline error below button */}
           {error && (
-            <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded text-destructive text-sm">
-              {error}
+            <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded text-destructive text-sm flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <div>
+                <p>{error}</p>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0 mt-1 text-destructive underline"
+                  onClick={handleOptimizeRoute}
+                  disabled={!canSubmit || isOptimizing}
+                >
+                  Try again
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
