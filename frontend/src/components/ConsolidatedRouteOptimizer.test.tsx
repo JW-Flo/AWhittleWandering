@@ -250,8 +250,10 @@ describe('ConsolidatedRouteOptimizer', () => {
     await user.type(waypointInputs[0], 'Fresno, CA');
     expect(waypointInputs[0]).toHaveValue('Fresno, CA');
 
-    const removeButton = screen.getByRole('button', { name: '' });
-    await user.click(removeButton);
+    const waypointContainer = waypointInputs[0].closest('div');
+    const removeButton = waypointContainer?.querySelector('button');
+    expect(removeButton).not.toBeNull();
+    await user.click(removeButton as HTMLButtonElement);
 
     expect(screen.queryByPlaceholderText('Waypoint address')).not.toBeInTheDocument();
   });
