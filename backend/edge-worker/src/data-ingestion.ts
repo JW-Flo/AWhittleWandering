@@ -71,7 +71,7 @@ export class TeslaDataIngestion {
     this.config = {
       apiKey: tessieApiKey,
       baseUrl: 'https://api.tessie.com',
-      vehicleIdOrVin
+      vehicleIdOrVin: String(vehicleIdOrVin || '').trim() || '5YJYGDEE5LF027324'
     };
 
     // Wire into ApiRateLimitTracker if DB is available (best-effort)

@@ -52,10 +52,16 @@ export class CronDataController {
    */
   private async hasActiveJourney(): Promise<boolean> {
     try {
-      const row = await this.db.prepare(
+      const activeJourney = await this.db.prepare(
         `SELECT 1 FROM journeys WHERE status = 'active' LIMIT 1`
       ).first();
-      return row !== null;
+      if (activeJourney) return true;
+
+      // Bootstrap path: if no journeys exist yet, allow ingestion to seed baseline records.
+      const anyJourney = await this.db.prepare(
+        `SELECT 1 FROM journeys LIMIT 1`
+      ).first();
+      return anyJourney === null;
     } catch {
       // If DB query fails, assume active to avoid silently dropping data
       return true;
