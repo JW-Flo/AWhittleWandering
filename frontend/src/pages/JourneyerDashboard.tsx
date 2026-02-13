@@ -102,6 +102,9 @@ const JourneyerDashboardInner: React.FC = () => {
               <Button asChild variant="ghost" size="sm">
                 <Link to="/dashboard/coordination">Coordination</Link>
               </Button>
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/settings">Settings</Link>
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

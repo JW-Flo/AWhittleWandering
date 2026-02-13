@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Landing from "./pages/Landing";
 import JourneyerDashboard from "./pages/JourneyerDashboard";
 import FollowerView from "./pages/FollowerView";
+import ExploreJourney from "./pages/ExploreJourney";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Demo from "./pages/Demo";
 import { MasterCoordinationDashboard } from "./components/MasterCoordinationDashboard";
@@ -76,6 +78,9 @@ const App = () => (
                   journeyData={[]}
                 />
               } />
+              <Route path="/explore" element={<ExploreJourney />} />
+              <Route path="/explore/:id" element={<ExploreJourney />} />
+              <Route path="/settings" element={<Settings />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="/demo" element={<Demo />} />
               <Route path="*" element={<NotFound />} />
