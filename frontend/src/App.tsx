@@ -56,8 +56,8 @@ class ErrorBoundary extends React.Component<
 }
 
 const App = () => (
-  <ErrorBoundary>
-    <ThemeProvider>
+  <ThemeProvider>
+    <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <a
@@ -91,8 +91,8 @@ const App = () => (
           </BrowserRouter>
         </TooltipProvider>
       </QueryClientProvider>
-    </ThemeProvider>
-  </ErrorBoundary>
+    </ErrorBoundary>
+  </ThemeProvider>
 );
 
 export default App;

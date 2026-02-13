@@ -1,7 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Hono } from 'hono';
 import { authRouter } from '../src/routers/auth';
 import type { AppContext } from '../src/types/env';
+import * as passwordPbkdf2 from '../src/utils/passwordPbkdf2';
 
 // Helper to create mock D1 database
 function createMockD1() {
@@ -117,6 +118,9 @@ describe('/api/v1/auth endpoint', () => {
   });
 
   it('returns 401 for login with incorrect password', async () => {
+    // Mock verifyPassword to explicitly return false for incorrect password
+    const verifyPasswordSpy = vi.spyOn(passwordPbkdf2, 'verifyPassword').mockResolvedValue(false);
+
     const mockDb = createMockD1();
     mockDb.prepare = vi.fn(() => ({
       bind: vi.fn().mockReturnThis(),
@@ -148,6 +152,13 @@ describe('/api/v1/auth endpoint', () => {
     const json = await res.json();
     expect(json.ok).toBe(false);
     expect(json.error).toBe('Invalid credentials');
+    expect(verifyPasswordSpy).toHaveBeenCalledWith('wrongpassword123', {
+      password_hash: 'hash123',
+      password_salt: 'salt123',
+      password_algo: 'pbkdf2_sha256_v1',
+    });
+
+    verifyPasswordSpy.mockRestore();
   });
 
   it('returns 201 for successful registration', async () => {
