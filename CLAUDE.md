@@ -73,17 +73,46 @@ shared/
 7. TypeScript strict mode in all workspaces
 8. Conventional Commits for all commit messages
 
-## Workflow (Gastown-managed)
-1. Mayor creates convoy with beads for the feature
-2. Polecat agent creates feature branch from main
-3. Implement changes with tests in feature branch
-4. Run: npm test && npm run build
-5. IF tests fail: revert last change, try alternative approach
-6. IF tests pass: git commit (Conventional Commits), push
-7. Create PR via `gh pr create --fill`
-8. CI deploys preview, runs smoke tests
-9. AI agent (Copilot) reviews PR; human review required only for significant platform changes
-10. Merge triggers staging → production pipeline
+## GitHub Access
+
+**Do NOT use MCP GitHub tools.** Use the GitHub REST API via `curl` with the `GH_PAT` env var:
+```bash
+TOKEN="$(printenv GH_PAT)"
+# Authenticated request pattern:
+curl -sS -H "Authorization: Bearer ${TOKEN}" -H "Accept: application/vnd.github+json" \
+  "https://api.github.com/repos/JW-Flo/AWhittleWandering/..."
+```
+
+Common API endpoints (relative to `https://api.github.com/repos/JW-Flo/AWhittleWandering`):
+- `GET /pulls?state=open` — list open PRs
+- `POST /pulls` — create PR (JSON body: title, head, base, body)
+- `POST /pulls/{n}/requested_reviewers` — assign reviewer (see below for login)
+- `GET /pulls/{n}/reviews` — get reviews
+- `GET /pulls/{n}/comments` — get review comments
+- `PUT /pulls/{n}/merge` — merge PR (JSON: `{"merge_method":"squash"}`)
+- `DELETE /git/refs/heads/{branch}` — delete branch after merge
+- `GET /commits/{sha}/check-runs` — check CI status
+
+Automated reviewer login: `"copilot"` (GitHub Copilot pull-request reviewer bot).
+
+## PR Workflow
+
+1. **Branch**: Create/checkout feature branch from main
+2. **Implement**: Make changes with tests
+3. **Verify locally**: `npm test && npm run build` — if tests fail, fix before proceeding
+4. **Commit**: Use Conventional Commits, then `git push -u origin <branch>`
+5. **Create PR**: `POST /pulls` with title, head branch, base: main, and body (summary + test plan)
+6. **Assign Copilot**: `POST /pulls/{n}/requested_reviewers` with `{"reviewers":["copilot"]}` (the bot login)
+7. **Wait for CI + review**: Poll `GET /commits/{sha}/check-runs` and `GET /pulls/{n}/reviews` until:
+   - All CI checks pass (security, quality, tests, build)
+   - Copilot/Codex review completes
+8. **Address review comments**: If Copilot/Codex requests changes:
+   - `GET /pulls/{n}/comments` to read specific feedback
+   - Make the requested fixes
+   - Commit and push to the same branch (PR updates automatically)
+   - Re-check reviews until approved or no blocking comments remain
+9. **Merge**: `PUT /pulls/{n}/merge` with `{"merge_method":"squash"}`
+10. **Clean up**: `DELETE /git/refs/heads/{branch}` to remove the merged branch
 
 ## D1 Migration Rules
 - Migrations are FORWARD-ONLY (no down migrations)
