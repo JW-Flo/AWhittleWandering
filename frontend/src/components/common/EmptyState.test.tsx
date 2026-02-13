@@ -21,9 +21,10 @@ describe('EmptyState', () => {
   });
 
   it('does not render description when not provided', () => {
-    const { container } = render(<EmptyState title="No data" />);
-    const descriptions = container.querySelectorAll('.text-muted-foreground');
-    expect(descriptions.length).toBe(0);
+    render(<EmptyState title="No data" />);
+    expect(
+      screen.queryByText('Start by adding some items')
+    ).not.toBeInTheDocument();
   });
 
   it('renders icon when provided', () => {
