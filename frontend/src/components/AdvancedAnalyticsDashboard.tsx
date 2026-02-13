@@ -17,6 +17,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { backendApi } from '@/services/backendApi';
+import EmptyState from '@/components/common/EmptyState';
 
 interface AnalyticsSummary {
   ok: boolean;
@@ -142,75 +143,111 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Distance</p>
-                <p className="text-2xl font-bold">
-                  {insights ? formatDistance(insights.totalDistance) : '---'}
-                </p>
-              </div>
-              <Route className="h-8 w-8 text-primary" />
-            </div>
-            <div className="mt-2">
-              <Badge variant="secondary" className="text-xs">
-                {summary?.totalDrives ?? 0} drives
-              </Badge>
-            </div>
+            {insights ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Total Distance</p>
+                    <p className="text-2xl font-bold">
+                      {formatDistance(insights.totalDistance)}
+                    </p>
+                  </div>
+                  <Route className="h-8 w-8 text-primary" />
+                </div>
+                <div className="mt-2">
+                  <Badge variant="secondary" className="text-xs">
+                    {summary?.totalDrives ?? 0} drives
+                  </Badge>
+                </div>
+              </>
+            ) : (
+              <EmptyState
+                icon={<Route className="h-8 w-8" />}
+                title="Metrics appear after your first drive"
+              />
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Energy Efficiency</p>
-                <p className="text-2xl font-bold">
-                  {insights ? `${insights.averageEfficiency.toFixed(2)} mi/kWh` : '---'}
-                </p>
-              </div>
-              <Zap className="h-8 w-8 text-primary" />
-            </div>
-            <div className="mt-2">
-              <Progress value={insights ? Math.min(100, (insights.averageEfficiency / 4.5) * 100) : 0} className="h-2" />
-            </div>
+            {insights ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Energy Efficiency</p>
+                    <p className="text-2xl font-bold">
+                      {`${insights.averageEfficiency.toFixed(2)} mi/kWh`}
+                    </p>
+                  </div>
+                  <Zap className="h-8 w-8 text-primary" />
+                </div>
+                <div className="mt-2">
+                  <Progress value={Math.min(100, (insights.averageEfficiency / 4.5) * 100)} className="h-2" />
+                </div>
+              </>
+            ) : (
+              <EmptyState
+                icon={<Zap className="h-8 w-8" />}
+                title="Metrics appear after your first drive"
+              />
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Cost Savings</p>
-                <p className="text-2xl font-bold">
-                  {insights ? formatCurrency(insights.costSavings) : '---'}
-                </p>
-              </div>
-              <DollarSign className="h-8 w-8 text-primary" />
-            </div>
-            <div className="mt-2">
-              <Badge variant="default" className="text-xs">
-                vs gasoline
-              </Badge>
-            </div>
+            {insights ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Cost Savings</p>
+                    <p className="text-2xl font-bold">
+                      {formatCurrency(insights.costSavings)}
+                    </p>
+                  </div>
+                  <DollarSign className="h-8 w-8 text-primary" />
+                </div>
+                <div className="mt-2">
+                  <Badge variant="default" className="text-xs">
+                    vs gasoline
+                  </Badge>
+                </div>
+              </>
+            ) : (
+              <EmptyState
+                icon={<DollarSign className="h-8 w-8" />}
+                title="Metrics appear after your first drive"
+              />
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Carbon Saved</p>
-                <p className="text-2xl font-bold">
-                  {insights ? `${insights.carbonSaved.toFixed(0)} lbs` : '---'}
-                </p>
-              </div>
-              <Leaf className="h-8 w-8 text-primary" />
-            </div>
-            <div className="mt-2">
-              <Badge variant="outline" className="text-xs">
-                CO2 equivalent
-              </Badge>
-            </div>
+            {insights ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Carbon Saved</p>
+                    <p className="text-2xl font-bold">
+                      {`${insights.carbonSaved.toFixed(0)} lbs`}
+                    </p>
+                  </div>
+                  <Leaf className="h-8 w-8 text-primary" />
+                </div>
+                <div className="mt-2">
+                  <Badge variant="outline" className="text-xs">
+                    CO2 equivalent
+                  </Badge>
+                </div>
+              </>
+            ) : (
+              <EmptyState
+                icon={<Leaf className="h-8 w-8" />}
+                title="Metrics appear after your first drive"
+              />
+            )}
           </CardContent>
         </Card>
       </div>
@@ -260,19 +297,23 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                     <CardTitle className="text-lg">Recent Efficiency</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      {recentEfficiency.length === 0 && (
-                        <p className="text-sm text-muted-foreground">No efficiency data yet.</p>
-                      )}
-                      {recentEfficiency.slice(0, 5).map((row) => (
-                        <div key={row.date} className="flex items-center justify-between">
-                          <span className="text-sm">{row.date}</span>
-                          <Badge variant={row.efficiency_miles_per_kwh >= (insights?.averageEfficiency ?? 0) ? 'default' : 'secondary'}>
-                            {row.efficiency_miles_per_kwh.toFixed(2)} mi/kWh
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
+                    {recentEfficiency.length === 0 ? (
+                      <EmptyState
+                        icon={<TrendingUp className="h-8 w-8" />}
+                        title="Efficiency data will appear after multiple drives"
+                      />
+                    ) : (
+                      <div className="space-y-3">
+                        {recentEfficiency.slice(0, 5).map((row) => (
+                          <div key={row.date} className="flex items-center justify-between">
+                            <span className="text-sm">{row.date}</span>
+                            <Badge variant={row.efficiency_miles_per_kwh >= (insights?.averageEfficiency ?? 0) ? 'default' : 'secondary'}>
+                              {row.efficiency_miles_per_kwh.toFixed(2)} mi/kWh
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -308,10 +349,10 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                   </CardContent>
                 </Card>
               </div>
-              {charging.length > 0 && (
-                <Card>
-                  <CardHeader><CardTitle className="text-lg">Charging by Type</CardTitle></CardHeader>
-                  <CardContent>
+              <Card>
+                <CardHeader><CardTitle className="text-lg">Charging by Type</CardTitle></CardHeader>
+                <CardContent>
+                  {charging.length > 0 ? (
                     <div className="space-y-3">
                       {charging.map((row) => (
                         <div key={row.charger_type} className="flex items-center justify-between">
@@ -323,9 +364,14 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                         </div>
                       ))}
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                  ) : (
+                    <EmptyState
+                      icon={<Battery className="h-8 w-8" />}
+                      title="Charging data appears after your first charging session"
+                    />
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="carbon" className="space-y-4 mt-6">
@@ -385,56 +431,66 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
             AI-Powered Insights
-            <span className="ml-2 text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">Example</span>
+            {insights && summary && summary.totalDrives >= 5 && (
+              <span className="ml-2 text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">Example</span>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="p-4 bg-primary/10 rounded-lg border">
-              <div className="flex items-start gap-3">
-                <div className="p-1 bg-primary/10 rounded">
-                  <Zap className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <h4 className="font-medium">Efficiency Opportunity</h4>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Your efficiency improves by 18% when departing before 9 AM.
-                    Consider adjusting departure times for longer trips.
-                  </p>
+          {insights && summary && summary.totalDrives >= 5 ? (
+            <div className="space-y-4">
+              <div className="p-4 bg-primary/10 rounded-lg border">
+                <div className="flex items-start gap-3">
+                  <div className="p-1 bg-primary/10 rounded">
+                    <Zap className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium">Efficiency Opportunity</h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Your efficiency improves by 18% when departing before 9 AM.
+                      Consider adjusting departure times for longer trips.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="p-4 bg-accent/10 rounded-lg border">
-              <div className="flex items-start gap-3">
-                <div className="p-1 bg-accent/10 rounded">
-                  <DollarSign className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <h4 className="font-medium">Cost Optimization</h4>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Switching to off-peak charging could save you an additional $23/month
-                    based on your driving patterns.
-                  </p>
+              <div className="p-4 bg-accent/10 rounded-lg border">
+                <div className="flex items-start gap-3">
+                  <div className="p-1 bg-accent/10 rounded">
+                    <DollarSign className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium">Cost Optimization</h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Switching to off-peak charging could save you an additional $23/month
+                      based on your driving patterns.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="p-4 bg-secondary/10 rounded-lg border">
-              <div className="flex items-start gap-3">
-                <div className="p-1 bg-secondary/20 rounded">
-                  <Battery className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <h4 className="font-medium">Charging Pattern</h4>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Your battery health could improve by maintaining charge between 20-80%
-                    for daily use, reserving 100% for road trips.
-                  </p>
+              <div className="p-4 bg-secondary/10 rounded-lg border">
+                <div className="flex items-start gap-3">
+                  <div className="p-1 bg-secondary/20 rounded">
+                    <Battery className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium">Charging Pattern</h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Your battery health could improve by maintaining charge between 20-80%
+                      for daily use, reserving 100% for road trips.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <EmptyState
+              icon={<TrendingUp className="h-8 w-8" />}
+              title="AI insights generate after enough data is collected"
+              description="Complete at least 5 drives to unlock personalized recommendations"
+            />
+          )}
         </CardContent>
       </Card>
     </div>

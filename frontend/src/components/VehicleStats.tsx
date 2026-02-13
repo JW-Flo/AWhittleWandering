@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Battery, Zap, Thermometer, MapPin, Clock, Gauge } from 'lucide-react';
+import EmptyState from '@/components/common/EmptyState';
 
 interface VehicleStatsProps {
   batteryLevel?: number;
@@ -84,10 +85,12 @@ const VehicleStats = ({
   if (!hasData) {
     return (
       <Card className="border-border/60">
-        <CardContent className="p-6 text-center">
-          <Battery className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">Waiting for vehicle data...</p>
-          <p className="text-xs text-muted-foreground mt-1">Stats will appear once the backend connects.</p>
+        <CardContent className="p-6">
+          <EmptyState
+            icon={<Battery className="w-8 h-8" />}
+            title="Vehicle telemetry not yet available"
+            description="Stats will appear once the backend connects and syncs vehicle data."
+          />
         </CardContent>
       </Card>
     );

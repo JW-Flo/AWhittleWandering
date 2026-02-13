@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api-config";
 import JourneyNarrative, { type NarrativeUnifiedData } from "@/components/follower/JourneyNarrative";
 import FollowButton from "@/components/follower/FollowButton";
+import EmptyState from "@/components/common/EmptyState";
+import { MapPin } from "lucide-react";
 
 type UnifiedData = NarrativeUnifiedData & {
   overview?: NarrativeUnifiedData["overview"] & { tripName?: string };
@@ -172,9 +174,11 @@ const FollowerView: React.FC = () => {
           <section className="mb-10">
             <Card className="story-card">
               <CardContent className="p-6">
-                <p className="text-sm text-muted-foreground">
-                  The journey hasn't started yet. When the traveler sets out, the arc and moments will appear here.
-                </p>
+                <EmptyState
+                  icon={<MapPin className="h-8 w-8" />}
+                  title="The journey hasn't started yet. Check back for live updates!"
+                  description="When the traveler sets out, the arc and moments will appear here."
+                />
               </CardContent>
             </Card>
           </section>

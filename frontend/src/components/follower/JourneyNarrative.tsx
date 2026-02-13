@@ -1,6 +1,8 @@
 import React from "react";
 import JourneyArc from "./JourneyArc";
 import Moment from "@/components/shared/Moment";
+import EmptyState from "@/components/common/EmptyState";
+import { Camera } from "lucide-react";
 
 export type NarrativeUnifiedData = {
   overview?: {
@@ -106,10 +108,10 @@ const JourneyNarrative: React.FC<{ data: NarrativeUnifiedData | null }> = ({ dat
           })}
 
           {drives.length === 0 && (
-            <Moment
-              kind="note"
-              title="Moments will appear here"
-              body="As the traveler adds highlights—photos, notes, and milestones—this story will fill in with calm, intentional beats."
+            <EmptyState
+              icon={<Camera className="h-8 w-8" />}
+              title="Moments will appear here as the traveler adds highlights along the way."
+              description="As the traveler adds highlights—photos, notes, and milestones—this story will fill in with calm, intentional beats."
             />
           )}
         </div>
