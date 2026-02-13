@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { backendApi } from '@/services/backendApi';
 import EmptyState from '@/components/common/EmptyState';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 
 const limitForRange: Record<string, number> = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 };
 
@@ -497,4 +498,10 @@ export const AdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   );
 };
 
-export default AdvancedAnalyticsDashboard;
+const WrappedAdvancedAnalyticsDashboard: React.FC<AnalyticsDashboardProps> = (props) => (
+  <ErrorBoundary>
+    <AdvancedAnalyticsDashboard {...props} />
+  </ErrorBoundary>
+);
+
+export default WrappedAdvancedAnalyticsDashboard;

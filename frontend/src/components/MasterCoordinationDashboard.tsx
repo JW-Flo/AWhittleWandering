@@ -23,6 +23,7 @@ import JourneyArc from './follower/JourneyArc';
 import { backendApi, type HealthResponse, type UnifiedDataResponse } from '@/services/backendApi';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import EmptyState from '@/components/common/EmptyState';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 
 interface MasterCoordinationDashboardProps {
   journeyData?: unknown[];
@@ -349,3 +350,12 @@ export const MasterCoordinationDashboard: React.FC<MasterCoordinationDashboardPr
     </div>
   );
 };
+
+
+const WrappedMasterCoordinationDashboard: React.FC<MasterCoordinationDashboardProps> = (props) => (
+  <ErrorBoundary>
+    <MasterCoordinationDashboard {...props} />
+  </ErrorBoundary>
+);
+
+export default WrappedMasterCoordinationDashboard;

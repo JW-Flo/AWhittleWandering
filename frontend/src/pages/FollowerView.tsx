@@ -8,6 +8,7 @@ import { api } from "@/lib/api-config";
 import JourneyNarrative, { type NarrativeUnifiedData } from "@/components/follower/JourneyNarrative";
 import FollowButton from "@/components/follower/FollowButton";
 import EmptyState from "@/components/common/EmptyState";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { MapPin } from "lucide-react";
 
 type UnifiedData = NarrativeUnifiedData & {
@@ -191,4 +192,10 @@ const FollowerView: React.FC = () => {
   );
 };
 
-export default FollowerView;
+const WrappedFollowerView: React.FC = () => (
+  <ErrorBoundary>
+    <FollowerView />
+  </ErrorBoundary>
+);
+
+export default WrappedFollowerView;
