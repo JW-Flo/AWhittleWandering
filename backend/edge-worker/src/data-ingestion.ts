@@ -787,7 +787,8 @@ export class TeslaDataIngestion {
 
         const journeyEnd = (stats as any)?.journey_end || null;
         const isActive =
-          journeyEnd && (Date.now() - new Date(journeyEnd).getTime()) <= 24 * 60 * 60 * 1000;
+          !journeyEnd ||
+          Date.now() - new Date(journeyEnd).getTime() <= 24 * 60 * 60 * 1000;
 
         const stmt = this.db
           .prepare(
