@@ -189,13 +189,19 @@ export class TeslaDataIngestion {
   }
 
   private async resolveJourneyIdForCharge(startedAtIso: string): Promise<string> {
+    const parsedStartedAt = new Date(startedAtIso);
+    if (!Number.isFinite(parsedStartedAt.getTime())) {
+      throw new Error(`Invalid ISO timestamp passed to resolveJourneyIdForCharge: ${startedAtIso}`);
+    }
+    const startedAtUtc = parsedStartedAt.toISOString();
+
     const matchingJourney = await this.db.prepare(
       `SELECT id FROM journeys
        WHERE vehicle_id = ? AND start_date <= date(?)
          AND (end_date IS NULL OR end_date >= date(?))
        ORDER BY start_date DESC
        LIMIT 1`
-    ).bind('midnight-shadow', startedAtIso, startedAtIso).first<{ id?: string }>();
+    ).bind('midnight-shadow', startedAtUtc, startedAtUtc).first<{ id?: string }>();
 
     if (matchingJourney?.id) return matchingJourney.id;
 
