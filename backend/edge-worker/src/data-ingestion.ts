@@ -685,54 +685,137 @@ export class TeslaDataIngestion {
       const journeyRows = await this.db.prepare(`SELECT id FROM journeys WHERE vehicle_id = ?`).bind('midnight-shadow').all<{ id: string }>();
       const journeyIds = (journeyRows.results || []).map((row) => row.id);
 
-      for (const journeyId of journeyIds) {
-        const stats = await this.db.prepare(`
+      if (journeyIds.length === 0) {
+        logger.info('No journeys found for metadata update');
+        return;
+      }
+
+      // Build a single placeholder list for use in aggregated queries
+      const placeholders = journeyIds.map(() => '?').join(',');
+
+      // Aggregate drive stats for all journeys in a single query
+      const driveStatsResult = await this.db
+        .prepare(
+          `
           SELECT 
+            d.journey_id as journey_id,
             COUNT(DISTINCT d.id) as total_drives,
             COALESCE(SUM(d.distance_miles), 0) as total_miles,
             MIN(d.started_at) as journey_start,
             MAX(d.ended_at) as journey_end
           FROM drives d 
-          WHERE d.journey_id = ?
-        `).bind(journeyId).first();
+          WHERE d.journey_id IN (${placeholders})
+          GROUP BY d.journey_id
+        `,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .bind(...(journeyIds as any))
+        .all<{
+          journey_id: string;
+          total_drives: number;
+          total_miles: number;
+          journey_start: string | null;
+          journey_end: string | null;
+        }>();
 
-        const charges = await this.db.prepare(
-          `SELECT COUNT(*) as total_charges, COALESCE(SUM(cost_usd), 0) as total_cost
-           FROM charges WHERE journey_id = ?`
-        ).bind(journeyId).first();
+      const chargeStatsResult = await this.db
+        .prepare(
+          `
+          SELECT 
+            journey_id,
+            COUNT(*) as total_charges,
+            COALESCE(SUM(cost_usd), 0) as total_cost
+          FROM charges 
+          WHERE journey_id IN (${placeholders})
+          GROUP BY journey_id
+        `,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .bind(...(journeyIds as any))
+        .all<{
+          journey_id: string;
+          total_charges: number;
+          total_cost: number;
+        }>();
 
-        const statesVisited = await this.db.prepare(
-          `SELECT COUNT(*) as cnt FROM states_visited WHERE journey_id = ?`
-        ).bind(journeyId).first();
+      const statesVisitedResult = await this.db
+        .prepare(
+          `
+          SELECT 
+            journey_id,
+            COUNT(*) as cnt
+          FROM states_visited 
+          WHERE journey_id IN (${placeholders})
+          GROUP BY journey_id
+        `,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .bind(...(journeyIds as any))
+        .all<{
+          journey_id: string;
+          cnt: number;
+        }>();
 
-        const journeyEnd = (stats as any)?.journey_end || null;
-        const isActive = journeyEnd && (Date.now() - new Date(journeyEnd).getTime()) <= (24 * 60 * 60 * 1000);
+      const driveStatsByJourney = new Map<string, any>();
+      const chargeStatsByJourney = new Map<string, any>();
+      const statesVisitedByJourney = new Map<string, any>();
 
-        await this.db.prepare(
-          `UPDATE journeys
-           SET total_miles = ?,
-               total_drives = ?,
-               total_charges = ?,
-               total_states = ?,
-               total_cost_usd = ?,
-               start_date = COALESCE(start_date, date(?)),
-               end_date = date(?),
-               status = ?,
-               updated_at = datetime('now')
-           WHERE id = ?`
-        ).bind(
-          (stats as any)?.total_miles || 0,
-          (stats as any)?.total_drives || 0,
-          (charges as any)?.total_charges || 0,
-          (statesVisited as any)?.cnt || 0,
-          (charges as any)?.total_cost || 0,
-          (stats as any)?.journey_start || '2025-06-01',
-          journeyEnd,
-          isActive ? 'active' : 'completed',
-          journeyId
-        ).run();
+      for (const row of driveStatsResult.results || []) {
+        driveStatsByJourney.set(row.journey_id, row);
       }
 
+      for (const row of chargeStatsResult.results || []) {
+        chargeStatsByJourney.set(row.journey_id, row);
+      }
+
+      for (const row of statesVisitedResult.results || []) {
+        statesVisitedByJourney.set(row.journey_id, row);
+      }
+
+      const updateStatements = [];
+
+      for (const journeyId of journeyIds) {
+        const stats = driveStatsByJourney.get(journeyId) || {};
+        const charges = chargeStatsByJourney.get(journeyId) || {};
+        const statesVisited = statesVisitedByJourney.get(journeyId) || {};
+
+        const journeyEnd = (stats as any)?.journey_end || null;
+        const isActive =
+          journeyEnd && (Date.now() - new Date(journeyEnd).getTime()) <= 24 * 60 * 60 * 1000;
+
+        const stmt = this.db
+          .prepare(
+            `UPDATE journeys
+             SET total_miles = ?,
+                 total_drives = ?,
+                 total_charges = ?,
+                 total_states = ?,
+                 total_cost_usd = ?,
+                 start_date = COALESCE(start_date, date(?)),
+                 end_date = date(?),
+                 status = ?,
+                 updated_at = datetime('now')
+             WHERE id = ?`,
+          )
+          .bind(
+            (stats as any)?.total_miles || 0,
+            (stats as any)?.total_drives || 0,
+            (charges as any)?.total_charges || 0,
+            (statesVisited as any)?.cnt || 0,
+            (charges as any)?.total_cost || 0,
+            (stats as any)?.journey_start || '2025-06-01',
+            journeyEnd,
+            isActive ? 'active' : 'completed',
+            journeyId,
+          );
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (updateStatements as any).push(stmt);
+      }
+
+      if (updateStatements.length > 0) {
+        await this.db.batch(updateStatements as any);
+      }
       logger.info('Journey metadata updated');
     } catch (error) {
       logger.error('Journey metadata update failed', { error: error instanceof Error ? error.message : String(error) });
