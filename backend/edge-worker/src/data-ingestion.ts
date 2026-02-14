@@ -226,11 +226,26 @@ export class TeslaDataIngestion {
       `SELECT MAX(started_at) as latest FROM ${endpoint}`
     ).first<{ latest?: string }>();
 
-    let fromUnix = FULL_HISTORY_START_UNIX;
+    // Get the vehicle's purchased date to use as the earliest data import boundary
+    const vehicle = await this.db.prepare(
+      `SELECT purchased_date FROM vehicles WHERE id = ?`
+    ).bind('midnight-shadow').first<{ purchased_date?: string }>();
+
+    // Use vehicle's purchase date if available, otherwise fall back to Tesla Model S earliest delivery
+    let earliestDataUnix = FULL_HISTORY_START_UNIX;
+    if (vehicle?.purchased_date) {
+      const purchasedMs = new Date(vehicle.purchased_date).getTime();
+      if (!Number.isNaN(purchasedMs)) {
+        earliestDataUnix = Math.floor(purchasedMs / 1000);
+        logger.info(`Using vehicle purchased_date as history start: ${vehicle.purchased_date}`);
+      }
+    }
+
+    let fromUnix = earliestDataUnix;
     if (latest?.latest) {
       const latestMs = new Date(latest.latest).getTime();
       if (!Number.isNaN(latestMs)) {
-        fromUnix = Math.max(FULL_HISTORY_START_UNIX, Math.floor((latestMs - 2 * 24 * 60 * 60 * 1000) / 1000));
+        fromUnix = Math.max(earliestDataUnix, Math.floor((latestMs - 2 * 24 * 60 * 60 * 1000) / 1000));
       }
     }
 

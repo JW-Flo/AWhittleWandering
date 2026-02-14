@@ -21,6 +21,10 @@ class FakeDb {
           const next = db.firstQueue.shift();
           return (next ?? { cnt: 0 }) as T;
         }
+        if (query.includes('SELECT purchased_date FROM vehicles')) {
+          // Return null for purchased_date to use default behavior
+          return (null as T);
+        }
         const next = db.firstQueue.shift();
         return (next ?? null) as T;
       },
