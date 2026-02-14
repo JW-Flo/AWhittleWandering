@@ -222,8 +222,14 @@ export class TeslaDataIngestion {
   }
 
   private async fetchTimeSeriesResults(endpoint: 'drives' | 'charges'): Promise<any[]> {
+    const safeEndpoint = endpoint === 'drives' || endpoint === 'charges'
+      ? endpoint
+      : (() => {
+          throw new Error(`Invalid time series endpoint: ${String(endpoint)}`);
+        })();
+
     const latest = await this.db.prepare(
-      `SELECT MAX(started_at) as latest FROM ${endpoint}`
+      `SELECT MAX(started_at) as latest FROM ${safeEndpoint}`
     ).first<{ latest?: string }>();
 
     let fromUnix = FULL_HISTORY_START_UNIX;
