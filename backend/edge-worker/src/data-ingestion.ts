@@ -68,6 +68,7 @@ export class TeslaDataIngestion {
   private config: TessieConfig;
   private db: D1Database;
   private rateLimitTracker: { recordRequest(provider: string, success: boolean, latencyMs: number, errorCode?: string): Promise<void> } | null;
+  private readonly vehicleId = 'midnight-shadow'; // TODO: Support multiple vehicles
 
   constructor(db: D1Database, tessieApiKey: string, vehicleIdOrVin: string) {
     this.db = db;
@@ -222,6 +223,11 @@ export class TeslaDataIngestion {
   }
 
   private async fetchTimeSeriesResults(endpoint: 'drives' | 'charges'): Promise<any[]> {
+    // Validate endpoint parameter to prevent SQL injection
+    if (endpoint !== 'drives' && endpoint !== 'charges') {
+      throw new Error(`Invalid endpoint: ${endpoint}. Must be 'drives' or 'charges'.`);
+    }
+
     const latest = await this.db.prepare(
       `SELECT MAX(started_at) as latest FROM ${endpoint}`
     ).first<{ latest?: string }>();
@@ -229,7 +235,7 @@ export class TeslaDataIngestion {
     // Get the vehicle's purchased date to use as the earliest data import boundary
     const vehicle = await this.db.prepare(
       `SELECT purchased_date FROM vehicles WHERE id = ?`
-    ).bind('midnight-shadow').first<{ purchased_date?: string }>();
+    ).bind(this.vehicleId).first<{ purchased_date?: string }>();
 
     // Use vehicle's purchase date if available, otherwise fall back to Tesla Model S earliest delivery
     let earliestDataUnix = FULL_HISTORY_START_UNIX;

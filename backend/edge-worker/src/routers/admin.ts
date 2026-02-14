@@ -218,7 +218,7 @@ adminRouter.get('/data/:resource', async (c) => {
 // Vehicle onboarding endpoint - allows admin to add/update vehicles with purchase date
 const vehicleOnboardSchema = z.object({
   id: z.string().min(1).max(100),
-  vin: z.string().length(17).regex(/^[A-HJ-NPR-Z0-9]+$/i, 'Invalid VIN format'),
+  vin: z.string().length(17).regex(/^[A-HJ-NPR-Z0-9]+$/, 'Invalid VIN format (uppercase letters A-HJ-NPR-Z and digits 0-9 only)'),
   display_name: z.string().min(1).max(200).optional(),
   model: z.string().min(1).max(50).optional(),
   year: z.number().int().min(2012).max(new Date().getFullYear() + 1).optional(),
@@ -261,7 +261,7 @@ adminRouter.post('/vehicles', async (c) => {
     if (existing) {
       // Update existing vehicle
       const updateFields: string[] = ['vin = ?', 'updated_at = ?'];
-      const updateValues: any[] = [vehicle.vin, now];
+      const updateValues: (string | number | null)[] = [vehicle.vin, now];
 
       if (vehicle.display_name) {
         updateFields.push('display_name = ?');
