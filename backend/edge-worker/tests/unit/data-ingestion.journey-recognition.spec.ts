@@ -77,4 +77,48 @@ describe('TeslaDataIngestion journey recognition', () => {
 
     expect(journeyId).toBe('auto-20250611-02');
   });
+
+  it('handles invalid or unparseable drive startedAt values', async () => {
+    const db = new FakeDb([]);
+    const ingestion = new TeslaDataIngestion(db as any, 'token', 'VIN123');
+
+    const promise = (ingestion as any).resolveJourneyIdForDrive('not-a-valid-date');
+
+    await expect(promise).resolves.toBeDefined();
+  });
+
+  it('handles drives at date boundaries without failing', async () => {
+    const db = new FakeDb([{ journey_id: 'boundary-test', ended_at: '2025-06-10T23:59:59Z' }]);
+    const ingestion = new TeslaDataIngestion(db as any, 'token', 'VIN123');
+
+    const journeyId = await (ingestion as any).resolveJourneyIdForDrive('2025-06-11T00:00:01.000Z');
+
+    expect(typeof journeyId).toBe('string');
+  });
+
+  it('creates a journey when there are no existing journeys', async () => {
+    const db = new FakeDb([]);
+    const ingestion = new TeslaDataIngestion(db as any, 'token', 'VIN123');
+
+    const journeyId = await (ingestion as any).resolveJourneyIdForDrive('2025-06-10T10:00:00.000Z');
+
+    expect(journeyId).toBeDefined();
+    expect(db.insertedJourneyIds).toContain(journeyId);
+  });
+
+  it('supports concurrent journey resolution without errors', async () => {
+    const db = new FakeDb([]);
+    const ingestion = new TeslaDataIngestion(db as any, 'token', 'VIN123');
+
+    const startedAt = '2025-06-10T12:00:00.000Z';
+
+    const [journeyId1, journeyId2] = await Promise.all([
+      (ingestion as any).resolveJourneyIdForDrive(startedAt),
+      (ingestion as any).resolveJourneyIdForDrive(startedAt)
+    ]);
+
+    expect(journeyId1).toBeDefined();
+    expect(journeyId2).toBeDefined();
+    expect(db.insertedJourneyIds.length).toBeGreaterThanOrEqual(1);
+  });
 });
