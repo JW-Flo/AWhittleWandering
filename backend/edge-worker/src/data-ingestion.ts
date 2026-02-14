@@ -167,12 +167,12 @@ export class TeslaDataIngestion {
 
   /**
    * Calculate distance between two lat/lon points using Haversine formula
-   * Returns distance in miles
+   * Returns distance in miles, or POSITIVE_INFINITY for invalid coordinates
    */
   private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    // Handle invalid coordinates
+    // Handle invalid coordinates - return large value to prevent incorrect journey continuation
     if (!lat1 || !lon1 || !lat2 || !lon2) {
-      return 0;
+      return Number.POSITIVE_INFINITY;
     }
     
     const R = 3958.8; // Earth's radius in miles
@@ -219,13 +219,8 @@ export class TeslaDataIngestion {
         return prevDrive.journey_id;
       }
       
-      // 2. Short drives (< 10 miles) after longer gap are likely casual errands, not journey
-      if (currentDriveDistance < MIN_JOURNEY_DRIVE_DISTANCE_MILES) {
-        // Short drive after gap > 2 hours = casual driving, start new journey
-        // Falls through to create new journey below
-      } else {
-        // 3. For longer drives, check additional parameters
-        
+      // 2. For longer drives (>= 10 miles), check additional parameters
+      if (currentDriveDistance >= MIN_JOURNEY_DRIVE_DISTANCE_MILES) {
         // Check location continuity - if previous drive ended far away, less likely same journey
         const prevEndLat = prevDrive.end_latitude || 0;
         const prevEndLon = prevDrive.end_longitude || 0;
@@ -241,6 +236,9 @@ export class TeslaDataIngestion {
           return prevDrive.journey_id;
         }
       }
+      
+      // Short drives (< 10 miles) after gap > 2 hours, or drives that don't meet
+      // continuation criteria above: create new journey
     }
 
     const datePrefix = startedAtIso.slice(0, 10).replace(/-/g, '');
