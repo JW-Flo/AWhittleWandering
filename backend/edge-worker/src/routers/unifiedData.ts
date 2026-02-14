@@ -259,8 +259,9 @@ async function buildUnifiedData(c: any, limit: number, journeyId: string, vehicl
 
     return skeleton;
   } catch (err: any) {
-    logger.error('unified.build.error', { error: err?.message });
-    skeleton.tessieStatus.error = 'Failed to build unified data';
+    const errMsg = err?.message || String(err);
+    logger.error('unified.build.error', { error: errMsg, stack: err?.stack });
+    skeleton.tessieStatus.error = `Failed to build unified data: ${errMsg}`;
     return skeleton;
   }
 }

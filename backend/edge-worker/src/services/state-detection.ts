@@ -158,8 +158,7 @@ export async function updateStatesVisited(
     ) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, ?)
     ON CONFLICT(journey_id, state_name) DO UPDATE SET
       visit_count = visit_count + 1,
-      last_updated = ?,
-      last_drive_id = ?
+      last_updated = ?
   `).bind(
     journeyId,
     stateName,
@@ -168,9 +167,9 @@ export async function updateStatesVisited(
     driveId || null,
     latitude,
     longitude,
-    now, // created_at
     now, // last_updated
-    driveId || null // last_drive_id
+    now, // created_at
+    now  // last_updated (ON CONFLICT)
   ).run();
 }
 

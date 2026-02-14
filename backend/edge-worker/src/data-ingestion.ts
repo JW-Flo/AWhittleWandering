@@ -109,7 +109,7 @@ export class TeslaDataIngestion {
     return null;
   }
 
-  private async ensureVehicleAndJourney(): Promise<void> {
+  async ensureVehicleAndJourney(): Promise<void> {
     // Ensure baseline records exist and map the configured VIN/vehicle identifier.
     const vin = this.config.vehicleIdOrVin || '5YJYGDEE5LF027324';
     const now = new Date().toISOString();
@@ -642,6 +642,9 @@ export class TeslaDataIngestion {
    * Make authenticated API call to Tessie
    */
   private async callTessieAPI(endpoint: string): Promise<any> {
+    if (!this.config.vehicleIdOrVin) {
+      throw new Error('TESLA_VIN not configured — cannot call Tessie API without a vehicle VIN');
+    }
     const url = `${this.config.baseUrl}${endpoint}`;
 
     const headers = {
