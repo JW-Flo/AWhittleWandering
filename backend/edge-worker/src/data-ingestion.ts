@@ -60,6 +60,9 @@ interface IngestionResult {
   timestamp: string;
 }
 
+const FULL_HISTORY_START_UNIX = Math.floor(new Date('2012-01-01T00:00:00Z').getTime() / 1000);
+const HISTORICAL_WINDOW_SECONDS = 30 * 24 * 60 * 60;
+
 export class TeslaDataIngestion {
   private config: TessieConfig;
   private db: D1Database;
@@ -137,6 +140,109 @@ export class TeslaDataIngestion {
       now,
       now
     ).run();
+  }
+
+  private async ensureJourneyRecord(journeyId: string, startDate: string, status: 'active' | 'completed' = 'active'): Promise<void> {
+    const now = new Date().toISOString();
+    await this.db.prepare(
+      `INSERT OR IGNORE INTO journeys (id, vehicle_id, name, description, start_date, target_states, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      journeyId,
+      'midnight-shadow',
+      `Tessie Journey ${startDate}`,
+      'Auto-recognized Tessie journey from driving activity',
+      startDate,
+      48,
+      status,
+      now,
+      now
+    ).run();
+  }
+
+  private async resolveJourneyIdForDrive(startedAtIso: string): Promise<string> {
+    const startedAtMs = new Date(startedAtIso).getTime();
+    const prevDrive = await this.db.prepare(
+      `SELECT d.journey_id, d.ended_at
+       FROM drives d
+       WHERE d.vehicle_id = ? AND d.started_at < ?
+       ORDER BY d.started_at DESC
+       LIMIT 1`
+    ).bind('midnight-shadow', startedAtIso).first<{ journey_id?: string; ended_at?: string }>();
+
+    if (prevDrive?.journey_id && prevDrive.ended_at) {
+      const prevEndedMs = new Date(prevDrive.ended_at).getTime();
+      const gapHours = Number.isFinite(prevEndedMs) ? (startedAtMs - prevEndedMs) / (1000 * 60 * 60) : Number.POSITIVE_INFINITY;
+      if (gapHours <= 16) {
+        return prevDrive.journey_id;
+      }
+    }
+
+    const datePrefix = startedAtIso.slice(0, 10).replace(/-/g, '');
+    const existingCount = await this.db.prepare(
+      `SELECT COUNT(*) as cnt FROM journeys WHERE id LIKE ?`
+    ).bind(`auto-${datePrefix}-%`).first<{ cnt?: number }>();
+    const index = ((existingCount?.cnt || 0) + 1).toString().padStart(2, '0');
+    const journeyId = `auto-${datePrefix}-${index}`;
+    await this.ensureJourneyRecord(journeyId, startedAtIso.slice(0, 10));
+    return journeyId;
+  }
+
+  private async resolveJourneyIdForCharge(startedAtIso: string): Promise<string> {
+    const matchingJourney = await this.db.prepare(
+      `SELECT id FROM journeys
+       WHERE vehicle_id = ? AND start_date <= date(?)
+         AND (end_date IS NULL OR end_date >= date(?))
+       ORDER BY start_date DESC
+       LIMIT 1`
+    ).bind('midnight-shadow', startedAtIso, startedAtIso).first<{ id?: string }>();
+
+    if (matchingJourney?.id) return matchingJourney.id;
+
+    const fallbackJourney = await this.db.prepare(
+      `SELECT journey_id as id FROM drives
+       WHERE vehicle_id = ? AND started_at <= ?
+       ORDER BY started_at DESC
+       LIMIT 1`
+    ).bind('midnight-shadow', startedAtIso).first<{ id?: string }>();
+
+    if (fallbackJourney?.id) return fallbackJourney.id;
+
+    const date = startedAtIso.slice(0, 10);
+    const journeyId = `auto-${date.replace(/-/g, '')}-00`;
+    await this.ensureJourneyRecord(journeyId, date);
+    return journeyId;
+  }
+
+  private async fetchTimeSeriesResults(endpoint: 'drives' | 'charges'): Promise<any[]> {
+    const latest = await this.db.prepare(
+      `SELECT MAX(started_at) as latest FROM ${endpoint}`
+    ).first<{ latest?: string }>();
+
+    let fromUnix = FULL_HISTORY_START_UNIX;
+    if (latest?.latest) {
+      const latestMs = new Date(latest.latest).getTime();
+      if (!Number.isNaN(latestMs)) {
+        fromUnix = Math.max(FULL_HISTORY_START_UNIX, Math.floor((latestMs - 2 * 24 * 60 * 60 * 1000) / 1000));
+      }
+    }
+
+    const nowUnix = Math.floor(Date.now() / 1000);
+    const allResults: any[] = [];
+
+    while (fromUnix <= nowUnix) {
+      const toUnix = Math.min(nowUnix, fromUnix + HISTORICAL_WINDOW_SECONDS - 1);
+      const payload = await this.callTessieAPI(`/${this.config.vehicleIdOrVin}/${endpoint}?from=${fromUnix}&to=${toUnix}`);
+      const chunk = Array.isArray((payload as any)?.results)
+        ? (payload as any).results
+        : (Array.isArray(payload) ? payload : []);
+      allResults.push(...chunk);
+
+      if (toUnix >= nowUnix) break;
+      fromUnix = toUnix + 1;
+    }
+
+    return allResults;
   }
 
 
@@ -287,17 +393,7 @@ export class TeslaDataIngestion {
     
     try {
       await this.ensureVehicleAndJourney();
-      // Get drives from last 30 days
-      const thirtyDaysAgo = Math.floor((Date.now() - (30 * 24 * 60 * 60 * 1000)) / 1000);
-      const now = Math.floor(Date.now() / 1000);
-      
-      const drivesData = await this.callTessieAPI(
-        `/${this.config.vehicleIdOrVin}/drives?from=${thirtyDaysAgo}&to=${now}`
-      );
-
-      const driveResults = Array.isArray((drivesData as any)?.results)
-        ? (drivesData as any).results
-        : (Array.isArray(drivesData) ? drivesData : []);
+      const driveResults = await this.fetchTimeSeriesResults('drives');
       if (!driveResults.length) {
         logger.warn('No drives data received');
         return { success: true, recordsProcessed: 0, errors: [], timestamp: new Date().toISOString() };
@@ -306,7 +402,13 @@ export class TeslaDataIngestion {
       let recordsProcessed = 0;
       const errors: string[] = [];
 
-      for (const drive of driveResults) {
+      const sortedDrives = [...driveResults].sort((a: any, b: any) => {
+        const aTs = this.normalizeIso(a?.started_at);
+        const bTs = this.normalizeIso(b?.started_at);
+        return (aTs ? new Date(aTs).getTime() : 0) - (bTs ? new Date(bTs).getTime() : 0);
+      });
+
+      for (const drive of sortedDrives) {
         try {
           const startedAt = this.normalizeIso(drive.started_at);
           
@@ -367,6 +469,8 @@ export class TeslaDataIngestion {
             );
           }
           
+          const journeyId = await this.resolveJourneyIdForDrive(startedAt);
+
           await this.db.prepare(`
             INSERT OR REPLACE INTO drives (
               tessie_id, journey_id, vehicle_id, started_at, ended_at,
@@ -377,7 +481,7 @@ export class TeslaDataIngestion {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `).bind(
             drive.id,
-            'continental-usa-2025',
+            journeyId,
             'midnight-shadow',
             startedAt,
             endedAt,
@@ -406,7 +510,7 @@ export class TeslaDataIngestion {
               if (startState) {
                 await updateStatesVisited(
                   this.db,
-                  'continental-usa-2025',
+                  journeyId,
                   startState.code,
                   startState.name,
                   drive.starting_latitude,
@@ -427,7 +531,7 @@ export class TeslaDataIngestion {
               if (endState) {
                 await updateStatesVisited(
                   this.db,
-                  'continental-usa-2025',
+                  journeyId,
                   endState.code,
                   endState.name,
                   drive.ending_latitude,
@@ -475,17 +579,7 @@ export class TeslaDataIngestion {
     
     try {
       await this.ensureVehicleAndJourney();
-      // Get charges from last 30 days
-      const thirtyDaysAgo = Math.floor((Date.now() - (30 * 24 * 60 * 60 * 1000)) / 1000);
-      const now = Math.floor(Date.now() / 1000);
-      
-      const chargesData = await this.callTessieAPI(
-        `/${this.config.vehicleIdOrVin}/charges?from=${thirtyDaysAgo}&to=${now}`
-      );
-
-      const chargeResults = Array.isArray((chargesData as any)?.results)
-        ? (chargesData as any).results
-        : (Array.isArray(chargesData) ? chargesData : []);
+      const chargeResults = await this.fetchTimeSeriesResults('charges');
       if (!chargeResults.length) {
         logger.warn('No charges data received');
         return { success: true, recordsProcessed: 0, errors: [], timestamp: new Date().toISOString() };
@@ -523,6 +617,8 @@ export class TeslaDataIngestion {
               errors.push(`Charge ${charge.id}: Invalid ended_at timestamp: ${charge.ended_at}, treating as ongoing`);
             }
           }
+
+          const journeyId = await this.resolveJourneyIdForCharge(startedAt);
           
           await this.db.prepare(`
             INSERT OR REPLACE INTO charges (
@@ -533,7 +629,7 @@ export class TeslaDataIngestion {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `).bind(
             charge.id,
-            'continental-usa-2025',
+            journeyId,
             'midnight-shadow',
             startedAt,
             endedAt,
@@ -579,47 +675,56 @@ export class TeslaDataIngestion {
     logger.info('Updating journey metadata');
 
     try {
-      // Calculate journey statistics from actual data
-      const stats = await this.db.prepare(`
-        SELECT 
-          COUNT(DISTINCT d.id) as total_drives,
-          COALESCE(SUM(d.distance_miles), 0) as total_miles,
-          MIN(d.started_at) as journey_start,
-          MAX(d.ended_at) as journey_end
-        FROM drives d 
-        WHERE d.journey_id = 'continental-usa-2025'
-      `).first();
+      const journeyRows = await this.db.prepare(`SELECT id FROM journeys WHERE vehicle_id = ?`).bind('midnight-shadow').all<{ id: string }>();
+      const journeyIds = (journeyRows.results || []).map((row) => row.id);
 
-      const charges = await this.db.prepare(
-        `SELECT COUNT(*) as total_charges, COALESCE(SUM(cost_usd), 0) as total_cost
-         FROM charges WHERE journey_id = 'continental-usa-2025'`
-      ).first();
+      for (const journeyId of journeyIds) {
+        const stats = await this.db.prepare(`
+          SELECT 
+            COUNT(DISTINCT d.id) as total_drives,
+            COALESCE(SUM(d.distance_miles), 0) as total_miles,
+            MIN(d.started_at) as journey_start,
+            MAX(d.ended_at) as journey_end
+          FROM drives d 
+          WHERE d.journey_id = ?
+        `).bind(journeyId).first();
 
-      const statesVisited = await this.db.prepare(
-        `SELECT COUNT(*) as cnt FROM states_visited WHERE journey_id = 'continental-usa-2025'`
-      ).first();
+        const charges = await this.db.prepare(
+          `SELECT COUNT(*) as total_charges, COALESCE(SUM(cost_usd), 0) as total_cost
+           FROM charges WHERE journey_id = ?`
+        ).bind(journeyId).first();
 
-      await this.db.prepare(
-        `UPDATE journeys
-         SET total_miles = ?,
-             total_drives = ?,
-             total_charges = ?,
-             total_states = ?,
-             total_cost_usd = ?,
-             start_date = COALESCE(start_date, ?),
-             end_date = ?,
-             updated_at = datetime('now')
-         WHERE id = ?`
-      ).bind(
-        (stats as any)?.total_miles || 0,
-        (stats as any)?.total_drives || 0,
-        (charges as any)?.total_charges || 0,
-        (statesVisited as any)?.cnt || 0,
-        (charges as any)?.total_cost || 0,
-        (stats as any)?.journey_start || '2025-06-01',
-        (stats as any)?.journey_end || null,
-        'continental-usa-2025'
-      ).run();
+        const statesVisited = await this.db.prepare(
+          `SELECT COUNT(*) as cnt FROM states_visited WHERE journey_id = ?`
+        ).bind(journeyId).first();
+
+        const journeyEnd = (stats as any)?.journey_end || null;
+        const isActive = journeyEnd && (Date.now() - new Date(journeyEnd).getTime()) <= (24 * 60 * 60 * 1000);
+
+        await this.db.prepare(
+          `UPDATE journeys
+           SET total_miles = ?,
+               total_drives = ?,
+               total_charges = ?,
+               total_states = ?,
+               total_cost_usd = ?,
+               start_date = COALESCE(start_date, date(?)),
+               end_date = date(?),
+               status = ?,
+               updated_at = datetime('now')
+           WHERE id = ?`
+        ).bind(
+          (stats as any)?.total_miles || 0,
+          (stats as any)?.total_drives || 0,
+          (charges as any)?.total_charges || 0,
+          (statesVisited as any)?.cnt || 0,
+          (charges as any)?.total_cost || 0,
+          (stats as any)?.journey_start || '2025-06-01',
+          journeyEnd,
+          isActive ? 'active' : 'completed',
+          journeyId
+        ).run();
+      }
 
       logger.info('Journey metadata updated');
     } catch (error) {
