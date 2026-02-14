@@ -154,7 +154,7 @@ export class TeslaDataIngestion {
       `Tessie Journey ${startDate}`,
       'Auto-recognized Tessie journey from driving activity',
       startDate,
-      48,
+      null,
       status,
       now,
       now
