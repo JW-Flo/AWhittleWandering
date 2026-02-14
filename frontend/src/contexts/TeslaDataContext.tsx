@@ -4,23 +4,41 @@ import { api } from '@/lib/api-config';
 interface DriveData {
   id: number;
   date: string;
-  startTime: string;
-  endTime: string;
+  startTime?: string | null;
+  endTime?: string | null;
   distance: number;
+  duration?: number;
+  durationMinutes?: number;
   startLocation: string;
   endLocation: string;
-  startCoordinates: { lat: number; lng: number };
-  endCoordinates: { lat: number; lng: number };
+  startCoordinates?: { lat: number; lng: number } | null;
+  endCoordinates?: { lat: number; lng: number } | null;
+  startState?: string | null;
+  endState?: string | null;
+  energyUsed?: number;
+  startBattery?: number | null;
+  endBattery?: number | null;
 }
 
 interface ChargeData {
   id: string;
   date: string;
-  startTime: string;
-  endTime: string;
+  startTime?: string | null;
+  endTime?: string | null;
   location: string;
+  coordinates?: { lat: number; lng: number } | null;
   energyAdded: number;
-  cost: number;
+  duration?: number;
+  chargerType?: string | null;
+  startBattery?: number | null;
+  endBattery?: number | null;
+  cost?: number | null;
+}
+
+interface RoutePoint {
+  lat: number;
+  lng: number;
+  timestamp: string;
 }
 
 interface TeslaData {
@@ -49,6 +67,7 @@ interface TeslaData {
     vehicle: {
       odometer: number;
       speed: number;
+      heading?: number;
       temperature: {
         inside: number;
         outside: number;
@@ -59,6 +78,7 @@ interface TeslaData {
     drives: DriveData[];
     charges: ChargeData[];
   };
+  routePath?: RoutePoint[];
   tessieStatus: {
     connected: boolean;
     lastUpdate: string;

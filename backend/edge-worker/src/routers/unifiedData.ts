@@ -59,6 +59,7 @@ async function buildUnifiedData(c: any, limit: number, journeyId: string, vehicl
       vehicle: { odometer: 0, speed: 0, heading: 0, temperature: { inside: undefined as number | undefined, outside: undefined as number | undefined } }
     },
     timeline: { drives: [] as any[], charges: [] as any[] },
+    routePath: [] as Array<{ lat: number; lng: number; timestamp: string }>,
     liveData: { timestamp: Date.now(), vehicleState: {}, recentActivity: {} as any },
     tessieStatus: { connected: !!c.env?.TESSIE_API_TOKEN, lastUpdate: new Date().toISOString(), dataFreshness: 'unknown' as 'live' | 'cached' | 'unknown', error: undefined as string | undefined }
   };
@@ -170,7 +171,11 @@ async function buildUnifiedData(c: any, limit: number, journeyId: string, vehicl
 
     // Timeline
     const drives = await db.prepare(
-      `SELECT id, started_at, ended_at, start_address, end_address, distance_miles, duration_minutes, energy_used_kwh
+      `SELECT id, started_at, ended_at, start_address, end_address,
+              start_latitude, start_longitude, end_latitude, end_longitude,
+              start_state, end_state,
+              distance_miles, duration_minutes, energy_used_kwh,
+              start_battery_level, end_battery_level
        FROM drives
        WHERE journey_id = ?
        ORDER BY started_at DESC
@@ -178,7 +183,9 @@ async function buildUnifiedData(c: any, limit: number, journeyId: string, vehicl
     ).bind(journeyId, limit).all();
 
     const charges = await db.prepare(
-      `SELECT id, started_at, ended_at, location, energy_added_kwh, duration_minutes
+      `SELECT id, started_at, ended_at, location, latitude, longitude,
+              energy_added_kwh, duration_minutes, charger_type,
+              start_battery_level, end_battery_level, cost_usd
        FROM charges
        WHERE journey_id = ?
        ORDER BY started_at DESC
@@ -191,19 +198,38 @@ async function buildUnifiedData(c: any, limit: number, journeyId: string, vehicl
     skeleton.timeline.drives = driveRows.map((d: any) => ({
       id: d.id,
       date: isoToDateOnly(d.started_at) || isoToDateOnly(d.ended_at) || skeleton.overview.startDate,
+      startTime: d.started_at || null,
+      endTime: d.ended_at || null,
       startLocation: d.start_address || 'Unknown',
       endLocation: d.end_address || 'Unknown',
+      startCoordinates: (d.start_latitude && d.start_longitude)
+        ? { lat: Number(d.start_latitude), lng: Number(d.start_longitude) } : null,
+      endCoordinates: (d.end_latitude && d.end_longitude)
+        ? { lat: Number(d.end_latitude), lng: Number(d.end_longitude) } : null,
+      startState: d.start_state || null,
+      endState: d.end_state || null,
       distance: Number(d.distance_miles || 0),
       duration: Number(d.duration_minutes || 0),
-      energyUsed: Number(d.energy_used_kwh || 0)
+      durationMinutes: Number(d.duration_minutes || 0),
+      energyUsed: Number(d.energy_used_kwh || 0),
+      startBattery: d.start_battery_level != null ? Number(d.start_battery_level) : null,
+      endBattery: d.end_battery_level != null ? Number(d.end_battery_level) : null
     }));
 
     skeleton.timeline.charges = chargeRows.map((ch: any) => ({
       id: ch.id,
       date: isoToDateOnly(ch.started_at) || isoToDateOnly(ch.ended_at) || skeleton.overview.startDate,
+      startTime: ch.started_at || null,
+      endTime: ch.ended_at || null,
       location: ch.location || 'Unknown',
+      coordinates: (ch.latitude && ch.longitude)
+        ? { lat: Number(ch.latitude), lng: Number(ch.longitude) } : null,
       energyAdded: Number(ch.energy_added_kwh || 0),
-      duration: Number(ch.duration_minutes || 0)
+      duration: Number(ch.duration_minutes || 0),
+      chargerType: ch.charger_type || null,
+      startBattery: ch.start_battery_level != null ? Number(ch.start_battery_level) : null,
+      endBattery: ch.end_battery_level != null ? Number(ch.end_battery_level) : null,
+      cost: ch.cost_usd != null ? Number(ch.cost_usd) : null
     }));
 
     skeleton.liveData.recentActivity = {
@@ -211,10 +237,31 @@ async function buildUnifiedData(c: any, limit: number, journeyId: string, vehicl
       lastCharge: skeleton.timeline.charges[0]
     };
 
+    // Route path: ordered coordinates from ALL drives for the map polyline
+    const routePathRows = await db.prepare(
+      `SELECT start_latitude, start_longitude, end_latitude, end_longitude, started_at
+       FROM drives
+       WHERE journey_id = ? AND start_latitude IS NOT NULL AND end_latitude IS NOT NULL
+         AND start_latitude != 0 AND end_latitude != 0
+       ORDER BY started_at ASC`
+    ).bind(journeyId).all();
+    const rpRows = (routePathRows as any)?.results || [];
+    const routeCoords: Array<{ lat: number; lng: number; timestamp: string }> = [];
+    for (const r of rpRows) {
+      if (r.start_latitude && r.start_longitude) {
+        routeCoords.push({ lat: Number(r.start_latitude), lng: Number(r.start_longitude), timestamp: r.started_at });
+      }
+      if (r.end_latitude && r.end_longitude) {
+        routeCoords.push({ lat: Number(r.end_latitude), lng: Number(r.end_longitude), timestamp: r.started_at });
+      }
+    }
+    skeleton.routePath = routeCoords;
+
     return skeleton;
   } catch (err: any) {
-    logger.error('unified.build.error', { error: err?.message });
-    skeleton.tessieStatus.error = 'Failed to build unified data';
+    const errMsg = err?.message || String(err);
+    logger.error('unified.build.error', { error: errMsg, stack: err?.stack });
+    skeleton.tessieStatus.error = `Failed to build unified data: ${errMsg}`;
     return skeleton;
   }
 }
@@ -247,6 +294,7 @@ async function handleUnifiedData(c: any, journeyRef?: string) {
       overview: { tripName: 'Error', vehicle: 'Error', startDate: new Date().toISOString().slice(0, 10), daysElapsed: 0, totalMiles: 0, currentOdometer: 0, statesVisited: 0, totalStates: 48 },
       currentStatus: { battery: { level: 0, range: 0, charging: 'Unknown' }, location: { coordinates: { lat: 0, lng: 0 }, city: 'Unknown', state: 'Unknown', lastUpdate: new Date().toISOString() }, vehicle: { odometer: 0, speed: 0, heading: 0, temperature: { inside: undefined, outside: undefined } } },
       timeline: { drives: [], charges: [] },
+      routePath: [],
       liveData: { timestamp: Date.now(), vehicleState: {}, recentActivity: {} },
       tessieStatus: { connected: false, lastUpdate: new Date().toISOString(), dataFreshness: 'unknown' as const, error: err?.message || 'Unknown error' }
     };

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,9 +10,17 @@ import FollowButton from "@/components/follower/FollowButton";
 import EmptyState from "@/components/common/EmptyState";
 import { MapPin } from "lucide-react";
 
+const LazyTeslaMap = lazy(() => import("@/components/LazyTeslaMap"));
+
+type RoutePoint = { lat: number; lng: number; timestamp: string };
+
 type UnifiedData = NarrativeUnifiedData & {
-  overview?: NarrativeUnifiedData["overview"] & { tripName?: string };
-  currentStatus?: NarrativeUnifiedData["currentStatus"] & { battery?: { level?: number } };
+  overview?: NarrativeUnifiedData["overview"] & { tripName?: string; totalMiles?: number };
+  currentStatus?: NarrativeUnifiedData["currentStatus"] & {
+    battery?: { level?: number; range?: number; charging?: string };
+    vehicle?: { speed?: number; heading?: number };
+  };
+  routePath?: RoutePoint[];
 };
 
 const safePercent = (num?: number, den?: number) => {
@@ -34,6 +42,7 @@ const FollowerView: React.FC = () => {
   const [data, setData] = useState<UnifiedData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [appConfig, setAppConfig] = useState<{ mapboxToken?: string | null } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,7 +57,6 @@ const FollowerView: React.FC = () => {
         if (!res.ok) throw new Error(`Unable to load journey (${res.status})`);
         const json = (await res.json()) as unknown;
         if (cancelled) return;
-        // External data is untrusted — do minimal null-guarding and shape tolerance.
         setData((json ?? null) as UnifiedData | null);
       } catch (e) {
         if (cancelled) return;
@@ -63,13 +71,50 @@ const FollowerView: React.FC = () => {
     };
   }, [id]);
 
+  // Fetch Mapbox token for the map
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${api.baseUrl}/api/v1/config`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((cfg) => { if (!cancelled && cfg) setAppConfig(cfg as any); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
   const journeyTitle = data?.overview?.tripName || "A Whittle Wandering";
   const locationLabel = data?.currentStatus?.location?.state;
   const days = data?.overview?.daysElapsed;
   const statesVisited = data?.overview?.statesVisited;
   const totalStates = data?.overview?.totalStates;
+  const totalMiles = data?.overview?.totalMiles;
   const arcPct = useMemo(() => safePercent(statesVisited, totalStates), [statesVisited, totalStates]);
   const lastUpdate = formatDate(data?.currentStatus?.location?.lastUpdate);
+
+  const routeLocations = useMemo(() => {
+    if (data?.routePath && data.routePath.length > 0) {
+      return data.routePath.filter(
+        (p) => typeof p.lat === "number" && typeof p.lng === "number" && (p.lat !== 0 || p.lng !== 0)
+      );
+    }
+    return [];
+  }, [data]);
+
+  const vehicleLocation = useMemo(() => {
+    const loc = data?.currentStatus?.location;
+    if (!loc || !loc.coordinates || (loc.coordinates.lat === 0 && loc.coordinates.lng === 0)) return undefined;
+    return {
+      latitude: loc.coordinates.lat,
+      longitude: loc.coordinates.lng,
+      heading: data?.currentStatus?.vehicle?.heading ?? 0,
+      speed: data?.currentStatus?.vehicle?.speed ?? 0,
+    };
+  }, [data]);
+
+  const hasJourneyData = !!(data && (
+    (data.overview?.totalMiles && data.overview.totalMiles > 0) ||
+    (data.overview?.statesVisited && data.overview.statesVisited > 0) ||
+    (data.timeline?.drives && data.timeline.drives.length > 0)
+  ));
 
   return (
     <div className="journey-typography min-h-screen bg-background text-foreground overflow-y-auto">
@@ -98,7 +143,9 @@ const FollowerView: React.FC = () => {
           <Card className="hero-card">
             <CardHeader className="relative z-10">
               <CardTitle className="text-3xl md:text-4xl leading-tight font-semibold tracking-tight">
-                {locationLabel ? `Day ${days ?? "—"} — ${locationLabel}` : "Journey in progress"}
+                {locationLabel && locationLabel !== "Unknown"
+                  ? `Day ${days ?? "—"} — ${locationLabel}`
+                  : "Journey in progress"}
               </CardTitle>
               <p className="mt-3 text-sm md:text-base text-foreground/80 leading-relaxed max-w-2xl">
                 Orientation, not surveillance. This view is here to help you feel present—where the traveler
@@ -110,7 +157,12 @@ const FollowerView: React.FC = () => {
                     {statesVisited} of {totalStates} states
                   </Badge>
                 )}
-                {typeof data?.currentStatus?.battery?.level === "number" && (
+                {typeof totalMiles === "number" && totalMiles > 0 && (
+                  <Badge variant="secondary">
+                    {Math.round(totalMiles).toLocaleString()} miles
+                  </Badge>
+                )}
+                {typeof data?.currentStatus?.battery?.level === "number" && data.currentStatus.battery.level > 0 && (
                   <Badge variant="outline">Battery {Math.round(data.currentStatus.battery.level)}%</Badge>
                 )}
                 {lastUpdate && <Badge variant="outline">Updated {lastUpdate}</Badge>}
@@ -134,6 +186,30 @@ const FollowerView: React.FC = () => {
             </CardContent>
           </Card>
         </section>
+
+        {/* Live map */}
+        {!isLoading && hasJourneyData && (routeLocations.length > 0 || vehicleLocation) && (
+          <section className="mb-10">
+            <Card className="border-border/60 overflow-hidden">
+              <CardContent className="h-[400px] p-0">
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+                      Loading map…
+                    </div>
+                  }
+                >
+                  <LazyTeslaMap
+                    vehicleLocation={vehicleLocation}
+                    mapboxToken={appConfig?.mapboxToken || undefined}
+                    onTokenChange={() => {}}
+                    routeLocations={routeLocations}
+                  />
+                </Suspense>
+              </CardContent>
+            </Card>
+          </section>
+        )}
 
         {/* Loading skeleton */}
         {isLoading && (
@@ -170,7 +246,7 @@ const FollowerView: React.FC = () => {
         )}
 
         {/* Empty data state — backend returned skeleton data */}
-        {!isLoading && !error && data && data.overview?.totalMiles === 0 && data.overview?.statesVisited === 0 && (
+        {!isLoading && !error && data && !hasJourneyData && (
           <section className="mb-10">
             <Card className="story-card">
               <CardContent className="p-6">
@@ -184,7 +260,7 @@ const FollowerView: React.FC = () => {
           </section>
         )}
 
-        {/* Narrative skeleton */}
+        {/* Narrative */}
         <JourneyNarrative data={data} />
       </main>
     </div>

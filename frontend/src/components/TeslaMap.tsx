@@ -175,8 +175,19 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
       });
       map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
       map.current.on('load', () => {
-        addJourneyWaypoints();
         addJourneyRoute();
+        addJourneyWaypoints();
+
+        // Fit bounds to show the entire route
+        if (routeLocations && routeLocations.length > 1) {
+          const lngs = routeLocations.map(l => l.lng);
+          const lats = routeLocations.map(l => l.lat);
+          const bounds: [[number, number], [number, number]] = [
+            [Math.min(...lngs), Math.min(...lats)],
+            [Math.max(...lngs), Math.max(...lats)]
+          ];
+          map.current!.fitBounds(bounds, { padding: 60, maxZoom: 12 });
+        }
       });
     })();
     return () => { cancelled = true; if (map.current) map.current.remove(); };
@@ -186,29 +197,34 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
     if (!map.current || !vehicleLocation) return;
 
     // Remove existing marker
-  if (vehicleMarker.current) { vehicleMarker.current.remove(); }
+    if (vehicleMarker.current) { vehicleMarker.current.remove(); }
 
-    // Create Tesla vehicle marker
+    // Create Tesla vehicle marker with heading indicator
     const el = document.createElement('div');
     el.className = 'tesla-marker';
+    const rotation = vehicleLocation.heading ?? 0;
     el.innerHTML = `
-      <div class="w-6 h-6 bg-primary rounded-full border-2 border-background shadow-lg flex items-center justify-center">
-        <div class="w-2 h-2 bg-background rounded-full"></div>
+      <div class="relative">
+        <div class="w-8 h-8 bg-primary rounded-full border-2 border-background shadow-lg flex items-center justify-center animate-pulse">
+          <div class="w-3 h-3 bg-background rounded-full"></div>
+        </div>
+        <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[5px] border-r-[5px] border-b-[8px] border-l-transparent border-r-transparent border-b-primary"
+             style="transform: translateX(-50%) rotate(${rotation}deg); transform-origin: center bottom;"></div>
       </div>
     `;
 
-  // Add new marker (mapbox already loaded when map created)
-  if (mapboxglRef.current) {
-    vehicleMarker.current = new mapboxglRef.current.Marker(el)
-        .setLngLat([vehicleLocation.longitude, vehicleLocation.latitude])
-        .addTo(map.current);
-  }
+    // Add new marker (mapbox already loaded when map created)
+    if (mapboxglRef.current) {
+      vehicleMarker.current = new mapboxglRef.current.Marker(el)
+          .setLngLat([vehicleLocation.longitude, vehicleLocation.latitude])
+          .addTo(map.current);
+    }
 
-    // Only center on vehicle if it's the first time or user opts in
+    // Fit bounds to include vehicle and route, or fly to vehicle if no route
     if (!map.current.getSource('journey-route')) {
       map.current.flyTo({
         center: [vehicleLocation.longitude, vehicleLocation.latitude],
-        zoom: 15,
+        zoom: 10,
         essential: true
       });
     }

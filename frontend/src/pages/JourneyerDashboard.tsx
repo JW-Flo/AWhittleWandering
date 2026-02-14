@@ -68,14 +68,24 @@ const JourneyerDashboardInner: React.FC = () => {
     chargingRaw.includes("charging") ? "charging" : chargingRaw.includes("complete") ? "complete" : "disconnected";
 
   const routeLocations = useMemo(() => {
+    // Prefer the pre-built routePath (full ordered path from all drives)
+    if (data?.routePath && data.routePath.length > 0) {
+      return data.routePath.filter(
+        (p) => typeof p.lat === "number" && typeof p.lng === "number" && (p.lat !== 0 || p.lng !== 0)
+      );
+    }
+    // Fallback: build from drive endpoints
     const drives = data?.timeline?.drives || [];
-    return drives
-      .map((drive) => ({
-        lat: drive.endCoordinates?.lat,
-        lng: drive.endCoordinates?.lng,
-        timestamp: drive.endTime,
-      }))
-      .filter((p) => typeof p.lat === "number" && typeof p.lng === "number");
+    const points: Array<{ lat: number; lng: number; timestamp: string }> = [];
+    for (const drive of drives) {
+      if (drive.startCoordinates?.lat && drive.startCoordinates?.lng) {
+        points.push({ lat: drive.startCoordinates.lat, lng: drive.startCoordinates.lng, timestamp: drive.startTime || drive.date });
+      }
+      if (drive.endCoordinates?.lat && drive.endCoordinates?.lng) {
+        points.push({ lat: drive.endCoordinates.lat, lng: drive.endCoordinates.lng, timestamp: drive.endTime || drive.date });
+      }
+    }
+    return points;
   }, [data]);
 
   const currentLocation = data?.currentStatus?.location;
@@ -180,18 +190,18 @@ const JourneyerDashboardInner: React.FC = () => {
                     >
                       <LazyTeslaMap
                         vehicleLocation={
-                          currentLocation
+                          currentLocation && currentLocation.coordinates.lat !== 0
                             ? {
                                 latitude: currentLocation.coordinates.lat,
                                 longitude: currentLocation.coordinates.lng,
-                                heading: 0,
+                                heading: data?.currentStatus?.vehicle?.heading ?? 0,
                                 speed: data?.currentStatus?.vehicle?.speed ?? 0,
                               }
                             : undefined
                         }
                         mapboxToken={appConfig?.mapboxToken || undefined}
                         onTokenChange={() => {}}
-                        routeLocations={routeLocations as any}
+                        routeLocations={routeLocations}
                       />
                     </Suspense>
                   </CardContent>

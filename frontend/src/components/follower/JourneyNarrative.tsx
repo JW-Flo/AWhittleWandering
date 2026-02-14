@@ -12,18 +12,24 @@ export type NarrativeUnifiedData = {
     totalStates?: number;
   };
   currentStatus?: {
-    location?: { state?: string; lastUpdate?: string };
+    location?: { state?: string; lastUpdate?: string; city?: string };
   };
   timeline?: {
     drives?: Array<{
       id: number;
       date: string;
+      startTime?: string | null;
+      endTime?: string | null;
       startLocation?: string;
       endLocation: string;
       distance: number;
-      startState?: string;
-      endState?: string;
+      duration?: number;
       durationMinutes?: number;
+      startState?: string | null;
+      endState?: string | null;
+      startBattery?: number | null;
+      endBattery?: number | null;
+      energyUsed?: number;
     }>;
   };
 };
@@ -44,7 +50,11 @@ const formatDuration = (minutes?: number) => {
 };
 
 const JourneyNarrative: React.FC<{ data: NarrativeUnifiedData | null }> = ({ data }) => {
-  const locationLabel = data?.currentStatus?.location?.state;
+  const state = data?.currentStatus?.location?.state;
+  const city = data?.currentStatus?.location?.city;
+  const locationLabel = city && city !== "Unknown" && state && state !== "Unknown"
+    ? `${city}, ${state}`
+    : (state && state !== "Unknown" ? state : null);
   const lastUpdate = safeDate(data?.currentStatus?.location?.lastUpdate)?.toLocaleString();
   const drives = data?.timeline?.drives || [];
 
@@ -54,7 +64,6 @@ const JourneyNarrative: React.FC<{ data: NarrativeUnifiedData | null }> = ({ dat
         <h2 className="text-sm font-medium text-muted-foreground">Now</h2>
         <p className="mt-2 text-lg leading-relaxed max-w-2xl">
           {locationLabel
-            // Intentionally non-precise language.
             ? `Moving through ${locationLabel}. The details don't need to be loud to be meaningful—this is a chapter in motion.`
             : `The journey is in motion. When the next meaningful segment arrives, it will appear here as a chapter.`}
         </p>
@@ -71,36 +80,44 @@ const JourneyNarrative: React.FC<{ data: NarrativeUnifiedData | null }> = ({ dat
       <div>
         <h2 className="text-sm font-medium text-muted-foreground">Moments</h2>
         <div className="mt-4 space-y-4">
-          {drives.slice(0, 12).map((d) => {
+          {drives.slice(0, 20).map((d) => {
             const miles = Number.isFinite(d.distance) ? Math.round(d.distance) : null;
-            const duration = formatDuration(d.durationMinutes);
-            const from = d.startLocation;
-            const to = d.endLocation;
+            const dur = d.durationMinutes ?? d.duration;
+            const duration = formatDuration(dur);
+            const from = d.startLocation && d.startLocation !== "Unknown" ? d.startLocation : null;
+            const to = d.endLocation && d.endLocation !== "Unknown" ? d.endLocation : null;
+
+            const isCrossing = !!(d.startState && d.endState && d.startState !== d.endState);
 
             // Build a richer body with from/to, distance, and duration
             const parts: string[] = [];
-            if (from && to) {
-              parts.push(`${from} to ${to}`);
+            if (from && to && from !== to) {
+              parts.push(`${from} → ${to}`);
             } else if (to) {
-              parts.push(`Arriving in ${to}`);
+              parts.push(to);
+            } else if (from) {
+              parts.push(from);
             }
-            if (miles) parts.push(`${miles} miles`);
+            if (miles && miles > 0) parts.push(`${miles} mi`);
             if (duration) parts.push(duration);
+            if (typeof d.energyUsed === "number" && d.energyUsed > 0) {
+              parts.push(`${d.energyUsed.toFixed(1)} kWh`);
+            }
             const body = parts.length > 0
-              ? parts.join(" — ") + "."
+              ? parts.join(" — ")
               : "A chapter in the journey.";
 
-            // Location label from state info (e.g. "TX → NM")
-            const stateLabel = d.startState && d.endState && d.startState !== d.endState
+            // Location label from state info (e.g. "NC → SC")
+            const stateLabel = isCrossing
               ? `${d.startState} → ${d.endState}`
               : d.endState || d.startState || undefined;
 
             return (
               <Moment
                 key={d.id}
-                kind={d.startState !== d.endState && d.startState && d.endState ? "milestone" : "segment"}
-                title={to || "On the road"}
-                timestamp={d.date}
+                kind={isCrossing ? "milestone" : "segment"}
+                title={isCrossing ? `Crossed into ${d.endState}` : (to || from || "On the road")}
+                timestamp={d.startTime || d.date}
                 body={body}
                 locationLabel={stateLabel}
               />

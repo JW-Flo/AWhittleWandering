@@ -79,12 +79,17 @@ export class CronDataController {
   /**
    * Full data sync - runs every 30 minutes
    * Comprehensive update of all Tesla data.
-   * Skips Tessie API calls when no journey is active.
+   * Bootstraps vehicle/journey records if missing, then skips if no active journey.
    */
   async fullDataSync(): Promise<Response> {
     const startTime = Date.now();
 
     try {
+      // Bootstrap: ensure vehicle and journey rows exist BEFORE checking guard.
+      // This solves the chicken-and-egg problem where hasActiveJourney() returns
+      // false because ensureVehicleAndJourney() was never called.
+      await this.ingestion.ensureVehicleAndJourney();
+
       if (!await this.hasActiveJourney()) {
         logger.info('full_sync skipped: no active journey');
         return this.skippedResponse('full_sync');
@@ -143,6 +148,9 @@ export class CronDataController {
     const startTime = Date.now();
 
     try {
+      // Bootstrap journey row before checking guard
+      await this.ingestion.ensureVehicleAndJourney();
+
       if (!await this.hasActiveJourney()) {
         logger.info('historical_backfill skipped: no active journey');
         return this.skippedResponse('historical_backfill');
