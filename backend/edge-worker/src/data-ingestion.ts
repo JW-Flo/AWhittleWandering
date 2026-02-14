@@ -222,7 +222,7 @@ export class TeslaDataIngestion {
       // 2. Short drives (< 10 miles) after longer gap are likely casual errands, not journey
       if (currentDriveDistance < MIN_JOURNEY_DRIVE_DISTANCE_MILES) {
         // Short drive after gap > 2 hours = casual driving, start new journey
-        // (Don't fall through to other checks)
+        // Falls through to create new journey below
       } else {
         // 3. For longer drives, check additional parameters
         
@@ -236,8 +236,8 @@ export class TeslaDataIngestion {
           return prevDrive.journey_id;
         }
         
-        // If drives are far apart (> 100 miles) but gap is short (overnight stay), still continue journey
-        if (gapHours <= MAX_OVERNIGHT_GAP_HOURS) {
+        // If overnight gap with very nearby location (< 10 miles, e.g. hotel stay), continue journey
+        if (gapHours <= MAX_OVERNIGHT_GAP_HOURS && locationDistanceMiles <= 10) {
           return prevDrive.journey_id;
         }
       }

@@ -158,11 +158,11 @@ describe('TeslaDataIngestion journey recognition', () => {
     ]);
     const ingestion = new TeslaDataIngestion(db as any, 'token', 'VIN123');
 
-    // 14-hour gap, drives 400+ miles apart = new journey
+    // 14-hour gap, drives ~347 miles apart (SF to LA) = new journey
     const journeyId = await (ingestion as any).resolveJourneyIdForDrive(
       '2025-06-10T22:00:00.000Z',
       50,
-      34.0522, // Los Angeles (400+ miles away)
+      34.0522, // Los Angeles (~347 miles away)
       -118.2437
     );
 
