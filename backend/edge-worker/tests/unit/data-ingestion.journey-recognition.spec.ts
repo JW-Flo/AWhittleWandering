@@ -17,10 +17,6 @@ class FakeDb {
         return this;
       },
       async first<T = any>() {
-        if (query.includes('SELECT COUNT(*) as cnt FROM journeys WHERE id LIKE')) {
-          const next = db.firstQueue.shift();
-          return (next ?? { cnt: 0 }) as T;
-        }
         const next = db.firstQueue.shift();
         return (next ?? null) as T;
       },
@@ -58,15 +54,14 @@ describe('TeslaDataIngestion journey recognition', () => {
 
   it('creates a new auto journey when there is a long drive gap', async () => {
     const db = new FakeDb([
-      { journey_id: 'continental-usa-2025', ended_at: '2025-06-10T08:00:00Z' },
-      { cnt: 1 }
+      { journey_id: 'continental-usa-2025', ended_at: '2025-06-10T08:00:00Z' }
     ]);
     const ingestion = new TeslaDataIngestion(db as any, 'token', 'VIN123');
 
     const journeyId = await (ingestion as any).resolveJourneyIdForDrive('2025-06-11T23:00:00.000Z');
 
-    expect(journeyId).toBe('auto-20250611-02');
-    expect(db.insertedJourneyIds).toContain('auto-20250611-02');
+    expect(journeyId).toMatch(/^auto-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+    expect(db.insertedJourneyIds).toContain(journeyId);
   });
 
   it('maps charges to an existing matching journey date window', async () => {

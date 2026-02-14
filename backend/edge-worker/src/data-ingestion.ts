@@ -179,12 +179,8 @@ export class TeslaDataIngestion {
       }
     }
 
-    const datePrefix = startedAtIso.slice(0, 10).replace(/-/g, '');
-    const existingCount = await this.db.prepare(
-      `SELECT COUNT(*) as cnt FROM journeys WHERE id LIKE ?`
-    ).bind(`auto-${datePrefix}-%`).first<{ cnt?: number }>();
-    const index = ((existingCount?.cnt || 0) + 1).toString().padStart(2, '0');
-    const journeyId = `auto-${datePrefix}-${index}`;
+    // Generate a unique UUID-based journey ID to eliminate race conditions
+    const journeyId = `auto-${crypto.randomUUID()}`;
     await this.ensureJourneyRecord(journeyId, startedAtIso.slice(0, 10));
     return journeyId;
   }
