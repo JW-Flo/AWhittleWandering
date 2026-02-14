@@ -860,7 +860,10 @@
                     "type": "string"
                   }
                 },
-                "required": ["file", "journeyId"]
+                "required": [
+                  "file",
+                  "journeyId"
+                ]
               }
             }
           }
@@ -1890,6 +1893,87 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/vehicles": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Onboard or update a vehicle with purchase date",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "vin"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "example": "midnight-shadow"
+                  },
+                  "vin": {
+                    "type": "string",
+                    "pattern": "^[A-HJ-NPR-Z0-9]{17}$",
+                    "example": "5YJYGDEE5LF027324"
+                  },
+                  "display_name": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "example": "Midnight Shadow"
+                  },
+                  "model": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "example": "Model Y"
+                  },
+                  "year": {
+                    "type": "integer",
+                    "minimum": 2012,
+                    "example": 2023
+                  },
+                  "color": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "example": "Midnight Silver Metallic"
+                  },
+                  "purchased_date": {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "example": "2023-03-15",
+                    "description": "Date vehicle was purchased/delivered (YYYY-MM-DD). Used as start boundary for historical data imports."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vehicle updated"
+          },
+          "201": {
+            "description": "Vehicle created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "500": {
+            "description": "Server error"
           }
         }
       }

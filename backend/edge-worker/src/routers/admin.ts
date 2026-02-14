@@ -214,3 +214,126 @@ adminRouter.get('/data/:resource', async (c) => {
     return c.json({ ok: false, error: e?.message || 'query failed' }, 500);
   }
 });
+
+// Vehicle onboarding endpoint - allows admin to add/update vehicles with purchase date
+const vehicleOnboardSchema = z.object({
+  id: z.string().min(1).max(100),
+  vin: z.string().length(17).regex(/^[A-HJ-NPR-Z0-9]+$/i, 'Invalid VIN format'),
+  display_name: z.string().min(1).max(200).optional(),
+  model: z.string().min(1).max(50).optional(),
+  year: z.number().int().min(2012).max(new Date().getFullYear() + 1).optional(),
+  color: z.string().max(50).optional(),
+  purchased_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format').refine(
+    (dateStr) => {
+      const date = new Date(dateStr);
+      const earliest = new Date('2012-06-01');
+      const now = new Date();
+      return date >= earliest && date <= now;
+    },
+    'purchased_date must be between 2012-06-01 and today'
+  ).optional()
+});
+
+adminRouter.post('/vehicles', async (c) => {
+  const env = c.env;
+  if (!env?.TESLA_DB) return c.json({ ok: false, error: 'No DB bound' }, 500);
+
+  try {
+    const body = await c.req.json();
+    const parsed = vehicleOnboardSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return c.json({
+        ok: false,
+        error: 'Validation failed',
+        details: parsed.error.format()
+      }, 400);
+    }
+
+    const vehicle = parsed.data;
+    const now = new Date().toISOString();
+
+    // Check if vehicle already exists
+    const existing = await env.TESLA_DB.prepare(
+      'SELECT id, vin FROM vehicles WHERE id = ? OR vin = ?'
+    ).bind(vehicle.id, vehicle.vin).first<{ id: string; vin: string }>();
+
+    if (existing) {
+      // Update existing vehicle
+      const updateFields: string[] = ['vin = ?', 'updated_at = ?'];
+      const updateValues: any[] = [vehicle.vin, now];
+
+      if (vehicle.display_name) {
+        updateFields.push('display_name = ?');
+        updateValues.push(vehicle.display_name);
+      }
+      if (vehicle.model) {
+        updateFields.push('model = ?');
+        updateValues.push(vehicle.model);
+      }
+      if (vehicle.year) {
+        updateFields.push('year = ?');
+        updateValues.push(vehicle.year);
+      }
+      if (vehicle.color) {
+        updateFields.push('color = ?');
+        updateValues.push(vehicle.color);
+      }
+      if (vehicle.purchased_date) {
+        updateFields.push('purchased_date = ?');
+        updateValues.push(vehicle.purchased_date);
+      }
+
+      updateValues.push(vehicle.id);
+
+      await env.TESLA_DB.prepare(
+        `UPDATE vehicles SET ${updateFields.join(', ')} WHERE id = ?`
+      ).bind(...updateValues).run();
+
+      return c.json({
+        ok: true,
+        action: 'updated',
+        vehicle: {
+          id: vehicle.id,
+          vin: vehicle.vin,
+          purchased_date: vehicle.purchased_date
+        },
+        message: 'Vehicle updated successfully'
+      });
+    } else {
+      // Insert new vehicle
+      await env.TESLA_DB.prepare(
+        `INSERT INTO vehicles (id, vin, display_name, model, year, color, purchased_date, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ).bind(
+        vehicle.id,
+        vehicle.vin,
+        vehicle.display_name || null,
+        vehicle.model || null,
+        vehicle.year || null,
+        vehicle.color || null,
+        vehicle.purchased_date || null,
+        now,
+        now
+      ).run();
+
+      return c.json({
+        ok: true,
+        action: 'created',
+        vehicle: {
+          id: vehicle.id,
+          vin: vehicle.vin,
+          purchased_date: vehicle.purchased_date
+        },
+        message: 'Vehicle onboarded successfully. Historical data imports will use the purchased_date as the start boundary.'
+      }, 201);
+    }
+  } catch (error: any) {
+    console.error('Vehicle onboarding failed:', error);
+    return c.json({
+      ok: false,
+      error: error.message || 'Failed to onboard vehicle',
+      timestamp: new Date().toISOString()
+    }, 500);
+  }
+});
