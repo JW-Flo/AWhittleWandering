@@ -60,7 +60,8 @@ interface IngestionResult {
   timestamp: string;
 }
 
-const FULL_HISTORY_START_UNIX = Math.floor(new Date('2012-01-01T00:00:00Z').getTime() / 1000);
+// Earliest realistic Tesla Model S delivery timeframe (June 2012)
+const FULL_HISTORY_START_UNIX = Math.floor(new Date('2012-06-01T00:00:00Z').getTime() / 1000);
 const HISTORICAL_WINDOW_SECONDS = 30 * 24 * 60 * 60;
 
 export class TeslaDataIngestion {
