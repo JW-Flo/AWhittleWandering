@@ -7,6 +7,7 @@
 import { z } from 'zod';
 import { logger } from './utils/log';
 import { detectStateFromCoordinates, updateStatesVisited } from './services/state-detection';
+import { DEFAULT_VEHICLE_ID } from './utils/resolveJourney';
 
 // Cloudflare D1 Database interface
 interface D1Database {
@@ -66,10 +67,12 @@ const HISTORICAL_WINDOW_SECONDS = 30 * 24 * 60 * 60;
 export class TeslaDataIngestion {
   private config: TessieConfig;
   private db: D1Database;
+  private vehicleId: string;
   private rateLimitTracker: { recordRequest(provider: string, success: boolean, latencyMs: number, errorCode?: string): Promise<void> } | null;
 
   constructor(db: D1Database, tessieApiKey: string, vehicleIdOrVin: string) {
     this.db = db;
+    this.vehicleId = DEFAULT_VEHICLE_ID;
     this.rateLimitTracker = null;
     this.config = {
       apiKey: tessieApiKey,
@@ -121,17 +124,17 @@ export class TeslaDataIngestion {
     await this.db.prepare(
       `INSERT OR IGNORE INTO vehicles (id, vin, display_name, model, year, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`
-    ).bind('midnight-shadow', vin, 'Midnight Shadow', 'Model Y', 2023, now, now).run();
+    ).bind(this.vehicleId, vin, 'Midnight Shadow', 'Model Y', 2023, now, now).run();
     await this.db.prepare(
       `UPDATE vehicles SET vin = ?, updated_at = datetime('now') WHERE id = ?`
-    ).bind(vin, 'midnight-shadow').run();
+    ).bind(vin, this.vehicleId).run();
 
     await this.db.prepare(
       `INSERT OR IGNORE INTO journeys (id, vehicle_id, name, description, start_date, target_states, status, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       'continental-usa-2025',
-      'midnight-shadow',
+      this.vehicleId,
       'A Whittle Wandering - Continental USA',
       '48 Continental States Tesla Model Y Road Trip Adventure',
       '2025-06-01',
@@ -149,7 +152,7 @@ export class TeslaDataIngestion {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       journeyId,
-      'midnight-shadow',
+      this.vehicleId,
       `Tessie Journey ${startDate}`,
       'Auto-recognized Tessie journey from driving activity',
       startDate,
@@ -168,7 +171,7 @@ export class TeslaDataIngestion {
        WHERE d.vehicle_id = ? AND d.started_at < ?
        ORDER BY d.started_at DESC
        LIMIT 1`
-    ).bind('midnight-shadow', startedAtIso).first<{ journey_id?: string; ended_at?: string }>();
+    ).bind(this.vehicleId, startedAtIso).first<{ journey_id?: string; ended_at?: string }>();
 
     if (prevDrive?.journey_id && prevDrive.ended_at) {
       const prevEndedMs = new Date(prevDrive.ended_at).getTime();
@@ -195,7 +198,7 @@ export class TeslaDataIngestion {
          AND (end_date IS NULL OR end_date >= date(?))
        ORDER BY start_date DESC
        LIMIT 1`
-    ).bind('midnight-shadow', startedAtIso, startedAtIso).first<{ id?: string }>();
+    ).bind(this.vehicleId, startedAtIso, startedAtIso).first<{ id?: string }>();
 
     if (matchingJourney?.id) return matchingJourney.id;
 
@@ -204,7 +207,7 @@ export class TeslaDataIngestion {
        WHERE vehicle_id = ? AND started_at <= ?
        ORDER BY started_at DESC
        LIMIT 1`
-    ).bind('midnight-shadow', startedAtIso).first<{ id?: string }>();
+    ).bind(this.vehicleId, startedAtIso).first<{ id?: string }>();
 
     if (fallbackJourney?.id) return fallbackJourney.id;
 
@@ -324,7 +327,7 @@ export class TeslaDataIngestion {
           timestamp, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
       `).bind(
-        'midnight-shadow',
+        this.vehicleId,
         this.config.vehicleIdOrVin || '5YJYGDEE5LF027324',
         stateData.charge_state?.battery_level || 0,
         stateData.charge_state?.battery_range || 0,
@@ -352,7 +355,7 @@ export class TeslaDataIngestion {
             inside_temp, outside_temp, power, timestamp
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(
-          'midnight-shadow',
+          this.vehicleId,
           this.config.vehicleIdOrVin || '5YJYGDEE5LF027324',
           stateData.charge_state?.battery_level || 0,
           stateData.charge_state?.battery_range || 0,
@@ -482,7 +485,7 @@ export class TeslaDataIngestion {
           `).bind(
             drive.id,
             journeyId,
-            'midnight-shadow',
+            this.vehicleId,
             startedAt,
             endedAt,
             drive.starting_location || 'Unknown',
@@ -630,7 +633,7 @@ export class TeslaDataIngestion {
           `).bind(
             charge.id,
             journeyId,
-            'midnight-shadow',
+            this.vehicleId,
             startedAt,
             endedAt,
             charge.location || 'Unknown',
@@ -675,7 +678,7 @@ export class TeslaDataIngestion {
     logger.info('Updating journey metadata');
 
     try {
-      const journeyRows = await this.db.prepare(`SELECT id FROM journeys WHERE vehicle_id = ?`).bind('midnight-shadow').all<{ id: string }>();
+      const journeyRows = await this.db.prepare(`SELECT id FROM journeys WHERE vehicle_id = ?`).bind(this.vehicleId).all<{ id: string }>();
       const journeyIds = (journeyRows.results || []).map((row) => row.id);
 
       for (const journeyId of journeyIds) {
