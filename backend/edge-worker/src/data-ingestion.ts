@@ -63,6 +63,11 @@ interface IngestionResult {
 const FULL_HISTORY_START_UNIX = Math.floor(new Date('2012-01-01T00:00:00Z').getTime() / 1000);
 const HISTORICAL_WINDOW_SECONDS = 30 * 24 * 60 * 60;
 
+// Journey recognition parameters
+const MAX_JOURNEY_INACTIVITY_HOURS = 16;
+const MIN_JOURNEY_DRIVE_DISTANCE_MILES = 10; // Drives shorter than this are likely casual, not journey
+const MAX_OVERNIGHT_GAP_HOURS = 12; // Overnight gaps (e.g., hotel stays) up to this duration
+
 export class TeslaDataIngestion {
   private config: TessieConfig;
   private db: D1Database;
@@ -160,21 +165,81 @@ export class TeslaDataIngestion {
     ).run();
   }
 
-  private async resolveJourneyIdForDrive(startedAtIso: string): Promise<string> {
+  /**
+   * Calculate distance between two lat/lon points using Haversine formula
+   * Returns distance in miles
+   */
+  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    // Handle invalid coordinates
+    if (!lat1 || !lon1 || !lat2 || !lon2) {
+      return 0;
+    }
+    
+    const R = 3958.8; // Earth's radius in miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  private async resolveJourneyIdForDrive(
+    startedAtIso: string,
+    currentDriveDistance: number = 0,
+    currentStartLat: number = 0,
+    currentStartLon: number = 0
+  ): Promise<string> {
     const startedAtMs = new Date(startedAtIso).getTime();
     const prevDrive = await this.db.prepare(
-      `SELECT d.journey_id, d.ended_at
+      `SELECT d.journey_id, d.ended_at, d.distance_miles, 
+              d.end_latitude, d.end_longitude, d.end_state
        FROM drives d
        WHERE d.vehicle_id = ? AND d.started_at < ?
        ORDER BY d.started_at DESC
        LIMIT 1`
-    ).bind('midnight-shadow', startedAtIso).first<{ journey_id?: string; ended_at?: string }>();
+    ).bind('midnight-shadow', startedAtIso).first<{ 
+      journey_id?: string; 
+      ended_at?: string;
+      distance_miles?: number;
+      end_latitude?: number;
+      end_longitude?: number;
+      end_state?: string;
+    }>();
 
     if (prevDrive?.journey_id && prevDrive.ended_at) {
       const prevEndedMs = new Date(prevDrive.ended_at).getTime();
       const gapHours = Number.isFinite(prevEndedMs) ? (startedAtMs - prevEndedMs) / (1000 * 60 * 60) : Number.POSITIVE_INFINITY;
-      if (gapHours <= 16) {
+      
+      // Multi-parameter journey recognition logic:
+      // 1. Very short gap (< 2 hours) - always continue journey (quick stops, errands during trip)
+      if (gapHours <= 2) {
         return prevDrive.journey_id;
+      }
+      
+      // 2. Short drives (< 10 miles) after longer gap are likely casual errands, not journey
+      if (currentDriveDistance < MIN_JOURNEY_DRIVE_DISTANCE_MILES) {
+        // Short drive after gap > 2 hours = casual driving, start new journey
+        // (Don't fall through to other checks)
+      } else {
+        // 3. For longer drives, check additional parameters
+        
+        // Check location continuity - if previous drive ended far away, less likely same journey
+        const prevEndLat = prevDrive.end_latitude || 0;
+        const prevEndLon = prevDrive.end_longitude || 0;
+        const locationDistanceMiles = this.calculateDistance(prevEndLat, prevEndLon, currentStartLat, currentStartLon);
+        
+        // If drives are nearby (< 100 miles apart) and within max inactivity window, continue journey
+        if (locationDistanceMiles <= 100 && gapHours <= MAX_JOURNEY_INACTIVITY_HOURS) {
+          return prevDrive.journey_id;
+        }
+        
+        // If drives are far apart (> 100 miles) but gap is short (overnight stay), still continue journey
+        if (gapHours <= MAX_OVERNIGHT_GAP_HOURS) {
+          return prevDrive.journey_id;
+        }
       }
     }
 
@@ -469,7 +534,12 @@ export class TeslaDataIngestion {
             );
           }
           
-          const journeyId = await this.resolveJourneyIdForDrive(startedAt);
+          const journeyId = await this.resolveJourneyIdForDrive(
+            startedAt,
+            drive.odometer_distance || 0,
+            drive.starting_latitude || 0,
+            drive.starting_longitude || 0
+          );
 
           await this.db.prepare(`
             INSERT OR REPLACE INTO drives (
