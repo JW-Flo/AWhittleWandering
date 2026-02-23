@@ -29,12 +29,15 @@ function ageSeconds(ts?: string | null) {
 
 vehicleRouter.get('/test-connection', async (c) => {
   const tessieToken = c.env?.TESSIE_API_TOKEN;
+  const vin = c.env?.TESLA_VIN;
   if (!tessieToken) {
     return c.json({ ok: false, error: 'TESSIE_API_TOKEN not configured' }, 503);
   }
+  if (!vin) {
+    return c.json({ ok: false, error: 'TESLA_VIN not configured' }, 503);
+  }
 
   try {
-    const vin = c.env?.TESLA_VIN || '';
     const resp = await fetch(`https://api.tessie.com/${vin}/state`, {
       headers: { Authorization: `Bearer ${tessieToken}`, Accept: 'application/json' },
       signal: AbortSignal.timeout(10_000),
