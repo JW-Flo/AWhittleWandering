@@ -8,6 +8,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Car, Wifi, WifiOff, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { API_CONFIG } from "@/lib/api-config";
 
 type ConnectionTestStatus = "idle" | "testing" | "success" | "error";
 
@@ -32,12 +33,24 @@ const VehicleSettingsCard = ({
 
   const maskedVin = vin.slice(0, 11) + "******";
 
+  const [errorDetail, setErrorDetail] = useState<string>("");
+
   const handleTestConnection = async () => {
     setTestStatus("testing");
-    // Simulate API test delay
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    // Mock: always fails in example UI (matches screenshot)
-    setTestStatus("error");
+    setErrorDetail("");
+    try {
+      const resp = await fetch(`${API_CONFIG.BASE_URL}/api/v1/vehicle/test-connection`);
+      const data = await resp.json();
+      if (data.ok) {
+        setTestStatus("success");
+      } else {
+        setErrorDetail(data.error || `HTTP ${resp.status}`);
+        setTestStatus("error");
+      }
+    } catch (err: any) {
+      setErrorDetail(err?.message || "Network error");
+      setTestStatus("error");
+    }
   };
 
   return (
@@ -107,8 +120,8 @@ const VehicleSettingsCard = ({
           )}
           {testStatus === "error" && (
             <div className="flex items-center gap-2 text-sm text-destructive">
-              <XCircle className="h-4 w-4" />
-              Connection Failed — Edge Function returned non-2xx status
+              <XCircle className="h-4 w-4 shrink-0" />
+              <span>Connection Failed{errorDetail ? ` — ${errorDetail}` : ""}</span>
             </div>
           )}
         </div>

@@ -294,7 +294,7 @@ export const MasterCoordinationDashboard: React.FC<MasterCoordinationDashboardPr
                         <div key={name} className="flex items-center justify-between text-sm">
                           <span>{name}</span>
                           <div className="flex items-center gap-2">
-                            <StatusIcon ok={status === 'connected' || status === 'ok'} />
+                            <StatusIcon ok={status === 'connected' || status === 'ok' || status === 'operational' || status === 'assumed' || status === 'configured'} />
                             <span className="text-muted-foreground">{status}</span>
                           </div>
                         </div>

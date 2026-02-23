@@ -27,6 +27,29 @@ function ageSeconds(ts?: string | null) {
   return Math.round((Date.now() - ms) / 1000);
 }
 
+vehicleRouter.get('/test-connection', async (c) => {
+  const tessieToken = c.env?.TESSIE_API_TOKEN;
+  if (!tessieToken) {
+    return c.json({ ok: false, error: 'TESSIE_API_TOKEN not configured' }, 503);
+  }
+
+  try {
+    const vin = c.env?.TESLA_VIN || '';
+    const resp = await fetch(`https://api.tessie.com/${vin}/state`, {
+      headers: { Authorization: `Bearer ${tessieToken}`, Accept: 'application/json' },
+      signal: AbortSignal.timeout(10_000),
+    });
+
+    if (resp.ok) {
+      return c.json({ ok: true, status: resp.status, provider: 'tessie' });
+    }
+    return c.json({ ok: false, status: resp.status, error: `Tessie API returned ${resp.status}` }, 502);
+  } catch (err: any) {
+    logger.error('vehicle.test-connection.error', { error: err?.message });
+    return c.json({ ok: false, error: err?.message || 'Connection failed' }, 502);
+  }
+});
+
 vehicleRouter.get('/state/enhanced', async (c) => {
   const db = c.env?.TESLA_DB;
   if (!db) return c.json({ ok: false, error: 'Database not configured' }, 200);
