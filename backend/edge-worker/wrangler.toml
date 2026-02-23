@@ -168,7 +168,8 @@ binding = "AI"
 
 [env.production]
 name = "awhittlewandering-api"
-workers_dev = true
+# Disable workers.dev route — production API is only accessible via custom domain
+workers_dev = false
 
 # Cron triggers managed via Cloudflare dashboard (not in config)
 # See top-level comment for rationale.
