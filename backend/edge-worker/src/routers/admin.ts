@@ -149,6 +149,235 @@ adminRouter.post('/ingest', async (c) => {
   }
 });
 
+// Full historical backfill - fetches ALL drives and charges from Tessie with pagination
+adminRouter.post('/backfill', async (c) => {
+  const env = c.env;
+  if (!env?.TESLA_DB) return c.json({ ok: false, error: 'No DB bound' }, 500);
+
+  const tessieKey = env.TESSIE_API_TOKEN || '';
+  if (!tessieKey) return c.json({ ok: false, error: 'No Tessie API token configured' }, 503);
+
+  let vin = env.TESLA_VIN || '';
+  if (!vin) {
+    try {
+      const vehicle = await env.TESLA_DB.prepare(
+        'SELECT vin FROM vehicles WHERE id = ?'
+      ).bind('midnight-shadow').first<{ vin: string }>();
+      vin = vehicle?.vin || '';
+    } catch { /* ignore */ }
+  }
+  if (!vin || vin === 'UNKNOWN_VIN') {
+    return c.json({ ok: false, error: 'VIN not configured' }, 503);
+  }
+
+  try {
+    const ingestion = new TeslaDataIngestion(env.TESLA_DB, tessieKey, vin);
+    await ingestion.ensureVehicleAndJourney();
+
+    const results = { drives: 0, charges: 0, errors: [] as string[] };
+    const baseUrl = 'https://api.tessie.com';
+    const headers = {
+      'Authorization': `Bearer ${tessieKey}`,
+      'Content-Type': 'application/json'
+    };
+
+    // Import helper from data-ingestion for state detection
+    const { detectStateFromCoordinates, updateStatesVisited } = await import('../services/state-detection');
+
+    const normalizeIso = (ts: unknown): string | null => {
+      if (ts == null) return null;
+      if (typeof ts === 'number') {
+        const ms = ts < 1e12 ? ts * 1000 : ts;
+        const d = new Date(ms);
+        return isNaN(d.getTime()) ? null : d.toISOString();
+      }
+      if (typeof ts === 'string') {
+        const n = Number(ts);
+        if (!Number.isNaN(n) && /^\d{9,13}$/.test(ts)) {
+          const ms = ts.length === 13 ? n : n * 1000;
+          const d = new Date(ms);
+          return isNaN(d.getTime()) ? null : d.toISOString();
+        }
+        const d = new Date(ts);
+        return isNaN(d.getTime()) ? null : d.toISOString();
+      }
+      return null;
+    };
+
+    // Paginate all drives
+    let page = 1;
+    let hasMore = true;
+    while (hasMore) {
+      const url = `${baseUrl}/${vin}/drives?per_page=100&page=${page}`;
+      const res = await fetch(url, { headers });
+      if (!res.ok) {
+        results.errors.push(`Drives page ${page}: HTTP ${res.status}`);
+        break;
+      }
+      const json = await res.json() as any;
+      const driveList = Array.isArray(json?.results) ? json.results : (Array.isArray(json) ? json : []);
+      if (driveList.length === 0) { hasMore = false; break; }
+
+      for (const drive of driveList) {
+        try {
+          const startedAt = normalizeIso(drive.started_at);
+          if (!startedAt) { results.errors.push(`Drive ${drive.id}: bad started_at`); continue; }
+          let endedAt = normalizeIso(drive.ended_at);
+          let durationMinutes = 0;
+
+          if (!endedAt && typeof drive.started_at === 'number' && typeof drive.ended_at === 'number') {
+            const startMs = drive.started_at < 1e12 ? drive.started_at * 1000 : drive.started_at;
+            const endMs = drive.ended_at < 1e12 ? drive.ended_at * 1000 : drive.ended_at;
+            const d = new Date(endMs);
+            if (!isNaN(d.getTime()) && endMs > startMs) {
+              endedAt = d.toISOString();
+              durationMinutes = Math.round((endMs - startMs) / 60000);
+            }
+          }
+          if (!endedAt) { endedAt = startedAt; }
+          if (!durationMinutes && endedAt !== startedAt) {
+            durationMinutes = Math.round((new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 60000);
+          }
+
+          let startState: string | null = null;
+          let endState: string | null = null;
+          try {
+            if (drive.starting_latitude && drive.starting_longitude) {
+              const s = await detectStateFromCoordinates(drive.starting_latitude, drive.starting_longitude);
+              if (s) {
+                startState = s.name;
+                await updateStatesVisited(env.TESLA_DB, 'continental-usa-2025', s.code, s.name, drive.starting_latitude, drive.starting_longitude, drive.id);
+              }
+            }
+            if (drive.ending_latitude && drive.ending_longitude) {
+              const s = await detectStateFromCoordinates(drive.ending_latitude, drive.ending_longitude);
+              if (s) { endState = s.name; await updateStatesVisited(env.TESLA_DB, 'continental-usa-2025', s.code, s.name, drive.ending_latitude, drive.ending_longitude, drive.id); }
+            }
+            if (!endState && startState) endState = startState;
+          } catch { /* state detection is best-effort */ }
+
+          await env.TESLA_DB.prepare(`
+            INSERT OR REPLACE INTO drives (
+              tessie_id, journey_id, vehicle_id, started_at, ended_at,
+              start_address, end_address, start_latitude, start_longitude,
+              end_latitude, end_longitude, start_state, end_state,
+              distance_miles, duration_minutes,
+              start_battery_level, end_battery_level, energy_used_kwh,
+              outside_temp_avg
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).bind(
+            drive.id, 'continental-usa-2025', 'midnight-shadow',
+            startedAt, endedAt,
+            drive.starting_location || 'Unknown', drive.ending_location || 'Unknown',
+            drive.starting_latitude || 0, drive.starting_longitude || 0,
+            drive.ending_latitude || 0, drive.ending_longitude || 0,
+            startState, endState,
+            drive.odometer_distance || 0, durationMinutes,
+            drive.starting_battery || 0, drive.ending_battery || 0,
+            drive.energy_used || 0, drive.outside_temp || null
+          ).run();
+          results.drives++;
+        } catch (e: any) {
+          results.errors.push(`Drive ${drive.id}: ${e?.message || String(e)}`);
+        }
+      }
+      if (driveList.length < 100) { hasMore = false; } else { page++; }
+    }
+
+    // Paginate all charges
+    page = 1;
+    hasMore = true;
+    while (hasMore) {
+      const url = `${baseUrl}/${vin}/charges?per_page=100&page=${page}`;
+      const res = await fetch(url, { headers });
+      if (!res.ok) {
+        results.errors.push(`Charges page ${page}: HTTP ${res.status}`);
+        break;
+      }
+      const json = await res.json() as any;
+      const chargeList = Array.isArray(json?.results) ? json.results : (Array.isArray(json) ? json : []);
+      if (chargeList.length === 0) { hasMore = false; break; }
+
+      for (const charge of chargeList) {
+        try {
+          const startedAt = normalizeIso(charge.started_at);
+          if (!startedAt) { results.errors.push(`Charge ${charge.id}: bad started_at`); continue; }
+          const endedAt = normalizeIso(charge.ended_at);
+
+          await env.TESLA_DB.prepare(`
+            INSERT OR REPLACE INTO charges (
+              tessie_id, journey_id, vehicle_id, started_at, ended_at,
+              location, latitude, longitude, energy_added_kwh,
+              cost_usd, start_battery_level, end_battery_level,
+              charger_type, charger_power_kw
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).bind(
+            charge.id, 'continental-usa-2025', 'midnight-shadow',
+            startedAt, endedAt,
+            charge.location || 'Unknown',
+            charge.latitude || 0, charge.longitude || 0,
+            charge.energy_added || 0, charge.cost || 0,
+            charge.starting_battery || 0, charge.ending_battery || 0,
+            charge.charger_type || null, charge.charger_power || null
+          ).run();
+          results.charges++;
+        } catch (e: any) {
+          results.errors.push(`Charge ${charge.id}: ${e?.message || String(e)}`);
+        }
+      }
+      if (chargeList.length < 100) { hasMore = false; } else { page++; }
+    }
+
+    // Update journey metadata
+    const stats = await env.TESLA_DB.prepare(`
+      SELECT COUNT(*) as total_drives, COALESCE(SUM(distance_miles), 0) as total_miles
+      FROM drives WHERE journey_id = 'continental-usa-2025'
+    `).first();
+    const chargeStats = await env.TESLA_DB.prepare(
+      `SELECT COUNT(*) as total_charges, COALESCE(SUM(cost_usd), 0) as total_cost
+       FROM charges WHERE journey_id = 'continental-usa-2025'`
+    ).first();
+    const statesCount = await env.TESLA_DB.prepare(
+      `SELECT COUNT(*) as cnt FROM states_visited WHERE journey_id = 'continental-usa-2025'`
+    ).first();
+
+    await env.TESLA_DB.prepare(`
+      UPDATE journeys SET total_miles = ?, total_drives = ?, total_charges = ?,
+        total_states = ?, total_cost_usd = ?, updated_at = datetime('now')
+      WHERE id = ?
+    `).bind(
+      (stats as any)?.total_miles || 0,
+      (stats as any)?.total_drives || 0,
+      (chargeStats as any)?.total_charges || 0,
+      (statesCount as any)?.cnt || 0,
+      (chargeStats as any)?.total_cost || 0,
+      'continental-usa-2025'
+    ).run();
+
+    // Clear caches
+    try {
+      await env.TESLA_DB.prepare(`DELETE FROM api_cache WHERE cache_key LIKE 'unified_data%'`).run();
+    } catch { /* ignore */ }
+
+    return c.json({
+      ok: true,
+      operation: 'full_historical_backfill',
+      drives: results.drives,
+      charges: results.charges,
+      errors: results.errors.slice(0, 20),
+      totalErrors: results.errors.length,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    return c.json({
+      ok: false,
+      operation: 'full_historical_backfill',
+      error: error.message || 'Unknown error',
+      timestamp: new Date().toISOString()
+    }, 500);
+  }
+});
+
 // Lightweight cron metrics inspection (last 25 rows) – errors tolerated
 adminRouter.get('/cron/metrics', async (c) => {
   const env = c.env;

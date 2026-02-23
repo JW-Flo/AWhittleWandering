@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useMemo, useState, useContext } from "react";
+import React, { Suspense, lazy, useEffect, useMemo, useState, useContext, useCallback } from "react";
 import { Link } from "react-router-dom";
 import TeslaDataContext, { TeslaDataProvider } from "@/contexts/TeslaDataContext";
 import { api } from "@/lib/api-config";
@@ -7,20 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import VehicleStats from "@/components/VehicleStats";
+import TripTimeline from "@/components/TripTimeline";
 import JourneyJournal from "@/components/JourneyJournal";
 import MediaUpload from "@/components/MediaUpload";
 import ConsolidatedRouteOptimizer from "@/components/ConsolidatedRouteOptimizer";
 import { AdvancedAnalyticsDashboard } from "@/components/AdvancedAnalyticsDashboard";
-import { Activity, Compass, Route, PenLine, Server, RefreshCw } from "lucide-react";
+import { Activity, Compass, Route, PenLine, Server, RefreshCw, Wifi, WifiOff, Clock, Info } from "lucide-react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 const LazyTeslaMap = lazy(() => import("@/components/LazyTeslaMap"));
 
-/**
- * Journeyer (owner) command center.
- * For now this wraps the existing dashboard implementation; we’ll progressively
- * redesign it while keeping functionality intact.
- */
 type AppConfig = {
   mapboxToken: string | null;
   apiBaseUrl: string;
@@ -34,6 +30,58 @@ type AppConfig = {
   updateInterval: number;
 };
 
+/** Connection status banner */
+const ConnectionBanner: React.FC<{
+  isConnected: boolean;
+  isLoading: boolean;
+  dataFreshness?: string;
+  lastUpdate?: string;
+}> = ({ isConnected, isLoading, dataFreshness, lastUpdate }) => {
+  if (isLoading) return null;
+
+  // Determine status
+  if (!isConnected) {
+    return (
+      <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-2.5 text-sm">
+        <WifiOff className="w-4 h-4 text-destructive flex-shrink-0" />
+        <span className="text-destructive/90">Offline — unable to reach backend. Showing last known data.</span>
+      </div>
+    );
+  }
+
+  if (dataFreshness === 'live') {
+    return (
+      <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2.5 text-sm">
+        <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary" />
+        </span>
+        <span className="text-primary/90">Live</span>
+      </div>
+    );
+  }
+
+  if (dataFreshness === 'cached' && lastUpdate) {
+    const age = Date.now() - new Date(lastUpdate).getTime();
+    const hoursAgo = Math.floor(age / (1000 * 60 * 60));
+    const label = hoursAgo > 0 ? `${hoursAgo}h ago` : `${Math.floor(age / (1000 * 60))}m ago`;
+    return (
+      <div className="flex items-center gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/5 px-4 py-2.5 text-sm">
+        <Clock className="w-4 h-4 text-yellow-600 flex-shrink-0" />
+        <span className="text-yellow-700 dark:text-yellow-400">Last updated {label}</span>
+      </div>
+    );
+  }
+
+  // Between trips / unknown freshness
+  return (
+    <div className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-500/5 px-4 py-2.5 text-sm">
+      <Info className="w-4 h-4 text-blue-500 flex-shrink-0" />
+      <span className="text-blue-600 dark:text-blue-400">Between trips — showing historical data</span>
+    </div>
+  );
+};
+
 const JourneyerDashboardInner: React.FC = () => {
   useDocumentTitle("Dashboard");
   const ctx = useContext(TeslaDataContext);
@@ -44,6 +92,7 @@ const JourneyerDashboardInner: React.FC = () => {
   const refreshData = ctx?.refreshData;
 
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
+  const [selectedDriveId, setSelectedDriveId] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,13 +117,11 @@ const JourneyerDashboardInner: React.FC = () => {
     chargingRaw.includes("charging") ? "charging" : chargingRaw.includes("complete") ? "complete" : "disconnected";
 
   const routeLocations = useMemo(() => {
-    // Prefer the pre-built routePath (full ordered path from all drives)
     if (data?.routePath && data.routePath.length > 0) {
       return data.routePath.filter(
         (p) => typeof p.lat === "number" && typeof p.lng === "number" && (p.lat !== 0 || p.lng !== 0)
       );
     }
-    // Fallback: build from drive endpoints
     const drives = data?.timeline?.drives || [];
     const points: Array<{ lat: number; lng: number; timestamp: string }> = [];
     for (const drive of drives) {
@@ -89,6 +136,12 @@ const JourneyerDashboardInner: React.FC = () => {
   }, [data]);
 
   const currentLocation = data?.currentStatus?.location;
+
+  const handleDriveSelect = useCallback((drive: { id: number }) => {
+    setSelectedDriveId(prev => prev === drive.id ? null : drive.id);
+  }, []);
+
+  const hasDrives = (data?.timeline?.drives?.length ?? 0) > 0;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -125,9 +178,6 @@ const JourneyerDashboardInner: React.FC = () => {
                 <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
                 Refresh
               </Button>
-              <Badge variant="outline" className={isConnected ? "text-primary border-primary/40" : ""}>
-                {isConnected ? "Connected" : "Offline"}
-              </Badge>
             </div>
           </div>
         </div>
@@ -167,11 +217,15 @@ const JourneyerDashboardInner: React.FC = () => {
           </TabsList>
 
           <TabsContent value="live" className="space-y-6">
-            {!isConnected && !isLoading && (
-              <div className="rounded-lg border border-border/60 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-                Backend offline — showing last known data. Vehicle status may be stale.
-              </div>
-            )}
+            {/* Connection status banner */}
+            <ConnectionBanner
+              isConnected={isConnected}
+              isLoading={isLoading}
+              dataFreshness={data?.tessieStatus?.dataFreshness}
+              lastUpdate={data?.tessieStatus?.lastUpdate}
+            />
+
+            {/* Map + Stats row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
               <div className="lg:col-span-2">
                 <Card className="border-border/60">
@@ -180,7 +234,7 @@ const JourneyerDashboardInner: React.FC = () => {
                       Orientation
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="h-[420px] p-0">
+                  <CardContent className="h-[50vh] min-h-[300px] max-h-[600px] p-0">
                     <Suspense
                       fallback={
                         <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
@@ -216,6 +270,11 @@ const JourneyerDashboardInner: React.FC = () => {
                   temperature={data?.currentStatus?.vehicle?.temperature?.outside}
                   odometer={data?.currentStatus?.vehicle?.odometer}
                   speed={data?.currentStatus?.vehicle?.speed}
+                  location={
+                    currentLocation && currentLocation.city !== 'Unknown'
+                      ? `${currentLocation.city}, ${currentLocation.state}`
+                      : currentLocation?.state !== 'Unknown' ? currentLocation?.state : undefined
+                  }
                   lastUpdate={data?.currentStatus?.location?.lastUpdate}
                   isLoading={isLoading}
                   error={error}
@@ -252,6 +311,19 @@ const JourneyerDashboardInner: React.FC = () => {
                 </Card>
               </div>
             </div>
+
+            {/* Trip Timeline */}
+            {hasDrives && (
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">Drive Timeline</h3>
+                <TripTimeline
+                  drives={data?.timeline?.drives ?? []}
+                  charges={data?.timeline?.charges ?? []}
+                  onDriveSelect={handleDriveSelect}
+                  selectedDriveId={selectedDriveId}
+                />
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="navigation" className="space-y-6">
@@ -305,7 +377,7 @@ const JourneyerDashboardInner: React.FC = () => {
                   <div className="flex items-center justify-between text-sm">
                     <span>Last sync</span>
                     <span className="text-muted-foreground font-mono text-xs">
-                      {data?.tessieStatus?.lastUpdate ?? "—"}
+                      {data?.tessieStatus?.lastUpdate ? new Date(data.tessieStatus.lastUpdate).toLocaleString() : "—"}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
@@ -360,5 +432,3 @@ const JourneyerDashboard: React.FC = () => {
 };
 
 export default JourneyerDashboard;
-
-

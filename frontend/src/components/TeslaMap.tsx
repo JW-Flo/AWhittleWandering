@@ -30,9 +30,11 @@ interface TeslaMapProps {
   onTokenChange?: (token: string) => void;
   routeLocations?: Array<{lat: number, lng: number, timestamp: string}>;
   mapStyle?: string;
+  /** If true, hide navigation controls for a cleaner read-only embed */
+  readOnly?: boolean;
 }
 
-const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _onTokenChange, routeLocations, mapStyle }: TeslaMapProps) => {
+const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _onTokenChange, routeLocations, mapStyle, readOnly }: TeslaMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const vehicleMarker = useRef<mapboxgl.Marker | null>(null);
@@ -40,18 +42,25 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
   const [mapboxToken, setMapboxToken] = useState<string | null>(propsToken || null);
   const [isLoadingToken, setIsLoadingToken] = useState(false);
 
+  const hasRouteData = routeLocations && routeLocations.length > 0;
+  const hasVehicle = vehicleLocation && (vehicleLocation.latitude !== 0 || vehicleLocation.longitude !== 0);
+
   // Define map helper functions before they're used in effects
   const addJourneyWaypoints = useCallback(() => {
     if (!map.current || !routeLocations || routeLocations.length === 0) return;
 
-    // Add waypoint markers for actual drive locations from real data
-    routeLocations.forEach((location, _index) => {
+    // Only add start/end markers for each drive (every pair of points), not every single point
+    const markerPoints = routeLocations.length <= 20
+      ? routeLocations
+      : [routeLocations[0], routeLocations[routeLocations.length - 1]];
+
+    markerPoints.forEach((location) => {
       const el = document.createElement('div');
       el.className = 'journey-waypoint';
-      
+
       el.innerHTML = `
-        <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 hover:scale-110 bg-[hsl(var(--tesla-blue))] border-[hsl(var(--tesla-cyan))] shadow-[0_0_15px_hsl(var(--tesla-blue)/0.4)]">
-          <div class="w-2 h-2 bg-white rounded-full"></div>
+        <div style="width:24px;height:24px;border-radius:50%;border:2px solid hsl(var(--tesla-cyan));background:hsl(var(--tesla-blue));display:flex;align-items:center;justify-content:center;box-shadow:0 0 15px hsla(var(--tesla-blue),0.4);transition:transform 0.3s;">
+          <div style="width:8px;height:8px;background:white;border-radius:50%;"></div>
         </div>
       `;
 
@@ -66,32 +75,26 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
         closeButton: true,
         className: 'journey-popup'
       }).setHTML(`
-        <div class="bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden min-w-48">
-          <div class="bg-gradient-to-r from-blue-500 to-cyan-500 p-3">
-            <div class="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-white" />
-              <span class="text-white font-medium text-sm">Journey Point</span>
-            </div>
+        <div style="background:var(--background,#fff);border-radius:8px;overflow:hidden;min-width:180px;border:1px solid var(--border,#e5e7eb);">
+          <div style="background:linear-gradient(135deg,hsl(var(--tesla-blue)),hsl(var(--tesla-cyan)));padding:10px 12px;">
+            <span style="color:white;font-weight:500;font-size:13px;">Journey Point</span>
           </div>
-          <div class="p-3 space-y-1">
-            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">Location</div>
-            <div class="text-xs text-gray-600 dark:text-gray-400">${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}</div>
-            <div class="text-xs text-gray-600 dark:text-gray-400">${new Date(location.timestamp).toLocaleDateString()}</div>
+          <div style="padding:10px 12px;">
+            <div style="font-size:13px;font-weight:500;">${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}</div>
+            <div style="font-size:12px;opacity:0.7;margin-top:2px;">${new Date(location.timestamp).toLocaleDateString()}</div>
           </div>
         </div>
       `);
 
       marker.setPopup(popup);
     });
-  }, [routeLocations]); // Dependencies for useCallback
+  }, [routeLocations]);
 
   const addJourneyRoute = useCallback(() => {
     if (!map.current || !routeLocations || routeLocations.length === 0) return;
 
-    // Create route line from locations
     const coordinates = routeLocations.map(loc => [loc.lng, loc.lat]);
 
-    // Add route source
     map.current.addSource('journey-route', {
       type: 'geojson',
       data: {
@@ -104,7 +107,24 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
       }
     });
 
-    // Add route layer
+    // Glow layer (behind)
+    map.current.addLayer({
+      id: 'journey-route-glow',
+      type: 'line',
+      source: 'journey-route',
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round'
+      },
+      paint: {
+        'line-color': '#22d3ee',
+        'line-width': 8,
+        'line-opacity': 0.3,
+        'line-blur': 4
+      }
+    });
+
+    // Main route line
     map.current.addLayer({
       id: 'journey-route',
       type: 'line',
@@ -114,42 +134,24 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
         'line-cap': 'round'
       },
       paint: {
-        'line-color': 'hsl(var(--tesla-blue))',
+        'line-color': '#3b82f6',
         'line-width': 4,
-        'line-opacity': 0.8
+        'line-opacity': 0.85
       }
     });
-
-    // Add animated route layer
-    map.current.addLayer({
-      id: 'journey-route-glow',
-      type: 'line', 
-      source: 'journey-route',
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round'
-      },
-      paint: {
-        'line-color': 'hsl(var(--tesla-cyan))',
-        'line-width': 8,
-        'line-opacity': 0.3,
-        'line-blur': 4
-      }
-    });
-  }, [routeLocations]); // Dependencies for useCallback
+  }, [routeLocations]);
 
   // Fetch Mapbox token from backend on component mount
   useEffect(() => {
     const fetchMapboxToken = async () => {
-      if (mapboxToken) return; // Already have a token
-      
+      if (mapboxToken) return;
+
       setIsLoadingToken(true);
       try {
         const token = await dynamicConfig.getMapboxToken();
         setMapboxToken(token);
       } catch (error) {
         console.error('Failed to fetch Mapbox token from backend:', error);
-        // Fall back to user input if backend fails
       } finally {
         setIsLoadingToken(false);
       }
@@ -166,14 +168,32 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
       if (cancelled) return;
       mapboxglRef.current = mapboxgl;
       mapboxgl.accessToken = mapboxToken;
+
+      // Determine initial center: prefer vehicle, then last route point, then USA center
+      let center: [number, number] = [-98.5795, 39.8283];
+      let zoom = 3.5;
+      if (vehicleLocation && (vehicleLocation.latitude !== 0 || vehicleLocation.longitude !== 0)) {
+        center = [vehicleLocation.longitude, vehicleLocation.latitude];
+        zoom = 8;
+      } else if (routeLocations && routeLocations.length > 0) {
+        const last = routeLocations[routeLocations.length - 1];
+        center = [last.lng, last.lat];
+        zoom = 6;
+      }
+
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: mapStyle || 'mapbox://styles/mapbox/dark-v11',
-        center: [-98.5795, 39.8283],
-        zoom: 3.5,
-        pitch: 0
+        center,
+        zoom,
+        pitch: 0,
+        interactive: !readOnly || true, // still allow pan/zoom in read-only
       });
-      map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
+
+      if (!readOnly) {
+        map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
+      }
+
       map.current.on('load', () => {
         addJourneyRoute();
         addJourneyWaypoints();
@@ -191,7 +211,8 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
       });
     })();
     return () => { cancelled = true; if (map.current) map.current.remove(); };
-  }, [mapboxToken, mapStyle, addJourneyRoute, addJourneyWaypoints]); // Include all dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapboxToken, mapStyle, addJourneyRoute, addJourneyWaypoints]);
 
   useEffect(() => {
     if (!map.current || !vehicleLocation) return;
@@ -204,16 +225,14 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
     el.className = 'tesla-marker';
     const rotation = vehicleLocation.heading ?? 0;
     el.innerHTML = `
-      <div class="relative">
-        <div class="w-8 h-8 bg-primary rounded-full border-2 border-background shadow-lg flex items-center justify-center animate-pulse">
-          <div class="w-3 h-3 bg-background rounded-full"></div>
+      <div style="position:relative;">
+        <div style="width:32px;height:32px;background:hsl(var(--primary));border-radius:50%;border:2px solid hsl(var(--background));box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;">
+          <div style="width:12px;height:12px;background:hsl(var(--background));border-radius:50%;"></div>
         </div>
-        <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[5px] border-r-[5px] border-b-[8px] border-l-transparent border-r-transparent border-b-primary"
-             style="transform: translateX(-50%) rotate(${rotation}deg); transform-origin: center bottom;"></div>
+        <div style="position:absolute;top:-4px;left:50%;transform:translateX(-50%) rotate(${rotation}deg);transform-origin:center bottom;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:8px solid hsl(var(--primary));"></div>
       </div>
     `;
 
-    // Add new marker (mapbox already loaded when map created)
     if (mapboxglRef.current) {
       vehicleMarker.current = new mapboxglRef.current.Marker(el)
           .setLngLat([vehicleLocation.longitude, vehicleLocation.latitude])
@@ -270,6 +289,22 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
           </div>
         </CardContent>
       </Card>
+    );
+  }
+
+  // No data overlay — show when token is ready but no route/vehicle data
+  if (!hasRouteData && !hasVehicle) {
+    return (
+      <div className="relative w-full h-full">
+        <div ref={mapContainer} className="absolute inset-0 rounded-lg shadow-lg" />
+        <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm rounded-lg">
+          <div className="text-center px-6">
+            <MapPin className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+            <p className="text-sm font-medium text-muted-foreground">No journey data yet</p>
+            <p className="text-xs text-muted-foreground mt-1">Route will appear once drive data is imported</p>
+          </div>
+        </div>
+      </div>
     );
   }
 
