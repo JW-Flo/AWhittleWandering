@@ -16,9 +16,8 @@ const getApiBaseUrl = (): string => {
   // Dev mode: use empty string so requests go through Vite's /api proxy (vite.config.ts)
   if (viteEnv?.DEV) return '';
 
-  // Production: workers.dev URL (includes account subdomain).
-  // When custom domain DNS is configured, api.awhittlewandering.com routes to the same worker.
-  return 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev';
+  // Production: custom domain (workers.dev route is disabled)
+  return 'https://api.awhittlewandering.com';
 };
 
 export const API_CONFIG = {

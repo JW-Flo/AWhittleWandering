@@ -121,7 +121,7 @@ jobs:
         working-directory: ${{ env.FRONTEND_DIR }}
         env:
           # Set environment-specific variables
-          VITE_API_URL: ${{ needs.setup.outputs.environment == 'production' && 'https://api.awhittlewandering.com' || 'https://awhittlewandering-api-staging.kd8jc7v8cd.workers.dev' }}
+          VITE_API_BASE_URL: ${{ needs.setup.outputs.environment == 'production' && 'https://api.awhittlewandering.com' || 'https://awhittlewandering-api-staging.kd8jc7v8cd.workers.dev' }}
         run: npm run build
 
       - name: Remove _redirects from build output
