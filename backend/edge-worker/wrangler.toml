@@ -3,19 +3,18 @@ main = "dist/index.js"
 compatibility_date = "2023-10-30"
 workers_dev = true
 
-# Cron Triggers — DISABLED in wrangler.toml
+# Cron Triggers — NOT managed in wrangler.toml
 # Free plan limit: 5 cron triggers per account (shared across ALL workers).
-# Other workers on this account already consume slots, so crons must be
-# configured via the Cloudflare dashboard (Workers → Triggers → Cron Triggers)
-# where you can see the account-wide budget.
+# Other workers on this account already consume slots.
+# Even `crons = []` triggers a PUT to the schedules API which fails
+# with error 10072 when the account is at the limit.
 #
-# Recommended crons to add via dashboard:
+# Manage crons via Cloudflare dashboard: Workers → Triggers → Cron Triggers
+# Recommended crons:
 #   */30 * * * *   → full_sync (vehicle state + drives + charges)
 #   10 */6 * * *   → ai_data_processing + data_quality_check
 #
 # For historical backfill, use POST /api/v1/admin/backfill instead.
-[triggers]
-crons = []
 
 # Environment Variables - ZERO FAILURE API MANAGEMENT
 [vars]
@@ -171,9 +170,8 @@ binding = "AI"
 name = "awhittlewandering-api"
 workers_dev = true
 
-# Cron triggers disabled in config — manage via Cloudflare dashboard
-[env.production.triggers]
-crons = []
+# Cron triggers managed via Cloudflare dashboard (not in config)
+# See top-level comment for rationale.
 
 # Production environment variables - ZERO FAILURE API MANAGEMENT
 [env.production.vars]
