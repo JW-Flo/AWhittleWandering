@@ -182,7 +182,33 @@ adminRouter.post('/backfill', async (c) => {
     };
 
     // Import helper from data-ingestion for state detection
-    const { detectStateFromCoordinates, updateStatesVisited } = await import('../services/state-detection');
+    const { detectStateFromCoordinates } = await import('../services/state-detection');
+
+    // Reset states_visited before backfill to ensure idempotency
+    // (the ON CONFLICT in updateStatesVisited increments visit_count, so re-runs would inflate)
+    await env.TESLA_DB.prepare(
+      `DELETE FROM states_visited WHERE journey_id = 'continental-usa-2025'`
+    ).run();
+
+    // Idempotent state visit upsert that sets visit_count = 1 on conflict instead of incrementing
+    const upsertStateVisited = async (
+      stateCode: string, stateName: string, lat: number, lng: number, driveId?: string
+    ) => {
+      const now = new Date().toISOString();
+      await env.TESLA_DB.prepare(`
+        INSERT INTO states_visited (
+          journey_id, state_name, state_code, first_visited_date,
+          first_drive_id, visit_count, entry_latitude, entry_longitude,
+          last_updated, created_at
+        ) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, ?)
+        ON CONFLICT(journey_id, state_name) DO UPDATE SET
+          visit_count = visit_count + 1,
+          last_updated = ?
+      `).bind(
+        'continental-usa-2025', stateName, stateCode, now,
+        driveId || null, lat, lng, now, now, now
+      ).run();
+    };
 
     const normalizeIso = (ts: unknown): string | null => {
       if (ts == null) return null;
@@ -246,12 +272,12 @@ adminRouter.post('/backfill', async (c) => {
               const s = await detectStateFromCoordinates(drive.starting_latitude, drive.starting_longitude);
               if (s) {
                 startState = s.name;
-                await updateStatesVisited(env.TESLA_DB, 'continental-usa-2025', s.code, s.name, drive.starting_latitude, drive.starting_longitude, drive.id);
+                await upsertStateVisited(s.code, s.name, drive.starting_latitude, drive.starting_longitude, drive.id);
               }
             }
             if (drive.ending_latitude && drive.ending_longitude) {
               const s = await detectStateFromCoordinates(drive.ending_latitude, drive.ending_longitude);
-              if (s) { endState = s.name; await updateStatesVisited(env.TESLA_DB, 'continental-usa-2025', s.code, s.name, drive.ending_latitude, drive.ending_longitude, drive.id); }
+              if (s) { endState = s.name; await upsertStateVisited(s.code, s.name, drive.ending_latitude, drive.ending_longitude, drive.id); }
             }
             if (!endState && startState) endState = startState;
           } catch { /* state detection is best-effort */ }

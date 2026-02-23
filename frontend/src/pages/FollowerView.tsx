@@ -125,8 +125,12 @@ const FollowerView: React.FC = () => {
         (p) => typeof p.lat === "number" && typeof p.lng === "number" && (p.lat !== 0 || p.lng !== 0)
       );
     }
-    // Fallback: build from drive endpoints
-    const drives = data?.timeline?.drives || [];
+    // Fallback: build from drive endpoints (sort chronologically — API returns DESC)
+    const drives = [...(data?.timeline?.drives || [])].sort((a, b) => {
+      const tA = new Date(a.startTime || a.date).getTime();
+      const tB = new Date(b.startTime || b.date).getTime();
+      return tA - tB;
+    });
     const points: RoutePoint[] = [];
     for (const drive of drives) {
       if ((drive as any).startCoordinates?.lat && (drive as any).startCoordinates?.lng) {

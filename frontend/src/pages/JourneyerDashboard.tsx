@@ -122,7 +122,12 @@ const JourneyerDashboardInner: React.FC = () => {
         (p) => typeof p.lat === "number" && typeof p.lng === "number" && (p.lat !== 0 || p.lng !== 0)
       );
     }
-    const drives = data?.timeline?.drives || [];
+    // Sort chronologically — API returns drives in DESC order
+    const drives = [...(data?.timeline?.drives || [])].sort((a, b) => {
+      const tA = new Date(a.startTime || a.date).getTime();
+      const tB = new Date(b.startTime || b.date).getTime();
+      return tA - tB;
+    });
     const points: Array<{ lat: number; lng: number; timestamp: string }> = [];
     for (const drive of drives) {
       if (drive.startCoordinates?.lat && drive.startCoordinates?.lng) {
