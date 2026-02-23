@@ -134,7 +134,7 @@ jobs:
           if [[ "${{ inputs.environment }}" == "production" ]]; then
             HEALTH_URL="https://api.awhittlewandering.com/api/v1/health"
           else
-            HEALTH_URL="https://awhittlewandering-api-staging.workers.dev/api/v1/health"
+            HEALTH_URL="https://awhittlewandering-api-staging.kd8jc7v8cd.workers.dev/api/v1/health"
           fi
           
           HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" "$HEALTH_URL" 2>/dev/null || echo "000")

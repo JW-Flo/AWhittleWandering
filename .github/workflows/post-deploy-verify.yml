@@ -34,13 +34,13 @@ permissions:
 
 env:
   STAGING_FRONTEND: https://staging.awhittlewandering.pages.dev
-  STAGING_BACKEND: https://awhittlewandering-api-staging.workers.dev
+  STAGING_BACKEND: https://awhittlewandering-api-staging.kd8jc7v8cd.workers.dev
   # Custom domains (preferred for production)
   PROD_FRONTEND: https://awhittlewandering.com
   PROD_BACKEND: https://api.awhittlewandering.com
   # Fallback to workers.dev domains if custom domains not configured
   PROD_FRONTEND_FALLBACK: https://awhittlewandering.pages.dev
-  PROD_BACKEND_FALLBACK: https://awhittlewandering-api.workers.dev
+  PROD_BACKEND_FALLBACK: https://awhittlewandering-api.kd8jc7v8cd.workers.dev
 
 jobs:
   verify:
