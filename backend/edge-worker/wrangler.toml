@@ -4,13 +4,14 @@ compatibility_date = "2023-10-30"
 workers_dev = true
 
 # Cron Triggers for Automated Data Ingestion
-# Free plan limit: 5 cron triggers per account
+# Free plan limit: 5 cron triggers per account (shared across ALL workers)
+# Consolidated to 2 triggers to stay within budget:
+#   - historical_backfill removed (use POST /api/v1/admin/backfill instead)
+#   - data_quality_check folded into the 6-hour ai_data_processing job
 [triggers]
 crons = [
-  "*/30 * * * *",     # Full sync every 30 minutes (includes vehicle state)
-  "0 2 * * *",        # Historical backfill at 2 AM daily
-  "5 * * * *",        # Data quality check hourly (offset minute 5)
-  "10 */6 * * *"      # AI/ML aggregation processing every 6 hours
+  "*/30 * * * *",     # Full sync every 30 minutes (vehicle state + drives + charges)
+  "10 */6 * * *"      # AI/ML aggregation + data quality check every 6 hours
 ]
 
 # Environment Variables - ZERO FAILURE API MANAGEMENT
