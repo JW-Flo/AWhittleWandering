@@ -915,6 +915,25 @@
         }
       }
     },
+    "/api/v1/vehicle/test-connection": {
+      "get": {
+        "tags": [
+          "vehicle"
+        ],
+        "summary": "Test Tessie API connection",
+        "responses": {
+          "200": {
+            "description": "Connection successful"
+          },
+          "502": {
+            "description": "Tessie API unreachable or returned error"
+          },
+          "503": {
+            "description": "TESSIE_API_TOKEN not configured"
+          }
+        }
+      }
+    },
     "/api/v1/vehicle/state/enhanced": {
       "get": {
         "tags": [

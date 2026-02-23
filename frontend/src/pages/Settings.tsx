@@ -9,11 +9,13 @@ import VehicleSettingsCard from "@/components/settings/VehicleSettingsCard";
 import { mockVehicles, mockSettingsConfig } from "@/data/mockSettingsData";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, Construction } from "lucide-react";
 
 const PlaceholderTab = ({ name }: { name: string }) => (
-  <div className="flex items-center justify-center h-64 text-muted-foreground">
-    <p className="text-sm">{name} settings coming soon</p>
+  <div className="flex flex-col items-center justify-center h-64 gap-3 text-muted-foreground">
+    <Construction className="h-8 w-8" />
+    <p className="text-base font-medium">{name} Settings</p>
+    <p className="text-sm">Coming soon</p>
   </div>
 );
 
