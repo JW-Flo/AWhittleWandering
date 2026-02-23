@@ -19,6 +19,7 @@ interface LazyTeslaMapProps {
   routeLocations?: Array<{lat: number, lng: number, timestamp: string}>;
   routePoints?: Array<{lat: number, lng: number, timestamp: string}>;
   mapStyle?: string;
+  readOnly?: boolean;
 }
 
 const MapLoadingFallback = () => (

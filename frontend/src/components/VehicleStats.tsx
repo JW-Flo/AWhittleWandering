@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Battery, Zap, Thermometer, MapPin, Clock, Gauge } from 'lucide-react';
+import { Battery, Zap, Thermometer, MapPin, Clock, Gauge, Moon } from 'lucide-react';
 import EmptyState from '@/components/common/EmptyState';
 
 interface VehicleStatsProps {
@@ -30,6 +30,9 @@ const VehicleStats = ({
   error = null
 }: VehicleStatsProps) => {
   const hasData = batteryLevel != null || range != null || speed != null;
+  // Vehicle sleeping: backend returned data but values are all zero (between trips)
+  const isSleeping = hasData && batteryLevel === 0 && range === 0 && speed === 0;
+
   const getChargingBadge = () => {
     switch (chargingState) {
       case 'charging':
@@ -65,7 +68,7 @@ const VehicleStats = ({
     <Card className="border-destructive/20 bg-destructive/5">
       <CardContent className="p-4">
         <p className="text-destructive text-sm font-medium">
-          ⚠️ Error loading vehicle data: {error}
+          Unable to load vehicle data: {error}
         </p>
       </CardContent>
     </Card>
@@ -93,6 +96,43 @@ const VehicleStats = ({
           />
         </CardContent>
       </Card>
+    );
+  }
+
+  // Vehicle sleeping / between trips — show friendly sleeping state
+  if (isSleeping) {
+    return (
+      <div className="space-y-4">
+        <Card className="border-border/60 bg-gradient-to-br from-card to-muted/30">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <Moon className="w-6 h-6 text-muted-foreground" />
+              <div>
+                <p className="font-medium">Vehicle sleeping</p>
+                <p className="text-sm text-muted-foreground">Between trips — last known values cached</p>
+              </div>
+            </div>
+            {odometer != null && odometer > 0 && (
+              <div className="flex justify-between text-sm pt-3 border-t border-border/40">
+                <span className="text-muted-foreground">Odometer</span>
+                <span className="font-mono">{odometer.toLocaleString()} mi</span>
+              </div>
+            )}
+            {location && (
+              <div className="flex justify-between text-sm pt-2">
+                <span className="text-muted-foreground">Last location</span>
+                <span className="text-right max-w-[60%] truncate">{location}</span>
+              </div>
+            )}
+            {lastUpdate && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground pt-3 border-t border-border/40 mt-3">
+                <Clock className="w-3 h-3" />
+                <span>Last updated: {new Date(lastUpdate).toLocaleString()}</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
@@ -161,8 +201,8 @@ const VehicleStats = ({
               </div>
             )}
           </div>
-          
-          {odometer && (
+
+          {odometer != null && odometer > 0 && (
             <div className="pt-2 border-t border-tesla-gray-light">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Odometer</span>
@@ -191,7 +231,7 @@ const VehicleStats = ({
           {lastUpdate && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 border-t border-tesla-gray-light">
               <Clock className="w-3 h-3" />
-              <span>Last updated: {lastUpdate}</span>
+              <span>Last updated: {new Date(lastUpdate).toLocaleString()}</span>
             </div>
           )}
         </CardContent>
