@@ -3,16 +3,19 @@ main = "dist/index.js"
 compatibility_date = "2023-10-30"
 workers_dev = true
 
-# Cron Triggers for Automated Data Ingestion
-# Free plan limit: 5 cron triggers per account (shared across ALL workers)
-# Consolidated to 2 triggers to stay within budget:
-#   - historical_backfill removed (use POST /api/v1/admin/backfill instead)
-#   - data_quality_check folded into the 6-hour ai_data_processing job
+# Cron Triggers — DISABLED in wrangler.toml
+# Free plan limit: 5 cron triggers per account (shared across ALL workers).
+# Other workers on this account already consume slots, so crons must be
+# configured via the Cloudflare dashboard (Workers → Triggers → Cron Triggers)
+# where you can see the account-wide budget.
+#
+# Recommended crons to add via dashboard:
+#   */30 * * * *   → full_sync (vehicle state + drives + charges)
+#   10 */6 * * *   → ai_data_processing + data_quality_check
+#
+# For historical backfill, use POST /api/v1/admin/backfill instead.
 [triggers]
-crons = [
-  "*/30 * * * *",     # Full sync every 30 minutes (vehicle state + drives + charges)
-  "10 */6 * * *"      # AI/ML aggregation + data quality check every 6 hours
-]
+crons = []
 
 # Environment Variables - ZERO FAILURE API MANAGEMENT
 [vars]
@@ -167,6 +170,10 @@ binding = "AI"
 [env.production]
 name = "awhittlewandering-api"
 workers_dev = true
+
+# Cron triggers disabled in config — manage via Cloudflare dashboard
+[env.production.triggers]
+crons = []
 
 # Production environment variables - ZERO FAILURE API MANAGEMENT
 [env.production.vars]
