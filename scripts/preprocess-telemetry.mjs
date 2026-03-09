@@ -124,13 +124,15 @@ for (let i = 0; i < charging.length; i++) {
         start: sessionStart,
         end: endTime,
         durationMin,
+        location: "",
+        isSupercharger: peakPower > 20 || voltage > 300,
+        energyAddedKwh: Math.round(endRange - startRange),
+        energyUsedKwh: 0,
         startBattery,
         endBattery,
-        energyAdded: Math.round(endRange - startRange),
-        peakPowerKw: peakPower,
+        costUsd: 0,
         lat: loc.lat,
         lng: loc.lng,
-        isSupercharger: peakPower > 20 || voltage > 300,
       });
     }
     sessionStart = null;
