@@ -10,6 +10,7 @@ import ExploreJourney from "./pages/ExploreJourney";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Demo from "./pages/Demo";
+import RoadtripMap from "./pages/RoadtripMap";
 import { MasterCoordinationDashboard } from "./components/MasterCoordinationDashboard";
 
 const queryClient = new QueryClient();
@@ -81,6 +82,7 @@ const App = () => (
               <Route path="/explore" element={<ExploreJourney />} />
               <Route path="/explore/:id" element={<ExploreJourney />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/roadtrip" element={<RoadtripMap />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="/demo" element={<Demo />} />
               <Route path="*" element={<NotFound />} />
