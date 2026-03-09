@@ -29,6 +29,9 @@ import {
   Battery,
   Thermometer,
   BatteryCharging,
+  DollarSign,
+  Route,
+  Users,
 } from "lucide-react";
 import {
   parseDriveCsv,
@@ -43,9 +46,15 @@ import {
   loadChargingSessions,
   loadBatteryTimeline,
   loadClimateTimeline,
+  loadDailyCharging,
+  loadTripItinerary,
+  loadTripSummary,
   type ChargingSession,
   type BatterySample,
   type ClimateSample,
+  type DailyCharging,
+  type TripItineraryEntry,
+  type TripSummary,
 } from "@/data/parseTelemetry";
 import type mapboxgl from "mapbox-gl";
 import { dynamicConfig } from "@/lib/dynamic-config";
@@ -73,6 +82,9 @@ const RoadtripMap = () => {
   const [chargingSessions, setChargingSessions] = useState<ChargingSession[]>([]);
   const [batteryTimeline, setBatteryTimeline] = useState<BatterySample[]>([]);
   const [climateTimeline, setClimateTimeline] = useState<ClimateSample[]>([]);
+  const [dailyCharging, setDailyCharging] = useState<DailyCharging[]>([]);
+  const [itinerary, setItinerary] = useState<TripItineraryEntry[]>([]);
+  const [tripSummary, setTripSummary] = useState<TripSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
@@ -91,12 +103,18 @@ const RoadtripMap = () => {
       loadChargingSessions().catch(() => []),
       loadBatteryTimeline().catch(() => []),
       loadClimateTimeline().catch(() => []),
+      loadDailyCharging().catch(() => []),
+      loadTripItinerary().catch(() => []),
+      loadTripSummary().catch(() => null),
     ])
-      .then(([parsedDrives, sessions, battery, climate]) => {
+      .then(([parsedDrives, sessions, battery, climate, daily, itin, summary]) => {
         setDrives(parsedDrives);
         setChargingSessions(sessions);
         setBatteryTimeline(battery);
         setClimateTimeline(climate);
+        setDailyCharging(daily);
+        setItinerary(itin);
+        setTripSummary(summary);
         setLoading(false);
       })
       .catch((e) => {
@@ -113,8 +131,8 @@ const RoadtripMap = () => {
     if (!drives.length) return null;
     const first = drives[0];
     const last = drives[drives.length - 1];
-    const totalMiles = Math.round(last.endOdometer - first.startOdometer);
-    const totalEnergy = drives.reduce((s, d) => s + d.energyKwh, 0);
+    const totalMiles = tripSummary?.totalMiles ?? Math.round(last.endOdometer - first.startOdometer);
+    const totalEnergy = tripSummary?.totalEnergyKwh ?? Math.round(drives.reduce((s, d) => s + d.energyKwh, 0));
     const stateSet = new Set<string>();
     for (const d of drives) {
       const s1 = extractStateFromLocation(d.startLocation);
@@ -122,23 +140,23 @@ const RoadtripMap = () => {
       if (s1) stateSet.add(s1);
       if (s2) stateSet.add(s2);
     }
-    const scCount = chargingSessions.filter((s) => s.isSupercharger).length;
-    const totalChargeMin = chargingSessions.reduce((s, c) => s + c.durationMin, 0);
+    const totalCost = tripSummary?.totalCostUsd ?? chargingSessions.reduce((s, c) => s + c.costUsd, 0);
     return {
       totalMiles,
       totalDrives: drives.length,
-      totalEnergy: Math.round(totalEnergy),
-      statesCount: stateSet.size,
+      totalEnergy,
+      statesCount: tripSummary?.statesVisited ?? stateSet.size,
       startDate: first.startedAt.split(" ")[0],
       endDate: last.endedAt.split(" ")[0],
-      avgEfficiency: totalMiles > 0 ? Math.round((totalEnergy / totalMiles) * 1000) : 0,
+      tripDays: tripSummary?.tripDurationDays ?? 0,
       chargingSessions: chargingSessions.length,
-      superchargerSessions: scCount,
-      totalChargeHours: Math.round(totalChargeMin / 60),
+      totalCost: Math.round(totalCost),
+      costPerMile: tripSummary?.costPerMile ?? (totalMiles > 0 ? totalCost / totalMiles : 0),
+      peopleMet: tripSummary?.peopleMet ?? 0,
     };
-  }, [drives, chargingSessions]);
+  }, [drives, chargingSessions, tripSummary]);
 
-  // Sampled battery data for chart (every 4th point for performance)
+  // Battery chart data
   const batteryChartData = useMemo(() => {
     if (!batteryTimeline.length) return [];
     const step = Math.max(1, Math.floor(batteryTimeline.length / 800));
@@ -165,16 +183,15 @@ const RoadtripMap = () => {
       }));
   }, [climateTimeline]);
 
-  // Charging sessions chart (bar chart of session power)
-  const chargingChartData = useMemo(() => {
-    return chargingSessions.map((s) => ({
-      date: formatChartDate(s.start),
-      peakKw: s.peakPowerKw,
-      duration: s.durationMin,
-      added: s.endBattery - s.startBattery,
-      type: s.isSupercharger ? "Supercharger" : "L2/Dest",
+  // Daily cost chart
+  const dailyCostChartData = useMemo(() => {
+    return dailyCharging.map((d) => ({
+      date: formatChartDate(d.date),
+      cost: d.costUsd,
+      energy: d.energyKwh,
+      sessions: d.sessions,
     }));
-  }, [chargingSessions]);
+  }, [dailyCharging]);
 
   // Initialize Mapbox map
   useEffect(() => {
@@ -231,7 +248,6 @@ const RoadtripMap = () => {
     const mb = mbRef.current;
     if (!map || !mb || !mapReady) return;
 
-    // Remove existing charging markers
     const existing = document.querySelectorAll("[data-charging-marker]");
     existing.forEach((el) => el.remove());
 
@@ -278,7 +294,7 @@ const RoadtripMap = () => {
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
       {/* Map area */}
-      <div className={`relative min-h-0 ${panelOpen ? "flex-1" : "flex-1"}`} style={{ flex: panelOpen ? "1 1 55%" : "1 1 100%" }}>
+      <div className="relative min-h-0" style={{ flex: panelOpen ? "1 1 55%" : "1 1 100%" }}>
         <div ref={mapContainer} className="absolute inset-0" />
 
         {mapReady && (
@@ -326,17 +342,20 @@ const RoadtripMap = () => {
                   A Whittle Wandering
                 </h1>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Summer 2025 Tesla Road Trip &middot; 48 States
+                  Summer 2025 Tesla Road Trip &middot; {stats.statesCount} States &middot; {stats.tripDays} Days
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <StatBadge icon={<Gauge className="h-3 w-3" />} value={`${stats.totalMiles.toLocaleString()} mi`} />
                 <StatBadge icon={<MapPin className="h-3 w-3" />} value={`${stats.statesCount} states`} />
-                <StatBadge icon={<Calendar className="h-3 w-3" />} value={`${stats.startDate} \u2013 ${stats.endDate}`} />
                 <StatBadge icon={<Zap className="h-3 w-3" />} value={`${stats.totalEnergy.toLocaleString()} kWh`} />
                 <StatBadge icon={<BatteryCharging className="h-3 w-3" />} value={`${stats.chargingSessions} charges`} />
-                <StatBadge icon={<Zap className="h-3 w-3" />} value={`${stats.superchargerSessions} SC`} />
+                <StatBadge icon={<DollarSign className="h-3 w-3" />} value={`$${stats.totalCost.toLocaleString()}`} />
+                <StatBadge icon={<DollarSign className="h-3 w-3" />} value={`$${stats.costPerMile.toFixed(3)}/mi`} />
+                {stats.peopleMet > 0 && (
+                  <StatBadge icon={<Users className="h-3 w-3" />} value={`${stats.peopleMet} people met`} />
+                )}
               </div>
 
               {/* Stops list */}
@@ -395,9 +414,17 @@ const RoadtripMap = () => {
                   <BatteryCharging className="h-3 w-3" />
                   Charging
                 </TabsTrigger>
+                <TabsTrigger value="costs" className="text-xs h-7 gap-1">
+                  <DollarSign className="h-3 w-3" />
+                  Costs
+                </TabsTrigger>
                 <TabsTrigger value="climate" className="text-xs h-7 gap-1">
                   <Thermometer className="h-3 w-3" />
                   Climate
+                </TabsTrigger>
+                <TabsTrigger value="itinerary" className="text-xs h-7 gap-1">
+                  <Route className="h-3 w-3" />
+                  Route
                 </TabsTrigger>
               </TabsList>
               <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setPanelOpen(false)}>
@@ -405,6 +432,7 @@ const RoadtripMap = () => {
               </Button>
             </div>
 
+            {/* Battery tab */}
             <TabsContent value="battery" className="flex-1 min-h-0 px-4 pb-3">
               {batteryChartData.length > 0 ? (
                 <ChartContainer config={batteryChartConfig} className="h-full w-full aspect-auto">
@@ -423,88 +451,88 @@ const RoadtripMap = () => {
                         <stop offset="100%" stopColor="#eab308" stopOpacity={0.1} />
                       </linearGradient>
                     </defs>
-                    <Area
-                      type="monotone"
-                      dataKey="pct"
-                      stroke="#22c55e"
-                      strokeWidth={1.5}
-                      fill="url(#batteryGrad)"
-                      name="Battery %"
-                      dot={false}
-                      isAnimationActive={false}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="charging"
-                      stroke="#eab308"
-                      strokeWidth={0}
-                      fill="url(#chargingGrad)"
-                      name="Charging"
-                      dot={false}
-                      isAnimationActive={false}
-                      connectNulls={false}
-                    />
+                    <Area type="monotone" dataKey="pct" stroke="#22c55e" strokeWidth={1.5} fill="url(#batteryGrad)" name="Battery %" dot={false} isAnimationActive={false} />
+                    <Area type="monotone" dataKey="charging" stroke="#eab308" strokeWidth={0} fill="url(#chargingGrad)" name="Charging" dot={false} isAnimationActive={false} connectNulls={false} />
                   </AreaChart>
                 </ChartContainer>
               ) : (
-                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-                  No battery data available
-                </div>
+                <EmptyState text="No battery data available" />
               )}
             </TabsContent>
 
+            {/* Charging tab */}
             <TabsContent value="charging" className="flex-1 min-h-0 overflow-hidden flex flex-col px-4 pb-3">
-              {chargingChartData.length > 0 ? (
+              {chargingSessions.length > 0 ? (
+                <div className="flex-1 min-h-0 overflow-y-auto">
+                  <table className="w-full text-xs">
+                    <thead className="sticky top-0 bg-card z-10">
+                      <tr className="text-muted-foreground border-b border-border/50">
+                        <th className="text-left py-1 font-medium">Date</th>
+                        <th className="text-left py-1 font-medium">Location</th>
+                        <th className="text-left py-1 font-medium">Type</th>
+                        <th className="text-right py-1 font-medium">Dur</th>
+                        <th className="text-right py-1 font-medium">kWh</th>
+                        <th className="text-right py-1 font-medium">Battery</th>
+                        <th className="text-right py-1 font-medium">Cost</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {chargingSessions.map((s, i) => (
+                        <tr
+                          key={i}
+                          className="border-b border-border/20 hover:bg-accent/30 cursor-pointer transition-colors"
+                          onClick={() => flyToSession(s)}
+                        >
+                          <td className="py-1 tabular-nums whitespace-nowrap">{formatChartDate(s.start)}</td>
+                          <td className="py-1 max-w-[140px] truncate" title={s.location}>
+                            {extractCity(s.location)}
+                          </td>
+                          <td className="py-1">
+                            <Badge variant={s.isSupercharger ? "default" : "secondary"} className="text-[10px] h-4 px-1">
+                              {s.isSupercharger ? "SC" : "L2"}
+                            </Badge>
+                          </td>
+                          <td className="py-1 text-right tabular-nums">{s.durationMin}m</td>
+                          <td className="py-1 text-right tabular-nums">{s.energyAddedKwh.toFixed(1)}</td>
+                          <td className="py-1 text-right tabular-nums">{s.startBattery}→{s.endBattery}%</td>
+                          <td className="py-1 text-right tabular-nums font-medium">
+                            {s.costUsd > 0 ? `$${s.costUsd.toFixed(2)}` : <span className="text-green-500">Free</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <EmptyState text="No charging data available" />
+              )}
+            </TabsContent>
+
+            {/* Costs tab */}
+            <TabsContent value="costs" className="flex-1 min-h-0 px-4 pb-3 flex flex-col">
+              {dailyCostChartData.length > 0 ? (
                 <>
-                  <ChartContainer config={chargingChartConfig} className="h-1/2 w-full aspect-auto">
-                    <BarChart data={chargingChartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                  <div className="flex gap-4 text-xs mb-2">
+                    <span className="text-muted-foreground">Total: <span className="font-semibold text-foreground">${dailyCharging.reduce((s, d) => s + d.costUsd, 0).toFixed(2)}</span></span>
+                    <span className="text-muted-foreground">Avg/day: <span className="font-semibold text-foreground">${(dailyCharging.reduce((s, d) => s + d.costUsd, 0) / dailyCharging.length).toFixed(2)}</span></span>
+                    <span className="text-muted-foreground">Free days: <span className="font-semibold text-foreground">{dailyCharging.filter((d) => d.costUsd === 0).length}</span></span>
+                  </div>
+                  <ChartContainer config={costChartConfig} className="flex-1 min-h-0 w-full aspect-auto">
+                    <BarChart data={dailyCostChartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
                       <XAxis dataKey="date" tick={{ fontSize: 9 }} interval="preserveStartEnd" minTickGap={40} />
-                      <YAxis tick={{ fontSize: 10 }} width={32} tickFormatter={(v: number) => `${v}kW`} />
+                      <YAxis tick={{ fontSize: 10 }} width={32} tickFormatter={(v: number) => `$${v}`} />
                       <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="peakKw" fill="#eab308" name="Peak Power (kW)" radius={[2, 2, 0, 0]} isAnimationActive={false} />
+                      <Bar dataKey="cost" fill="#22c55e" name="Daily Cost ($)" radius={[2, 2, 0, 0]} isAnimationActive={false} />
                     </BarChart>
                   </ChartContainer>
-                  <div className="flex-1 min-h-0 overflow-y-auto mt-2">
-                    <table className="w-full text-xs">
-                      <thead className="sticky top-0 bg-card">
-                        <tr className="text-muted-foreground border-b border-border/50">
-                          <th className="text-left py-1 font-medium">Date</th>
-                          <th className="text-left py-1 font-medium">Type</th>
-                          <th className="text-right py-1 font-medium">Duration</th>
-                          <th className="text-right py-1 font-medium">Peak kW</th>
-                          <th className="text-right py-1 font-medium">Added</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {chargingSessions.map((s, i) => (
-                          <tr
-                            key={i}
-                            className="border-b border-border/20 hover:bg-accent/30 cursor-pointer transition-colors"
-                            onClick={() => flyToSession(s)}
-                          >
-                            <td className="py-1 tabular-nums">{formatChartDate(s.start)}</td>
-                            <td className="py-1">
-                              <Badge variant={s.isSupercharger ? "default" : "secondary"} className="text-[10px] h-4 px-1">
-                                {s.isSupercharger ? "SC" : "L2"}
-                              </Badge>
-                            </td>
-                            <td className="py-1 text-right tabular-nums">{s.durationMin}m</td>
-                            <td className="py-1 text-right tabular-nums">{s.peakPowerKw}</td>
-                            <td className="py-1 text-right tabular-nums">{s.startBattery}→{s.endBattery}%</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
                 </>
               ) : (
-                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-                  No charging data available
-                </div>
+                <EmptyState text="No cost data available" />
               )}
             </TabsContent>
 
+            {/* Climate tab */}
             <TabsContent value="climate" className="flex-1 min-h-0 px-4 pb-3">
               {climateChartData.length > 0 ? (
                 <ChartContainer config={climateChartConfig} className="h-full w-full aspect-auto">
@@ -513,30 +541,50 @@ const RoadtripMap = () => {
                     <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={50} />
                     <YAxis tick={{ fontSize: 10 }} width={32} tickFormatter={(v: number) => `${v}°F`} />
                     <ChartTooltip content={<ChartTooltipContent />} />
-                    <Line
-                      type="monotone"
-                      dataKey="outside"
-                      stroke="#ef4444"
-                      strokeWidth={1.5}
-                      name="Outside Temp"
-                      dot={false}
-                      isAnimationActive={false}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="inside"
-                      stroke="#3b82f6"
-                      strokeWidth={1.5}
-                      name="Inside Temp"
-                      dot={false}
-                      isAnimationActive={false}
-                    />
+                    <Line type="monotone" dataKey="outside" stroke="#ef4444" strokeWidth={1.5} name="Outside Temp" dot={false} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="inside" stroke="#3b82f6" strokeWidth={1.5} name="Inside Temp" dot={false} isAnimationActive={false} />
                   </LineChart>
                 </ChartContainer>
               ) : (
-                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-                  No climate data available
-                </div>
+                <EmptyState text="No climate data available" />
+              )}
+            </TabsContent>
+
+            {/* Itinerary tab */}
+            <TabsContent value="itinerary" className="flex-1 min-h-0 overflow-y-auto px-4 pb-3">
+              {itinerary.length > 0 ? (
+                <table className="w-full text-xs">
+                  <thead className="sticky top-0 bg-card z-10">
+                    <tr className="text-muted-foreground border-b border-border/50">
+                      <th className="text-left py-1.5 font-medium">State</th>
+                      <th className="text-left py-1.5 font-medium">Locations</th>
+                      <th className="text-left py-1.5 font-medium">Dates</th>
+                      <th className="text-left py-1.5 font-medium">People</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {itinerary.map((entry, i) => (
+                      <tr key={i} className="border-b border-border/20 hover:bg-accent/30 transition-colors">
+                        <td className="py-1.5">
+                          <Badge variant="outline" className="text-[10px] h-5 px-1.5 font-mono">
+                            {entry.state}
+                          </Badge>
+                        </td>
+                        <td className="py-1.5 max-w-[200px]">{entry.locations}</td>
+                        <td className="py-1.5 tabular-nums text-muted-foreground whitespace-nowrap">{entry.dates}</td>
+                        <td className="py-1.5">
+                          {entry.peopleMet ? (
+                            <span className="text-primary">{entry.peopleMet}</span>
+                          ) : (
+                            <span className="text-muted-foreground/40">&mdash;</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <EmptyState text="No itinerary data available" />
               )}
             </TabsContent>
           </Tabs>
@@ -553,8 +601,8 @@ const batteryChartConfig: ChartConfig = {
   charging: { label: "Charging", color: "#eab308" },
 };
 
-const chargingChartConfig: ChartConfig = {
-  peakKw: { label: "Peak Power (kW)", color: "#eab308" },
+const costChartConfig: ChartConfig = {
+  cost: { label: "Daily Cost ($)", color: "#22c55e" },
 };
 
 const climateChartConfig: ChartConfig = {
@@ -562,7 +610,7 @@ const climateChartConfig: ChartConfig = {
   inside: { label: "Inside (°F)", color: "#3b82f6" },
 };
 
-// --- Helpers ---
+// --- Components ---
 
 function StatBadge({ icon, value }: { icon: React.ReactNode; value: string }) {
   return (
@@ -572,6 +620,16 @@ function StatBadge({ icon, value }: { icon: React.ReactNode; value: string }) {
     </Badge>
   );
 }
+
+function EmptyState({ text }: { text: string }) {
+  return (
+    <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+      {text}
+    </div>
+  );
+}
+
+// --- Helpers ---
 
 function extractStateFromLocation(location: string): string {
   const match = location.match(/, ([A-Z][a-z]+(?: [A-Z][a-z]+)*)\s+\d{5}/);
@@ -607,43 +665,27 @@ function addRouteLayer(map: mapboxgl.Map, route: RoutePoint[]) {
     },
   });
 
-  // Glow
   map.addLayer({
     id: "trip-route-glow",
     type: "line",
     source: "trip-route",
     layout: { "line-join": "round", "line-cap": "round" },
-    paint: {
-      "line-color": "#22d3ee",
-      "line-width": 6,
-      "line-opacity": 0.25,
-      "line-blur": 4,
-    },
+    paint: { "line-color": "#22d3ee", "line-width": 6, "line-opacity": 0.25, "line-blur": 4 },
   });
 
-  // Main line
   map.addLayer({
     id: "trip-route-line",
     type: "line",
     source: "trip-route",
     layout: { "line-join": "round", "line-cap": "round" },
-    paint: {
-      "line-color": "#3b82f6",
-      "line-width": 2.5,
-      "line-opacity": 0.9,
-    },
+    paint: { "line-color": "#3b82f6", "line-width": 2.5, "line-opacity": 0.9 },
   });
 }
 
-function addStopMarkers(
-  map: mapboxgl.Map,
-  mb: typeof mapboxgl,
-  stops: TripStop[],
-) {
+function addStopMarkers(map: mapboxgl.Map, mb: typeof mapboxgl, stops: TripStop[]) {
   for (const stop of stops) {
     const el = document.createElement("div");
-    el.style.cssText =
-      "width:10px;height:10px;border-radius:50%;background:#3b82f6;border:2px solid #fff;box-shadow:0 0 6px rgba(59,130,246,0.5);cursor:pointer;";
+    el.style.cssText = "width:10px;height:10px;border-radius:50%;background:#3b82f6;border:2px solid #fff;box-shadow:0 0 6px rgba(59,130,246,0.5);cursor:pointer;";
 
     const city = extractCity(stop.location);
     const popup = new mb.Popup({ offset: 12, closeButton: false, maxWidth: "220px" }).setHTML(`
@@ -653,28 +695,14 @@ function addStopMarkers(
       </div>
     `);
 
-    new mb.Marker(el)
-      .setLngLat([stop.lng, stop.lat])
-      .setPopup(popup)
-      .addTo(map);
+    new mb.Marker(el).setLngLat([stop.lng, stop.lat]).setPopup(popup).addTo(map);
   }
 
-  // Start marker (green)
-  if (stops.length > 0) {
-    addSpecialMarker(map, mb, stops[0], "#22c55e", "START");
-  }
-  // End marker (red)
-  if (stops.length > 1) {
-    addSpecialMarker(map, mb, stops[stops.length - 1], "#ef4444", "END");
-  }
+  if (stops.length > 0) addSpecialMarker(map, mb, stops[0], "#22c55e", "START");
+  if (stops.length > 1) addSpecialMarker(map, mb, stops[stops.length - 1], "#ef4444", "END");
 }
 
-function addChargingMarkers(
-  map: mapboxgl.Map,
-  mb: typeof mapboxgl,
-  sessions: ChargingSession[],
-) {
-  // De-duplicate by rounding to ~0.01 degree (~1km) to avoid overlapping markers
+function addChargingMarkers(map: mapboxgl.Map, mb: typeof mapboxgl, sessions: ChargingSession[]) {
   const seen = new Set<string>();
   for (const s of sessions) {
     if (!s.lat || !s.lng) continue;
@@ -686,46 +714,36 @@ function addChargingMarkers(
     const el = document.createElement("div");
     el.setAttribute("data-charging-marker", "true");
     el.style.cssText = `
-      width:${isSC ? 14 : 10}px;
-      height:${isSC ? 14 : 10}px;
+      width:${isSC ? 14 : 10}px;height:${isSC ? 14 : 10}px;
       border-radius:${isSC ? "3px" : "50%"};
       background:${isSC ? "#eab308" : "#a855f7"};
       border:2px solid ${isSC ? "#fef08a" : "#e9d5ff"};
       box-shadow:0 0 8px ${isSC ? "rgba(234,179,8,0.5)" : "rgba(168,85,247,0.4)"};
-      cursor:pointer;
-      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
       font-size:8px;color:#000;font-weight:bold;
     `;
     el.textContent = isSC ? "\u26A1" : "";
-    el.title = `${isSC ? "Supercharger" : "L2"}: ${s.peakPowerKw}kW peak, ${s.startBattery}→${s.endBattery}%`;
 
-    const popup = new mb.Popup({ offset: 12, closeButton: false, maxWidth: "240px" }).setHTML(`
+    const city = extractCity(s.location);
+    const costStr = s.costUsd > 0 ? `$${s.costUsd.toFixed(2)}` : "Free";
+    const popup = new mb.Popup({ offset: 12, closeButton: false, maxWidth: "260px" }).setHTML(`
       <div style="font-size:12px;line-height:1.4;">
         <div style="font-weight:600;margin-bottom:2px;">${isSC ? "\u26A1 Supercharger" : "L2 / Destination"}</div>
+        <div style="opacity:0.8;font-size:11px;">${city}</div>
         <div>${formatChartDate(s.start)} &middot; ${s.durationMin}min</div>
-        <div>Battery: ${s.startBattery}% → ${s.endBattery}%</div>
-        <div>Peak: ${s.peakPowerKw} kW</div>
+        <div>Battery: ${s.startBattery}% → ${s.endBattery}% (+${s.energyAddedKwh.toFixed(1)} kWh)</div>
+        <div style="font-weight:600;color:${s.costUsd > 0 ? "#22c55e" : "#eab308"};">Cost: ${costStr}</div>
       </div>
     `);
 
-    new mb.Marker(el)
-      .setLngLat([s.lng, s.lat])
-      .setPopup(popup)
-      .addTo(map);
+    new mb.Marker(el).setLngLat([s.lng, s.lat]).setPopup(popup).addTo(map);
   }
 }
 
-function addSpecialMarker(
-  map: mapboxgl.Map,
-  mb: typeof mapboxgl,
-  stop: TripStop,
-  color: string,
-  label: string,
-) {
+function addSpecialMarker(map: mapboxgl.Map, mb: typeof mapboxgl, stop: TripStop, color: string, label: string) {
   const el = document.createElement("div");
   el.style.cssText = `width:18px;height:18px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 0 10px ${color}80;cursor:pointer;`;
   el.title = label;
-
   new mb.Marker(el).setLngLat([stop.lng, stop.lat]).addTo(map);
 }
 
