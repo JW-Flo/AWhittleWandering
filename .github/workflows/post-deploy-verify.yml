@@ -35,12 +35,12 @@ permissions:
 env:
   STAGING_FRONTEND: https://staging.awhittlewandering.pages.dev
   STAGING_BACKEND: https://awhittlewandering-api-staging.kd8jc7v8cd.workers.dev
-  # Production uses custom domains only (workers_dev = false)
+  # Production uses custom domains + workers.dev as fallback for CI
   PROD_FRONTEND: https://awhittlewandering.com
   PROD_BACKEND: https://api.awhittlewandering.com
   PROD_FRONTEND_FALLBACK: https://awhittlewandering.pages.dev
-  # Backend has no fallback — workers.dev route is disabled in production
-  PROD_BACKEND_FALLBACK: https://api.awhittlewandering.com
+  # workers.dev fallback bypasses Bot Fight Mode on custom domain
+  PROD_BACKEND_FALLBACK: https://awhittlewandering-api.kd8jc7v8cd.workers.dev
 
 jobs:
   verify:
@@ -140,7 +140,7 @@ jobs:
 
           check_url() {
             local URL="$1"
-            curl -s --connect-timeout 10 --max-time 30 -o /dev/null -w "%{http_code}" "$URL" 2>/dev/null || echo "000"
+            curl -s --connect-timeout 10 --max-time 30 -H "User-Agent: AWhittleWandering-CI/1.0" -o /dev/null -w "%{http_code}" "$URL" 2>/dev/null || echo "000"
           }
 
           DOMAIN_WARNING=""
