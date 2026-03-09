@@ -296,33 +296,33 @@ jobs:
       healthy: ${{ steps.check.outputs.healthy }}
     steps:
       - name: Wait for Deployment Propagation
-        run: sleep 30
+        run: sleep 45
 
       - name: Health Check
         id: check
         run: |
           HEALTH_URL="${{ needs.setup.outputs.health_url }}"
-          MAX_RETRIES=5
-          RETRY_DELAY=10
-          
+          MAX_RETRIES=8
+          RETRY_DELAY=15
+
           for i in $(seq 1 $MAX_RETRIES); do
             echo "Health check attempt $i/$MAX_RETRIES..."
-            
-            RESPONSE=$(curl -sf -w "\n%{http_code}" "$HEALTH_URL" 2>/dev/null || echo -e "\n000")
+
+            RESPONSE=$(curl -s --connect-timeout 10 --max-time 30 -w "\n%{http_code}" "$HEALTH_URL" 2>/dev/null || echo -e "\n000")
             HTTP_CODE=$(echo "$RESPONSE" | tail -1)
             # Normalize HTTP code (curl may return 000000 instead of 000 on connection failure)
             HTTP_CODE=${HTTP_CODE:0:3}
             BODY=$(echo "$RESPONSE" | head -n -1)
-            
+
             echo "HTTP Code: $HTTP_CODE"
             echo "Response: $BODY"
-            
+
             if [[ "$HTTP_CODE" == "200" ]]; then
               echo "✅ Health check passed"
               echo "healthy=true" >> $GITHUB_OUTPUT
               exit 0
             fi
-            
+
             if [[ $i -lt $MAX_RETRIES ]]; then
               echo "Retrying in ${RETRY_DELAY}s..."
               sleep $RETRY_DELAY
