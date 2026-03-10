@@ -237,14 +237,14 @@ describe('Tesla Drive Import', () => {
             run: async () => {
               // Simulate deduplication - if SQL contains ON CONFLICT, check if key exists
               if (sql.includes('ON CONFLICT')) {
-                // Extract dedup_key from params (3rd param in our SQL)
-                const dedupKey = params[2];
-                const table = 'drive_segments';
+                // tessie_id is the first param (index 0) for drives table
+                const uniqueKey = params[0];
+                const table = sql.includes('drives') ? 'drives' : 'drive_segments';
                 const existing = this.data.get(table) || [];
-                const isDuplicate = existing.some((row: any) => row.dedup_key === dedupKey);
+                const isDuplicate = existing.some((row: any) => row.unique_key === uniqueKey);
 
                 if (!isDuplicate) {
-                  this.data.set(table, [...existing, { dedup_key: dedupKey, ...params }]);
+                  this.data.set(table, [...existing, { unique_key: uniqueKey, ...params }]);
                   return { meta: { changes: 1 } };
                 }
                 return { meta: { changes: 0 } }; // Duplicate
