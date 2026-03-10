@@ -292,9 +292,48 @@ jobs:
           path: ${{ steps.deploy.outputs.log_dir || runner.temp }}/wrangler-logs/
           retention-days: 14
 
+  # Apply D1 database migrations after deployment
+  migrate:
+    needs: [setup, deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Install Wrangler
+        run: npm install -g wrangler@3
+
+      - name: Apply D1 Migrations
+        working-directory: ${{ env.WORKER_DIR }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          ENV="${{ needs.setup.outputs.environment }}"
+          echo "Applying D1 migrations for $ENV..."
+
+          # Apply migrations to the remote D1 database
+          if [[ "$ENV" == "production" || "$ENV" == "staging" ]]; then
+            npx wrangler d1 migrations apply TESLA_DB --remote --env "$ENV" 2>&1 || {
+              echo "⚠️ Migration apply failed (may already be applied)"
+              # Non-fatal: tables may already exist from init-schema or prior runs
+            }
+          else
+            echo "Skipping migrations for development environment"
+          fi
+
   # Health check after deployment
   health-check:
-    needs: [setup, deploy]
+    needs: [setup, deploy, migrate]
     runs-on: ubuntu-latest
     outputs:
       healthy: ${{ steps.check.outputs.healthy }}

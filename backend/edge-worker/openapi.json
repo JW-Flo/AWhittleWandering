@@ -42,6 +42,10 @@
       "name": "admin"
     },
     {
+      "name": "import",
+      "description": "CSV and JSON data import endpoints"
+    },
+    {
       "name": "meta"
     },
     {
@@ -1223,6 +1227,225 @@
           },
           "401": {
             "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/init-schema": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Bootstrap D1 database schema (idempotent)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Database not configured"
+          }
+        }
+      }
+    },
+    "/api/v1/import/tesla-drives": {
+      "post": {
+        "tags": [
+          "import"
+        ],
+        "summary": "Import Tesla drive segments from CSV",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "journeyId": {
+                    "type": "string"
+                  },
+                  "vehicleId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Import failed"
+          }
+        }
+      }
+    },
+    "/api/v1/import/tesla-charges": {
+      "post": {
+        "tags": [
+          "import"
+        ],
+        "summary": "Import Tesla charge events from CSV",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "journeyId": {
+                    "type": "string"
+                  },
+                  "vehicleId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Import failed"
+          }
+        }
+      }
+    },
+    "/api/v1/import/waypoints": {
+      "post": {
+        "tags": [
+          "import"
+        ],
+        "summary": "Import narrative waypoints from JSON",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "waypoints": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "journeyId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "waypoints"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Import failed"
+          }
+        }
+      }
+    },
+    "/api/v1/import/history": {
+      "get": {
+        "tags": [
+          "import"
+        ],
+        "summary": "Get import audit history",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "journeyId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Server error"
           }
         }
       }
