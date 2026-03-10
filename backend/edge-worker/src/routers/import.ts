@@ -95,42 +95,46 @@ importRouter.post('/tesla-drives', async (c) => {
       vehicleId
     });
 
-    // Create audit log entry
-    const auditResult = await db.prepare(`
-      INSERT INTO import_audit (
-        journey_id, import_type, import_source, filename, status, started_at
-      ) VALUES (?, ?, ?, ?, ?, datetime('now'))
-      RETURNING id
-    `).bind(journeyId, 'drive_segments', 'csv', file.name, 'processing').first();
-
-    const auditId = (auditResult as any)?.id;
+    // Create audit log entry (best-effort; table may not exist yet)
+    let auditId: number | null = null;
+    try {
+      const auditResult = await db.prepare(`
+        INSERT INTO import_audit (
+          journey_id, import_type, import_source, filename, status, started_at
+        ) VALUES (?, ?, ?, ?, ?, datetime('now'))
+        RETURNING id
+      `).bind(journeyId, 'drives', 'csv', file.name, 'processing').first();
+      auditId = (auditResult as any)?.id ?? null;
+    } catch { /* import_audit table may not exist */ }
 
     // Import drives
     const result = await importTeslaDrives(db, csvContent, journeyId, vehicleId);
 
-    // Update audit log
+    // Update audit log (best-effort)
     if (auditId) {
-      await db.prepare(`
-        UPDATE import_audit
-        SET records_processed = ?,
-            records_imported = ?,
-            records_skipped = ?,
-            records_failed = ?,
-            status = ?,
-            error_summary = ?,
-            duration_ms = ?,
-            completed_at = datetime('now')
-        WHERE id = ?
-      `).bind(
-        result.recordsProcessed,
-        result.recordsImported,
-        result.recordsSkipped,
-        result.recordsFailed,
-        result.success ? 'completed' : (result.recordsImported > 0 ? 'partial' : 'failed'),
-        JSON.stringify(result.errors),
-        result.duration,
-        auditId
-      ).run();
+      try {
+        await db.prepare(`
+          UPDATE import_audit
+          SET records_processed = ?,
+              records_imported = ?,
+              records_skipped = ?,
+              records_failed = ?,
+              status = ?,
+              error_summary = ?,
+              duration_ms = ?,
+              completed_at = datetime('now')
+          WHERE id = ?
+        `).bind(
+          result.recordsProcessed,
+          result.recordsImported,
+          result.recordsSkipped,
+          result.recordsFailed,
+          result.success ? 'completed' : (result.recordsImported > 0 ? 'partial' : 'failed'),
+          JSON.stringify(result.errors),
+          result.duration,
+          auditId
+        ).run();
+      } catch { /* best-effort */ }
     }
 
     // Update journey aggregates
@@ -203,42 +207,46 @@ importRouter.post('/tesla-charges', async (c) => {
       vehicleId
     });
 
-    // Create audit log entry
-    const auditResult = await db.prepare(`
-      INSERT INTO import_audit (
-        journey_id, import_type, import_source, filename, status, started_at
-      ) VALUES (?, ?, ?, ?, ?, datetime('now'))
-      RETURNING id
-    `).bind(journeyId, 'energy_events', 'csv', file.name, 'processing').first();
-
-    const auditId = (auditResult as any)?.id;
+    // Create audit log entry (best-effort)
+    let auditId: number | null = null;
+    try {
+      const auditResult = await db.prepare(`
+        INSERT INTO import_audit (
+          journey_id, import_type, import_source, filename, status, started_at
+        ) VALUES (?, ?, ?, ?, ?, datetime('now'))
+        RETURNING id
+      `).bind(journeyId, 'energy_events', 'csv', file.name, 'processing').first();
+      auditId = (auditResult as any)?.id ?? null;
+    } catch { /* import_audit table may not exist */ }
 
     // Import charges
     const result = await importTeslaCharges(db, csvContent, journeyId, vehicleId);
 
-    // Update audit log
+    // Update audit log (best-effort)
     if (auditId) {
-      await db.prepare(`
-        UPDATE import_audit
-        SET records_processed = ?,
-            records_imported = ?,
-            records_skipped = ?,
-            records_failed = ?,
-            status = ?,
-            error_summary = ?,
-            duration_ms = ?,
-            completed_at = datetime('now')
-        WHERE id = ?
-      `).bind(
-        result.recordsProcessed,
-        result.recordsImported,
-        result.recordsSkipped,
-        result.recordsFailed,
-        result.success ? 'completed' : (result.recordsImported > 0 ? 'partial' : 'failed'),
-        JSON.stringify(result.errors),
-        result.duration,
-        auditId
-      ).run();
+      try {
+        await db.prepare(`
+          UPDATE import_audit
+          SET records_processed = ?,
+              records_imported = ?,
+              records_skipped = ?,
+              records_failed = ?,
+              status = ?,
+              error_summary = ?,
+              duration_ms = ?,
+              completed_at = datetime('now')
+          WHERE id = ?
+        `).bind(
+          result.recordsProcessed,
+          result.recordsImported,
+          result.recordsSkipped,
+          result.recordsFailed,
+          result.success ? 'completed' : (result.recordsImported > 0 ? 'partial' : 'failed'),
+          JSON.stringify(result.errors),
+          result.duration,
+          auditId
+        ).run();
+      } catch { /* best-effort */ }
     }
 
     // Update journey aggregates
@@ -300,15 +308,17 @@ importRouter.post('/waypoints', async (c) => {
       count: waypoints.length
     });
 
-    // Create audit log entry
-    const auditResult = await db.prepare(`
-      INSERT INTO import_audit (
-        journey_id, import_type, import_source, status, started_at
-      ) VALUES (?, ?, ?, ?, datetime('now'))
-      RETURNING id
-    `).bind(journeyId, 'waypoints', 'json', 'processing').first();
-
-    const auditId = (auditResult as any)?.id;
+    // Create audit log entry (best-effort)
+    let auditId: number | null = null;
+    try {
+      const auditResult = await db.prepare(`
+        INSERT INTO import_audit (
+          journey_id, import_type, import_source, status, started_at
+        ) VALUES (?, ?, ?, ?, datetime('now'))
+        RETURNING id
+      `).bind(journeyId, 'waypoints', 'json', 'processing').first();
+      auditId = (auditResult as any)?.id ?? null;
+    } catch { /* import_audit table may not exist */ }
 
     // Import waypoints in batches
     let imported = 0;
@@ -387,29 +397,31 @@ importRouter.post('/waypoints', async (c) => {
 
     const duration = Date.now() - startTime;
 
-    // Update audit log
+    // Update audit log (best-effort)
     if (auditId) {
-      await db.prepare(`
-        UPDATE import_audit
-        SET records_processed = ?,
-            records_imported = ?,
-            records_skipped = ?,
-            records_failed = ?,
-            status = ?,
-            error_summary = ?,
-            duration_ms = ?,
-            completed_at = datetime('now')
-        WHERE id = ?
-      `).bind(
-        waypoints.length,
-        imported,
-        skipped,
-        failed,
-        failed === 0 ? 'completed' : (imported > 0 ? 'partial' : 'failed'),
-        JSON.stringify(errors),
-        duration,
-        auditId
-      ).run();
+      try {
+        await db.prepare(`
+          UPDATE import_audit
+          SET records_processed = ?,
+              records_imported = ?,
+              records_skipped = ?,
+              records_failed = ?,
+              status = ?,
+              error_summary = ?,
+              duration_ms = ?,
+              completed_at = datetime('now')
+          WHERE id = ?
+        `).bind(
+          waypoints.length,
+          imported,
+          skipped,
+          failed,
+          failed === 0 ? 'completed' : (imported > 0 ? 'partial' : 'failed'),
+          JSON.stringify(errors),
+          duration,
+          auditId
+        ).run();
+      } catch { /* best-effort */ }
     }
 
     logger.info('import.waypoints.complete', {
