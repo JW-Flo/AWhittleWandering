@@ -11,6 +11,64 @@ export const adminRouter = new Hono<{ Bindings: Env }>();
 // Auth is enforced at the app layer via `Authorization: Bearer <ADMIN_TOKEN>` on `/api/v1/admin/*`
 // (see `src/index.ts`). Keep this router focused on admin functionality only.
 
+/**
+ * POST /api/v1/admin/init-schema
+ * Bootstrap the D1 database schema. Safe to call multiple times (uses IF NOT EXISTS).
+ * This is needed because wrangler d1 migrations aren't automatically applied on deploy.
+ */
+adminRouter.post('/init-schema', async (c) => {
+  const db = c.env?.TESLA_DB;
+  if (!db) return c.json({ ok: false, error: 'Database not configured' }, 500);
+
+  const statements = [
+    // Core tables
+    `CREATE TABLE IF NOT EXISTS vehicles (id TEXT PRIMARY KEY, vin TEXT UNIQUE NOT NULL, display_name TEXT, vehicle_type TEXT, model TEXT, year INTEGER, color TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)`,
+    `CREATE TABLE IF NOT EXISTS journeys (id TEXT PRIMARY KEY, vehicle_id TEXT NOT NULL, name TEXT NOT NULL, description TEXT, start_date DATE NOT NULL, end_date DATE, total_states INTEGER DEFAULT 0, target_states INTEGER DEFAULT 48, total_miles REAL DEFAULT 0, total_drives INTEGER DEFAULT 0, total_charges INTEGER DEFAULT 0, total_energy_used_kwh REAL DEFAULT 0, total_cost_usd REAL DEFAULT 0, overall_efficiency_miles_per_kwh REAL DEFAULT 0, status TEXT DEFAULT 'active', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)`,
+    // Vehicle state
+    `CREATE TABLE IF NOT EXISTS vehicle_state (vehicle_id TEXT PRIMARY KEY, vin TEXT NOT NULL, battery_level INTEGER DEFAULT 0, battery_range REAL DEFAULT 0, charging_state TEXT DEFAULT 'Unknown', latitude REAL DEFAULT 0, longitude REAL DEFAULT 0, heading REAL DEFAULT 0, speed REAL DEFAULT 0, odometer REAL DEFAULT 0, inside_temp REAL, outside_temp REAL, shift_state TEXT, power INTEGER, locked BOOLEAN DEFAULT FALSE, climate_on BOOLEAN DEFAULT FALSE, software_update_status TEXT, car_version TEXT, timestamp DATETIME NOT NULL, state_name TEXT, city TEXT, address TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)`,
+    // Drives
+    `CREATE TABLE IF NOT EXISTS drives (id INTEGER PRIMARY KEY AUTOINCREMENT, tessie_id INTEGER UNIQUE, vehicle_id TEXT NOT NULL, journey_id TEXT NOT NULL, started_at DATETIME NOT NULL, ended_at DATETIME NOT NULL, start_address TEXT, end_address TEXT, start_latitude REAL DEFAULT 0, start_longitude REAL DEFAULT 0, end_latitude REAL DEFAULT 0, end_longitude REAL DEFAULT 0, start_state TEXT, end_state TEXT, distance_miles REAL DEFAULT 0, duration_minutes INTEGER DEFAULT 0, energy_used_kwh REAL DEFAULT 0, average_speed REAL DEFAULT 0, max_speed REAL DEFAULT 0, start_battery_level INTEGER DEFAULT 0, end_battery_level INTEGER DEFAULT 0, starting_range REAL DEFAULT 0, ending_range REAL DEFAULT 0, rated_range_used REAL DEFAULT 0, outside_temp_avg REAL, average_inside_temp REAL, drive_tag TEXT, efficiency_miles_per_kwh REAL DEFAULT 0, route_complexity TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`,
+    // Charges
+    `CREATE TABLE IF NOT EXISTS charges (id INTEGER PRIMARY KEY AUTOINCREMENT, tessie_id INTEGER UNIQUE, vehicle_id TEXT NOT NULL, journey_id TEXT NOT NULL, started_at DATETIME NOT NULL, ended_at DATETIME, location TEXT, latitude REAL DEFAULT 0, longitude REAL DEFAULT 0, state_name TEXT, city TEXT, charger_type TEXT, charger_power_kw REAL DEFAULT 0, energy_added_kwh REAL DEFAULT 0, energy_used_kwh REAL DEFAULT 0, charge_rate_avg REAL DEFAULT 0, charge_rate_max REAL DEFAULT 0, peak_charging_rate REAL DEFAULT 0, start_battery_level INTEGER DEFAULT 0, end_battery_level INTEGER DEFAULT 0, start_range REAL DEFAULT 0, end_range REAL DEFAULT 0, miles_added INTEGER DEFAULT 0, miles_added_ideal INTEGER DEFAULT 0, cost_usd REAL DEFAULT 0, cost_per_kwh REAL DEFAULT 0, duration_minutes INTEGER DEFAULT 0, is_supercharger BOOLEAN DEFAULT FALSE, charge_port_type TEXT, charging_efficiency_kw REAL DEFAULT 0, charging_network TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`,
+    // States visited
+    `CREATE TABLE IF NOT EXISTS states_visited (id INTEGER PRIMARY KEY AUTOINCREMENT, journey_id TEXT NOT NULL, state_name TEXT NOT NULL, state_code TEXT, first_visited_date DATE, first_drive_id INTEGER, visit_count INTEGER DEFAULT 1, total_miles_in_state REAL DEFAULT 0, total_time_minutes INTEGER DEFAULT 0, entry_latitude REAL, entry_longitude REAL, entry_address TEXT, is_current_state BOOLEAN DEFAULT FALSE, last_updated DATETIME DEFAULT CURRENT_TIMESTAMP, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(journey_id, state_name))`,
+    // Supporting tables
+    `CREATE TABLE IF NOT EXISTS daily_analytics (id INTEGER PRIMARY KEY AUTOINCREMENT, journey_id TEXT NOT NULL, date TEXT NOT NULL, total_drives INTEGER DEFAULT 0, total_distance_miles REAL DEFAULT 0, total_energy_used_kwh REAL DEFAULT 0, total_charges INTEGER DEFAULT 0, total_energy_added_kwh REAL DEFAULT 0, total_cost_usd REAL DEFAULT 0, avg_speed_mph REAL DEFAULT 0, max_speed_mph REAL DEFAULT 0, efficiency_miles_per_kwh REAL DEFAULT 0, states_visited_count INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(journey_id, date))`,
+    `CREATE TABLE IF NOT EXISTS journey_overview (id TEXT PRIMARY KEY, journey_id TEXT NOT NULL, total_miles REAL DEFAULT 0, current_odometer REAL DEFAULT 0, trip_miles REAL DEFAULT 0, days_elapsed INTEGER DEFAULT 0, states_visited_count INTEGER DEFAULT 0, journey_start_date DATE, status TEXT DEFAULT 'active', last_updated DATETIME DEFAULT CURRENT_TIMESTAMP, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(journey_id))`,
+    `CREATE TABLE IF NOT EXISTS current_status (id TEXT PRIMARY KEY, journey_id TEXT NOT NULL, current_state TEXT, current_city TEXT, current_latitude REAL DEFAULT 0, current_longitude REAL DEFAULT 0, battery_level INTEGER DEFAULT 0, battery_range REAL DEFAULT 0, charging_state TEXT DEFAULT 'Unknown', odometer REAL DEFAULT 0, location_description TEXT, last_updated DATETIME DEFAULT CURRENT_TIMESTAMP, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(journey_id))`,
+    `CREATE TABLE IF NOT EXISTS media (id TEXT PRIMARY KEY, journey_id TEXT NOT NULL, vehicle_id TEXT NOT NULL, filename TEXT NOT NULL, original_filename TEXT, mime_type TEXT, file_size INTEGER, r2_object_key TEXT UNIQUE NOT NULL, title TEXT, description TEXT, latitude REAL, longitude REAL, state_name TEXT, city TEXT, address TEXT, taken_at DATETIME, drive_id INTEGER, charge_id INTEGER, tags TEXT, is_favorite BOOLEAN DEFAULT FALSE, view_count INTEGER DEFAULT 0, upload_ip TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)`,
+    `CREATE TABLE IF NOT EXISTS api_cache (cache_key TEXT PRIMARY KEY, cache_data TEXT NOT NULL, expires_at DATETIME NOT NULL, cache_type TEXT, metadata TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`,
+    `CREATE TABLE IF NOT EXISTS analytics_events (id INTEGER PRIMARY KEY AUTOINCREMENT, event_type TEXT NOT NULL, event_data TEXT, user_ip TEXT, user_agent TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, processing_time_ms INTEGER, status_code INTEGER)`,
+    `CREATE TABLE IF NOT EXISTS ingestion_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, operation TEXT NOT NULL, records_processed INTEGER DEFAULT 0, success BOOLEAN DEFAULT TRUE, errors TEXT, duration_ms INTEGER DEFAULT 0, api_calls_made INTEGER DEFAULT 0, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)`,
+    `CREATE TABLE IF NOT EXISTS import_audit (id INTEGER PRIMARY KEY AUTOINCREMENT, journey_id TEXT NOT NULL, import_type TEXT NOT NULL, import_source TEXT NOT NULL, filename TEXT, records_processed INTEGER DEFAULT 0, records_imported INTEGER DEFAULT 0, records_skipped INTEGER DEFAULT 0, records_failed INTEGER DEFAULT 0, status TEXT DEFAULT 'pending', error_summary TEXT, duration_ms INTEGER DEFAULT 0, started_at DATETIME, completed_at DATETIME, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`,
+    // Key indexes
+    `CREATE INDEX IF NOT EXISTS idx_drives_vehicle_journey ON drives(vehicle_id, journey_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_drives_dates ON drives(started_at, ended_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_drives_states ON drives(start_state, end_state)`,
+    `CREATE INDEX IF NOT EXISTS idx_charges_vehicle_journey ON charges(vehicle_id, journey_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_states_visited_journey ON states_visited(journey_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_media_journey ON media(journey_id)`,
+    // Seed data
+    `INSERT OR IGNORE INTO vehicles (id, vin, display_name, vehicle_type, model, year, color) VALUES ('midnight-shadow', '5YJYGDEE5LF027324', 'Midnight Shadow', 'Tesla Model Y', 'Model Y', 2023, 'Midnight Silver Metallic')`,
+    `INSERT OR IGNORE INTO journeys (id, vehicle_id, name, description, start_date, target_states, status) VALUES ('continental-usa-2025', 'midnight-shadow', 'A Whittle Wandering - Continental USA', '48 Continental States Tesla Model Y Road Trip Adventure', '2025-06-01', 48, 'active')`,
+    `INSERT OR IGNORE INTO journey_overview (id, journey_id, journey_start_date, status) VALUES ('continental-usa-2025-overview', 'continental-usa-2025', '2025-06-01', 'active')`,
+    `INSERT OR IGNORE INTO current_status (id, journey_id) VALUES ('continental-usa-2025-status', 'continental-usa-2025')`,
+  ];
+
+  const results: Array<{ sql: string; ok: boolean; error?: string }> = [];
+  for (const sql of statements) {
+    try {
+      await db.prepare(sql).run();
+      results.push({ sql: sql.substring(0, 60) + '...', ok: true });
+    } catch (err: any) {
+      results.push({ sql: sql.substring(0, 60) + '...', ok: false, error: err.message });
+    }
+  }
+
+  const allOk = results.every(r => r.ok);
+  return c.json({ ok: allOk, results });
+});
+
 adminRouter.post('/auth/token', async (c) => {
   // This route is already protected by the adminAuth middleware at the app layer.
   // It mints a short-lived admin JWT, enabling safe rotations via JWT_SECRET(_PREVIOUS).
