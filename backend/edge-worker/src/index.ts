@@ -30,6 +30,7 @@ import { mfaRouter } from './routers/mfa';
 import { pushRouter } from './routers/push';
 import { notificationsRouter } from './routers/notifications';
 import { mediaRouter } from './routers/media';
+import { importRouter } from './routers/import';
 
 // Augment Env typing (local) for new PLATFORM_MODE variable
 declare global {
@@ -142,6 +143,8 @@ app.route('/api/v1/notifications', notificationsRouter);
 app.route('/api/v1/media', mediaRouter);
 app.use('/api/v1/admin/*', adminAuth);
 app.route('/api/v1/admin', adminRouter);
+app.use('/api/v1/import/*', adminAuth);
+app.route('/api/v1/import', importRouter);
 
 // Legacy and convenience routes (permanent redirects for backward compatibility)
 // Provide a simple health endpoint directly

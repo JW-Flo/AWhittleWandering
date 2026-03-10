@@ -485,33 +485,75 @@ importRouter.get('/history', async (c) => {
 // =====================================================
 
 /**
- * Update journey aggregates after import
+ * Update journey aggregates after import.
+ * Reads from the canonical `drives` table (matching unified-data queries)
+ * and populates `states_visited` from drive start/end states.
  */
 async function updateJourneyAggregates(db: D1Database, journeyId: string): Promise<void> {
   try {
-    // Calculate total miles and drives from segments
-    const segmentStats = await db.prepare(`
+    // Calculate total miles and drives from canonical drives table
+    const driveStats = await db.prepare(`
       SELECT
-        COUNT(*) as total_segments,
+        COUNT(*) as total_drives,
         COALESCE(SUM(distance_miles), 0) as total_miles,
         COALESCE(SUM(energy_used_kwh), 0) as total_energy
-      FROM drive_segments
+      FROM drives
       WHERE journey_id = ?
     `).bind(journeyId).first();
 
-    // Calculate total charges from energy events
-    const energyStats = await db.prepare(`
+    // Calculate total charges from charges table
+    const chargeStats = await db.prepare(`
       SELECT
         COUNT(*) as total_charges,
         COALESCE(SUM(cost_usd), 0) as total_cost
-      FROM energy_events
-      WHERE journey_id = ? AND event_type = 'charge'
+      FROM charges
+      WHERE journey_id = ?
     `).bind(journeyId).first();
 
     // Calculate efficiency
-    const totalMiles = Number((segmentStats as any)?.total_miles || 0);
-    const totalEnergy = Number((segmentStats as any)?.total_energy || 0);
+    const totalMiles = Number((driveStats as any)?.total_miles || 0);
+    const totalEnergy = Number((driveStats as any)?.total_energy || 0);
     const efficiency = totalEnergy > 0 ? totalMiles / totalEnergy : 0;
+    const totalDrives = Number((driveStats as any)?.total_drives || 0);
+
+    // Populate states_visited from drives' start_state and end_state
+    // Collect distinct non-null states with their first occurrence
+    const stateRows = await db.prepare(`
+      SELECT state_name, MIN(started_at) as first_visit, MIN(id) as first_drive_id,
+             SUM(miles_in_state) as total_miles, COUNT(*) as visit_count
+      FROM (
+        SELECT start_state as state_name, started_at, id, distance_miles * 0.5 as miles_in_state
+        FROM drives WHERE journey_id = ? AND start_state IS NOT NULL AND start_state != ''
+        UNION ALL
+        SELECT end_state as state_name, started_at, id, distance_miles * 0.5 as miles_in_state
+        FROM drives WHERE journey_id = ? AND end_state IS NOT NULL AND end_state != ''
+      )
+      GROUP BY state_name
+      ORDER BY first_visit ASC
+    `).bind(journeyId, journeyId).all();
+
+    const stateResults = (stateRows as any)?.results || [];
+
+    // Upsert states_visited
+    if (stateResults.length > 0) {
+      const stateStatements: D1PreparedStatement[] = [];
+      for (const s of stateResults) {
+        const firstVisitDate = s.first_visit ? String(s.first_visit).slice(0, 10) : null;
+        stateStatements.push(
+          db.prepare(`
+            INSERT INTO states_visited (journey_id, state_name, first_visited_date, first_drive_id, visit_count, total_miles_in_state)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(journey_id, state_name) DO UPDATE SET
+              visit_count = excluded.visit_count,
+              total_miles_in_state = excluded.total_miles_in_state,
+              last_updated = datetime('now')
+          `).bind(journeyId, s.state_name, firstVisitDate, s.first_drive_id, s.visit_count, s.total_miles || 0)
+        );
+      }
+      await db.batch(stateStatements);
+    }
+
+    const totalStates = stateResults.length;
 
     // Update journey record
     await db.prepare(`
@@ -519,6 +561,7 @@ async function updateJourneyAggregates(db: D1Database, journeyId: string): Promi
       SET total_miles = ?,
           total_drives = ?,
           total_charges = ?,
+          total_states = ?,
           total_energy_used_kwh = ?,
           total_cost_usd = ?,
           overall_efficiency_miles_per_kwh = ?,
@@ -526,10 +569,11 @@ async function updateJourneyAggregates(db: D1Database, journeyId: string): Promi
       WHERE id = ?
     `).bind(
       totalMiles,
-      (segmentStats as any)?.total_segments || 0,
-      (energyStats as any)?.total_charges || 0,
+      totalDrives,
+      (chargeStats as any)?.total_charges || 0,
+      totalStates,
       totalEnergy,
-      (energyStats as any)?.total_cost || 0,
+      (chargeStats as any)?.total_cost || 0,
       efficiency,
       journeyId
     ).run();
@@ -537,8 +581,9 @@ async function updateJourneyAggregates(db: D1Database, journeyId: string): Promi
     logger.info('journey.aggregates.updated', {
       journeyId,
       totalMiles,
-      totalDrives: (segmentStats as any)?.total_segments,
-      totalCharges: (energyStats as any)?.total_charges
+      totalDrives,
+      totalStates,
+      totalCharges: (chargeStats as any)?.total_charges
     });
   } catch (err: any) {
     logger.error('journey.aggregates.error', { journeyId, error: err.message });

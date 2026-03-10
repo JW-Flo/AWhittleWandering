@@ -96,11 +96,85 @@ export function csvToObjects<T>(rows: string[][]): T[] {
 }
 
 // =====================================================
+// HEADER NORMALIZATION (Tessie export → internal format)
+// =====================================================
+
+/**
+ * Map Tessie CSV export headers to internal format.
+ * Tessie uses verbose headers like "Started At (CST)" while
+ * we use simplified "Start Time" internally.
+ */
+const TESSIE_DRIVE_HEADER_MAP: Record<string, string> = {
+  'Started At (CST)': 'Start Time',
+  'Started At (EST)': 'Start Time',
+  'Started At (PST)': 'Start Time',
+  'Started At (UTC)': 'Start Time',
+  'Started At': 'Start Time',
+  'Ended At (CST)': 'End Time',
+  'Ended At (EST)': 'End Time',
+  'Ended At (PST)': 'End Time',
+  'Ended At (UTC)': 'End Time',
+  'Ended At': 'End Time',
+  'Tag': 'Tag',
+  'Duration (Minutes)': 'Duration (minutes)',
+  'Starting Location': 'Start Address',
+  'Starting Saved Location': 'Start Saved Location',
+  'Starting Latitude': 'Start Latitude',
+  'Starting Longitude': 'Start Longitude',
+  'Starting Odometer (mi)': 'Odometer (start)',
+  'Ending Location': 'End Address',
+  'Ending Saved Location': 'End Saved Location',
+  'Ending Latitude': 'End Latitude',
+  'Ending Longitude': 'End Longitude',
+  'Ending Odometer (mi)': 'Odometer (end)',
+  'Starting Battery (%)': 'Start Battery',
+  'Ending Battery (%)': 'End Battery',
+  'Average Inside Temperature (°F)': 'Inside Temp (avg)',
+  'Average Outside Temperature (°F)': 'Outside Temp (avg)',
+  'Average Speed (mph)': 'Average Speed (mph)',
+  'Max Speed (mph)': 'Max Speed (mph)',
+  'Rated Range Used (mi)': 'Rated Range Used (mi)',
+  'Ideal Range Used (mi)': 'Ideal Range Used (mi)',
+  'Distance (mi)': 'Distance (mi)',
+  'Total Energy Used (kWh)': 'Energy Used (kWh)',
+  'Average Energy Used (Wh/mi)': 'Average Energy Used (Wh/mi)',
+};
+
+const TESSIE_CHARGE_HEADER_MAP: Record<string, string> = {
+  'Started At (CST)': 'Start Time',
+  'Started At (EST)': 'Start Time',
+  'Started At (PST)': 'Start Time',
+  'Started At (UTC)': 'Start Time',
+  'Started At': 'Start Time',
+  'Ended At (CST)': 'End Time',
+  'Ended At (EST)': 'End Time',
+  'Ended At (PST)': 'End Time',
+  'Ended At (UTC)': 'End Time',
+  'Ended At': 'End Time',
+  'Charge Energy Added (kWh)': 'Energy Added (kWh)',
+  'Energy Added (kWh)': 'Energy Added (kWh)',
+  'Charger Type': 'Charger Type',
+  'Is Supercharger': 'Is Supercharger',
+  'Duration (Minutes)': 'Duration (minutes)',
+};
+
+/**
+ * Normalize CSV headers by applying header map.
+ * If a header doesn't have a mapping, keep it as-is.
+ */
+function normalizeHeaders(rows: string[][], headerMap: Record<string, string>): string[][] {
+  if (rows.length === 0) return rows;
+  const normalized = [...rows];
+  normalized[0] = rows[0].map(h => headerMap[h] || h);
+  return normalized;
+}
+
+// =====================================================
 // VALIDATION SCHEMAS
 // =====================================================
 
 /**
- * Tesla Drive CSV Row Schema
+ * Tesla Drive CSV Row Schema (accepts both Tessie export and internal format)
  */
 const TeslaDriveRowSchema = z.object({
   // Temporal
@@ -132,9 +206,11 @@ const TeslaDriveRowSchema = z.object({
   'Inside Temp (avg)': z.string().optional(),
 
   // Additional fields
+  'Tag': z.string().optional(),
   'Duration (minutes)': z.string().optional(),
   'Odometer (start)': z.string().optional(),
   'Odometer (end)': z.string().optional(),
+  'Rated Range Used (mi)': z.string().optional(),
 }).passthrough(); // Allow additional fields
 
 /**
@@ -260,7 +336,34 @@ function parseBoolean(value: string | undefined): boolean {
 }
 
 /**
- * Import Tesla drives from CSV
+ * Extract US state name from a Tessie address string.
+ * Addresses typically look like: "Street, City, State ZIP, United States"
+ */
+function extractStateName(address: string | undefined | null): string | null {
+  if (!address) return null;
+  // Match ", State ZIP," or ", State ZIP" at end
+  const match = address.match(/,\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+\d{5}/);
+  if (match) return match[1];
+  // Fallback: try second-to-last comma-segment (for addresses like "City, State, Country")
+  const parts = address.split(',').map(s => s.trim());
+  if (parts.length >= 3) {
+    const stateCandidate = parts[parts.length - 2].replace(/\d{5}.*/, '').trim();
+    if (stateCandidate && /^[A-Z][a-z]/.test(stateCandidate)) return stateCandidate;
+  }
+  return null;
+}
+
+/**
+ * Convert a dedup hash string to a deterministic integer for tessie_id.
+ * Uses first 8 hex chars → 32-bit integer.
+ */
+function hashToTessieId(hash: string): number {
+  return Number.parseInt(hash.substring(0, 8), 16);
+}
+
+/**
+ * Import Tesla drives from CSV into the `drives` table.
+ * Normalizes Tessie CSV headers, validates rows, and writes with dedup via tessie_id.
  */
 export async function importTeslaDrives(
   db: D1Database,
@@ -275,85 +378,91 @@ export async function importTeslaDrives(
   let failed = 0;
 
   try {
-    // Parse CSV
-    const rows = parseCSV(csvContent);
+    // Parse CSV and normalize Tessie headers to internal format
+    const rawRows = parseCSV(csvContent);
+    const rows = normalizeHeaders(rawRows, TESSIE_DRIVE_HEADER_MAP);
     const objects = csvToObjects<TeslaDriveRow>(rows);
 
-    // Process in batches (500 statements per batch as per requirements)
-    const BATCH_SIZE = 500;
+    // Process in batches (D1 limit: 500 statements per batch)
+    const BATCH_SIZE = 100; // conservative to stay within CPU limits
 
     for (let i = 0; i < objects.length; i += BATCH_SIZE) {
       const batch = objects.slice(i, i + BATCH_SIZE);
       const statements: D1PreparedStatement[] = [];
 
       for (let j = 0; j < batch.length; j++) {
-        const rowIndex = i + j + 2; // +2 for header and 0-index
+        const rowIndex = i + j + 2; // +2 for header row and 0-indexing
         const row = batch[j];
 
         try {
-          // Validate row
+          // Validate row against schema
           const validated = TeslaDriveRowSchema.parse(row);
 
-          // Parse data
+          // Parse coordinates
           const startLat = parseNumber(validated['Start Latitude']);
           const startLng = parseNumber(validated['Start Longitude']);
           const endLat = parseNumber(validated['End Latitude']);
           const endLng = parseNumber(validated['End Longitude']);
-          const startTime = validated['Start Time'];
+          const driveStartTime = validated['Start Time'];
 
-          // Generate dedup key
-          const dedupKey = await generateDriveDedupeKey(startTime, startLat, startLng, endLat, endLng);
+          // Generate deterministic tessie_id from hash for deduplication
+          const dedupHash = await generateDriveDedupeKey(driveStartTime, startLat, startLng, endLat, endLng);
+          const tessieId = hashToTessieId(dedupHash);
 
-          // Calculate duration
-          const duration = validated['Duration (minutes)']
-            ? parseInt(validated['Duration (minutes)'])
-            : 0;
-
-          // Calculate efficiency
+          // Parse numeric fields
+          const duration = parseInt(validated['Duration (minutes)']);
           const distance = parseNumber(validated['Distance (mi)']);
           const energyUsed = parseNumber(validated['Energy Used (kWh)']);
           const efficiency = energyUsed > 0 ? distance / energyUsed : 0;
+          const ratedRangeUsed = parseNumber(validated['Rated Range Used (mi)']);
 
-          // Prepare insert statement
+          // Extract state names from addresses
+          const startAddress = validated['Start Address'] || null;
+          const endAddress = validated['End Address'] || null;
+          const startState = extractStateName(startAddress);
+          const endState = extractStateName(endAddress);
+
+          // Insert into `drives` table (canonical table read by unified-data API)
           const stmt = db.prepare(`
-            INSERT INTO drive_segments (
-              journey_id, vehicle_id, dedup_key,
-              start_time, end_time, duration_minutes,
+            INSERT INTO drives (
+              tessie_id, vehicle_id, journey_id,
+              started_at, ended_at,
               start_address, end_address,
               start_latitude, start_longitude, end_latitude, end_longitude,
-              distance_miles, energy_used_kwh, efficiency_miles_per_kwh,
+              start_state, end_state,
+              distance_miles, duration_minutes, energy_used_kwh,
+              average_speed, max_speed,
               start_battery_level, end_battery_level,
-              avg_outside_temp_f, avg_inside_temp_f,
-              avg_speed_mph, max_speed_mph,
-              odometer_start, odometer_end,
-              import_source, import_timestamp
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-            ON CONFLICT(dedup_key) DO NOTHING
+              rated_range_used, outside_temp_avg, average_inside_temp,
+              drive_tag, efficiency_miles_per_kwh
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(tessie_id) DO NOTHING
           `).bind(
-            journeyId,
+            tessieId,
             vehicleId,
-            dedupKey,
+            journeyId,
             validated['Start Time'],
             validated['End Time'],
-            duration,
-            validated['Start Address'] || null,
-            validated['End Address'] || null,
+            startAddress,
+            endAddress,
             startLat,
             startLng,
             endLat,
             endLng,
+            startState,
+            endState,
             distance,
+            duration,
             energyUsed,
-            efficiency,
-            parseInt(validated['Start Battery']),
-            parseInt(validated['End Battery']),
-            parseNumber(validated['Outside Temp (avg)']),
-            parseNumber(validated['Inside Temp (avg)']),
             parseNumber(validated['Average Speed (mph)']),
             parseNumber(validated['Max Speed (mph)']),
-            parseNumber(validated['Odometer (start)']),
-            parseNumber(validated['Odometer (end)']),
-            'csv'
+            parseInt(validated['Start Battery']),
+            parseInt(validated['End Battery']),
+            ratedRangeUsed,
+            parseNumber(validated['Outside Temp (avg)']),
+            parseNumber(validated['Inside Temp (avg)']),
+            validated['Tag'] || null,
+            efficiency
           );
 
           statements.push(stmt);
@@ -370,7 +479,6 @@ export async function importTeslaDrives(
       // Execute batch
       if (statements.length > 0) {
         const results = await db.batch(statements);
-        // Count successful inserts (changes > 0 means row was inserted)
         const insertedCount = results.filter(r => (r.meta as any).changes > 0).length;
         imported += insertedCount;
         skipped += (statements.length - insertedCount);
