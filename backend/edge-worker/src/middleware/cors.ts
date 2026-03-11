@@ -39,14 +39,16 @@ export const corsMiddleware = cors({
 export async function securityHeaders(c: Context, next: Next) {
   await next();
   
-  // Add security headers
+  // Security headers
   c.res.headers.set('X-Content-Type-Options', 'nosniff');
   c.res.headers.set('X-Frame-Options', 'DENY');
   c.res.headers.set('X-XSS-Protection', '1; mode=block');
   c.res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   c.res.headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-  
-  // Add Content Security Policy for API responses
+  c.res.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  c.res.headers.set('X-Permitted-Cross-Domain-Policies', 'none');
+
+  // Content Security Policy for API responses
   if (c.req.path.startsWith('/api/')) {
     c.res.headers.set('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
   }

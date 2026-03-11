@@ -85,9 +85,9 @@ const adminAuth = async (c: Context<{ Bindings: Env }>, next: Next) => {
   const jwtCur = String(c.env?.JWT_SECRET || '').trim();
   const jwtPrev = String(c.env?.JWT_SECRET_PREVIOUS || '').trim();
 
-  // If nothing is configured, only allow in development; fail closed otherwise.
+  // If nothing is configured, fail closed. Dev bypass requires explicit ENVIRONMENT=development.
   if (!secret && !prev && !jwtCur && !jwtPrev) {
-    const env = String(c.env?.ENVIRONMENT || '').toLowerCase();
+    const env = String(c.env?.ENVIRONMENT || '');
     if (env === 'development') return next();
     return c.json({ ok: false, error: 'Admin auth not configured' }, 503);
   }
@@ -153,28 +153,28 @@ app.get('/unified-data', async (c) => c.redirect('/api/v1/unified-data', 301));
 app.get('/trip-status', async (c) => c.redirect('/api/v1/trip-status', 301));
 // Frontend expects this path (older config)
 app.get('/api/v1/trip/status', async (c) => c.redirect('/api/v1/trip-status', 301));
-// Provide a config endpoint directly for demo
+// Provide a config endpoint for frontend bootstrap.
+// SECURITY: Only expose public tokens (pk.*). Never expose secret tokens (sk.*).
 app.get('/api/v1/config', async (c) => {
   const mode = c.env?.PLATFORM_MODE || 'live';
   const url = new URL(c.req.url);
   const apiBaseUrl = `${url.protocol}//${url.host}`;
 
-  // Mapbox token is safe to expose (public token); return null if not configured.
-  const mapboxToken = c.env?.MAPBOX_API_TOKEN || null;
+  // Prefer dedicated MAPBOX_PUBLIC_TOKEN; fall back to MAPBOX_API_TOKEN only if it's a public key.
+  const publicToken = c.env?.MAPBOX_PUBLIC_TOKEN || null;
+  const apiToken = c.env?.MAPBOX_API_TOKEN || null;
+  const safeToken = publicToken ?? (apiToken && !apiToken.startsWith('sk.') ? apiToken : null);
 
   return c.json({
     appName: 'A Whittle Wandering',
     apiVersion: '3.0.0',
     mode,
     apiBaseUrl,
-    // Backward/forward compatibility:
-    // - Older frontend(s) read `mapboxToken`
-    // - Newer frontend dynamic config expects `mapboxAccessToken`
-    mapboxToken,
-    mapboxAccessToken: mapboxToken,
+    mapboxToken: safeToken,
+    mapboxAccessToken: safeToken,
     features: {
       liveTeslaData: !!c.env?.TESSIE_API_TOKEN,
-      mapIntegration: !!mapboxToken,
+      mapIntegration: !!safeToken,
       realtimeUpdates: true
     },
     updateInterval: mode === 'live' ? 30000 : 45000
@@ -191,26 +191,13 @@ app.get('/api/connectors', async (c) => {
   });
 });
 
-// Root endpoint
+// Root endpoint (minimal — avoid information disclosure)
 app.get('/', async (c) => {
   return c.json({
     service: 'A Whittle Wandering',
     version: '3.0.0',
-    platformMode: c.env?.PLATFORM_MODE || 'live',
-    timestamp: new Date().toISOString(),
-    endpoints: {
-      health: '/api/v1/health',
-      telemetry: '/api/v1/telemetry',
-      unifiedData: '/api/v1/unified-data',
-      tripStatus: '/api/v1/trip-status',
-      admin: '/api/v1/admin',
-      config: '/api/v1/config'
-    },
-    legacy: {
-      '/health': 'Redirects to simple health check',
-      '/unified-data': 'Redirects to /api/v1/unified-data',
-      '/trip-status': 'Redirects to /api/v1/trip-status'
-    }
+    status: 'ok',
+    timestamp: new Date().toISOString()
   });
 });
 

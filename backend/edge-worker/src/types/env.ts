@@ -32,6 +32,7 @@ export interface Env {
   // Tessie uses bearer tokens; canonical name is TESSIE_API_TOKEN.
   TESSIE_API_TOKEN?: string;
   MAPBOX_API_TOKEN?: string;
+  MAPBOX_PUBLIC_TOKEN?: string; // pk.* public token safe for frontend exposure
   OPENWEATHER_API_KEY?: string;
   
   // Web Search APIs (fallback chain: Serper → Brave → Tavily → AI)
