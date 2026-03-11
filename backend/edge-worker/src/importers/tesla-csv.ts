@@ -508,7 +508,8 @@ export async function importTeslaDrives(
 }
 
 /**
- * Import Tesla charges from CSV
+ * Import Tesla charges from CSV into the `charges` table.
+ * Normalizes Tessie CSV headers and writes with dedup via tessie_id.
  */
 export async function importTeslaCharges(
   db: D1Database,
@@ -523,12 +524,12 @@ export async function importTeslaCharges(
   let failed = 0;
 
   try {
-    // Parse CSV
-    const rows = parseCSV(csvContent);
+    // Parse CSV and normalize Tessie headers
+    const rawRows = parseCSV(csvContent);
+    const rows = normalizeHeaders(rawRows, TESSIE_CHARGE_HEADER_MAP);
     const objects = csvToObjects<TeslaChargeRow>(rows);
 
-    // Process in batches
-    const BATCH_SIZE = 500;
+    const BATCH_SIZE = 100;
 
     for (let i = 0; i < objects.length; i += BATCH_SIZE) {
       const batch = objects.slice(i, i + BATCH_SIZE);
@@ -539,71 +540,53 @@ export async function importTeslaCharges(
         const row = batch[j];
 
         try {
-          // Validate row
           const validated = TeslaChargeRowSchema.parse(row);
 
-          // Parse data
           const lat = parseNumber(validated['Latitude']);
           const lng = parseNumber(validated['Longitude']);
-          const startTime = validated['Start Time'];
+          const chargeStartTime = validated['Start Time'];
           const energyAdded = parseNumber(validated['Energy Added (kWh)']);
 
-          // Generate dedup key
-          const dedupKey = await generateEnergyDedupeKey(startTime, lat, lng, energyAdded);
+          // Generate deterministic tessie_id for dedup
+          const dedupHash = await generateEnergyDedupeKey(chargeStartTime, lat, lng, energyAdded);
+          const tessieId = hashToTessieId(dedupHash);
 
-          // Calculate duration
-          const duration = validated['Duration (minutes)']
-            ? parseInt(validated['Duration (minutes)'])
-            : 0;
-
-          // Calculate efficiency
-          const energyUsed = parseNumber(validated['Energy Used (kWh)']);
-          const efficiency = energyUsed > 0 ? (energyAdded / energyUsed) * 100 : 100;
-
-          // Battery delta
+          const duration = parseInt(validated['Duration (minutes)']);
           const startBattery = parseInt(validated['Start Battery']);
           const endBattery = parseInt(validated['End Battery']);
-          const batteryDelta = endBattery - startBattery;
 
-          // Determine charger type
           const isSupercharger = parseBoolean(validated['Is Supercharger']);
           const chargerType = validated['Charger Type'] || (isSupercharger ? 'Supercharger' : 'Level2');
 
-          // Prepare insert statement
+          // Insert into canonical `charges` table
           const stmt = db.prepare(`
-            INSERT INTO energy_events (
-              journey_id, vehicle_id, dedup_key, event_type,
-              start_time, end_time, duration_minutes,
-              location_name, latitude, longitude,
+            INSERT INTO charges (
+              tessie_id, vehicle_id, journey_id,
+              started_at, ended_at,
+              location, latitude, longitude,
               charger_type, is_supercharger,
-              energy_added_kwh, energy_used_kwh, charge_efficiency_percent,
-              start_battery_level, end_battery_level, battery_delta,
-              cost_usd, odometer,
-              import_source, import_timestamp
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-            ON CONFLICT(dedup_key) DO NOTHING
+              energy_added_kwh, energy_used_kwh,
+              start_battery_level, end_battery_level,
+              cost_usd, duration_minutes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(tessie_id) DO NOTHING
           `).bind(
-            journeyId,
+            tessieId,
             vehicleId,
-            dedupKey,
-            'charge',
+            journeyId,
             validated['Start Time'],
             validated['End Time'] || null,
-            duration,
             validated['Location'] || null,
             lat,
             lng,
             chargerType,
             isSupercharger ? 1 : 0,
             energyAdded,
-            energyUsed,
-            efficiency,
+            parseNumber(validated['Energy Used (kWh)']),
             startBattery,
             endBattery,
-            batteryDelta,
             parseNumber(validated['Cost']),
-            parseNumber(validated['Odometer']),
-            'csv'
+            duration
           );
 
           statements.push(stmt);
@@ -617,7 +600,6 @@ export async function importTeslaCharges(
         }
       }
 
-      // Execute batch
       if (statements.length > 0) {
         const results = await db.batch(statements);
         const insertedCount = results.filter(r => (r.meta as any).changes > 0).length;

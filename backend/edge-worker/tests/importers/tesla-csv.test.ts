@@ -326,13 +326,13 @@ describe('Tesla Charge Import', () => {
           return {
             run: async () => {
               if (sql.includes('ON CONFLICT')) {
-                const dedupKey = params[2];
-                const table = 'energy_events';
+                const uniqueKey = params[0];
+                const table = 'charges';
                 const existing = this.data.get(table) || [];
-                const isDuplicate = existing.some((row: any) => row.dedup_key === dedupKey);
+                const isDuplicate = existing.some((row: any) => row.unique_key === uniqueKey);
 
                 if (!isDuplicate) {
-                  this.data.set(table, [...existing, { dedup_key: dedupKey, ...params }]);
+                  this.data.set(table, [...existing, { unique_key: uniqueKey, ...params }]);
                   return { meta: { changes: 1 } };
                 }
                 return { meta: { changes: 0 } };
