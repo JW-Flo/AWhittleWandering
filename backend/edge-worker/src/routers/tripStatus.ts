@@ -27,19 +27,23 @@ tripStatusRouter.get('/', async (c: Context) => {
 });
 
 tripStatusRouter.get('/config', async (c: Context) => {
+  // SECURITY: Only expose public tokens (pk.*). Never expose secret tokens (sk.*).
+  const publicToken = c.env?.MAPBOX_PUBLIC_TOKEN || null;
+  const apiToken = c.env?.MAPBOX_API_TOKEN || null;
+  const safeToken = publicToken ?? (apiToken && !apiToken.startsWith('sk.') ? apiToken : null);
+
+  const url = new URL(c.req.url);
   const config = {
-    // Mapbox token from environment (prefer MAPBOX_API_TOKEN if available)
-    // prefer undefined over null for absent env values
-    mapboxToken: c.env?.MAPBOX_API_TOKEN ?? undefined,
-    apiBaseUrl: 'https://awhittlewandering-api.kd8jc7v8cd.workers.dev',
+    mapboxToken: safeToken ?? undefined,
+    apiBaseUrl: `${url.protocol}//${url.host}`,
     appName: 'A Whittle Wandering',
     apiVersion: '3.0.0',
     features: {
       liveTeslaData: Boolean(c.env?.TESSIE_API_TOKEN),
-      mapIntegration: Boolean(c.env?.MAPBOX_API_TOKEN),
+      mapIntegration: Boolean(safeToken),
       realtimeUpdates: true
     },
-    updateInterval: 30000 // 30 seconds
+    updateInterval: 30000
   };
 
   return c.json(config);
