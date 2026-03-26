@@ -1,0 +1,6 @@
+export const RATE_LIMIT_CONFIG = {
+  DEFAULT_WINDOW_MS: 15 * 60 * 1000, // 15 minutes
+  DEFAULT_MAX_REQUESTS: 100,
+  STRICT_WINDOW_MS: 5 * 60 * 1000, // 5 minutes
+  STRICT_MAX_REQUESTS: 10,
+};
