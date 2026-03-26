@@ -1,0 +1,20 @@
+export const SECURITY_CONFIG = {
+  RATE_LIMIT_WINDOW_MS: 15 * 60 * 1000,
+  RATE_LIMIT_MAX_REQUESTS: 100,
+  CSRF_PROTECTION_ENABLED: true,
+  INPUT_SANITIZATION_ENABLED: true,
+
+  // Password complexity requirements
+  PASSWORD_MIN_LENGTH: 8,
+  PASSWORD_REQUIRES_UPPERCASE: true,
+  PASSWORD_REQUIRES_LOWERCASE: true,
+  PASSWORD_REQUIRES_NUMBER: true,
+
+  // Allowed input lengths
+  MAX_INPUT_LENGTH: {
+    USERNAME: 50,
+    EMAIL: 100,
+    PASSWORD: 72, // Typical bcrypt max length
+    DESCRIPTION: 500
+  }
+};
