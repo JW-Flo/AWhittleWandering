@@ -1,31 +1,15 @@
 {
   "name": "edge-worker",
   "version": "1.0.0",
-  "type": "module",
-  "scripts": {
-    "build": "npx esbuild src/index.ts --bundle --format=esm --outfile=dist/index.js --external:hono --external:zod",
-    "build:qa": "npx esbuild src/qa/unified-contract-check.ts --bundle --format=esm --outfile=dist/qa/unified-contract-check.js --platform=node && npx esbuild src/qa/validate-unified.ts --bundle --format=esm --outfile=dist/qa/validate-unified.js --platform=node",
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "test": "vitest",
-    "test:run": "vitest run",
-    "test:contract": "vitest run tests/contract",
-    "qa:contract": "npm run test:contract",
-    "qa:schema": "vitest run tests/schema-canonical.spec.ts"
-  },
   "dependencies": {
-    "@hono/zod-validator": "^0.7.6",
-    "hono": "^4.12.4",
-    "zod": "^3.22.0"
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20240320.1",
-    "@vitest/web-worker": "^2.1.9",
-    "esbuild": "^0.27.2",
-    "miniflare": "^4.20251217.0",
-    "typescript": "^5.4.2",
-    "vite": "^6.4.1",
-    "vitest": "^2.1.9",
-    "wrangler": "^4.59.1"
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/express-rate-limit": "^6.0.0"
   }
 }
