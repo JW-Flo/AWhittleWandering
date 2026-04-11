@@ -64,7 +64,6 @@ let mapboxPromise: Promise<typeof mapboxgl> | null = null;
 function getMapbox(): Promise<typeof mapboxgl> {
   if (!mapboxPromise) {
     mapboxPromise = import("mapbox-gl").then((m) => {
-      import("mapbox-gl/dist/mapbox-gl.css");
       return m.default || m;
     });
   }
