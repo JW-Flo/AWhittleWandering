@@ -24,7 +24,7 @@ export const API_CONFIG = {
   BASE_URL: getApiBaseUrl(),
   ENDPOINTS: {
     UNIFIED_DATA: '/api/v1/unified-data',
-    LIVE_STATUS: '/api/v1/trip/status', // Use trip status for live status
+    LIVE_STATUS: '/api/v1/trip-status', // Use trip status for live status
     TELEMETRY: '/api/v1/telemetry',
     HEALTH: '/api/v1/health',
     CONFIG: '/api/v1/config', // Configuration endpoint for secure tokens

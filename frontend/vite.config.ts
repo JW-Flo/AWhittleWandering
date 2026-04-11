@@ -27,27 +27,13 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          // Vendor chunks
           'react-vendor': ['react', 'react-dom'],
-          'ui-vendor': ['lucide-react', '@radix-ui/react-slot', 'class-variance-authority', 'clsx', 'tailwind-merge'],
-          // Removed monolithic 'map-vendor' to allow Rollup to tree-shake and split mapbox submodules further
-          // App chunks
-          'map-component': ['./src/components/TeslaMap.tsx'],
-          'hooks-utils': [
-            './src/utils/temperature.ts',
-            './src/utils/dateHelpers.ts'
-          ]
+          'ui-vendor': ['lucide-react', 'class-variance-authority', 'clsx', 'tailwind-merge'],
         }
       }
     },
-    chunkSizeWarningLimit: 1000, // Increase limit to 1MB
-    sourcemap: false, // Disable sourcemaps in production to reduce size
-    minify: 'terser', // Use terser for better minification
-    terserOptions: {
-      compress: {
-        drop_console: true, // Remove console logs in production
-        drop_debugger: true
-      }
-    }
+    chunkSizeWarningLimit: 2000,
+    sourcemap: false,
+    minify: 'esbuild',
   }
 });

@@ -180,17 +180,6 @@ app.get('/api/v1/config', async (c) => {
     updateInterval: mode === 'live' ? 30000 : 45000
   });
 });
-// Optional: minimal connectors endpoint for demo (moved after app declaration)
-app.get('/api/connectors', async (c) => {
-  return c.json({
-    connectors: [
-      { id: 'okta', name: 'Okta', status: 'stubbed' },
-      { id: 'azuread', name: 'Azure AD', status: 'stubbed' },
-      { id: 'google', name: 'Google Workspace', status: 'stubbed' }
-    ]
-  });
-});
-
 // Root endpoint (minimal — avoid information disclosure)
 app.get('/', async (c) => {
   return c.json({
@@ -199,28 +188,6 @@ app.get('/', async (c) => {
     status: 'ok',
     timestamp: new Date().toISOString()
   });
-});
-
-// Minimal demo joiner endpoint (no body validation needed - no body expected)
-app.post('/api/joiner', async (c) => {
-  // Simulate joiner flow: create user, stub provision, assign role, return log
-  const now = new Date().toISOString();
-  // Use Web Crypto for secure unique id; fall back to timestamp if unavailable
-  let userId: string;
-  try {
-    // crypto.randomUUID is supported in Cloudflare Workers runtime
-    userId = 'demo-' + crypto.randomUUID();
-  } catch {
-    // Fallback (should rarely execute) – still unique enough for demo
-    userId = 'demo-fallback-' + Date.now().toString(36);
-  }
-  const log = [
-    { step: 'create_user', status: 'ok', userId, timestamp: now },
-    { step: 'provision_stub', status: 'ok', userId, timestamp: now },
-    { step: 'assign_role', status: 'ok', userId, role: 'joiner', timestamp: now },
-    { step: 'done', status: 'success', userId, timestamp: now }
-  ];
-  return c.json({ ok: true, userId, log });
 });
 
 // Legacy endpoint /drop: proxies to /api/v1/auth for backward compatibility

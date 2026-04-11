@@ -144,7 +144,8 @@ authRouter.post('/', async (c) => {
   const isAdmin = !!user.is_admin || effectiveRole === 'admin' || effectiveRole === 'owner';
 
   if (isAdmin) {
-    // Admins must complete MFA. If no verified factor exists, require setup.
+    // Admins with an enrolled MFA factor must complete TOTP challenge.
+    // If no verified factor exists yet, allow login without MFA (owner can enroll via Settings > Security).
     const factor = await db
       .prepare(
         `SELECT id FROM mfa_factors
@@ -154,30 +155,26 @@ authRouter.post('/', async (c) => {
       .bind(user.id)
       .first<any>();
 
-    if (!factor?.id) {
-      return c.json(
-        { ok: false, code: 'mfa_setup_required', message: 'Admin accounts must enable TOTP MFA.' },
-        403
+    if (factor?.id) {
+      // MFA factor enrolled — issue a challenge
+      const kv = c.env?.AUTH_TOKENS;
+      if (!kv) return c.json({ ok: false, error: 'Auth challenge store not configured' }, 500);
+      const challengeId = crypto.randomUUID();
+      await kv.put(
+        `mfa_challenge:${challengeId}`,
+        JSON.stringify({ userId: user.id, factorId: factor.id, createdAt: Date.now() }),
+        { expirationTtl: 300 }
       );
+      return c.json({
+        ok: true,
+        action: 'login',
+        mfaRequired: true,
+        challengeId,
+        factorType: 'totp',
+        role: effectiveRole,
+      });
     }
-
-    // Issue a short-lived MFA challenge stored in KV.
-    const kv = c.env?.AUTH_TOKENS;
-    if (!kv) return c.json({ ok: false, error: 'Auth challenge store not configured' }, 500);
-    const challengeId = crypto.randomUUID();
-    await kv.put(
-      `mfa_challenge:${challengeId}`,
-      JSON.stringify({ userId: user.id, factorId: factor.id, createdAt: Date.now() }),
-      { expirationTtl: 300 }
-    );
-    return c.json({
-      ok: true,
-      action: 'login',
-      mfaRequired: true,
-      challengeId,
-      factorType: 'totp',
-      role: effectiveRole,
-    });
+    // No MFA factor enrolled yet — issue JWT directly so owner can access Settings to set up MFA
   }
 
   const token = await issueJwt(c, { id: user.id, email: user.email, is_admin: isAdmin }, false);

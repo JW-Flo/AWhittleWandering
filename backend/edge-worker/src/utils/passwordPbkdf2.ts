@@ -1,6 +1,6 @@
 import { b64urlDecodeToBytes, b64urlEncodeBytes } from './base64url';
 
-const ITERATIONS = 310_000;
+const ITERATIONS = 100_000;
 const DK_LEN = 32;
 
 export type PasswordRecord = {

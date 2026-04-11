@@ -1,19 +1,16 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
-// Dynamic mapbox-gl loading to shrink initial bundle. Only loads when token present & component mounted.
+// Dynamic mapbox-gl module loading (bundle stays lazy; CSS is already injected above)
 let mapboxModulePromise: Promise<typeof mapboxgl> | null = null;
 async function getMapbox(): Promise<typeof mapboxgl> {
   if (!mapboxModulePromise) {
-    mapboxModulePromise = import('mapbox-gl').then(m => {
-      import('mapbox-gl/dist/mapbox-gl.css'); // side-effect CSS load
-      return m.default || m;
-    });
+    mapboxModulePromise = import('mapbox-gl').then(m => m.default || m);
   }
   return mapboxModulePromise;
 }
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Navigation, Loader2 } from 'lucide-react';
 import { dynamicConfig } from '@/lib/dynamic-config';
 
@@ -41,18 +38,21 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
   const mapboxglRef = useRef<typeof mapboxgl | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(propsToken || null);
   const [isLoadingToken, setIsLoadingToken] = useState(false);
+  // Keep route data in a ref so it never causes map re-initialization
+  const routeLocationsRef = useRef(routeLocations);
+  routeLocationsRef.current = routeLocations;
 
   const hasRouteData = routeLocations && routeLocations.length > 0;
   const hasVehicle = vehicleLocation && (vehicleLocation.latitude !== 0 || vehicleLocation.longitude !== 0);
 
-  // Define map helper functions before they're used in effects
-  const addJourneyWaypoints = useCallback(() => {
-    if (!map.current || !routeLocations || routeLocations.length === 0) return;
+  const addJourneyWaypoints = () => {
+    const locs = routeLocationsRef.current;
+    if (!map.current || !locs || locs.length === 0) return;
 
     // Only add start/end markers for each drive (every pair of points), not every single point
-    const markerPoints = routeLocations.length <= 20
-      ? routeLocations
-      : [routeLocations[0], routeLocations[routeLocations.length - 1]];
+    const markerPoints = locs.length <= 20
+      ? locs
+      : [locs[0], locs[locs.length - 1]];
 
     markerPoints.forEach((location) => {
       const el = document.createElement('div');
@@ -88,12 +88,13 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
 
       marker.setPopup(popup);
     });
-  }, [routeLocations]);
+  };
 
-  const addJourneyRoute = useCallback(() => {
-    if (!map.current || !routeLocations || routeLocations.length === 0) return;
+  const addJourneyRoute = () => {
+    const locs = routeLocationsRef.current;
+    if (!map.current || !locs || locs.length === 0) return;
 
-    const coordinates = routeLocations.map(loc => [loc.lng, loc.lat]);
+    const coordinates = locs.map(loc => [loc.lng, loc.lat]);
 
     map.current.addSource('journey-route', {
       type: 'geojson',
@@ -139,7 +140,7 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
         'line-opacity': 0.85
       }
     });
-  }, [routeLocations]);
+  };
 
   // Fetch Mapbox token from backend on component mount
   useEffect(() => {
@@ -158,16 +159,21 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
     };
 
     fetchMapboxToken();
-  }, [mapboxToken]);
+  }, []); // Only run on mount — token won't change
 
+  // Initialize map only when token + container are ready. Never recreate for route data changes.
   useEffect(() => {
+    if (!mapboxToken || !mapContainer.current) return;
+    if (map.current) return; // Map already initialized — don't recreate
+
     let cancelled = false;
     (async () => {
-      if (!mapContainer.current || !mapboxToken) return;
       const mapboxgl = await getMapbox();
-      if (cancelled) return;
+      if (cancelled || !mapContainer.current) return;
       mapboxglRef.current = mapboxgl;
       mapboxgl.accessToken = mapboxToken;
+
+      const locs = routeLocationsRef.current;
 
       // Determine initial center: prefer vehicle, then last route point, then USA center
       let center: [number, number] = [-98.5795, 39.8283];
@@ -175,8 +181,8 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
       if (vehicleLocation && (vehicleLocation.latitude !== 0 || vehicleLocation.longitude !== 0)) {
         center = [vehicleLocation.longitude, vehicleLocation.latitude];
         zoom = 8;
-      } else if (routeLocations && routeLocations.length > 0) {
-        const last = routeLocations[routeLocations.length - 1];
+      } else if (locs && locs.length > 0) {
+        const last = locs[locs.length - 1];
         center = [last.lng, last.lat];
         zoom = 6;
       }
@@ -187,7 +193,7 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
         center,
         zoom,
         pitch: 0,
-        interactive: !readOnly || true, // still allow pan/zoom in read-only
+        interactive: true,
       });
 
       if (!readOnly) {
@@ -195,13 +201,15 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
       }
 
       map.current.on('load', () => {
+        if (cancelled) return;
         addJourneyRoute();
         addJourneyWaypoints();
 
         // Fit bounds to show the entire route
-        if (routeLocations && routeLocations.length > 1) {
-          const lngs = routeLocations.map(l => l.lng);
-          const lats = routeLocations.map(l => l.lat);
+        const currentLocs = routeLocationsRef.current;
+        if (currentLocs && currentLocs.length > 1) {
+          const lngs = currentLocs.map(l => l.lng);
+          const lats = currentLocs.map(l => l.lat);
           const bounds: [[number, number], [number, number]] = [
             [Math.min(...lngs), Math.min(...lats)],
             [Math.max(...lngs), Math.max(...lats)]
@@ -210,9 +218,16 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
         }
       });
     })();
-    return () => { cancelled = true; if (map.current) map.current.remove(); };
+    return () => {
+      cancelled = true;
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    };
+    // Only depends on token + style — NOT on route data or callbacks
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mapboxToken, mapStyle, addJourneyRoute, addJourneyWaypoints]);
+  }, [mapboxToken, mapStyle]);
 
   useEffect(() => {
     if (!map.current || !vehicleLocation) return;
@@ -249,69 +264,50 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
     }
   }, [vehicleLocation]);
 
-  if (!mapboxToken) {
-    if (isLoadingToken) {
-      return (
-        <Card className="w-full h-full flex items-center justify-center">
-          <CardContent className="max-w-md p-6">
-            <CardHeader className="text-center p-0 mb-6">
-              <Loader2 className="w-12 h-12 text-primary mx-auto mb-4 animate-spin" />
-              <CardTitle>Loading Map</CardTitle>
-              <CardDescription>
-                Fetching map configuration from backend...
-              </CardDescription>
-            </CardHeader>
-          </CardContent>
-        </Card>
-      );
-    }
 
-    return (
-      <Card className="w-full h-full flex items-center justify-center">
-        <CardContent className="max-w-md p-6">
-          <CardHeader className="text-center p-0 mb-6">
-            <MapPin className="w-12 h-12 text-primary mx-auto mb-4" />
-            <CardTitle>Mapbox Token Required</CardTitle>
-            <CardDescription>
-              No Mapbox token found. Set <code className="bg-secondary/60 px-1.5 py-0.5 rounded text-xs font-mono">VITE_MAPBOX_TOKEN</code> in{' '}
-              <code className="bg-secondary/60 px-1.5 py-0.5 rounded text-xs font-mono">frontend/.env.local</code>{' '}
-              or configure <code className="bg-secondary/60 px-1.5 py-0.5 rounded text-xs font-mono">MAPBOX_API_TOKEN</code> as a Wrangler secret.
-            </CardDescription>
-          </CardHeader>
-          <div className="space-y-4">
-            <Button
-              onClick={() => window.location.reload()}
-              className="w-full"
-            >
-              <Navigation className="w-4 h-4 mr-2" />
-              Refresh Page
-            </Button>
+  // Always render the map container so the ref persists across route-data state changes.
+  // Show overlays conditionally on top instead of early-returning different JSX.
+  return (
+    <div className="relative w-full h-full">
+      {/* Persistent map container — MUST be the same DOM node throughout the component lifecycle */}
+      <div ref={mapContainer} className="absolute inset-0 rounded-lg shadow-lg" />
+
+      {/* Loading token overlay */}
+      {isLoadingToken && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg z-10">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 text-primary mx-auto mb-2 animate-spin" />
+            <p className="text-sm text-muted-foreground">Loading map…</p>
           </div>
-        </CardContent>
-      </Card>
-    );
-  }
+        </div>
+      )}
 
-  // No data overlay — show when token is ready but no route/vehicle data
-  if (!hasRouteData && !hasVehicle) {
-    return (
-      <div className="relative w-full h-full">
-        <div ref={mapContainer} className="absolute inset-0 rounded-lg shadow-lg" />
-        <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm rounded-lg">
+      {/* No token overlay */}
+      {!isLoadingToken && !mapboxToken && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg z-10">
+          <div className="text-center px-6">
+            <MapPin className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+            <p className="text-sm font-medium">Mapbox Token Required</p>
+            <p className="text-xs text-muted-foreground mt-1">Configure MAPBOX_API_TOKEN as a Wrangler secret.</p>
+          </div>
+        </div>
+      )}
+
+      {/* No data overlay */}
+      {mapboxToken && !hasRouteData && !hasVehicle && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm rounded-lg z-10">
           <div className="text-center px-6">
             <MapPin className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
             <p className="text-sm font-medium text-muted-foreground">No journey data yet</p>
             <p className="text-xs text-muted-foreground mt-1">Route will appear once drive data is imported</p>
           </div>
         </div>
-      </div>
-    );
-  }
+      )}
 
-  return (
-    <div className="relative w-full h-full">
-      <div ref={mapContainer} className="absolute inset-0 rounded-lg shadow-lg" />
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent to-background/5 rounded-lg" />
+      {/* Route gradient overlay */}
+      {(hasRouteData || hasVehicle) && (
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent to-background/5 rounded-lg z-[1]" />
+      )}
     </div>
   );
 };

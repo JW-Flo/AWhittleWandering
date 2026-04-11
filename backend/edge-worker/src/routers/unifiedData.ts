@@ -150,6 +150,27 @@ async function buildUnifiedData(c: any, limit: number, journeyId: string, vehicl
         },
         timestamp: vsTs ? new Date(vsTs).getTime() : Date.now()
       };
+    } else {
+      // No live vehicle state — fall back to last known position from drives table
+      const lastDrive = await db.prepare(
+        `SELECT end_state, end_address, end_latitude, end_longitude, end_battery_level, ended_at
+         FROM drives WHERE journey_id = ? ORDER BY ended_at DESC LIMIT 1`
+      ).bind(journeyId).first();
+
+      if (lastDrive) {
+        const ld = lastDrive as any;
+        skeleton.currentStatus.location = {
+          coordinates: { lat: Number(ld.end_latitude || 0), lng: Number(ld.end_longitude || 0) },
+          city: (ld.end_address || '').split(',')[1]?.trim() || 'Unknown',
+          state: ld.end_state || 'Unknown',
+          lastUpdate: ld.ended_at ? new Date(ld.ended_at).toISOString() : new Date().toISOString()
+        };
+        skeleton.currentStatus.battery = {
+          level: Number(ld.end_battery_level || 0),
+          range: 0,
+          charging: 'Unknown'
+        };
+      }
     }
 
     // Stats

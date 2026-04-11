@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Plus,
   MapPin,
@@ -11,6 +11,12 @@ import {
   TrendingUp,
   Battery,
   MessageSquare,
+  Car,
+  Smile,
+  ThumbsUp,
+  FileText,
+  Meh,
+  Frown,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -58,6 +64,11 @@ export default function JourneyJournal({
   onGenerateEntry,
 }: JourneyJournalProps) {
   const [entries, setEntries] = useState<JournalEntry[]>(propEntries || []);
+
+  // Sync entries if parent-provided prop changes
+  useEffect(() => {
+    if (propEntries) setEntries(propEntries);
+  }, [propEntries]);
   const [isAddingEntry, setIsAddingEntry] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [newEntry, setNewEntry] = useState<Partial<JournalEntry>>({
@@ -133,6 +144,7 @@ export default function JourneyJournal({
           : 'Unknown Location'),
     };
 
+    setEntries(prev => [entry, ...prev]);
     onAddEntry?.(entry);
     setNewEntry({ title: '', content: '', location: '', photos: [] });
     setIsAddingEntry(false);
@@ -383,13 +395,13 @@ export default function JourneyJournal({
                         </div>
                       )}
                       {entry.mood && (
-                        <span className="text-xs">
-                          {entry.mood === 'excited' && '🚗'}
-                          {entry.mood === 'happy' && '😊'}
-                          {entry.mood === 'satisfied' && '👍'}
-                          {entry.mood === 'neutral' && '📝'}
-                          {entry.mood === 'concerned' && '😐'}
-                          {entry.mood === 'frustrated' && '😤'}
+                        <span className="text-xs text-muted-foreground">
+                          {entry.mood === 'excited' && <Car className="w-3 h-3 inline" />}
+                          {entry.mood === 'happy' && <Smile className="w-3 h-3 inline" />}
+                          {entry.mood === 'satisfied' && <ThumbsUp className="w-3 h-3 inline" />}
+                          {entry.mood === 'neutral' && <FileText className="w-3 h-3 inline" />}
+                          {entry.mood === 'concerned' && <Meh className="w-3 h-3 inline" />}
+                          {entry.mood === 'frustrated' && <Frown className="w-3 h-3 inline" />}
                         </span>
                       )}
                     </div>
