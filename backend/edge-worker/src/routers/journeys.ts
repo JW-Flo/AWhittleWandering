@@ -128,46 +128,55 @@ journeysRouter.post('/:id/unfollow', requireUser, async (c) => {
   return c.json({ ok: true, following: false, followerCount });
 });
 
-journeysRouter.get('/:id/follow/settings', requireUser, async (c) => {
+journeysRouter.get('/:id/follow/settings', async (c) => {
   const db = c.env?.TESLA_DB;
   if (!db) return c.json({ ok: false, error: 'Database not configured' }, 500);
-  const user = c.get('user');
   const journeyId = c.req.param('id');
 
-  const follow = await db
-    .prepare(`SELECT unfollowed_at FROM journey_follows WHERE journey_id = ? AND user_id = ? LIMIT 1`)
-    .bind(journeyId, user.id)
-    .first<any>();
-  const following = !!follow && !follow.unfollowed_at;
-
-  const prefs = await db
-    .prepare(
-      `SELECT notify_waypoints, notify_state_crossings, notify_photos, notify_charging, notify_security
-       FROM journey_follow_notification_prefs
-       WHERE journey_id = ? AND user_id = ? LIMIT 1`
-    )
-    .bind(journeyId, user.id)
-    .first<any>();
-
-  // Get follower count
+  // Get public follower count — no auth required
   const countResult = await db
     .prepare(`SELECT COUNT(*) as count FROM journey_follows WHERE journey_id = ? AND unfollowed_at IS NULL`)
     .bind(journeyId)
     .first<{ count: number }>();
   const followerCount = countResult?.count ?? 0;
 
-  return c.json({
-    ok: true,
-    following,
-    followerCount,
-    prefs: prefs || {
-      notify_waypoints: 1,
-      notify_state_crossings: 1,
-      notify_photos: 1,
-      notify_charging: 0,
-      notify_security: 1,
-    },
-  });
+  // Try to resolve authenticated user (optional — no 401 if missing)
+  const authz = c.req.header('Authorization') || '';
+  if (authz.startsWith('Bearer ')) {
+    try {
+      const { verifyJwtHS256 } = await import('../utils/jwtHs256');
+      const token = authz.slice(7).trim();
+      const jwtSecret = String(c.env?.JWT_SECRET || '').trim();
+      const verified = jwtSecret ? await verifyJwtHS256(token, [jwtSecret]) : { ok: false };
+      if (verified.ok) {
+        const payload = (verified as any).payload as Record<string, unknown>;
+        const userId = String(payload?.sub || payload?.id || '');
+        if (userId) {
+          const follow = await db
+            .prepare(`SELECT unfollowed_at FROM journey_follows WHERE journey_id = ? AND user_id = ? LIMIT 1`)
+            .bind(journeyId, userId)
+            .first<any>();
+          const following = !!follow && !follow.unfollowed_at;
+          const prefs = await db
+            .prepare(
+              `SELECT notify_waypoints, notify_state_crossings, notify_photos, notify_charging, notify_security
+               FROM journey_follow_notification_prefs WHERE journey_id = ? AND user_id = ? LIMIT 1`
+            )
+            .bind(journeyId, userId)
+            .first<any>();
+          return c.json({
+            ok: true,
+            following,
+            followerCount,
+            prefs: prefs || { notify_waypoints: 1, notify_state_crossings: 1, notify_photos: 1, notify_charging: 0, notify_security: 1 },
+          });
+        }
+      }
+    } catch { /* fall through to anonymous response */ }
+  }
+
+  // Anonymous: return public follower count, not following
+  return c.json({ ok: true, following: false, followerCount });
 });
 
 journeysRouter.put(

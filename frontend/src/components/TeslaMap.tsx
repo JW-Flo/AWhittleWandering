@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+// CSS is imported in main.tsx to ensure it loads before any lazy chunk
 
 // Dynamic mapbox-gl module loading (bundle stays lazy; CSS is already injected above)
 let mapboxModulePromise: Promise<typeof mapboxgl> | null = null;
@@ -268,9 +268,9 @@ const TeslaMap = ({ vehicleLocation, mapboxToken: propsToken, onTokenChange: _on
   // Always render the map container so the ref persists across route-data state changes.
   // Show overlays conditionally on top instead of early-returning different JSX.
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full" style={{ height: '100%', width: '100%', minHeight: '280px' }}>
       {/* Persistent map container — MUST be the same DOM node throughout the component lifecycle */}
-      <div ref={mapContainer} className="absolute inset-0 rounded-lg shadow-lg" />
+      <div ref={mapContainer} className="absolute inset-0" style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }} />
 
       {/* Loading token overlay */}
       {isLoadingToken && (

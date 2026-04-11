@@ -29,6 +29,7 @@ export default defineConfig({
         manualChunks: {
           'react-vendor': ['react', 'react-dom'],
           'ui-vendor': ['lucide-react', 'class-variance-authority', 'clsx', 'tailwind-merge'],
+          'mapbox-vendor': ['mapbox-gl'],
         }
       }
     },
