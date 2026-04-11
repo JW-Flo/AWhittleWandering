@@ -66,7 +66,22 @@ Full QA report: `/app/QA_REPORT.md`
 - [x] Follower view `/journey/continental-usa-2025` shows correct journey data
 - [x] API config returns valid Mapbox token (pk.*)
 
-## Session 3 — Mapbox + 401 Fixes (2026-04-11)
+## Session 4 — Full Platform Build-out (2026-04-11)
+- [x] `journal_entries` DB table — migration 0011 applied to D1 remote
+- [x] Journal API router — `GET /api/v1/journal/:id` (public), `POST/PUT/DELETE` (auth-gated)
+- [x] States endpoint — `GET /api/v1/unified-data/:id/states` (public, 41 states returned)
+- [x] AuthContext + JWT login in React (localStorage, expiry check, logout)
+- [x] `/login` page with email/password form
+- [x] Dashboard `/dashboard` protected with `ProtectedRoute` → redirects to `/login`
+- [x] Dashboard: logout button added to header
+- [x] JourneyJournal: full backend persistence (create/delete/load from API)
+- [x] FollowerView: parallel data fetching (journal + states + unified + config)
+- [x] FollowerView: states progress grid (48 contiguous states, visited/current/unvisited)
+- [x] FollowerView: public journal section with show-more collapse
+- [x] FollowerView: stats grid (miles, states, days, drives)
+- [x] Verified login: `joe@awhittlewandering.com` / `JourneyAdmin2025!` works
+- [x] Verified journal: POST + GET endpoints live
+- [x] Deployed backend (worker Version: 53a42d6e) + frontend (ce3e9e4b.awhittlewandering.pages.dev)
 - [x] Moved `mapbox-gl/dist/mapbox-gl.css` import from lazy `TeslaMap.tsx` to `main.tsx`
   - CSS now in initial bundle (`index-BVYNEvgv.css`) — loads before ANY component renders
   - This was the root cause of the black map: lazy CSS injection was silently failing in Cloudflare Pages

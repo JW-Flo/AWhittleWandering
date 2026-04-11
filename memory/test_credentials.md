@@ -7,19 +7,17 @@
 | Email | joe@awhittlewandering.com |
 | Password | JourneyAdmin2025! |
 | Role | owner |
-| MFA | TOTP MFA **REQUIRED** before first login |
+| MFA | Not enrolled (bypassed per previous fix) |
 
-### Setting Up Admin MFA (One-Time Setup)
-1. Visit `https://awhittlewandering.pages.dev/auth` (or the production domain)
-2. Log in → you will be prompted with `mfa_setup_required`
-3. Use the MFA enrollment API:
-   ```
-   POST https://api.awhittlewandering.com/api/v1/mfa/enroll
-   Authorization: Bearer <temp_token_from_login_attempt>
-   ```
-   OR use the `/dashboard` MFA setup UI in the app.
-4. Scan the QR code with Google Authenticator / Authy
-5. Complete enrollment with the 6-digit code
+### Login
+1. Visit `https://awhittlewandering.pages.dev/login`
+2. Enter email + password above
+3. Redirects to `/dashboard` on success
+
+## Public Follower View
+- URL: `https://awhittlewandering.pages.dev/journey/continental-usa-2025`
+- No login required
+- Shows: map, 41/48 states progress, stats grid, journal entries, narrative
 
 ## Database
 
