@@ -1,7 +1,8 @@
 import React, { Suspense, lazy, useEffect, useMemo, useState, useContext, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import TeslaDataContext, { TeslaDataProvider } from "@/contexts/TeslaDataContext";
 import { api } from "@/lib/api-config";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,7 @@ import JourneyJournal from "@/components/JourneyJournal";
 import MediaUpload from "@/components/MediaUpload";
 import ConsolidatedRouteOptimizer from "@/components/ConsolidatedRouteOptimizer";
 import { AdvancedAnalyticsDashboard } from "@/components/AdvancedAnalyticsDashboard";
-import { Activity, Compass, Route, PenLine, Server, RefreshCw, Wifi, WifiOff, Clock, Info } from "lucide-react";
+import { Activity, Compass, Route, PenLine, Server, RefreshCw, Wifi, WifiOff, Clock, Info, LogOut } from "lucide-react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 const LazyTeslaMap = lazy(() => import("@/components/LazyTeslaMap"));
@@ -90,6 +91,8 @@ const JourneyerDashboardInner: React.FC = () => {
   const error = ctx?.error ?? null;
   const isConnected = ctx?.isConnected ?? false;
   const refreshData = ctx?.refreshData;
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
   const [selectedDriveId, setSelectedDriveId] = useState<number | null>(null);
@@ -172,6 +175,15 @@ const JourneyerDashboardInner: React.FC = () => {
               </Button>
               <Button asChild variant="ghost" size="sm">
                 <Link to="/settings">Settings</Link>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { logout(); navigate('/login'); }}
+                className="gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign out
               </Button>
               <Button
                 variant="outline"

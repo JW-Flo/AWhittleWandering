@@ -8,7 +8,7 @@ import { api } from "@/lib/api-config";
 import JourneyNarrative, { type NarrativeUnifiedData } from "@/components/follower/JourneyNarrative";
 import FollowButton from "@/components/follower/FollowButton";
 import EmptyState from "@/components/common/EmptyState";
-import { MapPin } from "lucide-react";
+import { MapPin, BookOpen, Calendar, MessageSquare, Brain, Zap, TrendingUp, ChevronRight } from "lucide-react";
 
 const LazyTeslaMap = lazy(() => import("@/components/LazyTeslaMap"));
 
@@ -23,36 +23,98 @@ type UnifiedData = NarrativeUnifiedData & {
   routePath?: RoutePoint[];
 };
 
+interface StateRow {
+  state_name: string;
+  state_code: string | null;
+  first_visited_date: string | null;
+  visit_count: number;
+  total_miles_in_state: number;
+  is_current_state: number;
+}
+
+interface JournalEntry {
+  id: number;
+  title: string;
+  content: string;
+  location: string | null;
+  mood: string;
+  entry_type: string;
+  auto_generated: number;
+  created_at: string;
+}
+
 const safePercent = (num?: number, den?: number) => {
-  if (!num || !den) return 0;
-  if (!Number.isFinite(num) || !Number.isFinite(den) || den <= 0) return 0;
+  if (!num || !den || !Number.isFinite(num) || !Number.isFinite(den) || den <= 0) return 0;
   return Math.max(0, Math.min(100, (num / den) * 100));
 };
 
-const formatDate = (iso?: string) => {
-  if (!iso) return undefined;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return undefined;
-  return d.toLocaleString();
+// All 48 contiguous US states for the progress grid
+const CONTIGUOUS_STATES = [
+  "Alabama","Arizona","Arkansas","California","Colorado","Connecticut",
+  "Delaware","Florida","Georgia","Idaho","Illinois","Indiana",
+  "Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland",
+  "Massachusetts","Michigan","Minnesota","Mississippi","Missouri","Montana",
+  "Nebraska","Nevada","New Hampshire","New Jersey","New Mexico","New York",
+  "North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania",
+  "Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah",
+  "Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming",
+];
+
+const StatesProgress: React.FC<{ visited: StateRow[] }> = ({ visited }) => {
+  const visitedNames = new Set(visited.map(s => s.state_name));
+  const currentState = visited.find(s => s.is_current_state)?.state_name;
+  return (
+    <div>
+      <div className="flex flex-wrap gap-1.5">
+        {CONTIGUOUS_STATES.map(state => {
+          const isCurrent = state === currentState;
+          const isVisited = visitedNames.has(state);
+          return (
+            <div
+              key={state}
+              title={state}
+              className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors
+                ${isCurrent
+                  ? "bg-primary text-primary-foreground ring-1 ring-primary"
+                  : isVisited
+                  ? "bg-primary/20 text-primary"
+                  : "bg-muted text-muted-foreground/40"
+                }`}
+            >
+              {state.slice(0, 2).toUpperCase()}
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        {visitedNames.size} of 48 contiguous states visited
+        {currentState ? ` — currently in ${currentState}` : ""}
+      </p>
+    </div>
+  );
 };
 
-/** Update document <meta> tags for dynamic link previews (client-side only — not effective for crawlers) */
+const JournalIcon: React.FC<{ entry: JournalEntry }> = ({ entry }) => {
+  if (entry.entry_type === 'charging_started' || entry.entry_type === 'charging_completed')
+    return <Zap className="h-3.5 w-3.5 text-yellow-500 flex-shrink-0" />;
+  if (entry.entry_type === 'efficiency_milestone')
+    return <TrendingUp className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />;
+  if (entry.auto_generated)
+    return <Brain className="h-3.5 w-3.5 text-purple-500 flex-shrink-0" />;
+  return <MessageSquare className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />;
+};
+
 function updateMetaTags(data: UnifiedData) {
   const state = data.currentStatus?.location?.state;
   const miles = data.overview?.totalMiles;
   const states = data.overview?.statesVisited;
-
   const parts: string[] = [];
   if (state && state !== "Unknown") parts.push(`Currently in ${state}`);
   if (typeof miles === "number" && miles > 0) parts.push(`${Math.round(miles).toLocaleString()} miles`);
   if (typeof states === "number" && states > 0) parts.push(`across ${states} states`);
-
   const desc = parts.length > 0 ? parts.join(". ") + "." : "48 State Tesla Road Trip — follow along live.";
   const title = "A Whittle Wandering — 48 State Tesla Road Trip";
-
   document.title = title;
-
-  // Update existing meta tags if present
   const setMeta = (attr: string, key: string, content: string) => {
     const el = document.querySelector(`meta[${attr}="${key}"]`);
     if (el) el.setAttribute("content", content);
@@ -71,6 +133,11 @@ const FollowerView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [appConfig, setAppConfig] = useState<{ mapboxToken?: string | null } | null>(null);
+  const [states, setStates] = useState<StateRow[]>([]);
+  const [journal, setJournal] = useState<JournalEntry[]>([]);
+  const [showAllJournal, setShowAllJournal] = useState(false);
+
+  const journeyId = id && id !== "live" ? id : "continental-usa-2025";
 
   useEffect(() => {
     let cancelled = false;
@@ -79,35 +146,43 @@ const FollowerView: React.FC = () => {
       setError(null);
       try {
         const suffix = id && id !== "live" ? `/${id}` : "";
-        const res = await fetch(`${api.baseUrl}/api/v1/unified-data${suffix}`, { method: "GET" });
-        if (!res.ok) throw new Error(`Unable to load journey (${res.status})`);
-        const json = (await res.json()) as unknown;
+        const [dataRes, cfgRes, statesRes, journalRes] = await Promise.allSettled([
+          fetch(`${api.baseUrl}/api/v1/unified-data${suffix}`),
+          fetch(`${api.baseUrl}/api/v1/config`),
+          fetch(`${api.baseUrl}/api/v1/unified-data/${journeyId}/states`),
+          fetch(`${api.baseUrl}/api/v1/journal/${journeyId}`),
+        ]);
+
         if (cancelled) return;
-        const parsed = (json ?? null) as UnifiedData | null;
-        setData(parsed);
-        if (parsed) updateMetaTags(parsed);
+
+        if (dataRes.status === "fulfilled" && dataRes.value.ok) {
+          const json = await dataRes.value.json() as UnifiedData;
+          setData(json);
+          updateMetaTags(json);
+        } else {
+          throw new Error("Unable to load journey");
+        }
+
+        if (cfgRes.status === "fulfilled" && cfgRes.value.ok) {
+          setAppConfig(await cfgRes.value.json() as any);
+        }
+        if (statesRes.status === "fulfilled" && statesRes.value.ok) {
+          const s = await statesRes.value.json() as { ok: boolean; states: StateRow[] };
+          if (s.ok) setStates(s.states);
+        }
+        if (journalRes.status === "fulfilled" && journalRes.value.ok) {
+          const j = await journalRes.value.json() as { ok: boolean; entries: JournalEntry[] };
+          if (j.ok) setJournal(j.entries);
+        }
       } catch (e) {
-        if (cancelled) return;
-        setError(e instanceof Error ? e.message : "Unable to load journey");
+        if (!cancelled) setError(e instanceof Error ? e.message : "Unable to load journey");
       } finally {
         if (!cancelled) setIsLoading(false);
       }
     };
     run();
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
-
-  // Fetch Mapbox token for the map
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`${api.baseUrl}/api/v1/config`)
-      .then((r) => r.ok ? r.json() : null)
-      .then((cfg) => { if (!cancelled && cfg) setAppConfig(cfg as any); })
-      .catch(() => {});
     return () => { cancelled = true; };
-  }, []);
+  }, [id, journeyId]);
 
   const journeyTitle = data?.overview?.tripName || "A Whittle Wandering";
   const locationLabel = data?.currentStatus?.location?.state;
@@ -117,49 +192,31 @@ const FollowerView: React.FC = () => {
   const totalStates = data?.overview?.totalStates;
   const totalMiles = data?.overview?.totalMiles;
   const arcPct = useMemo(() => safePercent(statesVisited, totalStates), [statesVisited, totalStates]);
-  const lastUpdate = formatDate(data?.currentStatus?.location?.lastUpdate);
+  const lastUpdate = data?.currentStatus?.location?.lastUpdate
+    ? new Date(data.currentStatus.location.lastUpdate).toLocaleString()
+    : undefined;
 
   const routeLocations = useMemo(() => {
     if (data?.routePath && data.routePath.length > 0) {
       return data.routePath.filter(
-        (p) => typeof p.lat === "number" && typeof p.lng === "number" && (p.lat !== 0 || p.lng !== 0)
+        p => typeof p.lat === "number" && typeof p.lng === "number" && (p.lat !== 0 || p.lng !== 0)
       );
     }
-    // Fallback: build from drive endpoints (sort chronologically — API returns DESC)
-    const drives = [...(data?.timeline?.drives || [])].sort((a, b) => {
-      const tA = new Date(a.startTime || a.date).getTime();
-      const tB = new Date(b.startTime || b.date).getTime();
-      return tA - tB;
-    });
+    const drives = [...(data?.timeline?.drives || [])].sort((a, b) =>
+      new Date(a.startTime || a.date).getTime() - new Date(b.startTime || b.date).getTime()
+    );
     const points: RoutePoint[] = [];
     for (const drive of drives) {
-      if ((drive as any).startCoordinates?.lat && (drive as any).startCoordinates?.lng) {
-        points.push({
-          lat: (drive as any).startCoordinates.lat,
-          lng: (drive as any).startCoordinates.lng,
-          timestamp: drive.startTime || drive.date
-        });
-      }
-      if ((drive as any).endCoordinates?.lat && (drive as any).endCoordinates?.lng) {
-        points.push({
-          lat: (drive as any).endCoordinates.lat,
-          lng: (drive as any).endCoordinates.lng,
-          timestamp: drive.endTime || drive.date
-        });
-      }
+      if ((drive as any).startCoordinates?.lat) points.push({ lat: (drive as any).startCoordinates.lat, lng: (drive as any).startCoordinates.lng, timestamp: drive.startTime || drive.date });
+      if ((drive as any).endCoordinates?.lat) points.push({ lat: (drive as any).endCoordinates.lat, lng: (drive as any).endCoordinates.lng, timestamp: drive.endTime || drive.date });
     }
     return points;
   }, [data]);
 
   const vehicleLocation = useMemo(() => {
-    const loc = data?.currentStatus?.location;
-    if (!loc || !(loc as any).coordinates || ((loc as any).coordinates.lat === 0 && (loc as any).coordinates.lng === 0)) return undefined;
-    return {
-      latitude: (loc as any).coordinates.lat,
-      longitude: (loc as any).coordinates.lng,
-      heading: data?.currentStatus?.vehicle?.heading ?? 0,
-      speed: data?.currentStatus?.vehicle?.speed ?? 0,
-    };
+    const loc = data?.currentStatus?.location as any;
+    if (!loc?.coordinates || (loc.coordinates.lat === 0 && loc.coordinates.lng === 0)) return undefined;
+    return { latitude: loc.coordinates.lat, longitude: loc.coordinates.lng, heading: data?.currentStatus?.vehicle?.heading ?? 0, speed: data?.currentStatus?.vehicle?.speed ?? 0 };
   }, [data]);
 
   const hasJourneyData = !!(data && (
@@ -168,10 +225,10 @@ const FollowerView: React.FC = () => {
     (data.timeline?.drives && data.timeline.drives.length > 0)
   ));
 
-  // Location display
   const heroLocation = city && city !== "Unknown" && locationLabel && locationLabel !== "Unknown"
-    ? `${city}, ${locationLabel}`
-    : locationLabel && locationLabel !== "Unknown" ? locationLabel : null;
+    ? `${city}, ${locationLabel}` : locationLabel && locationLabel !== "Unknown" ? locationLabel : null;
+
+  const visibleJournal = showAllJournal ? journal : journal.slice(0, 4);
 
   return (
     <div className="journey-typography min-h-screen bg-background text-foreground overflow-y-auto overflow-x-hidden">
@@ -179,31 +236,23 @@ const FollowerView: React.FC = () => {
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="min-w-0">
             <p className="text-sm text-muted-foreground">Following</p>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold tracking-tight truncate">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold tracking-tight truncate" data-testid="journey-title">
               {journeyTitle}
             </h1>
           </div>
-          <div className="flex items-center gap-2">
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/">Home</Link>
-            </Button>
-          </div>
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/">Home</Link>
+          </Button>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 pb-16">
-        {/* Hero Map — above the fold, full width */}
+      <main className="container mx-auto px-4 pb-16 space-y-8">
+        {/* === MAP === */}
         {!isLoading && (routeLocations.length > 0 || vehicleLocation) && (
-          <section className="mb-8">
+          <section>
             <Card className="border-border/60 overflow-hidden">
-              <CardContent className="h-[50vh] min-h-[280px] max-h-[500px] p-0">
-                <Suspense
-                  fallback={
-                    <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-                      Loading map…
-                    </div>
-                  }
-                >
+              <CardContent className="h-[50vh] min-h-[280px] max-h-[500px] p-0" style={{ height: '50vh', minHeight: '280px' }}>
+                <Suspense fallback={<div className="flex items-center justify-center h-full text-sm text-muted-foreground">Loading map…</div>}>
                   <LazyTeslaMap
                     vehicleLocation={vehicleLocation}
                     mapboxToken={appConfig?.mapboxToken || undefined}
@@ -217,9 +266,9 @@ const FollowerView: React.FC = () => {
           </section>
         )}
 
-        {/* Hero text / Current chapter */}
-        <section className="mb-10">
-          <Card className="hero-card">
+        {/* === HERO === */}
+        <section>
+          <Card className="hero-card" data-testid="hero-card">
             <CardHeader className="relative z-10">
               <CardTitle className="text-2xl sm:text-3xl md:text-4xl leading-tight font-semibold tracking-tight">
                 {heroLocation
@@ -232,17 +281,13 @@ const FollowerView: React.FC = () => {
               </p>
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 {typeof statesVisited === "number" && typeof totalStates === "number" && (
-                  <Badge variant="secondary">
-                    {statesVisited} of {totalStates} states
-                  </Badge>
+                  <Badge variant="secondary" data-testid="states-badge">{statesVisited} of {totalStates} states</Badge>
                 )}
                 {typeof totalMiles === "number" && totalMiles > 0 && (
-                  <Badge variant="secondary">
-                    {Math.round(totalMiles).toLocaleString()} miles
-                  </Badge>
+                  <Badge variant="secondary" data-testid="miles-badge">{Math.round(totalMiles).toLocaleString()} miles</Badge>
                 )}
-                {typeof data?.currentStatus?.battery?.level === "number" && data.currentStatus.battery.level > 0 && (
-                  <Badge variant="outline">Battery {Math.round(data.currentStatus.battery.level)}%</Badge>
+                {typeof days === "number" && days > 0 && (
+                  <Badge variant="outline" data-testid="days-badge">Day {days}</Badge>
                 )}
                 {lastUpdate && <Badge variant="outline">Updated {lastUpdate}</Badge>}
               </div>
@@ -253,10 +298,7 @@ const FollowerView: React.FC = () => {
             <CardContent className="relative z-10 pt-0">
               <div className="mt-4">
                 <div className="h-2 w-full rounded-full bg-foreground/10 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-foreground/60"
-                    style={{ width: `${arcPct}%`, transition: "width 600ms ease" }}
-                  />
+                  <div className="h-full rounded-full bg-foreground/60" style={{ width: `${arcPct}%`, transition: "width 600ms ease" }} />
                 </div>
                 <p className="mt-2 text-xs text-foreground/70">
                   The arc so far{typeof arcPct === "number" ? `: ${Math.round(arcPct)}%` : ""}.
@@ -266,12 +308,10 @@ const FollowerView: React.FC = () => {
           </Card>
         </section>
 
-        {/* Loading skeleton */}
+        {/* === LOADING SKELETON === */}
         {isLoading && (
-          <section className="mb-10 space-y-4">
-            <Card className="animate-pulse">
-              <CardContent className="p-0 h-[40vh] min-h-[240px] bg-muted rounded-lg" />
-            </Card>
+          <section className="space-y-4">
+            <Card className="animate-pulse"><CardContent className="p-0 h-[40vh] min-h-[240px] bg-muted rounded-lg" /></Card>
             <Card className="story-card animate-pulse">
               <CardContent className="p-6 space-y-3">
                 <div className="h-4 w-2/3 bg-muted rounded" />
@@ -282,37 +322,101 @@ const FollowerView: React.FC = () => {
           </section>
         )}
 
-        {/* Error state */}
+        {/* === ERROR === */}
         {!isLoading && error && (
-          <section className="mb-10">
-            <Card className="story-card border-destructive/20">
-              <CardContent className="p-6 space-y-3">
-                <p className="text-sm font-medium">This journey is temporarily unavailable.</p>
-                <p className="text-xs text-muted-foreground">{error}</p>
-                <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
-                  Try again
-                </Button>
-              </CardContent>
-            </Card>
-          </section>
+          <Card className="story-card border-destructive/20">
+            <CardContent className="p-6 space-y-3">
+              <p className="text-sm font-medium">This journey is temporarily unavailable.</p>
+              <p className="text-xs text-muted-foreground">{error}</p>
+              <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Try again</Button>
+            </CardContent>
+          </Card>
         )}
 
-        {/* Empty data state — backend returned skeleton data */}
+        {/* === EMPTY STATE === */}
         {!isLoading && !error && data && !hasJourneyData && (
-          <section className="mb-10">
-            <Card className="story-card">
-              <CardContent className="p-6">
-                <EmptyState
-                  icon={<MapPin className="h-8 w-8" />}
-                  title="The journey hasn't started yet. Check back for live updates!"
-                  description="When the traveler sets out, the arc and moments will appear here."
-                />
+          <Card className="story-card">
+            <CardContent className="p-6">
+              <EmptyState icon={<MapPin className="h-8 w-8" />} title="The journey hasn't started yet. Check back for live updates!" description="When the traveler sets out, the arc and moments will appear here." />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* === STATS GRID === */}
+        {hasJourneyData && (
+          <section className="grid grid-cols-2 sm:grid-cols-4 gap-3" data-testid="stats-grid">
+            {[
+              { label: "Miles driven", value: typeof totalMiles === "number" ? Math.round(totalMiles).toLocaleString() : "—" },
+              { label: "States visited", value: statesVisited !== undefined ? `${statesVisited} / 48` : "—" },
+              { label: "Days on road", value: typeof days === "number" ? String(days) : "—" },
+              { label: "Drives logged", value: data?.timeline?.drives?.length ? data.timeline.drives.length.toLocaleString() : "—" },
+            ].map(({ label, value }) => (
+              <Card key={label} className="border-border/60">
+                <CardContent className="p-4">
+                  <p className="text-xs text-muted-foreground">{label}</p>
+                  <p className="text-2xl font-mono font-semibold mt-1">{value}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </section>
+        )}
+
+        {/* === STATES PROGRESS === */}
+        {states.length > 0 && (
+          <section>
+            <Card className="border-border/60">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">States visited</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <StatesProgress visited={states} />
               </CardContent>
             </Card>
           </section>
         )}
 
-        {/* Narrative */}
+        {/* === JOURNAL === */}
+        {journal.length > 0 && (
+          <section data-testid="journal-section">
+            <Card className="border-border/60">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <BookOpen className="w-4 h-4" />
+                    Journey Journal
+                  </CardTitle>
+                  <span className="text-xs text-muted-foreground">{journal.length} entries</span>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {visibleJournal.map(entry => (
+                  <div key={entry.id} className="border-b border-border/40 pb-4 last:border-0 last:pb-0">
+                    <div className="flex items-start gap-2 mb-1.5">
+                      <JournalIcon entry={entry} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium">{entry.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
+                          <Calendar className="w-3 h-3 inline" />
+                          {new Date(entry.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          {entry.location && <><MapPin className="w-3 h-3 inline ml-1" />{entry.location}</>}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{entry.content}</p>
+                  </div>
+                ))}
+                {journal.length > 4 && (
+                  <Button variant="ghost" size="sm" className="w-full gap-1 text-xs" onClick={() => setShowAllJournal(!showAllJournal)}>
+                    {showAllJournal ? "Show less" : `Show ${journal.length - 4} more entries`}
+                    <ChevronRight className={`w-3 h-3 transition-transform ${showAllJournal ? "rotate-90" : ""}`} />
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          </section>
+        )}
+
+        {/* === NARRATIVE === */}
         <JourneyNarrative data={data} />
       </main>
     </div>

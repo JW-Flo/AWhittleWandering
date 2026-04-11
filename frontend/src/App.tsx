@@ -2,7 +2,7 @@ import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Landing from "./pages/Landing";
 import JourneyerDashboard from "./pages/JourneyerDashboard";
 import FollowerView from "./pages/FollowerView";
@@ -11,9 +11,18 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Demo from "./pages/Demo";
 import RoadtripMap from "./pages/RoadtripMap";
+import LoginPage from "./pages/LoginPage";
 import { MasterCoordinationDashboard } from "./components/MasterCoordinationDashboard";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
+
+/** Wrapper that redirects unauthenticated users to /login */
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+};
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -59,36 +68,40 @@ const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:rounded focus:bg-primary focus:text-primary-foreground"
-        >
-          Skip to content
-        </a>
-        <Toaster />
-        <BrowserRouter>
-          <main id="main-content">
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/journey/:id" element={<FollowerView />} />
-              <Route path="/dashboard" element={<JourneyerDashboard />} />
-              <Route path="/dashboard/coordination" element={
-                <MasterCoordinationDashboard
-                  currentLocation={[37.7749, -122.4194]}
-                  destination={[34.0522, -118.2437]}
-                  journeyData={[]}
-                />
-              } />
-              <Route path="/explore" element={<ExploreJourney />} />
-              <Route path="/explore/:id" element={<ExploreJourney />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/roadtrip" element={<RoadtripMap />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="/demo" element={<Demo />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-        </BrowserRouter>
+        <AuthProvider>
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:rounded focus:bg-primary focus:text-primary-foreground"
+          >
+            Skip to content
+          </a>
+          <Toaster />
+          <BrowserRouter>
+            <main id="main-content">
+              <Routes>
+                <Route path="/" element={<Landing />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/journey/:id" element={<FollowerView />} />
+                <Route path="/dashboard" element={<ProtectedRoute><JourneyerDashboard /></ProtectedRoute>} />
+                <Route path="/dashboard/coordination" element={
+                  <ProtectedRoute>
+                    <MasterCoordinationDashboard
+                      currentLocation={[37.7749, -122.4194]}
+                      destination={[34.0522, -118.2437]}
+                      journeyData={[]}
+                    />
+                  </ProtectedRoute>
+                } />
+                <Route path="/explore" element={<ExploreJourney />} />
+                <Route path="/explore/:id" element={<ExploreJourney />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/roadtrip" element={<RoadtripMap />} />
+                <Route path="/demo" element={<Demo />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </main>
+          </BrowserRouter>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   </ErrorBoundary>

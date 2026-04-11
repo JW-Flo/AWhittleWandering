@@ -326,6 +326,21 @@ async function handleUnifiedData(c: any, journeyRef?: string) {
 // Query-param route: GET /api/v1/unified-data?journeyId=...
 unifiedDataRouter.get('/', async (c) => handleUnifiedData(c));
 
+// States visited: GET /api/v1/unified-data/:journeyRef/states
+unifiedDataRouter.get('/:journeyRef/states', async (c) => {
+  const db = c.env?.TESLA_DB;
+  if (!db) return c.json({ ok: false, error: 'DB not configured' }, 500);
+  const journeyRef = c.req.param('journeyRef');
+  const rows = await db
+    .prepare(
+      `SELECT state_name, state_code, first_visited_date, visit_count, total_miles_in_state, is_current_state
+       FROM states_visited WHERE journey_id = ? ORDER BY first_visited_date ASC`
+    )
+    .bind(journeyRef)
+    .all<Record<string, unknown>>();
+  return c.json({ ok: true, states: rows.results ?? [] });
+});
+
 // Path-param route: GET /api/v1/unified-data/:journeyRef (numeric public_id or text slug)
 unifiedDataRouter.get('/:journeyRef', async (c) => {
   const journeyRef = c.req.param('journeyRef');

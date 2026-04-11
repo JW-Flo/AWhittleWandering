@@ -30,6 +30,7 @@ import { mfaRouter } from './routers/mfa';
 import { pushRouter } from './routers/push';
 import { notificationsRouter } from './routers/notifications';
 import { mediaRouter } from './routers/media';
+import { journalRouter } from './routers/journal';
 import { importRouter } from './routers/import';
 
 // Augment Env typing (local) for new PLATFORM_MODE variable
@@ -143,6 +144,7 @@ app.route('/api/v1/notifications', notificationsRouter);
 app.route('/api/v1/media', mediaRouter);
 app.use('/api/v1/admin/*', adminAuth);
 app.route('/api/v1/admin', adminRouter);
+app.route('/api/v1/journal', journalRouter); // Public read, auth-gated write
 app.use('/api/v1/import/*', adminAuth);
 app.route('/api/v1/import', importRouter);
 
