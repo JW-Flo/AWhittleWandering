@@ -66,6 +66,18 @@ Full QA report: `/app/QA_REPORT.md`
 - [x] Follower view `/journey/continental-usa-2025` shows correct journey data
 - [x] API config returns valid Mapbox token (pk.*)
 
+## Session 3 — Mapbox + 401 Fixes (2026-04-11)
+- [x] Moved `mapbox-gl/dist/mapbox-gl.css` import from lazy `TeslaMap.tsx` to `main.tsx`
+  - CSS now in initial bundle (`index-BVYNEvgv.css`) — loads before ANY component renders
+  - This was the root cause of the black map: lazy CSS injection was silently failing in Cloudflare Pages
+- [x] Added `mapbox-gl` to Vite `manualChunks` for predictable bundling
+- [x] Removed duplicate dynamic CSS import from `RoadtripMap.tsx`
+- [x] Added explicit inline `height/width` fallback styles on TeslaMap container divs
+- [x] Made `GET /api/v1/journeys/:id/follow/settings` public — no longer requires auth
+  - Anonymous users get `{ok: true, following: false, followerCount: N}` — eliminates 401 console errors
+- [x] Deployed backend via wrangler (Version ID: `9e2147fe-634c-4201-8434-57d6666f0dad`)
+- [x] Deployed frontend via wrangler pages (commit `cc46d4c`)
+
 ## Prioritized Backlog
 
 ### P0 (Critical)
