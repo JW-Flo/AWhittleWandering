@@ -23,7 +23,7 @@
     "@csstools/css-tokenizer" "^3.0.3"
     lru-cache "^10.4.3"
 
-"@awhittlewandering/shared@file:/home/runner/work/AWhittleWandering/AWhittleWandering/shared":
+"@awhittlewandering/shared@file:shared":
   version "1.0.0"
   resolved "file:shared"
   dependencies:
@@ -1569,7 +1569,7 @@ autoprefixer@^10.4.20:
     picocolors "^1.1.1"
     postcss-value-parser "^4.2.0"
 
-"awhittlewandering-frontend@file:/home/runner/work/AWhittleWandering/AWhittleWandering/frontend":
+"awhittlewandering-frontend@file:frontend":
   version "1.0.0"
   resolved "file:frontend"
   dependencies:
@@ -1995,7 +1995,7 @@ earcut@^3.0.1:
   resolved "https://registry.npmjs.org/earcut/-/earcut-3.0.2.tgz"
   integrity sha512-X7hshQbLyMJ/3RPhyObLARM2sNxxmRALLKx1+NVFFnQ9gKzmCrxm9+uLIAdBcvc8FNLpctqlQ2V6AE92Ol9UDQ==
 
-"edge-worker@file:/home/runner/work/AWhittleWandering/AWhittleWandering/backend/edge-worker":
+"edge-worker@file:backend/edge-worker":
   version "1.0.0"
   resolved "file:backend/edge-worker"
   dependencies:
