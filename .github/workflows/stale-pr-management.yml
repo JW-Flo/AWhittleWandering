@@ -1,9 +1,9 @@
 name: Stale PR Management
 
 on:
-  schedule:
-    # Run weekly on Monday at midnight UTC (daily is excessive for a small repo)
-    - cron: '0 0 * * 1'
+  # schedule:
+  #   # Run weekly on Monday at midnight UTC (daily is excessive for a small repo)
+  #   - cron: '0 0 * * 1'
   workflow_dispatch:  # Allow manual triggering
 
 permissions:
