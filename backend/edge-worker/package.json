@@ -15,17 +15,17 @@
   },
   "dependencies": {
     "@hono/zod-validator": "^0.7.6",
-    "hono": "^4.12.7",
+    "hono": "^4.12.21",
     "zod": "^3.22.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240320.1",
     "@vitest/web-worker": "^2.1.9",
     "esbuild": "^0.27.2",
-    "miniflare": "^4.20251217.0",
+    "miniflare": "^4.20260603.0",
     "typescript": "^5.4.2",
-    "vite": "^6.4.1",
-    "vitest": "^2.1.9",
-    "wrangler": "^4.59.1"
+    "vite": "^6.4.2",
+    "vitest": "^3.2.6",
+    "wrangler": "^4.98.0"
   }
 }
